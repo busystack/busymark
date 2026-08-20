@@ -1105,7 +1105,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '“$topic” को चुने गए सहायता इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
+    return '“$topic” को चुने गए इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
   }
 
   @override
@@ -1535,7 +1535,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside मॉड्यूल में कोई हेल्प इंस्टेंस ट्री नहीं है।';
+      'Writerside मॉड्यूल में कोई इंस्टेंस ट्री नहीं है।';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2605,10 +2605,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'सक्रिय दस्तावेज़ या Writerside मॉड्यूल को PDF के रूप में निर्यात करें।';
 
   @override
-  String get newHelpInstance => 'नया हेल्प इंस्टेंस';
+  String get instances => 'इंस्टेंस';
 
   @override
-  String get importMarkdownInstance => 'Markdown फ़ाइलों से नया इंस्टेंस';
+  String get newInstance => 'नया इंस्टेंस';
 
   @override
   String get newTocLibrary => 'नई विषय-सूची लाइब्रेरी';
@@ -2620,17 +2620,35 @@ class AppLocalizationsHi extends AppLocalizations {
   String get openTocFile => 'विषय-सूची फ़ाइल खोलें';
 
   @override
-  String get changeInstanceColor => 'इंस्टेंस का रंग बदलें';
-
-  @override
-  String get createHelpInstance => 'हेल्प इंस्टेंस बनाएँ';
+  String get createInstance => 'इंस्टेंस बनाएँ';
 
   @override
   String get createTocLibrary => 'विषय-सूची लाइब्रेरी बनाएँ';
 
   @override
-  String get importMarkdownAsInstance =>
-      'Markdown को इंस्टेंस के रूप में आयात करें';
+  String get instanceContent => 'सामग्री';
+
+  @override
+  String get instanceContentSource => 'इससे बनाएँ';
+
+  @override
+  String get emptyInstance => 'खाली इंस्टेंस';
+
+  @override
+  String get markdownFiles => 'स्थानीय Markdown फ़ाइलें';
+
+  @override
+  String get chooseMarkdownFolder => 'Markdown फ़ोल्डर चुनें';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Markdown फ़ाइलों वाला फ़ोल्डर चुनें।';
+
+  @override
+  String get instanceAppearance => 'रूप-रंग';
+
+  @override
+  String get instanceColor => 'आइकन का रंग';
 
   @override
   String get instanceVersion => 'संस्करण';
@@ -2906,7 +2924,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'JetBrains के आधिकारिक Writerside बिल्डर से एक Writerside इंस्टेंस बनाएँ।';
+      'एक इंस्टेंस और PDF सेटिंग चुनें। BusyMark, JetBrains के आधिकारिक Writerside बिल्डर का उपयोग करता है।';
 
   @override
   String get writersidePdfContent => 'निर्यात सामग्री';
@@ -3140,6 +3158,10 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'यह सुझाव बनते समय दस्तावेज़ बदल गया। क्रिया फिर से चलाएँ।';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'यह कमिट संदेश बनते समय स्टेज किए गए बदलाव बदल गए। क्रिया फिर से चलाएँ।';
 
   @override
   String get aiViewContext => 'भेजा गया संदर्भ देखें';

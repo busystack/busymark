@@ -664,6 +664,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'pdfOrientation',
     'pdfPortrait',
     'instanceColorOrange',
+    'instances',
     'instanceVersion',
     'writersidePdfPage',
   },

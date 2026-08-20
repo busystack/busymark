@@ -77,6 +77,25 @@ void main() {
     expect(gateway.detectCalls, 2);
   });
 
+  test('does not expose repository Git for a single Markdown file', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(
+      _workspace(
+        kind: WorkspaceKind.singleMarkdown,
+        activeFilePath: '/repo/README.md',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    await controller.refresh();
+
+    expect(gateway.detectCalls, 0);
+    expect(gateway.statusCalls, 0);
+    expect(container.read(gitControllerProvider).repositoryInfo, isNull);
+  });
+
   test(
     'trust-required gateway does not inspect workspace before trust',
     () async {
@@ -399,6 +418,25 @@ void main() {
       GitFailureCode.noStagedFiles,
     );
     expect(gateway.commitCalls, 0);
+  });
+
+  test('AI staged-diff fingerprint rejects obsolete commit context', () async {
+    final gateway = _FakeGitGateway(staged: true)
+      ..stagedRawPatch = 'diff --git a/a.md b/a.md\n+first\n';
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    final snapshot = await controller.stagedDiffForAi();
+
+    expect(snapshot, isNotNull);
+    expect(snapshot!.patch, gateway.stagedRawPatch);
+    expect(await controller.stagedDiffMatches(snapshot.fingerprint), isTrue);
+
+    gateway.stagedRawPatch = 'diff --git a/a.md b/a.md\n+second\n';
+
+    expect(await controller.stagedDiffMatches(snapshot.fingerprint), isFalse);
   });
 
   test('branch switch requires clean BusyMark editor state', () async {
@@ -1006,11 +1044,12 @@ Workspace _workspace({
   String id = '/repo',
   String rootPath = '/repo',
   String? activeFilePath,
+  WorkspaceKind kind = WorkspaceKind.markdownFolder,
 }) {
   return Workspace(
     id: id,
     rootPath: rootPath,
-    kind: WorkspaceKind.markdownFolder,
+    kind: kind,
     openedAt: DateTime(2026),
     activeFilePath: activeFilePath,
     files: const [],
@@ -1045,6 +1084,7 @@ class _FakeGitGateway implements GitRepositoryGateway {
   final rollbackPathSets = <List<String>>[];
   var indexContent = '# Indexed\n';
   var workingTreeContent = '# Working tree\n';
+  var stagedRawPatch = 'diff --git a/README.md b/README.md\n+staged\n';
   String? lastDetectedWorkspacePath;
   String? lastInitializeRootPath;
   String? lastHistoryPath;
@@ -1228,10 +1268,10 @@ class _FakeGitGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository, {
     required bool staged,
   }) async {
-    return const GitDiff(
+    return GitDiff(
       title: 'All',
-      files: [],
-      rawPatch: '',
+      files: const [],
+      rawPatch: staged ? stagedRawPatch : '',
       hasBinaryFiles: false,
     );
   }

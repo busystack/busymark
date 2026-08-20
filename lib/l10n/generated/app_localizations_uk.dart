@@ -1131,7 +1131,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Вилучити «$topic» із вибраного екземпляра довідки. Файл теми буде збережено.';
+    return 'Вилучити «$topic» із вибраного екземпляра. Файл теми буде збережено.';
   }
 
   @override
@@ -1568,7 +1568,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'У модулі Writerside немає дерева екземпляра довідки.';
+      'У модулі Writerside немає дерева екземпляра.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2652,10 +2652,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Експортувати активний документ або модуль Writerside як PDF.';
 
   @override
-  String get newHelpInstance => 'Новий екземпляр довідки';
+  String get instances => 'Екземпляри';
 
   @override
-  String get importMarkdownInstance => 'Новий екземпляр із файлів Markdown';
+  String get newInstance => 'Новий екземпляр';
 
   @override
   String get newTocLibrary => 'Нова бібліотека змісту';
@@ -2667,16 +2667,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String get openTocFile => 'Відкрити файл змісту';
 
   @override
-  String get changeInstanceColor => 'Змінити колір екземпляра';
-
-  @override
-  String get createHelpInstance => 'Створити екземпляр довідки';
+  String get createInstance => 'Створити екземпляр';
 
   @override
   String get createTocLibrary => 'Створити бібліотеку змісту';
 
   @override
-  String get importMarkdownAsInstance => 'Імпортувати Markdown як екземпляр';
+  String get instanceContent => 'Вміст';
+
+  @override
+  String get instanceContentSource => 'Створити з';
+
+  @override
+  String get emptyInstance => 'Порожній екземпляр';
+
+  @override
+  String get markdownFiles => 'Локальні файли Markdown';
+
+  @override
+  String get chooseMarkdownFolder => 'Вибрати папку Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Виберіть папку, що містить файли Markdown.';
+
+  @override
+  String get instanceAppearance => 'Вигляд';
+
+  @override
+  String get instanceColor => 'Колір піктограми';
 
   @override
   String get instanceVersion => 'Версія';
@@ -2952,7 +2971,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'Зберіть один екземпляр Writerside за допомогою офіційного збирача JetBrains.';
+      'Виберіть екземпляр і параметри PDF. BusyMark використовує офіційний збирач Writerside від JetBrains.';
 
   @override
   String get writersidePdfContent => 'Вміст експорту';
@@ -3188,6 +3207,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Індексовані зміни змінилися під час створення цього повідомлення коміту. Запустіть дію ще раз.';
 
   @override
   String get aiViewContext => 'Показати надісланий контекст';

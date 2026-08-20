@@ -35,7 +35,7 @@ directory name when that element is absent, for JetBrains'
 default; otherwise it uses the currently tested version
 `2026.07.8925`.
 
-Generated settings exist only in a private temporary source facade. BusyMark
+Generated settings exist only in a private temporary source copy. BusyMark
 does not add or modify a file in the Writerside project. Selecting a project
 configuration passes that file through unchanged, so teams can commit and
 review a release-specific `PDF.xml`. The example module contains
@@ -52,11 +52,14 @@ Docker's local image store.
 
 Every build uses direct process arguments rather than a host shell and applies:
 
-- read-only nested mounts for every real project entry;
-- a private writable source facade for the builder's transient `.idea`
-  metadata;
+- a bounded private source copy, leaving the project untouched while preserving
+  the coherent directory tree expected by the builder;
+- exclusion of version-control metadata, IDE state, and stale builder output;
+- rejection of circular links and links that escape the selected source root;
+- a private writable `.idea` directory for transient builder metadata;
 - a private temporary output directory;
 - a private generated PDF configuration when custom settings are selected;
+- a bounded Docker shared-memory allocation for the PDF renderer;
 - `--pull=never`, so an export cannot replace the selected builder image;
 - `--network none` by default; and
 - bounded process time, diagnostic output, and PDF size.
@@ -86,8 +89,8 @@ with an approximate native conversion.
 
 Focused tests cover documented XML generation, configuration and keymap
 discovery, missing builder handling, cancellation, existing configuration
-pass-through, PDF validation, private builder metadata, and read-only project
-entries, including a module without an existing `cfg` directory. Release
+pass-through, PDF validation, private builder metadata, bounded source copying,
+process-crash retry, and a module without an existing `cfg` directory. Release
 validation with the real image should export the demo using both generated
 settings and `cfg/PDF.xml`.
 

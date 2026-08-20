@@ -17,6 +17,7 @@ class GitChangesView extends StatefulWidget {
     this.hasUnsavedEditorChanges = false,
     this.outsideWorkspacePaths = const {},
     this.onDraftCommitMessage,
+    this.canOpenFile,
   });
 
   final GitState state;
@@ -26,6 +27,7 @@ class GitChangesView extends StatefulWidget {
   final bool hasUnsavedEditorChanges;
   final Set<String> outsideWorkspacePaths;
   final Future<String?> Function()? onDraftCommitMessage;
+  final bool Function(GitFileStatus file)? canOpenFile;
 
   @override
   State<GitChangesView> createState() => _GitChangesViewState();
@@ -94,6 +96,7 @@ class _GitChangesViewState extends State<GitChangesView> {
                   onSelectFile: widget.onSelectFile,
                   onOpenFile: widget.onOpenFile,
                   onConfirmDiscard: widget.onConfirmDiscard,
+                  canOpenFile: widget.canOpenFile,
                 ),
                 _ChangeGroup(
                   kind: _ChangeGroupKind.staged,
@@ -104,6 +107,7 @@ class _GitChangesViewState extends State<GitChangesView> {
                   onOpenFile: widget.onOpenFile,
                   onConfirmDiscard: widget.onConfirmDiscard,
                   outsideWorkspacePaths: widget.outsideWorkspacePaths,
+                  canOpenFile: widget.canOpenFile,
                 ),
                 _ChangeGroup(
                   kind: _ChangeGroupKind.unstaged,
@@ -113,6 +117,7 @@ class _GitChangesViewState extends State<GitChangesView> {
                   onSelectFile: widget.onSelectFile,
                   onOpenFile: widget.onOpenFile,
                   onConfirmDiscard: widget.onConfirmDiscard,
+                  canOpenFile: widget.canOpenFile,
                 ),
                 _ChangeGroup(
                   kind: _ChangeGroupKind.untracked,
@@ -122,6 +127,7 @@ class _GitChangesViewState extends State<GitChangesView> {
                   onSelectFile: widget.onSelectFile,
                   onOpenFile: widget.onOpenFile,
                   onConfirmDiscard: widget.onConfirmDiscard,
+                  canOpenFile: widget.canOpenFile,
                 ),
               ],
               const SizedBox(height: BusyMarkSpacing.xl),
@@ -317,6 +323,7 @@ class _ChangeGroup extends StatelessWidget {
     required this.onOpenFile,
     required this.onConfirmDiscard,
     this.outsideWorkspacePaths = const {},
+    this.canOpenFile,
   });
 
   final _ChangeGroupKind kind;
@@ -327,6 +334,7 @@ class _ChangeGroup extends StatelessWidget {
   final ValueChanged<String> onOpenFile;
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
   final Set<String> outsideWorkspacePaths;
+  final bool Function(GitFileStatus file)? canOpenFile;
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +368,8 @@ class _ChangeGroup extends StatelessWidget {
                       outsideWorkspacePaths.contains(
                         file.originalRepoRelativePath,
                       )),
-              canOpen: file.hasWorkingTreeFile,
+              canOpen:
+                  file.hasWorkingTreeFile && (canOpenFile?.call(file) ?? true),
               onSelect: () {
                 if (kind == _ChangeGroupKind.conflicts) {
                   onOpenFile(file.repoRelativePath);

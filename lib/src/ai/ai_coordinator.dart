@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'ai_http_transport.dart';
@@ -88,6 +89,7 @@ class AiCoordinator {
         AiPolicy.validateRequest(effectiveRequest);
       }
       final output = StringBuffer();
+      var outputBytes = 0;
       var completed = false;
       await for (final event in _providerEvents(
         effectiveRequest,
@@ -104,7 +106,8 @@ class AiCoordinator {
               );
             }
             output.write(text);
-            if (output.length > AiPolicy.maxOutputCharacters) {
+            outputBytes += utf8.encode(text).length;
+            if (outputBytes > AiPolicy.maxGeneratedOutputBytes) {
               throw const AiException(
                 AiFailureCode.responseTooLarge,
                 'The AI proposal is too large.',

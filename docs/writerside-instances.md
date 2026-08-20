@@ -7,14 +7,12 @@ introduce a BusyMark-specific project file.
 
 ## Instance actions
 
-Open **Table of Contents**, select the instance icon, and use **TOC actions**
-to:
+Open **Table of Contents**, select an instance from the visible **Instances**
+list, and use **TOC actions** to:
 
-- create an empty help instance;
-- create an instance from selected local Markdown files;
+- create an instance, either empty or from selected local Markdown files;
 - create a non-publishing TOC library;
-- edit the selected instance;
-- assign a local icon color; or
+- edit the selected instance and assign its local icon color; or
 - open the authoritative `.tree` file.
 
 The instance editor writes the documented locations:

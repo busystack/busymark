@@ -1114,7 +1114,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Fjern «$topic» fra den valgte hjelpeinstansen. Emnefilen beholdes.';
+    return 'Fjern «$topic» fra den valgte instansen. Emnefilen beholdes.';
   }
 
   @override
@@ -1544,7 +1544,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside-modulen har ikke noe tre for hjelpeinstansen.';
+      'Writerside-modulen har ikke noe instanstre.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2611,10 +2611,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Eksporter det aktive dokumentet eller Writerside-modulen som PDF.';
 
   @override
-  String get newHelpInstance => 'Ny hjelpeinstans';
+  String get instances => 'Instanser';
 
   @override
-  String get importMarkdownInstance => 'Ny instans fra Markdown-filer';
+  String get newInstance => 'Ny instans';
 
   @override
   String get newTocLibrary => 'Nytt innholdsfortegnelsesbibliotek';
@@ -2626,16 +2626,35 @@ class AppLocalizationsNb extends AppLocalizations {
   String get openTocFile => 'Åpne innholdsfortegnelsesfil';
 
   @override
-  String get changeInstanceColor => 'Endre instansfarge';
-
-  @override
-  String get createHelpInstance => 'Opprett hjelpeinstans';
+  String get createInstance => 'Opprett instans';
 
   @override
   String get createTocLibrary => 'Opprett innholdsfortegnelsesbibliotek';
 
   @override
-  String get importMarkdownAsInstance => 'Importer Markdown som instans';
+  String get instanceContent => 'Innhold';
+
+  @override
+  String get instanceContentSource => 'Opprett fra';
+
+  @override
+  String get emptyInstance => 'Tom instans';
+
+  @override
+  String get markdownFiles => 'Lokale Markdown-filer';
+
+  @override
+  String get chooseMarkdownFolder => 'Velg Markdown-mappe';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Velg en mappe som inneholder Markdown-filer.';
+
+  @override
+  String get instanceAppearance => 'Utseende';
+
+  @override
+  String get instanceColor => 'Ikonfarge';
 
   @override
   String get instanceVersion => 'Versjon';
@@ -2909,7 +2928,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'Bygg én Writerside-instans med JetBrains’ offisielle Writerside-byggeverktøy.';
+      'Velg en instans og PDF-innstillinger. BusyMark bruker JetBrains’ offisielle Writerside-byggeverktøy.';
 
   @override
   String get writersidePdfContent => 'Eksportinnhold';
@@ -3142,6 +3161,10 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'Dokumentet ble endret mens forslaget ble generert. Kjør handlingen på nytt.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'De indekserte endringene ble endret mens denne commit-meldingen ble generert. Kjør handlingen på nytt.';
 
   @override
   String get aiViewContext => 'Vis sendt kontekst';

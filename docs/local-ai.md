@@ -63,10 +63,14 @@ The supported document actions are:
 - Improve code block
 
 Rewrite, Shorten, Change tone, Translate, and Proofread require a selection.
-Summarize uses a selection when present and otherwise summarizes the active
-document. Draft inserts generated Markdown at the cursor. Code actions require
-the cursor or selection to be inside one complete fenced code block. Explain
-inserts prose after the fence; Improve proposes a replacement for that fence.
+Summarize expands a partial selection to complete Markdown blocks and otherwise
+summarizes the active document. Draft keeps selected notes as context and
+inserts the generated Markdown after them; without a selection it uses the
+nearest safe prose block as local context. Insertions move to a Markdown block
+boundary rather than splitting front matter, a fence, raw markup, or another
+protected construct. Code actions require the cursor or selection to be inside
+one complete fenced code block. Explain inserts prose after the fence; Improve
+proposes a replacement for that fence.
 
 Every action follows the same flow:
 
@@ -89,6 +93,9 @@ working tree, history, unstaged content, or repository files. The generated
 subject is limited to 72 characters and an optional body must be separated by
 a blank line. Accepting the proposal only fills the existing commit-message
 field; it never stages or commits anything.
+Immediately before Apply, BusyMark reads the complete staged patch again and
+compares its SHA-256 fingerprint with the exact patch used for generation. A
+changed index makes the proposal stale and requires a new draft.
 
 ## Markdown integrity
 
@@ -111,8 +118,10 @@ response is never treated as trusted Markdown merely because it looks valid.
 
 ## Budgets, retries, and privacy
 
-- Feature-specific input, total-prompt, instruction, output-token, character,
-  and absolute request-time limits are enforced before and during generation.
+- Feature-specific input, total-prompt, instruction, provider output-token,
+  generated-output byte, transport-byte, and absolute request-time limits are
+  enforced independently. Provider-neutral prompt estimates count Unicode
+  text, not UTF-8 transport bytes; providers receive output limits in tokens.
 - Large whole-document summaries use at most 16 bounded section summaries and
   a final synthesis. Other actions reject oversized input rather than silently
   sending more context.

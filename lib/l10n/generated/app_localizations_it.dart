@@ -1122,7 +1122,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Rimuovi «$topic» dall’istanza della guida selezionata. Il file dell’argomento verrà conservato.';
+    return 'Rimuovi «$topic» dall’istanza selezionata. Il file dell’argomento verrà conservato.';
   }
 
   @override
@@ -1559,7 +1559,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Il modulo Writerside non ha un albero dell\'istanza della guida.';
+      'Il modulo Writerside non ha un albero dell’istanza.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2633,10 +2633,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Esporta il documento attivo o il modulo Writerside come PDF.';
 
   @override
-  String get newHelpInstance => 'Nuova istanza della guida';
+  String get instances => 'Istanze';
 
   @override
-  String get importMarkdownInstance => 'Nuova istanza da file Markdown';
+  String get newInstance => 'Nuova istanza';
 
   @override
   String get newTocLibrary => 'Nuova libreria del sommario';
@@ -2648,16 +2648,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get openTocFile => 'Apri file del sommario';
 
   @override
-  String get changeInstanceColor => 'Cambia colore dell’istanza';
-
-  @override
-  String get createHelpInstance => 'Crea istanza della guida';
+  String get createInstance => 'Crea istanza';
 
   @override
   String get createTocLibrary => 'Crea libreria del sommario';
 
   @override
-  String get importMarkdownAsInstance => 'Importa Markdown come istanza';
+  String get instanceContent => 'Contenuto';
+
+  @override
+  String get instanceContentSource => 'Crea da';
+
+  @override
+  String get emptyInstance => 'Istanza vuota';
+
+  @override
+  String get markdownFiles => 'File Markdown locali';
+
+  @override
+  String get chooseMarkdownFolder => 'Scegli cartella Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Scegli una cartella contenente file Markdown.';
+
+  @override
+  String get instanceAppearance => 'Aspetto';
+
+  @override
+  String get instanceColor => 'Colore dell’icona';
 
   @override
   String get instanceVersion => 'Versione';
@@ -2933,7 +2952,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'Genera un’istanza Writerside con il generatore ufficiale di JetBrains.';
+      'Scegli un’istanza e le impostazioni PDF. BusyMark usa il generatore Writerside ufficiale di JetBrains.';
 
   @override
   String get writersidePdfContent => 'Contenuto dell’esportazione';
@@ -3169,6 +3188,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'Il documento è cambiato durante la generazione della proposta. Esegui di nuovo l’azione.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Le modifiche in stage sono cambiate durante la generazione di questo messaggio di commit. Esegui di nuovo l’azione.';
 
   @override
   String get aiViewContext => 'Visualizza contesto inviato';

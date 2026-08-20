@@ -1137,7 +1137,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '«⁨$topic⁩» را از نمونهٔ راهنمای انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
+    return '«⁨$topic⁩» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
   }
 
   @override
@@ -1584,7 +1584,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'ماژول Writerside درخت نمونهٔ راهنما ندارد.';
+      'ماژول Writerside درخت نمونه ندارد.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2663,10 +2663,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'سند فعال یا ماژول Writerside را به PDF صادر کنید.';
 
   @override
-  String get newHelpInstance => 'نمونهٔ راهنمای جدید';
+  String get instances => 'نمونه‌ها';
 
   @override
-  String get importMarkdownInstance => 'نمونهٔ جدید از فایل‌های Markdown';
+  String get newInstance => 'نمونهٔ جدید';
 
   @override
   String get newTocLibrary => 'کتابخانهٔ جدید فهرست مطالب';
@@ -2678,16 +2678,35 @@ class AppLocalizationsFa extends AppLocalizations {
   String get openTocFile => 'باز کردن فایل فهرست مطالب';
 
   @override
-  String get changeInstanceColor => 'تغییر رنگ نمونه';
-
-  @override
-  String get createHelpInstance => 'ایجاد نمونهٔ راهنما';
+  String get createInstance => 'ایجاد نمونه';
 
   @override
   String get createTocLibrary => 'ایجاد کتابخانهٔ فهرست مطالب';
 
   @override
-  String get importMarkdownAsInstance => 'وارد کردن Markdown به‌عنوان نمونه';
+  String get instanceContent => 'محتوا';
+
+  @override
+  String get instanceContentSource => 'ایجاد از';
+
+  @override
+  String get emptyInstance => 'نمونهٔ خالی';
+
+  @override
+  String get markdownFiles => 'فایل‌های محلی Markdown';
+
+  @override
+  String get chooseMarkdownFolder => 'انتخاب پوشهٔ Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'پوشه‌ای حاوی فایل‌های Markdown انتخاب کنید.';
+
+  @override
+  String get instanceAppearance => 'ظاهر';
+
+  @override
+  String get instanceColor => 'رنگ نماد';
 
   @override
   String get instanceVersion => 'نسخه';
@@ -2961,7 +2980,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'یک نمونهٔ Writerside را با سازندهٔ رسمی JetBrains بسازید.';
+      'یک نمونه و تنظیمات PDF را انتخاب کنید. BusyMark از سازندهٔ رسمی Writerside شرکت JetBrains استفاده می‌کند.';
 
   @override
   String get writersidePdfContent => 'محتوای صدور';
@@ -3195,6 +3214,10 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'سند هنگام تولید این پیشنهاد تغییر کرد. کنش را دوباره اجرا کنید.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'تغییرات مرحله‌بندی‌شده هنگام تولید این پیام کامیت تغییر کرد. کنش را دوباره اجرا کنید.';
 
   @override
   String get aiViewContext => 'نمایش بافت ارسال‌شده';

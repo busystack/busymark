@@ -272,6 +272,14 @@ extension on AiRequest {
     deadline: deadline,
     contentFormat: contentFormat,
     promptVersion: promptVersion,
+    replacementOriginal: replacementOriginal,
+    documentSource: documentSource,
+    replacementStart: replacementStart,
+    replacementEnd: replacementEnd,
+    replacementPrefix: replacementPrefix,
+    replacementSuffix: replacementSuffix,
+    trimReplacementOutput: trimReplacementOutput,
+    hierarchicalChunks: hierarchicalChunks,
   );
 }
 

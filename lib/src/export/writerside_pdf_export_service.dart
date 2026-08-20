@@ -186,7 +186,8 @@ class WritersidePdfExportService {
     this.buildTimeout = const Duration(minutes: 15),
     this.pullTimeout = const Duration(hours: 1),
     this.maximumPdfBytes = 250 * 1024 * 1024,
-    this.maximumOverlayMounts = 4096,
+    this.maximumSourceCopyBytes = 2 * 1024 * 1024 * 1024,
+    this.maximumSourceCopyEntries = 100000,
   });
 
   final DockerExecutableLocator dockerLocator;
@@ -196,7 +197,8 @@ class WritersidePdfExportService {
   final Duration buildTimeout;
   final Duration pullTimeout;
   final int maximumPdfBytes;
-  final int maximumOverlayMounts;
+  final int maximumSourceCopyBytes;
+  final int maximumSourceCopyEntries;
 
   Future<List<String>> discoverProjectConfigurations({
     required String moduleRoot,
@@ -314,13 +316,11 @@ class WritersidePdfExportService {
         '--pull=never',
         '--name',
         containerName,
+        '--shm-size',
+        '1g',
         if (!request.allowNetwork) ...['--network', 'none'],
         '--mount',
         _mount(sourceOverlay.directory.path, '/opt/sources'),
-        for (final mount in sourceOverlay.childMounts) ...[
-          '--mount',
-          _mount(mount.source, mount.target, readOnly: true),
-        ],
         '--mount',
         _mount(outputDirectory.path, '/opt/output'),
         '-e',
@@ -335,7 +335,7 @@ class WritersidePdfExportService {
         'PDF=${_posix(configurationArgument)}',
         request.builderImage,
       ];
-      final build = await commandRunner.run(
+      var build = await commandRunner.run(
         executable: executable,
         arguments: arguments,
         timeout: buildTimeout,
@@ -349,10 +349,41 @@ class WritersidePdfExportService {
         );
       }
       token.throwIfCancelled();
-      final artifact = await _findPdfArtifact(
-        outputDirectory,
-        request.instanceId,
-      );
+      File artifact;
+      try {
+        artifact = await _findPdfArtifact(
+          outputDirectory,
+          request.instanceId,
+          build,
+        );
+      } on WritersidePdfExportException {
+        if (!_isRecoverablePdfProcessCrash(build)) {
+          rethrow;
+        }
+        final retry = await commandRunner.run(
+          executable: executable,
+          arguments: arguments,
+          timeout: buildTimeout,
+          cancellationToken: token,
+          containerName: containerName,
+        );
+        if (retry.exitCode != 0) {
+          throw WritersidePdfExportException(
+            WritersidePdfFailureCode.buildFailed,
+            detail: _safeDetail('${retry.stderr}\n${retry.stdout}'),
+          );
+        }
+        build = WritersideBuilderProcessResult(
+          exitCode: retry.exitCode,
+          stdout: '${build.stdout}\nPDF generation retried.\n${retry.stdout}',
+          stderr: '${build.stderr}\n${retry.stderr}',
+        );
+        artifact = await _findPdfArtifact(
+          outputDirectory,
+          request.instanceId,
+          build,
+        );
+      }
       final artifactLength = await artifact.length();
       if (artifactLength <= 8 || artifactLength > maximumPdfBytes) {
         throw const WritersidePdfExportException(
@@ -567,26 +598,44 @@ class WritersidePdfExportService {
     final directory = await Directory(
       p.join(exportRoot.path, 'source-overlay'),
     ).create();
-    await Directory(p.join(directory.path, '.idea')).create();
-    final childMounts = <_OverlayMount>[];
-    await _populateGeneratedOverlay(
-      originalDirectory: validated.sourceRoot,
-      overlayDirectory: directory,
-      containerDirectory: '/opt/sources',
+    await _copySourceTree(
       sourceRoot: validated.sourceRoot,
-      configurationSegments: [
-        if (validated.moduleRelativePath != '.')
-          ...p.split(validated.moduleRelativePath),
-        ...p.split(validated.buildConfigDirectory),
-      ],
-      configurationXml: configurationXml,
-      childMounts: childMounts,
+      destination: directory,
       cancellationToken: cancellationToken,
     );
-    return _SourceOverlay(
-      directory: directory,
-      childMounts: List.unmodifiable(childMounts),
+    final configurationDirectory = Directory(
+      p.joinAll([
+        directory.path,
+        if (validated.moduleRelativePath != '.') validated.moduleRelativePath,
+        validated.buildConfigDirectory,
+      ]),
     );
+    await configurationDirectory.create(recursive: true);
+    await File(
+      p.join(configurationDirectory.path, 'BusyMark-PDF.xml'),
+    ).writeAsString(configurationXml, flush: true);
+    return _SourceOverlay(directory: directory);
+  }
+
+  Future<void> _copySourceTree({
+    required String sourceRoot,
+    required Directory destination,
+    required WritersidePdfCancellationToken cancellationToken,
+  }) async {
+    final budget = _SourceCopyBudget(
+      maximumBytes: maximumSourceCopyBytes,
+      maximumEntries: maximumSourceCopyEntries,
+    );
+    await _copyDirectoryContents(
+      sourceDirectory: sourceRoot,
+      destinationDirectory: destination.path,
+      sourceRoot: sourceRoot,
+      excludedPath: p.dirname(destination.path),
+      budget: budget,
+      activeDirectories: <String>{},
+      cancellationToken: cancellationToken,
+    );
+    await Directory(p.join(destination.path, '.idea')).create();
   }
 
   Future<_SourceOverlay> _createProjectSourceOverlay({
@@ -597,155 +646,85 @@ class WritersidePdfExportService {
     final directory = await Directory(
       p.join(exportRoot.path, 'source-overlay'),
     ).create();
-    await Directory(p.join(directory.path, '.idea')).create();
-    final childMounts = <_OverlayMount>[];
-    await for (final entity in Directory(
-      validated.sourceRoot,
-    ).list(followLinks: false)) {
-      cancellationToken.throwIfCancelled();
-      if (p.basename(entity.path) == '.idea') {
-        continue;
-      }
-      await _addOverlayMount(
-        entityPath: entity.path,
-        overlayDirectory: directory,
-        containerDirectory: '/opt/sources',
-        sourceRoot: validated.sourceRoot,
-        childMounts: childMounts,
-      );
-    }
-    return _SourceOverlay(
-      directory: directory,
-      childMounts: List.unmodifiable(childMounts),
+    await _copySourceTree(
+      sourceRoot: validated.sourceRoot,
+      destination: directory,
+      cancellationToken: cancellationToken,
     );
+    return _SourceOverlay(directory: directory);
   }
 
-  Future<void> _populateGeneratedOverlay({
-    required String? originalDirectory,
-    required Directory overlayDirectory,
-    required String containerDirectory,
+  Future<void> _copyDirectoryContents({
+    required String sourceDirectory,
+    required String destinationDirectory,
     required String sourceRoot,
-    required List<String> configurationSegments,
-    required String configurationXml,
-    required List<_OverlayMount> childMounts,
+    required String excludedPath,
+    required _SourceCopyBudget budget,
+    required Set<String> activeDirectories,
     required WritersidePdfCancellationToken cancellationToken,
   }) async {
     cancellationToken.throwIfCancelled();
-    final configName = configurationSegments.isEmpty
-        ? null
-        : configurationSegments.first;
-    var foundConfigurationDirectory = false;
-    if (originalDirectory != null) {
-      await for (final entity in Directory(
-        originalDirectory,
-      ).list(followLinks: false)) {
+    final canonicalDirectory = p.normalize(
+      await Directory(sourceDirectory).resolveSymbolicLinks(),
+    );
+    if (!activeDirectories.add(canonicalDirectory)) {
+      throw const WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail: 'The selected source root contains a circular symlink.',
+      );
+    }
+    try {
+      await Directory(destinationDirectory).create(recursive: true);
+      final entities = await Directory(
+        sourceDirectory,
+      ).list(followLinks: false).toList();
+      entities.sort((left, right) => left.path.compareTo(right.path));
+      for (final entity in entities) {
         cancellationToken.throwIfCancelled();
         final name = p.basename(entity.path);
-        if (name == configName) {
-          final resolved = await _canonicalOverlayEntity(
-            entity.path,
-            sourceRoot,
-          );
-          if (resolved.type != FileSystemEntityType.directory) {
-            throw const WritersidePdfExportException(
-              WritersidePdfFailureCode.invalidConfiguration,
-              detail: 'The build configuration path is not a directory.',
+        final resolved = await _canonicalOverlayEntity(entity.path, sourceRoot);
+        if (p.equals(resolved.path, excludedPath) ||
+            p.isWithin(excludedPath, resolved.path)) {
+          continue;
+        }
+        if (resolved.type == FileSystemEntityType.directory &&
+            const {'.git', '.hg', '.svn', '.idea'}.contains(name)) {
+          continue;
+        }
+        if (resolved.type == FileSystemEntityType.file &&
+            RegExp(r'^pdfSource.+\.(?:pdf|html)$').hasMatch(name)) {
+          continue;
+        }
+        budget.addEntry(name);
+        final destinationPath = p.join(destinationDirectory, name);
+        switch (resolved.type) {
+          case FileSystemEntityType.directory:
+            await _copyDirectoryContents(
+              sourceDirectory: resolved.path,
+              destinationDirectory: destinationPath,
+              sourceRoot: sourceRoot,
+              excludedPath: excludedPath,
+              budget: budget,
+              activeDirectories: activeDirectories,
+              cancellationToken: cancellationToken,
             );
-          }
-          foundConfigurationDirectory = true;
-          final childOverlay = await Directory(
-            p.join(overlayDirectory.path, name),
-          ).create();
-          await _populateGeneratedOverlay(
-            originalDirectory: resolved.path,
-            overlayDirectory: childOverlay,
-            containerDirectory: _containerPath([containerDirectory, name]),
-            sourceRoot: sourceRoot,
-            configurationSegments: configurationSegments.sublist(1),
-            configurationXml: configurationXml,
-            childMounts: childMounts,
-            cancellationToken: cancellationToken,
-          );
-          continue;
+          case FileSystemEntityType.file:
+            final sourceFile = File(resolved.path);
+            budget.addBytes(await sourceFile.length(), name);
+            await sourceFile.copy(destinationPath);
+          case FileSystemEntityType.link:
+          case FileSystemEntityType.unixDomainSock:
+          case FileSystemEntityType.pipe:
+          case FileSystemEntityType.notFound:
+            throw WritersidePdfExportException(
+              WritersidePdfFailureCode.invalidRequest,
+              detail: 'Unsupported filesystem entry in the source: $name',
+            );
         }
-        if (configurationSegments.isEmpty && name == 'BusyMark-PDF.xml') {
-          continue;
-        }
-        if (name == '.idea') {
-          await Directory(p.join(overlayDirectory.path, name)).create();
-          continue;
-        }
-        await _addOverlayMount(
-          entityPath: entity.path,
-          overlayDirectory: overlayDirectory,
-          containerDirectory: containerDirectory,
-          sourceRoot: sourceRoot,
-          childMounts: childMounts,
-        );
       }
+    } finally {
+      activeDirectories.remove(canonicalDirectory);
     }
-
-    if (configurationSegments.isEmpty) {
-      await File(
-        p.join(overlayDirectory.path, 'BusyMark-PDF.xml'),
-      ).writeAsString(configurationXml, flush: true);
-      return;
-    }
-    if (!foundConfigurationDirectory) {
-      final childOverlay = await Directory(
-        p.join(overlayDirectory.path, configName!),
-      ).create();
-      await _populateGeneratedOverlay(
-        originalDirectory: null,
-        overlayDirectory: childOverlay,
-        containerDirectory: _containerPath([containerDirectory, configName]),
-        sourceRoot: sourceRoot,
-        configurationSegments: configurationSegments.sublist(1),
-        configurationXml: configurationXml,
-        childMounts: childMounts,
-        cancellationToken: cancellationToken,
-      );
-    }
-  }
-
-  Future<void> _addOverlayMount({
-    required String entityPath,
-    required Directory overlayDirectory,
-    required String containerDirectory,
-    required String sourceRoot,
-    required List<_OverlayMount> childMounts,
-  }) async {
-    if (childMounts.length >= maximumOverlayMounts) {
-      throw WritersidePdfExportException(
-        WritersidePdfFailureCode.invalidRequest,
-        detail:
-            'The help module needs more than $maximumOverlayMounts read-only '
-            'overlay mounts.',
-      );
-    }
-    final resolved = await _canonicalOverlayEntity(entityPath, sourceRoot);
-    final name = p.basename(entityPath);
-    final placeholder = p.join(overlayDirectory.path, name);
-    switch (resolved.type) {
-      case FileSystemEntityType.directory:
-        await Directory(placeholder).create();
-      case FileSystemEntityType.file:
-        await File(placeholder).create();
-      case FileSystemEntityType.link:
-      case FileSystemEntityType.unixDomainSock:
-      case FileSystemEntityType.pipe:
-      case FileSystemEntityType.notFound:
-        throw WritersidePdfExportException(
-          WritersidePdfFailureCode.invalidRequest,
-          detail: 'Unsupported filesystem entry in the help module: $name',
-        );
-    }
-    childMounts.add(
-      _OverlayMount(
-        source: resolved.path,
-        target: _containerPath([containerDirectory, name]),
-      ),
-    );
   }
 
   Future<_ResolvedOverlayEntity> _canonicalOverlayEntity(
@@ -887,7 +866,11 @@ class WritersidePdfExportService {
 
   String _posix(String value) => value.replaceAll('\\', '/');
 
-  Future<File> _findPdfArtifact(Directory output, String instanceId) async {
+  Future<File> _findPdfArtifact(
+    Directory output,
+    String instanceId,
+    WritersideBuilderProcessResult build,
+  ) async {
     final expectedName = 'pdfSource${instanceId.toUpperCase()}.pdf';
     final candidates = <File>[];
     await for (final entity in output.list(
@@ -904,12 +887,24 @@ class WritersidePdfExportService {
     if (candidates.length == 1) {
       return candidates.single;
     }
+    final log = _safeDetail('${build.stderr}\n${build.stdout}');
+    final crashed = _isRecoverablePdfProcessCrash(build);
     throw WritersidePdfExportException(
-      WritersidePdfFailureCode.invalidOutput,
-      detail: candidates.isEmpty
-          ? 'The Writerside builder did not produce a PDF artifact.'
-          : 'The Writerside builder produced multiple PDF artifacts.',
+      crashed
+          ? WritersidePdfFailureCode.buildFailed
+          : WritersidePdfFailureCode.invalidOutput,
+      detail: [
+        candidates.isEmpty
+            ? 'The Writerside builder did not produce a PDF artifact.'
+            : 'The Writerside builder produced multiple PDF artifacts.',
+        if (log.isNotEmpty) log,
+      ].join('\n\n'),
     );
+  }
+
+  bool _isRecoverablePdfProcessCrash(WritersideBuilderProcessResult build) {
+    return build.stderr.toLowerCase().contains('stack smashing detected') ||
+        build.stdout.toLowerCase().contains('stack smashing detected');
   }
 
   bool _isPdf(List<int> bytes) {
@@ -971,17 +966,41 @@ class _ValidatedWritersidePdfRequest {
 }
 
 class _SourceOverlay {
-  const _SourceOverlay({required this.directory, required this.childMounts});
+  const _SourceOverlay({required this.directory});
 
   final Directory directory;
-  final List<_OverlayMount> childMounts;
 }
 
-class _OverlayMount {
-  const _OverlayMount({required this.source, required this.target});
+class _SourceCopyBudget {
+  _SourceCopyBudget({required this.maximumBytes, required this.maximumEntries});
 
-  final String source;
-  final String target;
+  final int maximumBytes;
+  final int maximumEntries;
+  var _bytes = 0;
+  var _entries = 0;
+
+  void addEntry(String name) {
+    _entries++;
+    if (_entries > maximumEntries) {
+      throw WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail:
+            'The selected source contains more than $maximumEntries entries.',
+      );
+    }
+  }
+
+  void addBytes(int bytes, String name) {
+    _bytes += bytes;
+    if (_bytes > maximumBytes) {
+      throw WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail:
+            'The selected source exceeds the private-copy limit while '
+            'copying $name.',
+      );
+    }
+  }
 }
 
 class _ResolvedOverlayEntity {

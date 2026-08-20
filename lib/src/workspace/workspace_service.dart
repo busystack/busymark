@@ -1076,9 +1076,13 @@ class WorkspaceService {
   }
 
   Future<Workspace> _openMarkdownFolder(String rootPath) async {
-    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final scan = await scanWorkspaceEntities(
+      rootPath,
+      options: _workspaceDisplayScanOptions,
+    );
     final entities = scan.entities;
     final files = <DocumentFile>[];
+    final directories = _workspaceDirectories(entities, rootPath);
     final diagnostics = <Diagnostic>[...scan.diagnostics];
     ParsedMarkdownDocument? firstMarkdown;
     var parsedDocuments = 0;
@@ -1120,6 +1124,7 @@ class WorkspaceService {
           ? const []
           : [firstMarkdown.filePath],
       files: files,
+      directories: directories,
       diagnostics: sortDiagnostics(diagnostics),
       markdown: firstMarkdown,
     );
@@ -1130,9 +1135,13 @@ class WorkspaceService {
     String? activeFilePath,
   }) async {
     final module = await _loadWritersideModule(rootPath);
-    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final scan = await scanWorkspaceEntities(
+      rootPath,
+      options: _workspaceDisplayScanOptions,
+    );
     final entities = scan.entities;
     final files = <DocumentFile>[];
+    final directories = _workspaceDirectories(entities, rootPath);
     final diagnostics = <Diagnostic>[
       ...module.diagnostics,
       ...scan.diagnostics,
@@ -1158,6 +1167,7 @@ class WorkspaceService {
           : await fileSnapshot(firstTopic),
       openFilePaths: firstTopic == null ? const [] : [firstTopic],
       files: files,
+      directories: directories,
       diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,
       markdown: module.topics
@@ -1260,6 +1270,9 @@ class WorkspaceService {
 
   DocumentKind _documentKind(String path) {
     final extension = p.extension(path).toLowerCase();
+    if (p.basename(path) == '.gitignore') {
+      return DocumentKind.gitIgnore;
+    }
     if (extension == '.md' || extension == '.markdown') {
       return DocumentKind.markdown;
     }
@@ -1293,6 +1306,30 @@ class WorkspaceService {
     return isTextDocumentationPath(path)
         ? DocumentKind.resource
         : DocumentKind.unknown;
+  }
+
+  WorkspaceScanOptions get _workspaceDisplayScanOptions => WorkspaceScanOptions(
+    maxParsedFileBytes: scanOptions.maxParsedFileBytes,
+    maxParsedDocuments: scanOptions.maxParsedDocuments,
+    maxTreeEntries: scanOptions.maxTreeEntries,
+    followLinks: scanOptions.followLinks,
+    includeUnsupportedFiles: true,
+    includeDirectories: true,
+    includeHiddenDirectories: true,
+    includeExcludedDirectories: true,
+  );
+
+  List<WorkspaceDirectory> _workspaceDirectories(
+    List<FileSystemEntity> entities,
+    String rootPath,
+  ) {
+    return [
+      for (final entity in entities.whereType<Directory>())
+        WorkspaceDirectory(
+          absolutePath: entity.path,
+          relativePath: normalizedRelative(rootPath, entity.path),
+        ),
+    ];
   }
 
   bool _visibleSemanticElement(String name) {

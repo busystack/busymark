@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import '../core/diagnostic.dart';
@@ -9,7 +10,7 @@ import 'ai_models.dart';
 
 abstract final class AiPolicy {
   static const maxDocumentCharacters = 2 * 1024 * 1024;
-  static const maxOutputCharacters = 100000;
+  static const maxGeneratedOutputBytes = 512 * 1024;
 
   static Uri validateLocalOllamaEndpoint(String value) {
     final uri = Uri.tryParse(value.trim());
@@ -80,7 +81,7 @@ abstract final class AiPolicy {
       );
     }
     for (final chunk in request.hierarchicalChunks) {
-      if (AiTokenEstimator.conservative(chunk) > request.maxInputTokens) {
+      if (AiTokenEstimator.estimate(chunk) > request.maxInputTokens) {
         throw const AiException(
           AiFailureCode.validation,
           'A document summary section exceeds the AI safety budget.',
@@ -142,11 +143,10 @@ class AiMarkdownGuard {
         'The model returned an empty proposal.',
       );
     }
-    if (output.length > AiPolicy.maxOutputCharacters ||
-        AiTokenEstimator.conservative(output) > request.maxOutputTokens) {
+    if (utf8.encode(output).length > AiPolicy.maxGeneratedOutputBytes) {
       throw const AiException(
         AiFailureCode.responseTooLarge,
-        'The AI proposal exceeds the output safety limit.',
+        'The AI proposal exceeds the output byte limit.',
       );
     }
     if (request.feature == AiFeature.draftCommitMessage) {

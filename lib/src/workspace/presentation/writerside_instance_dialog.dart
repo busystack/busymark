@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -18,11 +19,18 @@ import '../workspace_controller.dart';
 import '../workspace_message.dart';
 import '../workspace_model.dart';
 
-enum BusyMarkWritersideInstanceDialogMode {
-  createHelp,
-  createLibrary,
-  importMarkdown,
-  edit,
+enum BusyMarkWritersideInstanceDialogMode { create, createLibrary, edit }
+
+enum _WritersideInstanceContentSource { empty, markdownFiles }
+
+class BusyMarkWritersideInstanceDialogResult {
+  const BusyMarkWritersideInstanceDialogResult({
+    required this.mutation,
+    required this.iconColor,
+  });
+
+  final WritersideInstanceMutationResult mutation;
+  final WritersideInstanceIconColor iconColor;
 }
 
 class BusyMarkWritersideInstanceDialog extends ConsumerStatefulWidget {
@@ -31,15 +39,11 @@ class BusyMarkWritersideInstanceDialog extends ConsumerStatefulWidget {
     required this.workspace,
     required this.mode,
     this.instance,
-    this.importRootPath,
-    this.importCandidates = const [],
   });
 
   final Workspace workspace;
   final BusyMarkWritersideInstanceDialogMode mode;
   final WritersideInstance? instance;
-  final String? importRootPath;
-  final List<WritersideMarkdownImportCandidate> importCandidates;
 
   @override
   ConsumerState<BusyMarkWritersideInstanceDialog> createState() =>
@@ -55,8 +59,13 @@ class _BusyMarkWritersideInstanceDialogState
   late WritersideInstanceStatus _status;
   late bool _allowIndexing;
   late bool _offlineArtifact;
+  late WritersideInstanceIconColor _iconColor;
+  var _contentSource = _WritersideInstanceContentSource.empty;
+  String? _importRootPath;
+  List<WritersideMarkdownImportCandidate> _importCandidates = const [];
   late Set<String> _selectedImportPaths;
   var _copyReferencedMedia = true;
+  var _discoveringMarkdown = false;
   var _idEdited = false;
   var _syncingId = false;
   var _saving = false;
@@ -70,7 +79,9 @@ class _BusyMarkWritersideInstanceDialogState
       (_isEdit && widget.instance?.isLibrary == true);
 
   bool get _isImport =>
-      widget.mode == BusyMarkWritersideInstanceDialogMode.importMarkdown;
+      !_isEdit &&
+      !_isLibrary &&
+      _contentSource == _WritersideInstanceContentSource.markdownFiles;
 
   @override
   void initState() {
@@ -89,9 +100,15 @@ class _BusyMarkWritersideInstanceDialogState
     );
     _allowIndexing = instance?.allowSearchEngineIndexing ?? false;
     _offlineArtifact = instance?.offlineArtifact ?? false;
-    _selectedImportPaths = {
-      for (final candidate in widget.importCandidates) candidate.absolutePath,
-    };
+    _iconColor = instance == null
+        ? WritersideInstanceIconColor.automatic
+        : ref
+              .read(appSettingsControllerProvider)
+              .writersideInstanceIconColor(
+                widget.workspace.rootPath,
+                instance.id,
+              );
+    _selectedImportPaths = {};
   }
 
   @override
@@ -103,8 +120,6 @@ class _BusyMarkWritersideInstanceDialogState
     _defaultsApplied = true;
     final name = _isLibrary
         ? context.l10n.defaultTocLibraryName
-        : _isImport
-        ? _suggestedImportName(widget.importRootPath)
         : context.l10n.defaultInstanceName;
     _nameController.text = name;
     _idController.text = WritersideProjectCreator.slugInstanceId(name);
@@ -160,6 +175,35 @@ class _BusyMarkWritersideInstanceDialogState
               ),
             ],
           ),
+          if (!_isEdit && !_isLibrary)
+            BusyMarkGroupedList(
+              title: context.l10n.instanceContent,
+              filled: true,
+              children: [
+                BusyMarkComboRow<_WritersideInstanceContentSource>(
+                  title: context.l10n.instanceContentSource,
+                  values: _WritersideInstanceContentSource.values,
+                  selected: _contentSource,
+                  labelFor: (source) => switch (source) {
+                    _WritersideInstanceContentSource.empty =>
+                      context.l10n.emptyInstance,
+                    _WritersideInstanceContentSource.markdownFiles =>
+                      context.l10n.markdownFiles,
+                  },
+                  onSelected: (source) {
+                    setState(() {
+                      _contentSource = source;
+                      _error = null;
+                    });
+                    if (source ==
+                            _WritersideInstanceContentSource.markdownFiles &&
+                        _importRootPath == null) {
+                      unawaited(_chooseMarkdownDirectory());
+                    }
+                  },
+                ),
+              ],
+            ),
           if (_isLibrary) ...[
             const SizedBox(height: BusyMarkSpacing.md),
             BusyMarkStatusBox(
@@ -229,16 +273,23 @@ class _BusyMarkWritersideInstanceDialogState
           if (_isImport) ...[
             BusyMarkGroupedList(
               title: context.l10n.markdownImportSource,
-              description: context.l10n.markdownFilesFound(
-                widget.importCandidates.length,
-              ),
+              description: _importRootPath == null
+                  ? null
+                  : context.l10n.markdownFilesFound(_importCandidates.length),
               filled: true,
               children: [
-                YaruListTile.square(
-                  title: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: SelectableText(widget.importRootPath ?? ''),
-                  ),
+                BusyMarkActionRow(
+                  title: _importRootPath == null
+                      ? context.l10n.chooseMarkdownFolder
+                      : p.basename(_importRootPath!),
+                  subtitle: _importRootPath,
+                  leading: _discoveringMarkdown
+                      ? const SizedBox.square(
+                          dimension: BusyMarkSizes.iconSm,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(BusyMarkGlyphs.folderOpen),
+                  onTap: _discoveringMarkdown ? null : _chooseMarkdownDirectory,
                 ),
                 BusyMarkSwitchRow(
                   title: context.l10n.copyReferencedMedia,
@@ -251,8 +302,29 @@ class _BusyMarkWritersideInstanceDialogState
                 ),
               ],
             ),
-            _importFileSelection(importError),
+            if (!_discoveringMarkdown) _importFileSelection(importError),
           ],
+          BusyMarkGroupedList(
+            title: context.l10n.instanceAppearance,
+            filled: true,
+            children: [
+              BusyMarkComboRow<WritersideInstanceIconColor>(
+                title: context.l10n.instanceColor,
+                values: WritersideInstanceIconColor.values,
+                selected: _iconColor,
+                labelFor: (color) =>
+                    writersideInstanceColorLabel(context, color),
+                leading: Icon(
+                  BusyMarkGlyphs.tree,
+                  color: writersideInstanceIconColorValue(context, _iconColor),
+                ),
+                onSelected: (color) => setState(() {
+                  _iconColor = color;
+                  _error = null;
+                }),
+              ),
+            ],
+          ),
           if (_error != null) ...[
             const SizedBox(height: BusyMarkSpacing.md),
             BusyMarkStatusBox(message: _error!, kind: BusyMarkStatusKind.error),
@@ -264,7 +336,13 @@ class _BusyMarkWritersideInstanceDialogState
   }
 
   Widget _importFileSelection(String? importError) {
-    if (widget.importCandidates.isEmpty) {
+    if (_importRootPath == null) {
+      return BusyMarkStatusBox(
+        message: context.l10n.chooseMarkdownFolder,
+        kind: BusyMarkStatusKind.information,
+      );
+    }
+    if (_importCandidates.isEmpty) {
       return BusyMarkStatusBox(
         message: context.l10n.noMarkdownFilesFound,
         kind: BusyMarkStatusKind.warning,
@@ -282,7 +360,7 @@ class _BusyMarkWritersideInstanceDialogState
               TextButton(
                 onPressed: () => setState(() {
                   _selectedImportPaths = {
-                    for (final candidate in widget.importCandidates)
+                    for (final candidate in _importCandidates)
                       candidate.absolutePath,
                   };
                   _error = null;
@@ -299,7 +377,7 @@ class _BusyMarkWritersideInstanceDialogState
             ],
           ),
         ),
-        for (final candidate in widget.importCandidates)
+        for (final candidate in _importCandidates)
           BusyMarkActionRow(
             title: candidate.title,
             subtitle: candidate.relativePath,
@@ -314,12 +392,9 @@ class _BusyMarkWritersideInstanceDialogState
   }
 
   String get _title => switch (widget.mode) {
-    BusyMarkWritersideInstanceDialogMode.createHelp =>
-      context.l10n.createHelpInstance,
+    BusyMarkWritersideInstanceDialogMode.create => context.l10n.createInstance,
     BusyMarkWritersideInstanceDialogMode.createLibrary =>
       context.l10n.createTocLibrary,
-    BusyMarkWritersideInstanceDialogMode.importMarkdown =>
-      context.l10n.importMarkdownAsInstance,
     BusyMarkWritersideInstanceDialogMode.edit => context.l10n.editInstance,
   };
 
@@ -349,6 +424,9 @@ class _BusyMarkWritersideInstanceDialogState
   String? _importError() {
     if (!_isImport) {
       return null;
+    }
+    if (_importRootPath == null) {
+      return context.l10n.errorWritersideInstanceImportSourceRequired;
     }
     return _selectedImportPaths.isEmpty
         ? context.l10n.errorWritersideInstanceImportSelectionRequired
@@ -430,11 +508,12 @@ class _BusyMarkWritersideInstanceDialogState
         WritersideInstanceCreateRequest(
           settings: settings,
           isLibrary: _isLibrary,
-          importRootPath: widget.importRootPath,
+          importRootPath: _isImport ? _importRootPath : null,
           importedMarkdownPaths: [
-            for (final candidate in widget.importCandidates)
-              if (_selectedImportPaths.contains(candidate.absolutePath))
-                candidate.absolutePath,
+            if (_isImport)
+              for (final candidate in _importCandidates)
+                if (_selectedImportPaths.contains(candidate.absolutePath))
+                  candidate.absolutePath,
           ],
           copyReferencedMedia: _copyReferencedMedia,
         ),
@@ -444,7 +523,13 @@ class _BusyMarkWritersideInstanceDialogState
       return;
     }
     if (result != null) {
-      Navigator.pop(context, result);
+      Navigator.pop(
+        context,
+        BusyMarkWritersideInstanceDialogResult(
+          mutation: result,
+          iconColor: _iconColor,
+        ),
+      );
       return;
     }
     final message = ref.read(workspaceControllerProvider).message;
@@ -453,6 +538,46 @@ class _BusyMarkWritersideInstanceDialogState
       _error = message == null
           ? context.l10n.workspaceErrorFileOperationFailed('')
           : localizeWorkspaceMessage(context, message);
+    });
+  }
+
+  Future<void> _chooseMarkdownDirectory() async {
+    final sourcePath = await getDirectoryPath(
+      initialDirectory: _importRootPath ?? widget.workspace.rootPath,
+      confirmButtonText: context.l10n.open,
+      canCreateDirectories: false,
+    );
+    if (sourcePath == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _discoveringMarkdown = true;
+      _error = null;
+    });
+    final candidates = await ref
+        .read(workspaceControllerProvider.notifier)
+        .discoverWritersideMarkdownImport(sourcePath);
+    if (!mounted) {
+      return;
+    }
+    if (candidates == null) {
+      final message = ref.read(workspaceControllerProvider).message;
+      setState(() {
+        _discoveringMarkdown = false;
+        _error = message == null
+            ? context.l10n.workspaceErrorFileOperationFailed(sourcePath)
+            : localizeWorkspaceMessage(context, message);
+      });
+      return;
+    }
+    setState(() {
+      _discoveringMarkdown = false;
+      _importRootPath = sourcePath;
+      _importCandidates = candidates;
+      _selectedImportPaths = {
+        for (final candidate in candidates) candidate.absolutePath,
+      };
+      _error = null;
     });
   }
 
@@ -480,47 +605,6 @@ class _BusyMarkWritersideInstanceDialogState
       ),
     );
     return result ?? false;
-  }
-
-  String _suggestedImportName(String? path) {
-    final name = path == null ? '' : p.basename(p.normalize(path));
-    return name.isEmpty ? context.l10n.defaultInstanceName : name;
-  }
-}
-
-class BusyMarkWritersideInstanceColorDialog extends StatelessWidget {
-  const BusyMarkWritersideInstanceColorDialog({
-    super.key,
-    required this.selected,
-  });
-
-  final WritersideInstanceIconColor selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
-      title: context.l10n.changeInstanceColor,
-      maxWidth: BusyMarkSizes.dialog,
-      children: [
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            for (final color in WritersideInstanceIconColor.values)
-              BusyMarkActionRow(
-                title: writersideInstanceColorLabel(context, color),
-                leading: Icon(
-                  BusyMarkGlyphs.tree,
-                  color: writersideInstanceIconColorValue(context, color),
-                ),
-                trailing: color == selected
-                    ? const Icon(BusyMarkGlyphs.check)
-                    : null,
-                onTap: () => Navigator.pop(context, color),
-              ),
-          ],
-        ),
-      ],
-    );
   }
 }
 

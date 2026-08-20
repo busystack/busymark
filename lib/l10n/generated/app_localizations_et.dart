@@ -1543,7 +1543,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside’i moodulil puudub abieksemplari puu.';
+      'Writerside’i moodulil puudub eksemplaripuu.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2612,10 +2612,10 @@ class AppLocalizationsEt extends AppLocalizations {
       'Ekspordi aktiivne dokument või Writerside’i moodul PDF-ina.';
 
   @override
-  String get newHelpInstance => 'Uus abieksemplar';
+  String get instances => 'Eksemplarid';
 
   @override
-  String get importMarkdownInstance => 'Uus eksemplar Markdowni failidest';
+  String get newInstance => 'Uus eksemplar';
 
   @override
   String get newTocLibrary => 'Uus sisukorrateek';
@@ -2627,16 +2627,35 @@ class AppLocalizationsEt extends AppLocalizations {
   String get openTocFile => 'Ava sisukorrafail';
 
   @override
-  String get changeInstanceColor => 'Muuda eksemplari värvi';
-
-  @override
-  String get createHelpInstance => 'Loo abieksemplar';
+  String get createInstance => 'Loo eksemplar';
 
   @override
   String get createTocLibrary => 'Loo sisukorrateek';
 
   @override
-  String get importMarkdownAsInstance => 'Impordi Markdown eksemplarina';
+  String get instanceContent => 'Sisu';
+
+  @override
+  String get instanceContentSource => 'Loo allikast';
+
+  @override
+  String get emptyInstance => 'Tühi eksemplar';
+
+  @override
+  String get markdownFiles => 'Kohalikud Markdowni failid';
+
+  @override
+  String get chooseMarkdownFolder => 'Vali Markdowni kaust';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Vali Markdowni faile sisaldav kaust.';
+
+  @override
+  String get instanceAppearance => 'Välimus';
+
+  @override
+  String get instanceColor => 'Ikooni värv';
 
   @override
   String get instanceVersion => 'Versioon';
@@ -2911,7 +2930,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'Koosta üks Writerside’i eksemplar JetBrainsi ametliku Writerside’i koosturiga.';
+      'Valige eksemplar ja PDF-i sätted. BusyMark kasutab JetBrainsi ametlikku Writerside’i koosturit.';
 
   @override
   String get writersidePdfContent => 'Ekspordi sisu';
@@ -3145,6 +3164,10 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'Dokumenti muudeti ettepaneku loomise ajal. Käivita toiming uuesti.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Indekseeritud muudatused muutusid selle commit-sõnumi loomise ajal. Käivita toiming uuesti.';
 
   @override
   String get aiViewContext => 'Kuva saadetud kontekst';

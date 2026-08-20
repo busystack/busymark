@@ -1128,7 +1128,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '„$topic“ aus der ausgewählten Hilfeinstanz entfernen. Die Themendatei bleibt erhalten.';
+    return '„$topic“ aus der ausgewählten Instanz entfernen. Die Themendatei bleibt erhalten.';
   }
 
   @override
@@ -1563,7 +1563,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Das Writerside-Modul enthält keinen Baum für die Hilfeinstanz.';
+      'Das Writerside-Modul enthält keinen Instanzbaum.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2639,10 +2639,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das aktive Dokument oder Writerside-Modul als PDF exportieren.';
 
   @override
-  String get newHelpInstance => 'Neue Hilfeinstanz';
+  String get instances => 'Instanzen';
 
   @override
-  String get importMarkdownInstance => 'Neue Instanz aus Markdown-Dateien';
+  String get newInstance => 'Neue Instanz';
 
   @override
   String get newTocLibrary => 'Neue TOC-Bibliothek';
@@ -2654,16 +2654,35 @@ class AppLocalizationsDe extends AppLocalizations {
   String get openTocFile => 'TOC-Datei öffnen';
 
   @override
-  String get changeInstanceColor => 'Instanzfarbe ändern';
-
-  @override
-  String get createHelpInstance => 'Hilfeinstanz erstellen';
+  String get createInstance => 'Instanz erstellen';
 
   @override
   String get createTocLibrary => 'TOC-Bibliothek erstellen';
 
   @override
-  String get importMarkdownAsInstance => 'Markdown als Instanz importieren';
+  String get instanceContent => 'Inhalt';
+
+  @override
+  String get instanceContentSource => 'Erstellen aus';
+
+  @override
+  String get emptyInstance => 'Leere Instanz';
+
+  @override
+  String get markdownFiles => 'Lokale Markdown-Dateien';
+
+  @override
+  String get chooseMarkdownFolder => 'Markdown-Ordner auswählen';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Wählen Sie einen Ordner mit Markdown-Dateien aus.';
+
+  @override
+  String get instanceAppearance => 'Darstellung';
+
+  @override
+  String get instanceColor => 'Symbolfarbe';
 
   @override
   String get instanceVersion => 'Version';
@@ -2940,7 +2959,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'Eine Writerside-Instanz mit dem offiziellen Writerside-Builder von JetBrains erstellen.';
+      'Wählen Sie eine Instanz und die PDF-Einstellungen aus. BusyMark verwendet den offiziellen Writerside-Builder von JetBrains.';
 
   @override
   String get writersidePdfContent => 'Exportinhalt';
@@ -3176,6 +3195,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'Das Dokument wurde während der Erstellung dieses Vorschlags geändert. Führen Sie die Aktion erneut aus.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Die vorgemerkten Änderungen wurden geändert, während diese Commit-Nachricht erstellt wurde. Führen Sie die Aktion erneut aus.';
 
   @override
   String get aiViewContext => 'Gesendeten Kontext anzeigen';

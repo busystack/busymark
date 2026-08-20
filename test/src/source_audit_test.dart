@@ -770,7 +770,7 @@ void main() {
     expect(singleMarkdownClause, contains('_SidebarTab.outline'));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.files')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.toc')));
-    expect(singleMarkdownClause, contains('_SidebarTab.git'));
+    expect(singleMarkdownClause, isNot(contains('_SidebarTab.git')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.gitFileHistory')));
     expect(
       singleMarkdownClause,

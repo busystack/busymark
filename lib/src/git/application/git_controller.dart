@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -18,6 +20,13 @@ final gitRepositoryGatewayProvider = Provider<GitRepositoryGateway>(
 final gitControllerProvider = NotifierProvider<GitController, GitState>(
   GitController.new,
 );
+
+class GitStagedDiffSnapshot {
+  const GitStagedDiffSnapshot({required this.patch, required this.fingerprint});
+
+  final String patch;
+  final String fingerprint;
+}
 
 class GitFileHistoryState {
   const GitFileHistoryState({
@@ -353,7 +362,8 @@ class GitController extends Notifier<GitState> {
       );
       return;
     }
-    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown ||
+        workspace.kind == WorkspaceKind.singleMarkdown) {
       _debounce?.cancel();
       _knownHashes = {};
       state = const GitState();
@@ -373,7 +383,9 @@ class GitController extends Notifier<GitState> {
 
   Future<void> refresh() async {
     final workspace = state.attachedWorkspace;
-    if (workspace == null || workspace.kind == WorkspaceKind.untitledMarkdown) {
+    if (workspace == null ||
+        workspace.kind == WorkspaceKind.untitledMarkdown ||
+        workspace.kind == WorkspaceKind.singleMarkdown) {
       return;
     }
     final workspaceId = workspace.id;
@@ -1054,7 +1066,7 @@ class GitController extends Notifier<GitState> {
     return completed;
   }
 
-  Future<String?> stagedDiffForAi() async {
+  Future<GitStagedDiffSnapshot?> stagedDiffForAi() async {
     final operation = _captureRepositoryOperation();
     if (operation == null ||
         (state.statusSnapshot?.stagedFiles.isEmpty ?? true)) {
@@ -1065,7 +1077,13 @@ class GitController extends Notifier<GitState> {
       if (!_isCurrentRepositoryOperation(operation)) {
         return null;
       }
-      return diff.rawPatch.trim().isEmpty ? null : diff.rawPatch;
+      if (diff.rawPatch.trim().isEmpty) {
+        return null;
+      }
+      return GitStagedDiffSnapshot(
+        patch: diff.rawPatch,
+        fingerprint: _stagedDiffFingerprint(diff.rawPatch),
+      );
     } on Object catch (error) {
       if (_isCurrentRepositoryOperation(operation)) {
         _setFailure(error, commandName: 'diff');
@@ -1073,6 +1091,27 @@ class GitController extends Notifier<GitState> {
       return null;
     }
   }
+
+  Future<bool> stagedDiffMatches(String fingerprint) async {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
+      return false;
+    }
+    try {
+      final diff = await _gateway.diffAll(operation.repository, staged: true);
+      return _isCurrentRepositoryOperation(operation) &&
+          diff.rawPatch.trim().isNotEmpty &&
+          _stagedDiffFingerprint(diff.rawPatch) == fingerprint;
+    } on Object catch (error) {
+      if (_isCurrentRepositoryOperation(operation)) {
+        _setFailure(error, commandName: 'diff');
+      }
+      return false;
+    }
+  }
+
+  String _stagedDiffFingerprint(String patch) =>
+      sha256.convert(utf8.encode(patch)).toString();
 
   Future<void> pullFastForwardOnly() async {
     await _runOperation(

@@ -13,60 +13,57 @@ void main() {
   const moduleService = WritersideModuleService();
   const instanceService = WritersideInstanceService();
 
-  test(
-    'creates and registers an empty help instance with build settings',
-    () async {
-      final root = await _project();
-      addTearDown(() => root.deleteSync(recursive: true));
-      final module = await moduleService.load(root.path);
+  test('creates and registers an empty instance with build settings', () async {
+    final root = await _project();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final module = await moduleService.load(root.path);
 
-      final result = await instanceService.create(
-        module: module,
-        request: const WritersideInstanceCreateRequest(
-          settings: WritersideInstanceSettings(
-            name: 'Administrator Guide',
-            id: 'admin',
-            version: '2.0',
-            webPath: '/admin/',
-            status: WritersideInstanceStatus.eap,
-            allowSearchEngineIndexing: true,
-            offlineArtifact: true,
-          ),
+    final result = await instanceService.create(
+      module: module,
+      request: const WritersideInstanceCreateRequest(
+        settings: WritersideInstanceSettings(
+          name: 'Administrator Guide',
+          id: 'admin',
+          version: '2.0',
+          webPath: '/admin/',
+          status: WritersideInstanceStatus.eap,
+          allowSearchEngineIndexing: true,
+          offlineArtifact: true,
         ),
-      );
+      ),
+    );
 
-      expect(result.treePath, p.join(root.path, 'admin.tree'));
-      final config = XmlDocument.parse(
-        File(p.join(root.path, 'writerside.cfg')).readAsStringSync(),
-      );
-      final entry = config.rootElement.childElements
-          .where((element) => element.name.local == 'instance')
-          .last;
-      expect(entry.getAttribute('src'), 'admin.tree');
-      expect(entry.getAttribute('version'), '2.0');
-      expect(entry.getAttribute('web-path'), '/admin/');
+    expect(result.treePath, p.join(root.path, 'admin.tree'));
+    final config = XmlDocument.parse(
+      File(p.join(root.path, 'writerside.cfg')).readAsStringSync(),
+    );
+    final entry = config.rootElement.childElements
+        .where((element) => element.name.local == 'instance')
+        .last;
+    expect(entry.getAttribute('src'), 'admin.tree');
+    expect(entry.getAttribute('version'), '2.0');
+    expect(entry.getAttribute('web-path'), '/admin/');
 
-      final tree = XmlDocument.parse(File(result.treePath).readAsStringSync());
-      expect(tree.rootElement.getAttribute('id'), 'admin');
-      expect(tree.rootElement.getAttribute('name'), 'Administrator Guide');
-      expect(tree.rootElement.getAttribute('status'), 'eap');
-      expect(tree.rootElement.getAttribute('start-page'), isNull);
-      expect(tree.rootElement.childElements, isEmpty);
+    final tree = XmlDocument.parse(File(result.treePath).readAsStringSync());
+    expect(tree.rootElement.getAttribute('id'), 'admin');
+    expect(tree.rootElement.getAttribute('name'), 'Administrator Guide');
+    expect(tree.rootElement.getAttribute('status'), 'eap');
+    expect(tree.rootElement.getAttribute('start-page'), isNull);
+    expect(tree.rootElement.childElements, isEmpty);
 
-      final refreshed = await moduleService.load(root.path);
-      final created = refreshed.instances.singleWhere(
-        (instance) => instance.id == 'admin',
-      );
-      expect(created.version, '2.0');
-      expect(created.webPath, '/admin/');
-      expect(created.allowSearchEngineIndexing, isTrue);
-      expect(created.offlineArtifact, isTrue);
-      expect(
-        created.diagnostics.map((diagnostic) => diagnostic.code),
-        isNot(contains('writerside.tree.missing-start-page')),
-      );
-    },
-  );
+    final refreshed = await moduleService.load(root.path);
+    final created = refreshed.instances.singleWhere(
+      (instance) => instance.id == 'admin',
+    );
+    expect(created.version, '2.0');
+    expect(created.webPath, '/admin/');
+    expect(created.allowSearchEngineIndexing, isTrue);
+    expect(created.offlineArtifact, isTrue);
+    expect(
+      created.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('writerside.tree.missing-start-page')),
+    );
+  });
 
   test('creates a non-publishing TOC library instance', () async {
     final root = await _project();

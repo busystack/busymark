@@ -22,7 +22,7 @@ projects.
 - Open Writerside-compatible project folders.
 - Create Writerside-compatible starter projects.
 - Create Writerside Markdown and XML topics from the TOC.
-- Create, select, import, edit, and reuse Writerside help instances and TOC libraries.
+- Create, select, import, edit, and reuse Writerside instances and TOC libraries.
 - Edit and save local files.
 - Preview Markdown content.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
@@ -85,14 +85,10 @@ conditional and reusable TOC sections, and cross-instance topic references.
 See [Writerside instances](docs/writerside-instances.md) for behavior, safety
 rules, an openable example, and the authoritative JetBrains references.
 
-Folder workspaces include documentation-like files such as Markdown, Writerside
-topic files, `.tree`, `.cfg`, `.list`, and `.xml` files. Common resource files
-such as images, PDFs, CSS, and JavaScript can appear in the project tree, but
-binary resources are not opened in the text editor.
-
-Large folders are scanned defensively. Generated and vendor directories such as
-`.git`, `build`, `dist`, `node_modules`, `.dart_tool`, `.gradle`, and `target`
-are skipped to keep the app responsive.
+Folder workspaces show all files and directories, including hidden project
+files such as `.gitignore`. Unsupported and binary files remain visible but are
+disabled in the text editor. Version-control metadata directories such as
+`.git` are excluded, and traversal remains bounded for safety.
 
 ## PDF export
 

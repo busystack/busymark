@@ -109,6 +109,36 @@ void main() {
     expect(await draft.exists(), isFalse);
   });
 
+  test('status lists every non-ignored hidden untracked file', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-hidden-untracked-');
+    final idea = await Directory(p.join(root.path, '.idea')).create();
+    await File(
+      p.join(idea.path, '.gitignore'),
+    ).writeAsString('/workspace.xml\n');
+    await File(
+      p.join(idea.path, 'workspace.xml'),
+    ).writeAsString('<workspace/>\n');
+    await File(p.join(idea.path, 'misc.xml')).writeAsString('<project/>\n');
+    await File(p.join(root.path, 'writerside.cfg')).writeAsString('<ihp/>\n');
+    final gateway = const GitCliGateway();
+    final repository = (await gateway.detectRepository(root.path))!;
+
+    final status = await gateway.status(repository);
+    final paths = status.untrackedFiles
+        .map((file) => file.repoRelativePath)
+        .toList();
+
+    expect(
+      paths,
+      containsAll(['.idea/.gitignore', '.idea/misc.xml', 'writerside.cfg']),
+    );
+    expect(paths, isNot(contains('.idea/workspace.xml')));
+  });
+
   test('resets the current branch with each explicit Git reset mode', () async {
     if (!await _gitAvailable()) {
       markTestSkipped('Git executable is unavailable.');

@@ -11,6 +11,7 @@ import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
@@ -30,6 +31,9 @@ import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
+import 'package:busymark/src/export/writerside_pdf_export_service.dart';
+import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
+import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
@@ -1364,6 +1368,9 @@ void main() {
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        writersidePdfExportServiceProvider.overrideWithValue(
+          const _OptionsOnlyWritersidePdfExportService(),
+        ),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
@@ -1411,6 +1418,28 @@ void main() {
     await tester.tap(find.text(l10n.toc));
     await tester.pump(const Duration(milliseconds: 300));
 
+    final guideInstance = find.byKey(
+      const ValueKey('writerside-instance-guide'),
+    );
+    final apiInstance = find.byKey(const ValueKey('writerside-instance-api'));
+    expect(guideInstance, findsOneWidget);
+    expect(apiInstance, findsOneWidget);
+    final guideIcon = tester.widget<Icon>(
+      find.descendant(
+        of: guideInstance,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    final apiIcon = tester.widget<Icon>(
+      find.descendant(
+        of: apiInstance,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    expect(guideIcon.color, isNotNull);
+    expect(apiIcon.color, isNotNull);
+    expect(guideIcon.color, isNot(apiIcon.color));
+
     expect(find.text('Nested entry'), findsOneWidget);
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
     expect(find.byTooltip(l10n.newTopic), findsNothing);
@@ -1423,11 +1452,9 @@ void main() {
     await openPopup(find.byTooltip(l10n.tocActions));
     expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
     expect(find.text(l10n.newTopic), findsOneWidget);
-    expect(find.text(l10n.newHelpInstance), findsOneWidget);
-    expect(find.text(l10n.importMarkdownInstance), findsOneWidget);
+    expect(find.text(l10n.newInstance), findsOneWidget);
     expect(find.text(l10n.newTocLibrary), findsOneWidget);
     expect(find.text(l10n.editInstance), findsOneWidget);
-    expect(find.text(l10n.changeInstanceColor), findsOneWidget);
     expect(find.text(l10n.openTocFile), findsOneWidget);
     await tester.tap(find.text(l10n.editInstance));
     await tester.pump(const Duration(milliseconds: 300));
@@ -1450,6 +1477,21 @@ void main() {
     );
     expect(find.text(l10n.allowSearchEngineIndexing), findsOneWidget);
     expect(find.text(l10n.offlineArtifact), findsOneWidget);
+    expect(find.text(l10n.instanceAppearance), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await openPopup(find.byTooltip(l10n.tocActions));
+    await tester.tap(find.text(l10n.newInstance));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(l10n.createInstance), findsOneWidget);
+    expect(find.text(l10n.emptyInstance), findsOneWidget);
+    await tester.tap(find.text(l10n.emptyInstance));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.markdownFiles), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.instanceAppearance), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1493,8 +1535,7 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, isNull);
     expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
-    await openPopup(find.byTooltip(l10n.instanceName));
-    await tester.tap(find.text('API Reference'));
+    await tester.tap(apiInstance);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
 
@@ -1511,8 +1552,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
-    await openPopup(find.byTooltip(l10n.instanceName));
-    await tester.tap(find.text('Guide').last);
+    await tester.tap(guideInstance);
     await tester.pump(const Duration(milliseconds: 300));
 
     await tester.tap(find.text('Nested entry'));
@@ -1662,6 +1702,31 @@ void main() {
       (node) => node.topicFileName == 'target.md',
     );
     expect(targetNode.children.single.topicFileName, 'loose.md');
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    final exportItem = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> &&
+          widget.label == l10n.exportAsPdf,
+    );
+    expect(exportItem, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkPopupMenuItem<Object?>>(exportItem).enabled,
+      isTrue,
+    );
+    await tester.tap(exportItem);
+    for (var index = 0; index < 20; index++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkModalEditorSurface).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.text(l10n.writersidePdfExportDescription), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('tab keyboard shortcuts move and close editor tabs', (
@@ -2880,6 +2945,80 @@ void main() {
     _expectTextWithVcsColor(tester, 'docs', BusyMarkVcsFileColor.added);
     _expectTextWithVcsColor(tester, 'api.md', BusyMarkVcsFileColor.added);
     _expectTextWithVcsColor(tester, 'draft.md', BusyMarkVcsFileColor.untracked);
+  });
+
+  testWidgets('Files view shows hidden, empty, and unsupported entries', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final temp = Directory.systemTemp.createTempSync('busymark_files_all_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    File('${temp.path}/README.md').writeAsStringSync('# Readme\n');
+    File('${temp.path}/binary.bin').writeAsBytesSync([0, 1, 2]);
+    Directory('${temp.path}/empty').createSync();
+    final idea = Directory('${temp.path}/.idea')..createSync();
+    File('${idea.path}/.gitignore').writeAsStringSync('/workspace.xml\n');
+    final openedWorkspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(temp.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(workspace: openedWorkspace, activeText: '# Readme\n'),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.files));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final workspace = container.read(workspaceControllerProvider).workspace!;
+    expect(
+      workspace.directories.map((directory) => directory.relativePath),
+      containsAll(['.idea', 'empty']),
+    );
+    expect(
+      workspace.files.map((file) => file.relativePath),
+      containsAll(['README.md', 'binary.bin', '.idea/.gitignore']),
+    );
+    expect(find.text('.idea'), findsOneWidget);
+    expect(find.text('empty'), findsOneWidget);
+    expect(find.text('binary.bin'), findsOneWidget);
+    final binaryRow = tester.widget<InkWell>(
+      find
+          .ancestor(of: find.text('binary.bin'), matching: find.byType(InkWell))
+          .first,
+    );
+    expect(binaryRow.onTap, isNull);
+
+    expect(find.text('.gitignore'), findsOneWidget);
+    final gitIgnoreRow = tester.widget<InkWell>(
+      find
+          .ancestor(of: find.text('.gitignore'), matching: find.byType(InkWell))
+          .first,
+    );
+    expect(gitIgnoreRow.onTap, isNotNull);
   });
 
   testWidgets('workspace sidebar is on the right in Arabic', (tester) async {
@@ -4832,9 +4971,14 @@ After break.
     );
     expect(find.text(l10n.noOutline), findsNothing);
 
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.digit4);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.digit4);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
-    expect(find.text(l10n.git), findsOneWidget);
+    expect(outlineTree, findsOneWidget);
+    expect(find.text(l10n.git), findsNothing);
     expect(find.text(l10n.gitChanges), findsNothing);
     expect(find.text(l10n.gitFileHistory), findsNothing);
     expect(find.text(l10n.gitProjectHistory), findsNothing);
@@ -7216,6 +7360,24 @@ class _FallbackHeaderBarService extends LinuxHeaderBarService {
   Stream<HeaderBarAction> get actions => const Stream.empty();
 }
 
+class _OptionsOnlyWritersidePdfExportService
+    extends WritersidePdfExportService {
+  const _OptionsOnlyWritersidePdfExportService();
+
+  @override
+  Future<List<String>> discoverProjectConfigurations({
+    required String moduleRoot,
+    required String buildConfigDirectory,
+  }) async => const [];
+
+  @override
+  Future<List<WritersidePdfKeymapLayout>> discoverLayouts({
+    required String moduleRoot,
+    required String buildConfigDirectory,
+    required String instanceId,
+  }) async => const [];
+}
+
 class _MutableWorkspaceController extends WorkspaceController {
   _MutableWorkspaceController(this.initialState);
 
@@ -7699,6 +7861,9 @@ class _PresetGitController extends GitController {
   void attachWorkspace(Workspace workspace) {
     state = state.copyWith(attachedWorkspace: workspace);
   }
+
+  @override
+  Future<void> refresh() async {}
 
   @override
   Future<List<GitBranch>> loadBranches() async {

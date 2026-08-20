@@ -95,7 +95,7 @@ void main() {
   });
 
   test(
-    'generated export keeps project entries read-only and sources unchanged',
+    'generated export uses a private source copy and leaves sources unchanged',
     () async {
       if (!Platform.isLinux) {
         return;
@@ -108,6 +108,16 @@ void main() {
         commandRunner: runner,
       );
       final destination = p.join(fixture.root.path, 'guide.pdf');
+      await Directory(p.join(fixture.root.path, '.git')).create();
+      await File(
+        p.join(fixture.root.path, '.git', 'config'),
+      ).writeAsString('[core]\n');
+      await File(
+        p.join(fixture.module.path, 'pdfSourceGUIDE.pdf'),
+      ).writeAsBytes(_validPdf);
+      await File(
+        p.join(fixture.module.path, 'images.dat'),
+      ).writeAsBytes([0, 1, 2]);
 
       final result = await service.export(
         fixture.request(
@@ -131,6 +141,7 @@ void main() {
         isFalse,
       );
       expect(arguments, containsAllInOrder(['--network', 'none']));
+      expect(arguments, containsAllInOrder(['--shm-size', '1g']));
       expect(arguments, contains('SOURCE_DIR=/opt/sources'));
       expect(arguments, contains('MODULE_INSTANCE=Writerside/guide'));
       expect(arguments, contains('PDF=BusyMark-PDF.xml'));
@@ -141,20 +152,39 @@ void main() {
         ),
       );
       expect(runner.generatedConfiguration, contains('<title>Guide</title>'));
-      expect(
-        runner.mountTargets,
-        contains('/opt/sources/Writerside/writerside.cfg'),
-      );
-      expect(
-        runner.readOnlyMountTargets,
-        containsAll([
-          '/opt/sources/Writerside/writerside.cfg',
-          '/opt/sources/Writerside/guide.tree',
-          '/opt/sources/Writerside/topics',
-        ]),
-      );
-      expect(runner.readOnlyMountTargets, isNot(contains('/opt/sources')));
+      expect(runner.mountTargets, containsAll(['/opt/sources', '/opt/output']));
+      expect(runner.mountTargets, hasLength(2));
+      expect(runner.readOnlyMountTargets, isEmpty);
+      expect(runner.copiedGitMetadata, isFalse);
+      expect(runner.copiedStalePdfArtifact, isFalse);
+      expect(runner.copiedUnsupportedResource, isTrue);
       expect(runner.calls.where((call) => call.first == 'pull'), isEmpty);
+    },
+  );
+
+  test(
+    'retries once when the builder process crashes before producing PDF',
+    () async {
+      if (!Platform.isLinux) {
+        return;
+      }
+      final fixture = await _WritersideFixture.create(withConfig: false);
+      addTearDown(fixture.dispose);
+      final runner = _FakeBuilderRunner(crashFirstBuild: true);
+      final service = WritersidePdfExportService(
+        dockerLocator: const _FixedDockerLocator(),
+        commandRunner: runner,
+      );
+      final destination = p.join(fixture.root.path, 'retried.pdf');
+
+      final result = await service.export(
+        fixture.request(destinationPath: destination),
+      );
+
+      expect(result.destinationPath, destination);
+      expect(runner.buildRunCount, 2);
+      expect(result.buildLog, contains('PDF generation retried.'));
+      expect(await File(destination).exists(), isTrue);
     },
   );
 
@@ -182,12 +212,9 @@ void main() {
       );
 
       expect(runner.buildArguments, contains('PDF=Release-PDF.xml'));
-      expect(
-        runner.mountTargets,
-        containsAll(['/opt/sources', '/opt/sources/Writerside', '/opt/output']),
-      );
-      expect(runner.mountTargets, hasLength(3));
-      expect(runner.readOnlyMountTargets, ['/opt/sources/Writerside']);
+      expect(runner.mountTargets, containsAll(['/opt/sources', '/opt/output']));
+      expect(runner.mountTargets, hasLength(2));
+      expect(runner.readOnlyMountTargets, isEmpty);
       expect(
         await Directory(p.join(fixture.root.path, '.idea')).exists(),
         isFalse,
@@ -501,14 +528,22 @@ class _FixedDockerLocator extends DockerExecutableLocator {
 }
 
 class _FakeBuilderRunner implements WritersideBuilderCommandRunner {
-  _FakeBuilderRunner({this.imageAvailable = true});
+  _FakeBuilderRunner({
+    this.imageAvailable = true,
+    this.crashFirstBuild = false,
+  });
 
   final bool imageAvailable;
+  final bool crashFirstBuild;
   final List<List<String>> calls = [];
   List<String>? buildArguments;
   String? generatedConfiguration;
   final List<String> mountTargets = [];
   final List<String> readOnlyMountTargets = [];
+  var buildRunCount = 0;
+  var copiedGitMetadata = false;
+  var copiedStalePdfArtifact = false;
+  var copiedUnsupportedResource = false;
 
   @override
   Future<WritersideBuilderProcessResult> run({
@@ -541,6 +576,7 @@ class _FakeBuilderRunner implements WritersideBuilderCommandRunner {
         stderr: '',
       );
     }
+    buildRunCount++;
     buildArguments = List.unmodifiable(arguments);
     String? outputPath;
     String? sourceOverlayPath;
@@ -562,6 +598,15 @@ class _FakeBuilderRunner implements WritersideBuilderCommandRunner {
       }
     }
     if (sourceOverlayPath != null) {
+      copiedGitMetadata = await Directory(
+        p.join(sourceOverlayPath, '.git'),
+      ).exists();
+      copiedStalePdfArtifact = await File(
+        p.join(sourceOverlayPath, 'Writerside', 'pdfSourceGUIDE.pdf'),
+      ).exists();
+      copiedUnsupportedResource = await File(
+        p.join(sourceOverlayPath, 'Writerside', 'images.dat'),
+      ).exists();
       await File(
         p.join(sourceOverlayPath, '.idea', 'workspace.xml'),
       ).writeAsString('<project/>');
@@ -571,6 +616,13 @@ class _FakeBuilderRunner implements WritersideBuilderCommandRunner {
       generatedConfiguration = await File(
         p.join(sourceOverlayPath, 'Writerside', 'cfg', 'BusyMark-PDF.xml'),
       ).readAsString();
+    }
+    if (crashFirstBuild && buildRunCount == 1) {
+      return const WritersideBuilderProcessResult(
+        exitCode: 0,
+        stdout: '',
+        stderr: '*** stack smashing detected ***',
+      );
     }
     await File(
       p.join(outputPath!, 'pdfSourceGUIDE.pdf'),

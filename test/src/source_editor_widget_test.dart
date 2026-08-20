@@ -134,12 +134,73 @@ void main() {
     expect(invocation?.feature, AiFeature.explainCode);
     expect(invocation?.scope, AiScope.codeBlock);
     expect(invocation?.input, '```dart\nfinal value = 1;\n```\n');
-    expect(invocation?.replacementStart, source.indexOf('\n\nAfter.') + 1);
+    expect(invocation?.replacementStart, source.indexOf('After.'));
     expect(invocation?.replacementStart, invocation?.replacementEnd);
     expect(
       changedText,
       contains('The block declares an immutable integer value.'),
     );
+  });
+
+  testWidgets('Draft uses selected notes without replacing them', (
+    tester,
+  ) async {
+    const source = '# Plan\n\nNotes for draft.\n\nAfter.\n';
+    AiEditInvocation? invocation;
+    String? changedText;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (text, _) => changedText = text,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              editRevision: 10,
+              onAiEdit: (value) async {
+                invocation = value;
+                return 'Generated section.';
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final start = source.indexOf('Notes');
+    field.controller!.selection = TextSelection(
+      baseOffset: start,
+      extentOffset: start + 'Notes for draft.'.length,
+    );
+
+    await tester.tap(find.byTooltip('AI'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Draft…').last);
+    await tester.pumpAndSettle();
+
+    expect(invocation?.scope, AiScope.insertion);
+    expect(invocation?.input, 'Notes for draft.');
+    expect(invocation?.replacementStart, source.indexOf('After.'));
+    expect(invocation?.replacementStart, invocation?.replacementEnd);
+    expect(changedText, contains('Notes for draft.'));
+    expect(changedText, contains('Generated section.\n\nAfter.'));
   });
 
   testWidgets('source editor remains LTR inside an Arabic interface', (

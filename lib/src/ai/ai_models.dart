@@ -203,6 +203,9 @@ class AiEditInvocation {
     this.documentSource,
     this.replacementStart,
     this.replacementEnd,
+    this.replacementPrefix = '',
+    this.replacementSuffix = '',
+    this.trimReplacementOutput = false,
     this.enforceDocumentRevision = true,
   });
 
@@ -218,7 +221,15 @@ class AiEditInvocation {
   final String? documentSource;
   final int? replacementStart;
   final int? replacementEnd;
+  final String replacementPrefix;
+  final String replacementSuffix;
+  final bool trimReplacementOutput;
   final bool enforceDocumentRevision;
+
+  String appliedReplacement(String output) {
+    final value = trimReplacementOutput ? output.trim() : output;
+    return '$replacementPrefix$value$replacementSuffix';
+  }
 
   AiEditInvocation copyWith({String? instruction}) {
     return AiEditInvocation(
@@ -234,6 +245,9 @@ class AiEditInvocation {
       documentSource: documentSource,
       replacementStart: replacementStart,
       replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
       enforceDocumentRevision: enforceDocumentRevision,
     );
   }
@@ -265,6 +279,9 @@ class AiRequest {
     this.documentSource,
     this.replacementStart,
     this.replacementEnd,
+    this.replacementPrefix = '',
+    this.replacementSuffix = '',
+    this.trimReplacementOutput = false,
     this.hierarchicalChunks = const [],
   });
 
@@ -289,13 +306,16 @@ class AiRequest {
   final String? documentSource;
   final int? replacementStart;
   final int? replacementEnd;
+  final String replacementPrefix;
+  final String replacementSuffix;
+  final bool trimReplacementOutput;
   final List<String> hierarchicalChunks;
 
   String get model => modelCandidates.first;
 
   int get estimatedPromptTokens =>
-      AiTokenEstimator.conservative(systemPrompt) +
-      AiTokenEstimator.conservative(userPrompt);
+      AiTokenEstimator.estimate(systemPrompt) +
+      AiTokenEstimator.estimate(userPrompt);
 
   int get estimatedTotalPromptTokens => hierarchicalChunks.isEmpty
       ? estimatedPromptTokens
@@ -318,7 +338,12 @@ class AiRequest {
         'The AI edit range is no longer valid.',
       );
     }
-    return source.replaceRange(start, end, output);
+    return source.replaceRange(start, end, appliedReplacement(output));
+  }
+
+  String appliedReplacement(String output) {
+    final value = trimReplacementOutput ? output.trim() : output;
+    return '$replacementPrefix$value$replacementSuffix';
   }
 
   AiRequest copyWithModel(String value) {
@@ -344,6 +369,9 @@ class AiRequest {
       documentSource: documentSource,
       replacementStart: replacementStart,
       replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
       hierarchicalChunks: hierarchicalChunks,
     );
   }
@@ -371,6 +399,9 @@ class AiRequest {
       documentSource: documentSource,
       replacementStart: replacementStart,
       replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
       hierarchicalChunks: hierarchicalChunks,
     );
   }
@@ -401,6 +432,9 @@ class AiRequest {
       documentSource: documentSource,
       replacementStart: replacementStart,
       replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
     );
   }
 
@@ -613,12 +647,34 @@ class AiCancellationToken {
 }
 
 abstract final class AiTokenEstimator {
-  /// A deliberately conservative provider-neutral upper bound.
+  /// A provider-neutral token estimate used only for preflight budgeting.
   ///
-  /// Provider tokenizers can combine multiple UTF-8 bytes into one token. By
-  /// counting every UTF-8 byte separately, BusyMark never treats a language as
-  /// cheaper merely because it uses fewer UTF-16 code units.
-  static int conservative(String value) => utf8.encode(value).length;
+  /// Exact tokenization is model-specific. This estimate uses a safety margin
+  /// of three ASCII characters per token and one token per non-ASCII Unicode
+  /// scalar. UTF-8 transport bytes are deliberately not treated as tokens.
+  static int estimate(String value) {
+    var tokens = 0;
+    var asciiRun = 0;
+
+    void flushAscii() {
+      if (asciiRun == 0) {
+        return;
+      }
+      tokens += (asciiRun + 2) ~/ 3;
+      asciiRun = 0;
+    }
+
+    for (final rune in value.runes) {
+      if (rune <= 0x7f) {
+        asciiRun += 1;
+      } else {
+        flushAscii();
+        tokens += 1;
+      }
+    }
+    flushAscii();
+    return tokens;
+  }
 }
 
 /// Prompt construction is centralized so provider adapters never invent
@@ -653,6 +709,9 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
     String? documentSource,
     int? replacementStart,
     int? replacementEnd,
+    String replacementPrefix = '',
+    String replacementSuffix = '',
+    bool trimReplacementOutput = false,
     Duration deadline = const Duration(minutes: 3),
     int maxRetries = 2,
   }) {
@@ -694,8 +753,8 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
         : _plainTextSystemPrompt;
     final directUserPrompt = userPrompt(task, input);
     final directTokens =
-        AiTokenEstimator.conservative(systemPrompt) +
-        AiTokenEstimator.conservative(directUserPrompt);
+        AiTokenEstimator.estimate(systemPrompt) +
+        AiTokenEstimator.estimate(directUserPrompt);
     final chunks =
         feature == AiFeature.summarize &&
             scope == AiScope.document &&
@@ -754,6 +813,9 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
       documentSource: documentSource,
       replacementStart: replacementStart,
       replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
       hierarchicalChunks: chunks,
     );
   }
@@ -805,11 +867,11 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
     }
 
     for (final block in source.split(RegExp(r'\n(?=#{1,6}\s)'))) {
-      if (AiTokenEstimator.conservative(block) > tokenBudget) {
+      if (AiTokenEstimator.estimate(block) > tokenBudget) {
         flush();
         var offset = 0;
         while (offset < block.length) {
-          var end = _utf8BoundedEnd(block, offset, tokenBudget);
+          var end = _tokenBoundedEnd(block, offset, tokenBudget);
           if (end < block.length) {
             final boundary = block.lastIndexOf('\n\n', end);
             if (boundary > offset) {
@@ -827,7 +889,7 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
       final candidate = current.isEmpty
           ? block
           : '${current.toString()}\n$block';
-      if (AiTokenEstimator.conservative(candidate) > tokenBudget) {
+      if (AiTokenEstimator.estimate(candidate) > tokenBudget) {
         flush();
       }
       if (current.isNotEmpty) {
@@ -846,8 +908,8 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
   }) {
     var total = 0;
     for (final chunk in chunks) {
-      total += AiTokenEstimator.conservative(systemPrompt);
-      total += AiTokenEstimator.conservative(
+      total += AiTokenEstimator.estimate(systemPrompt);
+      total += AiTokenEstimator.estimate(
         userPrompt(
           'Summarize this document section faithfully and concisely. Preserve technical names and do not add facts.',
           chunk,
@@ -855,9 +917,9 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
       );
     }
     const summaryOutputTokensPerChunk = 1200;
-    total += AiTokenEstimator.conservative(systemPrompt);
+    total += AiTokenEstimator.estimate(systemPrompt);
     total += chunks.length * summaryOutputTokensPerChunk;
-    total += AiTokenEstimator.conservative(
+    total += AiTokenEstimator.estimate(
       userPrompt(
         'Synthesize the supplied section summaries into one concise ${contentFormat == AiContentFormat.markdown ? 'Markdown' : 'plain-text'} document summary.',
         '',
@@ -866,17 +928,22 @@ Preserve facts, technical identifiers, and meaning unless the requested operatio
     return total;
   }
 
-  static int _utf8BoundedEnd(String value, int start, int byteBudget) {
+  static int _tokenBoundedEnd(String value, int start, int tokenBudget) {
     var end = start;
-    var bytes = 0;
+    var estimatedTokens = 0;
+    var asciiRun = 0;
     for (final rune in value.substring(start).runes) {
-      final encodedLength = utf8.encode(String.fromCharCode(rune)).length;
-      if (end > start && bytes + encodedLength > byteBudget) {
+      final nextAsciiRun = rune <= 0x7f ? asciiRun + 1 : 0;
+      final increment = rune <= 0x7f
+          ? ((nextAsciiRun + 2) ~/ 3) - ((asciiRun + 2) ~/ 3)
+          : 1;
+      if (end > start && estimatedTokens + increment > tokenBudget) {
         break;
       }
-      bytes += encodedLength;
+      estimatedTokens += increment;
+      asciiRun = nextAsciiRun;
       end += rune > 0xffff ? 2 : 1;
-      if (bytes >= byteBudget) {
+      if (estimatedTokens >= tokenBudget) {
         break;
       }
     }

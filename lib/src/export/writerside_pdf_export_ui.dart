@@ -81,17 +81,20 @@ Future<void> exportWritersideModuleToPdf(
       .where((instance) => instance.id == storedInstanceId)
       .firstOrNull;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final selection = await showBusyMarkModalDialog<_WritersidePdfSelection>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => _WritersidePdfOptionsDialog(
-      module: module,
-      instances: regularInstances,
-      initialInstance: initialInstance ?? regularInstances.first,
-      projectConfigurations: projectConfigurations,
-      layouts: layouts,
-    ),
-  );
+  final selection =
+      await showBusyMarkModalEditorDialog<_WritersidePdfSelection>(
+        context,
+        headerBarService: headerBar.isAvailable ? headerBar : null,
+        maxWidth: BusyMarkSizes.dialogWide,
+        maxHeight: 820,
+        builder: (context) => _WritersidePdfOptionsDialog(
+          module: module,
+          instances: regularInstances,
+          initialInstance: initialInstance ?? regularInstances.first,
+          projectConfigurations: projectConfigurations,
+          layouts: layouts,
+        ),
+      );
   if (selection == null || !context.mounted) {
     return;
   }

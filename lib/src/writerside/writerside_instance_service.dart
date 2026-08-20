@@ -101,7 +101,7 @@ class WritersideInstanceMutationResult {
   final String? previousId;
 }
 
-/// Creates and edits Writerside help instances without rewriting topic source.
+/// Creates and edits Writerside instances without rewriting topic source.
 ///
 /// The project configuration, tree, build profile, and any ID references are
 /// published as one guarded mutation. Every target is checked immediately

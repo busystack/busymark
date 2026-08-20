@@ -26,6 +26,7 @@ enum DocumentKind {
   config,
   variables,
   categories,
+  gitIgnore,
   image,
   resource,
   unknown,
@@ -102,6 +103,16 @@ class DocumentFile {
   final DateTime lastModified;
 }
 
+class WorkspaceDirectory {
+  const WorkspaceDirectory({
+    required this.absolutePath,
+    required this.relativePath,
+  });
+
+  final String absolutePath;
+  final String relativePath;
+}
+
 class Workspace {
   Workspace({
     required this.id,
@@ -110,6 +121,7 @@ class Workspace {
     required this.openedAt,
     required this.files,
     required this.diagnostics,
+    this.directories = const [],
     List<String> openFilePaths = const [],
     this.activeFilePath,
     DateTime? activeFileModifiedAt,
@@ -129,6 +141,7 @@ class Workspace {
   final WorkspaceFileSnapshot? activeFileSnapshot;
   final List<String> openFilePaths;
   final List<DocumentFile> files;
+  final List<WorkspaceDirectory> directories;
   final List<Diagnostic> diagnostics;
   final ParsedMarkdownDocument? markdown;
   final WritersideModule? writersideModule;
@@ -139,6 +152,7 @@ class Workspace {
     Object? activeFileSnapshot = _copyWithUnset,
     List<String>? openFilePaths,
     List<DocumentFile>? files,
+    List<WorkspaceDirectory>? directories,
     List<Diagnostic>? diagnostics,
     Object? markdown = _copyWithUnset,
     Object? writersideModule = _copyWithUnset,
@@ -170,6 +184,7 @@ class Workspace {
       activeFileSnapshot: nextSnapshot,
       openFilePaths: openFilePaths ?? this.openFilePaths,
       files: files ?? this.files,
+      directories: directories ?? this.directories,
       diagnostics: diagnostics ?? this.diagnostics,
       markdown: nextMarkdown,
       writersideModule: nextWritersideModule,

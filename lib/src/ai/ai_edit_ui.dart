@@ -13,6 +13,7 @@ import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../workspace/workspace_controller.dart';
 import 'ai_configuration.dart';
+import 'ai_coordinator.dart';
 import 'ai_models.dart';
 import 'ai_policy.dart';
 import 'ai_providers.dart';
@@ -47,8 +48,10 @@ List<PopupMenuEntry<AiFeature>> aiFeatureMenuItems(BuildContext context) {
 Future<String?> showBusyMarkAiProposal(
   BuildContext context,
   WidgetRef ref,
-  AiEditInvocation invocation,
-) async {
+  AiEditInvocation invocation, {
+  Future<bool> Function()? validateBeforeApply,
+  String? staleMessage,
+}) async {
   final settings = ref.read(appSettingsControllerProvider);
   final providerKind = settings.aiProviderKind;
   if (providerKind == null) {
@@ -110,6 +113,9 @@ Future<String?> showBusyMarkAiProposal(
       documentSource: configured.documentSource,
       replacementStart: configured.replacementStart,
       replacementEnd: configured.replacementEnd,
+      replacementPrefix: configured.replacementPrefix,
+      replacementSuffix: configured.replacementSuffix,
+      trimReplacementOutput: configured.trimReplacementOutput,
       deadline: providerKind == AiProviderKind.ollamaLocal
           ? const Duration(minutes: 5)
           : const Duration(minutes: 2),
@@ -126,8 +132,12 @@ Future<String?> showBusyMarkAiProposal(
   return showBusyMarkModalDialog<String>(
     context,
     barrierDismissible: false,
-    builder: (dialogContext) =>
-        _AiProposalDialog(request: request, invocation: configured),
+    builder: (dialogContext) => _AiProposalDialog(
+      request: request,
+      invocation: configured,
+      validateBeforeApply: validateBeforeApply,
+      staleMessage: staleMessage,
+    ),
   );
 }
 
@@ -233,16 +243,24 @@ class _AiInstructionDialogState extends State<_AiInstructionDialog> {
 }
 
 class _AiProposalDialog extends ConsumerStatefulWidget {
-  const _AiProposalDialog({required this.request, required this.invocation});
+  const _AiProposalDialog({
+    required this.request,
+    required this.invocation,
+    this.validateBeforeApply,
+    this.staleMessage,
+  });
 
   final AiRequest request;
   final AiEditInvocation invocation;
+  final Future<bool> Function()? validateBeforeApply;
+  final String? staleMessage;
 
   @override
   ConsumerState<_AiProposalDialog> createState() => _AiProposalDialogState();
 }
 
 class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
+  late final AiCoordinator _coordinator;
   StreamSubscription<AiStreamEvent>? _subscription;
   final _output = StringBuffer();
   AiUsage? _usage;
@@ -250,12 +268,14 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
   String? _providerId;
   String? _model;
   var _complete = false;
+  var _checkingApply = false;
+  var _externalSourceStale = false;
 
   @override
   void initState() {
     super.initState();
-    _subscription = ref
-        .read(aiCoordinatorProvider)
+    _coordinator = ref.read(aiCoordinatorProvider);
+    _subscription = _coordinator
         .stream(widget.request)
         .listen(
           _handleEvent,
@@ -270,7 +290,7 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
 
   @override
   void dispose() {
-    ref.read(aiCoordinatorProvider).cancelRequest(widget.request.id);
+    _coordinator.cancelRequest(widget.request.id);
     unawaited(_subscription?.cancel());
     super.dispose();
   }
@@ -312,10 +332,11 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
     final currentPath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     final revisionCurrent =
-        !widget.invocation.enforceDocumentRevision ||
-        (ref.read(workspaceControllerProvider.notifier).editRevision ==
-                widget.invocation.sourceRevision &&
-            currentPath == widget.invocation.documentPath);
+        !_externalSourceStale &&
+        (!widget.invocation.enforceDocumentRevision ||
+            (ref.read(workspaceControllerProvider.notifier).editRevision ==
+                    widget.invocation.sourceRevision &&
+                currentPath == widget.invocation.documentPath));
     final proposal = _output.toString();
     return BusyMarkDialogShell(
       title: context.l10n.aiProposal,
@@ -325,7 +346,7 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
         BusyMarkDialogButton(
           label: context.l10n.cancel,
           onPressed: () {
-            ref.read(aiCoordinatorProvider).cancelRequest(widget.request.id);
+            _coordinator.cancelRequest(widget.request.id);
             Navigator.pop(context);
           },
         ),
@@ -345,8 +366,9 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
               _complete &&
                   _error == null &&
                   revisionCurrent &&
+                  !_checkingApply &&
                   proposal.isNotEmpty
-              ? () => Navigator.pop(context, proposal)
+              ? () => unawaited(_applyProposal(proposal))
               : null,
         ),
       ],
@@ -378,7 +400,7 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
           BusyMarkStatusBox(message: _error!, kind: BusyMarkStatusKind.error)
         else if (!revisionCurrent)
           BusyMarkStatusBox(
-            message: context.l10n.aiStaleProposal,
+            message: widget.staleMessage ?? context.l10n.aiStaleProposal,
             kind: BusyMarkStatusKind.warning,
           )
         else if (!_complete)
@@ -411,6 +433,32 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
         ],
       ],
     );
+  }
+
+  Future<void> _applyProposal(String proposal) async {
+    final validate = widget.validateBeforeApply;
+    if (validate != null) {
+      setState(() => _checkingApply = true);
+      var current = false;
+      try {
+        current = await validate();
+      } on Object {
+        current = false;
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _checkingApply = false;
+        _externalSourceStale = !current;
+      });
+      if (!current) {
+        return;
+      }
+    }
+    if (mounted) {
+      Navigator.pop(context, proposal);
+    }
   }
 
   String _usageLabel(AiUsage usage) {

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_markdown_edit_resolver.dart';
 import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -376,6 +377,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final selected = selection.isCollapsed
         ? ''
         : value.text.substring(selection.start, selection.end);
+    final originalText = value.text;
     if (feature == AiFeature.draftCommitMessage) {
       return;
     }
@@ -388,6 +390,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     var replacementStart = selection.start;
     var replacementEnd = selection.end;
     var replacementOriginal = selected;
+    var replacementPrefix = '';
+    var replacementSuffix = '';
+    var trimReplacementOutput = false;
     late final AiScope scope;
     late final String input;
     if (feature.requiresCodeBlock) {
@@ -405,38 +410,59 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         replacementEnd = codeBlock.end;
         replacementOriginal = input;
       } else {
-        replacementStart = codeBlock.end;
-        replacementEnd = codeBlock.end;
+        final insertion = const AiMarkdownEditResolver().blockInsertion(
+          originalText,
+          codeBlock.end,
+        );
+        replacementStart = insertion.offset;
+        replacementEnd = insertion.offset;
         replacementOriginal = '';
+        replacementPrefix = insertion.prefix;
+        replacementSuffix = insertion.suffix;
+        trimReplacementOutput = true;
       }
     } else {
-      scope = selected.isNotEmpty
-          ? AiScope.selection
-          : feature == AiFeature.summarize
-          ? AiScope.document
-          : AiScope.insertion;
-      input = selected.isNotEmpty
-          ? selected
-          : feature == AiFeature.summarize
-          ? value.text
-          : '';
+      final AiMarkdownEditTarget target;
+      try {
+        target = const AiMarkdownEditResolver().resolve(
+          feature: feature,
+          source: originalText,
+          selectionStart: selection.start,
+          selectionEnd: selection.end,
+          filePath: widget.filePath ?? 'untitled.md',
+        );
+      } on AiException catch (error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+        return;
+      }
+      scope = target.scope;
+      input = target.input;
+      replacementStart = target.replacementStart;
+      replacementEnd = target.replacementEnd;
+      replacementOriginal = target.replacementOriginal;
+      replacementPrefix = target.replacementPrefix;
+      replacementSuffix = target.replacementSuffix;
+      trimReplacementOutput = target.trimReplacementOutput;
     }
-    final originalText = value.text;
-    final result = await callback(
-      AiEditInvocation(
-        feature: feature,
-        scope: scope,
-        input: input,
-        replacementOriginal: replacementOriginal,
-        sourceRevision: widget.editRevision,
-        targetId:
-            '${widget.filePath ?? 'untitled'}:$replacementStart:$replacementEnd',
-        documentPath: widget.filePath,
-        documentSource: originalText,
-        replacementStart: replacementStart,
-        replacementEnd: replacementEnd,
-      ),
+    final invocation = AiEditInvocation(
+      feature: feature,
+      scope: scope,
+      input: input,
+      replacementOriginal: replacementOriginal,
+      sourceRevision: widget.editRevision,
+      targetId:
+          '${widget.filePath ?? 'untitled'}:$replacementStart:$replacementEnd',
+      documentPath: widget.filePath,
+      documentSource: originalText,
+      replacementStart: replacementStart,
+      replacementEnd: replacementEnd,
+      replacementPrefix: replacementPrefix,
+      replacementSuffix: replacementSuffix,
+      trimReplacementOutput: trimReplacementOutput,
     );
+    final result = await callback(invocation);
     if (!mounted || result == null) {
       return;
     }
@@ -446,33 +472,22 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
       return;
     }
-    if (replacementStart == replacementEnd) {
-      final insertion = _blockInsertion(originalText, replacementStart, result);
-      _applyFullEditingValue(
-        TextEditingValue(
-          text: originalText.replaceRange(
-            replacementStart,
-            replacementEnd,
-            insertion,
-          ),
-          selection: TextSelection.collapsed(
-            offset: replacementStart + insertion.length,
-          ),
-        ),
-      );
-      return;
-    }
+    final replacement = invocation.appliedReplacement(result);
     _applyFullEditingValue(
       TextEditingValue(
         text: originalText.replaceRange(
           replacementStart,
           replacementEnd,
-          result,
+          replacement,
         ),
-        selection: TextSelection(
-          baseOffset: replacementStart,
-          extentOffset: replacementStart + result.length,
-        ),
+        selection: replacementStart == replacementEnd
+            ? TextSelection.collapsed(
+                offset: replacementStart + replacement.length,
+              )
+            : TextSelection(
+                baseOffset: replacementStart,
+                extentOffset: replacementStart + replacement.length,
+              ),
       ),
     );
   }
@@ -517,12 +532,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       }
     }
     return null;
-  }
-
-  String _blockInsertion(String source, int offset, String proposal) {
-    final beforeNeedsBreak = offset > 0 && source[offset - 1] != '\n';
-    final afterNeedsBreak = offset < source.length && source[offset] != '\n';
-    return '${beforeNeedsBreak ? '\n\n' : ''}$proposal${afterNeedsBreak ? '\n\n' : ''}';
   }
 
   void _syncSearchOptions() {

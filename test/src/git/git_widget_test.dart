@@ -545,6 +545,43 @@ void main() {
     ]);
   });
 
+  testWidgets('unsupported untracked files remain stageable but cannot open', (
+    tester,
+  ) async {
+    final selectedPaths = <String>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: selectedPaths.addAll,
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('.idea/project.iml', untracked: true)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              canOpenFile: (_) => false,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('project.iml'), findsOneWidget);
+    await tester.tap(find.byType(YaruCheckbox).last);
+    await tester.pump();
+    expect(selectedPaths, ['.idea/project.iml']);
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.gitOpenFile), findsNothing);
+  });
+
   testWidgets('commit section colors files by Git status', (tester) async {
     await tester.pumpWidget(
       _localized(

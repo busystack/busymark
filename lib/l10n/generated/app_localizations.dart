@@ -2130,7 +2130,7 @@ abstract class AppLocalizations {
   /// Summary in the dialog for removing a topic from one Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'Remove “{topic}” from the selected help instance. The topic file will be kept.'**
+  /// **'Remove “{topic}” from the selected instance. The topic file will be kept.'**
   String topicRemovalSummary(String topic);
 
   /// Summary in the Writerside safe-delete dialog.
@@ -2802,7 +2802,7 @@ abstract class AppLocalizations {
   /// Detail shown when creating a topic without a Writerside instance tree.
   ///
   /// In en, this message translates to:
-  /// **'The Writerside module has no help instance tree.'**
+  /// **'The Writerside module has no instance tree.'**
   String get errorWritersideInstanceTreeMissing;
 
   /// Detail for a missing Writerside tree file.
@@ -4430,17 +4430,17 @@ abstract class AppLocalizations {
   /// **'Export the active document or Writerside module as a PDF.'**
   String get shortcutExportPdfDescription;
 
-  /// Action that creates an empty Writerside help instance.
+  /// Heading for the Writerside instances shown in the TOC sidebar.
   ///
   /// In en, this message translates to:
-  /// **'New help instance'**
-  String get newHelpInstance;
+  /// **'Instances'**
+  String get instances;
 
-  /// Action that imports local Markdown files as a Writerside instance.
+  /// Action that creates a Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'New instance from Markdown files'**
-  String get importMarkdownInstance;
+  /// **'New instance'**
+  String get newInstance;
 
   /// Action that creates a Writerside library instance for reusable TOC sections.
   ///
@@ -4460,17 +4460,11 @@ abstract class AppLocalizations {
   /// **'Open TOC file'**
   String get openTocFile;
 
-  /// Action and dialog title for changing the local icon color of a Writerside instance.
+  /// Dialog title for creating a Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'Change instance color'**
-  String get changeInstanceColor;
-
-  /// Dialog title for creating an empty Writerside help instance.
-  ///
-  /// In en, this message translates to:
-  /// **'Create help instance'**
-  String get createHelpInstance;
+  /// **'Create instance'**
+  String get createInstance;
 
   /// Dialog title for creating a Writerside TOC library instance.
   ///
@@ -4478,11 +4472,53 @@ abstract class AppLocalizations {
   /// **'Create TOC library'**
   String get createTocLibrary;
 
-  /// Dialog title for importing Markdown files as a Writerside instance.
+  /// Group title for choosing the initial content of a Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'Import Markdown as instance'**
-  String get importMarkdownAsInstance;
+  /// **'Content'**
+  String get instanceContent;
+
+  /// Field for choosing how a Writerside instance is initialized.
+  ///
+  /// In en, this message translates to:
+  /// **'Create from'**
+  String get instanceContentSource;
+
+  /// Option to create a Writerside instance without imported topics.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty instance'**
+  String get emptyInstance;
+
+  /// Option to initialize a Writerside instance from Markdown files.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Markdown files'**
+  String get markdownFiles;
+
+  /// Action to choose a folder containing Markdown files.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Markdown folder'**
+  String get chooseMarkdownFolder;
+
+  /// Validation shown when an imported instance has no source folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder containing Markdown files.'**
+  String get errorWritersideInstanceImportSourceRequired;
+
+  /// Group title for the local appearance of a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get instanceAppearance;
+
+  /// Writerside instance icon-color field.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon color'**
+  String get instanceColor;
 
   /// Writerside instance version field.
   ///
@@ -4896,7 +4932,7 @@ abstract class AppLocalizations {
   /// Introduction to Writerside PDF export.
   ///
   /// In en, this message translates to:
-  /// **'Build one Writerside instance with JetBrains’ official Writerside builder.'**
+  /// **'Choose an instance and PDF settings. BusyMark uses JetBrains’ official Writerside builder.'**
   String get writersidePdfExportDescription;
 
   /// Group title for selecting Writerside PDF content.
@@ -5318,6 +5354,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The document changed while this proposal was generated. Run the action again.'**
   String get aiStaleProposal;
+
+  /// Warning shown when an AI commit-message proposal was generated from an obsolete staged diff.
+  ///
+  /// In en, this message translates to:
+  /// **'The staged changes changed while this commit message was generated. Run the action again.'**
+  String get gitAiStagedChangesChanged;
 
   /// Action that reveals the exact AI input context.
   ///

@@ -109,6 +109,7 @@ class GitSidebarTab extends ConsumerWidget {
                   onOpenFile: onOpenFile,
                   onConfirmDiscard: onConfirmDiscard,
                   hasUnsavedEditorChanges: hasUnsavedEditorChanges,
+                  canOpenFile: (file) => _canOpenGitFile(workspace, file),
                   outsideWorkspacePaths: {
                     for (final file
                         in state.statusSnapshot?.stagedFiles ??
@@ -159,8 +160,8 @@ class GitSidebarTab extends ConsumerWidget {
     WidgetRef ref,
     GitController controller,
   ) async {
-    final patch = await controller.stagedDiffForAi();
-    if (patch == null || !context.mounted) {
+    final stagedDiff = await controller.stagedDiffForAi();
+    if (stagedDiff == null || !context.mounted) {
       return null;
     }
     final repository = ref.read(gitControllerProvider).repositoryInfo;
@@ -170,7 +171,7 @@ class GitSidebarTab extends ConsumerWidget {
       AiEditInvocation(
         feature: AiFeature.draftCommitMessage,
         scope: AiScope.gitDiff,
-        input: patch,
+        input: stagedDiff.patch,
         replacementOriginal: '',
         sourceRevision: 0,
         targetId: 'git-commit:${repository?.rootPath ?? 'repository'}',
@@ -178,6 +179,9 @@ class GitSidebarTab extends ConsumerWidget {
         contentFormat: AiContentFormat.plainText,
         enforceDocumentRevision: false,
       ),
+      validateBeforeApply: () =>
+          controller.stagedDiffMatches(stagedDiff.fingerprint),
+      staleMessage: context.l10n.gitAiStagedChangesChanged,
     );
   }
 
@@ -251,6 +255,39 @@ class GitSidebarTab extends ConsumerWidget {
       await onAfterWorkspaceFilesChanged();
     }
   }
+}
+
+bool _canOpenGitFile(Workspace workspace, GitFileStatus status) {
+  final matching = workspace.files
+      .where((file) => file.absolutePath == status.absolutePath)
+      .firstOrNull;
+  final kind = matching?.kind;
+  if (kind != null) {
+    return switch (kind) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic ||
+      DocumentKind.writersideXmlTopic ||
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories ||
+      DocumentKind.gitIgnore ||
+      DocumentKind.resource => true,
+      DocumentKind.image || DocumentKind.unknown => false,
+    };
+  }
+  final normalized = status.repoRelativePath.toLowerCase();
+  return normalized.endsWith('.md') ||
+      normalized.endsWith('.markdown') ||
+      normalized.endsWith('.topic') ||
+      normalized.endsWith('.tree') ||
+      normalized.endsWith('.cfg') ||
+      normalized.endsWith('.list') ||
+      normalized.endsWith('.xml') ||
+      normalized.endsWith('.css') ||
+      normalized.endsWith('.js') ||
+      normalized.endsWith('/.gitignore') ||
+      normalized == '.gitignore';
 }
 
 class _GitResetDialog extends StatefulWidget {

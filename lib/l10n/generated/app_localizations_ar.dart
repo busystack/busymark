@@ -1113,7 +1113,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'أزِل «⁨$topic⁩» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.';
+    return 'أزِل «⁨$topic⁩» من المثيل المحدد. سيُحتفظ بملف الموضوع.';
   }
 
   @override
@@ -1550,7 +1550,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'لا تحتوي وحدة Writerside على شجرة مثيل للمساعدة.';
+      'لا تحتوي وحدة Writerside على شجرة مثيل.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2633,10 +2633,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تصدير المستند النشط أو وحدة Writerside بصيغة PDF.';
 
   @override
-  String get newHelpInstance => 'مثيل مساعدة جديد';
+  String get instances => 'المثيلات';
 
   @override
-  String get importMarkdownInstance => 'مثيل جديد من ملفات Markdown';
+  String get newInstance => 'مثيل جديد';
 
   @override
   String get newTocLibrary => 'مكتبة جديدة لجدول المحتويات';
@@ -2648,16 +2648,35 @@ class AppLocalizationsAr extends AppLocalizations {
   String get openTocFile => 'فتح ملف جدول المحتويات';
 
   @override
-  String get changeInstanceColor => 'تغيير لون المثيل';
-
-  @override
-  String get createHelpInstance => 'إنشاء مثيل مساعدة';
+  String get createInstance => 'إنشاء مثيل';
 
   @override
   String get createTocLibrary => 'إنشاء مكتبة جدول محتويات';
 
   @override
-  String get importMarkdownAsInstance => 'استيراد Markdown كمثيل';
+  String get instanceContent => 'المحتوى';
+
+  @override
+  String get instanceContentSource => 'إنشاء من';
+
+  @override
+  String get emptyInstance => 'مثيل فارغ';
+
+  @override
+  String get markdownFiles => 'ملفات Markdown المحلية';
+
+  @override
+  String get chooseMarkdownFolder => 'اختيار مجلد Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'اختر مجلدًا يحتوي على ملفات Markdown.';
+
+  @override
+  String get instanceAppearance => 'المظهر';
+
+  @override
+  String get instanceColor => 'لون الأيقونة';
 
   @override
   String get instanceVersion => 'الإصدار';
@@ -2932,7 +2951,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get writersidePdfExportDescription =>
-      'أنشئ مثيلاً واحدًا من Writerside باستخدام أداة البناء الرسمية من JetBrains.';
+      'اختر مثيلاً وإعدادات PDF. يستخدم BusyMark أداة البناء الرسمية لـ Writerside من JetBrains.';
 
   @override
   String get writersidePdfContent => 'محتوى التصدير';
@@ -3165,6 +3184,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get aiStaleProposal =>
       'تغيّر المستند أثناء إنشاء هذا الاقتراح. شغّل الإجراء مرة أخرى.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'تغيّرت التغييرات المُرحَّلة أثناء إنشاء رسالة الالتزام هذه. شغّل الإجراء مرة أخرى.';
 
   @override
   String get aiViewContext => 'عرض السياق المُرسل';

@@ -6,7 +6,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -26,7 +25,8 @@ import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
-import '../../core/path_utils.dart' show slugForHeading;
+import '../../core/path_utils.dart'
+    show isTextDocumentationPath, slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
@@ -60,7 +60,6 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
-import '../../writerside/writerside_instance_service.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
 import '../workspace_controller.dart';
@@ -774,6 +773,10 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
+      return;
+    }
     _closeSearch(ref);
     unawaited(
       ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
@@ -1115,14 +1118,24 @@ Future<void> _openGitDiffFile(
     await ref.read(gitControllerProvider.notifier).refresh();
     return;
   }
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final workspaceFile = workspace?.files
+      .where((file) => p.equals(file.absolutePath, absolutePath))
+      .firstOrNull;
+  final openable = workspaceFile == null
+      ? _isOpenableExternalTextPath(absolutePath)
+      : _isOpenableTextDocument(workspaceFile);
+  if (!openable) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.cannotOpenFileTypeInEditor)),
+    );
+    return;
+  }
   if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
       !context.mounted) {
     return;
   }
-  final workspace = ref.read(workspaceControllerProvider).workspace;
-  final fileInWorkspace =
-      workspace?.files.any((file) => file.absolutePath == absolutePath) ??
-      false;
+  final fileInWorkspace = workspaceFile != null;
   final controller = ref.read(workspaceControllerProvider.notifier);
   if (fileInWorkspace) {
     await controller.openActiveFile(absolutePath);
@@ -1130,6 +1143,14 @@ Future<void> _openGitDiffFile(
     await controller.openPath(absolutePath);
   }
   ref.read(gitControllerProvider.notifier).deactivateDiffFile();
+}
+
+bool _isOpenableExternalTextPath(String path) {
+  final normalized = path.toLowerCase();
+  return isTextDocumentationPath(path) ||
+      p.basename(path) == '.gitignore' ||
+      normalized.endsWith('.css') ||
+      normalized.endsWith('.js');
 }
 
 void _clearGitDetailSelection(WidgetRef ref) {
@@ -1898,12 +1919,16 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
-    if (tab == _SidebarTab.git &&
-        showGitChanges &&
-        ref.read(gitControllerProvider).selectedView != GitView.changes) {
-      unawaited(
-        ref.read(gitControllerProvider.notifier).selectView(GitView.changes),
-      );
+    if (tab == _SidebarTab.git) {
+      final controller = ref.read(gitControllerProvider.notifier);
+      unawaited(() async {
+        await controller.refresh();
+        if (showGitChanges &&
+            mounted &&
+            ref.read(gitControllerProvider).selectedView != GitView.changes) {
+          await controller.selectView(GitView.changes);
+        }
+      }());
     } else if (tab != _SidebarTab.git) {
       _clearGitDetailSelection(ref);
     }
@@ -2129,10 +2154,7 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
     WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [
-      _SidebarTab.outline,
-      _SidebarTab.git,
-    ],
+    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
@@ -3317,13 +3339,17 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   @override
   Widget build(BuildContext context) {
-    final tree = _buildFileTree(widget.workspace.files);
+    final tree = _buildFileTree(
+      widget.workspace.files,
+      widget.workspace.directories,
+    );
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
     final vcsStatusColors = _FileTreeVcsStatusColors.fromSnapshot(
       widget.workspace,
       ref.watch(gitControllerProvider.select((state) => state.statusSnapshot)),
     );
-    if (widget.workspace.files.isEmpty) {
+    if (widget.workspace.files.isEmpty &&
+        widget.workspace.directories.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.folder,
         title: context.l10n.noFiles,
@@ -3547,7 +3573,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   _FileTreeEntry? _fileTreeEntryForPath(String path) {
     final entries = _visibleFileTreeEntries(
-      _buildFileTree(widget.workspace.files),
+      _buildFileTree(widget.workspace.files, widget.workspace.directories),
       _expandedPaths,
     );
     for (final entry in entries) {
@@ -3948,6 +3974,7 @@ Future<bool> _confirmDeleteFileTreeEntry(
 
 class _SidebarTreeRow extends StatelessWidget {
   const _SidebarTreeRow({
+    super.key,
     required this.title,
     required this.depth,
     required this.icon,
@@ -4084,6 +4111,7 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
     DocumentKind.config => YaruIcons.gear,
     DocumentKind.variables => BusyMarkGlyphs.symbols,
     DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.gitIgnore => YaruIcons.gear,
     DocumentKind.image => BusyMarkGlyphs.image,
     _ => YaruIcons.document,
   };
@@ -4098,6 +4126,7 @@ bool _isOpenableTextDocument(DocumentFile file) {
     DocumentKind.config ||
     DocumentKind.variables ||
     DocumentKind.categories ||
+    DocumentKind.gitIgnore ||
     DocumentKind.resource => true,
     DocumentKind.image || DocumentKind.unknown => false,
   };
@@ -4237,10 +4266,31 @@ int _vcsFileColorPriority(BusyMarkVcsFileColor color) {
   };
 }
 
-List<_FileTreeNode> _buildFileTree(List<DocumentFile> files) {
+List<_FileTreeNode> _buildFileTree(
+  List<DocumentFile> files,
+  List<WorkspaceDirectory> directories,
+) {
   final root = _MutableFileTreeNode(name: '', relativePath: '');
+  final sortedDirectories = [...directories]
+    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
   final sortedFiles = [...files]
     ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+
+  for (final directory in sortedDirectories) {
+    final parts = directory.relativePath
+        .split('/')
+        .where((part) => part.isNotEmpty)
+        .toList();
+    var parent = root;
+    for (var index = 0; index < parts.length; index++) {
+      final name = parts[index];
+      final relativePath = parts.take(index + 1).join('/');
+      parent = parent.children.putIfAbsent(
+        name,
+        () => _MutableFileTreeNode(name: name, relativePath: relativePath),
+      );
+    }
+  }
 
   for (final file in sortedFiles) {
     final parts = file.relativePath
@@ -4495,9 +4545,18 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final instance =
         _tocInstanceForTreePath(module, _selectedInstanceTreePath) ??
         _defaultWritersideInstance(module);
-    final instanceColor = ref
-        .watch(appSettingsControllerProvider)
-        .writersideInstanceIconColor(widget.workspace.rootPath, instance.id);
+    final appSettings = ref.watch(appSettingsControllerProvider);
+    final instanceColors = <String, WritersideInstanceIconColor>{};
+    for (var index = 0; index < module.instances.length; index++) {
+      final item = module.instances[index];
+      instanceColors[item.sourceTreePath] = _effectiveInstanceIconColor(
+        appSettings.writersideInstanceIconColor(
+          widget.workspace.rootPath,
+          item.id,
+        ),
+        index,
+      );
+    }
     final entries = _visibleTocTreeEntries(
       instance.navigationTocRoots,
       _expandedNodeKeys,
@@ -4543,7 +4602,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 return _TocHeader(
                   instances: module.instances,
                   selectedInstance: instance,
-                  selectedColor: instanceColor,
+                  instanceColors: instanceColors,
                   onSelectInstance: (treePath) {
                     if (p.equals(treePath, instance.sourceTreePath)) {
                       return;
@@ -4578,12 +4637,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     placement: WritersideTopicCreatePlacement.root,
                     referenceEntry: null,
                   ),
-                  onCreateHelpInstance: () => _showInstanceEditor(
+                  onCreateInstance: () => _showInstanceEditor(
                     context,
-                    BusyMarkWritersideInstanceDialogMode.createHelp,
+                    BusyMarkWritersideInstanceDialogMode.create,
                   ),
-                  onImportMarkdownInstance: () =>
-                      _showMarkdownInstanceImport(context),
                   onCreateLibrary: () => _showInstanceEditor(
                     context,
                     BusyMarkWritersideInstanceDialogMode.createLibrary,
@@ -4593,8 +4650,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     BusyMarkWritersideInstanceDialogMode.edit,
                     instance: instance,
                   ),
-                  onChangeColor: () =>
-                      _showInstanceColorDialog(context, instance),
                   onOpenTocFile: () =>
                       _openInstanceTree(context, instance.sourceTreePath),
                 );
@@ -4980,16 +5035,16 @@ class _TocTabState extends ConsumerState<_TocTab> {
     BuildContext context,
     BusyMarkWritersideInstanceDialogMode mode, {
     WritersideInstance? instance,
-    String? importRootPath,
-    List<WritersideMarkdownImportCandidate> importCandidates = const [],
   }) async {
     final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
     if (!canContinue || !mounted || !context.mounted) {
       return;
     }
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final result =
-        await showBusyMarkModalEditorDialog<WritersideInstanceMutationResult>(
+    final dialogResult =
+        await showBusyMarkModalEditorDialog<
+          BusyMarkWritersideInstanceDialogResult
+        >(
           context,
           headerBarService: headerBar.isAvailable ? headerBar : null,
           maxWidth: BusyMarkSizes.dialogWide,
@@ -4997,13 +5052,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
             workspace: widget.workspace,
             mode: mode,
             instance: instance,
-            importRootPath: importRootPath,
-            importCandidates: importCandidates,
           ),
         );
-    if (result == null || !mounted) {
+    if (dialogResult == null || !mounted) {
       return;
     }
+    final result = dialogResult.mutation;
     final id = p.basenameWithoutExtension(result.treePath);
     final settings = ref.read(appSettingsControllerProvider.notifier);
     final previousId = result.previousId;
@@ -5014,6 +5068,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
         id,
       );
     }
+    await settings.setWritersideInstanceIconColor(
+      widget.workspace.rootPath,
+      id,
+      dialogResult.iconColor,
+    );
     await settings.selectWritersideInstance(widget.workspace.rootPath, id);
     if (mounted) {
       setState(() {
@@ -5022,57 +5081,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
         _cutEntry = null;
       });
     }
-  }
-
-  Future<void> _showMarkdownInstanceImport(BuildContext context) async {
-    final sourcePath = await getDirectoryPath(
-      initialDirectory: widget.workspace.rootPath,
-      confirmButtonText: context.l10n.open,
-      canCreateDirectories: false,
-    );
-    if (sourcePath == null || !mounted || !context.mounted) {
-      return;
-    }
-    final candidates = await ref
-        .read(workspaceControllerProvider.notifier)
-        .discoverWritersideMarkdownImport(sourcePath);
-    if (candidates == null || !mounted || !context.mounted) {
-      return;
-    }
-    await _showInstanceEditor(
-      context,
-      BusyMarkWritersideInstanceDialogMode.importMarkdown,
-      importRootPath: sourcePath,
-      importCandidates: candidates,
-    );
-  }
-
-  Future<void> _showInstanceColorDialog(
-    BuildContext context,
-    WritersideInstance instance,
-  ) async {
-    final settings = ref.read(appSettingsControllerProvider);
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final color = await showBusyMarkModalDialog<WritersideInstanceIconColor>(
-      context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => BusyMarkWritersideInstanceColorDialog(
-        selected: settings.writersideInstanceIconColor(
-          widget.workspace.rootPath,
-          instance.id,
-        ),
-      ),
-    );
-    if (color == null || !mounted) {
-      return;
-    }
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setWritersideInstanceIconColor(
-          widget.workspace.rootPath,
-          instance.id,
-          color,
-        );
   }
 
   Future<void> _openInstanceTree(BuildContext context, String treePath) async {
@@ -5535,11 +5543,9 @@ Future<bool> _confirmRemoveTocEntry(
 
 enum _TocHeaderAction {
   newTopic,
-  newHelpInstance,
-  importMarkdownInstance,
+  newInstance,
   newLibrary,
   editInstance,
-  changeColor,
   openTocFile,
 }
 
@@ -5547,139 +5553,146 @@ class _TocHeader extends StatelessWidget {
   const _TocHeader({
     required this.instances,
     required this.selectedInstance,
-    required this.selectedColor,
+    required this.instanceColors,
     required this.onSelectInstance,
     required this.onCreateTopic,
-    required this.onCreateHelpInstance,
-    required this.onImportMarkdownInstance,
+    required this.onCreateInstance,
     required this.onCreateLibrary,
     required this.onEditInstance,
-    required this.onChangeColor,
     required this.onOpenTocFile,
   });
 
   final List<WritersideInstance> instances;
   final WritersideInstance selectedInstance;
-  final WritersideInstanceIconColor selectedColor;
+  final Map<String, WritersideInstanceIconColor> instanceColors;
   final ValueChanged<String> onSelectInstance;
   final VoidCallback onCreateTopic;
-  final VoidCallback onCreateHelpInstance;
-  final VoidCallback onImportMarkdownInstance;
+  final VoidCallback onCreateInstance;
   final VoidCallback onCreateLibrary;
   final VoidCallback onEditInstance;
-  final VoidCallback onChangeColor;
   final VoidCallback onOpenTocFile;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: BusyMarkInsets.tocHeader,
-      child: _SidebarHeaderRow(
-        key: const ValueKey('workspace-sidebar-first-content'),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedInstance.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: busyMarkSectionHeaderStyle(context),
-              ),
-            ),
-            const SizedBox(width: BusyMarkSpacing.xs),
-            BusyMarkHeaderPopupMenuButton<String>(
-              tooltip: context.l10n.instanceName,
-              icon: BusyMarkGlyphs.tree,
-              foregroundColor: writersideInstanceIconColorValue(
-                context,
-                selectedColor,
-              ),
-              transparent: true,
-              itemBuilder: (context) => [
-                for (final instance in instances)
-                  BusyMarkPopupMenuItem(
-                    value: instance.sourceTreePath,
-                    label: instance.name,
-                    icon: BusyMarkGlyphs.tree,
-                    checked: p.equals(
-                      instance.sourceTreePath,
-                      selectedInstance.sourceTreePath,
-                    ),
-                    trailingCheck: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SidebarHeaderRow(
+            key: const ValueKey('workspace-sidebar-first-content'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.instances,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: busyMarkSectionHeaderStyle(context),
                   ),
+                ),
+                BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
+                  key: const ValueKey('workspace-sidebar-toc-menu'),
+                  tooltip: context.l10n.tocActions,
+                  icon: BusyMarkGlyphs.menuVertical,
+                  transparent: true,
+                  borderRadius: BusyMarkRadius.nativeHeaderButton,
+                  highlightWhenOpen: false,
+                  itemBuilder: (context) => [
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.newTopic,
+                      label: context.l10n.newTopic,
+                      icon: BusyMarkGlyphs.newDocument,
+                    ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.newInstance,
+                      label: context.l10n.newInstance,
+                      icon: BusyMarkGlyphs.add,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.newLibrary,
+                      label: context.l10n.newTocLibrary,
+                      icon: BusyMarkGlyphs.code,
+                    ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.editInstance,
+                      label: context.l10n.editInstance,
+                      icon: BusyMarkGlyphs.edit,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.openTocFile,
+                      label: context.l10n.openTocFile,
+                      icon: BusyMarkGlyphs.documentOpen,
+                    ),
+                  ],
+                  onSelected: (action) {
+                    switch (action) {
+                      case _TocHeaderAction.newTopic:
+                        onCreateTopic();
+                      case _TocHeaderAction.newInstance:
+                        onCreateInstance();
+                      case _TocHeaderAction.newLibrary:
+                        onCreateLibrary();
+                      case _TocHeaderAction.editInstance:
+                        onEditInstance();
+                      case _TocHeaderAction.openTocFile:
+                        onOpenTocFile();
+                    }
+                  },
+                ),
               ],
-              onSelected: onSelectInstance,
             ),
-            BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
-              key: const ValueKey('workspace-sidebar-toc-menu'),
-              tooltip: context.l10n.tocActions,
-              icon: BusyMarkGlyphs.menuVertical,
-              transparent: true,
-              borderRadius: BusyMarkRadius.nativeHeaderButton,
-              highlightWhenOpen: false,
-              itemBuilder: (context) => [
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.newTopic,
-                  label: context.l10n.newTopic,
-                  icon: BusyMarkGlyphs.newDocument,
+          ),
+          for (final instance in instances)
+            _SidebarTreeRow(
+              key: ValueKey('writerside-instance-${instance.id}'),
+              title: busyMarkLtrIsolateFor(context, instance.name),
+              depth: 0,
+              icon: BusyMarkGlyphs.tree,
+              leading: Icon(
+                BusyMarkGlyphs.tree,
+                size: BusyMarkSizes.iconSm,
+                color: writersideInstanceIconColorValue(
+                  context,
+                  instanceColors[instance.sourceTreePath] ??
+                      WritersideInstanceIconColor.blue,
                 ),
-                const PopupMenuDivider(),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.newHelpInstance,
-                  label: context.l10n.newHelpInstance,
-                  icon: BusyMarkGlyphs.add,
-                ),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.importMarkdownInstance,
-                  label: context.l10n.importMarkdownInstance,
-                  icon: BusyMarkGlyphs.folderOpen,
-                ),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.newLibrary,
-                  label: context.l10n.newTocLibrary,
-                  icon: BusyMarkGlyphs.code,
-                ),
-                const PopupMenuDivider(),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.editInstance,
-                  label: context.l10n.editInstance,
-                  icon: BusyMarkGlyphs.edit,
-                ),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.changeColor,
-                  label: context.l10n.changeInstanceColor,
-                  icon: BusyMarkGlyphs.appearance,
-                ),
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.openTocFile,
-                  label: context.l10n.openTocFile,
-                  icon: BusyMarkGlyphs.documentOpen,
-                ),
-              ],
-              onSelected: (action) {
-                switch (action) {
-                  case _TocHeaderAction.newTopic:
-                    onCreateTopic();
-                  case _TocHeaderAction.newHelpInstance:
-                    onCreateHelpInstance();
-                  case _TocHeaderAction.importMarkdownInstance:
-                    onImportMarkdownInstance();
-                  case _TocHeaderAction.newLibrary:
-                    onCreateLibrary();
-                  case _TocHeaderAction.editInstance:
-                    onEditInstance();
-                  case _TocHeaderAction.changeColor:
-                    onChangeColor();
-                  case _TocHeaderAction.openTocFile:
-                    onOpenTocFile();
-                }
-              },
+              ),
+              hasChildren: false,
+              expanded: false,
+              selected: p.equals(
+                instance.sourceTreePath,
+                selectedInstance.sourceTreePath,
+              ),
+              enabled: true,
+              onTap: () => onSelectInstance(instance.sourceTreePath),
             ),
-          ],
-        ),
+          const Divider(height: BusyMarkSpacing.md),
+        ],
       ),
     );
   }
+}
+
+WritersideInstanceIconColor _effectiveInstanceIconColor(
+  WritersideInstanceIconColor configured,
+  int index,
+) {
+  if (configured != WritersideInstanceIconColor.automatic) {
+    return configured;
+  }
+  const automaticPalette = [
+    WritersideInstanceIconColor.blue,
+    WritersideInstanceIconColor.green,
+    WritersideInstanceIconColor.orange,
+    WritersideInstanceIconColor.purple,
+    WritersideInstanceIconColor.teal,
+    WritersideInstanceIconColor.red,
+    WritersideInstanceIconColor.yellow,
+  ];
+  return automaticPalette[index % automaticPalette.length];
 }
 
 class _CreateWritersideTopicDialog extends ConsumerStatefulWidget {
@@ -8792,6 +8805,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       DocumentKind.config ||
       DocumentKind.variables ||
       DocumentKind.categories => SourceSyntaxLanguage.xml,
+      DocumentKind.gitIgnore => SourceSyntaxLanguage.plain,
       DocumentKind.image ||
       DocumentKind.resource ||
       DocumentKind.unknown ||
@@ -11257,6 +11271,7 @@ IconData _documentKindIcon(DocumentKind kind) {
     DocumentKind.config => YaruIcons.gear,
     DocumentKind.variables => BusyMarkGlyphs.symbols,
     DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.gitIgnore => YaruIcons.gear,
     DocumentKind.image => BusyMarkGlyphs.image,
     DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
   };
@@ -11273,6 +11288,7 @@ String _documentKindLabel(BuildContext context, DocumentKind kind) {
     DocumentKind.config => context.l10n.documentKindConfigurationFile,
     DocumentKind.variables => context.l10n.documentKindVariablesFile,
     DocumentKind.categories => context.l10n.documentKindCategoriesFile,
+    DocumentKind.gitIgnore => context.l10n.documentKindConfigurationFile,
     DocumentKind.image => context.l10n.image,
     DocumentKind.resource => context.l10n.documentKindResourceFile,
     DocumentKind.unknown => context.l10n.file,

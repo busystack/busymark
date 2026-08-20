@@ -65,4 +65,44 @@ void main() {
       contains('workspace.scan.skipped'),
     );
   });
+
+  test(
+    'display scan includes hidden and unsupported entries but not VCS data',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-scan-all-');
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      await Directory(p.join(root.path, '.idea')).create();
+      await File(
+        p.join(root.path, '.idea', '.gitignore'),
+      ).writeAsString('/cache\n');
+      await Directory(p.join(root.path, 'empty')).create();
+      await File(p.join(root.path, 'binary.dat')).writeAsBytes([0, 1, 2]);
+      await Directory(p.join(root.path, '.git')).create();
+      await File(p.join(root.path, '.git', 'config')).writeAsString('[core]\n');
+
+      final result = await scanWorkspaceEntities(
+        root.path,
+        options: const WorkspaceScanOptions(
+          includeUnsupportedFiles: true,
+          includeDirectories: true,
+          includeHiddenDirectories: true,
+          includeExcludedDirectories: true,
+        ),
+      );
+      final paths = result.entities
+          .map((entity) => p.relative(entity.path, from: root.path))
+          .toList();
+
+      expect(
+        paths,
+        containsAll(['.idea', '.idea/.gitignore', 'empty', 'binary.dat']),
+      );
+      expect(paths, isNot(contains('.git')));
+      expect(paths, isNot(contains('.git/config')));
+    },
+  );
 }
