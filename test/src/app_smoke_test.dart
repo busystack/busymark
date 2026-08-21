@@ -3911,6 +3911,9 @@ void main() {
     expect(editorContent, findsOneWidget);
     expect(editorScroll, findsOneWidget);
     final editorRect = tester.getRect(editorContent);
+    final editorScrollRect = tester.getRect(editorScroll);
+    expect(editorScrollRect.width, greaterThan(editorRect.width));
+    expect(editorScrollRect.right, greaterThan(editorRect.right));
     final editorHeadingRect = tester.getRect(
       find.descendant(of: editorContent, matching: find.byType(TextField)),
     );
@@ -3946,6 +3949,11 @@ void main() {
     expect(previewContent, findsOneWidget);
     expect(previewScroll, findsOneWidget);
     final previewRect = tester.getRect(previewContent);
+    final previewScrollRect = tester.getRect(previewScroll);
+    expect(previewScrollRect.width, closeTo(editorScrollRect.width, 0.1));
+    expect(previewScrollRect.right, closeTo(editorScrollRect.right, 0.1));
+    expect(previewScrollRect.width, greaterThan(previewRect.width));
+    expect(previewScrollRect.right, greaterThan(previewRect.right));
     final previewHeading = find.descendant(
       of: previewContent,
       matching: find.byWidgetPredicate(
@@ -3957,7 +3965,7 @@ void main() {
     expect(previewHeading, findsOneWidget);
     final previewHeadingRect = tester.getRect(previewHeading);
     final previewParagraph = find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is Text &&
@@ -3995,9 +4003,30 @@ void main() {
 
     final splitPaneRect = tester.getRect(previewScroll);
     final splitContentRect = tester.getRect(previewContent);
-    expect(splitContentRect.left, splitPaneRect.left);
-    expect(splitContentRect.right, splitPaneRect.right);
-    expect(splitContentRect.top, splitPaneRect.top);
+    expect(
+      splitContentRect.left,
+      closeTo(
+        splitPaneRect.left +
+            BusyMarkDocumentLayoutSpec.splitPreview.minimumInsets.left,
+        0.1,
+      ),
+    );
+    expect(
+      splitContentRect.right,
+      closeTo(
+        splitPaneRect.right -
+            BusyMarkDocumentLayoutSpec.splitPreview.minimumInsets.right,
+        0.1,
+      ),
+    );
+    expect(
+      splitContentRect.top,
+      closeTo(
+        splitPaneRect.top +
+            BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding.top,
+        0.1,
+      ),
+    );
     expect(
       tester.widget<ScrollablePositionedList>(previewScroll).padding,
       BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
@@ -4305,7 +4334,7 @@ void main() {
     expect(previewTextWidget.textSpan?.toPlainText(), code);
     expect(Directionality.of(tester.element(previewText)), TextDirection.ltr);
     final previewArabic = find.descendant(
-      of: find.byKey(const ValueKey('preview-document-content')),
+      of: find.byKey(const ValueKey('preview-document-scroll')),
       matching: find.byWidgetPredicate(
         (widget) => widget is RichText && widget.text.toPlainText() == 'مرحبا',
       ),
@@ -4482,11 +4511,9 @@ After break.
         .setDocumentViewMode(DocumentViewModePreference.preview);
     await tester.pump(const Duration(milliseconds: 100));
 
-    final previewContent = find.byKey(
-      const ValueKey('preview-document-content'),
-    );
+    final previewScroll = find.byKey(const ValueKey('preview-document-scroll'));
     Finder previewHeading(String text) => find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) => widget is Text && widget.textSpan?.toPlainText() == text,
       ),
@@ -4508,7 +4535,7 @@ After break.
       expect(previewStyle?.height, editorStyle?.height);
     }
     final previewBody = find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is Text &&

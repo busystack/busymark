@@ -9257,17 +9257,18 @@ class _PreviewPane extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: SelectionArea(
-        child: BusyMarkDocumentContentFrame(
-          layout: documentLayout,
-          contentKey: const ValueKey('preview-document-content'),
-          child: ScrollablePositionedList.builder(
-            key: const ValueKey('preview-document-scroll'),
-            itemScrollController: controller,
-            itemPositionsListener: itemPositionsListener,
-            padding: documentLayout.scrollPadding,
-            itemCount: document.blocks.length,
-            itemBuilder: (context, index) =>
-                _keyedPreviewBlock(context, index, document.blocks[index]),
+        child: ScrollablePositionedList.builder(
+          key: const ValueKey('preview-document-scroll'),
+          itemScrollController: controller,
+          itemPositionsListener: itemPositionsListener,
+          padding: documentLayout.scrollPadding,
+          itemCount: document.blocks.length,
+          itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
+            layout: documentLayout,
+            contentKey: index == 0
+                ? const ValueKey('preview-document-content')
+                : null,
+            child: _keyedPreviewBlock(context, index, document.blocks[index]),
           ),
         ),
       ),
