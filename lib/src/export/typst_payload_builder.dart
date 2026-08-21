@@ -51,6 +51,7 @@ class TypstPayloadBuilder {
         'children': [
           for (final child in inline.children) _inline(child, assets),
         ],
+      ...inline.attributes,
     };
   }
 }

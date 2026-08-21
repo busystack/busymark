@@ -3475,4 +3475,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'يجب أن تعرّف رؤوس الجدول أعمدتها؛ أكمل كل رأس فارغ.';
+
+  @override
+  String get mathRenderFailed => 'تعذر عرض التعبير الرياضي.';
+
+  @override
+  String get inlineMath => 'رياضيات مضمنة';
+
+  @override
+  String get displayMath => 'رياضيات معروضة';
 }

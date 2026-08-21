@@ -3498,4 +3498,14 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Nagłówki tabeli muszą identyfikować kolumny; uzupełnij każdy pusty nagłówek.';
+
+  @override
+  String get mathRenderFailed =>
+      'Nie udało się wyrenderować wyrażenia matematycznego.';
+
+  @override
+  String get inlineMath => 'Matematyka w tekście';
+
+  @override
+  String get displayMath => 'Matematyka blokowa';
 }

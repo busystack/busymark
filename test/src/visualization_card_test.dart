@@ -307,6 +307,12 @@ class _OpenReferenceHost implements WebRenderHost {
   Uint8List copiedPng = Uint8List(0);
 
   @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) => throw UnimplementedError();
+
+  @override
   Future<void> copyPngToClipboard(Uint8List pngBytes) async {
     copiedPng = pngBytes;
   }

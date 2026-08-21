@@ -240,6 +240,57 @@ def expect_svg(response: dict[str, object]) -> None:
         raise AssertionError(response.get("message", "SVG was not returned"))
 
 
+def expect_math_all_svg(response: dict[str, object]) -> None:
+    if response.get("mathJaxVersion") != "4.1.3":
+        raise AssertionError(f"Unexpected MathJax version: {response}")
+    if response.get("fontVersion") != "4.1.3":
+        raise AssertionError(f"Unexpected MathJax font version: {response}")
+    results = response.get("results")
+    if not isinstance(results, list) or not results:
+        raise AssertionError(f"MathJax returned no results: {response}")
+    for item in results:
+        if not isinstance(item, dict) or not isinstance(item.get("svg"), str):
+            raise AssertionError(f"MathJax did not return SVG: {item}")
+        if "<svg" not in item["svg"] or "<defs" not in item["svg"]:
+            raise AssertionError(f"MathJax SVG was not standalone: {item}")
+
+
+def expect_math_partial_failure(response: dict[str, object]) -> None:
+    results = response.get("results")
+    if not isinstance(results, list) or len(results) != 2:
+        raise AssertionError(f"Unexpected math batch: {response}")
+    if not isinstance(results[0], dict) or "<svg" not in results[0].get("svg", ""):
+        raise AssertionError(f"Valid expression did not render: {results[0]}")
+    if (
+        not isinstance(results[1], dict)
+        or not isinstance(results[1].get("error"), dict)
+        or results[1]["error"].get("code") != "math.invalidTex"
+    ):
+        raise AssertionError(f"Invalid expression did not fail locally: {results[1]}")
+
+
+def expect_math_error(response: dict[str, object]) -> None:
+    results = response.get("results")
+    if not isinstance(results, list) or len(results) != 1:
+        raise AssertionError(f"Unexpected math error batch: {response}")
+    error = results[0].get("error") if isinstance(results[0], dict) else None
+    if not isinstance(error, dict) or error.get("code") != "math.invalidTex":
+        raise AssertionError(f"Expression unexpectedly inherited TeX state: {response}")
+
+
+def expect_math_rejected(response: dict[str, object]) -> None:
+    results = response.get("results")
+    if not isinstance(results, list) or len(results) != 4:
+        raise AssertionError(f"Unexpected unsafe-math batch: {response}")
+    for item in results:
+        error = item.get("error") if isinstance(item, dict) else None
+        if not isinstance(error, dict) or error.get("code") not in {
+            "math.invalidTex",
+            "math.resourceLimit",
+        }:
+            raise AssertionError(f"Unsafe TeX was not rejected: {item}")
+
+
 def expect_openapi(response: dict[str, object]) -> None:
     reference = response.get("reference")
     if not isinstance(reference, dict) or not reference.get("valid"):
@@ -418,6 +469,203 @@ def main() -> int:
                 "theme": "dark",
             },
             "validator": expect_svg,
+        },
+        {
+            "name": "MathJax NewCM double-struck",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "mathbb",
+                        "expression": r"\mathbb{R}",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-mathbb",
+                    }
+                ],
+            },
+            "validator": expect_math_all_svg,
+        },
+        {
+            "name": "MathJax NewCM sequential calligraphic",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "mathcal",
+                        "expression": r"\mathcal{L}",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-mathcal",
+                    }
+                ],
+            },
+            "validator": expect_math_all_svg,
+        },
+        {
+            "name": "MathJax scientific package profile",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "scientific",
+                        "expression": (
+                            r"\ce{2H2 + O2 -> 2H2O}\quad"
+                            r"\Braket{\psi|\phi}+\cancel{x}+\upalpha"
+                            r"+a\coloneqq b+\units{m}"
+                        ),
+                        "display": True,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-scientific",
+                    },
+                    {
+                        "id": "boldsymbol",
+                        "expression": r"\boldsymbol{\alpha}",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-boldsymbol",
+                    },
+                    {
+                        "id": "cases",
+                        "expression": r"f(x)=\begin{cases}x&x>0\\0&x\leq0\end{cases}",
+                        "display": True,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-cases",
+                    },
+                    {
+                        "id": "gensymb",
+                        "expression": r"90\degree",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-gensymb",
+                    },
+                    {
+                        "id": "empheq",
+                        "expression": r"\begin{empheq}{align}E&=mc^2\end{empheq}",
+                        "display": True,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-empheq",
+                    },
+                    {
+                        "id": "ams",
+                        "expression": r"\begin{align}a&=b\end{align}",
+                        "display": True,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-ams",
+                    },
+                ],
+            },
+            "validator": expect_math_all_svg,
+        },
+        {
+            "name": "MathJax partial failure",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "valid",
+                        "expression": r"\sqrt{x^2+y^2}",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-valid",
+                    },
+                    {
+                        "id": "invalid",
+                        "expression": r"\frac{",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-invalid",
+                    },
+                ],
+            },
+            "validator": expect_math_partial_failure,
+        },
+        {
+            "name": "MathJax unsafe and dynamic commands",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": name,
+                        "expression": expression,
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": f"smoke-{name}",
+                    }
+                    for name, expression in [
+                        ("url", r"\href{javascript:alert(1)}{x}"),
+                        ("dynamic", r"\require{physics}"),
+                        ("style", r"\style{position:fixed}{x}"),
+                        ("recursive", r"\newcommand{\loop}{\loop}\loop"),
+                    ]
+                ],
+            },
+            "validator": expect_math_rejected,
+        },
+        {
+            "name": "MathJax local newcommand",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "macro-definition",
+                        "expression": r"\newcommand{\busyisolated}{z}\busyisolated",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-macro-definition",
+                    }
+                ],
+            },
+            "validator": expect_math_all_svg,
+        },
+        {
+            "name": "MathJax expression isolation",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "renderMathBatch",
+                "expressions": [
+                    {
+                        "id": "macro-isolation",
+                        "expression": r"\busyisolated",
+                        "display": False,
+                        "em": 16,
+                        "ex": 8,
+                        "containerWidth": 720,
+                        "svgIdPrefix": "smoke-macro-isolation",
+                    }
+                ],
+            },
+            "validator": expect_math_error,
         },
         *(
             [

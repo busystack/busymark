@@ -2723,5 +2723,8 @@
   "compare": "Comparer",
   "reloadFromDisk": "Recharger depuis le disque",
   "keepMine": "Conserver ma version",
-  "saveAs": "Enregistrer sous"
+  "saveAs": "Enregistrer sous",
+  "mathRenderFailed": "Impossible d’afficher l’expression mathématique.",
+  "inlineMath": "Formule en ligne",
+  "displayMath": "Formule en bloc"
 }

@@ -150,6 +150,8 @@ void main() {
       orderedEquals(<String>[
         'Icons'
             '.fork_right',
+        'Icons'
+            '.functions',
       ]),
     );
   });

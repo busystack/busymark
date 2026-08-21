@@ -8,6 +8,7 @@ import '../core/atomic_file_writer.dart';
 import '../markdown/markdown_parser.dart';
 import 'markdown_export_assets.dart';
 import 'markdown_export_mapper.dart';
+import 'markdown_math_export.dart';
 import 'markdown_pdf_models.dart';
 import 'markdown_visualization_export.dart';
 import 'typst_compiler.dart';
@@ -28,6 +29,7 @@ class MarkdownPdfExportService {
     this.compileTimeout = const Duration(seconds: 45),
     this.maximumPdfBytes = 100 * 1024 * 1024,
     this.visualizationRenderer,
+    this.mathRenderer,
   });
 
   final MarkdownParser parser;
@@ -41,6 +43,7 @@ class MarkdownPdfExportService {
   final Duration compileTimeout;
   final int maximumPdfBytes;
   final MarkdownVisualizationExportRenderer? visualizationRenderer;
+  final MarkdownMathExportRenderer? mathRenderer;
 
   Future<MarkdownPdfExportResult> export(
     MarkdownPdfExportRequest request, {
@@ -90,10 +93,23 @@ class MarkdownPdfExportService {
               cancellationToken: token,
             );
       token.throwIfCancelled();
-      final document = mapper.map(
+      final mappedDocument = mapper.map(
         parsed.busyDocument,
         blockOverrides: visualizationPreparation.blockOverrides,
       );
+      final mathPreparation = mathRenderer == null
+          ? MarkdownMathExportPreparation(
+              document: mappedDocument,
+              warnings: const [],
+            )
+          : await mathRenderer!.prepare(
+              document: mappedDocument,
+              exportRoot: exportRoot,
+              containerWidth: _pdfContentWidth(request.options),
+              cancellationToken: token,
+            );
+      token.throwIfCancelled();
+      final document = mathPreparation.document;
       final stagedAssets = await assetStager.stage(
         document: document,
         exportRoot: exportRoot,
@@ -175,6 +191,7 @@ class MarkdownPdfExportService {
         pageCount: _pageCount(pdfBytes),
         warnings: [
           ...visualizationPreparation.warnings,
+          ...mathPreparation.warnings,
           ...stagedAssets.warnings,
         ],
       );
@@ -189,6 +206,27 @@ class MarkdownPdfExportService {
     } finally {
       await _deleteExportRootBestEffort(exportRoot);
     }
+  }
+
+  double _pdfContentWidth(MarkdownPdfOptions options) {
+    final pageWidth = switch (options.pageSize) {
+      MarkdownPdfPageSize.a4 => 595.28,
+      MarkdownPdfPageSize.letter => 612.0,
+    };
+    final pageHeight = switch (options.pageSize) {
+      MarkdownPdfPageSize.a4 => 841.89,
+      MarkdownPdfPageSize.letter => 792.0,
+    };
+    final horizontalMargin = switch (options.margin) {
+      MarkdownPdfMargin.narrow => 36.0,
+      MarkdownPdfMargin.normal => 57.0,
+      MarkdownPdfMargin.wide => 78.0,
+    };
+    final orientedWidth =
+        options.orientation == MarkdownPdfOrientation.landscape
+        ? pageHeight
+        : pageWidth;
+    return orientedWidth - 2 * horizontalMargin;
   }
 
   static Future<String> _loadBundledTemplate() {

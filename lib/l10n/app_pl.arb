@@ -2718,5 +2718,8 @@
   "compare": "Porównaj",
   "reloadFromDisk": "Wczytaj ponownie z dysku",
   "keepMine": "Zachowaj moją wersję",
-  "saveAs": "Zapisz jako"
+  "saveAs": "Zapisz jako",
+  "mathRenderFailed": "Nie udało się wyrenderować wyrażenia matematycznego.",
+  "inlineMath": "Matematyka w tekście",
+  "displayMath": "Matematyka blokowa"
 }

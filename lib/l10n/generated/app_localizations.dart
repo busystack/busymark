@@ -5852,6 +5852,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Table header cells must identify their columns; complete each empty header.'**
   String get diagnosticMarkdownTableEmptyHeader;
+
+  /// Tooltip and diagnostic text shown when a mathematical expression cannot be rendered.
+  ///
+  /// In en, this message translates to:
+  /// **'The mathematical expression could not be rendered.'**
+  String get mathRenderFailed;
+
+  /// Editor action that inserts an inline mathematical expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline math'**
+  String get inlineMath;
+
+  /// Editor action that inserts a display mathematical expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Display math'**
+  String get displayMath;
 }
 
 class _AppLocalizationsDelegate

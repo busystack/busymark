@@ -3494,4 +3494,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Tabellenüberschriften müssen ihre Spalten bezeichnen; füllen Sie jede leere Überschrift aus.';
+
+  @override
+  String get mathRenderFailed =>
+      'Der mathematische Ausdruck konnte nicht dargestellt werden.';
+
+  @override
+  String get inlineMath => 'Mathematik im Text';
+
+  @override
+  String get displayMath => 'Mathematische Formel als Block';
 }

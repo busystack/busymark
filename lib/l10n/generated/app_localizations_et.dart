@@ -3457,4 +3457,13 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
+
+  @override
+  String get mathRenderFailed => 'Matemaatilist avaldist ei saanud kuvada.';
+
+  @override
+  String get inlineMath => 'Reasisene matemaatika';
+
+  @override
+  String get displayMath => 'Plokina matemaatika';
 }

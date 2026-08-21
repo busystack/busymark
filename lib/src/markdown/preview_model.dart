@@ -4,10 +4,12 @@ import '../visualization/visualization_models.dart';
 import 'busymark_document.dart';
 import 'document_outline.dart';
 import 'markdown_model.dart';
+import 'math_syntax.dart';
 
 enum PreviewBlockKind {
   heading,
   paragraph,
+  math,
   code,
   list,
   quote,
@@ -62,6 +64,7 @@ enum PreviewInlineKind {
   code,
   link,
   image,
+  math,
 }
 
 class PreviewInline {
@@ -70,12 +73,14 @@ class PreviewInline {
     required this.text,
     this.destination,
     this.children = const [],
+    this.attributes = const {},
   });
 
   final PreviewInlineKind kind;
   final String text;
   final String? destination;
   final List<PreviewInline> children;
+  final Map<String, String> attributes;
 }
 
 class PreviewDocument {
@@ -156,19 +161,19 @@ class BusyMarkPreviewBuilder {
 
   List<PreviewBlock> buildBlocks(BusyDocument document) {
     return [
-      for (final block in document.blocks)
+      for (final (index, block) in document.blocks.indexed)
         if (block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly)
-          _block(block),
+          _block(block, 'b$index'),
     ];
   }
 
-  PreviewBlock _block(BusyBlock block) {
+  PreviewBlock _block(BusyBlock block, String path) {
     final preview = switch (block.kind) {
       BusyBlockKind.heading => PreviewBlock(
         kind: PreviewBlockKind.heading,
         text: _plainText(block.inlines),
         level: int.tryParse(block.attributes['level'] ?? ''),
-        inlines: _inlines(block.inlines),
+        inlines: _inlines(block.inlines, '$path.i'),
         attributes: {
           ...block.attributes,
           if (block.attributes['id'] case final id?) 'id': id,
@@ -178,8 +183,20 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.paragraph => PreviewBlock(
         kind: PreviewBlockKind.paragraph,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines),
+        inlines: _inlines(block.inlines, '$path.i'),
         attributes: block.attributes,
+      ),
+      BusyBlockKind.math => PreviewBlock(
+        kind: PreviewBlockKind.math,
+        text:
+            block.attributes[busyMarkMathExpressionAttribute] ??
+            block.plainText,
+        inlines: _inlines(block.inlines, '$path.i'),
+        attributes: {
+          ...block.attributes,
+          'expressionId': 'block-${block.id}',
+          'editorBlockId': block.id,
+        },
       ),
       BusyBlockKind.codeBlock => PreviewBlock(
         kind: PreviewBlockKind.code,
@@ -195,8 +212,11 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.taskListItem => PreviewBlock(
         kind: PreviewBlockKind.list,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines),
-        children: block.children.map(_block).toList(),
+        inlines: _inlines(block.inlines, '$path.i'),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.blockquote => PreviewBlock(
@@ -207,11 +227,14 @@ class BusyMarkPreviewBuilder {
         inlines:
             block.children.length == 1 &&
                 block.children.single.kind == BusyBlockKind.paragraph
-            ? _inlines(block.children.single.inlines)
+            ? _inlines(block.children.single.inlines, '$path.b0.i')
             : block.children.isEmpty
-            ? _inlines(block.inlines)
+            ? _inlines(block.inlines, '$path.i')
             : const [],
-        children: block.children.map(_block).toList(),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.thematicBreak => const PreviewBlock(
@@ -223,19 +246,22 @@ class BusyMarkPreviewBuilder {
         text: block.inlines.isEmpty
             ? block.plainText
             : block.inlines.first.text,
-        inlines: _inlines(block.inlines),
+        inlines: _inlines(block.inlines, '$path.i'),
         attributes: block.attributes,
       ),
       BusyBlockKind.table => PreviewBlock(
         kind: PreviewBlockKind.table,
         text: '',
-        children: block.children.map(_block).toList(),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.writersideAdmonition => PreviewBlock(
         kind: PreviewBlockKind.admonition,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines),
+        inlines: _inlines(block.inlines, '$path.i'),
         attributes: {
           ...block.attributes,
           'style': block.attributes['element'] ?? 'note',
@@ -256,7 +282,10 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.htmlBlock when block.children.isNotEmpty => PreviewBlock(
         kind: PreviewBlockKind.container,
         text: block.children.map((child) => child.plainText).join('\n'),
-        children: block.children.map(_block).toList(),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.htmlBlock ||
@@ -294,11 +323,14 @@ class BusyMarkPreviewBuilder {
     );
   }
 
-  List<PreviewInline> _inlines(List<BusyInline> inlines) {
-    return [for (final inline in inlines) _inline(inline)];
+  List<PreviewInline> _inlines(List<BusyInline> inlines, String path) {
+    return [
+      for (final (index, inline) in inlines.indexed)
+        _inline(inline, '$path$index'),
+    ];
   }
 
-  PreviewInline _inline(BusyInline inline) {
+  PreviewInline _inline(BusyInline inline, String path) {
     return PreviewInline(
       kind: switch (inline.kind) {
         BusyInlineKind.text ||
@@ -307,6 +339,7 @@ class BusyMarkPreviewBuilder {
         BusyInlineKind.writersideVariable ||
         BusyInlineKind.html ||
         BusyInlineKind.unknown => PreviewInlineKind.text,
+        BusyInlineKind.math => PreviewInlineKind.math,
         BusyInlineKind.strong => PreviewInlineKind.strong,
         BusyInlineKind.emphasis => PreviewInlineKind.emphasis,
         BusyInlineKind.underline => PreviewInlineKind.underline,
@@ -317,7 +350,11 @@ class BusyMarkPreviewBuilder {
       },
       text: inline.kind == BusyInlineKind.softBreak ? ' ' : inline.text,
       destination: inline.destination,
-      children: _inlines(inline.children),
+      children: _inlines(inline.children, '$path.i'),
+      attributes: {
+        ...inline.attributes,
+        if (inline.kind == BusyInlineKind.math) 'expressionId': 'inline-$path',
+      },
     );
   }
 

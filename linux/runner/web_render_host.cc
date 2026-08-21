@@ -711,7 +711,8 @@ gchar* encode_arguments(FlValue* args, GError** error) {
 }
 
 gboolean is_render_operation(const gchar* method) {
-  return g_strcmp0(method, "renderMermaid") == 0 ||
+  return g_strcmp0(method, "renderMathBatch") == 0 ||
+         g_strcmp0(method, "renderMermaid") == 0 ||
          g_strcmp0(method, "renderPlantUml") == 0 ||
          g_strcmp0(method, "inspectOpenApi") == 0 ||
          g_strcmp0(method, "parseOpenApi") == 0 ||

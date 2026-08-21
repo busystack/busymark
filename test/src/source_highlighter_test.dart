@@ -623,6 +623,28 @@ void main() {
 
     expect(_spanStyle(spans, 'value')?.fontStyle, FontStyle.italic);
   });
+
+  testWidgets('markdown highlighter recognizes math without damaging code', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(
+      tester,
+      r'Formula $x^2$ and $`a_b`$; code `$not$`; escaped \$5 and $5-$10.'
+      '\n'
+      r'$$'
+      '\n'
+      r'\int_0^1 x\,dx'
+      '\n'
+      r'$$'
+      '\n',
+    );
+
+    final mathStyle = _spanStyle(spans, 'x^2');
+    expect(mathStyle?.color, isNotNull);
+    expect(_spanStyle(spans, 'a_b')?.color, mathStyle?.color);
+    expect(_spanStyle(spans, r'$not$')?.fontFamily, 'Ubuntu Mono');
+    expect(_spanStyle(spans, r'\int_0^1 x\,dx')?.color, mathStyle?.color);
+  });
 }
 
 Future<List<TextSpan>> _highlightMarkdown(

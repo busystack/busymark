@@ -12,6 +12,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onBlockCommand,
     required this.onInlineCommand,
     required this.onLinkCommand,
+    required this.onInlineMathCommand,
+    required this.onDisplayMathCommand,
     required this.onImageCommand,
     required this.onInlineImageCommand,
     required this.onTableCommand,
@@ -27,6 +29,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
+  final VoidCallback onInlineMathCommand;
+  final VoidCallback onDisplayMathCommand;
   final VoidCallback onImageCommand;
   final VoidCallback onInlineImageCommand;
   final VoidCallback onTableCommand;
@@ -108,6 +112,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             ),
             _button(
               context,
+              tooltip: context.l10n.inlineMath,
+              icon: BusyMarkGlyphs.math,
+              onPressed: onInlineMathCommand,
+            ),
+            _button(
+              context,
               tooltip: context.l10n.hardLineBreak,
               icon: BusyMarkGlyphs.hardBreak,
               shortcut: BusyMarkEditorShortcutLabels.hardLineBreak,
@@ -130,6 +140,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               shortcut: BusyMarkEditorShortcutLabels.codeBlock,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.codeBlock),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.displayMath,
+              icon: BusyMarkGlyphs.math,
+              onPressed: onDisplayMathCommand,
             ),
             _button(
               context,

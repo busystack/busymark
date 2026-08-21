@@ -12,10 +12,12 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
+import '../math/math_providers.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
 import '../visualization/visualization_providers.dart';
 import 'markdown_visualization_export.dart';
+import 'markdown_math_export.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
 import 'writerside_pdf_export_ui.dart';
@@ -24,6 +26,9 @@ final markdownPdfExportServiceProvider = Provider<MarkdownPdfExportService>(
   (ref) => MarkdownPdfExportService(
     visualizationRenderer: MarkdownVisualizationExportRenderer(
       coordinator: ref.watch(visualizationCoordinatorProvider),
+    ),
+    mathRenderer: MarkdownMathExportRenderer(
+      coordinator: ref.watch(mathCoordinatorProvider),
     ),
   ),
 );

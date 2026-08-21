@@ -26,6 +26,8 @@ projects.
 - Edit and save local files.
 - Read rendered Markdown without editing it.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
+- Typeset inline and display mathematics locally and offline with bundled
+  MathJax, including Writerside math forms and vector PDF output.
 - Edit Markdown with free-form AI instructions, an explicit change target, and
   explicitly selected context through Ollama, OpenAI, or Gemini, with
   diff-before-apply review.
@@ -102,6 +104,12 @@ Markdown PDF generation is local and offline. BusyMark bundles the pinned Typst
 compiler; users do not install or configure a separate program. Local PNG,
 JPEG, GIF, and safe SVG images are included. Remote images are deliberately not
 downloaded during export and are represented by their alternative text.
+
+Inline and display equations use the same bundled MathJax semantics in preview
+and PDF export. Safe generated equations remain self-contained vector SVG, with
+inline baseline metrics carried into Typst. See [mathematical expressions](docs/math.md)
+for supported Markdown and Writerside forms, the scientific TeX package profile,
+editing behavior, and offline security boundaries.
 
 Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
 SVG where possible and a local high-resolution raster fallback for browser-only

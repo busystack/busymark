@@ -139,6 +139,16 @@ class MarkdownExportMapper {
         kind: MarkdownExportBlockKind.paragraph,
         inlines: _mapInlines(block.inlines),
       ),
+      BusyBlockKind.math => MarkdownExportBlock(
+        kind: MarkdownExportBlockKind.math,
+        text: block.plainText,
+        attributes: {
+          'mathId': block.id,
+          'display': true,
+          if (block.attributes['mathSourceForm'] case final sourceForm?)
+            'sourceForm': sourceForm,
+        },
+      ),
       BusyBlockKind.codeBlock => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.code,
         text: block.plainText,
@@ -270,6 +280,16 @@ class MarkdownExportMapper {
       BusyInlineKind.code => MarkdownExportInline(
         kind: MarkdownExportInlineKind.code,
         text: inline.text,
+      ),
+      BusyInlineKind.math => MarkdownExportInline(
+        kind: MarkdownExportInlineKind.math,
+        text: inline.text,
+        attributes: {
+          'mathId': inline.attributes['expressionId'] ?? inline.text,
+          'display': 'false',
+          if (inline.attributes['mathSourceForm'] case final sourceForm?)
+            'sourceForm': sourceForm,
+        },
       ),
       BusyInlineKind.link => MarkdownExportInline(
         kind: MarkdownExportInlineKind.link,

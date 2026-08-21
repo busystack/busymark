@@ -3484,4 +3484,14 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Le intestazioni della tabella devono identificare le colonne; completa ogni intestazione vuota.';
+
+  @override
+  String get mathRenderFailed =>
+      'Impossibile visualizzare l’espressione matematica.';
+
+  @override
+  String get inlineMath => 'Formula in linea';
+
+  @override
+  String get displayMath => 'Formula in blocco';
 }

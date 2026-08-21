@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
@@ -12,6 +13,7 @@ import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
+import '../markdown/math_syntax.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_instance_service.dart';
@@ -1429,6 +1431,7 @@ class WorkspaceService {
       'code-block',
       'img',
       'a',
+      'math',
     }.contains(name);
   }
 
@@ -1463,6 +1466,20 @@ class WorkspaceService {
   }
 
   List<PreviewBlock> _xmlPreviewBlocks(String source, String? title) {
+    final mathExpressions = <String>[];
+    try {
+      final document = XmlDocument.parse(source);
+      mathExpressions.addAll(
+        document.descendants
+            .whereType<XmlElement>()
+            .where((element) => element.name.local == 'math')
+            .map((element) => element.innerText),
+      );
+    } on XmlParserException {
+      // The ordinary semantic-element fallback below still provides a useful
+      // preview while the user repairs malformed topic XML.
+    }
+    var mathIndex = 0;
     final names = RegExp(
       r'<\s*([A-Za-z][A-Za-z0-9_-]*)\b',
     ).allMatches(source).map((match) => match.group(1)!).toList();
@@ -1472,11 +1489,29 @@ class WorkspaceService {
     return [
       for (final name in names)
         if (_visibleSemanticElement(name))
-          PreviewBlock(
-            kind: _semanticKind(name),
-            text: _semanticText(name, title),
-            attributes: {'element': name},
-          ),
+          if (name == 'math' && mathIndex < mathExpressions.length)
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: mathExpressions[mathIndex],
+              inlines: [
+                PreviewInline(
+                  kind: PreviewInlineKind.math,
+                  text: mathExpressions[mathIndex],
+                  attributes: {
+                    busyMarkMathSourceFormAttribute:
+                        BusyMathSourceForm.writersideElement.name,
+                    'expressionId': 'topic-math-${mathIndex++}',
+                  },
+                ),
+              ],
+              attributes: const {'element': 'math'},
+            )
+          else
+            PreviewBlock(
+              kind: _semanticKind(name),
+              text: _semanticText(name, title),
+              attributes: {'element': name},
+            ),
     ];
   }
 }

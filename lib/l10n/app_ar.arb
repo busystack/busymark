@@ -2702,5 +2702,8 @@
   "compare": "مقارنة",
   "reloadFromDisk": "إعادة التحميل من القرص",
   "keepMine": "الاحتفاظ بنسختي",
-  "saveAs": "حفظ باسم"
+  "saveAs": "حفظ باسم",
+  "mathRenderFailed": "تعذر عرض التعبير الرياضي.",
+  "inlineMath": "رياضيات مضمنة",
+  "displayMath": "رياضيات معروضة"
 }

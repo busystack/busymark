@@ -2721,5 +2721,8 @@
   "compare": "مقایسه",
   "reloadFromDisk": "بارگیری دوباره از دیسک",
   "keepMine": "نگه‌داشتن نسخهٔ من",
-  "saveAs": "ذخیره با نام"
+  "saveAs": "ذخیره با نام",
+  "mathRenderFailed": "عبارت ریاضی قابل نمایش نبود.",
+  "inlineMath": "ریاضی درون‌خطی",
+  "displayMath": "ریاضی نمایشی"
 }

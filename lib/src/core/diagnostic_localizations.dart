@@ -62,6 +62,12 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
       value('destination'),
     ),
     'markdown.table.empty-header' => l10n.diagnosticMarkdownTableEmptyHeader,
+    'math.invalidTex' ||
+    'math.resourceLimit' ||
+    'math.timeout' ||
+    'math.rendererUnavailable' ||
+    'math.unsafeOutput' ||
+    'math.cancelled' => l10n.mathRenderFailed,
     'writerside.config.invalid-xml' ||
     'writerside.build-profiles.invalid-xml' ||
     'writerside.instance-groups.invalid-xml' ||

@@ -13,6 +13,7 @@ import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
 import 'markdown_model.dart';
+import 'math_syntax.dart';
 import 'raw_html_policy.dart';
 
 // Cross-file diagnostics are intentionally scoped to Markdown files that
@@ -669,6 +670,7 @@ class MarkdownParser {
             );
             break;
           case BusyInlineKind.text:
+          case BusyInlineKind.math:
           case BusyInlineKind.strong:
           case BusyInlineKind.emphasis:
           case BusyInlineKind.underline:
@@ -822,6 +824,13 @@ class MarkdownParser {
         continue;
       }
 
+      final displayMathEnd = _displayMathEndIndex(indexedLines, index);
+      if (displayMathEnd != null) {
+        addChunk(startIndex, displayMathEnd);
+        index = displayMathEnd;
+        continue;
+      }
+
       final htmlEndIndex = _rawHtmlContainerSourceEndIndex(indexedLines, index);
       if (htmlEndIndex != null) {
         addChunk(startIndex, htmlEndIndex);
@@ -862,6 +871,7 @@ class MarkdownParser {
         final line = indexedLines[index];
         if (line.trimmed.isEmpty ||
             MarkdownFence.parse(line.line) != null ||
+            _startsDisplayMath(line.line) ||
             _isAtxHeading(line.line) ||
             (!startsWithBlockquote && _isBlockquoteStart(line.line)) ||
             _listItemIndent(line.line) != null) {
@@ -1067,10 +1077,59 @@ class MarkdownParser {
   }
 
   md.Document _markdownDocument() {
-    return md.Document(
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: false,
-    );
+    return busyMarkMarkdownDocument(MarkdownMode.commonMark);
+  }
+
+  int? _displayMathEndIndex(List<_ScannedSourceLine> lines, int startIndex) {
+    if (!_startsDisplayMath(lines[startIndex].line)) {
+      return null;
+    }
+    final first = lines[startIndex].line;
+    final opening = first.indexOf(r'$$');
+    final tail = first.substring(opening + 2);
+    final firstClose = _displayMathCloseIndex(tail);
+    if (firstClose != null) {
+      return tail.substring(0, firstClose).trim().isEmpty
+          ? null
+          : startIndex + 1;
+    }
+    final expression = StringBuffer(tail);
+    for (var index = startIndex + 1; index < lines.length; index++) {
+      final line = lines[index].line;
+      final close = _displayMathCloseIndex(line);
+      if (close != null) {
+        if (expression.isNotEmpty) expression.writeln();
+        expression.write(line.substring(0, close));
+        return expression.toString().trim().isEmpty ? null : index + 1;
+      }
+      if (expression.isNotEmpty) expression.writeln();
+      expression.write(line);
+    }
+    return null;
+  }
+
+  bool _startsDisplayMath(String line) {
+    return RegExp(r'^ {0,3}\$\$(?!\$)').hasMatch(line);
+  }
+
+  int? _displayMathCloseIndex(String line) {
+    for (var index = 0; index + 1 < line.length; index++) {
+      if (!line.startsWith(r'$$', index)) {
+        continue;
+      }
+      var backslashes = 0;
+      for (
+        var cursor = index - 1;
+        cursor >= 0 && line.codeUnitAt(cursor) == 0x5c;
+        cursor--
+      ) {
+        backslashes += 1;
+      }
+      if (backslashes.isEven && line.substring(index + 2).trim().isEmpty) {
+        return index;
+      }
+    }
+    return null;
   }
 
   int _consumedLineCount(md.BlockParser parser, List<md.Line> lines) {

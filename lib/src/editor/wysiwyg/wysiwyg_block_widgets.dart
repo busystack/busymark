@@ -12,6 +12,7 @@ import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
+import '../../math/math_widget.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../editor_text_context_menu.dart';
@@ -198,6 +199,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, _) => _buildBlock(context),
+    );
+  }
+
+  Widget _buildBlock(BuildContext context) {
     final style = _textStyle(context);
     final prefix = _prefix(context);
     final readOnly = _readOnly;
@@ -346,6 +354,21 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         allowRemoteImages: allowRemoteImages,
         onRemoteImageBlocked: onRemoteImageBlocked,
         onEdit: _editHtmlBlock,
+      );
+    }
+    if (busyMarkWysiwygBlockContainsMath(block) && !focusNode.hasFocus) {
+      return Focus(
+        focusNode: focusNode,
+        child: GestureDetector(
+          key: ValueKey('wysiwyg-rendered-math-${block.id}'),
+          behavior: HitTestBehavior.translucent,
+          onTap: _focusBlock,
+          child: _RenderedMathBlock(
+            block: block,
+            editRevision: editRevision,
+            style: style,
+          ),
+        ),
       );
     }
     return Directionality(
@@ -543,6 +566,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
     return switch (block.kind) {
       BusyBlockKind.heading => busyMarkDocumentHeadingTextStyle(context, level),
+      _ when busyMarkWysiwygBlockContainsMath(block) && focusNode.hasFocus =>
+        busyMarkDocumentCodeTextStyle(context),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => busyMarkDocumentBodyTextStyle(context),
     };
@@ -597,6 +622,90 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.unknown => Border.all(color: colors.subtleBorder),
       _ => null,
     };
+  }
+}
+
+class _RenderedMathBlock extends StatelessWidget {
+  const _RenderedMathBlock({
+    required this.block,
+    required this.editRevision,
+    required this.style,
+  });
+
+  final BusyBlock block;
+  final int editRevision;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.kind == BusyBlockKind.math) {
+      return BusyMarkDisplayMath(
+        expression: block.attributes['mathExpression'] ?? block.plainText,
+        expressionId: 'wysiwyg-display-${block.id}',
+        editRevision: editRevision,
+      );
+    }
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          for (final (index, inline) in block.inlines.indexed)
+            _span(inline, style, editRevision, 'i$index'),
+        ],
+      ),
+    );
+  }
+
+  InlineSpan _span(
+    BusyInline inline,
+    TextStyle inherited,
+    int revision,
+    String path,
+  ) {
+    final nextStyle = switch (inline.kind) {
+      BusyInlineKind.strong => inherited.copyWith(fontWeight: FontWeight.w700),
+      BusyInlineKind.emphasis => inherited.copyWith(
+        fontStyle: FontStyle.italic,
+      ),
+      BusyInlineKind.underline => inherited.copyWith(
+        decoration: TextDecoration.underline,
+      ),
+      BusyInlineKind.strikethrough => inherited.copyWith(
+        decoration: TextDecoration.lineThrough,
+      ),
+      BusyInlineKind.code => inherited.copyWith(
+        fontFamily: BusyMarkTypography.monoFontFamily,
+      ),
+      _ => inherited,
+    };
+    if (inline.kind == BusyInlineKind.math) {
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: BusyMarkInlineMath(
+          expression: inline.text,
+          expressionId: 'wysiwyg-inline-${block.id}-$path',
+          editRevision: revision,
+          textStyle: nextStyle,
+        ),
+      );
+    }
+    if (inline.kind == BusyInlineKind.hardBreak) {
+      return const TextSpan(text: '\n');
+    }
+    if (inline.kind == BusyInlineKind.softBreak) {
+      return const TextSpan(text: ' ');
+    }
+    if (inline.children.isNotEmpty) {
+      return TextSpan(
+        style: nextStyle,
+        children: [
+          for (final (index, child) in inline.children.indexed)
+            _span(child, nextStyle, revision, '$path.i$index'),
+        ],
+      );
+    }
+    return TextSpan(text: inline.text, style: nextStyle);
   }
 }
 

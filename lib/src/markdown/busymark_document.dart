@@ -70,6 +70,7 @@ class BusyDocument {
 enum BusyBlockKind {
   heading,
   paragraph,
+  math,
   codeBlock,
   unorderedListItem,
   orderedListItem,
@@ -151,6 +152,7 @@ class BusyBlock {
 
 enum BusyInlineKind {
   text,
+  math,
   strong,
   emphasis,
   underline,

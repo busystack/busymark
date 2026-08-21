@@ -1911,5 +1911,8 @@
   "compare": "Võrdle",
   "reloadFromDisk": "Laadi kettalt uuesti",
   "keepMine": "Säilita minu versioon",
-  "saveAs": "Salvesta nimega"
+  "saveAs": "Salvesta nimega",
+  "mathRenderFailed": "Matemaatilist avaldist ei saanud kuvada.",
+  "inlineMath": "Reasisene matemaatika",
+  "displayMath": "Plokina matemaatika"
 }

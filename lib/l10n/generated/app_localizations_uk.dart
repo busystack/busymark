@@ -3502,4 +3502,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.';
+
+  @override
+  String get mathRenderFailed => 'Не вдалося відобразити математичний вираз.';
+
+  @override
+  String get inlineMath => 'Формула в рядку';
+
+  @override
+  String get displayMath => 'Формула окремим блоком';
 }

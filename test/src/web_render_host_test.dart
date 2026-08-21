@@ -38,6 +38,29 @@ void main() {
     expect(arguments['requestId'], isA<String>());
   });
 
+  test('sends a MathJax batch in one cancellable host request', () async {
+    MethodCall? received;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      received = call;
+      return <String, Object?>{'results': <Object?>[]};
+    });
+    const host = PlatformWebRenderHost(channel: channel);
+    final expressions = <Map<String, Object?>>[
+      {'id': 'one', 'expression': 'x', 'display': false},
+      {'id': 'two', 'expression': r'\mathbb{R}', 'display': true},
+    ];
+
+    await host.renderMathBatch(
+      expressions: expressions,
+      cancellationToken: VisualizationCancellationToken(),
+    );
+
+    expect(received?.method, 'renderMathBatch');
+    final arguments = received?.arguments as Map<Object?, Object?>;
+    expect(arguments['expressions'], expressions);
+    expect(arguments['requestId'], isA<String>());
+  });
+
   test(
     'cancels the matching native request and rejects a late success',
     () async {

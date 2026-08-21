@@ -2700,5 +2700,8 @@
   "compare": "Comparar",
   "reloadFromDisk": "Recarregar do disco",
   "keepMine": "Manter minha versão",
-  "saveAs": "Salvar como"
+  "saveAs": "Salvar como",
+  "mathRenderFailed": "Não foi possível renderizar a expressão matemática.",
+  "inlineMath": "Matemática em linha",
+  "displayMath": "Matemática em bloco"
 }

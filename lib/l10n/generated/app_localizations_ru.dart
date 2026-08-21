@@ -3493,4 +3493,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Заголовки таблицы должны обозначать столбцы; заполните каждый пустой заголовок.';
+
+  @override
+  String get mathRenderFailed =>
+      'Не удалось отобразить математическое выражение.';
+
+  @override
+  String get inlineMath => 'Формула в строке';
+
+  @override
+  String get displayMath => 'Формула отдельным блоком';
 }

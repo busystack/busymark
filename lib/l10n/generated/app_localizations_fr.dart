@@ -3488,4 +3488,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Les en-têtes de tableau doivent identifier leurs colonnes ; complétez chaque en-tête vide.';
+
+  @override
+  String get mathRenderFailed =>
+      'Impossible d’afficher l’expression mathématique.';
+
+  @override
+  String get inlineMath => 'Formule en ligne';
+
+  @override
+  String get displayMath => 'Formule en bloc';
 }

@@ -4,6 +4,7 @@ import '../core/path_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_model.dart';
+import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
 
@@ -56,7 +57,7 @@ class MarkdownAstAdapter {
     required MarkdownMode mode,
   }) {
     final blocks = <BusyBlock>[];
-    for (final segment in _rawHtmlAwareSegments(source)) {
+    for (final segment in _rawHtmlAwareSegments(source, mode)) {
       if (segment.rawHtml) {
         final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
         if (html != null) {
@@ -89,10 +90,7 @@ class MarkdownAstAdapter {
     final packageSource = _protectProseHyphenLines(
       _protectImageDestinationsWithSpaces(source),
     );
-    final document = md.Document(
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: false,
-    );
+    final document = busyMarkMarkdownDocument(mode);
     final nodes = document.parse(packageSource);
     return [
       for (final node in nodes)
@@ -165,6 +163,24 @@ class MarkdownAstAdapter {
 
     final tag = node.tag.toLowerCase();
     final children = node.children ?? const <md.Node>[];
+    if (tag == busyMarkMathBlockTag) {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.math,
+          inlines: [
+            BusyInline(
+              kind: BusyInlineKind.math,
+              text:
+                  node.attributes[busyMarkMathExpressionAttribute] ??
+                  node.textContent,
+              attributes: node.attributes,
+            ),
+          ],
+          attributes: node.attributes,
+        ),
+      ];
+    }
     if (_headingLevel(tag) case final level?) {
       final rawText = node.textContent.trim();
       final attrId = _attributeValue(rawText, 'id');
@@ -215,6 +231,39 @@ class MarkdownAstAdapter {
       final language = className.startsWith('language-')
           ? className.substring('language-'.length)
           : '';
+      final normalizedLanguage = language.trim().toLowerCase();
+      final mathSourceForm = switch (normalizedLanguage) {
+        'math' => BusyMathSourceForm.mathFence,
+        'tex' when mode == MarkdownMode.writersideMarkdown =>
+          BusyMathSourceForm.writersideTexFence,
+        _ => null,
+      };
+      if (mathSourceForm != null) {
+        final expression = _codeBlockText(code.textContent);
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.math,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.math,
+                text: expression,
+                attributes: {
+                  busyMarkMathExpressionAttribute: expression,
+                  busyMarkMathDisplayAttribute: 'true',
+                  busyMarkMathSourceFormAttribute: mathSourceForm.name,
+                },
+              ),
+            ],
+            attributes: {
+              busyMarkMathExpressionAttribute: expression,
+              busyMarkMathDisplayAttribute: 'true',
+              busyMarkMathSourceFormAttribute: mathSourceForm.name,
+              'language': normalizedLanguage,
+            },
+          ),
+        ];
+      }
       return [
         BusyBlock(
           id: nextId(),
@@ -235,7 +284,12 @@ class MarkdownAstAdapter {
     }
 
     if (tag == 'ul' || tag == 'ol') {
-      return _listBlocksFromNode(node, ordered: tag == 'ol', nextId: nextId);
+      return _listBlocksFromNode(
+        node,
+        ordered: tag == 'ol',
+        nextId: nextId,
+        mode: mode,
+      );
     }
 
     if (tag == 'blockquote') {
@@ -319,6 +373,7 @@ class MarkdownAstAdapter {
     md.Element node, {
     required bool ordered,
     required String Function() nextId,
+    required MarkdownMode mode,
   }) {
     final result = <BusyBlock>[];
     final items =
@@ -341,7 +396,7 @@ class MarkdownAstAdapter {
                 child.tag == 'pre' ||
                 child.tag == 'table')) {
           nestedBlocks.addAll(
-            _blocksFromNode(child, nextId: nextId, mode: MarkdownMode.gfm),
+            _blocksFromNode(child, nextId: nextId, mode: mode),
           );
         } else {
           inlineNodes.add(child);
@@ -392,6 +447,15 @@ class MarkdownAstAdapter {
     final children = _inlinesFromNodes(node.children ?? const <md.Node>[]);
     final text = node.textContent;
     return switch (tag) {
+      busyMarkMathInlineTag => [
+        BusyInline(
+          kind: BusyInlineKind.math,
+          text:
+              node.attributes[busyMarkMathExpressionAttribute] ??
+              node.textContent,
+          attributes: node.attributes,
+        ),
+      ],
       'strong' || 'b' => [
         BusyInline(kind: BusyInlineKind.strong, text: text, children: children),
       ],
@@ -898,7 +962,10 @@ class MarkdownAstAdapter {
     return lines.join('\n');
   }
 
-  List<_MarkdownSourceSegment> _rawHtmlAwareSegments(String source) {
+  List<_MarkdownSourceSegment> _rawHtmlAwareSegments(
+    String source,
+    MarkdownMode mode,
+  ) {
     final lines = _markdownSourceLines(source);
     final segments = <_MarkdownSourceSegment>[];
     var segmentStart = 0;
@@ -917,6 +984,15 @@ class MarkdownAstAdapter {
 
       fence = MarkdownFence.parse(line);
       if (fence != null) {
+        index += 1;
+        continue;
+      }
+
+      if (mode == MarkdownMode.writersideMarkdown &&
+          RegExp(
+            r'^\s{0,3}<math(?:\s[^>]*)?>',
+            caseSensitive: false,
+          ).hasMatch(line)) {
         index += 1;
         continue;
       }

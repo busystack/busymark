@@ -6,6 +6,7 @@ import { bundle } from '@scalar/json-magic/bundle'
 import { normalize, validate } from '@scalar/openapi-parser'
 import mermaid from 'mermaid'
 import { LineCounter, parseDocument } from 'yaml'
+import { renderMathBatch } from './mathjax_renderer.js'
 
 const httpMethods = new Set([
   'get',
@@ -500,6 +501,8 @@ async function handleRequest(request) {
       return renderMermaid(request.source, request.theme)
     case 'renderPlantUml':
       return renderPlantUml(request.source, request.theme)
+    case 'renderMathBatch':
+      return renderMathBatch(request)
     case 'inspectOpenApi': {
       try {
         const sourceMap = createSourceMap('document.openapi', request.source, true)

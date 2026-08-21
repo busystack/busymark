@@ -111,7 +111,7 @@ warning; it does not abort the document export.
 
 | Component | Version | Verified artifact SHA-256 |
 | --- | --- | --- |
-| Mermaid | 11.16.1 | `ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4` |
+| Mermaid source | 11.16.1 | `0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11` |
 | `@plantuml/core` | 1.2026.6 | `798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413` |
 | `@scalar/openapi-parser` | 0.28.14 | `993bb7ebb3480cc574665b0eac52d9cd4a817fdf5b4444894bb70e174880513d` |
 | `@scalar/api-reference` | 1.65.1 | `68b6f22ca530ac50e3cd034c5189d89cc5457c3c2d325b44e90db05c9f08c573` |
@@ -128,6 +128,11 @@ application bundle. The build requires Node.js 22 or newer; the core24 Snap
 recipe uses the official `node/24/stable` build snap. Node.js and npm are build
 tools only. Runtime rendering does not require Node.js, Chromium, Java, a
 public rendering service, or a first-run download.
+
+BusyMark builds the complete Mermaid source profile with Mermaid's internal
+math rendering disabled. This keeps the existing diagram families while
+removing KaTeX from both the locked dependency graph and the shipped web
+bundle; mathematical document content is rendered only by MathJax.
 
 D2 is packaged only for Linux amd64. BusyMark must not advertise another
 architecture until the Snap platform, upstream artifact, and full corpus are

@@ -4,6 +4,8 @@ import '../../core/path_utils.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/markdown_parser.dart';
+import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -30,7 +32,106 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   String blockText(String blockId) {
     final block = blockById(blockId);
-    return block?.plainText ?? '';
+    return block == null ? '' : busyMarkWysiwygEditableText(block);
+  }
+
+  void updateMathSource(String blockId, String source) {
+    final current = blockById(blockId);
+    if (current == null) {
+      return;
+    }
+    final parsed = const MarkdownParser().parse(
+      filePath: _document.filePath,
+      source: source,
+      mode: _document.mode,
+      validateLocalReferences: false,
+    );
+    final parsedBlocks = parsed.busyDocument.blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+        )
+        .toList(growable: false);
+    final replacements = parsedBlocks.isEmpty
+        ? [
+            BusyBlock(
+              id: current.id,
+              kind: BusyBlockKind.paragraph,
+              inlines: [BusyInline(kind: BusyInlineKind.text, text: source)],
+              sourceSpan: current.sourceSpan,
+              dirty: true,
+            ),
+          ]
+        : [
+            for (final (index, parsedBlock) in parsedBlocks.indexed)
+              BusyBlock(
+                id: index == 0
+                    ? current.id
+                    : _nextGeneratedBlockId('math-edit'),
+                kind: parsedBlock.kind,
+                inlines: parsedBlock.inlines,
+                children: parsedBlock.children,
+                attributes: {
+                  ...parsedBlock.attributes,
+                  'wysiwygMathSource': 'true',
+                },
+                rawSource: parsedBlock.rawSource,
+                sourceSpan: index == 0 ? current.sourceSpan : null,
+                preserveRaw: false,
+                dirty: true,
+              ),
+          ];
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
+    );
+    notifyListeners();
+  }
+
+  String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
+    if (blockById(blockId) == null) {
+      return null;
+    }
+    final mathId = _nextGeneratedBlockId('math');
+    final paragraphId = _nextGeneratedBlockId('paragraph');
+    _document = _document.copyWith(
+      blocks: _insertBlocksAfter(_document.blocks, blockId, [
+        BusyBlock(
+          id: mathId,
+          kind: BusyBlockKind.math,
+          inlines: [
+            BusyInline(
+              kind: BusyInlineKind.math,
+              text: expression,
+              attributes: {
+                busyMarkMathExpressionAttribute: expression,
+                busyMarkMathDisplayAttribute: 'true',
+                busyMarkMathSourceFormAttribute:
+                    BusyMathSourceForm.doubleDollarDisplay.name,
+              },
+            ),
+          ],
+          attributes: {
+            busyMarkMathExpressionAttribute: expression,
+            busyMarkMathDisplayAttribute: 'true',
+            busyMarkMathSourceFormAttribute:
+                BusyMathSourceForm.doubleDollarDisplay.name,
+            'wysiwygMathSource': 'true',
+          },
+          rawSource: '\$\$\n$expression\n\$\$',
+          preserveRaw: false,
+          dirty: true,
+        ),
+        BusyBlock(
+          id: paragraphId,
+          kind: BusyBlockKind.paragraph,
+          inlines: _textInlines(''),
+          attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
+          dirty: true,
+        ),
+      ]),
+    );
+    notifyListeners();
+    return mathId;
   }
 
   BusyBlock? blockById(String blockId) {

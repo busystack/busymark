@@ -3452,4 +3452,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Table header cells must identify their columns; complete each empty header.';
+
+  @override
+  String get mathRenderFailed =>
+      'The mathematical expression could not be rendered.';
+
+  @override
+  String get inlineMath => 'Inline math';
+
+  @override
+  String get displayMath => 'Display math';
 }

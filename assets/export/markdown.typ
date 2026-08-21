@@ -35,6 +35,53 @@
 
 #let value-or(item, key, default) = item.at(key, default: default)
 
+#let render-math(item, inline: false) = {
+  let asset = value-or(item, "asset", "")
+  let source = value-or(item, "text", "")
+  if asset == "" {
+    if inline { raw(source) } else {
+      block(
+        width: 100%,
+        fill: rgb("fff4e5"),
+        inset: 7pt,
+        radius: 3pt,
+        raw(source, block: true),
+      )
+    }
+  } else {
+    let natural-width = float(value-or(item, "width", "1")) * 1pt
+    let natural-height = float(value-or(item, "height", "1")) * 1pt
+    let depth = float(value-or(item, "depth", "0")) * 1pt
+    if inline {
+      box(
+        width: natural-width,
+        height: natural-height,
+        baseline: depth,
+        image(
+          asset,
+          width: natural-width,
+          height: natural-height,
+          fit: "contain",
+          alt: source,
+        ),
+      )
+    } else {
+      block(
+        width: 100%,
+        above: 0.8em,
+        below: 0.8em,
+        breakable: false,
+        align(center, layout(size => image(
+          asset,
+          width: calc.min(natural-width, size.width),
+          fit: "contain",
+          alt: source,
+        ))),
+      )
+    }
+  }
+}
+
 #let render-inlines(items) = {
   for item in items {
     let kind = item.kind
@@ -74,6 +121,8 @@
       } else {
         image(asset, width: 1.25em, height: 1.25em, fit: "contain", alt: alt)
       }
+    } else if kind == "math" {
+      render-math(item, inline: true)
     } else if kind == "softBreak" {
       text(" ")
     } else if kind == "hardBreak" {
@@ -190,6 +239,8 @@
         raw(value-or(block-data, "text", ""), block: true, lang: language)
       },
     )
+  } else if kind == "math" {
+    render-math(block-data)
   } else if kind == "list" {
     render-list(block-data, render-block)
   } else if kind == "blockquote" {

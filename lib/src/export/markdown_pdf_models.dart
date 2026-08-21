@@ -59,6 +59,8 @@ enum MarkdownPdfWarningCode {
   imageReadFailed,
   visualizationRenderFailed,
   visualizationLimitReached,
+  mathRenderFailed,
+  mathLimitReached,
 }
 
 @immutable

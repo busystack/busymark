@@ -2,6 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/busymark_markdown_serializer.dart';
+
+bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
+  bool contains(List<BusyInline> inlines) => inlines.any(
+    (inline) => inline.kind == BusyInlineKind.math || contains(inline.children),
+  );
+  return block.attributes['wysiwygMathSource'] == 'true' ||
+      block.kind == BusyBlockKind.math ||
+      contains(block.inlines) ||
+      block.children.any(busyMarkWysiwygBlockContainsMath);
+}
+
+String busyMarkWysiwygEditableText(BusyBlock block) {
+  if (!busyMarkWysiwygBlockContainsMath(block)) {
+    return block.plainText;
+  }
+  final source =
+      block.rawSource ??
+      const BusyMarkMarkdownSerializer().serializeBlock(block);
+  return source.replaceFirst(RegExp(r'(?:\r\n|\r|\n)$'), '');
+}
 
 class BusyInlineStyleRange {
   const BusyInlineStyleRange({
@@ -27,8 +48,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
   List<BusyInlineStyleRange> _ranges;
 
   void updateFromBlock(BusyBlock block) {
-    final nextText = block.plainText;
-    final nextRanges = busyInlineStyleRanges(block.inlines);
+    final sourceEditing = busyMarkWysiwygBlockContainsMath(block);
+    final nextText = busyMarkWysiwygEditableText(block);
+    final nextRanges = sourceEditing
+        ? const <BusyInlineStyleRange>[]
+        : busyInlineStyleRanges(block.inlines);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
     if (text != nextText) {
       final previousSelection = selection;

@@ -3452,4 +3452,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'तालिका शीर्षकों को अपने कॉलम पहचानने चाहिए; हर खाली शीर्षक पूरा करें।';
+
+  @override
+  String get mathRenderFailed => 'गणितीय व्यंजक रेंडर नहीं किया जा सका।';
+
+  @override
+  String get inlineMath => 'इनलाइन गणित';
+
+  @override
+  String get displayMath => 'डिस्प्ले गणित';
 }

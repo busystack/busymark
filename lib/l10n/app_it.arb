@@ -2700,5 +2700,8 @@
   "compare": "Confronta",
   "reloadFromDisk": "Ricarica dal disco",
   "keepMine": "Mantieni la mia versione",
-  "saveAs": "Salva con nome"
+  "saveAs": "Salva con nome",
+  "mathRenderFailed": "Impossibile visualizzare l’espressione matematica.",
+  "inlineMath": "Formula in linea",
+  "displayMath": "Formula in blocco"
 }

@@ -58,6 +58,7 @@ import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
 import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
+import '../../math/math_widget.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../search/search_replace_service.dart';
 import '../../visualization/visualization_card.dart';
@@ -10560,6 +10561,19 @@ class _PreviewBlockView extends StatelessWidget {
             displayBlock,
             busyMarkDocumentHeadingTextStyle(context, displayBlock.level),
           ),
+          editRevision: editRevision,
+        ),
+      ),
+      PreviewBlockKind.math => Padding(
+        padding: first
+            ? BusyMarkInsets.documentParagraphBlock.copyWith(top: 0)
+            : BusyMarkInsets.documentParagraphBlock,
+        child: BusyMarkDisplayMath(
+          expression: displayBlock.text,
+          expressionId:
+              displayBlock.attributes['expressionId'] ??
+              'display-${displayBlock.sourceStartOffset ?? 0}',
+          editRevision: editRevision,
         ),
       ),
       PreviewBlockKind.code
@@ -10585,6 +10599,7 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(
           block: displayBlock,
           style: _diffPreviewTextStyle(context, displayBlock, null),
+          editRevision: editRevision,
         ),
       ),
       PreviewBlockKind.tabs => BusyMarkDocumentCallout(
@@ -10622,6 +10637,7 @@ class _PreviewBlockView extends StatelessWidget {
                   child: _PreviewInlineText(
                     block: displayBlock,
                     style: _diffPreviewTextStyle(context, displayBlock, null),
+                    editRevision: editRevision,
                   ),
                 ),
               ],
@@ -10642,11 +10658,15 @@ class _PreviewBlockView extends StatelessWidget {
             ? _PreviewInlineText(
                 block: displayBlock,
                 style: _diffPreviewTextStyle(context, displayBlock, null),
+                editRevision: editRevision,
               )
             : _previewChildBlocks(displayBlock.children, first: true),
       ),
       PreviewBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
-      PreviewBlockKind.table => _PreviewTable(block: displayBlock),
+      PreviewBlockKind.table => _PreviewTable(
+        block: displayBlock,
+        editRevision: editRevision,
+      ),
       PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
         _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
@@ -10671,6 +10691,7 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(
           block: displayBlock,
           style: _diffPreviewTextStyle(context, displayBlock, null),
+          editRevision: editRevision,
         ),
       ),
     };
@@ -10891,9 +10912,10 @@ String _previewDirectionalText(PreviewBlock block) {
 }
 
 class _PreviewTable extends StatelessWidget {
-  const _PreviewTable({required this.block});
+  const _PreviewTable({required this.block, this.editRevision = 0});
 
   final PreviewBlock block;
+  final int editRevision;
 
   @override
   Widget build(BuildContext context) {
@@ -10931,6 +10953,7 @@ class _PreviewTable extends StatelessWidget {
                       child: index < row.children.length
                           ? _PreviewInlineText(
                               block: row.children[index],
+                              editRevision: editRevision,
                               style: row.attributes['header'] == 'true'
                                   ? busyMarkDocumentBodyTextStyle(
                                       context,
@@ -10949,10 +10972,16 @@ class _PreviewTable extends StatelessWidget {
 }
 
 class _PreviewInlineText extends ConsumerWidget {
-  const _PreviewInlineText({super.key, required this.block, this.style});
+  const _PreviewInlineText({
+    super.key,
+    required this.block,
+    this.style,
+    this.editRevision = 0,
+  });
 
   final PreviewBlock block;
   final TextStyle? style;
+  final int editRevision;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -10986,6 +11015,7 @@ class _PreviewInlineText extends ConsumerWidget {
                     unawaited(_showRemoteImagesPrompt(context, ref)),
                 onLinkTap: (destination) =>
                     _openPreviewLink(context, ref, destination),
+                editRevision: editRevision,
               ),
           ],
         ),
@@ -11411,6 +11441,7 @@ InlineSpan _previewInlineSpan(
   required bool allowRemoteImages,
   required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
+  required int editRevision,
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
 }) {
@@ -11450,6 +11481,7 @@ InlineSpan _previewInlineSpan(
       allowRemoteImages: allowRemoteImages,
       onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
+      editRevision: editRevision,
       inheritedLinkDestination: linkDestination,
       inheritedStyle: style,
     );
@@ -11576,6 +11608,18 @@ InlineSpan _previewInlineSpan(
       onRemoteImageBlocked: onRemoteImageBlocked,
       style: mergeStyle(
         TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
+      ),
+    ),
+    PreviewInlineKind.math => WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: BusyMarkInlineMath(
+        expression: inline.text,
+        expressionId:
+            inline.attributes['expressionId'] ??
+            'inline-${Object.hash(inline.text, inline.attributes)}',
+        editRevision: editRevision,
+        textStyle: mergeStyle(null) ?? DefaultTextStyle.of(context).style,
       ),
     ),
   };

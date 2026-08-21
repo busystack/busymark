@@ -472,6 +472,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onBlockCommand: _applyBlockCommand,
                       onInlineCommand: _applyInlineCommand,
                       onLinkCommand: () => unawaited(_applyLinkCommand()),
+                      onInlineMathCommand: _applyInlineMathCommand,
+                      onDisplayMathCommand: _applyDisplayMathCommand,
                       onImageCommand: () => unawaited(_applyImageCommand()),
                       onInlineImageCommand: () =>
                           unawaited(_applyInlineImageCommand()),
@@ -738,8 +740,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final controller = _textControllers.putIfAbsent(
       block.id,
       () => BusyMarkWysiwygTextController(
-        text: block.plainText,
-        ranges: busyInlineStyleRanges(block.inlines),
+        text: busyMarkWysiwygEditableText(block),
+        ranges: busyMarkWysiwygBlockContainsMath(block)
+            ? const []
+            : busyInlineStyleRanges(block.inlines),
       ),
     );
     controller.updateFromBlock(block);
@@ -985,6 +989,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     _recordUndoSnapshot();
+    final currentBlock = _documentController.blockById(blockId);
+    if (currentBlock != null &&
+        busyMarkWysiwygBlockContainsMath(currentBlock)) {
+      _documentController.updateMathSource(blockId, value);
+      _emitMarkdown();
+      return;
+    }
     final controller = _textControllers[blockId];
     final offset =
         controller?.selection.extentOffset.clamp(0, value.length).toInt() ??
@@ -1171,9 +1182,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _initialFocusScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focusActiveOrFirstBlock(initialSelectionOffset: 0);
+      if (!mounted) {
+        return;
       }
+      final firstPlainBlock = _focusableBlocks()
+          .where((block) => !busyMarkWysiwygBlockContainsMath(block))
+          .firstOrNull;
+      if (firstPlainBlock == null) {
+        return;
+      }
+      _activeBlockId = firstPlainBlock.id;
+      _focusActiveOrFirstBlock(initialSelectionOffset: 0);
     });
   }
 
@@ -2357,6 +2376,48 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       destination: destination.trim(),
     );
     _emitMarkdown();
+  }
+
+  void _applyInlineMathCommand() {
+    final blockId = _activeBlockId;
+    final controller = blockId == null ? null : _textControllers[blockId];
+    if (blockId == null || controller == null) {
+      return;
+    }
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: controller.text.length);
+    final start = math.min(selection.start, selection.end);
+    final end = math.max(selection.start, selection.end);
+    final selected = controller.text.substring(start, end);
+    final expression = selected.isEmpty ? 'x' : selected;
+    final insertion = '\$$expression\$';
+    final nextText = controller.text.replaceRange(start, end, insertion);
+    _recordUndoSnapshot();
+    controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection(
+        baseOffset: start + 1,
+        extentOffset: start + 1 + expression.length,
+      ),
+    );
+    _documentController.updateMathSource(blockId, nextText);
+    _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: start + 1 + expression.length);
+  }
+
+  void _applyDisplayMathCommand() {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    final mathId = _documentController.insertDisplayMathAfter(blockId);
+    if (mathId == null) {
+      return;
+    }
+    _emitMarkdown();
+    _focusBlockAfterFrame(mathId, offset: 4);
   }
 
   Future<void> _applyImageCommand() async {

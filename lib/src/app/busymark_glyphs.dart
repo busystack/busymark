@@ -57,6 +57,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData keyboard = YaruIcons.keyboard_shortcuts;
   static const IconData link = YaruIcons.insert_link;
   static const IconData markdownFile = YaruIcons.text_editor;
+  static const IconData math = Icons.functions;
   static const IconData menuHorizontal = YaruIcons.view_more_horizontal;
   static const IconData menuVertical = YaruIcons.view_more;
   static const IconData newDocument = YaruIcons.document_new;

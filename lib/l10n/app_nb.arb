@@ -2700,5 +2700,8 @@
   "compare": "Sammenlign",
   "reloadFromDisk": "Last inn fra disk på nytt",
   "keepMine": "Behold min versjon",
-  "saveAs": "Lagre som"
+  "saveAs": "Lagre som",
+  "mathRenderFailed": "Det matematiske uttrykket kunne ikke gjengis.",
+  "inlineMath": "Integrert matematikk",
+  "displayMath": "Matematikkblokk"
 }

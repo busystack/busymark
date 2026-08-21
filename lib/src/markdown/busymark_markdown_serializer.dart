@@ -1,5 +1,6 @@
 import '../core/source_span.dart';
 import 'busymark_document.dart';
+import 'math_syntax.dart';
 
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
@@ -38,6 +39,7 @@ class BusyMarkMarkdownSerializer {
     return switch (block.kind) {
       BusyBlockKind.heading => _heading(block),
       BusyBlockKind.paragraph => _inlineMarkdown(block.inlines),
+      BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
       BusyBlockKind.unorderedListItem => _listItem(block, '-'),
       BusyBlockKind.orderedListItem => _listItem(
@@ -171,6 +173,22 @@ class BusyMarkMarkdownSerializer {
     final fence = delimiter * _delimiterLength(text, delimiter, minimum: 3);
     final infoSeparator = language.startsWith(delimiter) ? ' ' : '';
     return '$fence$infoSeparator$language\n$text\n$fence';
+  }
+
+  String _mathBlock(BusyBlock block) {
+    final expression =
+        block.attributes[busyMarkMathExpressionAttribute] ?? block.plainText;
+    final form = busyMathSourceFormFromName(
+      block.attributes[busyMarkMathSourceFormAttribute],
+    );
+    return switch (form) {
+      BusyMathSourceForm.mathFence => '```math\n$expression\n```',
+      BusyMathSourceForm.writersideTexFence => '```tex\n$expression\n```',
+      BusyMathSourceForm.writersideElement => '<math>$expression</math>',
+      BusyMathSourceForm.doubleDollarDisplay ||
+      BusyMathSourceForm.dollarInline ||
+      BusyMathSourceForm.githubDollarBacktick => '\$\$\n$expression\n\$\$',
+    };
   }
 
   String _listItem(BusyBlock block, String marker, {String? contentPrefix}) {
@@ -337,6 +355,7 @@ class BusyMarkMarkdownSerializer {
         : _inlineMarkdown(inline.children, tableCell: tableCell);
     return switch (inline.kind) {
       BusyInlineKind.text => _escapeInlineText(inline.text),
+      BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
       BusyInlineKind.underline => '<u>$children</u>',
@@ -353,6 +372,20 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.hardBreak => '  \n',
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
+    };
+  }
+
+  String _mathInline(BusyInline inline) {
+    final form = busyMathSourceFormFromName(
+      inline.attributes[busyMarkMathSourceFormAttribute],
+    );
+    return switch (form) {
+      BusyMathSourceForm.githubDollarBacktick => '\$`${inline.text}`\$',
+      BusyMathSourceForm.writersideElement => '<math>${inline.text}</math>',
+      BusyMathSourceForm.dollarInline ||
+      BusyMathSourceForm.doubleDollarDisplay ||
+      BusyMathSourceForm.mathFence ||
+      BusyMathSourceForm.writersideTexFence => '\$${inline.text}\$',
     };
   }
 

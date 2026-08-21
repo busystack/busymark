@@ -258,6 +258,12 @@ class _RasterHost implements WebRenderHost {
   String? lastSvg;
 
   @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) => throw UnimplementedError();
+
+  @override
   Future<void> copyPngToClipboard(Uint8List pngBytes) async {}
 
   @override

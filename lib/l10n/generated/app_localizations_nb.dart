@@ -3458,4 +3458,14 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
+
+  @override
+  String get mathRenderFailed =>
+      'Det matematiske uttrykket kunne ikke gjengis.';
+
+  @override
+  String get inlineMath => 'Integrert matematikk';
+
+  @override
+  String get displayMath => 'Matematikkblokk';
 }

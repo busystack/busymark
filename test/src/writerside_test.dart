@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -170,6 +171,31 @@ void main() {
     expect(instance.startPage, 'intro.md');
     expect(instance.topicFileSet, containsAll(['intro.md', 'install.topic']));
   });
+
+  test(
+    'Writerside topic XML exposes semantic math to the shared preview',
+    () async {
+      final workspace = await workspaceService.openPath(
+        'test/fixtures/writerside/basic_project',
+      );
+      final topicPath = p.normalize(
+        p.absolute('test/fixtures/writerside/basic_project/topics/math.topic'),
+      );
+      final source = File(topicPath).readAsStringSync();
+      final preview = workspaceService.buildPreview(
+        workspace.copyWith(activeFilePath: topicPath),
+        source,
+      );
+
+      final math = preview!.blocks
+          .expand((block) => block.inlines)
+          .where((inline) => inline.kind == PreviewInlineKind.math)
+          .single;
+      expect(math.text, r'e^{i\pi}+1=0');
+      expect(math.attributes['mathSourceForm'], 'writersideElement');
+      expect(source, contains(r'<math>e^{i\pi}+1=0</math>'));
+    },
+  );
 
   test(
     'loads basic Writerside project with topics and no missing topic diagnostics',

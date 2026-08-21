@@ -2238,6 +2238,12 @@
   "diagnosticMarkdownLinkReviewText": "Review whether the link text “{text}” describes its purpose in context.",
   "@diagnosticMarkdownLinkReviewText": {"description": "Accessibility hint for potentially non-descriptive Markdown link text.", "placeholders": {"text": {"type": "String"}}},
   "diagnosticMarkdownTableEmptyHeader": "Table header cells must identify their columns; complete each empty header.",
-  "@diagnosticMarkdownTableEmptyHeader": {"description": "Accessibility diagnostic for an empty Markdown table header cell."}
+  "@diagnosticMarkdownTableEmptyHeader": {"description": "Accessibility diagnostic for an empty Markdown table header cell."},
+  "mathRenderFailed": "The mathematical expression could not be rendered.",
+  "@mathRenderFailed": {"description": "Tooltip and diagnostic text shown when a mathematical expression cannot be rendered."},
+  "inlineMath": "Inline math",
+  "@inlineMath": {"description": "Editor action that inserts an inline mathematical expression."},
+  "displayMath": "Display math",
+  "@displayMath": {"description": "Editor action that inserts a display mathematical expression."}
 
 }

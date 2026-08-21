@@ -3478,4 +3478,14 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Os cabeçalhos da tabela devem identificar suas colunas; preencha cada cabeçalho vazio.';
+
+  @override
+  String get mathRenderFailed =>
+      'Não foi possível renderizar a expressão matemática.';
+
+  @override
+  String get inlineMath => 'Matemática em linha';
+
+  @override
+  String get displayMath => 'Matemática em bloco';
 }

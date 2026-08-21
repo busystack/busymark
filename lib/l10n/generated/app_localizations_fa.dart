@@ -3507,4 +3507,13 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'سرستون‌های جدول باید ستون‌های خود را مشخص کنند؛ هر سرستون خالی را تکمیل کنید.';
+
+  @override
+  String get mathRenderFailed => 'عبارت ریاضی قابل نمایش نبود.';
+
+  @override
+  String get inlineMath => 'ریاضی درون‌خطی';
+
+  @override
+  String get displayMath => 'ریاضی نمایشی';
 }
