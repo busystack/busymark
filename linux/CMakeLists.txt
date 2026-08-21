@@ -54,6 +54,7 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 pkg_check_modules(HANDY REQUIRED IMPORTED_TARGET libhandy-1)
+pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
 pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkit2gtk-4.1)
 
 # Application build; see runner/CMakeLists.txt.

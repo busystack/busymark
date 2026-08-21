@@ -9,6 +9,7 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "secure_credential_host.cc"
   "web_render_host.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
@@ -24,6 +25,7 @@ add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::HANDY)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::LIBSECRET)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::WEBKIT)
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")

@@ -1,4 +1,4 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 
 import 'ai_models.dart';
 
@@ -9,24 +9,28 @@ abstract interface class AiSecretStore {
 }
 
 class FlutterAiSecretStore implements AiSecretStore {
-  const FlutterAiSecretStore({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
-  }) : _storage = storage;
+  const FlutterAiSecretStore({MethodChannel channel = _defaultChannel})
+    : _channel = channel;
 
   static const _prefix = 'busymark.ai.provider-key.';
+  static const _defaultChannel = MethodChannel(
+    'com.busymark.app/secure_credentials',
+  );
 
-  final FlutterSecureStorage _storage;
+  final MethodChannel _channel;
 
   @override
   Future<String?> read(AiProviderKind provider) async {
     try {
-      final value = await _storage.read(key: _key(provider));
+      final value = await _channel.invokeMethod<String>('read', {
+        'key': _key(provider),
+      });
       final normalized = value?.trim() ?? '';
       return normalized.isEmpty ? null : normalized;
-    } on Object {
-      throw const AiException(
+    } on Object catch (error) {
+      throw AiException(
         AiFailureCode.invalidConfiguration,
-        'BusyMark could not access the system credential store.',
+        _failureMessage('BusyMark could not access secure credentials.', error),
       );
     }
   }
@@ -41,11 +45,14 @@ class FlutterAiSecretStore implements AiSecretStore {
       );
     }
     try {
-      await _storage.write(key: _key(provider), value: normalized);
-    } on Object {
-      throw const AiException(
+      await _channel.invokeMethod<void>('write', {
+        'key': _key(provider),
+        'value': normalized,
+      });
+    } on Object catch (error) {
+      throw AiException(
         AiFailureCode.invalidConfiguration,
-        'BusyMark could not save the API key in the system credential store.',
+        _failureMessage('BusyMark could not save the API key securely.', error),
       );
     }
   }
@@ -53,14 +60,27 @@ class FlutterAiSecretStore implements AiSecretStore {
   @override
   Future<void> delete(AiProviderKind provider) async {
     try {
-      await _storage.delete(key: _key(provider));
-    } on Object {
-      throw const AiException(
+      await _channel.invokeMethod<void>('delete', {'key': _key(provider)});
+    } on Object catch (error) {
+      throw AiException(
         AiFailureCode.invalidConfiguration,
-        'BusyMark could not remove the API key from the system credential store.',
+        _failureMessage(
+          'BusyMark could not remove the securely stored API key.',
+          error,
+        ),
       );
     }
   }
 
   String _key(AiProviderKind provider) => '$_prefix${provider.id}';
+
+  static String _failureMessage(String summary, Object error) {
+    if (error case PlatformException(message: final message?)) {
+      final normalized = message.trim();
+      if (normalized.isNotEmpty) {
+        return '$summary $normalized';
+      }
+    }
+    return summary;
+  }
 }

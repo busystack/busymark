@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "secure_credential_host.h"
 #include "web_render_host.h"
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
@@ -80,6 +81,7 @@ struct _MyApplication {
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
   FlMethodChannel* native_menu_channel;
+  FlMethodChannel* secure_credential_channel;
   BusyMarkWebRenderHost* visualization_host;
   GtkCssProvider* header_bar_css_provider;
   GtkWindow* main_window;
@@ -2854,6 +2856,8 @@ static void my_application_activate(GApplication* application) {
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
+  self->secure_credential_channel =
+      busymark_secure_credential_channel_new(view);
   self->visualization_host =
       busymark_web_render_host_new(GTK_APPLICATION(self), window);
   busymark_web_render_host_register_channel(self->visualization_host, view);
@@ -2913,6 +2917,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_css_provider);
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
+  g_clear_object(&self->secure_credential_channel);
   if (self->visualization_host != nullptr) {
     busymark_web_render_host_shutdown(self->visualization_host);
   }
@@ -2950,6 +2955,7 @@ static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
   self->native_menu_channel = nullptr;
+  self->secure_credential_channel = nullptr;
   self->visualization_host = nullptr;
   self->header_bar_css_provider = nullptr;
   self->main_window = nullptr;

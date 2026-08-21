@@ -21,6 +21,11 @@ application bundle. A desktop process must still read the key to make a direct
 BYOK request, so OS credential storage protects the key at rest; it does not
 make a compromised desktop process trustworthy.
 
+Under strict Snap confinement, BusyMark uses libsecret's password API through
+the desktop interface. Libsecret selects the per-Snap Secret Portal backend;
+BusyMark does not request the broad `password-manager-service` interface or
+access other applications' keyring entries.
+
 Choose **Automatic model selection** to let BusyMark route the task among the
 approved models of the selected provider, or **Fixed model** to use only the
 chosen model. Routing and retries never cross provider boundaries. BusyMark
@@ -163,7 +168,8 @@ The provider-neutral implementation lives under `lib/src/ai/`:
 - the coordinator owns routing, retry, concurrency, cancellation, usage, and
   latest-write-wins behavior;
 - policy and Markdown validation run independently of the provider;
-- `flutter_secure_storage` uses libsecret on Linux for cloud credentials.
+- the first-party Linux credential host uses portal-compatible libsecret
+  password operations without opening the global Secret Service collection;
 
 Deterministic tests cover arbitrary UTF-8 stream boundaries, malformed and
 incomplete events, redirects, response bounds, provider isolation, model
@@ -199,5 +205,5 @@ human quality review and exits unsuccessfully if any structural check fails.
 - [Gemini models](https://ai.google.dev/gemini-api/docs/models)
 - [Ollama chat API](https://docs.ollama.com/api/chat)
 - [Ollama model details API](https://docs.ollama.com/api/show)
-- [flutter_secure_storage Linux requirements](https://pub.dev/packages/flutter_secure_storage)
-- [Snap secret portal](https://snapcraft.io/docs/how-to-guides/snap-development/use-the-secret-portal/)
+- [Libsecret password storage](https://gnome.pages.gitlab.gnome.org/libsecret/libsecret/password-storage.html)
+- [Snap Secret Portal](https://snapcraft.io/docs/how-to-guides/snap-development/use-the-secret-portal/)

@@ -10,7 +10,15 @@ void main() {
     ).readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
-    expect(pubspec, contains('flutter_secure_storage: ^11.0.0'));
+    final credentialHost = File(
+      'linux/runner/secure_credential_host.cc',
+    ).readAsStringSync();
+
+    expect(pubspec, isNot(contains('flutter_secure_storage:')));
+    expect(credentialHost, contains('secret_password_lookup('));
+    expect(credentialHost, contains('secret_password_store('));
+    expect(credentialHost, isNot(contains('secret_service_get')));
+    expect(credentialHost, isNot(contains('password-manager-service')));
     expect(workflow, contains('libsecret-1-dev'));
     expect(snapcraft, contains('- libsecret-1-dev'));
     expect(snapcraft, contains('- libsecret-1-0'));
