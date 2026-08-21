@@ -18,6 +18,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            apparmor-profiles \
+            bubblewrap \
             clang \
             cmake \
             ninja-build \
@@ -33,6 +35,22 @@ jobs:
             xvfb \
             weston \
             xz-utils
+
+      - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        run: |
+          probe_bwrap() {
+            bwrap --ro-bind / / --unshare-user --unshare-pid \
+              --unshare-net /usr/bin/true
+          }
+          if ! probe_bwrap; then
+            profile=/usr/share/apparmor/extra-profiles/bwrap-userns-restrict
+            test -f "$profile"
+            sudo install -m 0644 "$profile" \
+              /etc/apparmor.d/bwrap-userns-restrict
+            sudo apparmor_parser --replace \
+              /etc/apparmor.d/bwrap-userns-restrict
+          fi
+          probe_bwrap
 
       - name: Set up Node.js for bundled web engines
         uses: actions/setup-node@v7

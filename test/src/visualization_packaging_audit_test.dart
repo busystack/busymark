@@ -101,6 +101,13 @@ void main() {
     ).readAsStringSync();
 
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
+    expect(workflow, contains('apparmor-profiles'));
+    expect(workflow, contains('bwrap-userns-restrict'));
+    expect(workflow, contains('--unshare-net /usr/bin/true'));
+    expect(
+      workflow,
+      isNot(contains('WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS')),
+    );
     expect(workflow, contains('poppler-utils'));
     expect(workflow, contains('actions/checkout@v7'));
     expect(workflow, contains('actions/setup-node@v7'));
