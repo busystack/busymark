@@ -298,40 +298,36 @@ void main() {
     expect(outsideTree.readAsStringSync(), original);
   });
 
-  test(
-    'rejects a symlinked tree without mutating its target',
-    () async {
-      final root = await tempModule();
-      final outside = await Directory.systemTemp.createTemp(
-        'busymark-toc-editor-link-target-',
-      );
-      addTearDown(() async {
-        if (await outside.exists()) {
-          await outside.delete(recursive: true);
-        }
-      });
-      final outsideTree = File(p.join(outside.path, 'outside.tree'))
-        ..writeAsStringSync(_treeSource);
-      final original = outsideTree.readAsStringSync();
-      final treePath = p.join(root.path, 'guide.tree');
-      await File(treePath).delete();
-      await Link(treePath).create(outsideTree.path);
+  test('rejects a symlinked tree without mutating its target', () async {
+    final root = await tempModule();
+    final outside = await Directory.systemTemp.createTemp(
+      'busymark-toc-editor-link-target-',
+    );
+    addTearDown(() async {
+      if (await outside.exists()) {
+        await outside.delete(recursive: true);
+      }
+    });
+    final outsideTree = File(p.join(outside.path, 'outside.tree'))
+      ..writeAsStringSync(_treeSource);
+    final original = outsideTree.readAsStringSync();
+    final treePath = p.join(root.path, 'guide.tree');
+    await File(treePath).delete();
+    await Link(treePath).create(outsideTree.path);
 
-      await expectLater(
-        editor.removeEntry(targetFor(root), const [0]),
-        throwsA(
-          isA<BusyMarkException>().having(
-            (error) => error.code,
-            'code',
-            'writerside.topic.tree-file-missing',
-          ),
+    await expectLater(
+      editor.removeEntry(targetFor(root), const [0]),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.tree-file-missing',
         ),
-      );
+      ),
+    );
 
-      expect(outsideTree.readAsStringSync(), original);
-    },
-    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
-  );
+    expect(outsideTree.readAsStringSync(), original);
+  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
 
   test('does not overwrite a tree changed before atomic publication', () async {
     final root = await tempModule();
@@ -370,21 +366,17 @@ void main() {
     expect(temporaryFiles, isEmpty);
   });
 
-  test(
-    'atomic replacement preserves the tree POSIX mode',
-    () async {
-      final root = await tempModule();
-      final treeFile = File(p.join(root.path, 'guide.tree'));
-      final chmod = await Process.run('chmod', ['640', treeFile.path]);
-      expect(chmod.exitCode, 0, reason: '${chmod.stderr}');
-      final originalMode = (await treeFile.stat()).mode & 0xfff;
+  test('atomic replacement preserves the tree POSIX mode', () async {
+    final root = await tempModule();
+    final treeFile = File(p.join(root.path, 'guide.tree'));
+    final chmod = await Process.run('chmod', ['640', treeFile.path]);
+    expect(chmod.exitCode, 0, reason: '${chmod.stderr}');
+    final originalMode = (await treeFile.stat()).mode & 0xfff;
 
-      await editor.removeEntry(targetFor(root), const [0]);
+    await editor.removeEntry(targetFor(root), const [0]);
 
-      expect((await treeFile.stat()).mode & 0xfff, originalMode);
-    },
-    skip: Platform.isWindows ? 'POSIX permissions only.' : false,
-  );
+    expect((await treeFile.stat()).mode & 0xfff, originalMode);
+  }, skip: Platform.isWindows ? 'POSIX permissions only.' : false);
 }
 
 const _treeSource = '''

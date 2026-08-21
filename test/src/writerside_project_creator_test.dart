@@ -249,34 +249,29 @@ void main() {
     skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
   );
 
-  test(
-    'canonicalizes a project parent selected through a symlink',
-    () async {
-      final parent = await tempParent();
-      final container = Directory(p.join(parent.path, 'container'))
-        ..createSync();
-      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
-      final actualParent = Directory(p.join(outside.path, 'projects'))
-        ..createSync();
-      final link = Link(p.join(container.path, 'bridge'))
-        ..createSync(outside.path);
+  test('canonicalizes a project parent selected through a symlink', () async {
+    final parent = await tempParent();
+    final container = Directory(p.join(parent.path, 'container'))..createSync();
+    final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+    final actualParent = Directory(p.join(outside.path, 'projects'))
+      ..createSync();
+    final link = Link(p.join(container.path, 'bridge'))
+      ..createSync(outside.path);
 
-      final result = await creator.create(
-        WritersideProjectCreateRequest(
-          parentDirectoryPath: p.join(link.path, 'projects'),
-          projectName: 'Docs',
-          directoryName: 'docs',
-          instanceName: 'User Guide',
-          topicTitle: 'Getting started',
-        ),
-      );
+    final result = await creator.create(
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: p.join(link.path, 'projects'),
+        projectName: 'Docs',
+        directoryName: 'docs',
+        instanceName: 'User Guide',
+        topicTitle: 'Getting started',
+      ),
+    );
 
-      final canonicalParent = await actualParent.resolveSymbolicLinks();
-      expect(result.rootPath, p.join(canonicalParent, 'docs'));
-      expect(Directory(p.join(actualParent.path, 'docs')).existsSync(), isTrue);
-    },
-    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
-  );
+    final canonicalParent = await actualParent.resolveSymbolicLinks();
+    expect(result.rootPath, p.join(canonicalParent, 'docs'));
+    expect(Directory(p.join(actualParent.path, 'docs')).existsSync(), isTrue);
+  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
 
   test('rejects unsafe create request names before writing files', () async {
     final parent = await tempParent();

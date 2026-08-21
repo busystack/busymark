@@ -519,32 +519,28 @@ void main() {
     skip: Platform.isWindows,
   );
 
-  test(
-    'stored Git trust does not follow a replaced canonical path',
-    () async {
-      final root = await Directory.systemTemp.createTemp(
-        'busymark-stored-git-trust-',
-      );
-      addTearDown(() async {
-        if (await root.exists()) {
-          await root.delete(recursive: true);
-        }
-      });
-      final trustedPath = await Directory('${root.path}/trusted').create();
-      final replacement = await Directory('${root.path}/replacement').create();
-      final stored = AppSettings.defaults()
-          .copyWith(trustedGitWorkspacePaths: [trustedPath.path])
-          .toJson();
+  test('stored Git trust does not follow a replaced canonical path', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-stored-git-trust-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final trustedPath = await Directory('${root.path}/trusted').create();
+    final replacement = await Directory('${root.path}/replacement').create();
+    final stored = AppSettings.defaults()
+        .copyWith(trustedGitWorkspacePaths: [trustedPath.path])
+        .toJson();
 
-      await trustedPath.delete();
-      await Link(trustedPath.path).create(replacement.path);
-      final reloaded = AppSettings.fromJson(stored);
+    await trustedPath.delete();
+    await Link(trustedPath.path).create(replacement.path);
+    final reloaded = AppSettings.fromJson(stored);
 
-      expect(reloaded.trustsGitWorkspace(trustedPath.path), isFalse);
-      expect(reloaded.trustedGitWorkspacePaths, [trustedPath.path]);
-    },
-    skip: Platform.isWindows,
-  );
+    expect(reloaded.trustsGitWorkspace(trustedPath.path), isFalse);
+    expect(reloaded.trustedGitWorkspacePaths, [trustedPath.path]);
+  }, skip: Platform.isWindows);
 
   test('Git trust preserves leading and trailing path whitespace', () async {
     final root = await Directory.systemTemp.createTemp(
