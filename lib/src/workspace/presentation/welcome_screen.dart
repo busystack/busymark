@@ -43,6 +43,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
   var _startupPathConsumed = false;
+  var _restoreAttempted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +66,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           unawaited(_openPath(startupPath));
+        }
+      });
+    } else if (!_restoreAttempted &&
+        (startupPath == null || startupPath.isEmpty)) {
+      _restoreAttempted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) {
+          return;
+        }
+        final restored = await ref
+            .read(workspaceControllerProvider.notifier)
+            .restorePreviousSession();
+        if (restored && mounted) {
+          this.context.go('/workspace');
         }
       });
     }
@@ -272,6 +287,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.commandPalette:
+        return;
       case BusyMarkMainMenuAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

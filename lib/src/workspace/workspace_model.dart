@@ -3,7 +3,11 @@ import '../markdown/document_outline.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
+import 'document_buffer.dart';
 import 'workspace_message.dart';
+import 'workspace_file_snapshot.dart';
+
+export 'workspace_file_snapshot.dart';
 
 const Object _copyWithUnset = _CopyWithUnset();
 
@@ -56,35 +60,6 @@ class ActiveDocumentOutline {
         filePath == workspace.activeFilePath &&
         source == activeSource;
   }
-}
-
-class WorkspaceFileSnapshot {
-  const WorkspaceFileSnapshot({
-    required this.modifiedAt,
-    required this.size,
-    required this.contentHash,
-  });
-
-  final DateTime modifiedAt;
-  final int size;
-  final String contentHash;
-
-  bool differsFrom(WorkspaceFileSnapshot other) {
-    // A timestamp-only change cannot lose user content. Prefer the hashes when
-    // both snapshots have one so metadata touches and filesystem timestamp
-    // rounding do not produce false external-edit conflicts.
-    if (contentHash.isNotEmpty && other.contentHash.isNotEmpty) {
-      return contentHash != other.contentHash;
-    }
-    return modifiedAt != other.modifiedAt || size != other.size;
-  }
-}
-
-class WorkspaceFileLoad {
-  const WorkspaceFileLoad({required this.text, required this.snapshot});
-
-  final String text;
-  final WorkspaceFileSnapshot snapshot;
 }
 
 class DocumentFile {
@@ -215,23 +190,59 @@ List<String> _normalizedOpenFilePaths(
 class WorkspaceState {
   const WorkspaceState({
     this.workspace,
-    this.activeText = '',
+    String activeText = '',
     this.preview,
     this.liveOutline,
-    this.isDirty = false,
+    bool isDirty = false,
+    this.documentBuffers = const [],
+    this.activeBufferId,
     this.isLoading = false,
     this.message,
-  });
+  }) : _legacyActiveText = activeText,
+       _legacyIsDirty = isDirty;
 
   final Workspace? workspace;
-  final String activeText;
+  final String _legacyActiveText;
   final PreviewDocument? preview;
   final ActiveDocumentOutline? liveOutline;
-  final bool isDirty;
+  final bool _legacyIsDirty;
+  final List<DocumentBuffer> documentBuffers;
+  final String? activeBufferId;
   final bool isLoading;
   final WorkspaceMessage? message;
 
-  bool get hasUnsavedChanges => isDirty;
+  DocumentBuffer? get activeBuffer {
+    final id = activeBufferId;
+    if (id == null) {
+      return null;
+    }
+    for (final buffer in documentBuffers) {
+      if (buffer.id == id) {
+        return buffer;
+      }
+    }
+    return null;
+  }
+
+  String get activeText => activeBuffer?.text ?? _legacyActiveText;
+
+  bool get isDirty => activeBuffer?.isDirty ?? _legacyIsDirty;
+
+  bool get hasUnsavedChanges => documentBuffers.isEmpty
+      ? _legacyIsDirty
+      : documentBuffers.any((buffer) => buffer.isDirty);
+
+  List<DocumentBuffer> get dirtyBuffers =>
+      List.unmodifiable(documentBuffers.where((buffer) => buffer.isDirty));
+
+  DocumentBuffer? bufferForPath(String path) {
+    for (final buffer in documentBuffers) {
+      if (buffer.filePath == path) {
+        return buffer;
+      }
+    }
+    return null;
+  }
 
   WorkspaceState copyWith({
     Workspace? workspace,
@@ -239,6 +250,8 @@ class WorkspaceState {
     Object? preview = _copyWithUnset,
     Object? liveOutline = _copyWithUnset,
     bool? isDirty,
+    List<DocumentBuffer>? documentBuffers,
+    Object? activeBufferId = _copyWithUnset,
     bool? isLoading,
     WorkspaceMessage? message,
     bool clearMessage = false,
@@ -254,10 +267,14 @@ class WorkspaceState {
         : this.liveOutline;
     return WorkspaceState(
       workspace: workspace ?? this.workspace,
-      activeText: activeText ?? this.activeText,
+      activeText: activeText ?? _legacyActiveText,
       preview: nextPreview,
       liveOutline: nextLiveOutline,
-      isDirty: isDirty ?? this.isDirty,
+      isDirty: isDirty ?? _legacyIsDirty,
+      documentBuffers: documentBuffers ?? this.documentBuffers,
+      activeBufferId: identical(activeBufferId, _copyWithUnset)
+          ? this.activeBufferId
+          : activeBufferId as String?,
       isLoading: isLoading ?? this.isLoading,
       message: clearMessage ? null : message ?? this.message,
     );

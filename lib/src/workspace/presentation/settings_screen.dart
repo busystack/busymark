@@ -341,6 +341,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.commandPalette:
+        return;
       case BusyMarkMainMenuAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
       case BusyMarkMainMenuAction.reportIssue:

@@ -439,36 +439,40 @@ void main() {
     },
   );
 
-  test('save as explicit overwrite replaces the final symlink only', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-save-as-symlink-',
-    );
-    final target = File('${directory.path}/target.md');
-    final link = Link('${directory.path}/note.md');
-    await target.writeAsString('# Target\n');
-    await link.create(target.path);
-    final harness = await _createControllerHarness();
-    final settingsController = harness.settingsController;
-    final controller = harness.controller;
+  test(
+    'save as explicit overwrite replaces the final symlink only',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      final target = File('${directory.path}/target.md');
+      final link = Link('${directory.path}/note.md');
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
-    await controller.createMarkdownFile();
-    controller.updateActiveText('# Draft\n');
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
 
-    expect(
-      await controller.saveActiveAs(link.path, overwriteExisting: true),
-      isTrue,
-    );
-    expect(
-      await FileSystemEntity.type(link.path, followLinks: false),
-      FileSystemEntityType.file,
-    );
-    expect(await File(link.path).readAsString(), '# Draft\n');
-    expect(await target.readAsString(), '# Target\n');
+      expect(
+        await controller.saveActiveAs(link.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Draft\n');
+      expect(await target.readAsString(), '# Target\n');
 
-    controller.dispose();
-    settingsController.dispose();
-    await directory.delete(recursive: true);
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test(
     'save as preserves source edits for an untitled Markdown file',
@@ -709,6 +713,38 @@ void main() {
       initialPath,
       otherFile.absolutePath,
     ]);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('Save All writes every dirty file-backed buffer', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-all-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final first = File(p.join(directory.path, 'a.md'))
+      ..writeAsStringSync('# A\n');
+    final second = File(p.join(directory.path, 'b.md'))
+      ..writeAsStringSync('# B\n');
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath(directory.path);
+    controller.updateActiveText('# Edited A\n');
+    expect(await controller.openActiveFile(second.path), isTrue);
+    controller.updateActiveText('# Edited B\n');
+
+    final result = await controller.saveAll();
+
+    expect(result.savedBufferIds, hasLength(2));
+    expect(result.failedBufferIds, isEmpty);
+    expect(result.conflictBufferIds, isEmpty);
+    expect(controller.state.dirtyBuffers, isEmpty);
+    expect(controller.state.workspace?.activeFilePath, second.path);
+    expect(first.readAsStringSync(), '# Edited A\n');
+    expect(second.readAsStringSync(), '# Edited B\n');
 
     controller.dispose();
     settingsController.dispose();
@@ -1125,6 +1161,8 @@ class _WorkspaceControllerDriver {
 
   Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
       _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
+
+  Future<SaveAllResult> saveAll() => _notifier.saveAll();
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 

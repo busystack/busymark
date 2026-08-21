@@ -221,6 +221,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get keyboardShortcuts => 'Tastatursnarveier';
 
   @override
+  String get commandPalette => 'Kommandopalett';
+
+  @override
+  String get commandPaletteHint => 'Skriv inn en kommando';
+
+  @override
+  String get commandPaletteEmpty => 'Ingen samsvarende kommandoer';
+
+  @override
   String get lightTheme => 'Lys';
 
   @override
@@ -893,6 +902,18 @@ class AppLocalizationsNb extends AppLocalizations {
   String get deleteColumn => 'Slett kolonne';
 
   @override
+  String get tableAlignmentUnspecified => 'Justering: ikke angitt';
+
+  @override
+  String get tableAlignmentLeft => 'Justering: venstre';
+
+  @override
+  String get tableAlignmentCenter => 'Justering: midtstilt';
+
+  @override
+  String get tableAlignmentRight => 'Justering: høyre';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Rad $rowNumber';
   }
@@ -1318,6 +1339,110 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Regulært uttrykk';
+
+  @override
+  String get sourceSearchReplacement => 'Erstatt med';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Erstatt gjeldende treff';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Erstatt og finn neste';
+
+  @override
+  String get sourceSearchReplaceAll => 'Erstatt alle';
+
+  @override
+  String get workspaceReplace => 'Erstatt i arbeidsområdet';
+
+  @override
+  String get reviewReplacements => 'Se gjennom erstatninger';
+
+  @override
+  String get applyReplacements => 'Bruk erstatninger';
+
+  @override
+  String get skippedFiles => 'Filer som ble hoppet over';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Ulagret redigeringsinnhold';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Innhold lagret på disk';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Velg alle $count treff';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Erstattet $matches treff i $files filer; hoppet over $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normaliser linjeslutt';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'Dette dokumentet inneholder blandede linjeslutt. Velg et format.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName bruker blandede linjeslutt. Velg format før du erstatter.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized =>
+      'En for stor fil ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'En fil som ikke kunne leses, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'En fil som ikke er gyldig UTF-8, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Erstatningsforhåndsvisningen ble avkortet.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'En fil som ble endret etter forhåndsvisningen, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'En redigeringsbuffer som ble endret etter forhåndsvisningen, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Velg LF- eller CRLF-normalisering før du erstatter.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Eksterne endringer — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Denne filen ble slettet fra disken.';
+
+  @override
+  String get externalFileChanged =>
+      'Denne filen ble endret på disken mens du har ulagrede endringer.';
+
+  @override
+  String get compare => 'Sammenlign';
+
+  @override
+  String get reloadFromDisk => 'Last inn fra disk på nytt';
+
+  @override
+  String get keepMine => 'Behold min versjon';
+
+  @override
+  String get saveAs => 'Lagre som';
 
   @override
   String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';

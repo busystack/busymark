@@ -220,6 +220,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get keyboardShortcuts => 'कीबोर्ड शॉर्टकट';
 
   @override
+  String get commandPalette => 'कमांड पैलेट';
+
+  @override
+  String get commandPaletteHint => 'कमांड लिखें';
+
+  @override
+  String get commandPaletteEmpty => 'कोई मेल खाता कमांड नहीं';
+
+  @override
   String get lightTheme => 'लाइट';
 
   @override
@@ -885,6 +894,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get deleteColumn => 'कॉलम हटाएँ';
 
   @override
+  String get tableAlignmentUnspecified => 'संरेखण: अनिर्दिष्ट';
+
+  @override
+  String get tableAlignmentLeft => 'संरेखण: बायाँ';
+
+  @override
+  String get tableAlignmentCenter => 'संरेखण: मध्य';
+
+  @override
+  String get tableAlignmentRight => 'संरेखण: दायाँ';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'पंक्ति $rowNumber';
   }
@@ -1309,6 +1330,109 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'रेगुलर एक्सप्रेशन';
+
+  @override
+  String get sourceSearchReplacement => 'इससे बदलें';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'वर्तमान मिलान बदलें';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'बदलें और अगला खोजें';
+
+  @override
+  String get sourceSearchReplaceAll => 'सभी बदलें';
+
+  @override
+  String get workspaceReplace => 'वर्कस्पेस में बदलें';
+
+  @override
+  String get reviewReplacements => 'बदलावों की समीक्षा करें';
+
+  @override
+  String get applyReplacements => 'बदलाव लागू करें';
+
+  @override
+  String get skippedFiles => 'छोड़ी गई फ़ाइलें';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'सहेजी न गई संपादक सामग्री';
+
+  @override
+  String get workspaceReplaceDiskContent => 'डिस्क पर सहेजी सामग्री';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'सभी $count मिलान चुनें';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return '$files फ़ाइलों में $matches मिलान बदले गए; $skipped छोड़े गए।';
+  }
+
+  @override
+  String get normalizeLineEndings => 'पंक्ति अंत सामान्य करें';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'इस दस्तावेज़ में मिले-जुले पंक्ति अंत हैं। कोई प्रारूप चुनें।';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName में मिले-जुले पंक्ति अंत हैं। बदलने से पहले प्रारूप चुनें।';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'बहुत बड़ी फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'पढ़ी न जा सकने वाली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'अमान्य UTF-8 वाली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'बदलाव पूर्वावलोकन छोटा कर दिया गया।';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'पूर्वावलोकन के बाद बदली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'पूर्वावलोकन के बाद बदला संपादक बफ़र छोड़ दिया गया।';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'बदलने से पहले LF या CRLF सामान्यीकरण चुनें।';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'बाहरी बदलाव — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'यह फ़ाइल डिस्क से हटा दी गई।';
+
+  @override
+  String get externalFileChanged =>
+      'आपके सहेजे न गए बदलावों के दौरान यह फ़ाइल डिस्क पर बदल गई।';
+
+  @override
+  String get compare => 'तुलना करें';
+
+  @override
+  String get reloadFromDisk => 'डिस्क से फिर लोड करें';
+
+  @override
+  String get keepMine => 'मेरा संस्करण रखें';
+
+  @override
+  String get saveAs => 'इस रूप में सहेजें';
 
   @override
   String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';

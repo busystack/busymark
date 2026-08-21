@@ -16,6 +16,7 @@
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
 constexpr char kNativeMenuChannel[] = "busymark/native_menus";
+constexpr char kAssetInputChannel[] = "com.busymark.app/asset_input";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
@@ -81,6 +82,7 @@ struct _MyApplication {
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
   FlMethodChannel* native_menu_channel;
+  FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   BusyMarkWebRenderHost* visualization_host;
   GtkCssProvider* header_bar_css_provider;
@@ -2789,6 +2791,95 @@ static void register_native_menu_channel(MyApplication* self, FlView* view) {
       native_menu_handler_data_free);
 }
 
+static FlValue* local_paths_from_uris(gchar** uris) {
+  FlValue* paths = fl_value_new_list();
+  if (uris == nullptr) {
+    return paths;
+  }
+  for (gchar** current = uris; *current != nullptr; current++) {
+    g_autoptr(GError) error = nullptr;
+    g_autofree gchar* path = g_filename_from_uri(*current, nullptr, &error);
+    if (path != nullptr) {
+      fl_value_append_take(paths, fl_value_new_string(path));
+    }
+  }
+  return paths;
+}
+
+static void asset_input_method_call_cb(FlMethodChannel*,
+                                       FlMethodCall* method_call,
+                                       gpointer) {
+  const gchar* method = fl_method_call_get_name(method_call);
+  GtkClipboard* clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  if (strcmp(method, "readClipboardImageFiles") == 0) {
+    g_auto(GStrv) uris = gtk_clipboard_wait_for_uris(clipboard);
+    g_autoptr(FlValue) paths = local_paths_from_uris(uris);
+    fl_method_call_respond_success(method_call, paths, nullptr);
+    return;
+  }
+  if (strcmp(method, "readClipboardImagePng") == 0) {
+    g_autoptr(GdkPixbuf) pixbuf = gtk_clipboard_wait_for_image(clipboard);
+    if (pixbuf == nullptr) {
+      g_autoptr(FlValue) result = fl_value_new_null();
+      fl_method_call_respond_success(method_call, result, nullptr);
+      return;
+    }
+    gchar* buffer = nullptr;
+    gsize length = 0;
+    g_autoptr(GError) error = nullptr;
+    if (!gdk_pixbuf_save_to_buffer(pixbuf, &buffer, &length, "png", &error,
+                                   nullptr)) {
+      g_autoptr(FlValue) details = fl_value_new_null();
+      fl_method_call_respond_error(
+          method_call, "asset.clipboard-encode-failed",
+          error != nullptr ? error->message : "Could not encode clipboard image.",
+          details, nullptr);
+      return;
+    }
+    g_autoptr(GBytes) bytes = g_bytes_new_take(buffer, length);
+    g_autoptr(FlValue) result = fl_value_new_uint8_list_from_bytes(bytes);
+    fl_method_call_respond_success(method_call, result, nullptr);
+    return;
+  }
+  fl_method_call_respond_not_implemented(method_call, nullptr);
+}
+
+static void asset_drag_data_received_cb(GtkWidget*,
+                                        GdkDragContext* context,
+                                        gint,
+                                        gint,
+                                        GtkSelectionData* selection,
+                                        guint,
+                                        guint time,
+                                        gpointer user_data) {
+  auto* self = MY_APPLICATION(user_data);
+  g_auto(GStrv) uris = gtk_selection_data_get_uris(selection);
+  g_autoptr(FlValue) paths = local_paths_from_uris(uris);
+  const gboolean accepted = fl_value_get_length(paths) > 0;
+  if (accepted && self->asset_input_channel != nullptr) {
+    fl_method_channel_invoke_method(self->asset_input_channel,
+                                    "assetFilesDropped", paths, nullptr,
+                                    nullptr, nullptr);
+  }
+  gtk_drag_finish(context, accepted, FALSE, time);
+}
+
+static void register_asset_input_channel(MyApplication* self, FlView* view) {
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  self->asset_input_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      kAssetInputChannel, FL_METHOD_CODEC(codec));
+  fl_method_channel_set_method_call_handler(
+      self->asset_input_channel, asset_input_method_call_cb, self, nullptr);
+  GtkTargetEntry targets[] = {
+      {const_cast<gchar*>("text/uri-list"), 0, 0},
+  };
+  gtk_drag_dest_set(GTK_WIDGET(view), GTK_DEST_DEFAULT_ALL, targets, 1,
+                    GDK_ACTION_COPY);
+  g_signal_connect(view, "drag-data-received",
+                   G_CALLBACK(asset_drag_data_received_cb), self);
+}
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
@@ -2856,6 +2947,7 @@ static void my_application_activate(GApplication* application) {
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
+  register_asset_input_channel(self, view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
   self->visualization_host =
@@ -2917,6 +3009,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_css_provider);
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
+  g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->secure_credential_channel);
   if (self->visualization_host != nullptr) {
     busymark_web_render_host_shutdown(self->visualization_host);
@@ -2955,6 +3048,7 @@ static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
   self->native_menu_channel = nullptr;
+  self->asset_input_channel = nullptr;
   self->secure_credential_channel = nullptr;
   self->visualization_host = nullptr;
   self->header_bar_css_provider = nullptr;

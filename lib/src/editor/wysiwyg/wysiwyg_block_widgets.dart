@@ -147,6 +147,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableRowDeleted,
     required this.onTableColumnInserted,
     required this.onTableColumnDeleted,
+    required this.onTableColumnAlignmentChanged,
     required this.onTableDeleted,
     required this.onImageEditRequested,
     required this.onHtmlEditRequested,
@@ -180,6 +181,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final void Function(int columnIndex, {required bool after})
   onTableColumnInserted;
   final ValueChanged<int> onTableColumnDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onTableColumnAlignmentChanged;
   final VoidCallback onTableDeleted;
   final VoidCallback onImageEditRequested;
   final VoidCallback onHtmlEditRequested;
@@ -328,6 +331,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           onRowDeleted: onTableRowDeleted,
           onColumnInserted: onTableColumnInserted,
           onColumnDeleted: onTableColumnDeleted,
+          onColumnAlignmentChanged: onTableColumnAlignmentChanged,
           onTableDeleted: onTableDeleted,
         ),
       );
@@ -1234,6 +1238,7 @@ class _TableBlockEditor extends StatelessWidget {
     required this.onRowDeleted,
     required this.onColumnInserted,
     required this.onColumnDeleted,
+    required this.onColumnAlignmentChanged,
     required this.onTableDeleted,
   });
 
@@ -1246,6 +1251,8 @@ class _TableBlockEditor extends StatelessWidget {
   final ValueChanged<int> onRowDeleted;
   final void Function(int columnIndex, {required bool after}) onColumnInserted;
   final ValueChanged<int> onColumnDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onColumnAlignmentChanged;
   final VoidCallback onTableDeleted;
 
   @override
@@ -1284,8 +1291,10 @@ class _TableBlockEditor extends StatelessWidget {
                 for (var column = 0; column < columnCount; column++)
                   _TableColumnControlCell(
                     columnIndex: column,
+                    alignment: _alignmentForColumn(rows, column),
                     onInserted: onColumnInserted,
                     onDeleted: onColumnDeleted,
+                    onAlignmentChanged: onColumnAlignmentChanged,
                   ),
               ],
             ),
@@ -1333,9 +1342,31 @@ class _TableBlockEditor extends StatelessWidget {
   bool _isHeaderRow(BusyBlock row, int index) {
     return index == 0 || row.attributes['header'] == 'true';
   }
+
+  BusyTableAlignment _alignmentForColumn(List<BusyBlock> rows, int column) {
+    for (final row in rows) {
+      if (column < row.children.length) {
+        final alignment = busyTableAlignmentFromAttribute(
+          row.children[column].attributes['align'],
+        );
+        if (alignment != BusyTableAlignment.unspecified) {
+          return alignment;
+        }
+      }
+    }
+    return BusyTableAlignment.unspecified;
+  }
 }
 
-enum _TableControlAction { insertBefore, insertAfter, delete }
+enum _TableControlAction {
+  insertBefore,
+  insertAfter,
+  alignUnspecified,
+  alignLeft,
+  alignCenter,
+  alignRight,
+  delete,
+}
 
 class _TableCornerCell extends StatelessWidget {
   const _TableCornerCell({required this.onTableDeleted});
@@ -1361,13 +1392,18 @@ class _TableCornerCell extends StatelessWidget {
 class _TableColumnControlCell extends StatelessWidget {
   const _TableColumnControlCell({
     required this.columnIndex,
+    required this.alignment,
     required this.onInserted,
     required this.onDeleted,
+    required this.onAlignmentChanged,
   });
 
   final int columnIndex;
+  final BusyTableAlignment alignment;
   final void Function(int columnIndex, {required bool after}) onInserted;
   final ValueChanged<int> onDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onAlignmentChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1377,12 +1413,27 @@ class _TableColumnControlCell extends StatelessWidget {
       beforeLabel: context.l10n.insertColumnLeft,
       afterLabel: context.l10n.insertColumnRight,
       deleteLabel: context.l10n.deleteColumn,
+      alignment: alignment,
+      alignmentLabels: (
+        unspecified: context.l10n.tableAlignmentUnspecified,
+        left: context.l10n.tableAlignmentLeft,
+        center: context.l10n.tableAlignmentCenter,
+        right: context.l10n.tableAlignmentRight,
+      ),
       onSelected: (action) {
         switch (action) {
           case _TableControlAction.insertBefore:
             onInserted(columnIndex, after: false);
           case _TableControlAction.insertAfter:
             onInserted(columnIndex, after: true);
+          case _TableControlAction.alignUnspecified:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.unspecified);
+          case _TableControlAction.alignLeft:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.left);
+          case _TableControlAction.alignCenter:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.center);
+          case _TableControlAction.alignRight:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.right);
           case _TableControlAction.delete:
             onDeleted(columnIndex);
         }
@@ -1416,6 +1467,11 @@ class _TableRowControlCell extends StatelessWidget {
             onInserted(rowIndex, after: false);
           case _TableControlAction.insertAfter:
             onInserted(rowIndex, after: true);
+          case _TableControlAction.alignUnspecified ||
+              _TableControlAction.alignLeft ||
+              _TableControlAction.alignCenter ||
+              _TableControlAction.alignRight:
+            return;
           case _TableControlAction.delete:
             onDeleted(rowIndex);
         }
@@ -1432,6 +1488,8 @@ class _TableControlMenuButton extends StatelessWidget {
     required this.afterLabel,
     required this.deleteLabel,
     required this.onSelected,
+    this.alignment,
+    this.alignmentLabels,
   });
 
   final String tooltip;
@@ -1440,6 +1498,9 @@ class _TableControlMenuButton extends StatelessWidget {
   final String afterLabel;
   final String deleteLabel;
   final ValueChanged<_TableControlAction> onSelected;
+  final BusyTableAlignment? alignment;
+  final ({String unspecified, String left, String center, String right})?
+  alignmentLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -1455,6 +1516,28 @@ class _TableControlMenuButton extends StatelessWidget {
           value: _TableControlAction.insertAfter,
           label: afterLabel,
         ),
+        if (alignmentLabels case final labels?) ...[
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignUnspecified,
+            label: labels.unspecified,
+            checked: alignment == BusyTableAlignment.unspecified,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignLeft,
+            label: labels.left,
+            checked: alignment == BusyTableAlignment.left,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignCenter,
+            label: labels.center,
+            checked: alignment == BusyTableAlignment.center,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignRight,
+            label: labels.right,
+            checked: alignment == BusyTableAlignment.right,
+          ),
+        ],
         BusyMarkPopupMenuItem(
           value: _TableControlAction.delete,
           label: deleteLabel,

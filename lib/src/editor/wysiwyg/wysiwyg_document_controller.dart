@@ -418,10 +418,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? 0
           : rowIndex.clamp(0, rows.length - 1).toInt();
       final insertIndex = rows.isEmpty ? 0 : safeRow + (after ? 1 : 0);
+      final alignments = [
+        for (var column = 0; column < columnCount; column++)
+          _tableColumnAlignment(block, column),
+      ];
       final nextRows = [...rows]
         ..insert(
           insertIndex.clamp(0, rows.length).toInt(),
-          _newTableRow(columnCount),
+          _newTableRow(columnCount, alignments: alignments),
         );
       return block.copyWith(
         children: _normalizedTableRows(nextRows),
@@ -525,6 +529,59 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     });
   }
 
+  BusyTableAlignment tableColumnAlignment(
+    String tableBlockId,
+    int columnIndex,
+  ) {
+    final table = blockById(tableBlockId);
+    if (table == null || table.kind != BusyBlockKind.table) {
+      return BusyTableAlignment.unspecified;
+    }
+    return _tableColumnAlignment(table, columnIndex);
+  }
+
+  void setTableColumnAlignment(
+    String tableBlockId,
+    int columnIndex,
+    BusyTableAlignment alignment,
+  ) {
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final columnCount = _tableColumnCount(block);
+      final safeColumn = columnIndex.clamp(0, columnCount - 1).toInt();
+      final attribute = busyTableAlignmentAttribute(alignment);
+      return block.copyWith(
+        children: [
+          for (final row in block.children)
+            row.copyWith(
+              children: [
+                for (final (index, cell) in _cellsPaddedTo(
+                  row,
+                  columnCount,
+                ).indexed)
+                  if (index == safeColumn)
+                    cell.copyWith(
+                      attributes: {
+                        for (final entry in cell.attributes.entries)
+                          if (entry.key != 'align') entry.key: entry.value,
+                        if (attribute != null) 'align': attribute,
+                      },
+                      dirty: true,
+                    )
+                  else
+                    cell,
+              ],
+              dirty: true,
+            ),
+        ],
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
   void deleteTable(String tableBlockId) {
     final nextDocument = BusyDocument(
       filePath: _document.filePath,
@@ -586,7 +643,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                 _tableCellText(template, rowIndex, column) ??
                     (header ? headerTextForColumn(column + 1) : cellText),
               ),
-              attributes: {'cell': header ? 'th' : 'td'},
+              attributes: {
+                'cell': header ? 'th' : 'td',
+                if (template != null)
+                  if (busyTableAlignmentAttribute(
+                        _tableColumnAlignment(template, column),
+                      )
+                      case final alignment?)
+                    'align': alignment,
+              },
               dirty: true,
             ),
         ],
@@ -608,24 +673,53 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
-  BusyBlock _newTableRow(int columns) {
+  BusyBlock _newTableRow(
+    int columns, {
+    List<BusyTableAlignment> alignments = const [],
+  }) {
     return BusyBlock(
       id: _nextGeneratedBlockId('table-row'),
       kind: BusyBlockKind.table,
       children: [
-        for (var column = 0; column < columns; column++) _newTableCell(),
+        for (var column = 0; column < columns; column++)
+          _newTableCell(
+            alignment: column < alignments.length
+                ? alignments[column]
+                : BusyTableAlignment.unspecified,
+          ),
       ],
       dirty: true,
     );
   }
 
-  BusyBlock _newTableCell() {
+  BusyBlock _newTableCell({
+    BusyTableAlignment alignment = BusyTableAlignment.unspecified,
+  }) {
     return BusyBlock(
       id: _nextGeneratedBlockId('table-cell'),
       kind: BusyBlockKind.paragraph,
       inlines: _textInlines(''),
+      attributes: {
+        if (busyTableAlignmentAttribute(alignment) case final value?)
+          'align': value,
+      },
       dirty: true,
     );
+  }
+
+  BusyTableAlignment _tableColumnAlignment(BusyBlock table, int column) {
+    for (final row in table.children) {
+      if (column >= row.children.length) {
+        continue;
+      }
+      final alignment = busyTableAlignmentFromAttribute(
+        row.children[column].attributes['align'],
+      );
+      if (alignment != BusyTableAlignment.unspecified) {
+        return alignment;
+      }
+    }
+    return BusyTableAlignment.unspecified;
   }
 
   int _tableColumnCount(BusyBlock table) {

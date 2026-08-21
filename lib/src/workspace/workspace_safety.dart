@@ -11,6 +11,7 @@ import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
 import 'workspace_message.dart';
+import 'text_format_metadata.dart';
 
 enum _UnsavedChangesAction { cancel, discard, save }
 
@@ -107,9 +108,20 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   if (operationTarget.needsSaveLocation) {
     return _saveActiveAs(context, ref, operationTarget);
   }
+  final normalization = await _chooseMixedLineEndingNormalization(
+    context,
+    ref,
+    operationTarget,
+  );
+  if (operationTarget.format.hasMixedLineEndings && normalization == null) {
+    return false;
+  }
   // The controller owns both the disk check and save serialization so a
   // separate preflight cannot race an already-running write.
-  final saved = await controller.saveActive(target: operationTarget);
+  final saved = await controller.saveActive(
+    target: operationTarget,
+    mixedLineEndingNormalization: normalization,
+  );
   if (saved) {
     return true;
   }
@@ -149,7 +161,20 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   return controller.saveActive(
     overwriteExternalChanges: true,
     target: operationTarget,
+    mixedLineEndingNormalization: normalization,
   );
+}
+
+Future<bool> saveActiveToNewLocation(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final target = controller.captureActiveDocumentSaveTarget();
+  if (target == null) {
+    return false;
+  }
+  return _saveActiveAs(context, ref, target);
 }
 
 Future<bool> _saveActiveAs(
@@ -159,6 +184,17 @@ Future<bool> _saveActiveAs(
 ) async {
   final controller = ref.read(workspaceControllerProvider.notifier);
   if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
+    return false;
+  }
+  final normalization = await _chooseMixedLineEndingNormalization(
+    context,
+    ref,
+    target,
+  );
+  if (target.format.hasMixedLineEndings && normalization == null) {
+    return false;
+  }
+  if (!context.mounted) {
     return false;
   }
   final activePath = target.path;
@@ -196,6 +232,42 @@ Future<bool> _saveActiveAs(
     savePath,
     target: target,
     overwriteExisting: overwriteExisting,
+    mixedLineEndingNormalization: normalization,
+  );
+}
+
+Future<LineEndingNormalization?> _chooseMixedLineEndingNormalization(
+  BuildContext context,
+  WidgetRef ref,
+  ActiveDocumentSaveTarget target,
+) async {
+  if (!target.format.hasMixedLineEndings) {
+    return null;
+  }
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  return showBusyMarkModalDialog<LineEndingNormalization>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.normalizeLineEndings,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: LineEndingNormalization.lf.name.toUpperCase(),
+          onPressed: () => Navigator.pop(context, LineEndingNormalization.lf),
+        ),
+        BusyMarkDialogButton(
+          label: LineEndingNormalization.crlf.name.toUpperCase(),
+          suggested: true,
+          onPressed: () => Navigator.pop(context, LineEndingNormalization.crlf),
+        ),
+      ],
+      children: [Text(context.l10n.mixedLineEndingsSavePrompt)],
+    ),
   );
 }
 

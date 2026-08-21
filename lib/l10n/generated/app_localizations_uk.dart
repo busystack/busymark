@@ -220,6 +220,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
+  String get commandPalette => 'Палітра команд';
+
+  @override
+  String get commandPaletteHint => 'Введіть команду';
+
+  @override
+  String get commandPaletteEmpty => 'Немає відповідних команд';
+
+  @override
   String get lightTheme => 'Світла';
 
   @override
@@ -905,6 +914,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteColumn => 'Видалити стовпець';
 
   @override
+  String get tableAlignmentUnspecified => 'Вирівнювання: не вказано';
+
+  @override
+  String get tableAlignmentLeft => 'Вирівнювання: ліворуч';
+
+  @override
+  String get tableAlignmentCenter => 'Вирівнювання: по центру';
+
+  @override
+  String get tableAlignmentRight => 'Вирівнювання: праворуч';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Рядок $rowNumber';
   }
@@ -1340,6 +1361,109 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Регулярний вираз';
+
+  @override
+  String get sourceSearchReplacement => 'Замінити на';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Замінити поточне';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Замінити й знайти наступне';
+
+  @override
+  String get sourceSearchReplaceAll => 'Замінити все';
+
+  @override
+  String get workspaceReplace => 'Замінити в робочій області';
+
+  @override
+  String get reviewReplacements => 'Переглянути заміни';
+
+  @override
+  String get applyReplacements => 'Застосувати заміни';
+
+  @override
+  String get skippedFiles => 'Пропущені файли';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Незбережений вміст редактора';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Вміст, збережений на диску';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Вибрати всі збіги: $count';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Замінено збігів: $matches у файлах: $files; пропущено: $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Нормалізувати закінчення рядків';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'У документі використовуються змішані закінчення рядків. Виберіть формат.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'У $fileName використовуються змішані закінчення рядків. Виберіть формат перед заміною.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Завеликий файл пропущено.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Файл, який не вдалося прочитати, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Файл із неприпустимим UTF-8 пропущено.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Попередній перегляд замін було скорочено.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Файл, змінений після попереднього перегляду, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Буфер редактора, змінений після попереднього перегляду, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Перед заміною виберіть нормалізацію LF або CRLF.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Зовнішні зміни — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Цей файл було видалено з диска.';
+
+  @override
+  String get externalFileChanged =>
+      'Цей файл змінився на диску, поки у вас були незбережені зміни.';
+
+  @override
+  String get compare => 'Порівняти';
+
+  @override
+  String get reloadFromDisk => 'Перезавантажити з диска';
+
+  @override
+  String get keepMine => 'Залишити мою версію';
+
+  @override
+  String get saveAs => 'Зберегти як';
 
   @override
   String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';

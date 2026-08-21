@@ -219,6 +219,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyboardShortcuts => 'Keyboard Shortcuts';
 
   @override
+  String get commandPalette => 'Command Palette';
+
+  @override
+  String get commandPaletteHint => 'Type a command';
+
+  @override
+  String get commandPaletteEmpty => 'No matching commands';
+
+  @override
   String get lightTheme => 'Light';
 
   @override
@@ -889,6 +898,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteColumn => 'Delete column';
 
   @override
+  String get tableAlignmentUnspecified => 'Alignment: Unspecified';
+
+  @override
+  String get tableAlignmentLeft => 'Alignment: Left';
+
+  @override
+  String get tableAlignmentCenter => 'Alignment: Center';
+
+  @override
+  String get tableAlignmentRight => 'Alignment: Right';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Row $rowNumber';
   }
@@ -1312,6 +1333,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceSearchReplacement => 'Replace with';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Replace current';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Replace and find next';
+
+  @override
+  String get sourceSearchReplaceAll => 'Replace all';
+
+  @override
+  String get workspaceReplace => 'Replace in Workspace';
+
+  @override
+  String get reviewReplacements => 'Review replacements';
+
+  @override
+  String get applyReplacements => 'Apply replacements';
+
+  @override
+  String get skippedFiles => 'Skipped files';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Unsaved editor content';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Saved disk content';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Select all $count matches';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Replaced $matches matches in $files files; skipped $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normalize line endings';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'This document contains mixed line endings. Choose a format.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName uses mixed line endings. Choose the format to use before replacing.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Skipped an oversized file.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Skipped a file that could not be read.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Skipped a file that is not valid UTF-8.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'The replacement preview was truncated.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Skipped a file that changed after the preview.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Skipped an editor buffer that changed after the preview.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Choose LF or CRLF normalization before replacing.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'External changes — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'This file was deleted on disk.';
+
+  @override
+  String get externalFileChanged =>
+      'This file changed on disk while you have unsaved edits.';
+
+  @override
+  String get compare => 'Compare';
+
+  @override
+  String get reloadFromDisk => 'Reload from Disk';
+
+  @override
+  String get keepMine => 'Keep Mine';
+
+  @override
+  String get saveAs => 'Save As';
 
   @override
   String get sourceSearchInvalidRegex => 'Invalid regular expression';

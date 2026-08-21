@@ -22,6 +22,7 @@ import '../writerside/writerside_topic_creator.dart';
 import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
+import 'text_format_metadata.dart';
 
 class WorkspaceService {
   const WorkspaceService({
@@ -407,9 +408,11 @@ class WorkspaceService {
     final file = File(path);
     final bytes = await file.readAsBytes();
     final stat = await file.stat();
+    final decoded = decodeUtf8Document(bytes);
     return WorkspaceFileLoad(
-      text: utf8.decode(bytes),
+      text: decoded.text,
       snapshot: _snapshotFromBytes(stat, bytes),
+      format: decoded.format,
     );
   }
 
@@ -451,8 +454,21 @@ class WorkspaceService {
   /// published with Linux's atomic no-replace rename operation (or an atomic
   /// hard-link fallback). It fails if any filesystem entity already has the
   /// final name.
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
-    final bytes = utf8.encode(text);
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) {
+    return saveNewFormattedText(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final staged = await _stageNewSave(path, bytes);
     try {
       final stat = await staged.file.stat();
@@ -470,8 +486,21 @@ class WorkspaceService {
   Future<WorkspaceFileSnapshot> saveTextReplacingPath(
     String path,
     String text,
-  ) async {
-    final bytes = utf8.encode(text);
+  ) {
+    return saveFormattedTextReplacingPath(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveFormattedTextReplacingPath(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final staged = await _stageNewSave(path, bytes);
     try {
       final targetType = await FileSystemEntity.type(path, followLinks: false);
@@ -486,11 +515,24 @@ class WorkspaceService {
     }
   }
 
-  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) {
+    return saveFormattedText(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
     final savePath = await _saveTargetPath(path);
     final target = File(savePath);
     final existingStat = await target.stat();
-    final bytes = utf8.encode(text);
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final temp = _temporarySaveFile(savePath);
     var renamed = false;
     try {
@@ -1437,6 +1479,16 @@ class WorkspaceService {
           ),
     ];
   }
+}
+
+List<int> _encodeDocumentText(
+  String text, {
+  TextFormatMetadata? format,
+  LineEndingNormalization? mixedNormalization,
+}) {
+  return format == null
+      ? utf8.encode(text)
+      : format.encode(text, mixedNormalization: mixedNormalization);
 }
 
 class _StagedSave {

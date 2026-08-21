@@ -27,6 +27,7 @@ enum BusyMarkAppShortcutAction {
   back,
   search,
   keyboardShortcuts,
+  commandPalette,
   markdownAndHtml,
   settings,
   nextTab,
@@ -47,6 +48,7 @@ abstract final class BusyMarkAppShortcuts {
   static const backLabel = 'Alt+Left';
   static const searchLabel = 'Ctrl+F';
   static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
+  static const commandPaletteLabel = 'Ctrl+Shift+P';
   static const markdownAndHtmlLabel = 'Ctrl+Alt+M';
   static const settingsLabel = 'Ctrl+Alt+S';
   static const nextTabLabel = 'Ctrl+Tab';
@@ -63,6 +65,7 @@ abstract final class BusyMarkAppShortcuts {
   static const backGtkAccelerator = '<Alt>Left';
   static const searchGtkAccelerator = '<Primary>f';
   static const keyboardShortcutsGtkAccelerator = '<Primary><Alt>k';
+  static const commandPaletteGtkAccelerator = '<Primary><Shift>p';
   static const markdownAndHtmlGtkAccelerator = '<Primary><Alt>m';
   static const settingsGtkAccelerator = '<Primary><Alt>s';
   static const nextTabGtkAccelerator = '<Primary>Tab';
@@ -122,6 +125,15 @@ abstract final class BusyMarkAppShortcuts {
       alt: true,
     ),
     gtkAccelerator: keyboardShortcutsGtkAccelerator,
+  );
+  static const commandPalette = BusyMarkShortcutDefinition(
+    label: commandPaletteLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyP,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: commandPaletteGtkAccelerator,
   );
   static const markdownAndHtml = BusyMarkShortcutDefinition(
     label: markdownAndHtmlLabel,
@@ -185,6 +197,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.back: back,
         BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
+        BusyMarkAppShortcutAction.commandPalette: commandPalette,
         BusyMarkAppShortcutAction.markdownAndHtml: markdownAndHtml,
         BusyMarkAppShortcutAction.settings: settings,
         BusyMarkAppShortcutAction.nextTab: nextTab,
@@ -206,6 +219,7 @@ abstract final class BusyMarkAppShortcutLabels {
   static const back = BusyMarkAppShortcuts.backLabel;
   static const search = BusyMarkAppShortcuts.searchLabel;
   static const keyboardShortcuts = BusyMarkAppShortcuts.keyboardShortcutsLabel;
+  static const commandPalette = BusyMarkAppShortcuts.commandPaletteLabel;
   static const markdownAndHtml = BusyMarkAppShortcuts.markdownAndHtmlLabel;
   static const settings = BusyMarkAppShortcuts.settingsLabel;
   static const nextTab = BusyMarkAppShortcuts.nextTabLabel;
@@ -229,6 +243,8 @@ abstract final class BusyMarkAppShortcutActivators {
   static ShortcutActivator get search => BusyMarkAppShortcuts.search.activator;
   static ShortcutActivator get keyboardShortcuts =>
       BusyMarkAppShortcuts.keyboardShortcuts.activator;
+  static ShortcutActivator get commandPalette =>
+      BusyMarkAppShortcuts.commandPalette.activator;
   static ShortcutActivator get markdownAndHtml =>
       BusyMarkAppShortcuts.markdownAndHtml.activator;
   static ShortcutActivator get settings =>

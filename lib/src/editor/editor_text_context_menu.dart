@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
-import '../app/busymark_shortcuts.dart';
+import '../app/command_registry.dart';
 
 Widget buildBusyMarkEditorTextContextMenu(
   BuildContext context,
@@ -86,15 +86,25 @@ class _BusyMarkEditorTextContextMenuState
 
   List<PopupMenuEntry<VoidCallback>> _menuItems(BuildContext context) {
     final editable = widget.editableTextState;
+    final commands = BusyMarkCommandCatalog.create();
     final items = <PopupMenuEntry<VoidCallback>>[
-      for (final item in editable.contextMenuButtonItems)
-        BusyMarkPopupMenuItem<VoidCallback>(
-          value: item.onPressed ?? () {},
-          label: AdaptiveTextSelectionToolbar.getButtonLabel(context, item),
-          icon: _iconFor(item.type),
-          shortcut: _shortcutFor(item.type),
-          enabled: item.onPressed != null,
-        ),
+      for (final item in editable.contextMenuButtonItems) ...[
+        if (_commandIdFor(item.type) case final commandId?)
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: item.onPressed ?? () {},
+            label: commands[commandId]!.label(context),
+            icon: _iconFor(item.type),
+            shortcut: commands[commandId]!.shortcut?.label,
+            enabled: item.onPressed != null,
+          )
+        else
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: item.onPressed ?? () {},
+            label: AdaptiveTextSelectionToolbar.getButtonLabel(context, item),
+            icon: _iconFor(item.type),
+            enabled: item.onPressed != null,
+          ),
+      ],
     ];
     final selection = editable.textEditingValue.selection;
     final refineWithAi = widget.onRefineWithAi;
@@ -102,9 +112,12 @@ class _BusyMarkEditorTextContextMenuState
       items.add(
         BusyMarkPopupMenuItem<VoidCallback>(
           value: refineWithAi,
-          label: widget.refineWithAiLabel,
+          label:
+              commands[BusyMarkCommandIds.editorRefineWithAi]?.label(context) ??
+              widget.refineWithAiLabel,
           icon: BusyMarkGlyphs.ai,
-          shortcut: BusyMarkEditorShortcutLabels.refineWithAi,
+          shortcut:
+              commands[BusyMarkCommandIds.editorRefineWithAi]?.shortcut?.label,
         ),
       );
     }
@@ -127,14 +140,13 @@ IconData? _iconFor(ContextMenuButtonType type) {
   };
 }
 
-String? _shortcutFor(ContextMenuButtonType type) {
+String? _commandIdFor(ContextMenuButtonType type) {
   return switch (type) {
-    ContextMenuButtonType.cut => BusyMarkTextEditingShortcutLabels.cut,
-    ContextMenuButtonType.copy => BusyMarkTextEditingShortcutLabels.copy,
-    ContextMenuButtonType.paste => BusyMarkTextEditingShortcutLabels.paste,
-    ContextMenuButtonType.selectAll =>
-      BusyMarkTextEditingShortcutLabels.selectAll,
-    ContextMenuButtonType.delete => 'Delete',
+    ContextMenuButtonType.cut => BusyMarkCommandIds.textCut,
+    ContextMenuButtonType.copy => BusyMarkCommandIds.textCopy,
+    ContextMenuButtonType.paste => BusyMarkCommandIds.textPaste,
+    ContextMenuButtonType.selectAll => BusyMarkCommandIds.textSelectAll,
+    ContextMenuButtonType.delete => null,
     ContextMenuButtonType.lookUp ||
     ContextMenuButtonType.searchWeb ||
     ContextMenuButtonType.share ||

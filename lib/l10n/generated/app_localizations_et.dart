@@ -218,6 +218,15 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
+  String get commandPalette => 'Käskude palett';
+
+  @override
+  String get commandPaletteHint => 'Sisesta käsk';
+
+  @override
+  String get commandPaletteEmpty => 'Sobivaid käske pole';
+
+  @override
   String get lightTheme => 'Hele';
 
   @override
@@ -893,6 +902,18 @@ class AppLocalizationsEt extends AppLocalizations {
   String get deleteColumn => 'Kustuta veerg';
 
   @override
+  String get tableAlignmentUnspecified => 'Joondus: määramata';
+
+  @override
+  String get tableAlignmentLeft => 'Joondus: vasakule';
+
+  @override
+  String get tableAlignmentCenter => 'Joondus: keskele';
+
+  @override
+  String get tableAlignmentRight => 'Joondus: paremale';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Rida $rowNumber';
   }
@@ -1316,6 +1337,108 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Regulaaravaldis';
+
+  @override
+  String get sourceSearchReplacement => 'Asenda väärtusega';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Asenda praegune vaste';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Asenda ja leia järgmine';
+
+  @override
+  String get sourceSearchReplaceAll => 'Asenda kõik';
+
+  @override
+  String get workspaceReplace => 'Asenda tööruumis';
+
+  @override
+  String get reviewReplacements => 'Vaata asendused üle';
+
+  @override
+  String get applyReplacements => 'Rakenda asendused';
+
+  @override
+  String get skippedFiles => 'Vahele jäetud failid';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Salvestamata redaktori sisu';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Kettale salvestatud sisu';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Vali kõik $count vastet';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Asendati $matches vastet $files failis; vahele jäeti $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normaliseeri reavahetused';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'See dokument sisaldab eri tüüpi reavahetusi. Vali vorming.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'Fail $fileName kasutab eri tüüpi reavahetusi. Vali enne asendamist vorming.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Liiga suur fail jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Fail, mida ei saanud lugeda, jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Fail, mis pole korrektne UTF-8, jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueTruncated => 'Asenduste eelvaade kärbiti.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Pärast eelvaadet muutunud fail jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Pärast eelvaadet muutunud redaktoripuhver jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Vali enne asendamist LF- või CRLF-normaliseerimine.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Välised muudatused — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'See fail kustutati kettalt.';
+
+  @override
+  String get externalFileChanged =>
+      'See fail muutus kettal ajal, kui sul on salvestamata muudatusi.';
+
+  @override
+  String get compare => 'Võrdle';
+
+  @override
+  String get reloadFromDisk => 'Laadi kettalt uuesti';
+
+  @override
+  String get keepMine => 'Säilita minu versioon';
+
+  @override
+  String get saveAs => 'Salvesta nimega';
 
   @override
   String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';

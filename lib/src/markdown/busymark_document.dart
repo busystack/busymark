@@ -5,6 +5,26 @@ import 'markdown_model.dart';
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 
+enum BusyTableAlignment { unspecified, left, center, right }
+
+BusyTableAlignment busyTableAlignmentFromAttribute(String? value) {
+  return switch (value?.toLowerCase()) {
+    'left' => BusyTableAlignment.left,
+    'center' => BusyTableAlignment.center,
+    'right' => BusyTableAlignment.right,
+    _ => BusyTableAlignment.unspecified,
+  };
+}
+
+String? busyTableAlignmentAttribute(BusyTableAlignment alignment) {
+  return switch (alignment) {
+    BusyTableAlignment.unspecified => null,
+    BusyTableAlignment.left => 'left',
+    BusyTableAlignment.center => 'center',
+    BusyTableAlignment.right => 'right',
+  };
+}
+
 class BusyDocument {
   const BusyDocument({
     required this.filePath,

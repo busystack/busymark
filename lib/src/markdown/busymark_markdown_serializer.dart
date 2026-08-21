@@ -281,11 +281,33 @@ class BusyMarkMarkdownSerializer {
     final body = rows.skip(1);
     final buffer = StringBuffer()
       ..writeln('| ${header.join(' | ')} |')
-      ..writeln('| ${header.map((_) => '---').join(' | ')} |');
+      ..writeln(
+        '| ${[for (var column = 0; column < header.length; column++) _tableColumnDelimiter(block, column)].join(' | ')} |',
+      );
     for (final row in body) {
       buffer.writeln('| ${row.children.map(_tableCellMarkdown).join(' | ')} |');
     }
     return buffer.toString().trimRight();
+  }
+
+  String _tableColumnDelimiter(BusyBlock table, int column) {
+    final alignment = table.children
+        .where((row) => column < row.children.length)
+        .map(
+          (row) => busyTableAlignmentFromAttribute(
+            row.children[column].attributes['align'],
+          ),
+        )
+        .firstWhere(
+          (value) => value != BusyTableAlignment.unspecified,
+          orElse: () => BusyTableAlignment.unspecified,
+        );
+    return switch (alignment) {
+      BusyTableAlignment.unspecified => '---',
+      BusyTableAlignment.left => ':---',
+      BusyTableAlignment.center => ':---:',
+      BusyTableAlignment.right => '---:',
+    };
   }
 
   String _tableCellMarkdown(BusyBlock cell) {

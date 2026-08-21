@@ -218,6 +218,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get keyboardShortcuts => 'اختصارات لوحة المفاتيح';
 
   @override
+  String get commandPalette => 'لوحة الأوامر';
+
+  @override
+  String get commandPaletteHint => 'اكتب أمرًا';
+
+  @override
+  String get commandPaletteEmpty => 'لا توجد أوامر مطابقة';
+
+  @override
   String get lightTheme => 'فاتح';
 
   @override
@@ -886,6 +895,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deleteColumn => 'حذف العمود';
 
   @override
+  String get tableAlignmentUnspecified => 'المحاذاة: غير محددة';
+
+  @override
+  String get tableAlignmentLeft => 'المحاذاة: إلى اليسار';
+
+  @override
+  String get tableAlignmentCenter => 'المحاذاة: إلى الوسط';
+
+  @override
+  String get tableAlignmentRight => 'المحاذاة: إلى اليمين';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'الصف $rowNumber';
   }
@@ -1323,6 +1344,108 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'تعبير نمطي';
+
+  @override
+  String get sourceSearchReplacement => 'استبدال بـ';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'استبدال المطابقة الحالية';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'استبدال والبحث عن التالي';
+
+  @override
+  String get sourceSearchReplaceAll => 'استبدال الكل';
+
+  @override
+  String get workspaceReplace => 'استبدال في مساحة العمل';
+
+  @override
+  String get reviewReplacements => 'مراجعة الاستبدالات';
+
+  @override
+  String get applyReplacements => 'تطبيق الاستبدالات';
+
+  @override
+  String get skippedFiles => 'الملفات المتخطاة';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'محتوى المحرر غير المحفوظ';
+
+  @override
+  String get workspaceReplaceDiskContent => 'المحتوى المحفوظ على القرص';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'تحديد كل المطابقات وعددها $count';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'تم استبدال $matches مطابقة في $files ملفًا؛ وتم تخطي $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'توحيد نهايات الأسطر';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'يحتوي هذا المستند على نهايات أسطر مختلطة. اختر تنسيقًا.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'يستخدم الملف ⁨$fileName⁩ نهايات أسطر مختلطة. اختر التنسيق قبل الاستبدال.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized =>
+      'تم تخطي ملف يتجاوز الحجم المسموح.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable => 'تم تخطي ملف تعذرت قراءته.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'تم تخطي ملف بترميز UTF-8 غير صالح.';
+
+  @override
+  String get workspaceReplaceIssueTruncated => 'تم اقتطاع معاينة الاستبدال.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'تم تخطي ملف تغيّر بعد المعاينة.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'تم تخطي مخزن محرر مؤقت تغيّر بعد المعاينة.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'اختر توحيد LF أو CRLF قبل الاستبدال.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'تغييرات خارجية — ⁨$fileName⁩';
+  }
+
+  @override
+  String get externalFileDeleted => 'تم حذف هذا الملف من القرص.';
+
+  @override
+  String get externalFileChanged =>
+      'تغيّر هذا الملف على القرص بينما لديك تعديلات غير محفوظة.';
+
+  @override
+  String get compare => 'مقارنة';
+
+  @override
+  String get reloadFromDisk => 'إعادة التحميل من القرص';
+
+  @override
+  String get keepMine => 'الاحتفاظ بنسختي';
+
+  @override
+  String get saveAs => 'حفظ باسم';
 
   @override
   String get sourceSearchInvalidRegex => 'تعبير نمطي غير صالح';

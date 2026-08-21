@@ -215,11 +215,19 @@ void main() {
     expect(service, contains('reportIssue'));
     expect(service, contains('fullScreen'));
     expect(app, contains('menu: l10n.mainMenu'));
-    expect(app, contains('settings: l10n.settings'));
-    expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
-    expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
+    expect(app, contains('settings: label(BusyMarkCommandIds.settings)'));
+    expect(
+      app,
+      contains(
+        'keyboardShortcuts: label(BusyMarkCommandIds.keyboardShortcuts)',
+      ),
+    );
+    expect(
+      app,
+      contains('markdownAndHtml: label(BusyMarkCommandIds.markdownAndHtml)'),
+    );
     expect(app, contains('reportIssue: l10n.reportIssue'));
-    expect(app, contains('fullScreen: l10n.fullScreen'));
+    expect(app, contains('fullScreen: label(BusyMarkCommandIds.fullScreen)'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -246,8 +254,14 @@ void main() {
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
     expect(mainMenu, contains('label: l10n.reportIssue'));
-    expect(mainMenu, contains('label: l10n.exportAsPdf'));
-    expect(mainMenu, contains('label: l10n.fullScreen'));
+    expect(
+      mainMenu,
+      contains('label: command(BusyMarkCommandIds.exportPdf).label(context)'),
+    );
+    expect(
+      mainMenu,
+      contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
+    );
     expect(mainMenu, contains('enabled: canExportPdf'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
@@ -1255,33 +1269,36 @@ void main() {
     expect(service, contains('viewModeSource'));
     expect(service, contains('viewModePreview'));
     expect(service, contains('viewModeSplit'));
-    expect(app, contains('editor: l10n.editor'));
-    expect(app, contains('source: l10n.source'));
-    expect(app, contains('preview: l10n.reading'));
-    expect(app, contains('split: l10n.split'));
+    expect(app, contains('editor: label(BusyMarkCommandIds.viewEditor)'));
+    expect(app, contains('source: label(BusyMarkCommandIds.viewSource)'));
+    expect(app, contains('preview: label(BusyMarkCommandIds.viewReading)'));
+    expect(app, contains('split: label(BusyMarkCommandIds.viewSplit)'));
     expect(
       app,
-      contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
+      contains('editorShortcut: shortcut(BusyMarkCommandIds.viewEditor)'),
     );
     expect(app, contains('editorGtkAccelerator:'));
-    expect(app, contains('BusyMarkDocumentViewShortcutGtkAccelerators.editor'));
+    expect(app, contains('accelerator(BusyMarkCommandIds.viewEditor)'));
     expect(
       app,
-      contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
+      contains('sourceShortcut: shortcut(BusyMarkCommandIds.viewSource)'),
     );
     expect(
       app,
-      contains('previewShortcut: BusyMarkDocumentViewShortcutLabels.reading'),
+      contains('previewShortcut: shortcut(BusyMarkCommandIds.viewReading)'),
     );
     expect(
       app,
-      contains('splitShortcut: BusyMarkDocumentViewShortcutLabels.split'),
+      contains('splitShortcut: shortcut(BusyMarkCommandIds.viewSplit)'),
     );
     expect(
       app,
-      contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),
+      contains('sidebarShortcut: shortcut(BusyMarkCommandIds.toggleSidebar)'),
     );
-    expect(app, contains('searchShortcut: BusyMarkAppShortcutLabels.search'));
+    expect(
+      app,
+      contains('searchShortcut: shortcut(BusyMarkCommandIds.search)'),
+    );
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));

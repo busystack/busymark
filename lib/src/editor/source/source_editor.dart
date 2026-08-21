@@ -8,9 +8,11 @@ import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
+import '../../search/search_replace_service.dart';
 import '../editor_text_context_menu.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
@@ -22,41 +24,66 @@ import 'source_search.dart';
 typedef BusyMarkSourceChanged =
     void Function(String fullText, String? sourceFilePath);
 
+typedef BusyMarkSourceSessionChanged =
+    void Function(
+      TextSelection selection,
+      double scrollOffset,
+      Set<String> foldedRegionKeys,
+    );
+
 class BusyMarkSourceEditor extends StatefulWidget {
   const BusyMarkSourceEditor({
     super.key,
     required this.text,
     required this.language,
     required this.filePath,
+    this.documentId,
     required this.diagnostics,
     required this.editorFontSize,
     required this.wordWrap,
     required this.searchActive,
     required this.searchOptions,
     required this.onSearchOptionsChanged,
+    this.searchReplacement = '',
+    this.onSearchReplacementChanged,
     required this.onChanged,
+    this.onUndo,
+    this.onRedo,
     required this.onOpenSearch,
     required this.onCloseSearch,
     this.onVisibleLineChanged,
     this.onAiEdit,
     this.editRevision = 0,
+    this.initialSelection,
+    this.initialScrollOffset = 0,
+    this.initialFoldedRegionKeys = const {},
+    this.onSessionChanged,
   });
 
   final String text;
   final SourceSyntaxLanguage language;
   final String? filePath;
+  final String? documentId;
   final Iterable<Diagnostic> diagnostics;
   final double editorFontSize;
   final bool wordWrap;
   final bool searchActive;
   final SourceSearchOptions searchOptions;
   final ValueChanged<SourceSearchOptions> onSearchOptionsChanged;
+  final String searchReplacement;
+  final ValueChanged<String>? onSearchReplacementChanged;
   final BusyMarkSourceChanged onChanged;
+  final String? Function()? onUndo;
+  final String? Function()? onRedo;
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
   final BusyMarkAiEditCallback? onAiEdit;
   final int editRevision;
+  final TextSelection? initialSelection;
+  final double initialScrollOffset;
+  final Set<String> initialFoldedRegionKeys;
+  final BusyMarkSourceSessionChanged? onSessionChanged;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -70,6 +97,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _sourceEditorKey = GlobalKey();
   final _foldedRegionKeys = <String>{};
   final _searchController = SourceSearchController();
+  final _replacementService = const SearchReplacementService();
   final _lineLayoutCache = SourceLineLayoutCache();
   List<SourceFoldRegion> _foldRegions = const [];
   String _lastPath = '';
@@ -84,29 +112,37 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
     _scrollController = ScrollController();
     _undoController = UndoHistoryController();
-    _lastPath = widget.filePath ?? '';
+    _lastPath = widget.documentId ?? widget.filePath ?? '';
     _recomputeFoldRegions(resetCollapsed: true);
+    _restoreSessionState();
     _syncSearchOptions();
+    _controller.addListener(_publishSessionState);
+    _scrollController.addListener(_publishSessionState);
   }
 
   @override
   void didUpdateWidget(covariant BusyMarkSourceEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final path = widget.filePath ?? '';
+    final path = widget.documentId ?? widget.filePath ?? '';
     final pathChanged = path != _lastPath;
     final languageChanged = widget.language != oldWidget.language;
     if (pathChanged) {
       _lastPath = path;
       _foldedRegionKeys.clear();
-      _replaceController(text: widget.text, language: widget.language);
-      _recomputeFoldRegions(resetCollapsed: true);
+      _withoutSessionPublication(() {
+        _replaceController(text: widget.text, language: widget.language);
+        _recomputeFoldRegions(resetCollapsed: true);
+        _restoreSessionState();
+      });
     } else if ((widget.text != oldWidget.text && !_focusNode.hasFocus) ||
         languageChanged) {
-      _controller.replaceFullTextAndLanguage(
-        text: widget.text,
-        language: widget.language,
-      );
-      _recomputeFoldRegions(resetCollapsed: languageChanged);
+      _withoutSessionPublication(() {
+        _controller.replaceFullTextAndLanguage(
+          text: widget.text,
+          language: widget.language,
+        );
+        _recomputeFoldRegions(resetCollapsed: languageChanged);
+      });
     }
     if (widget.searchActive != oldWidget.searchActive ||
         widget.searchOptions != oldWidget.searchOptions ||
@@ -179,6 +215,20 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       widget.onOpenSearch();
       return KeyEventResult.handled;
     }
+    if (BusyMarkTextEditingShortcutActivators.undo.accepts(event, keyboard)) {
+      final text = widget.onUndo?.call();
+      if (text != null) {
+        _applyOwnedUndoText(text);
+        return KeyEventResult.handled;
+      }
+    }
+    if (BusyMarkTextEditingShortcutActivators.redo.accepts(event, keyboard)) {
+      final text = widget.onRedo?.call();
+      if (text != null) {
+        _applyOwnedUndoText(text);
+        return KeyEventResult.handled;
+      }
+    }
     if (BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
       event,
       keyboard,
@@ -250,7 +300,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               child: SizedBox(
                 key: _sourceEditorKey,
                 child: KeyedSubtree(
-                  key: ValueKey(widget.filePath),
+                  key: ValueKey(widget.documentId ?? widget.filePath),
                   child: Shortcuts(
                     shortcuts: BusyMarkEditorShortcutActivators.intentMap(
                       _SourceEditorShortcutIntent.new,
@@ -352,6 +402,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                     regex: !widget.searchOptions.regex,
                   ),
                 ),
+                replacement: widget.searchReplacement,
+                onReplacementChanged:
+                    widget.onSearchReplacementChanged ?? (_) {},
+                onReplaceCurrent: _replaceCurrentSearchMatch,
+                onReplaceAndFindNext: () =>
+                    _replaceCurrentSearchMatch(findNext: true),
+                onReplaceAll: _replaceAllSearchMatches,
                 onClose: widget.onCloseSearch,
               ),
             ),
@@ -470,6 +527,74 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _revealSearchMatch(match);
   }
 
+  void _replaceCurrentSearchMatch({bool findNext = false}) {
+    if (_searchController.result.invalidRegex) {
+      return;
+    }
+    var currentIndex = _searchController.result.currentMatchIndex;
+    if (currentIndex == null) {
+      _searchController.next(_controller.document);
+      currentIndex = _searchController.result.currentMatchIndex;
+    }
+    if (currentIndex == null) {
+      return;
+    }
+    final preview = _replacementService.previewText(
+      source: _controller.fullText,
+      options: widget.searchOptions,
+      replacement: widget.searchReplacement,
+    );
+    if (preview.invalidRegex || currentIndex >= preview.matches.length) {
+      return;
+    }
+    final match = preview.matches[currentIndex];
+    final nextText = preview.source.replaceRange(
+      match.start,
+      match.end,
+      match.replacement,
+    );
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: nextText,
+        selection: TextSelection(
+          baseOffset: match.start,
+          extentOffset: match.start + match.replacement.length,
+        ),
+      ),
+    );
+    _refreshSearch(
+      currentIndex: math.min(
+        currentIndex,
+        math.max(0, preview.matches.length - 2),
+      ),
+    );
+    if (findNext) {
+      _nextSearchMatch();
+    }
+  }
+
+  void _replaceAllSearchMatches() {
+    final preview = _replacementService.previewText(
+      source: _controller.fullText,
+      options: widget.searchOptions,
+      replacement: widget.searchReplacement,
+    );
+    if (preview.invalidRegex || preview.matches.isEmpty) {
+      return;
+    }
+    final nextText = preview.apply();
+    final selectionOffset = _controller.fullSelection.extentOffset
+        .clamp(0, nextText.length)
+        .toInt();
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: nextText,
+        selection: TextSelection.collapsed(offset: selectionOffset),
+      ),
+    );
+    _refreshSearch();
+  }
+
   void _revealSearchMatch(SourceSearchMatch? initialMatch) {
     var match = initialMatch;
     if (match == null) {
@@ -547,6 +672,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _applyFoldedRegions();
       _refreshSearch(currentIndex: _searchController.result.currentMatchIndex);
     });
+    _publishSessionState();
   }
 
   void _unfoldSourceLine(int line) {
@@ -592,6 +718,59 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _refreshSearch(currentIndex: _searchController.result.currentMatchIndex);
     });
     widget.onChanged(_controller.fullText, widget.filePath);
+    _publishSessionState();
+  }
+
+  void _restoreSessionState() {
+    final validKeys = {for (final region in _foldRegions) region.key};
+    _foldedRegionKeys
+      ..clear()
+      ..addAll(widget.initialFoldedRegionKeys.where(validKeys.contains));
+    _applyFoldedRegions();
+    final selection = widget.initialSelection;
+    if (selection != null) {
+      _controller.fullSelection = TextSelection(
+        baseOffset: selection.baseOffset
+            .clamp(0, _controller.fullText.length)
+            .toInt(),
+        extentOffset: selection.extentOffset
+            .clamp(0, _controller.fullText.length)
+            .toInt(),
+      );
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+      _scrollController.jumpTo(
+        widget.initialScrollOffset
+            .clamp(0, _scrollController.position.maxScrollExtent)
+            .toDouble(),
+      );
+    });
+  }
+
+  void _publishSessionState() {
+    if (_suppressSessionPublication) {
+      return;
+    }
+    widget.onSessionChanged?.call(
+      _controller.fullSelection,
+      _scrollController.hasClients ? _scrollController.offset : 0,
+      Set.unmodifiable(_foldedRegionKeys),
+    );
+  }
+
+  bool _suppressSessionPublication = false;
+
+  void _withoutSessionPublication(VoidCallback callback) {
+    final wasSuppressed = _suppressSessionPublication;
+    _suppressSessionPublication = true;
+    try {
+      callback();
+    } finally {
+      _suppressSessionPublication = wasSuppressed;
+    }
   }
 
   TextEditingValue _fullEditingValue() {
@@ -605,6 +784,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _controller.setFullEditingValue(value);
     _focusNode.requestFocus();
     _handleSourceChanged();
+  }
+
+  void _applyOwnedUndoText(String text) {
+    _controller.replaceFullTextAndLanguage(
+      text: text,
+      language: widget.language,
+    );
+    _recomputeFoldRegions();
+    _refreshSearch();
+    setState(() {});
   }
 
   void _applyShortcutAction(BusyMarkEditorShortcutAction action) {
@@ -803,6 +992,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }) {
     final previous = _controller;
     _controller = BusyMarkSourceController(text: text, language: language);
+    _controller.addListener(_publishSessionState);
     _resetUndoHistory();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       previous.dispose();
@@ -1258,7 +1448,7 @@ class _CollapsedSourceLine extends StatelessWidget {
   }
 }
 
-class _SourceSearchPanel extends StatelessWidget {
+class _SourceSearchPanel extends StatefulWidget {
   const _SourceSearchPanel({
     required this.result,
     required this.onPrevious,
@@ -1266,6 +1456,11 @@ class _SourceSearchPanel extends StatelessWidget {
     required this.onToggleCaseSensitive,
     required this.onToggleWholeWord,
     required this.onToggleRegex,
+    required this.replacement,
+    required this.onReplacementChanged,
+    required this.onReplaceCurrent,
+    required this.onReplaceAndFindNext,
+    required this.onReplaceAll,
     required this.onClose,
   });
 
@@ -1275,11 +1470,45 @@ class _SourceSearchPanel extends StatelessWidget {
   final VoidCallback onToggleCaseSensitive;
   final VoidCallback onToggleWholeWord;
   final VoidCallback onToggleRegex;
+  final String replacement;
+  final ValueChanged<String> onReplacementChanged;
+  final VoidCallback onReplaceCurrent;
+  final VoidCallback onReplaceAndFindNext;
+  final VoidCallback onReplaceAll;
   final VoidCallback onClose;
+
+  @override
+  State<_SourceSearchPanel> createState() => _SourceSearchPanelState();
+}
+
+class _SourceSearchPanelState extends State<_SourceSearchPanel> {
+  late final TextEditingController _replacementController;
+
+  @override
+  void initState() {
+    super.initState();
+    _replacementController = TextEditingController(text: widget.replacement);
+  }
+
+  @override
+  void didUpdateWidget(covariant _SourceSearchPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.replacement != oldWidget.replacement &&
+        widget.replacement != _replacementController.text) {
+      _replacementController.text = widget.replacement;
+    }
+  }
+
+  @override
+  void dispose() {
+    _replacementController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final result = widget.result;
     final status = result.invalidRegex
         ? context.l10n.sourceSearchInvalidRegex
         : result.totalMatchCount == 0
@@ -1292,54 +1521,106 @@ class _SourceSearchPanel extends StatelessWidget {
           horizontal: BusyMarkSpacing.xs,
           vertical: BusyMarkSpacing.xxs,
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              status,
-              textDirection: result.invalidRegex
-                  ? Directionality.of(context)
-                  : TextDirection.ltr,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: result.invalidRegex
-                    ? Theme.of(context).colorScheme.error
-                    : colors.mutedForeground,
-                fontFeatures: const [FontFeature.tabularFigures()],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  status,
+                  textDirection: result.invalidRegex
+                      ? Directionality.of(context)
+                      : TextDirection.ltr,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: result.invalidRegex
+                        ? Theme.of(context).colorScheme.error
+                        : colors.mutedForeground,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                _SearchPanelIconButton(
+                  tooltip: context.l10n.sourceSearchPreviousMatch,
+                  icon: YaruIcons.pan_up,
+                  onPressed: result.totalMatchCount == 0
+                      ? null
+                      : widget.onPrevious,
+                ),
+                _SearchPanelIconButton(
+                  tooltip: context.l10n.sourceSearchNextMatch,
+                  icon: YaruIcons.pan_down,
+                  onPressed: result.totalMatchCount == 0 ? null : widget.onNext,
+                ),
+                _SearchOptionButton(
+                  label: 'Aa',
+                  tooltip: context.l10n.sourceSearchCaseSensitive,
+                  selected: result.options.caseSensitive,
+                  onPressed: widget.onToggleCaseSensitive,
+                ),
+                _SearchOptionButton(
+                  label: 'W',
+                  tooltip: context.l10n.sourceSearchWholeWord,
+                  selected: result.options.wholeWord,
+                  onPressed: widget.onToggleWholeWord,
+                ),
+                _SearchOptionButton(
+                  label: '.*',
+                  tooltip: context.l10n.sourceSearchRegex,
+                  selected: result.options.regex,
+                  onPressed: widget.onToggleRegex,
+                ),
+                _SearchPanelIconButton(
+                  tooltip: context.l10n.close,
+                  icon: YaruIcons.window_close,
+                  onPressed: widget.onClose,
+                ),
+              ],
+            ),
+            const SizedBox(height: BusyMarkSpacing.xxs),
+            SizedBox(
+              width: 410,
+              height: 30,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('source-search-replacement'),
+                      controller: _replacementController,
+                      onChanged: widget.onReplacementChanged,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: context.l10n.sourceSearchReplacement,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: BusyMarkSpacing.sm,
+                          vertical: BusyMarkSpacing.xs,
+                        ),
+                      ),
+                    ),
+                  ),
+                  _SearchPanelIconButton(
+                    tooltip: context.l10n.sourceSearchReplaceCurrent,
+                    icon: BusyMarkGlyphs.edit,
+                    onPressed: result.totalMatchCount == 0
+                        ? null
+                        : widget.onReplaceCurrent,
+                  ),
+                  _SearchPanelIconButton(
+                    tooltip: context.l10n.sourceSearchReplaceAndFindNext,
+                    icon: BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                    onPressed: result.totalMatchCount == 0
+                        ? null
+                        : widget.onReplaceAndFindNext,
+                  ),
+                  _SearchPanelIconButton(
+                    tooltip: context.l10n.sourceSearchReplaceAll,
+                    icon: BusyMarkGlyphs.searchUnavailable,
+                    onPressed: result.totalMatchCount == 0
+                        ? null
+                        : widget.onReplaceAll,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: BusyMarkSpacing.xs),
-            _SearchPanelIconButton(
-              tooltip: context.l10n.sourceSearchPreviousMatch,
-              icon: YaruIcons.pan_up,
-              onPressed: result.totalMatchCount == 0 ? null : onPrevious,
-            ),
-            _SearchPanelIconButton(
-              tooltip: context.l10n.sourceSearchNextMatch,
-              icon: YaruIcons.pan_down,
-              onPressed: result.totalMatchCount == 0 ? null : onNext,
-            ),
-            _SearchOptionButton(
-              label: 'Aa',
-              tooltip: context.l10n.sourceSearchCaseSensitive,
-              selected: result.options.caseSensitive,
-              onPressed: onToggleCaseSensitive,
-            ),
-            _SearchOptionButton(
-              label: 'W',
-              tooltip: context.l10n.sourceSearchWholeWord,
-              selected: result.options.wholeWord,
-              onPressed: onToggleWholeWord,
-            ),
-            _SearchOptionButton(
-              label: '.*',
-              tooltip: context.l10n.sourceSearchRegex,
-              selected: result.options.regex,
-              onPressed: onToggleRegex,
-            ),
-            _SearchPanelIconButton(
-              tooltip: context.l10n.close,
-              icon: YaruIcons.window_close,
-              onPressed: onClose,
             ),
           ],
         ),

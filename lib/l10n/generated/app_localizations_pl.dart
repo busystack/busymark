@@ -220,6 +220,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get keyboardShortcuts => 'Skróty klawiaturowe';
 
   @override
+  String get commandPalette => 'Paleta poleceń';
+
+  @override
+  String get commandPaletteHint => 'Wpisz polecenie';
+
+  @override
+  String get commandPaletteEmpty => 'Brak pasujących poleceń';
+
+  @override
   String get lightTheme => 'Jasny';
 
   @override
@@ -904,6 +913,18 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deleteColumn => 'Usuń kolumnę';
 
   @override
+  String get tableAlignmentUnspecified => 'Wyrównanie: nieokreślone';
+
+  @override
+  String get tableAlignmentLeft => 'Wyrównanie: do lewej';
+
+  @override
+  String get tableAlignmentCenter => 'Wyrównanie: do środka';
+
+  @override
+  String get tableAlignmentRight => 'Wyrównanie: do prawej';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Wiersz $rowNumber';
   }
@@ -1338,6 +1359,109 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Wyrażenie regularne';
+
+  @override
+  String get sourceSearchReplacement => 'Zamień na';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Zamień bieżące';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Zamień i znajdź następne';
+
+  @override
+  String get sourceSearchReplaceAll => 'Zamień wszystko';
+
+  @override
+  String get workspaceReplace => 'Zamień w obszarze roboczym';
+
+  @override
+  String get reviewReplacements => 'Przejrzyj zamiany';
+
+  @override
+  String get applyReplacements => 'Zastosuj zamiany';
+
+  @override
+  String get skippedFiles => 'Pominięte pliki';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Niezapisana zawartość edytora';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Zawartość zapisana na dysku';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Wybierz wszystkie dopasowania ($count)';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Zamieniono $matches dopasowań w $files plikach; pominięto $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normalizuj zakończenia wierszy';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'Ten dokument zawiera mieszane zakończenia wierszy. Wybierz format.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName używa mieszanych zakończeń wierszy. Wybierz format przed zamianą.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Pominięto zbyt duży plik.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Pominięto plik, którego nie można odczytać.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Pominięto plik z nieprawidłowym kodowaniem UTF-8.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Podgląd zamian został skrócony.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Pominięto plik zmieniony po utworzeniu podglądu.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Pominięto bufor edytora zmieniony po utworzeniu podglądu.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Przed zamianą wybierz normalizację LF lub CRLF.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Zmiany zewnętrzne — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Ten plik został usunięty z dysku.';
+
+  @override
+  String get externalFileChanged =>
+      'Ten plik zmienił się na dysku, gdy masz niezapisane zmiany.';
+
+  @override
+  String get compare => 'Porównaj';
+
+  @override
+  String get reloadFromDisk => 'Wczytaj ponownie z dysku';
+
+  @override
+  String get keepMine => 'Zachowaj moją wersję';
+
+  @override
+  String get saveAs => 'Zapisz jako';
 
   @override
   String get sourceSearchInvalidRegex => 'Nieprawidłowe wyrażenie regularne';

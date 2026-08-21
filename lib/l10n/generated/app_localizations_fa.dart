@@ -218,6 +218,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get keyboardShortcuts => 'میانبرهای صفحه‌کلید';
 
   @override
+  String get commandPalette => 'پالت فرمان';
+
+  @override
+  String get commandPaletteHint => 'یک فرمان وارد کنید';
+
+  @override
+  String get commandPaletteEmpty => 'هیچ فرمان منطبقی وجود ندارد';
+
+  @override
   String get lightTheme => 'روشن';
 
   @override
@@ -899,6 +908,18 @@ class AppLocalizationsFa extends AppLocalizations {
   String get deleteColumn => 'حذف ستون';
 
   @override
+  String get tableAlignmentUnspecified => 'تراز: مشخص‌نشده';
+
+  @override
+  String get tableAlignmentLeft => 'تراز: چپ';
+
+  @override
+  String get tableAlignmentCenter => 'تراز: وسط';
+
+  @override
+  String get tableAlignmentRight => 'تراز: راست';
+
+  @override
   String tableRowNumber(int rowNumber) {
     final intl.NumberFormat rowNumberNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -1353,6 +1374,109 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'عبارت منظم';
+
+  @override
+  String get sourceSearchReplacement => 'جایگزینی با';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'جایگزینی مورد فعلی';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'جایگزینی و یافتن بعدی';
+
+  @override
+  String get sourceSearchReplaceAll => 'جایگزینی همه';
+
+  @override
+  String get workspaceReplace => 'جایگزینی در فضای کاری';
+
+  @override
+  String get reviewReplacements => 'بازبینی جایگزینی‌ها';
+
+  @override
+  String get applyReplacements => 'اعمال جایگزینی‌ها';
+
+  @override
+  String get skippedFiles => 'فایل‌های نادیده‌گرفته‌شده';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'محتوای ذخیره‌نشدهٔ ویرایشگر';
+
+  @override
+  String get workspaceReplaceDiskContent => 'محتوای ذخیره‌شده روی دیسک';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'انتخاب هر $count مورد';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return '$matches مورد در $files فایل جایگزین شد؛ $skipped مورد نادیده گرفته شد.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'یکسان‌سازی پایان خط‌ها';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'این سند پایان خط‌های ترکیبی دارد. یک قالب انتخاب کنید.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'فایل ⁨$fileName⁩ پایان خط‌های ترکیبی دارد. پیش از جایگزینی قالب را انتخاب کنید.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized =>
+      'یک فایل بیش‌ازحد بزرگ نادیده گرفته شد.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'فایلی که خوانده نمی‌شد نادیده گرفته شد.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'فایلی با UTF-8 نامعتبر نادیده گرفته شد.';
+
+  @override
+  String get workspaceReplaceIssueTruncated => 'پیش‌نمایش جایگزینی کوتاه شد.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'فایلی که پس از پیش‌نمایش تغییر کرده بود نادیده گرفته شد.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'بافر ویرایشگری که پس از پیش‌نمایش تغییر کرده بود نادیده گرفته شد.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'پیش از جایگزینی، یکسان‌سازی LF یا CRLF را انتخاب کنید.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'تغییرات بیرونی — ⁨$fileName⁩';
+  }
+
+  @override
+  String get externalFileDeleted => 'این فایل از روی دیسک حذف شد.';
+
+  @override
+  String get externalFileChanged =>
+      'هنگامی که تغییرات ذخیره‌نشده داشتید، این فایل روی دیسک تغییر کرد.';
+
+  @override
+  String get compare => 'مقایسه';
+
+  @override
+  String get reloadFromDisk => 'بارگیری دوباره از دیسک';
+
+  @override
+  String get keepMine => 'نگه‌داشتن نسخهٔ من';
+
+  @override
+  String get saveAs => 'ذخیره با نام';
 
   @override
   String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';

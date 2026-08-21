@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
@@ -7,9 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html_parser;
+import 'package:path/path.dart' as p;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../ai/ai_models.dart';
+import '../../assets/asset_ingestion_service.dart';
+import '../../assets/asset_input_service.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
@@ -44,6 +48,10 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.assetWorkspaceKind,
+    this.assetIngestionService = const AssetIngestionService(),
+    this.assetInputService,
+    this.onAssetSaveRequired,
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
@@ -57,6 +65,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onVisibleHeadingChanged,
     this.onOpenSearch,
     this.onCloseSearch,
+    this.onUndo,
+    this.onRedo,
     this.headerBarService,
     this.documentLayout,
     this.visualizationRevision = 0,
@@ -69,6 +79,10 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final AssetWorkspaceKind? assetWorkspaceKind;
+  final AssetIngestionService assetIngestionService;
+  final AssetInputService? assetInputService;
+  final VoidCallback? onAssetSaveRequired;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
@@ -82,6 +96,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final ValueChanged<DocumentOutlineHeading?>? onVisibleHeadingChanged;
   final VoidCallback? onOpenSearch;
   final VoidCallback? onCloseSearch;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
   final int visualizationRevision;
@@ -98,6 +114,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _textControllers = <String, BusyMarkWysiwygTextController>{};
   final _textUndoControllers = <String, UndoHistoryController>{};
   final _focusNodes = <String, FocusNode>{};
+  StreamSubscription<List<String>>? _assetDropSubscription;
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
   final _redoStack = <BusyDocument>[];
@@ -133,6 +150,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
     )..addListener(_handleDocumentControllerChanged);
+    _listenForDroppedAssets();
     _itemPositionsListener.itemPositions.addListener(
       _handleVisibleItemsChanged,
     );
@@ -146,6 +164,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   void didUpdateWidget(covariant BusyMarkWysiwygEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.assetInputService != widget.assetInputService) {
+      unawaited(_assetDropSubscription?.cancel());
+      _listenForDroppedAssets();
+    }
     final fileChanged = oldWidget.document.filePath != widget.document.filePath;
     final sourceChanged = oldWidget.document.source != widget.document.source;
     if (fileChanged || (sourceChanged && !_internalChange)) {
@@ -173,6 +195,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    unawaited(_assetDropSubscription?.cancel());
     _itemPositionsListener.itemPositions.removeListener(
       _handleVisibleItemsChanged,
     );
@@ -375,13 +398,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               ),
           _UndoEditorIntent: CallbackAction<_UndoEditorIntent>(
             onInvoke: (intent) {
-              _undoEditorChange();
+              if (!_undoEditorChange()) {
+                widget.onUndo?.call();
+              }
               return null;
             },
           ),
           _RedoEditorIntent: CallbackAction<_RedoEditorIntent>(
             onInvoke: (intent) {
-              _redoEditorChange();
+              if (!_redoEditorChange()) {
+                widget.onRedo?.call();
+              }
               return null;
             },
           ),
@@ -624,6 +651,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           _handleTableColumnInserted(block.id, columnIndex, after: after),
       onTableColumnDeleted: (columnIndex) =>
           _handleTableColumnDeleted(block.id, columnIndex),
+      onTableColumnAlignmentChanged: (columnIndex, alignment) =>
+          _handleTableColumnAlignmentChanged(block.id, columnIndex, alignment),
       onTableDeleted: () => _handleTableDeleted(block.id),
       onImageEditRequested: () =>
           unawaited(_handleImageBlockEditRequested(block.id)),
@@ -1060,6 +1089,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _setActiveBlock(tableBlockId);
     _recordUndoSnapshot();
     _documentController.deleteTableColumn(tableBlockId, columnIndex);
+    _emitMarkdown();
+  }
+
+  void _handleTableColumnAlignmentChanged(
+    String tableBlockId,
+    int columnIndex,
+    BusyTableAlignment alignment,
+  ) {
+    _clearBlockSelection();
+    _setActiveBlock(tableBlockId);
+    _recordUndoSnapshot();
+    _documentController.setTableColumnAlignment(
+      tableBlockId,
+      columnIndex,
+      alignment,
+    );
     _emitMarkdown();
   }
 
@@ -2342,16 +2387,43 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _pasteIntoActiveBlock() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text;
-    if (text == null || text.isEmpty) {
+    if (text != null && text.isNotEmpty) {
+      final internalClipboard = _internalClipboard;
+      if (internalClipboard != null &&
+          internalClipboard.text == text &&
+          _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+        return;
+      }
+      final filePath = _localFilePathFromClipboardText(text);
+      if (filePath != null &&
+          await _ingestExternalImageFile(
+            filePath,
+            AssetIngestionOrigin.clipboardImageFile,
+            reportInvalidImage: false,
+          )) {
+        return;
+      }
+      await _pastePlainTextIntoActiveBlock(textOverride: text);
       return;
     }
-    final internalClipboard = _internalClipboard;
-    if (internalClipboard != null &&
-        internalClipboard.text == text &&
-        _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+    final assetInput = widget.assetInputService ?? busyMarkAssetInputService;
+    final clipboardFiles = await assetInput.readClipboardImageFiles();
+    if (clipboardFiles.isNotEmpty &&
+        await _ingestExternalImageFile(
+          clipboardFiles.first,
+          AssetIngestionOrigin.clipboardImageFile,
+        )) {
       return;
     }
-    await _pastePlainTextIntoActiveBlock(textOverride: text);
+    final png = await assetInput.readClipboardImagePng();
+    if (png != null && png.isNotEmpty) {
+      await _ingestExternalImageBytes(
+        png,
+        suggestedFileName:
+            'screenshot-${DateTime.now().millisecondsSinceEpoch}.png',
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+    }
   }
 
   bool _pasteInternalClipboardIntoActiveBlock(
@@ -2808,8 +2880,163 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         initialSource: initialSource,
         initialAlt: initialAlt,
         submitLabel: submitLabel,
+        ingestSelectedImage: _ingestSelectedImage,
+        onSaveRequired: widget.onAssetSaveRequired,
       ),
     );
+  }
+
+  Future<String> _ingestSelectedImage(String sourcePath) async {
+    final asset = await widget.assetIngestionService.ingestFile(
+      sourcePath: sourcePath,
+      request: _assetIngestionRequest,
+      origin: AssetIngestionOrigin.imagePicker,
+    );
+    return asset.markdownPath;
+  }
+
+  AssetIngestionRequest get _assetIngestionRequest => AssetIngestionRequest(
+    documentFilePath: _documentController.document.filePath,
+    workspaceKind:
+        widget.assetWorkspaceKind ??
+        (widget.writersideRoot != null
+            ? AssetWorkspaceKind.writerside
+            : widget.workspaceRoot != null
+            ? AssetWorkspaceKind.markdownWorkspace
+            : AssetWorkspaceKind.standalone),
+    workspaceRoot: widget.workspaceRoot,
+    writersideRoot: widget.writersideRoot,
+    imagesDir: widget.imagesDir,
+  );
+
+  void _listenForDroppedAssets() {
+    final input = widget.assetInputService ?? busyMarkAssetInputService;
+    _assetDropSubscription = input.droppedFiles.listen((paths) {
+      unawaited(_ingestDroppedAssetFiles(paths));
+    });
+  }
+
+  Future<void> _ingestDroppedAssetFiles(List<String> paths) async {
+    for (final path in paths) {
+      if (!mounted) {
+        return;
+      }
+      await _ingestExternalImageFile(path, AssetIngestionOrigin.dragAndDrop);
+    }
+  }
+
+  String? _localFilePathFromClipboardText(String value) {
+    final trimmed = value.trim();
+    if (trimmed.contains('\n') || trimmed.contains('\r')) {
+      return null;
+    }
+    final uri = Uri.tryParse(trimmed);
+    final candidate = uri?.scheme == 'file' ? File.fromUri(uri!).path : trimmed;
+    return File(candidate).existsSync() ? candidate : null;
+  }
+
+  Future<bool> _ingestExternalImageFile(
+    String sourcePath,
+    AssetIngestionOrigin origin, {
+    bool reportInvalidImage = true,
+  }) async {
+    try {
+      final asset = await widget.assetIngestionService.ingestFile(
+        sourcePath: sourcePath,
+        request: _assetIngestionRequest,
+        origin: origin,
+      );
+      await _requestAltAndInsertAsset(
+        asset,
+        suggestedAlt: p.basenameWithoutExtension(sourcePath),
+      );
+      return true;
+    } on AssetSaveRequiredException {
+      widget.onAssetSaveRequired?.call();
+      return true;
+    } on AssetIngestionException catch (error) {
+      if (reportInvalidImage && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return false;
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  Future<bool> _ingestExternalImageBytes(
+    Uint8List bytes, {
+    required String suggestedFileName,
+    required AssetIngestionOrigin origin,
+  }) async {
+    try {
+      final asset = await widget.assetIngestionService.ingestBytes(
+        bytes: bytes,
+        suggestedFileName: suggestedFileName,
+        request: _assetIngestionRequest,
+        origin: origin,
+      );
+      await _requestAltAndInsertAsset(asset, suggestedAlt: 'Screenshot');
+      return true;
+    } on AssetSaveRequiredException {
+      widget.onAssetSaveRequired?.call();
+      return true;
+    } on AssetIngestionException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return false;
+    }
+  }
+
+  Future<void> _requestAltAndInsertAsset(
+    IngestedAsset asset, {
+    required String suggestedAlt,
+  }) async {
+    if (!mounted) {
+      return;
+    }
+    final fallbackAltText = context.l10n.image;
+    final target = _captureDialogTarget();
+    final result = await _showImageDialog(
+      context,
+      title: context.l10n.image,
+      initialSource: asset.markdownPath,
+      initialAlt: suggestedAlt,
+      submitLabel: context.l10n.insert,
+    );
+    if (!_isDialogTargetCurrent(target) || result == null) {
+      if (!asset.reusedExisting) {
+        try {
+          await File(asset.absolutePath).delete();
+        } on FileSystemException {
+          // A cancelled dialog should not make the editor unusable.
+        }
+      }
+      return;
+    }
+    final blockId = _activeBlockId;
+    final controller = blockId == null ? null : _textControllers[blockId];
+    if (blockId == null || controller == null) {
+      return;
+    }
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: controller.text.length);
+    _recordUndoSnapshot();
+    _documentController.insertInlineImage(
+      blockId,
+      selectionStart: selection.start,
+      selectionEnd: selection.end,
+      source: result.source,
+      alt: result.alt,
+      fallbackAltText: fallbackAltText,
+    );
+    _emitMarkdown();
   }
 
   Future<_TableDialogResult?> _showTableDialog(
@@ -4488,12 +4715,16 @@ class _ImageDialog extends StatefulWidget {
     this.initialSource = '',
     this.initialAlt = '',
     required this.submitLabel,
+    required this.ingestSelectedImage,
+    this.onSaveRequired,
   });
 
   final String title;
   final String initialSource;
   final String initialAlt;
   final String submitLabel;
+  final Future<String> Function(String sourcePath) ingestSelectedImage;
+  final VoidCallback? onSaveRequired;
 
   @override
   State<_ImageDialog> createState() => _ImageDialogState();
@@ -4502,6 +4733,7 @@ class _ImageDialog extends StatefulWidget {
 class _ImageDialogState extends State<_ImageDialog> {
   final _sourceController = TextEditingController();
   final _altController = TextEditingController();
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -4552,6 +4784,21 @@ class _ImageDialogState extends State<_ImageDialog> {
                 onPressed: _chooseImage,
               ),
             ),
+            if (_errorMessage case final message?)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  BusyMarkSpacing.md,
+                  BusyMarkSpacing.xs,
+                  BusyMarkSpacing.md,
+                  BusyMarkSpacing.sm,
+                ),
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             BusyMarkGroupedTextEntry(
               key: BusyMarkImageDialogKeys.alt,
               label: context.l10n.altText,
@@ -4587,9 +4834,26 @@ class _ImageDialogState extends State<_ImageDialog> {
     if (file == null || !mounted) {
       return;
     }
-    _sourceController.text = file.path;
-    if (_altController.text.trim().isEmpty) {
-      _altController.text = file.name;
+    try {
+      final markdownPath = await widget.ingestSelectedImage(file.path);
+      if (!mounted) {
+        return;
+      }
+      _sourceController.text = markdownPath;
+      if (_altController.text.trim().isEmpty) {
+        _altController.text = p.basenameWithoutExtension(file.name);
+      }
+      setState(() => _errorMessage = null);
+    } on AssetSaveRequiredException {
+      if (!mounted) {
+        return;
+      }
+      Navigator.pop(context);
+      widget.onSaveRequired?.call();
+    } on AssetIngestionException catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
+      }
     }
   }
 

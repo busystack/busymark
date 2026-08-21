@@ -513,6 +513,24 @@ abstract class AppLocalizations {
   /// **'Keyboard Shortcuts'**
   String get keyboardShortcuts;
 
+  /// Title and command label for the searchable command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command Palette'**
+  String get commandPalette;
+
+  /// Search hint in the command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command'**
+  String get commandPaletteHint;
+
+  /// Empty state in the command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching commands'**
+  String get commandPaletteEmpty;
+
   /// Light theme option.
   ///
   /// In en, this message translates to:
@@ -1743,6 +1761,30 @@ abstract class AppLocalizations {
   /// **'Delete column'**
   String get deleteColumn;
 
+  /// Menu item for using unspecified Markdown table-column alignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Unspecified'**
+  String get tableAlignmentUnspecified;
+
+  /// Menu item for left-aligning a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Left'**
+  String get tableAlignmentLeft;
+
+  /// Menu item for centering a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Center'**
+  String get tableAlignmentCenter;
+
+  /// Menu item for right-aligning a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Right'**
+  String get tableAlignmentRight;
+
   /// Tooltip for a table row control.
   ///
   /// In en, this message translates to:
@@ -2450,6 +2492,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Regex'**
   String get sourceSearchRegex;
+
+  /// Placeholder for the active-document replacement field.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with'**
+  String get sourceSearchReplacement;
+
+  /// Tooltip for replacing the current search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace current'**
+  String get sourceSearchReplaceCurrent;
+
+  /// Tooltip for replacing the current match and moving to the next.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace and find next'**
+  String get sourceSearchReplaceAndFindNext;
+
+  /// Tooltip for replacing every active-document search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get sourceSearchReplaceAll;
+
+  /// Action that previews replacements across the workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace in Workspace'**
+  String get workspaceReplace;
+
+  /// Action and dialog title for reviewing workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Review replacements'**
+  String get reviewReplacements;
+
+  /// Action that applies selected workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply replacements'**
+  String get applyReplacements;
+
+  /// Heading for files excluded from a workspace replacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped files'**
+  String get skippedFiles;
+
+  /// Source label for a workspace replacement preview using a dirty document buffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved editor content'**
+  String get workspaceReplaceDirtyBuffer;
+
+  /// Source label for a workspace replacement preview using disk content.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved disk content'**
+  String get workspaceReplaceDiskContent;
+
+  /// Checkbox label for selecting every replacement match in a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all {count} matches'**
+  String selectFileMatches(int count);
+
+  /// Summary shown after applying workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced {matches} matches in {files} files; skipped {skipped}.'**
+  String workspaceReplaceApplied(int matches, int files, int skipped);
+
+  /// Dialog title for selecting a line-ending style.
+  ///
+  /// In en, this message translates to:
+  /// **'Normalize line endings'**
+  String get normalizeLineEndings;
+
+  /// Prompt shown before saving a document with mixed line endings.
+  ///
+  /// In en, this message translates to:
+  /// **'This document contains mixed line endings. Choose a format.'**
+  String get mixedLineEndingsSavePrompt;
+
+  /// Prompt shown before replacing content in a mixed-line-ending file.
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} uses mixed line endings. Choose the format to use before replacing.'**
+  String workspaceReplaceMixedLineEndings(String fileName);
+
+  /// Workspace replacement issue for a file above the size limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped an oversized file.'**
+  String get workspaceReplaceIssueOversized;
+
+  /// Workspace replacement issue for an unreadable file.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that could not be read.'**
+  String get workspaceReplaceIssueUnreadable;
+
+  /// Workspace replacement issue for invalid UTF-8 content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that is not valid UTF-8.'**
+  String get workspaceReplaceIssueInvalidUtf8;
+
+  /// Workspace replacement issue when the match limit is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'The replacement preview was truncated.'**
+  String get workspaceReplaceIssueTruncated;
+
+  /// Workspace replacement issue for stale disk content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that changed after the preview.'**
+  String get workspaceReplaceIssueFileChanged;
+
+  /// Workspace replacement issue for stale in-memory content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped an editor buffer that changed after the preview.'**
+  String get workspaceReplaceIssueBufferChanged;
+
+  /// Workspace replacement issue for mixed line endings without a selected format.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose LF or CRLF normalization before replacing.'**
+  String get workspaceReplaceIssueNormalizationRequired;
+
+  /// Title of the external-file comparison dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'External changes — {fileName}'**
+  String externalChangesTitle(String fileName);
+
+  /// Persistent banner shown when an open file is deleted externally.
+  ///
+  /// In en, this message translates to:
+  /// **'This file was deleted on disk.'**
+  String get externalFileDeleted;
+
+  /// Persistent banner shown when a dirty file changes externally.
+  ///
+  /// In en, this message translates to:
+  /// **'This file changed on disk while you have unsaved edits.'**
+  String get externalFileChanged;
+
+  /// Action that compares the editor buffer with the disk version.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get compare;
+
+  /// Action that replaces the editor buffer with the disk version.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload from Disk'**
+  String get reloadFromDisk;
+
+  /// Action that keeps the editor buffer after an external change.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Mine'**
+  String get keepMine;
+
+  /// Action that saves the current document to another path.
+  ///
+  /// In en, this message translates to:
+  /// **'Save As'**
+  String get saveAs;
 
   /// Source search status shown when the regular expression is invalid.
   ///

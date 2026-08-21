@@ -5564,6 +5564,85 @@ void main() {}
     expect(controller.markdown, '');
   });
 
+  test('table alignment survives parsing, edits, and structural changes', () {
+    const source =
+        '| Left | Center | Right | Default |\n'
+        '| :--- | :---: | ---: | --- |\n'
+        '| a | b | c | d |\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final table = parsed.busyDocument.blocks.single;
+    final header = table.children.first.children;
+
+    expect(header.map((cell) => cell.attributes['align']), [
+      'left',
+      'center',
+      'right',
+      isNull,
+    ]);
+
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    String tableId() => controller.document.blocks.single.id;
+    final firstBodyCell = table.children[1].children.first.id;
+    controller.updateTableCellText(tableId(), firstBodyCell, 'edited');
+    controller.insertTableRow(tableId(), 0, after: false);
+    controller.insertTableColumn(tableId(), 1, after: true);
+
+    expect(
+      controller.markdown,
+      '|  |  |  |  |  |\n'
+      '| :--- | :---: | --- | ---: | --- |\n'
+      '| Left | Center |  | Right | Default |\n'
+      '| edited | b |  | c | d |\n',
+    );
+
+    controller.deleteTableColumn(tableId(), 2);
+    expect(
+      controller.markdown,
+      '|  |  |  |  |\n'
+      '| :--- | :---: | ---: | --- |\n'
+      '| Left | Center | Right | Default |\n'
+      '| edited | b | c | d |\n',
+    );
+
+    final roundTrip = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(
+      const BusyMarkMarkdownSerializer().serialize(roundTrip.busyDocument),
+      controller.markdown,
+    );
+  });
+
+  test('table column alignment command supports all Markdown alignments', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final tableId = controller.document.blocks.single.id;
+
+    controller.setTableColumnAlignment(tableId, 0, BusyTableAlignment.left);
+    controller.setTableColumnAlignment(tableId, 1, BusyTableAlignment.center);
+    expect(controller.markdown, contains('| :--- | :---: |'));
+
+    controller.setTableColumnAlignment(tableId, 0, BusyTableAlignment.right);
+    controller.setTableColumnAlignment(
+      tableId,
+      1,
+      BusyTableAlignment.unspecified,
+    );
+    expect(controller.markdown, contains('| ---: | --- |'));
+    expect(
+      controller.tableColumnAlignment(tableId, 0),
+      BusyTableAlignment.right,
+    );
+  });
+
   testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -5646,6 +5725,16 @@ void main() {}
       '| --- | --- |\n'
       '| Alice | Cell |\n',
     );
+
+    await tester.tap(find.byTooltip('Column 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alignment: Unspecified'), findsOneWidget);
+    expect(find.text('Alignment: Left'), findsOneWidget);
+    expect(find.text('Alignment: Center'), findsOneWidget);
+    expect(find.text('Alignment: Right'), findsOneWidget);
+    await tester.tap(find.text('Alignment: Left'));
+    await tester.pumpAndSettle();
+    expect(markdown, contains('| :--- | --- |'));
 
     await tester.tap(deleteTableFinder);
     await tester.pump();

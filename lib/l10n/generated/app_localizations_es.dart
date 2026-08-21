@@ -221,6 +221,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get keyboardShortcuts => 'Atajos de teclado';
 
   @override
+  String get commandPalette => 'Paleta de comandos';
+
+  @override
+  String get commandPaletteHint => 'Escribe un comando';
+
+  @override
+  String get commandPaletteEmpty => 'No hay comandos coincidentes';
+
+  @override
   String get lightTheme => 'Claro';
 
   @override
@@ -904,6 +913,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get deleteColumn => 'Eliminar columna';
 
   @override
+  String get tableAlignmentUnspecified => 'Alineación: Sin especificar';
+
+  @override
+  String get tableAlignmentLeft => 'Alineación: Izquierda';
+
+  @override
+  String get tableAlignmentCenter => 'Alineación: Centro';
+
+  @override
+  String get tableAlignmentRight => 'Alineación: Derecha';
+
+  @override
   String tableRowNumber(int rowNumber) {
     return 'Fila $rowNumber';
   }
@@ -1332,6 +1353,110 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Expresión regular';
+
+  @override
+  String get sourceSearchReplacement => 'Reemplazar por';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Reemplazar actual';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Reemplazar y buscar siguiente';
+
+  @override
+  String get sourceSearchReplaceAll => 'Reemplazar todo';
+
+  @override
+  String get workspaceReplace => 'Reemplazar en el espacio de trabajo';
+
+  @override
+  String get reviewReplacements => 'Revisar reemplazos';
+
+  @override
+  String get applyReplacements => 'Aplicar reemplazos';
+
+  @override
+  String get skippedFiles => 'Archivos omitidos';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Contenido no guardado del editor';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Contenido guardado en disco';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Seleccionar las $count coincidencias';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Se reemplazaron $matches coincidencias en $files archivos; se omitieron $skipped.';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normalizar finales de línea';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'Este documento contiene finales de línea mezclados. Elige un formato.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName usa finales de línea mezclados. Elige el formato antes de reemplazar.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized =>
+      'Se omitió un archivo demasiado grande.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Se omitió un archivo que no se pudo leer.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Se omitió un archivo que no contiene UTF-8 válido.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'La vista previa de reemplazos se truncó.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Se omitió un archivo que cambió después de la vista previa.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Se omitió un búfer del editor que cambió después de la vista previa.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Elige la normalización LF o CRLF antes de reemplazar.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Cambios externos — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Este archivo se eliminó del disco.';
+
+  @override
+  String get externalFileChanged =>
+      'Este archivo cambió en el disco mientras tienes cambios sin guardar.';
+
+  @override
+  String get compare => 'Comparar';
+
+  @override
+  String get reloadFromDisk => 'Recargar desde el disco';
+
+  @override
+  String get keepMine => 'Conservar mi versión';
+
+  @override
+  String get saveAs => 'Guardar como';
 
   @override
   String get sourceSearchInvalidRegex => 'Expresión regular no válida';

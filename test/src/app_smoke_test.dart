@@ -1228,7 +1228,7 @@ void main() {
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
   });
 
-  testWidgets('Ctrl+N with unsaved changes opens confirmation dialog', (
+  testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
@@ -1294,14 +1294,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.unsavedChanges), findsOneWidget);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-
     expect(find.text(l10n.unsavedChanges), findsNothing);
-    expect(service.untitledCount, 0);
-    expect(container.read(workspaceControllerProvider).isDirty, isTrue);
+    expect(service.untitledCount, 1);
+    expect(
+      container.read(workspaceControllerProvider).documentBuffers,
+      hasLength(2),
+    );
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .where((buffer) => buffer.isDirty),
+      hasLength(2),
+    );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
@@ -1317,20 +1322,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.unsavedChanges), findsOneWidget);
-
-    await tester.tap(find.text(l10n.discard));
-    await tester.pumpAndSettle();
-    for (
-      var attempt = 0;
-      attempt < 10 && service.untitledCount == 0;
-      attempt++
-    ) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    expect(service.untitledCount, 1);
-    expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.untitledCount, 2);
+    expect(
+      container.read(workspaceControllerProvider).documentBuffers,
+      hasLength(3),
+    );
+    await tester.pump(const Duration(milliseconds: 800));
   });
 
   testWidgets('Topics defaults creation to root and exposes file-style menu', (
@@ -1905,9 +1903,7 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.tab);
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
-    expect(service.saveCount, 1);
-    expect(service.savedPath, third.path);
-    expect(service.savedText, '# Edited third\n');
+    expect(service.saveCount, 0);
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       first.path,
@@ -1922,6 +1918,10 @@ void main() {
 
     await pressControlShortcut(LogicalKeyboardKey.keyW);
 
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await tester.pumpAndSettle();
+
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       second.path,
@@ -1930,7 +1930,6 @@ void main() {
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path],
     );
-
     await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
 
     expect(
@@ -1942,6 +1941,7 @@ void main() {
       isEmpty,
     );
     expect(find.text(l10n.noOpenFile), findsWidgets);
+    await tester.pump(const Duration(milliseconds: 800));
   });
 
   testWidgets('Git diff files are shown as separate editor tabs', (
@@ -2088,6 +2088,9 @@ void main() {
     expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
     expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -2136,6 +2139,9 @@ void main() {
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -2173,6 +2179,9 @@ void main() {
     );
     expect(find.byType(TextField), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.split);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.split);
@@ -2218,6 +2227,9 @@ void main() {
     expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -3477,7 +3489,14 @@ void main() {
       }
     }
 
-    final sourceField = find.byType(TextField).last;
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# Introduction.md\n',
+    );
     await tester.tap(sourceField);
     await tester.enterText(sourceField, '# Edited Introduction\n');
     await tester.pump();
@@ -3979,6 +3998,9 @@ void main() {
         );
     expect(editorPadding, expectedStandalone.scrollPadding);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4038,6 +4060,9 @@ void main() {
       editorPadding,
     );
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.split);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.split);
@@ -4153,6 +4178,9 @@ void main() {
     expect(editorCheckedMarker.color, editorPrimary);
     expect(editorUncheckedMarker.color, editorMarkerColors.foreground);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4245,6 +4273,9 @@ void main() {
     final editorTextRect = tester.getRect(editorText);
     final editorIconRect = tester.getRect(editorIcon);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4351,6 +4382,9 @@ void main() {
     final editorTextRect = tester.getRect(editorField);
     final editorStyle = editorTextField.style;
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4548,6 +4582,9 @@ After break.
       ),
     );
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4667,6 +4704,9 @@ After break.
     expect(editorImageWidget.width, 320);
     expect(editorImageWidget.maxWidth, 320);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4839,6 +4879,9 @@ After break.
       }
     }
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -5610,6 +5653,9 @@ Gamma body.
     );
     expectSelectedOutlineRow(2);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -5656,6 +5702,9 @@ Gamma body.
     );
     expectSelectedOutlineRow(1);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -7003,6 +7052,9 @@ Draft paragraph.
     expect(editorMarkerText.style?.fontWeight, FontWeight.w600);
     expect(editorAfterListGap, greaterThan(editorItemGap + BusyMarkSpacing.xs));
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);

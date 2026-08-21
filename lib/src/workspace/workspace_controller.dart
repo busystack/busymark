@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,13 +16,40 @@ import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
 import '../writerside/writerside_toc_editor.dart';
+import 'document_buffer.dart';
+import 'recovery_persistence.dart';
+import 'session_persistence.dart';
+import 'text_format_metadata.dart';
 import 'workspace_model.dart';
 import 'workspace_message.dart';
+import 'workspace_file_monitor.dart';
 import 'workspace_service.dart';
 
 final workspaceServiceProvider = Provider<WorkspaceService>(
   (ref) => const WorkspaceService(),
 );
+
+final documentSessionStoreProvider = Provider<DocumentSessionStore>(
+  (ref) => _runningUnderFlutterTest
+      ? MemoryDocumentSessionStore()
+      : JsonDocumentSessionStore(),
+);
+
+final documentRecoveryStoreProvider = Provider<DocumentRecoveryStore>(
+  (ref) => _runningUnderFlutterTest
+      ? MemoryDocumentRecoveryStore()
+      : JsonDocumentRecoveryStore(),
+);
+
+final _runningUnderFlutterTest = Platform.environment.containsKey(
+  'FLUTTER_TEST',
+);
+
+final workspaceFileMonitorProvider = Provider<WorkspaceFileMonitor>((ref) {
+  final monitor = WorkspaceFileMonitor();
+  ref.onDispose(() => unawaited(monitor.dispose()));
+  return monitor;
+});
 
 final workspaceControllerProvider =
     NotifierProvider<WorkspaceController, WorkspaceState>(
@@ -48,24 +76,47 @@ final workspaceSearchCloseRequestProvider =
 class ActiveDocumentSaveTarget {
   const ActiveDocumentSaveTarget._({
     required this.workspaceId,
+    required this.bufferId,
     required this.path,
     required this.documentRevision,
     required this.editRevision,
     required this.snapshot,
     required this.text,
     required this.workspaceKind,
+    required this.format,
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? path;
   final int documentRevision;
   final int editRevision;
   final WorkspaceFileSnapshot? snapshot;
   final String text;
   final WorkspaceKind workspaceKind;
+  final TextFormatMetadata format;
 
   bool get needsSaveLocation =>
       workspaceKind == WorkspaceKind.untitledMarkdown || path == null;
+}
+
+class SaveAllResult {
+  const SaveAllResult({
+    this.savedBufferIds = const [],
+    this.failedBufferIds = const [],
+    this.conflictBufferIds = const [],
+    this.normalizationRequiredBufferIds = const [],
+  });
+
+  final List<String> savedBufferIds;
+  final List<String> failedBufferIds;
+  final List<String> conflictBufferIds;
+  final List<String> normalizationRequiredBufferIds;
+
+  bool get succeeded =>
+      failedBufferIds.isEmpty &&
+      conflictBufferIds.isEmpty &&
+      normalizationRequiredBufferIds.isEmpty;
 }
 
 class WorkspaceSearchRequestController extends Notifier<int> {
@@ -82,7 +133,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
+  late DocumentSessionStore _sessionStore;
+  late DocumentRecoveryStore _recoveryStore;
+  late WorkspaceFileMonitor _fileMonitor;
+  StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
   Timer? _autoSaveDebounce;
+  Timer? _persistenceDebounce;
+  Timer? _workspaceRefreshDebounce;
   Future<bool>? _activeSave;
   ActiveDocumentSaveTarget? _activeSaveTarget;
   var _derivedRefreshRunning = false;
@@ -90,34 +147,445 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _pendingPreviewRefresh = false;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
+  var _untitledSequence = 0;
+  final _intentionallyRemovedPaths = <String>{};
+  late Future<RecoverySnapshot> _recoveryStart;
+  Future<void> _persistenceWrites = Future.value();
 
-  int get editRevision => _editRevision;
+  int get editRevision => state.activeBuffer?.revision ?? _editRevision;
 
   @override
   WorkspaceState build() {
     _service = ref.read(workspaceServiceProvider);
     _settingsController = ref.read(appSettingsControllerProvider.notifier);
+    _sessionStore = ref.read(documentSessionStoreProvider);
+    _recoveryStore = ref.read(documentRecoveryStoreProvider);
+    _fileMonitor = ref.read(workspaceFileMonitorProvider);
+    _fileMonitorSubscription = _fileMonitor.events.listen(
+      (event) => unawaited(_handleFileMonitorEvent(event)),
+    );
+    _recoveryStart = _recoveryStore.beginRun();
     ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
       if (!next.autoSave) {
         _autoSaveDebounce?.cancel();
         return;
       }
-      if (state.isDirty) {
+      if (state.dirtyBuffers.any((buffer) => buffer.filePath != null)) {
         _scheduleAutoSave();
       }
     });
     ref.onDispose(() {
       _cancelPendingDerivedRefresh();
       _autoSaveDebounce?.cancel();
+      _persistenceDebounce?.cancel();
+      _workspaceRefreshDebounce?.cancel();
+      unawaited(_fileMonitorSubscription?.cancel());
     });
     return const WorkspaceState();
   }
 
+  Future<bool> restorePreviousSession() async {
+    if (state.workspace != null) {
+      return state.documentBuffers.isNotEmpty;
+    }
+    final recovery = await _recoveryStart;
+    final session = await _sessionStore.load();
+    final recoverEntries = recovery.cleanShutdown
+        ? const <DocumentRecoveryEntry>[]
+        : recovery.entries;
+    if (session == null && recoverEntries.isEmpty) {
+      return false;
+    }
+    final workspacePath =
+        session?.workspacePath ??
+        recoverEntries
+            .map((entry) => entry.workspacePath)
+            .whereType<String>()
+            .firstOrNull ??
+        recoverEntries
+            .map((entry) => entry.filePath)
+            .whereType<String>()
+            .firstOrNull;
+    try {
+      final workspace = workspacePath == null
+          ? _service.createUntitledMarkdown()
+          : await _service.openPath(workspacePath);
+      final recoveryById = {
+        for (final entry in recoverEntries) entry.id: entry,
+      };
+      final recoveryByPath = {
+        for (final entry in recoverEntries)
+          if (entry.filePath != null) entry.filePath!: entry,
+      };
+      final buffers = <DocumentBuffer>[];
+      final sessionEntries = session?.tabs ?? const <DocumentSessionEntry>[];
+      for (final entry in sessionEntries) {
+        final recovered =
+            recoveryById[entry.id] ??
+            (entry.filePath == null ? null : recoveryByPath[entry.filePath]);
+        final buffer = await _restoreSessionBuffer(entry, recovered);
+        if (buffer != null) {
+          buffers.add(buffer);
+        }
+      }
+      for (final recovered in recoverEntries) {
+        if (buffers.any((buffer) => buffer.id == recovered.id)) {
+          continue;
+        }
+        final buffer = await _restoreRecoveryBuffer(recovered);
+        if (buffer != null) {
+          buffers.add(buffer);
+        }
+      }
+      if (buffers.isEmpty) {
+        return false;
+      }
+      final activeId =
+          buffers.any((buffer) => buffer.id == session?.activeBufferId)
+          ? session!.activeBufferId!
+          : buffers.first.id;
+      final active = buffers.firstWhere((buffer) => buffer.id == activeId);
+      final openPaths = [
+        for (final buffer in buffers)
+          if (buffer.filePath != null) buffer.filePath!,
+      ];
+      final nextWorkspace = workspace.copyWith(
+        activeFilePath: active.filePath,
+        activeFileSnapshot: active.diskSnapshot,
+        openFilePaths: openPaths,
+      );
+      final reparsed = await _service.reparseActive(nextWorkspace, active.text);
+      state = WorkspaceState(
+        workspace: reparsed,
+        preview: _safePreview(reparsed, active.text),
+        documentBuffers: buffers,
+        activeBufferId: active.id,
+      );
+      _editRevision = active.revision;
+      await _startMonitoring(reparsed);
+      await _settingsController.setDocumentViewMode(active.editorState.mode);
+      _schedulePersistence();
+      return true;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Session restore failed',
+        error,
+        stackTrace,
+      );
+      return false;
+    }
+  }
+
+  Future<DocumentBuffer?> _restoreSessionBuffer(
+    DocumentSessionEntry session,
+    DocumentRecoveryEntry? recovery,
+  ) async {
+    if (recovery != null) {
+      return _restoreRecoveryBuffer(recovery, editorState: session.editorState);
+    }
+    final path = session.filePath;
+    if (path == null || !await _service.pathExists(path)) {
+      return null;
+    }
+    final load = await _service.loadTextWithSnapshot(path);
+    return _fileBuffer(path, load).copyWith(editorState: session.editorState);
+  }
+
+  Future<DocumentBuffer?> _restoreRecoveryBuffer(
+    DocumentRecoveryEntry recovery, {
+    DocumentEditorState? editorState,
+  }) async {
+    final path = recovery.filePath;
+    if (path == null) {
+      return DocumentBuffer.untitled(
+        id: recovery.id,
+        name: recovery.untitledName ?? 'Untitled',
+        text: recovery.text,
+        mode: (editorState ?? recovery.editorState).mode,
+      ).copyWith(
+        editorState: editorState ?? recovery.editorState,
+        format: recovery.format,
+        revision: recovery.revision,
+        recovered: true,
+      );
+    }
+    if (!await _service.pathExists(path)) {
+      return DocumentBuffer(
+        id: recovery.id,
+        filePath: path,
+        text: recovery.text,
+        lastSavedText: recovery.lastSavedText,
+        dirty: true,
+        diskSnapshot: recovery.diskSnapshot,
+        format: recovery.format,
+        editorState: editorState ?? recovery.editorState,
+        revision: recovery.revision,
+        diskState: DocumentDiskState.deleted,
+        recovered: true,
+      );
+    }
+    final disk = await _service.loadTextWithSnapshot(path);
+    final conflict =
+        recovery.diskSnapshot == null ||
+        disk.snapshot.differsFrom(recovery.diskSnapshot!);
+    return DocumentBuffer(
+      id: recovery.id,
+      filePath: path,
+      text: recovery.text,
+      lastSavedText: recovery.lastSavedText,
+      dirty: true,
+      diskSnapshot: recovery.diskSnapshot,
+      format: recovery.format,
+      editorState: editorState ?? recovery.editorState,
+      revision: recovery.revision,
+      diskState: conflict
+          ? DocumentDiskState.conflict
+          : DocumentDiskState.present,
+      diskVersionText: conflict ? disk.text : null,
+      diskVersionSnapshot: conflict ? disk.snapshot : null,
+      recovered: true,
+    );
+  }
+
+  void _schedulePersistence() {
+    _persistenceDebounce?.cancel();
+    if (_runningUnderFlutterTest) {
+      unawaited(flushPersistence());
+      return;
+    }
+    _persistenceDebounce = Timer(
+      const Duration(milliseconds: 700),
+      () => unawaited(flushPersistence()),
+    );
+  }
+
+  Future<void> flushPersistence() {
+    _persistenceDebounce?.cancel();
+    final snapshot = state;
+    final prior = _persistenceWrites.then<void>((_) {}, onError: (_, _) {});
+    final write = prior.then((_) => _persistSnapshot(snapshot));
+    _persistenceWrites = write;
+    return write;
+  }
+
+  Future<void> _persistSnapshot(WorkspaceState snapshot) async {
+    await _recoveryStart;
+    final workspace = snapshot.workspace;
+    if (workspace == null) {
+      await _sessionStore.clear();
+      await _recoveryStore.writeEntries(const []);
+      return;
+    }
+    final workspacePath = switch (workspace.kind) {
+      WorkspaceKind.untitledMarkdown => null,
+      WorkspaceKind.singleMarkdown =>
+        snapshot.documentBuffers.firstOrNull?.filePath ?? workspace.rootPath,
+      WorkspaceKind.markdownFolder ||
+      WorkspaceKind.writersideModule => workspace.rootPath,
+    };
+    await _sessionStore.save(
+      WorkspaceSessionSnapshot(
+        workspacePath: workspacePath,
+        activeBufferId: snapshot.activeBufferId,
+        tabs: [
+          for (final buffer in snapshot.documentBuffers)
+            DocumentSessionEntry(
+              id: buffer.id,
+              filePath: buffer.filePath,
+              untitledName: buffer.untitledName,
+              editorState: buffer.editorState,
+            ),
+        ],
+      ),
+    );
+    await _recoveryStore.writeEntries([
+      for (final buffer in snapshot.documentBuffers)
+        if (buffer.isDirty || buffer.isUntitled)
+          DocumentRecoveryEntry.fromBuffer(
+            buffer,
+            workspacePath: workspacePath,
+          ),
+    ]);
+  }
+
+  Future<void> markCleanShutdown() async {
+    await flushPersistence();
+    await _recoveryStore.markCleanShutdown();
+  }
+
+  Future<void> discardRecoveryForShutdown() async {
+    await flushPersistence();
+    await _recoveryStore.clear();
+  }
+
+  Future<void> _startMonitoring(Workspace workspace) async {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown ||
+        workspace.rootPath.isEmpty ||
+        !Directory(workspace.rootPath).existsSync()) {
+      await _fileMonitor.stop();
+      return;
+    }
+    await _fileMonitor.start(
+      rootPath: workspace.rootPath,
+      openFilePaths: state.documentBuffers
+          .map((buffer) => buffer.filePath)
+          .whereType<String>(),
+    );
+  }
+
+  Future<void> _handleFileMonitorEvent(WorkspaceFileMonitorEvent event) async {
+    final matching = state.documentBuffers.where((buffer) {
+      final path = buffer.filePath;
+      return path != null &&
+          (p.equals(path, event.path) ||
+              (event.destinationPath != null &&
+                  p.equals(path, event.destinationPath!)));
+    }).toList();
+    for (final buffer in matching) {
+      await _applyExternalFileState(buffer, event);
+    }
+    _workspaceRefreshDebounce?.cancel();
+    _workspaceRefreshDebounce = Timer(
+      const Duration(milliseconds: 250),
+      () => unawaited(refreshWorkspaceFromDiskPreservingOpenTabs()),
+    );
+  }
+
+  Future<void> _applyExternalFileState(
+    DocumentBuffer original,
+    WorkspaceFileMonitorEvent event,
+  ) async {
+    final current = state.documentBuffers
+        .where((buffer) => buffer.id == original.id)
+        .firstOrNull;
+    final path = current?.filePath;
+    if (current == null || path == null) {
+      return;
+    }
+    if (event.kind == WorkspaceFileEventKind.deleted &&
+        !await _service.pathExists(path)) {
+      _updateBufferFromMonitor(
+        current.copyWith(diskState: DocumentDiskState.deleted),
+      );
+      return;
+    }
+    try {
+      final disk = await _service.loadTextWithSnapshot(path);
+      if (_sameFileSnapshot(current.diskSnapshot, disk.snapshot)) {
+        return;
+      }
+      if (current.isDirty) {
+        _updateBufferFromMonitor(
+          current.copyWith(
+            diskState: DocumentDiskState.conflict,
+            diskVersionText: disk.text,
+            diskVersionSnapshot: disk.snapshot,
+          ),
+        );
+        return;
+      }
+      final reloaded = current.copyWith(
+        text: disk.text,
+        lastSavedText: disk.text,
+        dirty: false,
+        diskSnapshot: disk.snapshot,
+        format: disk.format,
+        revision: current.revision + 1,
+        diskState: DocumentDiskState.present,
+        diskVersionText: null,
+        diskVersionSnapshot: null,
+      );
+      _updateBufferFromMonitor(reloaded);
+      if (state.activeBufferId == reloaded.id && state.workspace != null) {
+        final workspace = state.workspace!.copyWith(
+          activeFileSnapshot: disk.snapshot,
+        );
+        final reparsed = await _service.reparseActive(workspace, disk.text);
+        if (state.activeBufferId == reloaded.id &&
+            state.activeBuffer?.revision == reloaded.revision) {
+          state = state.copyWith(
+            workspace: reparsed,
+            preview: _safePreview(reparsed, disk.text),
+          );
+        }
+      }
+    } on FileSystemException {
+      _updateBufferFromMonitor(
+        current.copyWith(diskState: DocumentDiskState.deleted),
+      );
+    } on FormatException {
+      // Invalid UTF-8 remains on disk and must not replace an editable buffer.
+    }
+  }
+
+  void _updateBufferFromMonitor(DocumentBuffer buffer) {
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, buffer),
+      workspace: state.activeBufferId == buffer.id
+          ? state.workspace?.copyWith(activeFileSnapshot: buffer.diskSnapshot)
+          : state.workspace,
+    );
+    _schedulePersistence();
+  }
+
+  Future<bool> reloadBufferFromDisk(String bufferId) async {
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    final path = buffer?.filePath;
+    if (buffer == null || path == null || !await _service.pathExists(path)) {
+      return false;
+    }
+    final disk = await _service.loadTextWithSnapshot(path);
+    final reloaded = buffer.copyWith(
+      text: disk.text,
+      lastSavedText: disk.text,
+      dirty: false,
+      diskSnapshot: disk.snapshot,
+      format: disk.format,
+      revision: buffer.revision + 1,
+      diskState: DocumentDiskState.present,
+      diskVersionText: null,
+      diskVersionSnapshot: null,
+      recovered: false,
+    );
+    _updateBufferFromMonitor(reloaded);
+    if (state.activeBufferId == bufferId && state.workspace != null) {
+      final workspace = await _service.reparseActive(
+        state.workspace!.copyWith(activeFileSnapshot: disk.snapshot),
+        disk.text,
+      );
+      state = state.copyWith(
+        workspace: workspace,
+        preview: _safePreview(workspace, disk.text),
+      );
+    }
+    return true;
+  }
+
+  void keepBufferVersion(String bufferId) {
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    if (buffer == null) {
+      return;
+    }
+    final snapshot = buffer.diskVersionSnapshot ?? buffer.diskSnapshot;
+    _updateBufferFromMonitor(
+      buffer.copyWith(
+        diskSnapshot: snapshot,
+        diskState: buffer.filePath == null
+            ? DocumentDiskState.present
+            : DocumentDiskState.changed,
+        diskVersionText: null,
+        diskVersionSnapshot: null,
+      ),
+    );
+  }
+
   bool get activeDocumentNeedsSaveLocation {
     final workspace = state.workspace;
-    return workspace != null &&
-        (workspace.kind == WorkspaceKind.untitledMarkdown ||
-            workspace.activeFilePath == null);
+    return workspace != null && state.activeBuffer?.filePath == null;
   }
 
   ActiveDocumentSaveTarget? captureActiveDocumentSaveTarget() {
@@ -125,14 +593,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (workspace == null) {
       return null;
     }
+    final buffer = state.activeBuffer;
+    if (buffer == null) {
+      return null;
+    }
     return ActiveDocumentSaveTarget._(
       workspaceId: workspace.id,
-      path: workspace.activeFilePath,
+      bufferId: buffer.id,
+      path: buffer.filePath,
       documentRevision: _activeDocumentRevision,
-      editRevision: _editRevision,
-      snapshot: workspace.activeFileSnapshot,
-      text: state.activeText,
+      editRevision: buffer.revision,
+      snapshot: buffer.diskSnapshot,
+      text: buffer.text,
       workspaceKind: workspace.kind,
+      format: buffer.format,
     );
   }
 
@@ -144,9 +618,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeFilePath: target.path,
         ) &&
         workspace != null &&
-        _editRevision == target.editRevision &&
-        state.activeText == target.text &&
-        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
+        state.activeBuffer?.id == target.bufferId &&
+        state.activeBuffer?.revision == target.editRevision &&
+        state.activeBuffer?.text == target.text &&
+        _sameFileSnapshot(state.activeBuffer?.diskSnapshot, target.snapshot);
   }
 
   Future<void> createMarkdownFile() async {
@@ -155,13 +630,34 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _invalidateActiveDocumentOperations();
     _resetSaveTracking(dirty: true);
     final viewModeChange = _showEditorForNewFile();
-    final workspace = _service.createUntitledMarkdown();
+    final currentWorkspace = state.workspace;
+    final untitledWorkspace = _service.createUntitledMarkdown();
+    final workspace = currentWorkspace == null
+        ? untitledWorkspace
+        : currentWorkspace.copyWith(
+            activeFilePath: null,
+            activeFileSnapshot: null,
+            markdown: untitledWorkspace.markdown,
+          );
+    final sequence = ++_untitledSequence;
+    final buffer = DocumentBuffer.untitled(
+      id: 'untitled:${DateTime.now().microsecondsSinceEpoch}:$sequence',
+      name: 'Untitled $sequence',
+      mode:
+          _settingsController.state.documentViewMode ==
+              DocumentViewModePreference.preview
+          ? DocumentViewModePreference.editor
+          : _settingsController.state.documentViewMode,
+    );
     state = WorkspaceState(
       workspace: workspace,
       preview: _safePreview(workspace, ''),
-      isDirty: true,
+      documentBuffers: [...state.documentBuffers, buffer],
+      activeBufferId: buffer.id,
       isLoading: false,
     );
+    await _startMonitoring(workspace);
+    _schedulePersistence();
     await viewModeChange;
   }
 
@@ -185,11 +681,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return;
       }
+      final buffer = load == null || active == null
+          ? null
+          : _fileBuffer(
+              active,
+              load,
+              mode: _settingsController.state.documentViewMode,
+            );
       state = WorkspaceState(
         workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
+        documentBuffers: buffer == null ? const [] : [buffer],
+        activeBufferId: buffer?.id,
       );
+      await _startMonitoring(loadedWorkspace);
+      _schedulePersistence();
       _resetSaveTracking();
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
@@ -239,11 +746,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return false;
       }
+      final buffer = load == null || active == null
+          ? null
+          : _fileBuffer(
+              active,
+              load,
+              mode: _settingsController.state.documentViewMode,
+            );
       state = WorkspaceState(
         workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
+        documentBuffers: buffer == null ? const [] : [buffer],
+        activeBufferId: buffer?.id,
       );
+      await _startMonitoring(loadedWorkspace);
+      _schedulePersistence();
       _resetSaveTracking();
       await _settingsController.recordOpenedWorkspace(
         path: workspace.rootPath,
@@ -311,11 +829,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return false;
       }
+      final existing = active == null ? null : state.bufferForPath(active);
+      final buffer =
+          existing ??
+          (load == null || active == null
+              ? null
+              : _fileBuffer(
+                  active,
+                  load,
+                  mode: _settingsController.state.documentViewMode,
+                ));
+      final buffers = buffer == null
+          ? state.documentBuffers
+          : existing != null
+          ? state.documentBuffers
+          : [...state.documentBuffers, buffer];
       state = WorkspaceState(
         workspace: tabbedWorkspace,
         activeText: text,
         preview: _safePreview(tabbedWorkspace, text),
+        documentBuffers: buffers,
+        activeBufferId: buffer?.id,
       );
+      await _startMonitoring(tabbedWorkspace);
+      _schedulePersistence();
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
@@ -398,16 +935,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> openFolder(String path) => openPath(path);
 
   Future<bool> openActiveFile(String path) async {
-    final workspace = state.workspace;
-    if (workspace?.activeFilePath != path && !await autoSaveActiveIfNeeded()) {
-      return false;
-    }
     return _openActiveFile(path);
   }
 
   Future<bool> activateNextOpenFileTab() => _activateOpenFileTab(1);
 
   Future<bool> activatePreviousOpenFileTab() => _activateOpenFileTab(-1);
+
+  Future<bool> activateDocumentBuffer(String bufferId) async {
+    final workspace = state.workspace;
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    if (workspace == null || buffer == null) {
+      return false;
+    }
+    return _activateBuffer(
+      workspace,
+      buffer,
+      documentBuffers: state.documentBuffers,
+      openFilePaths: workspace.openFilePaths,
+    );
+  }
 
   Future<bool> closeActiveOpenFileTab() async {
     final activeFilePath = state.workspace?.activeFilePath;
@@ -419,10 +968,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> closeAllOpenFileTabs() async {
     final workspace = state.workspace;
-    if (workspace == null || workspace.openFilePaths.isEmpty) {
+    if (workspace == null || state.documentBuffers.isEmpty) {
       return false;
     }
-    if (!await autoSaveActiveIfNeeded()) {
+    if (state.hasUnsavedChanges) {
       return false;
     }
     _clearOpenFileTabs(workspace);
@@ -468,10 +1017,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> deleteWorkspaceEntity(String path) async {
-    return _runWorkspaceFileOperation((workspace) async {
-      await _service.deleteEntity(workspace, path);
-      return null;
-    });
+    _intentionallyRemovedPaths.add(p.normalize(path));
+    try {
+      return await _runWorkspaceFileOperation((workspace) async {
+        await _service.deleteEntity(workspace, path);
+        return null;
+      });
+    } finally {
+      _intentionallyRemovedPaths.remove(p.normalize(path));
+    }
   }
 
   Future<bool> moveWritersideTocEntry({
@@ -638,9 +1192,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> closeOpenFileTab(String path) async {
     final workspace = state.workspace;
-    if (workspace == null ||
-        !_supportsOpenFileTabs(workspace) ||
-        !workspace.openFilePaths.contains(path)) {
+    if (workspace == null || !workspace.openFilePaths.contains(path)) {
+      return false;
+    }
+    final closingBuffer = state.bufferForPath(path);
+    if (closingBuffer?.isDirty == true) {
       return false;
     }
     final closedIndex = workspace.openFilePaths.indexOf(path);
@@ -648,16 +1204,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       for (final openPath in workspace.openFilePaths)
         if (openPath != path) openPath,
     ];
-    if (workspace.activeFilePath == path && !await autoSaveActiveIfNeeded()) {
-      return false;
-    }
+    final remainingBuffers = [
+      for (final buffer in state.documentBuffers)
+        if (buffer.filePath != path) buffer,
+    ];
     if (nextOpenFilePaths.isEmpty) {
-      _clearOpenFileTabs(workspace);
+      final nextUntitled = remainingBuffers.firstOrNull;
+      if (nextUntitled == null) {
+        _clearOpenFileTabs(workspace);
+      } else {
+        await _activateBuffer(
+          workspace,
+          nextUntitled,
+          documentBuffers: remainingBuffers,
+          openFilePaths: nextOpenFilePaths,
+        );
+      }
       return true;
     }
     if (workspace.activeFilePath != path) {
       state = state.copyWith(
         workspace: workspace.copyWith(openFilePaths: nextOpenFilePaths),
+        documentBuffers: remainingBuffers,
         clearMessage: true,
       );
       return true;
@@ -668,27 +1236,70 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return _openActiveFile(
       nextOpenFilePaths[nextIndex],
       openFilePaths: nextOpenFilePaths,
+      documentBuffers: remainingBuffers,
+    );
+  }
+
+  Future<bool> closeDocumentBuffer(
+    String bufferId, {
+    bool discard = false,
+  }) async {
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    if (buffer == null || (buffer.isDirty && !discard)) {
+      return false;
+    }
+    if (buffer.filePath case final path?) {
+      if (buffer.isDirty) {
+        state = state.copyWith(
+          documentBuffers: _replaceBuffer(
+            state.documentBuffers,
+            buffer.copyWith(dirty: false),
+          ),
+        );
+      }
+      return closeOpenFileTab(path);
+    }
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    final remaining = [
+      for (final candidate in state.documentBuffers)
+        if (candidate.id != bufferId) candidate,
+    ];
+    if (remaining.isEmpty) {
+      state = const WorkspaceState();
+      _fileMonitor.updateOpenFilePaths(const <String>[]);
+      _schedulePersistence();
+      return true;
+    }
+    return _activateBuffer(
+      workspace,
+      remaining.last,
+      documentBuffers: remaining,
+      openFilePaths: workspace.openFilePaths,
     );
   }
 
   Future<bool> _activateOpenFileTab(int delta) async {
     final workspace = state.workspace;
-    if (workspace == null ||
-        !_supportsOpenFileTabs(workspace) ||
-        workspace.openFilePaths.length < 2) {
+    if (workspace == null || state.documentBuffers.length < 2) {
       return false;
     }
-    final activeFilePath = workspace.activeFilePath;
-    final activeIndex = activeFilePath == null
+    final activeIndex = state.activeBufferId == null
         ? -1
-        : workspace.openFilePaths.indexOf(activeFilePath);
+        : state.documentBuffers.indexWhere(
+            (buffer) => buffer.id == state.activeBufferId,
+          );
     final nextIndex = activeIndex < 0
         ? 0
-        : (activeIndex + delta) % workspace.openFilePaths.length;
+        : (activeIndex + delta) % state.documentBuffers.length;
     final normalizedIndex = nextIndex < 0
-        ? nextIndex + workspace.openFilePaths.length
+        ? nextIndex + state.documentBuffers.length
         : nextIndex;
-    return openActiveFile(workspace.openFilePaths[normalizedIndex]);
+    return activateDocumentBuffer(state.documentBuffers[normalizedIndex].id);
   }
 
   void _clearOpenFileTabs(Workspace workspace) {
@@ -717,18 +1328,34 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       ),
       activeText: '',
       preview: null,
-      isDirty: false,
+      documentBuffers: const [],
+      activeBufferId: null,
       clearMessage: true,
     );
+    _fileMonitor.updateOpenFilePaths(const <String>[]);
+    _schedulePersistence();
   }
 
   Future<bool> _openActiveFile(
     String path, {
     List<String>? openFilePaths,
+    List<DocumentBuffer>? documentBuffers,
   }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
+    }
+    final buffers = documentBuffers ?? state.documentBuffers;
+    final existing = buffers
+        .where((buffer) => buffer.filePath == path)
+        .firstOrNull;
+    if (existing != null) {
+      return _activateBuffer(
+        workspace,
+        existing,
+        documentBuffers: buffers,
+        openFilePaths: openFilePaths ?? _openFileTabPaths(workspace, path),
+      );
     }
     _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
@@ -747,12 +1374,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return false;
       }
+      final buffer = _fileBuffer(
+        path,
+        load,
+        mode: _settingsController.state.documentViewMode,
+      );
       state = state.copyWith(
         workspace: reparsed,
         activeText: load.text,
         preview: _safePreview(reparsed, load.text),
-        isDirty: false,
+        documentBuffers: [...buffers, buffer],
+        activeBufferId: buffer.id,
         clearMessage: true,
+      );
+      _fileMonitor.updateOpenFilePaths(
+        [
+          ...buffers,
+          buffer,
+        ].map((candidate) => candidate.filePath).whereType<String>(),
       );
       _resetSaveTracking();
       return true;
@@ -773,6 +1412,146 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return false;
     }
+  }
+
+  Future<bool> _activateBuffer(
+    Workspace workspace,
+    DocumentBuffer buffer, {
+    required List<DocumentBuffer> documentBuffers,
+    required List<String> openFilePaths,
+  }) async {
+    _cancelPendingDerivedRefresh();
+    _autoSaveDebounce?.cancel();
+    final operationRevision = _invalidateActiveDocumentOperations();
+    final nextWorkspace = workspace.copyWith(
+      activeFilePath: buffer.filePath,
+      activeFileSnapshot: buffer.diskSnapshot,
+      openFilePaths: openFilePaths,
+      markdown: buffer.filePath == null ? workspace.markdown : null,
+    );
+    final reparsed = await _service.reparseActive(nextWorkspace, buffer.text);
+    if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      return false;
+    }
+    state = state.copyWith(
+      workspace: reparsed,
+      preview: _safePreview(reparsed, buffer.text),
+      documentBuffers: documentBuffers,
+      activeBufferId: buffer.id,
+      clearMessage: true,
+    );
+    _fileMonitor.updateOpenFilePaths(
+      documentBuffers
+          .map((candidate) => candidate.filePath)
+          .whereType<String>(),
+    );
+    _schedulePersistence();
+    _editRevision = buffer.revision;
+    unawaited(_settingsController.setDocumentViewMode(buffer.editorState.mode));
+    return true;
+  }
+
+  void updateActiveEditorState(DocumentEditorState editorState) {
+    final buffer = state.activeBuffer;
+    if (buffer == null) {
+      return;
+    }
+    updateDocumentEditorState(buffer.id, editorState);
+  }
+
+  void updateDocumentEditorState(
+    String bufferId,
+    DocumentEditorState editorState,
+  ) {
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    if (buffer == null) {
+      return;
+    }
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(
+        state.documentBuffers,
+        buffer.copyWith(editorState: editorState),
+      ),
+    );
+    _schedulePersistence();
+  }
+
+  bool updateDocumentText(String bufferId, String text) {
+    final buffer = state.documentBuffers
+        .where((candidate) => candidate.id == bufferId)
+        .firstOrNull;
+    if (buffer == null) {
+      return false;
+    }
+    if (state.activeBufferId == bufferId) {
+      updateActiveText(text, sourceFilePath: buffer.filePath);
+      return true;
+    }
+    final next = buffer.edited(text);
+    if (identical(next, buffer)) {
+      return true;
+    }
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, next),
+    );
+    _schedulePersistence();
+    return true;
+  }
+
+  void updateActiveEditorMode(DocumentViewModePreference mode) {
+    final buffer = state.activeBuffer;
+    if (buffer == null || buffer.editorState.mode == mode) {
+      return;
+    }
+    updateActiveEditorState(buffer.editorState.copyWith(mode: mode));
+  }
+
+  bool undoActiveBuffer() {
+    final buffer = state.activeBuffer;
+    if (buffer == null || buffer.editorState.undoState.undo.isEmpty) {
+      return false;
+    }
+    final undo = buffer.editorState.undoState;
+    final text = undo.undo.last;
+    final next = buffer.copyWith(
+      text: text,
+      dirty: text != buffer.lastSavedText || buffer.isUntitled,
+      revision: buffer.revision + 1,
+      editorState: buffer.editorState.copyWith(
+        undoState: undo.afterUndo(buffer.text),
+      ),
+    );
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, next),
+    );
+    _requestDerivedRefresh(rebuildPreview: true);
+    _schedulePersistence();
+    return true;
+  }
+
+  bool redoActiveBuffer() {
+    final buffer = state.activeBuffer;
+    if (buffer == null || buffer.editorState.undoState.redo.isEmpty) {
+      return false;
+    }
+    final undo = buffer.editorState.undoState;
+    final text = undo.redo.last;
+    final next = buffer.copyWith(
+      text: text,
+      dirty: text != buffer.lastSavedText || buffer.isUntitled,
+      revision: buffer.revision + 1,
+      editorState: buffer.editorState.copyWith(
+        undoState: undo.afterRedo(buffer.text),
+      ),
+    );
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, next),
+    );
+    _requestDerivedRefresh(rebuildPreview: true);
+    _schedulePersistence();
+    return true;
   }
 
   void updateActiveText(String text, {String? sourceFilePath}) {
@@ -823,9 +1602,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (sourceFilePath != null && activeEditorPath != sourceFilePath) {
       return;
     }
-    _editRevision++;
+    final activeBuffer = state.activeBuffer;
+    if (activeBuffer == null) {
+      return;
+    }
+    final nextBuffer = activeBuffer.edited(text);
+    if (identical(nextBuffer, activeBuffer)) {
+      return;
+    }
+    _editRevision = nextBuffer.revision;
     state = state.copyWith(
-      activeText: text,
+      documentBuffers: _replaceBuffer(state.documentBuffers, nextBuffer),
       liveOutline: workspace == null || liveOutline == null
           ? null
           : ActiveDocumentOutline(
@@ -834,8 +1621,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               source: text,
               headings: liveOutline,
             ),
-      isDirty: true,
     );
+    _schedulePersistence();
     _requestDerivedRefresh(rebuildPreview: rebuildPreview);
     _scheduleAutoSave();
   }
@@ -888,7 +1675,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final workspaceId = workspace.id;
     final activeFilePath = workspace.activeFilePath;
     final text = state.activeText;
-    final editRevision = _editRevision;
+    final editRevision = state.activeBuffer?.revision ?? _editRevision;
     final operationRevision = _activeDocumentRevision;
     try {
       final preview = await _service.buildPreviewAsync(workspace, text);
@@ -898,7 +1685,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             activeFilePath: activeFilePath,
           ) ||
           state.activeText != text ||
-          _editRevision != editRevision) {
+          state.activeBuffer?.revision != editRevision) {
         return;
       }
       state = state.copyWith(preview: preview);
@@ -926,6 +1713,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> saveActive({
     bool overwriteExternalChanges = false,
     ActiveDocumentSaveTarget? target,
+    LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     final operationTarget = target ?? captureActiveDocumentSaveTarget();
     if (operationTarget == null ||
@@ -953,12 +1741,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return saveActive(
         overwriteExternalChanges: overwriteExternalChanges,
         target: refreshedTarget,
+        mixedLineEndingNormalization: mixedLineEndingNormalization,
       );
     }
     late final Future<bool> operation;
     operation = _saveActiveNow(
       operationTarget,
       overwriteExternalChanges: overwriteExternalChanges,
+      mixedLineEndingNormalization: mixedLineEndingNormalization,
     );
     _activeSave = operation;
     _activeSaveTarget = operationTarget;
@@ -976,6 +1766,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> _saveActiveNow(
     ActiveDocumentSaveTarget target, {
     required bool overwriteExternalChanges,
+    required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     final active = target.path;
     if (active == null) {
@@ -1009,7 +1800,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     try {
-      final snapshot = await _service.saveText(active, target.text);
+      final snapshot = await _service.saveText(
+        active,
+        target.format.formattedText(
+          target.text,
+          mixedNormalization: mixedLineEndingNormalization,
+        ),
+      );
       final currentWorkspace = state.workspace;
       if (!_isCurrentActiveDocument(
             target.documentRevision,
@@ -1032,8 +1829,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           latestWorkspace == null) {
         return false;
       }
-      if (_editRevision == target.editRevision &&
-          state.activeText == target.text) {
+      final currentBuffer = state.activeBuffer;
+      if (currentBuffer == null || currentBuffer.id != target.bufferId) {
+        return false;
+      }
+      final savedFormat =
+          target.format.hasMixedLineEndings &&
+              mixedLineEndingNormalization != null
+          ? target.format.normalized(mixedLineEndingNormalization)
+          : target.format;
+      if (currentBuffer.revision == target.editRevision &&
+          currentBuffer.text == target.text) {
+        final savedBuffer = currentBuffer.copyWith(
+          lastSavedText: target.text,
+          dirty: false,
+          diskSnapshot: snapshot,
+          format: savedFormat,
+          diskState: DocumentDiskState.present,
+          diskVersionText: null,
+          diskVersionSnapshot: null,
+          recovered: false,
+        );
         final nextWorkspace = reparsed.copyWith(
           activeFileSnapshot: snapshot,
           openFilePaths: latestWorkspace.openFilePaths,
@@ -1042,17 +1858,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         state = state.copyWith(
           workspace: nextWorkspace,
           preview: _safePreview(nextWorkspace, target.text),
-          isDirty: false,
+          documentBuffers: _replaceBuffer(state.documentBuffers, savedBuffer),
           clearMessage: true,
         );
       } else {
+        final updatedBuffer = currentBuffer.copyWith(
+          lastSavedText: target.text,
+          dirty: currentBuffer.text != target.text,
+          diskSnapshot: snapshot,
+          format: savedFormat,
+          diskState: DocumentDiskState.present,
+          diskVersionText: null,
+          diskVersionSnapshot: null,
+          recovered: false,
+        );
         state = state.copyWith(
           workspace: latestWorkspace.copyWith(activeFileSnapshot: snapshot),
-          isDirty: true,
+          documentBuffers: _replaceBuffer(state.documentBuffers, updatedBuffer),
           clearMessage: true,
         );
         _scheduleAutoSave();
       }
+      _schedulePersistence();
       return true;
     } on Object catch (error) {
       if (_isCurrentActiveDocument(
@@ -1071,10 +1898,84 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  Future<SaveAllResult> saveAll({
+    Map<String, LineEndingNormalization> mixedLineEndingNormalizations =
+        const {},
+  }) async {
+    _autoSaveDebounce?.cancel();
+    final saved = <String>[];
+    final failed = <String>[];
+    final conflicts = <String>[];
+    final normalizationRequired = <String>[];
+    final targets = [
+      for (final buffer in state.documentBuffers)
+        if (buffer.isDirty && buffer.filePath != null) buffer,
+    ];
+    for (final target in targets) {
+      if (target.format.hasMixedLineEndings &&
+          !mixedLineEndingNormalizations.containsKey(target.id)) {
+        normalizationRequired.add(target.id);
+        continue;
+      }
+      final path = target.filePath!;
+      if (await _service.fileChangedSince(path, target.diskSnapshot)) {
+        conflicts.add(target.id);
+        continue;
+      }
+      try {
+        final snapshot = await _service.saveText(
+          path,
+          target.format.formattedText(
+            target.text,
+            mixedNormalization: mixedLineEndingNormalizations[target.id],
+          ),
+        );
+        final current = state.documentBuffers
+            .where((buffer) => buffer.id == target.id)
+            .firstOrNull;
+        if (current == null) {
+          failed.add(target.id);
+          continue;
+        }
+        final unchanged = current.revision == target.revision;
+        final normalization = mixedLineEndingNormalizations[target.id];
+        final next = current.copyWith(
+          lastSavedText: target.text,
+          dirty: !unchanged,
+          diskSnapshot: snapshot,
+          format: target.format.hasMixedLineEndings && normalization != null
+              ? target.format.normalized(normalization)
+              : target.format,
+          diskState: DocumentDiskState.present,
+          diskVersionText: null,
+          diskVersionSnapshot: null,
+          recovered: false,
+        );
+        state = state.copyWith(
+          documentBuffers: _replaceBuffer(state.documentBuffers, next),
+          workspace: state.activeBufferId == target.id
+              ? state.workspace?.copyWith(activeFileSnapshot: snapshot)
+              : state.workspace,
+        );
+        saved.add(target.id);
+      } on Object {
+        failed.add(target.id);
+      }
+    }
+    _schedulePersistence();
+    return SaveAllResult(
+      savedBufferIds: List.unmodifiable(saved),
+      failedBufferIds: List.unmodifiable(failed),
+      conflictBufferIds: List.unmodifiable(conflicts),
+      normalizationRequiredBufferIds: List.unmodifiable(normalizationRequired),
+    );
+  }
+
   Future<bool> saveActiveAs(
     String path, {
     ActiveDocumentSaveTarget? target,
     bool overwriteExisting = false,
+    LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     final operationTarget = target ?? captureActiveDocumentSaveTarget();
     if (operationTarget == null ||
@@ -1085,22 +1986,69 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();
     try {
+      late final WorkspaceFileSnapshot savedSnapshot;
       if (overwriteExisting) {
-        await _service.saveTextReplacingPath(path, operationTarget.text);
+        savedSnapshot = await _service.saveTextReplacingPath(
+          path,
+          operationTarget.format.formattedText(
+            operationTarget.text,
+            mixedNormalization: mixedLineEndingNormalization,
+          ),
+        );
       } else {
-        await _service.saveNewText(path, operationTarget.text);
+        savedSnapshot = await _service.saveNewText(
+          path,
+          operationTarget.format.formattedText(
+            operationTarget.text,
+            mixedNormalization: mixedLineEndingNormalization,
+          ),
+        );
       }
       if (!_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
         return false;
       }
-      final savedWorkspace = await _service.openPath(path);
+      final currentWorkspace = state.workspace!;
+      final replaceWorkspace =
+          currentWorkspace.kind == WorkspaceKind.untitledMarkdown &&
+          state.documentBuffers.length == 1;
+      var savedWorkspace = replaceWorkspace
+          ? await _service.openPath(path)
+          : currentWorkspace.copyWith(
+              activeFilePath: path,
+              activeFileSnapshot: savedSnapshot,
+              openFilePaths: _openFileTabPaths(currentWorkspace, path),
+            );
       if (!_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
         return false;
       }
       final latestText = state.activeText;
+      final currentBuffer = state.activeBuffer;
+      if (currentBuffer == null ||
+          currentBuffer.id != operationTarget.bufferId) {
+        return false;
+      }
       final hasNewerEdits =
-          _editRevision != operationTarget.editRevision ||
+          currentBuffer.revision != operationTarget.editRevision ||
           latestText != operationTarget.text;
+      final savedFormat =
+          operationTarget.format.hasMixedLineEndings &&
+              mixedLineEndingNormalization != null
+          ? operationTarget.format.normalized(mixedLineEndingNormalization)
+          : operationTarget.format;
+      final savedBuffer = currentBuffer.copyWith(
+        filePath: path,
+        untitledName: null,
+        lastSavedText: operationTarget.text,
+        dirty: hasNewerEdits,
+        diskSnapshot: savedSnapshot,
+        format: savedFormat,
+        diskState: DocumentDiskState.present,
+        recovered: false,
+      );
+      savedWorkspace = await _service.reparseActive(
+        savedWorkspace,
+        hasNewerEdits ? latestText : operationTarget.text,
+      );
       _cancelPendingDerivedRefresh();
       state = WorkspaceState(
         workspace: savedWorkspace,
@@ -1109,8 +2057,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           savedWorkspace,
           hasNewerEdits ? latestText : operationTarget.text,
         ),
-        isDirty: hasNewerEdits,
+        documentBuffers: _replaceBuffer(state.documentBuffers, savedBuffer),
+        activeBufferId: savedBuffer.id,
       );
+      await _startMonitoring(savedWorkspace);
       if (hasNewerEdits) {
         if (_settingsController.state.validateOnEdit) {
           unawaited(validateActive());
@@ -1123,6 +2073,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         path: path,
         kind: savedWorkspace.kind.name,
       );
+      _schedulePersistence();
       return true;
     } on Object catch (error) {
       if (_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
@@ -1172,8 +2123,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final active = operationTarget.path;
     final operationRevision = _invalidateActiveDocumentOperations();
-    if (workspace.kind == WorkspaceKind.untitledMarkdown || active == null) {
-      state = const WorkspaceState();
+    if (active == null) {
+      if (state.documentBuffers.length == 1) {
+        state = const WorkspaceState();
+        _fileMonitor.updateOpenFilePaths(const <String>[]);
+        _schedulePersistence();
+      } else {
+        await closeDocumentBuffer(operationTarget.bufferId, discard: true);
+      }
       _resetSaveTracking();
       return true;
     }
@@ -1189,13 +2146,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         return false;
       }
+      final currentBuffer = state.activeBuffer;
+      if (currentBuffer == null ||
+          currentBuffer.id != operationTarget.bufferId) {
+        return false;
+      }
+      final discardedBuffer = currentBuffer.copyWith(
+        text: load.text,
+        lastSavedText: load.text,
+        dirty: false,
+        diskSnapshot: load.snapshot,
+        format: load.format,
+        revision: currentBuffer.revision + 1,
+        diskState: DocumentDiskState.present,
+        diskVersionText: null,
+        diskVersionSnapshot: null,
+        recovered: false,
+      );
       state = state.copyWith(
         workspace: reparsed,
-        activeText: load.text,
         preview: _safePreview(reparsed, load.text),
-        isDirty: false,
+        documentBuffers: _replaceBuffer(state.documentBuffers, discardedBuffer),
         clearMessage: true,
       );
+      _schedulePersistence();
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
@@ -1207,7 +2181,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       if (_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         state = state.copyWith(
-          isDirty: true,
           message: WorkspaceMessage(
             WorkspaceMessageCode.couldNotOpenFile,
             error: error,
@@ -1220,7 +2193,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> refreshWorkspaceFromDiskPreservingOpenTabs() async {
     final workspace = state.workspace;
-    if (workspace == null || state.isDirty) {
+    if (workspace == null) {
       return false;
     }
     final operationRevision = _invalidateActiveDocumentOperations();
@@ -1235,45 +2208,80 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final existingFiles = {
         for (final file in refreshed.files) file.absolutePath: file,
       };
-      final retainedTabs = [
-        for (final path in workspace.openFilePaths)
-          if (existingFiles.containsKey(path)) path,
+      final buffers = <DocumentBuffer>[];
+      for (final buffer in state.documentBuffers) {
+        final path = buffer.filePath;
+        if (path == null) {
+          buffers.add(buffer);
+          continue;
+        }
+        if (_intentionallyRemovedPaths.any(
+          (removed) => p.equals(path, removed) || p.isWithin(removed, path),
+        )) {
+          continue;
+        }
+        if (!existingFiles.containsKey(path)) {
+          buffers.add(buffer.copyWith(diskState: DocumentDiskState.deleted));
+          continue;
+        }
+        if (buffer.isDirty) {
+          buffers.add(buffer);
+          continue;
+        }
+        final load = await _service.loadTextWithSnapshot(path);
+        buffers.add(
+          buffer.copyWith(
+            text: load.text,
+            lastSavedText: load.text,
+            dirty: false,
+            diskSnapshot: load.snapshot,
+            format: load.format,
+            diskState: DocumentDiskState.present,
+          ),
+        );
+      }
+      var activeBuffer = buffers
+          .where((buffer) => buffer.id == state.activeBufferId)
+          .firstOrNull;
+      activeBuffer ??= buffers.firstOrNull;
+      if (activeBuffer == null && refreshed.activeFilePath != null) {
+        final load = await _service.loadTextWithSnapshot(
+          refreshed.activeFilePath!,
+        );
+        activeBuffer = _fileBuffer(
+          refreshed.activeFilePath!,
+          load,
+          mode: _settingsController.state.documentViewMode,
+        );
+        buffers.add(activeBuffer);
+      }
+      final active = activeBuffer?.filePath;
+      final tabPaths = [
+        for (final buffer in buffers)
+          if (buffer.filePath != null) buffer.filePath!,
       ];
-      final previousActive = workspace.activeFilePath;
-      final active =
-          previousActive != null && existingFiles.containsKey(previousActive)
-          ? previousActive
-          : retainedTabs.isNotEmpty
-          ? retainedTabs.first
-          : refreshed.activeFilePath;
-      final load = active == null
-          ? null
-          : await _service.loadTextWithSnapshot(active);
-      final tabPaths = _supportsOpenFileTabs(refreshed)
-          ? _retainedOpenFileTabPaths(
-              current: workspace,
-              refreshed: refreshed,
-              activeFilePath: active,
-            )
-          : active == null
-          ? const <String>[]
-          : <String>[active];
       final nextWorkspace = refreshed.copyWith(
         activeFilePath: active,
-        activeFileSnapshot: load?.snapshot,
+        activeFileSnapshot: activeBuffer?.diskSnapshot,
         openFilePaths: tabPaths,
       );
-      final reparsed = load == null
+      final reparsed = activeBuffer == null
           ? nextWorkspace.copyWith(markdown: null)
-          : await _service.reparseActive(nextWorkspace, load.text);
+          : await _service.reparseActive(nextWorkspace, activeBuffer.text);
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return false;
       }
       state = WorkspaceState(
         workspace: reparsed,
-        activeText: load?.text ?? '',
-        preview: load == null ? null : _safePreview(reparsed, load.text),
+        activeText: activeBuffer?.text ?? '',
+        preview: activeBuffer == null
+            ? null
+            : _safePreview(reparsed, activeBuffer.text),
+        documentBuffers: buffers,
+        activeBufferId: activeBuffer?.id,
       );
+      _fileMonitor.updateOpenFilePaths(tabPaths);
+      _schedulePersistence();
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
@@ -1359,6 +2367,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeFilePath: remappedActive ?? activeFilePath,
         openFilePaths: remappedTabs,
       ),
+      documentBuffers: [
+        for (final buffer in state.documentBuffers)
+          if (_remapMovedPath(buffer.filePath, sourcePath, targetPath)
+              case final remapped?)
+            buffer.copyWith(filePath: remapped)
+          else
+            buffer,
+      ],
     );
   }
 
@@ -1370,7 +2386,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final workspaceId = workspace.id;
     final activeFilePath = workspace.activeFilePath;
     final text = state.activeText;
-    final editRevision = _editRevision;
+    final editRevision = state.activeBuffer?.revision ?? _editRevision;
     final operationRevision = _activeDocumentRevision;
     try {
       final reparsed = await _service.reparseActive(workspace, text);
@@ -1382,7 +2398,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ) ||
           currentWorkspace == null ||
           state.activeText != text ||
-          _editRevision != editRevision) {
+          state.activeBuffer?.revision != editRevision) {
         return;
       }
       final currentSnapshot = currentWorkspace.activeFileSnapshot;
@@ -1402,7 +2418,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             activeFilePath: activeFilePath,
           ) &&
           state.activeText == text &&
-          _editRevision == editRevision) {
+          state.activeBuffer?.revision == editRevision) {
         state = state.copyWith(
           message: WorkspaceMessage(
             WorkspaceMessageCode.validationFailed,
@@ -1447,8 +2463,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   bool _canAutoSaveActive() {
-    final workspace = state.workspace;
-    return workspace != null && workspace.activeFilePath != null;
+    return state.activeBuffer?.filePath != null;
   }
 
   void _resetSaveTracking({bool dirty = false}) {
@@ -1487,9 +2502,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeFilePath: target.path,
         ) &&
         workspace != null &&
-        _editRevision == target.editRevision &&
-        state.activeText == target.text &&
-        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
+        state.activeBuffer?.id == target.bufferId &&
+        state.activeBuffer?.revision == target.editRevision &&
+        state.activeBuffer?.text == target.text &&
+        _sameFileSnapshot(state.activeBuffer?.diskSnapshot, target.snapshot);
   }
 
   bool _isSaveAsSourceDocumentCurrent(
@@ -1503,7 +2519,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeFilePath: target.path,
         ) &&
         workspace != null &&
-        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
+        state.activeBuffer?.id == target.bufferId &&
+        _sameFileSnapshot(state.activeBuffer?.diskSnapshot, target.snapshot);
   }
 
   bool _sameSaveTarget(
@@ -1512,6 +2529,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   ) {
     return first != null &&
         first.workspaceId == second.workspaceId &&
+        first.bufferId == second.bufferId &&
         first.path == second.path &&
         first.documentRevision == second.documentRevision &&
         first.editRevision == second.editRevision &&
@@ -1530,21 +2548,63 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeFilePath: target.path,
         ) ||
         workspace == null ||
-        _editRevision != target.editRevision ||
-        state.activeText != target.text ||
+        state.activeBuffer?.id != target.bufferId ||
+        state.activeBuffer?.revision != target.editRevision ||
+        state.activeBuffer?.text != target.text ||
         workspace.kind != target.workspaceKind) {
       return null;
     }
     return ActiveDocumentSaveTarget._(
       workspaceId: target.workspaceId,
+      bufferId: target.bufferId,
       path: target.path,
       documentRevision: target.documentRevision,
       editRevision: target.editRevision,
-      snapshot: workspace.activeFileSnapshot,
+      snapshot: state.activeBuffer?.diskSnapshot,
       text: target.text,
       workspaceKind: target.workspaceKind,
+      format: state.activeBuffer?.format ?? target.format,
     );
   }
+}
+
+DocumentBuffer _fileBuffer(
+  String path,
+  WorkspaceFileLoad load, {
+  DocumentViewModePreference mode = DocumentViewModePreference.editor,
+}) {
+  final format =
+      load.format.lfCount == 0 &&
+          load.format.crlfCount == 0 &&
+          load.format.crCount == 0 &&
+          load.text.endsWith('\n')
+      ? load.format.copyWith(
+          lineEnding: DocumentLineEnding.lf,
+          hasFinalNewline: true,
+        )
+      : load.format;
+  return DocumentBuffer.file(
+    id: 'file:$path',
+    filePath: path,
+    text: load.text,
+    snapshot: load.snapshot,
+    format: format,
+    mode: mode,
+  );
+}
+
+List<DocumentBuffer> _replaceBuffer(
+  List<DocumentBuffer> buffers,
+  DocumentBuffer replacement,
+) {
+  return List.unmodifiable([
+    for (final buffer in buffers)
+      if (buffer.id == replacement.id) replacement else buffer,
+  ]);
+}
+
+extension _ControllerFirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }
 
 bool _sameFileSnapshot(
