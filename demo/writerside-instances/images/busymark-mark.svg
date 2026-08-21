@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title">
+  <title id="title">BusyMark demo mark</title>
+  <rect width="160" height="160" rx="28" fill="#111827"/>
+  <path d="M39 45h82v18H39zm0 31h54v18H39zm0 31h82v18H39z" fill="#f8f1e3"/>
+  <path d="m99 76 24 18-24 18z" fill="#c6a15b"/>
+</svg>

@@ -7,10 +7,13 @@ import 'markdown_export_document.dart';
 class MarkdownExportMapper {
   const MarkdownExportMapper();
 
-  MarkdownExportDocument map(BusyDocument document) {
+  MarkdownExportDocument map(
+    BusyDocument document, {
+    Map<String, MarkdownExportBlock> blockOverrides = const {},
+  }) {
     return MarkdownExportDocument(
       metadata: _metadata(document),
-      blocks: _mapBlocks(document.blocks),
+      blocks: _mapBlocks(document.blocks, blockOverrides),
     );
   }
 
@@ -55,12 +58,21 @@ class MarkdownExportMapper {
     );
   }
 
-  List<MarkdownExportBlock> _mapBlocks(List<BusyBlock> blocks) {
+  List<MarkdownExportBlock> _mapBlocks(
+    List<BusyBlock> blocks,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
     final result = <MarkdownExportBlock>[];
     var index = 0;
     while (index < blocks.length) {
       final block = blocks[index];
       if (block.isSourceOnly) {
+        index++;
+        continue;
+      }
+      final override = blockOverrides[block.id];
+      if (override != null) {
+        result.add(override);
         index++;
         continue;
       }
@@ -74,7 +86,7 @@ class MarkdownExportMapper {
           if (candidateOrdered != ordered) {
             break;
           }
-          items.add(_mapListItem(candidate));
+          items.add(_mapListItem(candidate, blockOverrides));
           index++;
         }
         result.add(
@@ -86,7 +98,7 @@ class MarkdownExportMapper {
         );
         continue;
       }
-      final mapped = _mapBlock(block);
+      final mapped = _mapBlock(block, blockOverrides);
       if (mapped != null) {
         result.add(mapped);
       }
@@ -95,18 +107,24 @@ class MarkdownExportMapper {
     return List.unmodifiable(result);
   }
 
-  MarkdownExportBlock _mapListItem(BusyBlock block) {
+  MarkdownExportBlock _mapListItem(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.listItem,
       inlines: _mapInlines(block.inlines),
-      children: _mapBlocks(block.children),
+      children: _mapBlocks(block.children, blockOverrides),
       attributes: {
         if (block.attributes['task'] case final task?) 'task': task == 'true',
       },
     );
   }
 
-  MarkdownExportBlock? _mapBlock(BusyBlock block) {
+  MarkdownExportBlock? _mapBlock(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
     return switch (block.kind) {
       BusyBlockKind.heading => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.heading,
@@ -133,17 +151,17 @@ class MarkdownExportMapper {
       BusyBlockKind.blockquote => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.blockquote,
         inlines: _mapInlines(block.inlines),
-        children: _mapBlocks(block.children),
+        children: _mapBlocks(block.children, blockOverrides),
       ),
       BusyBlockKind.thematicBreak => const MarkdownExportBlock(
         kind: MarkdownExportBlockKind.thematicBreak,
       ),
       BusyBlockKind.image => _mapImageBlock(block),
-      BusyBlockKind.table => _mapTable(block),
+      BusyBlockKind.table => _mapTable(block, blockOverrides),
       BusyBlockKind.htmlBlock when block.children.isNotEmpty =>
         MarkdownExportBlock(
           kind: MarkdownExportBlockKind.group,
-          children: _mapBlocks(block.children),
+          children: _mapBlocks(block.children, blockOverrides),
         ),
       BusyBlockKind.htmlBlock => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.rawText,
@@ -152,7 +170,7 @@ class MarkdownExportMapper {
       BusyBlockKind.frontMatter => null,
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
-      BusyBlockKind.taskListItem => _mapListItem(block),
+      BusyBlockKind.taskListItem => _mapListItem(block, blockOverrides),
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -162,13 +180,16 @@ class MarkdownExportMapper {
             ? MarkdownExportBlockKind.rawText
             : MarkdownExportBlockKind.group,
         inlines: _mapInlines(block.inlines),
-        children: _mapBlocks(block.children),
+        children: _mapBlocks(block.children, blockOverrides),
         text: block.rawSource ?? block.plainText,
       ),
     };
   }
 
-  MarkdownExportBlock _mapTable(BusyBlock table) {
+  MarkdownExportBlock _mapTable(
+    BusyBlock table,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.table,
       children: [
@@ -181,7 +202,7 @@ class MarkdownExportMapper {
                 MarkdownExportBlock(
                   kind: MarkdownExportBlockKind.tableCell,
                   inlines: _mapInlines(cell.inlines),
-                  children: _mapBlocks(cell.children),
+                  children: _mapBlocks(cell.children, blockOverrides),
                   attributes: {
                     if (_safeAlignment(cell.attributes['align'])
                         case final alignment?)

@@ -12,6 +12,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
+import '../../ai/ai_edit_ui.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
@@ -24,7 +25,8 @@ import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
-import '../../core/path_utils.dart' show slugForHeading;
+import '../../core/path_utils.dart'
+    show isTextDocumentationPath, slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
@@ -46,15 +48,17 @@ import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
 import '../../git/presentation/git_file_status_colors.dart';
-import '../../git/presentation/git_history_view.dart';
 import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
+import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../visualization/visualization_card.dart';
+import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
@@ -65,6 +69,7 @@ import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
+import 'writerside_instance_dialog.dart';
 
 final _outlineNavigationTargetProvider =
     NotifierProvider<
@@ -450,6 +455,18 @@ class WorkspaceScreen extends ConsumerWidget {
                   )
                 : _GitDiffDocumentView(
                     diff: gitState.selectedDiffForDisplay,
+                    comparisonLabel: _gitDiffComparisonLabel(context, gitState),
+                    comparisonType: gitState.selectedView == GitView.fileHistory
+                        ? gitState.fileHistory.comparisonType
+                        : null,
+                    comparisonEnabled: !gitState.isRunningOperation,
+                    onComparisonTypeChanged:
+                        gitState.selectedView == GitView.fileHistory
+                        ? (comparison) => unawaited(
+                            _selectFileHistoryComparison(ref, comparison),
+                          )
+                        : null,
+                    openFilePath: gitState.selectedDiffOpenFilePath,
                     workspace: workspace,
                     viewMode: settings.documentViewMode,
                     hasUnsavedEditorChanges: state.isDirty,
@@ -522,7 +539,10 @@ class WorkspaceScreen extends ConsumerWidget {
         ? '*${_activeFileName(context, workspace)}'
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
-    final canExportPdf = canExportActiveMarkdown(state);
+    final canExportPdf = canExportWorkspacePdf(state);
+    final canGenerateMarkdownToc =
+        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
+        false;
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
@@ -563,10 +583,6 @@ class WorkspaceScreen extends ConsumerWidget {
           ),
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.git),
-          BusyMarkSidebarShortcutActivators.history:
-              const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
-          const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
         },
         child: Actions(
           actions: {
@@ -687,6 +703,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                         BusyMarkMainMenuButton(
                           canExportPdf: canExportPdf,
+                          canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -760,6 +777,10 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
+      return;
+    }
     _closeSearch(ref);
     unawaited(
       ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
@@ -819,7 +840,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.save:
         break;
       case HeaderBarAction.exportPdf:
-        unawaited(exportActiveMarkdownToPdf(context, ref));
+        unawaited(exportWorkspaceToPdf(context, ref));
       case HeaderBarAction.fullScreen:
         break;
       case HeaderBarAction.settings:
@@ -868,8 +889,6 @@ class WorkspaceScreen extends ConsumerWidget {
         _selectSidebarShortcut(ref, _SidebarTab.outline);
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
-      case HeaderBarAction.sidebarHistory:
-        _selectSidebarShortcut(ref, _SidebarTab.gitHistory);
       case HeaderBarAction.search:
         _toggleSearch(ref);
       case HeaderBarAction.menu:
@@ -884,7 +903,9 @@ class WorkspaceScreen extends ConsumerWidget {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
-        unawaited(exportActiveMarkdownToPdf(context, ref));
+        unawaited(exportWorkspaceToPdf(context, ref));
+      case BusyMarkMainMenuAction.generateMarkdownToc:
+        _generateOrUpdateMarkdownToc(context, ref);
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -901,6 +922,49 @@ class WorkspaceScreen extends ConsumerWidget {
         );
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+    }
+  }
+
+  void _generateOrUpdateMarkdownToc(BuildContext context, WidgetRef ref) {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return;
+    }
+    final kind = _activeWorkspaceDocumentKind(workspace);
+    if (!(kind?.supportsAiMarkdownEditing ?? false)) {
+      return;
+    }
+    final filePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (filePath == null) {
+      return;
+    }
+    try {
+      final result = const MarkdownTocGenerator().generate(
+        source: state.activeText,
+        filePath: filePath,
+        mode: kind == DocumentKind.writersideMarkdownTopic
+            ? MarkdownMode.writersideMarkdown
+            : MarkdownMode.gfm,
+        title: context.l10n.markdownTocTitle,
+      );
+      ref
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(result.source, sourceFilePath: filePath);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.markdownTocUpdated(result.entryCount)),
+        ),
+      );
+    } on MarkdownTocException catch (error) {
+      final message = switch (error.failure) {
+        MarkdownTocFailure.malformedMarkers =>
+          context.l10n.markdownTocMalformedMarkers,
+        MarkdownTocFailure.noHeadings => context.l10n.markdownTocNoHeadings,
+      };
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -953,7 +1017,7 @@ class WorkspaceScreen extends ConsumerWidget {
     return switch (mode) {
       DocumentViewModePreference.editor => context.l10n.editor,
       DocumentViewModePreference.source => context.l10n.source,
-      DocumentViewModePreference.preview => context.l10n.preview,
+      DocumentViewModePreference.preview => context.l10n.reading,
       DocumentViewModePreference.split => context.l10n.split,
     };
   }
@@ -965,7 +1029,7 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.source =>
         BusyMarkDocumentViewShortcutLabels.source,
       DocumentViewModePreference.preview =>
-        BusyMarkDocumentViewShortcutLabels.preview,
+        BusyMarkDocumentViewShortcutLabels.reading,
       DocumentViewModePreference.split =>
         BusyMarkDocumentViewShortcutLabels.split,
     };
@@ -1063,15 +1127,32 @@ Future<void> _openGitDiffFile(
   if (repo == null) {
     return;
   }
+  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
+  if (!File(absolutePath).existsSync()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.errorPathDoesNotExist(absolutePath))),
+    );
+    await ref.read(gitControllerProvider.notifier).refresh();
+    return;
+  }
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final workspaceFile = workspace?.files
+      .where((file) => p.equals(file.absolutePath, absolutePath))
+      .firstOrNull;
+  final openable = workspaceFile == null
+      ? _isOpenableExternalTextPath(absolutePath)
+      : _isOpenableTextDocument(workspaceFile);
+  if (!openable) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.cannotOpenFileTypeInEditor)),
+    );
+    return;
+  }
   if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
       !context.mounted) {
     return;
   }
-  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
-  final workspace = ref.read(workspaceControllerProvider).workspace;
-  final fileInWorkspace =
-      workspace?.files.any((file) => file.absolutePath == absolutePath) ??
-      false;
+  final fileInWorkspace = workspaceFile != null;
   final controller = ref.read(workspaceControllerProvider.notifier);
   if (fileInWorkspace) {
     await controller.openActiveFile(absolutePath);
@@ -1079,6 +1160,14 @@ Future<void> _openGitDiffFile(
     await controller.openPath(absolutePath);
   }
   ref.read(gitControllerProvider.notifier).deactivateDiffFile();
+}
+
+bool _isOpenableExternalTextPath(String path) {
+  final normalized = path.toLowerCase();
+  return isTextDocumentationPath(path) ||
+      p.basename(path) == '.gitignore' ||
+      normalized.endsWith('.css') ||
+      normalized.endsWith('.js');
 }
 
 void _clearGitDetailSelection(WidgetRef ref) {
@@ -1123,7 +1212,9 @@ Future<bool> _confirmDiscardGitFiles(
           onPressed: () => Navigator.pop(context, false),
         ),
         BusyMarkDialogButton(
-          label: context.l10n.gitDiscard,
+          label: tracked.isEmpty
+              ? context.l10n.delete
+              : context.l10n.gitDiscard,
           destructive: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -1208,7 +1299,7 @@ Future<bool> _confirmGitPushSetUpstream(
   return confirmed ?? false;
 }
 
-Future<List<PopupMenuEntry<_BranchMenuAction>>> _loadWorkspaceBranchMenuItems(
+Future<List<PopupMenuEntry<_GitMenuAction>>> _loadWorkspaceGitMenuItems(
   BuildContext context,
   WidgetRef ref,
   GitRepositoryInfo repository,
@@ -1218,21 +1309,28 @@ Future<List<PopupMenuEntry<_BranchMenuAction>>> _loadWorkspaceBranchMenuItems(
   if (!context.mounted) {
     return const [];
   }
-  final latestRepository =
-      ref.read(gitControllerProvider).repositoryInfo ?? repository;
-  return _sidebarBranchMenuItems(context, latestRepository, branches);
+  final latestState = ref.read(gitControllerProvider);
+  final latestRepository = latestState.repositoryInfo ?? repository;
+  return _sidebarGitMenuItems(
+    context,
+    latestRepository,
+    branches,
+    selectedView: latestState.selectedView,
+  );
 }
 
-Future<void> _performWorkspaceBranchAction(
+Future<void> _performWorkspaceGitAction(
   BuildContext context,
   WidgetRef ref,
-  _BranchMenuAction action,
+  _GitMenuAction action,
 ) async {
   if (!context.mounted) {
     return;
   }
   final controller = ref.read(gitControllerProvider.notifier);
   switch (action) {
+    case _SelectGitViewMenuAction(:final view):
+      await controller.selectView(view);
     case _SwitchBranchMenuAction(:final branchName):
       if (branchName ==
           ref.read(gitControllerProvider).repositoryInfo?.currentBranch) {
@@ -1252,6 +1350,8 @@ Future<void> _performWorkspaceBranchAction(
         return;
       }
       await controller.createBranch(branchName);
+    case _FetchBranchMenuAction():
+      await controller.fetch();
     case _PullBranchMenuAction():
       await controller.pullFastForwardOnly();
       await _refreshWorkspaceAfterGitFileChanges(ref);
@@ -1264,12 +1364,41 @@ Future<void> _performWorkspaceBranchAction(
   }
 }
 
-List<PopupMenuEntry<_BranchMenuAction>> _sidebarBranchMenuItems(
+List<PopupMenuEntry<_GitMenuAction>> _sidebarGitMenuItems(
   BuildContext context,
   GitRepositoryInfo repository,
-  List<GitBranch> branches,
-) {
+  List<GitBranch> branches, {
+  required GitView selectedView,
+}) {
   return [
+    BusyMarkPopupMenuItem(
+      value: const _SelectGitViewMenuAction(GitView.changes),
+      label: context.l10n.gitChanges,
+      icon: BusyMarkGlyphs.checklist,
+      checked: selectedView == GitView.changes,
+      trailingCheck: true,
+    ),
+    BusyMarkPopupMenuItem(
+      value: const _SelectGitViewMenuAction(GitView.projectHistory),
+      label: context.l10n.gitProjectHistory,
+      icon: BusyMarkGlyphs.history,
+      checked: selectedView == GitView.projectHistory,
+      trailingCheck: true,
+    ),
+    BusyMarkPopupMenuItem(
+      value: const _SelectGitViewMenuAction(GitView.fileHistory),
+      label: context.l10n.gitFileHistory,
+      icon: BusyMarkGlyphs.documentHistory,
+      checked: selectedView == GitView.fileHistory,
+      trailingCheck: true,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: const _FetchBranchMenuAction(),
+      label: context.l10n.gitFetch,
+      icon: BusyMarkGlyphs.refresh,
+      enabled: repository.hasRemote,
+    ),
     BusyMarkPopupMenuItem(
       value: const _PullBranchMenuAction(),
       label: context.l10n.gitPull,
@@ -1282,10 +1411,11 @@ List<PopupMenuEntry<_BranchMenuAction>> _sidebarBranchMenuItems(
       icon: BusyMarkGlyphs.push,
       enabled: repository.hasRemote,
     ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
       value: const _CreateBranchMenuAction(),
       label: context.l10n.gitNewBranch,
-      icon: BusyMarkGlyphs.newDocument,
+      icon: BusyMarkGlyphs.add,
     ),
     const PopupMenuDivider(height: BusyMarkSpacing.sm),
     for (final branch in branches)
@@ -1397,25 +1527,35 @@ Future<String?> _showCreateBranchDialog(BuildContext context) {
   );
 }
 
-sealed class _BranchMenuAction {
-  const _BranchMenuAction();
+sealed class _GitMenuAction {
+  const _GitMenuAction();
 }
 
-final class _SwitchBranchMenuAction extends _BranchMenuAction {
+final class _SelectGitViewMenuAction extends _GitMenuAction {
+  const _SelectGitViewMenuAction(this.view);
+
+  final GitView view;
+}
+
+final class _SwitchBranchMenuAction extends _GitMenuAction {
   const _SwitchBranchMenuAction(this.branchName);
 
   final String branchName;
 }
 
-final class _CreateBranchMenuAction extends _BranchMenuAction {
+final class _CreateBranchMenuAction extends _GitMenuAction {
   const _CreateBranchMenuAction();
 }
 
-final class _PullBranchMenuAction extends _BranchMenuAction {
+final class _FetchBranchMenuAction extends _GitMenuAction {
+  const _FetchBranchMenuAction();
+}
+
+final class _PullBranchMenuAction extends _GitMenuAction {
   const _PullBranchMenuAction();
 }
 
-final class _PushBranchMenuAction extends _BranchMenuAction {
+final class _PushBranchMenuAction extends _GitMenuAction {
   const _PushBranchMenuAction();
 }
 
@@ -1663,7 +1803,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
-  DocumentFile? _fileHistoryFile;
   _WritersideTopicUsageReview? _topicUsageReview;
 
   @override
@@ -1688,7 +1827,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
-      _fileHistoryFile = null;
       _topicUsageReview = null;
       _tab = _initialSidebarTabIndex(widget.workspace);
       return;
@@ -1727,10 +1865,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             repositoryInfo: repositoryInfo,
             showTabMenu: !widget.searchState.active && tabs.length > 1,
             onSelectTab: (tab) => _selectTab(tab, tabs),
-            loadBranchMenuItems: (menuContext, repository) =>
-                _loadWorkspaceBranchMenuItems(menuContext, ref, repository),
-            onBranchAction: (menuContext, action) =>
-                _performWorkspaceBranchAction(menuContext, ref, action),
+            loadGitMenuItems: (menuContext, repository) =>
+                _loadWorkspaceGitMenuItems(menuContext, ref, repository),
+            onGitAction: (menuContext, action) =>
+                _performWorkspaceGitAction(menuContext, ref, action),
           ),
           Expanded(
             child: widget.searchState.active
@@ -1747,13 +1885,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     onOpenUsage: (usage) =>
                         _openWritersideTopicUsage(context, usage),
                     onDoRefactor: () => _resumeWritersideTopicRemoval(context),
-                  )
-                : _fileHistoryFile != null
-                ? _FileHistorySidebar(
-                    file: _fileHistoryFile!,
-                    onBack: _closeFileHistory,
-                    onOpenFile: (relativePath) =>
-                        _openGitDiffFile(context, ref, relativePath),
                   )
                 : switch (selectedTab) {
                     _SidebarTab.files => _FilesTab(
@@ -1774,21 +1905,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                     _SidebarTab.git => GitSidebarTab(
                       workspace: widget.workspace,
-                      view: GitView.changes,
-                      onOpenFile: (relativePath) =>
-                          _openGitDiffFile(context, ref, relativePath),
-                      onConfirmDiscard: (files) =>
-                          _confirmDiscardGitFiles(context, ref, files),
-                      onAfterWorkspaceFilesChanged: () =>
-                          _refreshWorkspaceAfterGitFileChanges(ref),
-                      onConfirmSwitchBranch: (branchName) =>
-                          _confirmSwitchGitBranch(context, ref, branchName),
-                      onConfirmPushSetUpstream: () =>
-                          _confirmGitPushSetUpstream(context, ref),
-                    ),
-                    _SidebarTab.gitHistory => GitSidebarTab(
-                      workspace: widget.workspace,
-                      view: GitView.history,
                       onOpenFile: (relativePath) =>
                           _openGitDiffFile(context, ref, relativePath),
                       onConfirmDiscard: (files) =>
@@ -1808,43 +1924,57 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     );
   }
 
-  void _selectTab(_SidebarTab tab, List<_SidebarTab> tabs) {
+  void _selectTab(
+    _SidebarTab tab,
+    List<_SidebarTab> tabs, {
+    bool showGitChanges = true,
+  }) {
     final index = tabs.indexOf(tab);
     if (index < 0) {
       return;
     }
     setState(() {
       _tab = index;
-      if (tab != _SidebarTab.files) {
-        _fileHistoryFile = null;
-      }
     });
-    if (tab != _SidebarTab.git && tab != _SidebarTab.gitHistory) {
+    if (tab == _SidebarTab.git) {
+      final controller = ref.read(gitControllerProvider.notifier);
+      unawaited(() async {
+        await controller.refresh();
+        if (showGitChanges &&
+            mounted &&
+            ref.read(gitControllerProvider).selectedView != GitView.changes) {
+          await controller.selectView(GitView.changes);
+        }
+      }());
+    } else if (tab != _SidebarTab.git) {
       _clearGitDetailSelection(ref);
     }
   }
 
   Future<void> _showFileHistory(DocumentFile file) async {
+    if (widget.workspace.activeFilePath != file.absolutePath) {
+      if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+          !mounted) {
+        return;
+      }
+      final opened = await ref
+          .read(workspaceControllerProvider.notifier)
+          .openActiveFile(file.absolutePath);
+      if (!opened || !mounted) {
+        return;
+      }
+    }
     await ref
         .read(gitControllerProvider.notifier)
         .loadFileHistory(file.absolutePath);
     if (!mounted) {
       return;
     }
-    final loadedPath = ref.read(gitControllerProvider).historyFilePath;
-    if (loadedPath == null) {
-      return;
-    }
-    setState(() {
-      _fileHistoryFile = file;
-    });
-  }
-
-  void _closeFileHistory() {
-    setState(() {
-      _fileHistoryFile = null;
-    });
-    _clearGitDetailSelection(ref);
+    _selectTab(
+      _SidebarTab.git,
+      _sidebarTabsFor(widget.workspace.kind),
+      showGitChanges: false,
+    );
   }
 
   Future<WritersideTopicRemovalResult?> _runWritersideTopicRemoval(
@@ -1902,7 +2032,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     }
     if (decision.reviewUsages) {
       setState(() {
-        _fileHistoryFile = null;
         _topicUsageReview = _WritersideTopicUsageReview(
           target: target,
           analysis: analysis,
@@ -2018,7 +2147,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git, gitHistory }
+enum _SidebarTab { files, toc, outline, git }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2047,14 +2176,12 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.gitHistory,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.gitHistory,
     ],
   };
 }
@@ -2064,8 +2191,7 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
-    _SidebarTab.git => context.l10n.gitCommit,
-    _SidebarTab.gitHistory => context.l10n.gitHistory,
+    _SidebarTab.git => context.l10n.git,
   };
 }
 
@@ -2074,8 +2200,7 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.files => BusyMarkGlyphs.documentOpen,
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
-    _SidebarTab.git => BusyMarkGlyphs.checklist,
-    _SidebarTab.gitHistory => BusyMarkGlyphs.history,
+    _SidebarTab.git => BusyMarkGlyphs.branch,
   };
 }
 
@@ -2085,7 +2210,6 @@ String? _sidebarTabShortcut(_SidebarTab tab) {
     _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
     _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
     _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
-    _SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history,
   };
 }
 
@@ -2103,6 +2227,45 @@ String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
       : context.l10n.gitDetachedHeadAt(commit);
 }
 
+String? _gitDiffComparisonLabel(BuildContext context, GitState state) {
+  final comparison = switch (state.selectedView) {
+    GitView.changes => null,
+    GitView.fileHistory => state.fileHistory.comparison,
+    GitView.projectHistory => state.projectHistory.comparison,
+  };
+  if (comparison == null) {
+    return null;
+  }
+  return state.selectedView == GitView.fileHistory &&
+          state.fileHistory.comparisonType ==
+              GitComparisonType.commitVersusCurrent
+      ? context.l10n.gitCompareWithCurrent
+      : context.l10n.gitChangesInCommit;
+}
+
+Future<void> _selectFileHistoryComparison(
+  WidgetRef ref,
+  GitComparisonType comparison,
+) async {
+  final controller = ref.read(gitControllerProvider.notifier);
+  switch (comparison) {
+    case GitComparisonType.commitChange:
+      final hash = ref
+          .read(gitControllerProvider)
+          .fileHistory
+          .selectedCommitHash;
+      if (hash != null) {
+        await controller.selectFileHistoryCommit(hash);
+      }
+    case GitComparisonType.commitVersusCurrent:
+      await controller.compareFileHistoryWithCurrent();
+    case GitComparisonType.staged:
+    case GitComparisonType.unstaged:
+    case GitComparisonType.untracked:
+      return;
+  }
+}
+
 class _SidebarHeader extends StatelessWidget {
   const _SidebarHeader({
     required this.workspace,
@@ -2111,8 +2274,8 @@ class _SidebarHeader extends StatelessWidget {
     required this.repositoryInfo,
     required this.showTabMenu,
     required this.onSelectTab,
-    required this.loadBranchMenuItems,
-    required this.onBranchAction,
+    required this.loadGitMenuItems,
+    required this.onGitAction,
   });
 
   final Workspace workspace;
@@ -2121,13 +2284,13 @@ class _SidebarHeader extends StatelessWidget {
   final GitRepositoryInfo? repositoryInfo;
   final bool showTabMenu;
   final ValueChanged<_SidebarTab> onSelectTab;
-  final Future<List<PopupMenuEntry<_BranchMenuAction>>> Function(
+  final Future<List<PopupMenuEntry<_GitMenuAction>>> Function(
     BuildContext context,
     GitRepositoryInfo repository,
   )
-  loadBranchMenuItems;
-  final Future<void> Function(BuildContext context, _BranchMenuAction action)
-  onBranchAction;
+  loadGitMenuItems;
+  final Future<void> Function(BuildContext context, _GitMenuAction action)
+  onGitAction;
 
   @override
   Widget build(BuildContext context) {
@@ -2302,8 +2465,7 @@ class _SidebarHeader extends StatelessWidget {
               ),
             ),
           ],
-          if ((selectedTab == _SidebarTab.git ||
-                  selectedTab == _SidebarTab.gitHistory) &&
+          if (selectedTab == _SidebarTab.git &&
               repository != null &&
               branchLabel != null &&
               branchLabel.trim().isNotEmpty) ...[
@@ -2325,17 +2487,17 @@ class _SidebarHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_BranchMenuAction>(
+                  BusyMarkHeaderPopupMenuButton<_GitMenuAction>(
                     key: const ValueKey('workspace-sidebar-branch-menu'),
-                    tooltip: context.l10n.gitBranchActions,
+                    tooltip: context.l10n.gitActions,
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
                     itemBuilder: (menuContext) =>
-                        loadBranchMenuItems(menuContext, repository),
+                        loadGitMenuItems(menuContext, repository),
                     onSelected: (action) =>
-                        unawaited(onBranchAction(context, action)),
+                        unawaited(onGitAction(context, action)),
                   ),
                 ],
               ),
@@ -2352,6 +2514,12 @@ class _SidebarHeader extends StatelessWidget {
       return filePath == null || filePath.isEmpty
           ? context.l10n.untitledMarkdownFileName
           : filePath;
+    }
+    if (workspace.kind == WorkspaceKind.writersideModule) {
+      final moduleName = workspace.writersideModule?.config.moduleName?.trim();
+      if (moduleName != null && moduleName.isNotEmpty) {
+        return moduleName;
+      }
     }
     final path = _workspacePath(workspace);
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
@@ -3130,81 +3298,6 @@ Future<bool> _confirmDeleteOrphanTopicFile(
   return confirmed ?? false;
 }
 
-class _FileHistorySidebar extends ConsumerWidget {
-  const _FileHistorySidebar({
-    required this.file,
-    required this.onBack,
-    required this.onOpenFile,
-  });
-
-  final DocumentFile file;
-  final VoidCallback onBack;
-  final ValueChanged<String> onOpenFile;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final controller = ref.read(gitControllerProvider.notifier);
-    final basename = p.basename(file.relativePath);
-    final fileName = basename.isEmpty ? file.relativePath : basename;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.sidebar,
-            border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-          ),
-          child: SizedBox(
-            height: BusyMarkSizes.paneHeaderHeight,
-            child: Row(
-              children: [
-                const SizedBox(width: BusyMarkSpacing.xs),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-                  transparent: true,
-                  onPressed: onBack,
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Icon(
-                  WorkspaceGlyphs.forPath(file.absolutePath),
-                  size: BusyMarkSizes.iconSm,
-                  color: colors.mutedForeground,
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Text(
-                    fileName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: Directionality.of(context) == TextDirection.rtl
-                        ? TextAlign.right
-                        : TextAlign.left,
-                    textDirection: TextDirection.ltr,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: GitHistoryView(
-            state: ref.watch(gitControllerProvider),
-            onSelectCommit: controller.loadCommitDetails,
-            onShowFileDiff: onOpenFile,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _FilesTab extends ConsumerStatefulWidget {
   const _FilesTab({
     required this.workspace,
@@ -3263,13 +3356,17 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   @override
   Widget build(BuildContext context) {
-    final tree = _buildFileTree(widget.workspace.files);
+    final tree = _buildFileTree(
+      widget.workspace.files,
+      widget.workspace.directories,
+    );
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
     final vcsStatusColors = _FileTreeVcsStatusColors.fromSnapshot(
       widget.workspace,
       ref.watch(gitControllerProvider.select((state) => state.statusSnapshot)),
     );
-    if (widget.workspace.files.isEmpty) {
+    if (widget.workspace.files.isEmpty &&
+        widget.workspace.directories.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.folder,
         title: context.l10n.noFiles,
@@ -3493,7 +3590,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   _FileTreeEntry? _fileTreeEntryForPath(String path) {
     final entries = _visibleFileTreeEntries(
-      _buildFileTree(widget.workspace.files),
+      _buildFileTree(widget.workspace.files, widget.workspace.directories),
       _expandedPaths,
     );
     for (final entry in entries) {
@@ -3894,6 +3991,7 @@ Future<bool> _confirmDeleteFileTreeEntry(
 
 class _SidebarTreeRow extends StatelessWidget {
   const _SidebarTreeRow({
+    super.key,
     required this.title,
     required this.depth,
     required this.icon,
@@ -4030,6 +4128,7 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
     DocumentKind.config => YaruIcons.gear,
     DocumentKind.variables => BusyMarkGlyphs.symbols,
     DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.gitIgnore => YaruIcons.gear,
     DocumentKind.image => BusyMarkGlyphs.image,
     _ => YaruIcons.document,
   };
@@ -4044,6 +4143,7 @@ bool _isOpenableTextDocument(DocumentFile file) {
     DocumentKind.config ||
     DocumentKind.variables ||
     DocumentKind.categories ||
+    DocumentKind.gitIgnore ||
     DocumentKind.resource => true,
     DocumentKind.image || DocumentKind.unknown => false,
   };
@@ -4183,10 +4283,31 @@ int _vcsFileColorPriority(BusyMarkVcsFileColor color) {
   };
 }
 
-List<_FileTreeNode> _buildFileTree(List<DocumentFile> files) {
+List<_FileTreeNode> _buildFileTree(
+  List<DocumentFile> files,
+  List<WorkspaceDirectory> directories,
+) {
   final root = _MutableFileTreeNode(name: '', relativePath: '');
+  final sortedDirectories = [...directories]
+    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
   final sortedFiles = [...files]
     ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+
+  for (final directory in sortedDirectories) {
+    final parts = directory.relativePath
+        .split('/')
+        .where((part) => part.isNotEmpty)
+        .toList();
+    var parent = root;
+    for (var index = 0; index < parts.length; index++) {
+      final name = parts[index];
+      final relativePath = parts.take(index + 1).join('/');
+      parent = parent.children.putIfAbsent(
+        name,
+        () => _MutableFileTreeNode(name: name, relativePath: relativePath),
+      );
+    }
+  }
 
   for (final file in sortedFiles) {
     final parts = file.relativePath
@@ -4323,7 +4444,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     super.initState();
     _workspaceId = widget.workspace.id;
     _tocStructureKey = _tocStructureSignature(widget.workspace);
-    _selectedInstanceTreePath = _preferredTocInstanceTreePath(widget.workspace);
+    _selectedInstanceTreePath = _preferredInstanceTreePath(widget.workspace);
     _expandedNodeKeys = _initialExpandedTocNodeKeys(
       widget.workspace,
       treePath: _selectedInstanceTreePath,
@@ -4348,9 +4469,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _tocStructureKey = nextStructureKey;
-      _selectedInstanceTreePath = _preferredTocInstanceTreePath(
-        widget.workspace,
-      );
+      _selectedInstanceTreePath = _preferredInstanceTreePath(widget.workspace);
       _expandedNodeKeys = _initialExpandedTocNodeKeys(
         widget.workspace,
         treePath: _selectedInstanceTreePath,
@@ -4364,7 +4483,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     if (nextStructureKey != _tocStructureKey) {
       _tocStructureKey = nextStructureKey;
-      _selectedInstanceTreePath = _preferredTocInstanceTreePath(
+      _selectedInstanceTreePath = _preferredInstanceTreePath(
         widget.workspace,
         currentTreePath: _selectedInstanceTreePath,
       );
@@ -4410,6 +4529,27 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
   }
 
+  String? _preferredInstanceTreePath(
+    Workspace workspace, {
+    String? currentTreePath,
+  }) {
+    final storedId = ref
+        .read(appSettingsControllerProvider)
+        .selectedWritersideInstanceId(workspace.rootPath);
+    if (currentTreePath == null && storedId != null) {
+      final stored = workspace.writersideModule?.instances
+          .where((instance) => instance.id == storedId)
+          .firstOrNull;
+      if (stored != null) {
+        return stored.sourceTreePath;
+      }
+    }
+    return _preferredTocInstanceTreePath(
+      workspace,
+      currentTreePath: currentTreePath,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final module = widget.workspace.writersideModule;
@@ -4421,9 +4561,21 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     final instance =
         _tocInstanceForTreePath(module, _selectedInstanceTreePath) ??
-        module.instances.first;
+        _defaultWritersideInstance(module);
+    final appSettings = ref.watch(appSettingsControllerProvider);
+    final instanceColors = <String, WritersideInstanceIconColor>{};
+    for (var index = 0; index < module.instances.length; index++) {
+      final item = module.instances[index];
+      instanceColors[item.sourceTreePath] = _effectiveInstanceIconColor(
+        appSettings.writersideInstanceIconColor(
+          widget.workspace.rootPath,
+          item.id,
+        ),
+        index,
+      );
+    }
     final entries = _visibleTocTreeEntries(
-      instance.tocRoots,
+      instance.navigationTocRoots,
       _expandedNodeKeys,
     );
     _TocTreeEntry? selectedEntry;
@@ -4467,6 +4619,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 return _TocHeader(
                   instances: module.instances,
                   selectedInstance: instance,
+                  instanceColors: instanceColors,
                   onSelectInstance: (treePath) {
                     if (p.equals(treePath, instance.sourceTreePath)) {
                       return;
@@ -4483,13 +4636,39 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       );
                       _cutEntry = null;
                     });
+                    final selected = _tocInstanceForTreePath(module, treePath);
+                    if (selected != null) {
+                      unawaited(
+                        ref
+                            .read(appSettingsControllerProvider.notifier)
+                            .selectWritersideInstance(
+                              widget.workspace.rootPath,
+                              selected.id,
+                            ),
+                      );
+                    }
                   },
                   onCreateTopic: () => _showCreateTopicDialog(
                     context,
                     instanceTreePath: instance.sourceTreePath,
                     placement: WritersideTopicCreatePlacement.root,
-                    referenceEntry: selectedEntry,
+                    referenceEntry: null,
                   ),
+                  onCreateInstance: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.create,
+                  ),
+                  onCreateLibrary: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.createLibrary,
+                  ),
+                  onEditInstance: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.edit,
+                    instance: instance,
+                  ),
+                  onOpenTocFile: () =>
+                      _openInstanceTree(context, instance.sourceTreePath),
                 );
               }
               final entry = entries[index - 1];
@@ -4497,9 +4676,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
               final key = entry.pathKey;
               final expanded = _expandedNodeKeys.contains(key);
               final hasChildren = node.children.isNotEmpty;
-              final writersideTopic = node.topicFileName == null
+              final topicReference = node.topicReference;
+              final writersideTopic =
+                  topicReference == null || node.origin != null
                   ? null
-                  : module.topicByReference(node.topicFileName!);
+                  : module.topicByReference(topicReference);
               final topicPath = writersideTopic?.filePath;
               final rawLabel = _tocNodeLabel(context, node);
               final label = _tocNodeDisplayLabel(context, node);
@@ -4527,7 +4708,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     ? topicPath == widget.workspace.activeFilePath
                     : entry.pathKey == _selectedNodePathKey,
                 depth: entry.depth,
-                icon: node.href != null
+                icon: node.includeResolutionError != null
+                    ? BusyMarkGlyphs.error
+                    : node.workInProgress
+                    ? BusyMarkGlyphs.warning
+                    : node.href != null
                     ? BusyMarkGlyphs.externalLink
                     : BusyMarkGlyphs.document,
                 hasChildren: hasChildren,
@@ -4569,6 +4754,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       entry: entry,
                       topic: writersideTopic,
                       rawLabel: rawLabel,
+                      canEditStructure:
+                          node.canEditStructure &&
+                          p.equals(
+                            node.sourceTreePath!,
+                            instance.sourceTreePath,
+                          ),
                       position: details.globalPosition,
                     ),
                   );
@@ -4586,10 +4777,21 @@ class _TocTabState extends ConsumerState<_TocTab> {
     required String instanceTreePath,
     required _TocTreeEntry entry,
   }) async {
+    if (!entry.canEditStructureIn(instanceTreePath)) {
+      return;
+    }
     if (!_tocTreeEntryStillMatches(widget.workspace, instanceTreePath, entry)) {
       return;
     }
-    final reference = entry.node.topicFileName;
+    final reference = entry.node.topicReference;
+    final rawNode = _rawTocNodeForEntry(
+      widget.workspace,
+      instanceTreePath,
+      entry,
+    );
+    if (rawNode == null) {
+      return;
+    }
     final topic = reference == null
         ? null
         : widget.workspace.writersideModule?.topicByReference(reference);
@@ -4599,7 +4801,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           mode: WritersideTopicRemovalMode.removeFromInstance,
           topicPath: topic.filePath,
           treePath: instanceTreePath,
-          nodePath: entry.path,
+          nodePath: entry.editPath!,
         ),
       );
       if (!mounted || result == null) {
@@ -4629,8 +4831,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
         .read(workspaceControllerProvider.notifier)
         .removeWritersideTocEntry(
           treePath: instanceTreePath,
-          nodePath: entry.path,
-          expectedIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+          nodePath: entry.editPath!,
+          expectedIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
         );
     if (!mounted || !removed) {
       return;
@@ -4648,6 +4850,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     required _TocTreeEntry entry,
     required WritersideTopic? topic,
     required String rawLabel,
+    required bool canEditStructure,
     required Offset position,
   }) async {
     final topicPath = topic?.filePath;
@@ -4658,10 +4861,15 @@ class _TocTabState extends ConsumerState<_TocTab> {
         ? null
         : _gitRelativePathForFileTreeEntry(ref, topicPath);
     final cutEntry = _cutEntry;
+    final rawNode = canEditStructure
+        ? _rawTocNodeForEntry(widget.workspace, instanceTreePath, entry)
+        : null;
     final canPaste =
         cutEntry != null &&
         _tocClipboardEntryStillMatches(widget.workspace, cutEntry) &&
-        _canPasteTocTreeEntry(cutEntry, instanceTreePath, entry.path);
+        canEditStructure &&
+        rawNode != null &&
+        _canPasteTocTreeEntry(cutEntry, instanceTreePath, entry.editPath!);
     final action = await _showTocTreeMenu(
       context,
       position,
@@ -4669,6 +4877,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       showHistory: historyFile != null,
       showPaste: canPaste,
       enableGitActions: gitRelativePath != null,
+      canEditStructure: canEditStructure,
     );
     if (!mounted || !context.mounted || action == null) {
       return;
@@ -4680,6 +4889,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     switch (action) {
       case _TocTreeAction.newSiblingTopic:
+        if (!canEditStructure) {
+          return;
+        }
         await _showCreateTopicDialog(
           context,
           instanceTreePath: instanceTreePath,
@@ -4687,6 +4899,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           referenceEntry: entry,
         );
       case _TocTreeAction.newChildTopic:
+        if (!canEditStructure) {
+          return;
+        }
         await _showCreateTopicDialog(
           context,
           instanceTreePath: instanceTreePath,
@@ -4725,16 +4940,22 @@ class _TocTabState extends ConsumerState<_TocTab> {
           _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.cut:
+        if (!canEditStructure || rawNode == null) {
+          return;
+        }
         setState(() {
           _cutEntry = _TocTreeClipboardEntry(
             treePath: instanceTreePath,
-            nodePath: entry.path,
-            nodeFingerprint: _tocNodeFingerprint(entry.node),
-            nodeIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+            nodePath: entry.editPath!,
+            nodeFingerprint: _tocNodeFingerprint(rawNode),
+            nodeIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
           );
         });
       case _TocTreeAction.pasteAfter:
       case _TocTreeAction.pasteAsChild:
+        if (!canEditStructure || rawNode == null) {
+          return;
+        }
         final source = _cutEntry;
         if (source == null ||
             !_tocClipboardEntryStillMatches(widget.workspace, source)) {
@@ -4759,9 +4980,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
               placement: action == _TocTreeAction.pasteAsChild
                   ? WritersideTopicCreatePlacement.child
                   : WritersideTopicCreatePlacement.sibling,
-              referencePath: entry.path,
+              referencePath: entry.editPath!,
               sourceIdentity: source.nodeIdentity,
-              referenceIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+              referenceIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
             );
         if (!mounted) {
           return;
@@ -4774,6 +4995,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.removeFromToc:
+        if (!canEditStructure) {
+          return;
+        }
         await _removeTocEntry(
           context,
           instanceTreePath: instanceTreePath,
@@ -4824,6 +5048,68 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
   }
 
+  Future<void> _showInstanceEditor(
+    BuildContext context,
+    BusyMarkWritersideInstanceDialogMode mode, {
+    WritersideInstance? instance,
+  }) async {
+    final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+    if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    final dialogResult =
+        await showBusyMarkModalEditorDialog<
+          BusyMarkWritersideInstanceDialogResult
+        >(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          maxWidth: BusyMarkSizes.dialogWide,
+          builder: (dialogContext) => BusyMarkWritersideInstanceDialog(
+            workspace: widget.workspace,
+            mode: mode,
+            instance: instance,
+          ),
+        );
+    if (dialogResult == null || !mounted) {
+      return;
+    }
+    final result = dialogResult.mutation;
+    final id = p.basenameWithoutExtension(result.treePath);
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    final previousId = result.previousId;
+    if (previousId != null && previousId != id) {
+      await settings.renameWritersideInstancePreferences(
+        widget.workspace.rootPath,
+        previousId,
+        id,
+      );
+    }
+    await settings.setWritersideInstanceIconColor(
+      widget.workspace.rootPath,
+      id,
+      dialogResult.iconColor,
+    );
+    await settings.selectWritersideInstance(widget.workspace.rootPath, id);
+    if (mounted) {
+      setState(() {
+        _selectedInstanceTreePath = result.treePath;
+        _selectedNodePathKey = null;
+        _cutEntry = null;
+      });
+    }
+  }
+
+  Future<void> _openInstanceTree(BuildContext context, String treePath) async {
+    final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+    if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .openActiveFile(treePath);
+  }
+
   Future<void> _showCreateTopicDialog(
     BuildContext context, {
     required String instanceTreePath,
@@ -4832,6 +5118,16 @@ class _TocTabState extends ConsumerState<_TocTab> {
   }) async {
     final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
     if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    final rawReference = referenceEntry == null
+        ? null
+        : _rawTocNodeForEntry(
+            widget.workspace,
+            instanceTreePath,
+            referenceEntry,
+          );
+    if (referenceEntry != null && rawReference == null) {
       return;
     }
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
@@ -4843,11 +5139,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
         workspace: widget.workspace,
         instanceTreePath: instanceTreePath,
         placement: placement,
-        referencePath: referenceEntry?.path,
+        referencePath: referenceEntry?.editPath,
         referenceTopic: referenceEntry?.node.topicFileName,
-        referenceIdentity: referenceEntry == null
+        referenceIdentity: rawReference == null
             ? null
-            : WritersideTocNodeIdentity.fromNode(referenceEntry.node),
+            : WritersideTocNodeIdentity.fromNode(rawReference),
         referenceLabel: referenceEntry == null
             ? null
             : _tocNodeDisplayLabel(dialogContext, referenceEntry.node),
@@ -4897,6 +5193,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
   required bool showHistory,
   required bool showPaste,
   required bool enableGitActions,
+  required bool canEditStructure,
 }) {
   return _showSidebarTreeMenu<_TocTreeAction>(
     context,
@@ -4906,11 +5203,13 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         value: _TocTreeAction.newSiblingTopic,
         label: context.l10n.newSiblingTopic,
         icon: BusyMarkGlyphs.newDocument,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.newChildTopic,
         label: context.l10n.newChildTopic,
         icon: BusyMarkGlyphs.tree,
+        enabled: canEditStructure,
       ),
       const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
@@ -4923,6 +5222,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         value: _TocTreeAction.cut,
         label: context.l10n.cut,
         icon: BusyMarkGlyphs.cut,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.pasteAfter,
@@ -4941,6 +5241,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         label: context.l10n.removeTocElement,
         icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
         shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.delete,
@@ -5014,12 +5315,52 @@ bool _tocTreeEntryStillMatches(
   String treePath,
   _TocTreeEntry entry,
 ) {
-  return _tocPathStillMatches(
-    workspace,
-    treePath,
-    entry.path,
-    _tocNodeFingerprint(entry.node),
-  );
+  if (!entry.canEditStructureIn(treePath)) {
+    final module = workspace.writersideModule;
+    final instance = module == null
+        ? null
+        : _tocInstanceForTreePath(module, treePath);
+    final current = instance == null
+        ? null
+        : _tocNodeAtPath(instance.navigationTocRoots, entry.path);
+    return current != null &&
+        _tocNodeFingerprint(current) == _tocNodeFingerprint(entry.node);
+  }
+  final rawNode = _rawTocNodeForEntry(workspace, treePath, entry);
+  return rawNode != null && _sameTocNodeAttributes(rawNode, entry.node);
+}
+
+TocNode? _rawTocNodeForEntry(
+  Workspace workspace,
+  String treePath,
+  _TocTreeEntry entry,
+) {
+  final editPath = entry.editPath;
+  if (editPath == null) {
+    return null;
+  }
+  final module = workspace.writersideModule;
+  final instance = module == null
+      ? null
+      : _tocInstanceForTreePath(module, treePath);
+  return instance == null ? null : _tocNodeAtPath(instance.tocRoots, editPath);
+}
+
+bool _sameTocNodeAttributes(TocNode first, TocNode second) {
+  return first.topicFileName == second.topicFileName &&
+      first.referenceTopicFileName == second.referenceTopicFileName &&
+      first.referenceInstanceId == second.referenceInstanceId &&
+      first.href == second.href &&
+      first.tocTitle == second.tocTitle &&
+      first.id == second.id &&
+      first.acceptsWebFileNames == second.acceptsWebFileNames &&
+      first.acceptsWebFileNamesRef == second.acceptsWebFileNamesRef &&
+      first.targetForAcceptWebFileNames == second.targetForAcceptWebFileNames &&
+      first.instanceCondition == second.instanceCondition &&
+      first.customFilter == second.customFilter &&
+      first.origin == second.origin &&
+      first.hidden == second.hidden &&
+      first.workInProgress == second.workInProgress;
 }
 
 bool _tocPathStillMatches(
@@ -5090,8 +5431,14 @@ bool _tocPathContains(List<int> parent, List<int> candidate) {
 }
 
 String _tocNodeLabel(BuildContext context, TocNode node) {
+  if (node.includeFrom != null || node.includeElementId != null) {
+    final source = node.includeFrom ?? '?';
+    final element = node.includeElementId ?? '?';
+    return '$source#$element';
+  }
   return node.tocTitle ??
       node.topicFileName ??
+      node.referenceTopicFileName ??
       node.href ??
       context.l10n.tocSection;
 }
@@ -5099,7 +5446,10 @@ String _tocNodeLabel(BuildContext context, TocNode node) {
 String _tocNodeDisplayLabel(BuildContext context, TocNode node) {
   final label = _tocNodeLabel(context, node);
   return node.tocTitle == null &&
-          (node.topicFileName != null || node.href != null)
+          (node.topicFileName != null ||
+              node.referenceTopicFileName != null ||
+              node.href != null ||
+              node.includeFrom != null)
       ? busyMarkLtrIsolateFor(context, label)
       : label;
 }
@@ -5124,9 +5474,9 @@ String _tocStructureSignature(Workspace workspace) {
   for (final instance in module.instances) {
     addField(instance.sourceTreePath);
     buffer
-      ..write(instance.tocRoots.length)
+      ..write(instance.navigationTocRoots.length)
       ..write(':');
-    for (final node in instance.tocRoots) {
+    for (final node in instance.navigationTocRoots) {
       addField(_tocNodeFingerprint(node));
     }
   }
@@ -5148,11 +5498,24 @@ String _tocNodeFingerprint(TocNode node) {
 
   addField(node.id);
   addField(node.topicFileName);
+  addField(node.referenceTopicFileName);
+  addField(node.referenceInstanceId);
   addField(node.href);
   addField(node.tocTitle);
+  addField(node.acceptsWebFileNames);
+  addField(node.acceptsWebFileNamesRef);
+  addField(node.targetForAcceptWebFileNames);
+  addField(node.instanceCondition);
+  addField(node.customFilter);
+  addField(node.origin);
+  addField(node.includeFrom);
+  addField(node.includeElementId);
+  addField(node.includeResolutionError);
   addField(node.span.filePath);
   buffer
     ..write(node.hidden ? '1:' : '0:')
+    ..write(node.workInProgress ? '1:' : '0:')
+    ..write(node.included ? '1:' : '0:')
     ..write(node.span.startOffset)
     ..write(':')
     ..write(node.span.endOffset)
@@ -5195,85 +5558,158 @@ Future<bool> _confirmRemoveTocEntry(
   return confirmed ?? false;
 }
 
-enum _TocHeaderAction { newTopic }
+enum _TocHeaderAction {
+  newTopic,
+  newInstance,
+  newLibrary,
+  editInstance,
+  openTocFile,
+}
 
 class _TocHeader extends StatelessWidget {
   const _TocHeader({
     required this.instances,
     required this.selectedInstance,
+    required this.instanceColors,
     required this.onSelectInstance,
     required this.onCreateTopic,
+    required this.onCreateInstance,
+    required this.onCreateLibrary,
+    required this.onEditInstance,
+    required this.onOpenTocFile,
   });
 
   final List<WritersideInstance> instances;
   final WritersideInstance selectedInstance;
+  final Map<String, WritersideInstanceIconColor> instanceColors;
   final ValueChanged<String> onSelectInstance;
   final VoidCallback onCreateTopic;
+  final VoidCallback onCreateInstance;
+  final VoidCallback onCreateLibrary;
+  final VoidCallback onEditInstance;
+  final VoidCallback onOpenTocFile;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: BusyMarkInsets.tocHeader,
-      child: _SidebarHeaderRow(
-        key: const ValueKey('workspace-sidebar-first-content'),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedInstance.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: busyMarkSectionHeaderStyle(context),
-              ),
-            ),
-            if (instances.length > 1) ...[
-              const SizedBox(width: BusyMarkSpacing.xs),
-              BusyMarkHeaderPopupMenuButton<String>(
-                tooltip: context.l10n.instanceName,
-                icon: BusyMarkGlyphs.tree,
-                transparent: true,
-                itemBuilder: (context) => [
-                  for (final instance in instances)
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SidebarHeaderRow(
+            key: const ValueKey('workspace-sidebar-first-content'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.instances,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: busyMarkSectionHeaderStyle(context),
+                  ),
+                ),
+                BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
+                  key: const ValueKey('workspace-sidebar-toc-menu'),
+                  tooltip: context.l10n.tocActions,
+                  icon: BusyMarkGlyphs.menuVertical,
+                  transparent: true,
+                  borderRadius: BusyMarkRadius.nativeHeaderButton,
+                  highlightWhenOpen: false,
+                  itemBuilder: (context) => [
                     BusyMarkPopupMenuItem(
-                      value: instance.sourceTreePath,
-                      label: instance.name,
-                      icon: BusyMarkGlyphs.tree,
-                      checked: p.equals(
-                        instance.sourceTreePath,
-                        selectedInstance.sourceTreePath,
-                      ),
-                      trailingCheck: true,
+                      value: _TocHeaderAction.newTopic,
+                      label: context.l10n.newTopic,
+                      icon: BusyMarkGlyphs.newDocument,
                     ),
-                ],
-                onSelected: onSelectInstance,
-              ),
-            ],
-            BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
-              key: const ValueKey('workspace-sidebar-toc-menu'),
-              tooltip: context.l10n.tocActions,
-              icon: BusyMarkGlyphs.menuVertical,
-              transparent: true,
-              borderRadius: BusyMarkRadius.nativeHeaderButton,
-              highlightWhenOpen: false,
-              itemBuilder: (context) => [
-                BusyMarkPopupMenuItem(
-                  value: _TocHeaderAction.newTopic,
-                  label: context.l10n.newTopic,
-                  icon: BusyMarkGlyphs.newDocument,
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.newInstance,
+                      label: context.l10n.newInstance,
+                      icon: BusyMarkGlyphs.add,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.newLibrary,
+                      label: context.l10n.newTocLibrary,
+                      icon: BusyMarkGlyphs.code,
+                    ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.editInstance,
+                      label: context.l10n.editInstance,
+                      icon: BusyMarkGlyphs.edit,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.openTocFile,
+                      label: context.l10n.openTocFile,
+                      icon: BusyMarkGlyphs.documentOpen,
+                    ),
+                  ],
+                  onSelected: (action) {
+                    switch (action) {
+                      case _TocHeaderAction.newTopic:
+                        onCreateTopic();
+                      case _TocHeaderAction.newInstance:
+                        onCreateInstance();
+                      case _TocHeaderAction.newLibrary:
+                        onCreateLibrary();
+                      case _TocHeaderAction.editInstance:
+                        onEditInstance();
+                      case _TocHeaderAction.openTocFile:
+                        onOpenTocFile();
+                    }
+                  },
                 ),
               ],
-              onSelected: (action) {
-                switch (action) {
-                  case _TocHeaderAction.newTopic:
-                    onCreateTopic();
-                }
-              },
             ),
-          ],
-        ),
+          ),
+          for (final instance in instances)
+            _SidebarTreeRow(
+              key: ValueKey('writerside-instance-${instance.id}'),
+              title: busyMarkLtrIsolateFor(context, instance.name),
+              depth: 0,
+              icon: BusyMarkGlyphs.tree,
+              leading: Icon(
+                BusyMarkGlyphs.tree,
+                size: BusyMarkSizes.iconSm,
+                color: writersideInstanceIconColorValue(
+                  context,
+                  instanceColors[instance.sourceTreePath] ??
+                      WritersideInstanceIconColor.blue,
+                ),
+              ),
+              hasChildren: false,
+              expanded: false,
+              selected: p.equals(
+                instance.sourceTreePath,
+                selectedInstance.sourceTreePath,
+              ),
+              enabled: true,
+              onTap: () => onSelectInstance(instance.sourceTreePath),
+            ),
+          const Divider(height: BusyMarkSpacing.md),
+        ],
       ),
     );
   }
+}
+
+WritersideInstanceIconColor _effectiveInstanceIconColor(
+  WritersideInstanceIconColor configured,
+  int index,
+) {
+  if (configured != WritersideInstanceIconColor.automatic) {
+    return configured;
+  }
+  const automaticPalette = [
+    WritersideInstanceIconColor.blue,
+    WritersideInstanceIconColor.green,
+    WritersideInstanceIconColor.orange,
+    WritersideInstanceIconColor.purple,
+    WritersideInstanceIconColor.teal,
+    WritersideInstanceIconColor.red,
+    WritersideInstanceIconColor.yellow,
+  ];
+  return automaticPalette[index % automaticPalette.length];
 }
 
 class _CreateWritersideTopicDialog extends ConsumerStatefulWidget {
@@ -5643,6 +6079,14 @@ class _TocTreeEntry {
   final List<int> path;
 
   String get pathKey => path.join('/');
+
+  List<int>? get editPath => node.sourceTocPath;
+
+  bool canEditStructureIn(String treePath) {
+    return node.canEditStructure &&
+        node.sourceTreePath != null &&
+        p.equals(node.sourceTreePath!, treePath);
+  }
 }
 
 List<_TocTreeEntry> _visibleTocTreeEntries(
@@ -5694,7 +6138,7 @@ String? _preferredTocInstanceTreePath(
     return current.sourceTreePath;
   }
   return _tocInstanceTreePathForActiveFile(workspace) ??
-      module.instances.first.sourceTreePath;
+      _defaultWritersideInstance(module).sourceTreePath;
 }
 
 String? _tocInstanceTreePathForActiveFile(
@@ -5708,13 +6152,13 @@ String? _tocInstanceTreePathForActiveFile(
   }
   String? firstMatch;
   for (final instance in module.instances) {
-    final matches = instance.tocRoots.expand((node) => node.flatten()).any((
-      node,
-    ) {
-      final reference = node.topicFileName;
-      return reference != null &&
-          module.topicByReference(reference)?.filePath == activeFilePath;
-    });
+    final matches = instance.navigationTocRoots
+        .expand((node) => node.flatten())
+        .any((node) {
+          final reference = node.topicReference;
+          return reference != null &&
+              module.topicByReference(reference)?.filePath == activeFilePath;
+        });
     if (!matches) {
       continue;
     }
@@ -5734,13 +6178,14 @@ String? _activeTocNodePathKey(Workspace workspace, {String? treePath}) {
     return null;
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   String? result;
   void visit(TocNode node, List<int> path) {
     if (result != null) {
       return;
     }
-    final reference = node.topicFileName;
+    final reference = node.topicReference;
     if (reference != null &&
         module.topicByReference(reference)?.filePath == activeFilePath) {
       result = path.join('/');
@@ -5751,7 +6196,7 @@ String? _activeTocNodePathKey(Workspace workspace, {String? treePath}) {
     }
   }
 
-  final roots = instance.tocRoots;
+  final roots = instance.navigationTocRoots;
   for (var index = 0; index < roots.length; index += 1) {
     visit(roots[index], [index]);
   }
@@ -5767,7 +6212,8 @@ Set<String> _initialExpandedTocNodeKeys(
     return const {};
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   final expanded = <String>{};
   void visit(TocNode node, List<int> path) {
     if (node.children.isNotEmpty) {
@@ -5778,8 +6224,8 @@ Set<String> _initialExpandedTocNodeKeys(
     }
   }
 
-  for (var index = 0; index < instance.tocRoots.length; index += 1) {
-    visit(instance.tocRoots[index], [index]);
+  for (var index = 0; index < instance.navigationTocRoots.length; index += 1) {
+    visit(instance.navigationTocRoots[index], [index]);
   }
   return expanded
     ..addAll(_activeTocAncestorKeys(workspace, treePath: treePath));
@@ -5792,12 +6238,13 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
     return const {};
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   final ancestors = <String>{};
   bool visit(TocNode node, List<int> path) {
-    final topic = node.topicFileName == null
+    final topic = node.topicReference == null || node.origin != null
         ? null
-        : module.topicByReference(node.topicFileName!)?.filePath;
+        : module.topicByReference(node.topicReference!)?.filePath;
     if (topic == activeFilePath) {
       return true;
     }
@@ -5810,10 +6257,17 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
     return false;
   }
 
-  for (var index = 0; index < instance.tocRoots.length; index += 1) {
-    visit(instance.tocRoots[index], [index]);
+  for (var index = 0; index < instance.navigationTocRoots.length; index += 1) {
+    visit(instance.navigationTocRoots[index], [index]);
   }
   return ancestors;
+}
+
+WritersideInstance _defaultWritersideInstance(WritersideModule module) {
+  return module.instances
+          .where((instance) => !instance.isLibrary)
+          .firstOrNull ??
+      module.instances.first;
 }
 
 class _OutlineTab extends ConsumerStatefulWidget {
@@ -6166,13 +6620,13 @@ List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
     const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
       value: _OutlineSectionAction.promote,
-      label: context.l10n.promoteHeading,
+      label: context.l10n.promoteSection,
       icon: BusyMarkGlyphs.outdentFor(direction),
       enabled: capabilities.canPromote,
     ),
     BusyMarkPopupMenuItem(
       value: _OutlineSectionAction.demote,
-      label: context.l10n.demoteHeading,
+      label: context.l10n.demoteSection,
       icon: BusyMarkGlyphs.indentFor(direction),
       enabled: capabilities.canDemote,
     ),
@@ -6646,7 +7100,7 @@ class _EditorTabStrip extends ConsumerWidget {
         if (entry.path.isEmpty) {
           return;
         }
-        gitController.selectCommitFile(entry.path);
+        await gitController.activateDiffFile(entry.path);
     }
   }
 
@@ -6846,6 +7300,11 @@ String _diffTabTitle(String path) {
 class _GitDiffDocumentView extends StatefulWidget {
   const _GitDiffDocumentView({
     required this.diff,
+    required this.comparisonLabel,
+    required this.comparisonType,
+    required this.comparisonEnabled,
+    required this.onComparisonTypeChanged,
+    required this.openFilePath,
     required this.workspace,
     required this.viewMode,
     required this.hasUnsavedEditorChanges,
@@ -6854,6 +7313,11 @@ class _GitDiffDocumentView extends StatefulWidget {
   });
 
   final GitDiff? diff;
+  final String? comparisonLabel;
+  final GitComparisonType? comparisonType;
+  final bool comparisonEnabled;
+  final ValueChanged<GitComparisonType>? onComparisonTypeChanged;
+  final String? openFilePath;
   final Workspace workspace;
   final DocumentViewModePreference viewMode;
   final bool hasUnsavedEditorChanges;
@@ -6903,6 +7367,15 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
     final sourceChangeCount = sourceVisible
         ? gitDiffSourceChangeCount(diff)
         : 0;
+    final comparisonUsesSourceNavigator =
+        widget.comparisonLabel != null &&
+        sourceVisible &&
+        sourceChangeCount > 0;
+    final comparisonUsesPreviewNavigator =
+        widget.comparisonLabel != null &&
+        !sourceVisible &&
+        previewVisible &&
+        changeTargets.isNotEmpty;
     final navigatorChangeCount = splitVisible
         ? sourceChangeCount
         : changeTargets.length;
@@ -6921,8 +7394,54 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
       decoration: BoxDecoration(color: colors.view),
       child: Column(
         children: [
-          if (splitVisible && sourceChangeCount > 0)
-            _DiffChangeNavigator(
+          if (widget.comparisonLabel != null)
+            _DiffToolbar(
+              label: widget.comparisonLabel!,
+              comparisonType: widget.comparisonType,
+              comparisonEnabled: widget.comparisonEnabled,
+              onComparisonTypeChanged: widget.onComparisonTypeChanged,
+              currentIndex:
+                  comparisonUsesSourceNavigator ||
+                      comparisonUsesPreviewNavigator
+                  ? _currentChangeIndex
+                  : null,
+              total: comparisonUsesSourceNavigator
+                  ? sourceChangeCount
+                  : comparisonUsesPreviewNavigator
+                  ? changeTargets.length
+                  : null,
+              onPrevious: comparisonUsesSourceNavigator
+                  ? () => _jumpToSplitChange(
+                      sourceChangeCount: sourceChangeCount,
+                      previewTargets: changeTargets,
+                      direction: -1,
+                    )
+                  : comparisonUsesPreviewNavigator
+                  ? () => _jumpToPreviewChange(changeTargets, -1)
+                  : null,
+              onNext: comparisonUsesSourceNavigator
+                  ? () => _jumpToSplitChange(
+                      sourceChangeCount: sourceChangeCount,
+                      previewTargets: changeTargets,
+                      direction: 1,
+                    )
+                  : comparisonUsesPreviewNavigator
+                  ? () => _jumpToPreviewChange(changeTargets, 1)
+                  : null,
+              target: comparisonUsesSourceNavigator
+                  ? _diffChangeTarget(diff, _currentChangeIndex)
+                  : null,
+              openFilePath: comparisonUsesSourceNavigator
+                  ? widget.openFilePath
+                  : null,
+              onOpenFile: comparisonUsesSourceNavigator
+                  ? widget.onOpenFile
+                  : null,
+            ),
+          if (widget.comparisonLabel == null &&
+              splitVisible &&
+              sourceChangeCount > 0)
+            _DiffToolbar(
               currentIndex: _currentChangeIndex,
               total: sourceChangeCount,
               onPrevious: () => _jumpToSplitChange(
@@ -6936,6 +7455,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                 direction: 1,
               ),
               target: _diffChangeTarget(diff, _currentChangeIndex),
+              openFilePath: widget.openFilePath,
               onOpenFile: widget.onOpenFile,
             ),
           Expanded(
@@ -6952,10 +7472,14 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                       showFileActions: !splitVisible,
                       showHunkHeaders: !splitVisible,
                       editorFontSize: widget.editorFontSize,
-                      showChangeNavigator: !previewVisible,
-                      changeNavigatorController: splitVisible
+                      showChangeNavigator:
+                          !previewVisible && widget.comparisonLabel == null,
+                      changeNavigatorController:
+                          splitVisible ||
+                              (widget.comparisonLabel != null && sourceVisible)
                           ? _sourceChangeNavigatorController
                           : null,
+                      openFilePath: widget.openFilePath,
                       onOpenFile: widget.onOpenFile,
                       onClose: () {},
                     ),
@@ -6969,8 +7493,10 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                   Expanded(
                     child: Column(
                       children: [
-                        if (!splitVisible && changeTargets.isNotEmpty)
-                          _DiffChangeNavigator(
+                        if (widget.comparisonLabel == null &&
+                            !splitVisible &&
+                            changeTargets.isNotEmpty)
+                          _DiffToolbar(
                             currentIndex: _currentChangeIndex,
                             total: changeTargets.length,
                             onPrevious: () =>
@@ -6978,6 +7504,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                             onNext: () =>
                                 _jumpToPreviewChange(changeTargets, 1),
                             target: null,
+                            openFilePath: null,
                             onOpenFile: null,
                           ),
                         Expanded(
@@ -7105,27 +7632,44 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
   }
 }
 
-class _DiffChangeNavigator extends StatelessWidget {
-  const _DiffChangeNavigator({
-    required this.currentIndex,
-    required this.total,
-    required this.onPrevious,
-    required this.onNext,
-    required this.target,
-    required this.onOpenFile,
+class _DiffToolbar extends StatelessWidget {
+  const _DiffToolbar({
+    this.label,
+    this.comparisonType,
+    this.comparisonEnabled = true,
+    this.onComparisonTypeChanged,
+    this.currentIndex,
+    this.total,
+    this.onPrevious,
+    this.onNext,
+    this.target,
+    this.openFilePath,
+    this.onOpenFile,
   });
 
-  final int currentIndex;
-  final int total;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
+  final String? label;
+  final GitComparisonType? comparisonType;
+  final bool comparisonEnabled;
+  final ValueChanged<GitComparisonType>? onComparisonTypeChanged;
+  final int? currentIndex;
+  final int? total;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
   final _DiffChangeTarget? target;
+  final String? openFilePath;
   final ValueChanged<String>? onOpenFile;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final path = target?.file.displayPath ?? '';
+    final hasNavigator =
+        currentIndex != null &&
+        total != null &&
+        total! > 0 &&
+        onPrevious != null &&
+        onNext != null;
+    final selectable =
+        comparisonType != null && onComparisonTypeChanged != null;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
@@ -7136,57 +7680,165 @@ class _DiffChangeNavigator extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: BusyMarkSpacing.md),
-            Text(
-              '${currentIndex + 1} / $total',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            if (label != null) ...[
+              Icon(
+                BusyMarkGlyphs.documentHistory,
+                size: BusyMarkSizes.iconSm,
                 color: colors.mutedForeground,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-            if (target != null) ...[
-              const SizedBox(width: BusyMarkSpacing.md),
-              Expanded(
-                child: Text(
-                  gitDiffHunkRangeText(
-                    target!.hunk,
-                    format: context.l10n.gitDiffHunkRange,
-                    noLinesText: context.l10n.gitDiffNoLines,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.mutedForeground,
-                    fontFamily: BusyMarkTypography.monoFontFamily,
-                  ),
-                ),
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
+              Flexible(
+                flex: 2,
+                child: selectable
+                    ? _GitHistoryComparisonSelector(
+                        value: comparisonType!,
+                        label: label!,
+                        enabled: comparisonEnabled,
+                        onSelected: onComparisonTypeChanged!,
+                      )
+                    : Text(
+                        label!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+              ),
+            ],
+            if (hasNavigator) ...[
+              if (label != null) const SizedBox(width: BusyMarkSpacing.md),
+              Text(
+                '${currentIndex! + 1} / $total',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: colors.mutedForeground,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              if (target != null) ...[
+                const SizedBox(width: BusyMarkSpacing.md),
+                Flexible(
+                  child: Text(
+                    gitDiffHunkRangeText(
+                      target!.hunk,
+                      format: context.l10n.gitDiffHunkRange,
+                      noLinesText: context.l10n.gitDiffNoLines,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.mutedForeground,
+                      fontFamily: BusyMarkTypography.monoFontFamily,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                if (openFilePath != null && onOpenFile != null)
+                  BusyMarkHeaderIconButton(
+                    tooltip: context.l10n.gitOpenFile,
+                    icon: BusyMarkGlyphs.externalLink,
+                    transparent: true,
+                    onPressed: () => onOpenFile!(openFilePath!),
+                  ),
+              ] else
+                const Spacer(),
               BusyMarkHeaderIconButton(
-                tooltip: context.l10n.gitOpenFile,
-                icon: BusyMarkGlyphs.externalLink,
+                tooltip: context.l10n.sourceSearchPreviousMatch,
+                icon: YaruIcons.pan_up,
                 transparent: true,
-                onPressed: path.isEmpty || onOpenFile == null
-                    ? null
-                    : () => onOpenFile!(path),
+                onPressed: onPrevious!,
+              ),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.sourceSearchNextMatch,
+                icon: BusyMarkGlyphs.downArrow,
+                transparent: true,
+                onPressed: onNext!,
               ),
             ] else
               const Spacer(),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.sourceSearchPreviousMatch,
-              icon: YaruIcons.pan_up,
-              transparent: true,
-              onPressed: onPrevious,
-            ),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.sourceSearchNextMatch,
-              icon: BusyMarkGlyphs.downArrow,
-              transparent: true,
-              onPressed: onNext,
-            ),
             const SizedBox(width: BusyMarkSpacing.xs),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GitHistoryComparisonSelector extends StatelessWidget {
+  const _GitHistoryComparisonSelector({
+    required this.value,
+    required this.label,
+    required this.enabled,
+    required this.onSelected,
+  });
+
+  final GitComparisonType value;
+  final String label;
+  final bool enabled;
+  final ValueChanged<GitComparisonType> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkMenuButton<GitComparisonType>(
+      key: const ValueKey('git-history-comparison-selector'),
+      tooltip: context.l10n.gitDiff,
+      enabled: enabled,
+      fallbackMenuWidth: 224,
+      items: [
+        BusyMarkPopupMenuItem(
+          value: GitComparisonType.commitChange,
+          label: context.l10n.gitChangesInCommit,
+          icon: BusyMarkGlyphs.documentHistory,
+          checked: value == GitComparisonType.commitChange,
+          trailingCheck: true,
+        ),
+        BusyMarkPopupMenuItem(
+          value: GitComparisonType.commitVersusCurrent,
+          label: context.l10n.gitCompareWithCurrent,
+          icon: BusyMarkGlyphs.preview,
+          checked: value == GitComparisonType.commitVersusCurrent,
+          trailingCheck: true,
+        ),
+      ],
+      onSelected: (selection) {
+        if (selection != value) {
+          onSelected(selection);
+        }
+      },
+      triggerBuilder: (context, trigger) {
+        return trigger.anchor(
+          child: Tooltip(
+            message: context.l10n.gitDiff,
+            child: Semantics(
+              expanded: trigger.isOpen,
+              child: BusyMarkPushButton.standard(
+                onPressed: trigger.onPressed,
+                focusNode: trigger.focusNode,
+                style: Theme.of(context).outlinedButtonTheme.style?.copyWith(
+                  side: const WidgetStatePropertyAll(BorderSide.none),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                    const Icon(
+                      BusyMarkGlyphs.downArrow,
+                      size: BusyMarkSizes.iconSm,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -7227,6 +7879,9 @@ _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
 
 _DiffPreviewSnapshot? _diffPreviewSnapshot(GitDiff diff) {
   for (final file in diff.files) {
+    if (file.status == GitDiffFileStatus.deleted) {
+      continue;
+    }
     final path = file.displayPath;
     if (path.isEmpty) {
       continue;
@@ -7609,6 +8264,7 @@ PreviewBlock _withDiffPreviewTone(PreviewBlock block, _DiffPreviewTone? tone) {
     text: block.text,
     level: block.level,
     language: block.language,
+    visualization: block.visualization,
     inlines: block.inlines,
     children: [
       for (final child in block.children) _withDiffPreviewTone(child, tone),
@@ -7654,6 +8310,7 @@ PreviewBlock _withDiffPreviewCodeLineTones(
     text: block.text,
     level: block.level,
     language: block.language,
+    visualization: block.visualization,
     inlines: block.inlines,
     children: block.children,
     attributes: {
@@ -7995,12 +8652,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollRequest: _wysiwygScrollRequest,
                 onVisibleHeadingChanged: _handleWysiwygVisibleHeadingChanged,
                 documentLayout: standaloneDocumentLayout,
+                visualizationRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
                     .request(),
                 onCloseSearch: () => ref
                     .read(workspaceSearchCloseRequestProvider.notifier)
                     .request(),
+                onAiEdit:
+                    (_activeDocumentKind(
+                          widget.state.workspace,
+                        )?.supportsAiMarkdownEditing ??
+                        false)
+                    ? (snapshot) => showBusyMarkAiEdit(context, ref, snapshot)
+                    : null,
               ),
             ),
           if (sourceVisible)
@@ -8030,6 +8697,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     .request(),
                 onVisibleLineChanged: _handleSourceVisibleLineChanged,
                 onChanged: _handleSourceChanged,
+                editRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
+                onAiEdit:
+                    (_activeDocumentKind(
+                          widget.state.workspace,
+                        )?.supportsAiMarkdownEditing ??
+                        false)
+                    ? (snapshot) => showBusyMarkAiEdit(context, ref, snapshot)
+                    : null,
               ),
             ),
           if (sourceVisible && previewVisible)
@@ -8042,6 +8719,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               child: _PreviewPane(
                 preview: widget.state.preview,
                 workspace: widget.state.workspace,
+                activeSource: widget.state.activeText,
+                editRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
+                visualizationsEnabled: true,
+                onVisualizationDiagnostic: _openVisualizationSourceLine,
+                onEditVisualizationSource: _openVisualizationSourceLine,
                 controller: _previewScrollController,
                 itemPositionsListener: _previewItemPositionsListener,
                 onBlockContextAvailable: _rememberPreviewBlockContext,
@@ -8058,6 +8742,27 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _rememberPreviewBlockContext(int index, BuildContext context) {
     _previewBlockContexts[index] = context;
+  }
+
+  Future<void> _openVisualizationSourceLine(int line) async {
+    final workspace = widget.state.workspace;
+    final filePath = _activeEditorPath();
+    if (workspace == null || filePath == null) {
+      return;
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    if (settings.documentViewMode == DocumentViewModePreference.preview ||
+        settings.documentViewMode == DocumentViewModePreference.editor) {
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.split);
+    }
+    if (!mounted || widget.state.workspace?.id != workspace.id) {
+      return;
+    }
+    ref
+        .read(_sourceNavigationTargetProvider.notifier)
+        .set(_SourceNavigationTarget(filePath: filePath, line: line));
   }
 
   void _forgetPreviewBlockContext(int index, BuildContext context) {
@@ -8123,6 +8828,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       DocumentKind.config ||
       DocumentKind.variables ||
       DocumentKind.categories => SourceSyntaxLanguage.xml,
+      DocumentKind.gitIgnore => SourceSyntaxLanguage.plain,
       DocumentKind.image ||
       DocumentKind.resource ||
       DocumentKind.unknown ||
@@ -8134,19 +8840,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (workspace == null) {
       return null;
     }
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    if (activePath == null) {
-      return null;
-    }
-    for (final file in workspace.files) {
-      if (file.absolutePath == activePath) {
-        return file.kind;
-      }
-    }
-    return workspace.kind == WorkspaceKind.untitledMarkdown ||
-            workspace.kind == WorkspaceKind.singleMarkdown
-        ? DocumentKind.markdown
-        : null;
+    return _activeWorkspaceDocumentKind(workspace);
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
@@ -8370,8 +9064,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
-    return kind == DocumentKind.markdown ||
-        kind == DocumentKind.writersideMarkdownTopic;
+    return kind?.supportsAiMarkdownEditing ?? false;
   }
 
   BusyDocument? _wysiwygDocument() {
@@ -8527,6 +9220,11 @@ class _PreviewPane extends StatelessWidget {
     required this.workspace,
     required this.controller,
     required this.documentLayout,
+    this.activeSource = '',
+    this.editRevision = 0,
+    this.visualizationsEnabled = false,
+    this.onVisualizationDiagnostic,
+    this.onEditVisualizationSource,
     this.itemPositionsListener,
     this.onBlockContextAvailable,
     this.onBlockContextUnavailable,
@@ -8534,6 +9232,11 @@ class _PreviewPane extends StatelessWidget {
 
   final PreviewDocument? preview;
   final Workspace? workspace;
+  final String activeSource;
+  final int editRevision;
+  final bool visualizationsEnabled;
+  final ValueChanged<int>? onVisualizationDiagnostic;
+  final ValueChanged<int>? onEditVisualizationSource;
   final ItemScrollController controller;
   final ItemPositionsListener? itemPositionsListener;
   final BusyMarkDocumentLayoutSpec documentLayout;
@@ -8548,7 +9251,7 @@ class _PreviewPane extends StatelessWidget {
     if (document == null) {
       return _EmptyPane(
         icon: BusyMarkGlyphs.preview,
-        title: context.l10n.noPreview,
+        title: context.l10n.nothingToRead,
       );
     }
     return DecoratedBox(
@@ -8581,6 +9284,11 @@ class _PreviewPane extends StatelessWidget {
       first: index == 0,
       listRunEnd: _isLastListBlock(index),
       workspace: workspace,
+      activeSource: activeSource,
+      editRevision: editRevision,
+      visualizationsEnabled: visualizationsEnabled,
+      onVisualizationDiagnostic: onVisualizationDiagnostic,
+      onEditVisualizationSource: onEditVisualizationSource,
       headingKey: block.kind == PreviewBlockKind.heading
           ? ValueKey('preview-heading-$index')
           : null,
@@ -8658,6 +9366,11 @@ class _PreviewBlockView extends StatelessWidget {
     required this.first,
     required this.listRunEnd,
     required this.headingKey,
+    this.activeSource = '',
+    this.editRevision = 0,
+    this.visualizationsEnabled = false,
+    this.onVisualizationDiagnostic,
+    this.onEditVisualizationSource,
   });
 
   final PreviewBlock block;
@@ -8665,6 +9378,11 @@ class _PreviewBlockView extends StatelessWidget {
   final bool first;
   final bool listRunEnd;
   final Key? headingKey;
+  final String activeSource;
+  final int editRevision;
+  final bool visualizationsEnabled;
+  final ValueChanged<int>? onVisualizationDiagnostic;
+  final ValueChanged<int>? onEditVisualizationSource;
 
   @override
   Widget build(BuildContext context) {
@@ -8690,6 +9408,9 @@ class _PreviewBlockView extends StatelessWidget {
           ),
         ),
       ),
+      PreviewBlockKind.code
+          when visualizationsEnabled && displayBlock.visualization != null =>
+        _visualizationCard(displayBlock),
       PreviewBlockKind.code => BusyMarkDocumentCodeBlock(
         backgroundColor: _diffPreviewCodeBackground(context, displayBlock),
         child: Text.rich(
@@ -8817,6 +9538,48 @@ class _PreviewBlockView extends StatelessWidget {
     };
   }
 
+  Widget _visualizationCard(PreviewBlock block) {
+    final descriptor = block.visualization!;
+    final documentPath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath ?? '';
+    final blockIdentity =
+        block.attributes['editorBlockId'] ??
+        block.sourceStartOffset?.toString() ??
+        '${block.sourceStartLine ?? 1}';
+    return BusyMarkVisualizationCard(
+      key: ValueKey('visualization-$documentPath-$blockIdentity'),
+      descriptor: descriptor,
+      source: block.text,
+      sourceFence: _visualizationSourceFence(block, descriptor),
+      documentPath: documentPath,
+      workspaceRoot: workspace?.rootPath ?? '',
+      sourceStartLine: block.sourceStartLine ?? 1,
+      editRevision: editRevision,
+      blockKey: 'preview:${workspace?.id ?? ''}:$documentPath:$blockIdentity',
+      onDiagnosticSelected: onVisualizationDiagnostic,
+      onEditSource: onEditVisualizationSource == null
+          ? null
+          : () => onEditVisualizationSource!(block.sourceStartLine ?? 1),
+    );
+  }
+
+  String _visualizationSourceFence(
+    PreviewBlock block,
+    VisualizationDescriptor descriptor,
+  ) {
+    final start = block.sourceStartOffset;
+    final end = block.sourceEndOffset;
+    if (start != null &&
+        end != null &&
+        start >= 0 &&
+        end >= start &&
+        end <= activeSource.length) {
+      return activeSource.substring(start, end);
+    }
+    final source = block.text.endsWith('\n') ? block.text : '${block.text}\n';
+    return '```${descriptor.originalLanguage}\n$source```';
+  }
+
   TextSpan _diffPreviewCodeTextSpan(
     BuildContext context,
     PreviewBlock block,
@@ -8894,6 +9657,11 @@ class _PreviewBlockView extends StatelessWidget {
             first: first && index == 0,
             listRunEnd: _isLastListBlock(blocks, index),
             headingKey: null,
+            activeSource: activeSource,
+            editRevision: editRevision,
+            visualizationsEnabled: visualizationsEnabled,
+            onVisualizationDiagnostic: onVisualizationDiagnostic,
+            onEditVisualizationSource: onEditVisualizationSource,
           ),
       ],
     );
@@ -8934,6 +9702,8 @@ class _PreviewBlockView extends StatelessWidget {
       kind: block.kind,
       text: text,
       level: block.level,
+      language: block.language,
+      visualization: block.visualization,
       attributes: block.attributes,
       inlines: block.inlines,
       children: block.children,
@@ -10524,6 +11294,7 @@ IconData _documentKindIcon(DocumentKind kind) {
     DocumentKind.config => YaruIcons.gear,
     DocumentKind.variables => BusyMarkGlyphs.symbols,
     DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.gitIgnore => YaruIcons.gear,
     DocumentKind.image => BusyMarkGlyphs.image,
     DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
   };
@@ -10540,6 +11311,7 @@ String _documentKindLabel(BuildContext context, DocumentKind kind) {
     DocumentKind.config => context.l10n.documentKindConfigurationFile,
     DocumentKind.variables => context.l10n.documentKindVariablesFile,
     DocumentKind.categories => context.l10n.documentKindCategoriesFile,
+    DocumentKind.gitIgnore => context.l10n.documentKindConfigurationFile,
     DocumentKind.image => context.l10n.image,
     DocumentKind.resource => context.l10n.documentKindResourceFile,
     DocumentKind.unknown => context.l10n.file,
@@ -10620,6 +11392,22 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
+}
+
+DocumentKind? _activeWorkspaceDocumentKind(Workspace workspace) {
+  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  if (activePath == null) {
+    return null;
+  }
+  for (final file in workspace.files) {
+    if (file.absolutePath == activePath) {
+      return file.kind;
+    }
+  }
+  return workspace.kind == WorkspaceKind.untitledMarkdown ||
+          workspace.kind == WorkspaceKind.singleMarkdown
+      ? DocumentKind.markdown
+      : null;
 }
 
 IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {

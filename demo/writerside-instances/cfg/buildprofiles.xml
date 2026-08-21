@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE buildprofiles SYSTEM "https://resources.jetbrains.com/writerside/1.0/build-profiles.dtd">
+<buildprofiles>
+  <build-profile instance="guide">
+    <variables>
+      <noindex-content>false</noindex-content>
+    </variables>
+  </build-profile>
+  <build-profile instance="admin">
+    <variables>
+      <offline-docs>true</offline-docs>
+    </variables>
+  </build-profile>
+</buildprofiles>

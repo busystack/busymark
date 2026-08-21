@@ -3,6 +3,7 @@ import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -45,11 +46,12 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -69,9 +71,10 @@ void main() {
     );
 
     expect(find.text(l10n.gitConflicts), findsOneWidget);
-    expect(find.text(l10n.gitChanges), findsOneWidget);
+    expect(find.text(l10n.gitStaged), findsOneWidget);
+    expect(find.text(l10n.gitUnstaged), findsOneWidget);
     expect(find.text(l10n.gitUntracked), findsOneWidget);
-    expect(find.byType(YaruCheckbox), findsNWidgets(4));
+    expect(find.byType(YaruCheckbox), findsNWidgets(3));
   });
 
   testWidgets('file checkboxes select files for commit', (tester) async {
@@ -80,11 +83,12 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: selectedPaths.addAll,
             unselect: unselectedPaths.addAll,
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('changed.md')]),
               onSelectFile: (_) {},
@@ -108,17 +112,427 @@ void main() {
     expect(unselectedPaths, isEmpty);
   });
 
+  testWidgets(
+    'a path with staged and unstaged changes appears in both groups',
+    (tester) async {
+      final selections = <GitChangeSelection>[];
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async => true,
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              rollback: (_) {},
+              deleteUntracked: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [_file('both.md', staged: true, unstaged: true)],
+                ),
+                onSelectFile: selections.add,
+                onOpenFile: (_) {},
+                onConfirmDiscard: (_) async => true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('both.md'), findsNWidgets(2));
+      await tester.tap(find.text('both.md').at(0));
+      await tester.pump();
+      await tester.tap(find.text('both.md').at(1));
+      await tester.pump();
+
+      expect(selections, [
+        const GitChangeSelection(
+          path: 'both.md',
+          comparison: GitComparisonType.staged,
+        ),
+        const GitChangeSelection(
+          path: 'both.md',
+          comparison: GitComparisonType.unstaged,
+        ),
+      ]);
+    },
+  );
+
+  testWidgets(
+    'AD path shows staged addition and unstaged deletion without open action',
+    (tester) async {
+      final openedPaths = <String>[];
+      final rollbackPathSets = <List<String>>[];
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async => true,
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              rollback: (paths) => rollbackPathSets.add(paths),
+              deleteUntracked: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [
+                    _file(
+                      'draft.md',
+                      staged: true,
+                      unstaged: true,
+                      category: GitFileStatusCategory.deleted,
+                      indexStatus: GitFileChangeStatus.added,
+                      workTreeStatus: GitFileChangeStatus.deleted,
+                    ),
+                  ],
+                ),
+                onSelectFile: (_) {},
+                onOpenFile: openedPaths.add,
+                onConfirmDiscard: (_) async => true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final stagedRow = find.byKey(
+        const ValueKey('git-change-staged-draft.md'),
+      );
+      final unstagedRow = find.byKey(
+        const ValueKey('git-change-unstaged-draft.md'),
+      );
+      expect(
+        find.descendant(of: stagedRow, matching: find.text('A')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: unstagedRow, matching: find.text('D')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip(l10n.gitStatusAdded), findsOneWidget);
+      expect(find.byTooltip(l10n.gitStatusDeleted), findsOneWidget);
+      expect(
+        find.descendant(
+          of: stagedRow,
+          matching: find.byTooltip(l10n.fileActions),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.descendant(
+          of: unstagedRow,
+          matching: find.byTooltip(l10n.fileActions),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.gitOpenFile), findsNothing);
+      expect(find.text(l10n.gitDiscard), findsOneWidget);
+      await tester.tap(find.text(l10n.gitDiscard));
+      await tester.pumpAndSettle();
+
+      expect(rollbackPathSets, const [
+        ['draft.md'],
+      ]);
+      expect(openedPaths, isEmpty);
+    },
+  );
+
+  testWidgets('staged rename preserves both paths and workspace scope', (
+    tester,
+  ) async {
+    final selections = <GitChangeSelection>[];
+    final unstagedPaths = <String>[];
+    final rollbackPathSets = <List<String>>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: unstagedPaths.addAll,
+            rollback: (paths) => rollbackPathSets.add(paths),
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file(
+                    'docs/new.md',
+                    originalPath: 'outside/old.md',
+                    staged: true,
+                    unstaged: false,
+                    category: GitFileStatusCategory.renamed,
+                  ),
+                ],
+              ),
+              outsideWorkspacePaths: const {'outside/old.md'},
+              onSelectFile: selections.add,
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('outside/old.md → docs/new.md'), findsOneWidget);
+    expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+
+    final stagedRow = find.byKey(
+      const ValueKey('git-change-staged-docs/new.md'),
+    );
+    await tester.tap(
+      find.descendant(
+        of: stagedRow,
+        matching: find.byTooltip(l10n.fileActions),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.gitDiscard));
+    await tester.pumpAndSettle();
+
+    expect(rollbackPathSets, const [
+      ['outside/old.md', 'docs/new.md'],
+    ]);
+
+    await tester.tap(find.text('outside/old.md → docs/new.md'));
+    await tester.tap(find.byType(YaruCheckbox).last);
+    await tester.pump();
+
+    expect(selections, const [
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.staged,
+        originalRepoRelativePath: 'outside/old.md',
+      ),
+    ]);
+    expect(unstagedPaths, ['outside/old.md', 'docs/new.md']);
+  });
+
+  testWidgets('rename paths follow the selected Git status column', (
+    tester,
+  ) async {
+    final selections = <GitChangeSelection>[];
+    final stagedPathSets = <List<String>>[];
+    final unstagedPathSets = <List<String>>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (paths) => stagedPathSets.add(paths),
+            unselect: (paths) => unstagedPathSets.add(paths),
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file(
+                    'docs/new.md',
+                    originalPath: 'docs/old.md',
+                    staged: true,
+                    unstaged: true,
+                    category: GitFileStatusCategory.renamed,
+                    indexStatus: GitFileChangeStatus.modified,
+                    workTreeStatus: GitFileChangeStatus.renamed,
+                  ),
+                ],
+              ),
+              onSelectFile: selections.add,
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final stagedRow = find.byKey(
+      const ValueKey('git-change-staged-docs/new.md'),
+    );
+    final unstagedRow = find.byKey(
+      const ValueKey('git-change-unstaged-docs/new.md'),
+    );
+    expect(
+      find.descendant(of: stagedRow, matching: find.text('new.md')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: unstagedRow,
+        matching: find.text('docs/old.md → docs/new.md'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.descendant(of: stagedRow, matching: find.text('new.md')),
+    );
+    await tester.tap(
+      find.descendant(
+        of: unstagedRow,
+        matching: find.text('docs/old.md → docs/new.md'),
+      ),
+    );
+    final stagedCheckbox = find.descendant(
+      of: stagedRow,
+      matching: find.byType(YaruCheckbox),
+    );
+    final unstagedCheckbox = find.descendant(
+      of: unstagedRow,
+      matching: find.byType(YaruCheckbox),
+    );
+    await tester.tap(stagedCheckbox);
+    await tester.tap(unstagedCheckbox);
+    await tester.pump();
+
+    expect(selections, const [
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.staged,
+      ),
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.unstaged,
+        originalRepoRelativePath: 'docs/old.md',
+      ),
+    ]);
+    expect(unstagedPathSets, const [
+      ['docs/new.md'],
+    ]);
+    expect(stagedPathSets, const [
+      ['docs/old.md', 'docs/new.md'],
+    ]);
+  });
+
+  testWidgets('commit panel reports staged count and unsaved editor state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file('README.md', staged: true, unstaged: false),
+                  _file('outside.md', staged: true, unstaged: false),
+                ],
+              ),
+              hasUnsavedEditorChanges: true,
+              outsideWorkspacePaths: const {'outside.md'},
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(l10n.gitStagedFileCount(2)), findsOneWidget);
+    expect(find.text(l10n.gitUnsavedChangesBanner), findsOneWidget);
+    expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+  });
+
+  testWidgets('AI commit draft is an icon immediately before Commit', (
+    tester,
+  ) async {
+    var draftCalls = 0;
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onDraftCommitMessage: () async {
+                draftCalls += 1;
+                return null;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final draftButton = find.byTooltip(l10n.aiDraftWithAi);
+    final commitButton = find.text(l10n.gitCommit);
+    expect(draftButton, findsOneWidget);
+    expect(find.text(l10n.aiDraftWithAi), findsNothing);
+    expect(find.byIcon(BusyMarkGlyphs.ai), findsOneWidget);
+    expect(
+      tester.getCenter(draftButton).dx,
+      lessThan(tester.getCenter(commitButton).dx),
+    );
+
+    await tester.tap(draftButton);
+    await tester.pumpAndSettle();
+    expect(draftCalls, 1);
+  });
+
+  testWidgets('file history requires an active Markdown file', (tester) async {
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'test@example.invalid',
+      authorDate: DateTime(2026),
+      subject: 'Stale file history',
+      parentHashes: const [],
+    );
+    await tester.pumpWidget(
+      _localized(
+        GitFileHistoryView(
+          state: GitState(
+            fileHistory: GitFileHistoryState(
+              currentPath: 'README.md',
+              entries: [
+                GitFileHistoryEntry(
+                  commit: commit,
+                  pathAtCommit: 'README.md',
+                  pathInParent: 'README.md',
+                  status: GitDiffFileStatus.modified,
+                ),
+              ],
+            ),
+          ),
+          onSelectCommit: (_) {},
+          onRestoreVersion: () {},
+          onLoadMore: () {},
+        ),
+      ),
+    );
+
+    expect(find.text(l10n.gitFileHistoryRequiresOpenFile), findsOneWidget);
+    expect(find.text('Stale file history'), findsNothing);
+  });
+
   testWidgets('file action menu does not contain commit selection actions', (
     tester,
   ) async {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('changed.md')]),
               onSelectFile: (_) {},
@@ -139,15 +553,91 @@ void main() {
     expect(find.text(l10n.gitRemoveFromCommit), findsNothing);
   });
 
+  testWidgets('untracked file menu uses an explicit delete action', (
+    tester,
+  ) async {
+    final deletedPathSets = <List<String>>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (paths) => deletedPathSets.add(paths),
+            child: GitChangesView(
+              state: _state(files: [_file('draft.md', untracked: true)]),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.delete), findsOneWidget);
+    expect(find.text(l10n.gitDiscard), findsNothing);
+
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+
+    expect(deletedPathSets, const [
+      ['draft.md'],
+    ]);
+  });
+
+  testWidgets('unsupported untracked files remain stageable but cannot open', (
+    tester,
+  ) async {
+    final selectedPaths = <String>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: selectedPaths.addAll,
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('.idea/project.iml', untracked: true)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              canOpenFile: (_) => false,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('project.iml'), findsOneWidget);
+    await tester.tap(find.byType(YaruCheckbox).last);
+    await tester.pump();
+    expect(selectedPaths, ['.idea/project.iml']);
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.gitOpenFile), findsNothing);
+  });
+
   testWidgets('commit section colors files by Git status', (tester) async {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -179,11 +669,15 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (message) async => committedMessage = message,
+          commit: (message) async {
+            committedMessage = message;
+            return true;
+          },
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [_file('README.md', staged: true, unstaged: false)],
@@ -207,19 +701,102 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Docs');
     await tester.pump();
     await tester.tap(find.text(l10n.gitCommit));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(committedMessage, 'Docs');
+    expect(find.text('Docs'), findsNothing);
+  });
+
+  testWidgets('failed commit preserves the commit message', (tester) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => false,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Keep this message');
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep this message'), findsOneWidget);
+  });
+
+  testWidgets('commit message clears when repository or workspace changes', (
+    tester,
+  ) async {
+    Widget changesView(GitState state) => _localized(
+      GitCommitActions(
+        commit: (_) async => true,
+        child: GitFileActions(
+          select: (_) {},
+          unselect: (_) {},
+          rollback: (_) {},
+          deleteUntracked: (_) {},
+          child: GitChangesView(
+            state: state,
+            onSelectFile: (_) {},
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+          ),
+        ),
+      ),
+    );
+    final staged = [_file('README.md', staged: true, unstaged: false)];
+    final firstWorkspace = _workspace();
+    const otherRepository = GitRepositoryInfo(
+      rootPath: '/other-repo',
+      gitDirPath: '/other-repo/.git',
+    );
+
+    await tester.pumpWidget(
+      changesView(_state(files: staged, workspace: firstWorkspace)),
+    );
+    await tester.enterText(find.byType(TextField), 'Repository message');
+    await tester.pumpWidget(
+      changesView(
+        _state(files: staged, repo: otherRepository, workspace: firstWorkspace),
+      ),
+    );
+    expect(find.text('Repository message'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'Workspace message');
+    await tester.pumpWidget(
+      changesView(
+        _state(
+          files: staged,
+          repo: otherRepository,
+          workspace: _workspace(id: '/another-workspace'),
+        ),
+      ),
+    );
+    expect(find.text('Workspace message'), findsNothing);
   });
 
   testWidgets('conflict group is visible', (tester) async {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('conflict.md', conflicted: true)]),
               onSelectFile: (_) {},
@@ -403,23 +980,61 @@ void main() {
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
   });
 
-  testWidgets('history view does not show project or current file controls', (
+  testWidgets('file history keeps comparison controls out of the sidebar', (
     tester,
   ) async {
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'busymark@example.com',
+      authorDate: DateTime(2026),
+      subject: 'Update docs',
+      parentHashes: const ['abcdef0123456789'],
+    );
+    var restoreCalls = 0;
+    final state = _state(
+      files: const [],
+      scopedFilePath: 'README.md',
+      selectedView: GitView.fileHistory,
+      history: [commit],
+      historyFilePath: 'README.md',
+      selectedCommitHash: commit.fullHash,
+      selectedCommitFilePath: 'README.md',
+      openDiffFilePaths: const ['README.md'],
+      selectedDiff: GitDiff(
+        title: 'README.md',
+        files: [_diffFile('README.md', 'Commit change')],
+        rawPatch: '',
+        hasBinaryFiles: false,
+      ),
+    );
+
     await tester.pumpWidget(
       _localized(
-        GitHistoryView(
-          state: _state(files: const [], scopedFilePath: 'docs/topic.md'),
+        GitFileHistoryView(
+          state: state,
           onSelectCommit: (_) {},
-          onShowFileDiff: (_) {},
+          onRestoreVersion: () => restoreCalls++,
+          onLoadMore: () {},
         ),
       ),
     );
 
-    expect(find.text(l10n.gitProjectHistory), findsNothing);
-    expect(find.text(l10n.gitFileHistory), findsNothing);
-    expect(find.byType(BusyMarkHeaderIconButton), findsNothing);
-    expect(find.byType(OutlinedButton), findsNothing);
+    expect(find.textContaining(l10n.gitChangesInCommit), findsNothing);
+    expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
+    expect(find.text(l10n.gitRestoreVersion), findsNothing);
+    expect(find.textContaining(commit.shortHash), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
+    expect(find.text(l10n.gitRestoreVersion), findsOneWidget);
+    await tester.tap(find.text(l10n.gitRestoreVersion));
+    await tester.pumpAndSettle();
+
+    expect(restoreCalls, 1);
   });
 
   testWidgets('project history file rows show selected file diff', (
@@ -446,7 +1061,7 @@ void main() {
     );
     var state = _state(
       files: const [],
-      selectedView: GitView.history,
+      selectedView: GitView.projectHistory,
       history: [commit],
       selectedCommitHash: commit.fullHash,
       selectedCommitFilePath: 'README.md',
@@ -462,9 +1077,10 @@ void main() {
               children: [
                 SizedBox(
                   width: 320,
-                  child: GitHistoryView(
+                  child: GitProjectHistoryView(
                     state: state,
                     onSelectCommit: (_) {},
+                    onResetCurrentBranch: () {},
                     onShowFileDiff: (path) {
                       setState(() {
                         state = state.copyWith(
@@ -476,6 +1092,7 @@ void main() {
                         );
                       });
                     },
+                    onLoadMore: () {},
                   ),
                 ),
                 Expanded(
@@ -496,6 +1113,8 @@ void main() {
 
     expect(find.text('README.md'), findsAtLeastNWidgets(1));
     expect(find.text('guide.md'), findsOneWidget);
+    expect(find.text(de.gitChangesInCommit), findsNothing);
+    expect(find.text(de.gitCompareWithCurrent), findsNothing);
     expect(
       find.textContaining('Readme change', findRichText: true),
       findsOneWidget,
@@ -540,6 +1159,78 @@ void main() {
     );
   });
 
+  testWidgets('project history reset requires an explicit reset mode', (
+    tester,
+  ) async {
+    const repo = GitRepositoryInfo(
+      rootPath: '/repo',
+      gitDirPath: '/repo/.git',
+      currentBranch: 'main',
+    );
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'busymark@example.com',
+      authorDate: DateTime(2026),
+      subject: 'Update docs',
+      parentHashes: const ['abcdef0123456789'],
+    );
+    final workspace = _workspace();
+    final controller = _PresetGitController(
+      _state(
+        files: const [],
+        repo: repo,
+        selectedView: GitView.projectHistory,
+        history: [commit],
+        selectedCommitHash: commit.fullHash,
+        workspace: workspace,
+      ),
+    );
+    var refreshCalls = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [gitControllerProvider.overrideWith(() => controller)],
+        child: _localized(
+          GitSidebarTab(
+            workspace: workspace,
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+            onAfterWorkspaceFilesChanged: () async => refreshCalls++,
+            onConfirmSwitchBranch: (_) async => true,
+            onConfirmPushSetUpstream: () async => true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip(l10n.gitCommitActions));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.gitResetCurrentBranchToHere));
+    await tester.pumpAndSettle();
+
+    final resetButton = find.widgetWithText(
+      BusyMarkDialogButton,
+      l10n.gitReset,
+    );
+    expect(resetButton, findsOneWidget);
+    expect(tester.widget<BusyMarkDialogButton>(resetButton).onPressed, isNull);
+
+    await tester.tap(find.text(l10n.gitResetModeMixed));
+    await tester.pump();
+    expect(
+      tester.widget<BusyMarkDialogButton>(resetButton).onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.text(l10n.gitReset));
+    await tester.pumpAndSettle();
+
+    expect(controller.resetModes, [GitResetMode.mixed]);
+    expect(refreshCalls, 1);
+  });
+
   testWidgets('dirty editor banner appears in diff viewer', (tester) async {
     await tester.pumpWidget(
       _localized(
@@ -577,6 +1268,7 @@ void main() {
             showHeader: false,
             showFileHeaders: false,
             showCloseButton: false,
+            openFilePath: 'README.md',
             onOpenFile: (path) => openedPath = path,
             onClose: () {},
           ),
@@ -592,6 +1284,90 @@ void main() {
       expect(openedPath, 'README.md');
     },
   );
+
+  testWidgets('diff open action requires an explicit working-tree target', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: GitDiff(
+            title: 'historical.md',
+            files: [_diffFile('historical.md', 'Historical change')],
+            rawPatch: '',
+            hasBinaryFiles: false,
+          ),
+          hasUnsavedEditorChanges: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+  });
+
+  testWidgets('diff open action uses the explicit current path', (
+    tester,
+  ) async {
+    String? openedPath;
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: GitDiff(
+            title: 'old.md',
+            files: [_diffFile('old.md', 'Historical change')],
+            rawPatch: '',
+            hasBinaryFiles: false,
+          ),
+          hasUnsavedEditorChanges: false,
+          openFilePath: 'current.md',
+          onOpenFile: (path) => openedPath = path,
+          onClose: () {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(l10n.gitOpenFile));
+    await tester.pump();
+
+    expect(openedPath, 'current.md');
+  });
+
+  testWidgets('embedded diff keeps rename paths visible', (tester) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: const GitDiff(
+            title: 'new.md',
+            files: [
+              GitDiffFile(
+                oldPath: 'old.md',
+                newPath: 'new.md',
+                status: GitDiffFileStatus.renamed,
+                hunks: [],
+                binary: false,
+                additions: 0,
+                deletions: 0,
+              ),
+            ],
+            rawPatch: '',
+            hasBinaryFiles: false,
+            fileSnapshots: {'new.md': '# Renamed\n'},
+          ),
+          hasUnsavedEditorChanges: false,
+          showHeader: false,
+          showFileHeaders: false,
+          showCloseButton: false,
+          showFileActions: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('old.md → new.md'), findsOneWidget);
+  });
 
   testWidgets('diff viewer renders patch rows with shared source view', (
     tester,
@@ -720,6 +1496,53 @@ void main() {
     expect(
       find.textContaining('unchanged after change', findRichText: true),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('deleted diff shows the complete removed file snapshot', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: const GitDiff(
+            title: 'README.md',
+            files: [
+              GitDiffFile(
+                oldPath: 'README.md',
+                status: GitDiffFileStatus.deleted,
+                hunks: [],
+                binary: false,
+                additions: 0,
+                deletions: 3,
+              ),
+            ],
+            rawPatch: '',
+            hasBinaryFiles: false,
+            fileSnapshots: {
+              'README.md': '# Removed\n\nComplete old document.\n',
+            },
+          ),
+          hasUnsavedEditorChanges: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    final source = tester.widget<BusyMarkReadOnlySourceLines>(
+      find.byType(BusyMarkReadOnlySourceLines),
+    );
+    expect(source.lines.map((line) => line.text), [
+      '# Removed',
+      '',
+      'Complete old document.',
+    ]);
+    expect(
+      source.lines.every(
+        (line) => line.tone == BusyMarkReadOnlySourceLineTone.removed,
+      ),
+      isTrue,
     );
   });
 
@@ -980,7 +1803,9 @@ GitState _state({
   String? selectedCommitFilePath,
   List<String> openDiffFilePaths = const [],
   GitDiff? selectedDiff,
+  GitComparisonType fileHistoryComparisonType = GitComparisonType.commitChange,
   bool requiresWorkspaceTrust = false,
+  Workspace? workspace,
 }) {
   return GitState(
     availability: const GitAvailability(
@@ -998,23 +1823,77 @@ GitState _state({
     branches: branches,
     scopedFilePath: scopedFilePath,
     selectedView: selectedView,
-    history: history,
-    historyFilePath: historyFilePath,
-    selectedCommitHash: selectedCommitHash,
+    changeDiff: selectedView == GitView.changes ? selectedDiff : null,
+    fileHistory: GitFileHistoryState(
+      currentPath: historyFilePath,
+      entries: historyFilePath == null
+          ? const []
+          : [
+              for (final commit in history)
+                GitFileHistoryEntry(
+                  commit: commit,
+                  pathAtCommit: historyFilePath,
+                  pathInParent: historyFilePath,
+                  status: GitDiffFileStatus.modified,
+                ),
+            ],
+      selectedCommitHash: selectedView == GitView.fileHistory
+          ? selectedCommitHash
+          : null,
+      comparisonType: fileHistoryComparisonType,
+      comparison: selectedView == GitView.fileHistory && selectedDiff != null
+          ? GitHistoricalFileComparison(
+              oldPath: historyFilePath,
+              newPath: historyFilePath,
+              oldContent: null,
+              newContent: null,
+              diff: selectedDiff,
+            )
+          : null,
+    ),
+    projectHistory: GitProjectHistoryState(
+      commits: history,
+      selectedCommitHash: selectedView == GitView.projectHistory
+          ? selectedCommitHash
+          : null,
+      selectedFilePath: selectedCommitFilePath,
+      details: selectedDiff == null || selectedCommitHash == null
+          ? null
+          : GitCommitDetails(
+              summary: history.firstWhere(
+                (commit) => commit.fullHash == selectedCommitHash,
+              ),
+              changedFiles: selectedDiff.files,
+              patch: selectedDiff.rawPatch,
+              fileSnapshots: selectedDiff.fileSnapshots,
+            ),
+      comparison: selectedView == GitView.projectHistory && selectedDiff != null
+          ? GitHistoricalFileComparison(
+              oldPath: selectedCommitFilePath,
+              newPath: selectedCommitFilePath,
+              oldContent: null,
+              newContent: null,
+              diff: selectedDiff,
+            )
+          : null,
+    ),
     selectedCommitFilePath: selectedCommitFilePath,
     openDiffFilePaths: openDiffFilePaths,
-    selectedDiff: selectedDiff,
     requiresWorkspaceTrust: requiresWorkspaceTrust,
+    attachedWorkspace: workspace,
   );
 }
 
 GitFileStatus _file(
   String path, {
+  String? originalPath,
   bool staged = false,
   bool unstaged = true,
   bool untracked = false,
   bool conflicted = false,
   GitFileStatusCategory? category,
+  GitFileChangeStatus? indexStatus,
+  GitFileChangeStatus? workTreeStatus,
 }) {
   final resolvedCategory =
       category ??
@@ -1023,22 +1902,46 @@ GitFileStatus _file(
           : untracked
           ? GitFileStatusCategory.untracked
           : GitFileStatusCategory.modified);
+  GitFileChangeStatus statusForCategory() {
+    return switch (resolvedCategory) {
+      GitFileStatusCategory.added => GitFileChangeStatus.added,
+      GitFileStatusCategory.deleted => GitFileChangeStatus.deleted,
+      GitFileStatusCategory.renamed => GitFileChangeStatus.renamed,
+      GitFileStatusCategory.copied => GitFileChangeStatus.copied,
+      GitFileStatusCategory.untracked => GitFileChangeStatus.untracked,
+      GitFileStatusCategory.conflicted => GitFileChangeStatus.unmerged,
+      GitFileStatusCategory.ignored => GitFileChangeStatus.ignored,
+      GitFileStatusCategory.typeChanged => GitFileChangeStatus.typeChanged,
+      GitFileStatusCategory.modified => GitFileChangeStatus.modified,
+      GitFileStatusCategory.unknown => GitFileChangeStatus.unknown,
+    };
+  }
+
+  final resolvedIndexStatus =
+      indexStatus ??
+      (staged ? statusForCategory() : GitFileChangeStatus.unmodified);
+  final resolvedWorkTreeStatus =
+      workTreeStatus ??
+      (unstaged ? statusForCategory() : GitFileChangeStatus.unmodified);
   return GitFileStatus(
     repoRelativePath: path,
     absolutePath: '/repo/$path',
-    indexStatus: staged
-        ? GitFileChangeStatus.modified
-        : GitFileChangeStatus.unmodified,
-    workTreeStatus: unstaged
-        ? GitFileChangeStatus.modified
-        : GitFileChangeStatus.unmodified,
+    originalRepoRelativePath: originalPath,
+    indexStatus: resolvedIndexStatus,
+    workTreeStatus: resolvedWorkTreeStatus,
     category: resolvedCategory,
     staged: staged,
     unstaged: unstaged,
     untracked: untracked,
-    deleted: resolvedCategory == GitFileStatusCategory.deleted,
-    renamed: resolvedCategory == GitFileStatusCategory.renamed,
-    copied: resolvedCategory == GitFileStatusCategory.copied,
+    deleted:
+        resolvedIndexStatus == GitFileChangeStatus.deleted ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.deleted,
+    renamed:
+        resolvedIndexStatus == GitFileChangeStatus.renamed ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.renamed,
+    copied:
+        resolvedIndexStatus == GitFileChangeStatus.copied ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.copied,
     conflicted: conflicted,
     ignored: false,
   );
@@ -1083,9 +1986,9 @@ GitDiffFile _diffFile(
   );
 }
 
-Workspace _workspace() {
+Workspace _workspace({String id = '/repo'}) {
   return Workspace(
-    id: '/repo',
+    id: id,
     rootPath: '/repo',
     kind: WorkspaceKind.markdownFolder,
     openedAt: DateTime(2026),
@@ -1098,10 +2001,17 @@ class _PresetGitController extends GitController {
   _PresetGitController(this.initialState);
 
   final GitState initialState;
+  final resetModes = <GitResetMode>[];
 
   @override
   GitState build() => initialState;
 
   @override
   Future<List<GitBranch>> loadBranches() async => state.branches;
+
+  @override
+  Future<bool> resetCurrentBranchToSelectedCommit(GitResetMode mode) async {
+    resetModes.add(mode);
+    return true;
+  }
 }

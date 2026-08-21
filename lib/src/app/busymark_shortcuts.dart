@@ -259,27 +259,27 @@ abstract final class BusyMarkAppShortcutGtkAccelerators {
   static const settings = BusyMarkAppShortcuts.settingsGtkAccelerator;
 }
 
-enum BusyMarkDocumentViewShortcutAction { editor, source, preview, split }
+enum BusyMarkDocumentViewShortcutAction { editor, source, reading, split }
 
 abstract final class BusyMarkDocumentViewShortcuts {
   const BusyMarkDocumentViewShortcuts._();
 
-  static const editorLabel = 'Ctrl+Alt+1';
-  static const sourceLabel = 'Ctrl+Alt+2';
-  static const previewLabel = 'Ctrl+Alt+3';
-  static const splitLabel = 'Ctrl+Alt+4';
+  static const editorLabel = 'Ctrl+Shift+1';
+  static const sourceLabel = 'Ctrl+Shift+2';
+  static const readingLabel = 'Ctrl+Shift+3';
+  static const splitLabel = 'Ctrl+Shift+4';
 
-  static const editorGtkAccelerator = '<Primary><Alt>1';
-  static const sourceGtkAccelerator = '<Primary><Alt>2';
-  static const previewGtkAccelerator = '<Primary><Alt>3';
-  static const splitGtkAccelerator = '<Primary><Alt>4';
+  static const editorGtkAccelerator = '<Primary><Shift>1';
+  static const sourceGtkAccelerator = '<Primary><Shift>2';
+  static const readingGtkAccelerator = '<Primary><Shift>3';
+  static const splitGtkAccelerator = '<Primary><Shift>4';
 
   static const editor = BusyMarkShortcutDefinition(
     label: editorLabel,
     activator: SingleActivator(
       LogicalKeyboardKey.digit1,
       control: true,
-      alt: true,
+      shift: true,
     ),
     gtkAccelerator: editorGtkAccelerator,
   );
@@ -288,25 +288,25 @@ abstract final class BusyMarkDocumentViewShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit2,
       control: true,
-      alt: true,
+      shift: true,
     ),
     gtkAccelerator: sourceGtkAccelerator,
   );
-  static const preview = BusyMarkShortcutDefinition(
-    label: previewLabel,
+  static const reading = BusyMarkShortcutDefinition(
+    label: readingLabel,
     activator: SingleActivator(
       LogicalKeyboardKey.digit3,
       control: true,
-      alt: true,
+      shift: true,
     ),
-    gtkAccelerator: previewGtkAccelerator,
+    gtkAccelerator: readingGtkAccelerator,
   );
   static const split = BusyMarkShortcutDefinition(
     label: splitLabel,
     activator: SingleActivator(
       LogicalKeyboardKey.digit4,
       control: true,
-      alt: true,
+      shift: true,
     ),
     gtkAccelerator: splitGtkAccelerator,
   );
@@ -315,7 +315,7 @@ abstract final class BusyMarkDocumentViewShortcuts {
       <BusyMarkDocumentViewShortcutAction, BusyMarkShortcutDefinition>{
         BusyMarkDocumentViewShortcutAction.editor: editor,
         BusyMarkDocumentViewShortcutAction.source: source,
-        BusyMarkDocumentViewShortcutAction.preview: preview,
+        BusyMarkDocumentViewShortcutAction.reading: reading,
         BusyMarkDocumentViewShortcutAction.split: split,
       };
 }
@@ -325,7 +325,7 @@ abstract final class BusyMarkDocumentViewShortcutLabels {
 
   static const editor = BusyMarkDocumentViewShortcuts.editorLabel;
   static const source = BusyMarkDocumentViewShortcuts.sourceLabel;
-  static const preview = BusyMarkDocumentViewShortcuts.previewLabel;
+  static const reading = BusyMarkDocumentViewShortcuts.readingLabel;
   static const split = BusyMarkDocumentViewShortcuts.splitLabel;
 }
 
@@ -336,8 +336,8 @@ abstract final class BusyMarkDocumentViewShortcutActivators {
       BusyMarkDocumentViewShortcuts.editor.activator;
   static ShortcutActivator get source =>
       BusyMarkDocumentViewShortcuts.source.activator;
-  static ShortcutActivator get preview =>
-      BusyMarkDocumentViewShortcuts.preview.activator;
+  static ShortcutActivator get reading =>
+      BusyMarkDocumentViewShortcuts.reading.activator;
   static ShortcutActivator get split =>
       BusyMarkDocumentViewShortcuts.split.activator;
 }
@@ -347,7 +347,7 @@ abstract final class BusyMarkDocumentViewShortcutGtkAccelerators {
 
   static const editor = BusyMarkDocumentViewShortcuts.editorGtkAccelerator;
   static const source = BusyMarkDocumentViewShortcuts.sourceGtkAccelerator;
-  static const preview = BusyMarkDocumentViewShortcuts.previewGtkAccelerator;
+  static const reading = BusyMarkDocumentViewShortcuts.readingGtkAccelerator;
   static const split = BusyMarkDocumentViewShortcuts.splitGtkAccelerator;
 }
 
@@ -485,6 +485,7 @@ abstract final class BusyMarkTextEditingShortcutActivators {
 }
 
 enum BusyMarkEditorShortcutAction {
+  refineWithAi,
   bold,
   italic,
   underline,
@@ -519,36 +520,35 @@ enum BusyMarkEditorShortcutAction {
 abstract final class BusyMarkEditorShortcuts {
   const BusyMarkEditorShortcuts._();
 
-  static const textStyleLabel = 'Ctrl+Shift+0-6';
+  static const refineWithAiLabel = 'Ctrl+G';
+  static const textStyleLabel = 'Ctrl+Alt+0-6';
   static const boldLabel = 'Ctrl+B';
   static const italicLabel = 'Ctrl+I';
   static const underlineLabel = 'Ctrl+U';
   static const strikethroughLabel = 'Alt+Shift+5';
-  static const inlineCodeLabel = 'Ctrl+E';
+  static const inlineCodeLabel = 'Ctrl+Shift+`';
   static const linkLabel = 'Ctrl+K';
-  static const paragraphLabel = 'Ctrl+Shift+0';
-  static const heading1Label = 'Ctrl+Shift+1';
-  static const heading2Label = 'Ctrl+Shift+2';
-  static const heading3Label = 'Ctrl+Shift+3';
-  static const heading4Label = 'Ctrl+Shift+4';
-  static const heading5Label = 'Ctrl+Shift+5';
-  static const heading6Label = 'Ctrl+Shift+6';
+  static const paragraphLabel = 'Ctrl+Alt+0';
+  static const heading1Label = 'Ctrl+Alt+1';
+  static const heading2Label = 'Ctrl+Alt+2';
+  static const heading3Label = 'Ctrl+Alt+3';
+  static const heading4Label = 'Ctrl+Alt+4';
+  static const heading5Label = 'Ctrl+Alt+5';
+  static const heading6Label = 'Ctrl+Alt+6';
   static const orderedListLabel = 'Ctrl+Shift+7';
   static const unorderedListLabel = 'Ctrl+Shift+8';
   static const taskListLabel = 'Ctrl+Shift+9';
-  static const toggleTaskLabel = 'Ctrl+Shift+X';
   static const indentLabel = 'Ctrl+]';
   static const outdentLabel = 'Ctrl+[';
-  static const blockquoteLabel = 'Ctrl+Shift+.';
-  static const codeBlockLabel = 'Ctrl+Alt+C';
-  static const codeBlockLanguageLabel = 'Ctrl+Alt+G';
-  static const imageLabel = 'Ctrl+Alt+I';
-  static const inlineImageLabel = 'Ctrl+Alt+Shift+I';
-  static const tableLabel = 'Ctrl+Shift+T';
-  static const htmlBlockLabel = 'Ctrl+Alt+H';
-  static const thematicBreakLabel = 'Ctrl+Alt+R';
+  static const blockquoteLabel = 'Ctrl+Shift+Q';
+  static const codeBlockLabel = 'Ctrl+Shift+K';
+  static const imageLabel = 'Ctrl+Shift+I';
   static const hardLineBreakLabel = 'Shift+Enter';
 
+  static const refineWithAi = BusyMarkShortcutDefinition(
+    label: refineWithAiLabel,
+    activator: SingleActivator(LogicalKeyboardKey.keyG, control: true),
+  );
   static const bold = BusyMarkShortcutDefinition(
     label: boldLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyB, control: true),
@@ -571,7 +571,11 @@ abstract final class BusyMarkEditorShortcuts {
   );
   static const inlineCode = BusyMarkShortcutDefinition(
     label: inlineCodeLabel,
-    activator: SingleActivator(LogicalKeyboardKey.keyE, control: true),
+    activator: SingleActivator(
+      LogicalKeyboardKey.backquote,
+      control: true,
+      shift: true,
+    ),
   );
   static const link = BusyMarkShortcutDefinition(
     label: linkLabel,
@@ -582,7 +586,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit0,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading1 = BusyMarkShortcutDefinition(
@@ -590,7 +594,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit1,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading2 = BusyMarkShortcutDefinition(
@@ -598,7 +602,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit2,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading3 = BusyMarkShortcutDefinition(
@@ -606,7 +610,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit3,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading4 = BusyMarkShortcutDefinition(
@@ -614,7 +618,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit4,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading5 = BusyMarkShortcutDefinition(
@@ -622,7 +626,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit5,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const heading6 = BusyMarkShortcutDefinition(
@@ -630,7 +634,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.digit6,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const orderedList = BusyMarkShortcutDefinition(
@@ -657,14 +661,6 @@ abstract final class BusyMarkEditorShortcuts {
       shift: true,
     ),
   );
-  static const toggleTask = BusyMarkShortcutDefinition(
-    label: toggleTaskLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyX,
-      control: true,
-      shift: true,
-    ),
-  );
   static const indent = BusyMarkShortcutDefinition(
     label: indentLabel,
     activator: SingleActivator(LogicalKeyboardKey.bracketRight, control: true),
@@ -676,7 +672,7 @@ abstract final class BusyMarkEditorShortcuts {
   static const blockquote = BusyMarkShortcutDefinition(
     label: blockquoteLabel,
     activator: SingleActivator(
-      LogicalKeyboardKey.period,
+      LogicalKeyboardKey.keyQ,
       control: true,
       shift: true,
     ),
@@ -684,17 +680,9 @@ abstract final class BusyMarkEditorShortcuts {
   static const codeBlock = BusyMarkShortcutDefinition(
     label: codeBlockLabel,
     activator: SingleActivator(
-      LogicalKeyboardKey.keyC,
+      LogicalKeyboardKey.keyK,
       control: true,
-      alt: true,
-    ),
-  );
-  static const codeBlockLanguage = BusyMarkShortcutDefinition(
-    label: codeBlockLanguageLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyG,
-      control: true,
-      alt: true,
+      shift: true,
     ),
   );
   static const image = BusyMarkShortcutDefinition(
@@ -702,40 +690,7 @@ abstract final class BusyMarkEditorShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.keyI,
       control: true,
-      alt: true,
-    ),
-  );
-  static const inlineImage = BusyMarkShortcutDefinition(
-    label: inlineImageLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyI,
-      control: true,
-      alt: true,
       shift: true,
-    ),
-  );
-  static const table = BusyMarkShortcutDefinition(
-    label: tableLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyT,
-      control: true,
-      shift: true,
-    ),
-  );
-  static const htmlBlock = BusyMarkShortcutDefinition(
-    label: htmlBlockLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyH,
-      control: true,
-      alt: true,
-    ),
-  );
-  static const thematicBreak = BusyMarkShortcutDefinition(
-    label: thematicBreakLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyR,
-      control: true,
-      alt: true,
     ),
   );
   static const hardLineBreak = BusyMarkShortcutDefinition(
@@ -746,6 +701,7 @@ abstract final class BusyMarkEditorShortcuts {
 
   static const definitions =
       <BusyMarkEditorShortcutAction, BusyMarkShortcutDefinition>{
+        BusyMarkEditorShortcutAction.refineWithAi: refineWithAi,
         BusyMarkEditorShortcutAction.bold: bold,
         BusyMarkEditorShortcutAction.italic: italic,
         BusyMarkEditorShortcutAction.underline: underline,
@@ -762,17 +718,11 @@ abstract final class BusyMarkEditorShortcuts {
         BusyMarkEditorShortcutAction.orderedList: orderedList,
         BusyMarkEditorShortcutAction.unorderedList: unorderedList,
         BusyMarkEditorShortcutAction.taskList: taskList,
-        BusyMarkEditorShortcutAction.toggleTask: toggleTask,
         BusyMarkEditorShortcutAction.indent: indent,
         BusyMarkEditorShortcutAction.outdent: outdent,
         BusyMarkEditorShortcutAction.blockquote: blockquote,
         BusyMarkEditorShortcutAction.codeBlock: codeBlock,
-        BusyMarkEditorShortcutAction.codeBlockLanguage: codeBlockLanguage,
         BusyMarkEditorShortcutAction.image: image,
-        BusyMarkEditorShortcutAction.inlineImage: inlineImage,
-        BusyMarkEditorShortcutAction.table: table,
-        BusyMarkEditorShortcutAction.htmlBlock: htmlBlock,
-        BusyMarkEditorShortcutAction.thematicBreak: thematicBreak,
         BusyMarkEditorShortcutAction.hardLineBreak: hardLineBreak,
         BusyMarkEditorShortcutAction.pastePlainText: pastePlainText,
       };
@@ -781,6 +731,7 @@ abstract final class BusyMarkEditorShortcuts {
 abstract final class BusyMarkEditorShortcutLabels {
   const BusyMarkEditorShortcutLabels._();
 
+  static const refineWithAi = BusyMarkEditorShortcuts.refineWithAiLabel;
   static const textStyle = BusyMarkEditorShortcuts.textStyleLabel;
   static const bold = BusyMarkEditorShortcuts.boldLabel;
   static const italic = BusyMarkEditorShortcuts.italicLabel;
@@ -798,18 +749,11 @@ abstract final class BusyMarkEditorShortcutLabels {
   static const orderedList = BusyMarkEditorShortcuts.orderedListLabel;
   static const unorderedList = BusyMarkEditorShortcuts.unorderedListLabel;
   static const taskList = BusyMarkEditorShortcuts.taskListLabel;
-  static const toggleTask = BusyMarkEditorShortcuts.toggleTaskLabel;
   static const indent = BusyMarkEditorShortcuts.indentLabel;
   static const outdent = BusyMarkEditorShortcuts.outdentLabel;
   static const blockquote = BusyMarkEditorShortcuts.blockquoteLabel;
   static const codeBlock = BusyMarkEditorShortcuts.codeBlockLabel;
-  static const codeBlockLanguage =
-      BusyMarkEditorShortcuts.codeBlockLanguageLabel;
   static const image = BusyMarkEditorShortcuts.imageLabel;
-  static const inlineImage = BusyMarkEditorShortcuts.inlineImageLabel;
-  static const table = BusyMarkEditorShortcuts.tableLabel;
-  static const htmlBlock = BusyMarkEditorShortcuts.htmlBlockLabel;
-  static const thematicBreak = BusyMarkEditorShortcuts.thematicBreakLabel;
   static const hardLineBreak = BusyMarkEditorShortcuts.hardLineBreakLabel;
   static const pastePlainText =
       BusyMarkTextEditingShortcuts.pastePlainTextLabel;
@@ -842,6 +786,8 @@ abstract final class BusyMarkEditorShortcutActivators {
     return null;
   }
 
+  static ShortcutActivator get refineWithAi =>
+      BusyMarkEditorShortcuts.refineWithAi.activator;
   static ShortcutActivator get bold => BusyMarkEditorShortcuts.bold.activator;
   static ShortcutActivator get italic =>
       BusyMarkEditorShortcuts.italic.activator;
@@ -872,8 +818,6 @@ abstract final class BusyMarkEditorShortcutActivators {
       BusyMarkEditorShortcuts.unorderedList.activator;
   static ShortcutActivator get taskList =>
       BusyMarkEditorShortcuts.taskList.activator;
-  static ShortcutActivator get toggleTask =>
-      BusyMarkEditorShortcuts.toggleTask.activator;
   static ShortcutActivator get indent =>
       BusyMarkEditorShortcuts.indent.activator;
   static ShortcutActivator get outdent =>
@@ -882,23 +826,14 @@ abstract final class BusyMarkEditorShortcutActivators {
       BusyMarkEditorShortcuts.blockquote.activator;
   static ShortcutActivator get codeBlock =>
       BusyMarkEditorShortcuts.codeBlock.activator;
-  static ShortcutActivator get codeBlockLanguage =>
-      BusyMarkEditorShortcuts.codeBlockLanguage.activator;
   static ShortcutActivator get image => BusyMarkEditorShortcuts.image.activator;
-  static ShortcutActivator get inlineImage =>
-      BusyMarkEditorShortcuts.inlineImage.activator;
-  static ShortcutActivator get table => BusyMarkEditorShortcuts.table.activator;
-  static ShortcutActivator get htmlBlock =>
-      BusyMarkEditorShortcuts.htmlBlock.activator;
-  static ShortcutActivator get thematicBreak =>
-      BusyMarkEditorShortcuts.thematicBreak.activator;
   static ShortcutActivator get hardLineBreak =>
       BusyMarkEditorShortcuts.hardLineBreak.activator;
   static ShortcutActivator get pastePlainText =>
       BusyMarkEditorShortcuts.pastePlainText.activator;
 }
 
-enum BusyMarkSidebarShortcutAction { files, toc, outline, git, history }
+enum BusyMarkSidebarShortcutAction { files, toc, outline, git }
 
 abstract final class BusyMarkSidebarShortcuts {
   const BusyMarkSidebarShortcuts._();
@@ -907,7 +842,6 @@ abstract final class BusyMarkSidebarShortcuts {
   static const tocLabel = 'Ctrl+2';
   static const outlineLabel = 'Ctrl+3';
   static const gitLabel = 'Ctrl+4';
-  static const historyLabel = 'Ctrl+5';
 
   static const toggleSidebar = BusyMarkAppShortcuts.toggleSidebar;
   static const files = BusyMarkShortcutDefinition(
@@ -926,10 +860,6 @@ abstract final class BusyMarkSidebarShortcuts {
     label: gitLabel,
     activator: SingleActivator(LogicalKeyboardKey.digit4, control: true),
   );
-  static const history = BusyMarkShortcutDefinition(
-    label: historyLabel,
-    activator: SingleActivator(LogicalKeyboardKey.digit5, control: true),
-  );
 
   static const definitions =
       <BusyMarkSidebarShortcutAction, BusyMarkShortcutDefinition>{
@@ -937,7 +867,6 @@ abstract final class BusyMarkSidebarShortcuts {
         BusyMarkSidebarShortcutAction.toc: toc,
         BusyMarkSidebarShortcutAction.outline: outline,
         BusyMarkSidebarShortcutAction.git: git,
-        BusyMarkSidebarShortcutAction.history: history,
       };
 }
 
@@ -949,7 +878,6 @@ abstract final class BusyMarkSidebarShortcutLabels {
   static const toc = BusyMarkSidebarShortcuts.tocLabel;
   static const outline = BusyMarkSidebarShortcuts.outlineLabel;
   static const git = BusyMarkSidebarShortcuts.gitLabel;
-  static const history = BusyMarkSidebarShortcuts.historyLabel;
 }
 
 abstract final class BusyMarkSidebarShortcutActivators {
@@ -963,8 +891,6 @@ abstract final class BusyMarkSidebarShortcutActivators {
   static ShortcutActivator get outline =>
       BusyMarkSidebarShortcuts.outline.activator;
   static ShortcutActivator get git => BusyMarkSidebarShortcuts.git.activator;
-  static ShortcutActivator get history =>
-      BusyMarkSidebarShortcuts.history.activator;
 
   static BusyMarkSidebarShortcutAction? actionForKeyEvent(
     KeyEvent event,
@@ -988,8 +914,6 @@ abstract final class BusyMarkSidebarShortcutActivators {
       LogicalKeyboardKey.numpad3 => BusyMarkSidebarShortcutAction.outline,
       LogicalKeyboardKey.digit4 ||
       LogicalKeyboardKey.numpad4 => BusyMarkSidebarShortcutAction.git,
-      LogicalKeyboardKey.digit5 ||
-      LogicalKeyboardKey.numpad5 => BusyMarkSidebarShortcutAction.history,
       _ => null,
     };
   }

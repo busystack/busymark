@@ -1,5 +1,6 @@
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
+import '../visualization/visualization_models.dart';
 import 'busymark_document.dart';
 import 'document_outline.dart';
 import 'markdown_model.dart';
@@ -28,6 +29,7 @@ class PreviewBlock {
     required this.text,
     this.level,
     this.language,
+    this.visualization,
     this.inlines = const [],
     this.children = const [],
     this.attributes = const {},
@@ -41,6 +43,7 @@ class PreviewBlock {
   final String text;
   final int? level;
   final String? language;
+  final VisualizationDescriptor? visualization;
   final List<PreviewInline> inlines;
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
@@ -182,7 +185,10 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.code,
         text: block.plainText,
         language: block.attributes['language'],
-        attributes: block.attributes,
+        visualization: VisualizationDescriptor.maybeForFenceLanguage(
+          block.attributes['language'],
+        ),
+        attributes: {...block.attributes, 'editorBlockId': block.id},
       ),
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
@@ -277,6 +283,7 @@ class BusyMarkPreviewBuilder {
       text: block.text,
       level: block.level,
       language: block.language,
+      visualization: block.visualization,
       inlines: block.inlines,
       children: block.children,
       attributes: block.attributes,

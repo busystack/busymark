@@ -6,16 +6,20 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+import '../../ai/ai_models.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
+import '../../markdown/markdown_parser.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
@@ -55,6 +59,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onCloseSearch,
     this.headerBarService,
     this.documentLayout,
+    this.visualizationRevision = 0,
+    this.onAiEdit,
   });
 
   final BusyDocument document;
@@ -78,6 +84,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final VoidCallback? onCloseSearch;
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
+  final int visualizationRevision;
+  final BusyMarkAiEditCallback? onAiEdit;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -446,8 +454,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
                       onHardBreakCommand: _applyHardBreakCommand,
-                      onCodeLanguageCommand: () =>
-                          unawaited(_applyCodeLanguageCommand()),
                     ),
                   ),
                 ],
@@ -599,6 +605,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onPointerMove: _handleBlockPointerMove,
       onPointerUp: _handleBlockPointerUp,
       onFocused: () => _handleBlockFocused(block.id),
+      onRefineWithAi: widget.onAiEdit == null
+          ? null
+          : () => unawaited(_runAiEdit(blockId: block.id)),
       onChanged: (value) =>
           _handleBlockTextChanged(documentFilePath, block.id, value),
       onTableCellChanged: (cellId, value) => _handleTableCellTextChanged(
@@ -621,6 +630,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onHtmlEditRequested: () =>
           unawaited(_handleHtmlBlockEditRequested(block.id)),
       onTaskChanged: (checked) => _handleTaskCheckedChanged(block.id, checked),
+      editRevision: widget.visualizationRevision + _documentGeneration,
     );
   }
 
@@ -1360,6 +1370,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       keyboard,
     );
     if (shortcutAction != null) {
+      if (shortcutAction == BusyMarkEditorShortcutAction.refineWithAi &&
+          (widget.onAiEdit == null || _currentSelectionRanges().isEmpty)) {
+        return KeyEventResult.ignored;
+      }
       _applyEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
@@ -2014,6 +2028,20 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _applyBlockCommand(BusyWysiwygBlockCommand command) {
     final selectedBlocks = _selectedBlocks();
+    final activeBlock = _activeBlockId == null
+        ? null
+        : _documentController.blockById(_activeBlockId!);
+    final commandTargets = selectedBlocks.isNotEmpty
+        ? selectedBlocks
+        : [if (activeBlock != null) activeBlock];
+    if (command == BusyWysiwygBlockCommand.codeBlock &&
+        commandTargets.isNotEmpty &&
+        commandTargets.every(
+          (block) => block.kind == BusyBlockKind.codeBlock,
+        )) {
+      unawaited(_applyCodeLanguageCommand());
+      return;
+    }
     if (selectedBlocks.isNotEmpty) {
       _recordUndoSnapshot();
       _documentController.applyBlockCommandToBlocks(
@@ -2083,6 +2111,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _applyEditorShortcutAction(BusyMarkEditorShortcutAction action) {
     switch (action) {
+      case BusyMarkEditorShortcutAction.refineWithAi:
+        unawaited(_runAiEdit());
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(BusyWysiwygInlineCommand.bold);
         break;
@@ -2886,6 +2917,392 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _internalChange = false;
     });
+  }
+
+  Future<void> _runAiEdit({String? blockId}) async {
+    final callback = widget.onAiEdit;
+    if (callback == null) {
+      return;
+    }
+    if (blockId != null) {
+      _setActiveBlock(blockId);
+    }
+    final originalSource = _documentController.markdown;
+    if (_currentSelectionRanges().isEmpty) {
+      return;
+    }
+    final snapshot = _aiEditorSnapshot(originalSource);
+    if (snapshot == null) {
+      return;
+    }
+    final result = await callback(snapshot);
+    if (!mounted || result == null) {
+      return;
+    }
+    if (_documentController.markdown != originalSource) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+      return;
+    }
+    final invocation = result.invocation;
+    final start = invocation.replacementStart;
+    final end = invocation.replacementEnd;
+    if (invocation.documentSource != originalSource ||
+        start == null ||
+        end == null ||
+        start < 0 ||
+        end < start ||
+        end > originalSource.length) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+      return;
+    }
+    final candidate = originalSource.replaceRange(
+      start,
+      end,
+      result.replacement,
+    );
+    final parsed = const MarkdownParser().parse(
+      filePath: _documentController.document.filePath,
+      source: candidate,
+      mode: _documentController.document.mode,
+      validateLocalReferences: false,
+    );
+    _recordUndoSnapshot();
+    _clearBlockSelection();
+    _documentController.replaceDocument(parsed.busyDocument);
+    _emitMarkdown();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusActiveOrFirstBlock();
+      }
+    });
+  }
+
+  AiEditorSnapshot? _aiEditorSnapshot(String source) {
+    final activeBlockId = _activeBlockId;
+    if (activeBlockId == null) {
+      return null;
+    }
+    final liveBlocks = _editableBlocks(_documentController.document.blocks);
+    final parsedDocument = const MarkdownParser()
+        .parse(
+          filePath: _documentController.document.filePath,
+          source: source,
+          mode: _documentController.document.mode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final parsedBlocks = _editableBlocks(parsedDocument.blocks);
+    final ranges = _currentSelectionRanges();
+    if (ranges.isEmpty) {
+      return null;
+    }
+    final parsedMatches = _matchAiSourceBlocks(
+      liveBlocks: liveBlocks,
+      parsedBlocks: parsedBlocks,
+      parsedRoots: parsedDocument.blocks,
+    );
+    final firstMatch = parsedMatches[ranges.first.block.id];
+    final lastMatch = parsedMatches[ranges.last.block.id];
+    if (firstMatch == null || lastMatch == null) {
+      return null;
+    }
+    for (final range in ranges) {
+      if (parsedMatches[range.block.id] == null) {
+        return null;
+      }
+    }
+
+    late final int selectionStart;
+    late final int selectionEnd;
+    if (ranges.every((range) => range.coversWholeBlock)) {
+      selectionStart = firstMatch.span.startOffset;
+      selectionEnd = lastMatch.span.endOffset;
+    } else {
+      final mappedStart = _visibleOffsetToSource(
+        source,
+        firstMatch.block,
+        ranges.first.start,
+        sourceSpan: firstMatch.span,
+        endBoundary: false,
+        visibleText: ranges.first.block.plainText,
+      );
+      final mappedEnd = _visibleOffsetToSource(
+        source,
+        lastMatch.block,
+        ranges.last.end,
+        sourceSpan: lastMatch.span,
+        endBoundary: true,
+        visibleText: ranges.last.block.plainText,
+      );
+      if (mappedStart == null || mappedEnd == null || mappedEnd < mappedStart) {
+        return null;
+      }
+      selectionStart = mappedStart;
+      selectionEnd = mappedEnd;
+    }
+
+    final activeLiveBlock = liveBlocks
+        .where((block) => block.id == activeBlockId)
+        .firstOrNull;
+    final activeMatch = parsedMatches[activeBlockId];
+    final activeSelection = _textControllers[activeBlockId]?.selection;
+    final mappedAnchor = activeLiveBlock == null || activeMatch == null
+        ? null
+        : _visibleOffsetToSource(
+            source,
+            activeMatch.block,
+            activeSelection?.isValid == true
+                ? activeSelection!.extentOffset
+                      .clamp(0, activeLiveBlock.plainText.length)
+                      .toInt()
+                : ranges.last.end,
+            sourceSpan: activeMatch.span,
+            endBoundary: false,
+            visibleText: activeLiveBlock.plainText,
+          );
+    return AiEditorSnapshot(
+      documentSource: source,
+      selectionStart: selectionStart,
+      selectionEnd: selectionEnd,
+      anchorOffset: mappedAnchor ?? selectionStart,
+      sourceRevision: widget.visualizationRevision,
+      targetId: _documentController.document.filePath,
+      documentPath: _documentController.document.filePath,
+    );
+  }
+
+  Map<String, ({BusyBlock block, SourceSpan span})> _matchAiSourceBlocks({
+    required List<BusyBlock> liveBlocks,
+    required List<BusyBlock> parsedBlocks,
+    required List<BusyBlock> parsedRoots,
+  }) {
+    final matches = <String, ({BusyBlock block, SourceSpan span})>{};
+    var parsedIndex = 0;
+    for (final liveBlock in liveBlocks) {
+      if (liveBlock.plainText.isEmpty) {
+        continue;
+      }
+      var candidateIndex = parsedIndex;
+      while (candidateIndex < parsedBlocks.length) {
+        final parsedBlock = parsedBlocks[candidateIndex];
+        if (parsedBlock.kind != liveBlock.kind ||
+            parsedBlock.plainText != liveBlock.plainText) {
+          candidateIndex += 1;
+          continue;
+        }
+        final span =
+            parsedBlock.sourceSpan ??
+            _aiSourceSpanForBlock(parsedRoots, parsedBlock);
+        if (span != null) {
+          matches[liveBlock.id] = (block: parsedBlock, span: span);
+        }
+        parsedIndex = candidateIndex + 1;
+        break;
+      }
+    }
+    return matches;
+  }
+
+  SourceSpan? _aiSourceSpanForBlock(
+    List<BusyBlock> blocks,
+    BusyBlock target, [
+    SourceSpan? inheritedSpan,
+  ]) {
+    for (final block in blocks) {
+      final sourceSpan = block.sourceSpan ?? inheritedSpan;
+      if (identical(block, target)) {
+        return sourceSpan;
+      }
+      final childSpan = _aiSourceSpanForBlock(
+        block.children,
+        target,
+        sourceSpan,
+      );
+      if (childSpan != null) {
+        return childSpan;
+      }
+    }
+    return null;
+  }
+
+  int? _visibleOffsetToSource(
+    String source,
+    BusyBlock block,
+    int visibleOffset, {
+    SourceSpan? sourceSpan,
+    required bool endBoundary,
+    String? visibleText,
+  }) {
+    final span = sourceSpan ?? block.sourceSpan;
+    if (span == null ||
+        span.startOffset < 0 ||
+        span.endOffset > source.length) {
+      return null;
+    }
+    final plainText = visibleText ?? block.plainText;
+    final safeOffset = visibleOffset.clamp(0, plainText.length).toInt();
+    if (plainText.isEmpty) {
+      return span.startOffset;
+    }
+    final requiredCharacters = endBoundary
+        ? safeOffset
+        : math.min(plainText.length, safeOffset + 1);
+    final raw = source.substring(span.startOffset, span.endOffset);
+    final sourceStarts = <int>[];
+    final sourceEnds = <int>[];
+    var rawOffset = _aiBlockContentStart(raw);
+    var textOffset = 0;
+    while (textOffset < requiredCharacters) {
+      final codeUnit = plainText.codeUnitAt(textOffset);
+      if (_aiMappingWhitespace(codeUnit)) {
+        final visibleRunStart = textOffset;
+        while (textOffset < plainText.length &&
+            _aiMappingWhitespace(plainText.codeUnitAt(textOffset))) {
+          textOffset += 1;
+        }
+        final visibleRunLength = textOffset - visibleRunStart;
+        int? rawRunStart;
+        int? rawRunEnd;
+        while (rawOffset < raw.length) {
+          final breakEnd = _aiBreakTagEnd(raw, rawOffset);
+          if (breakEnd != null) {
+            rawRunStart = rawOffset;
+            rawRunEnd = breakEnd;
+            break;
+          }
+          if (_aiMappingWhitespace(raw.codeUnitAt(rawOffset))) {
+            rawRunStart = rawOffset;
+            while (rawOffset < raw.length &&
+                _aiMappingWhitespace(raw.codeUnitAt(rawOffset))) {
+              rawOffset += 1;
+            }
+            rawRunEnd = rawOffset;
+            break;
+          }
+          final tagEnd = _aiMarkupTagEnd(raw, rawOffset);
+          rawOffset = tagEnd ?? rawOffset + 1;
+        }
+        if (rawRunStart == null || rawRunEnd == null) {
+          return null;
+        }
+        final rawRunLength = rawRunEnd - rawRunStart;
+        for (var index = 0; index < visibleRunLength; index += 1) {
+          if (rawRunLength == visibleRunLength) {
+            sourceStarts.add(span.startOffset + rawRunStart + index);
+            sourceEnds.add(span.startOffset + rawRunStart + index + 1);
+          } else {
+            sourceStarts.add(span.startOffset + rawRunStart);
+            sourceEnds.add(span.startOffset + rawRunEnd);
+          }
+        }
+        rawOffset = rawRunEnd;
+        continue;
+      }
+
+      var matched = false;
+      while (rawOffset < raw.length) {
+        final tagEnd = _aiMarkupTagEnd(raw, rawOffset);
+        if (tagEnd != null) {
+          rawOffset = tagEnd;
+          continue;
+        }
+        final entity = _aiEntityAt(raw, rawOffset);
+        if (entity != null &&
+            !plainText.startsWith(entity.raw, textOffset) &&
+            plainText.startsWith(entity.decoded, textOffset)) {
+          for (var index = 0; index < entity.decoded.length; index += 1) {
+            sourceStarts.add(span.startOffset + rawOffset);
+            sourceEnds.add(span.startOffset + entity.end);
+          }
+          textOffset += entity.decoded.length;
+          rawOffset = entity.end;
+          matched = true;
+          break;
+        }
+        if (raw.codeUnitAt(rawOffset) == codeUnit) {
+          sourceStarts.add(span.startOffset + rawOffset);
+          rawOffset += 1;
+          sourceEnds.add(span.startOffset + rawOffset);
+          textOffset += 1;
+          matched = true;
+          break;
+        }
+        rawOffset += 1;
+      }
+      if (!matched) {
+        return null;
+      }
+    }
+    if (sourceStarts.isEmpty) {
+      return span.startOffset;
+    }
+    if (safeOffset == 0) {
+      return sourceStarts.first;
+    }
+    if (safeOffset >= sourceStarts.length) {
+      return sourceEnds.last;
+    }
+    return endBoundary ? sourceEnds[safeOffset - 1] : sourceStarts[safeOffset];
+  }
+
+  int _aiBlockContentStart(String raw) {
+    var offset = 0;
+    final quotePrefix = RegExp(r'^(?:[ \t]{0,3}>[ \t]?)+').firstMatch(raw);
+    if (quotePrefix != null) {
+      offset = quotePrefix.end;
+    }
+    final remainder = raw.substring(offset);
+    final structuralPrefix = RegExp(
+      r'^(?:[ \t]{0,3}#{1,6}[ \t]+|[ \t]{0,3}[-+*][ \t]+(?:\[[ xX]\][ \t]+)?|[ \t]{0,3}\d{1,9}[.)][ \t]+)',
+    ).firstMatch(remainder);
+    return offset + (structuralPrefix?.end ?? 0);
+  }
+
+  bool _aiMappingWhitespace(int codeUnit) =>
+      codeUnit == 0x09 ||
+      codeUnit == 0x0a ||
+      codeUnit == 0x0d ||
+      codeUnit == 0x20;
+
+  int? _aiBreakTagEnd(String raw, int offset) {
+    if (raw.codeUnitAt(offset) != 0x3c) {
+      return null;
+    }
+    final match = RegExp(
+      r'^<br\s*/?>',
+      caseSensitive: false,
+    ).firstMatch(raw.substring(offset));
+    return match == null ? null : offset + match.end;
+  }
+
+  int? _aiMarkupTagEnd(String raw, int offset) {
+    if (raw.codeUnitAt(offset) != 0x3c) {
+      return null;
+    }
+    final match = RegExp(
+      r'^</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*?)?/?>',
+    ).firstMatch(raw.substring(offset));
+    return match == null ? null : offset + match.end;
+  }
+
+  ({String raw, String decoded, int end})? _aiEntityAt(String raw, int offset) {
+    if (raw.codeUnitAt(offset) != 0x26) {
+      return null;
+    }
+    final semicolon = raw.indexOf(';', offset + 1);
+    if (semicolon < 0 || semicolon - offset > 32) {
+      return null;
+    }
+    final encoded = raw.substring(offset, semicolon + 1);
+    final decoded = html_parser.parseFragment(encoded).text;
+    if (decoded == null || decoded.isEmpty || decoded == encoded) {
+      return null;
+    }
+    return (raw: encoded, decoded: decoded, end: semicolon + 1);
   }
 
   bool get _hasBlockSelection => _documentSelection != null;

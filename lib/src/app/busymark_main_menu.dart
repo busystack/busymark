@@ -9,6 +9,7 @@ import 'window_control_service.dart';
 
 enum BusyMarkMainMenuAction {
   exportPdf,
+  generateMarkdownToc,
   fullScreen,
   settings,
   keyboardShortcuts,
@@ -22,10 +23,12 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
     super.key,
     required this.onSelected,
     this.canExportPdf = false,
+    this.canGenerateMarkdownToc = false,
   });
 
   final ValueChanged<BusyMarkMainMenuAction> onSelected;
   final bool canExportPdf;
+  final bool canGenerateMarkdownToc;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,6 +46,12 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           icon: BusyMarkGlyphs.exportPdf,
           shortcut: BusyMarkAppShortcutLabels.exportPdf,
           enabled: canExportPdf,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.generateMarkdownToc,
+          label: l10n.generateOrUpdateMarkdownToc,
+          icon: BusyMarkGlyphs.orderedList,
+          enabled: canGenerateMarkdownToc,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.fullScreen,

@@ -223,6 +223,31 @@
     })
   } else if kind == "table" {
     render-table(block-data)
+  } else if kind == "visualization" {
+    let asset = value-or(block-data, "asset", "")
+    let alt = value-or(block-data, "alt", "Diagram")
+    if asset == "" {
+      emph(text("[" + alt + " unavailable]"))
+    } else {
+      block(
+        above: 0.8em,
+        below: 0.8em,
+        breakable: false,
+        align(center, layout(size => image(
+          asset,
+          width: 100%,
+          height: 70% * size.height,
+          fit: "contain",
+          alt: alt,
+        ))),
+      )
+    }
+  } else if kind == "openApiReference" {
+    block(
+      above: 0.8em,
+      below: 0.8em,
+      for child in children { render-block(child) },
+    )
   } else if kind == "rawText" {
     block(
       width: 100%,

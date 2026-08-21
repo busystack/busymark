@@ -799,7 +799,7 @@ void main() {
   );
 
   test(
-    'folder scan skips generated directories and binary resources',
+    'folder workspace lists all content except version-control metadata',
     () async {
       final directory = await Directory.systemTemp.createTemp('busymark-scan-');
       await File('${directory.path}/README.md').writeAsString('# Readme\n');
@@ -808,43 +808,74 @@ void main() {
         '${directory.path}/node_modules/ignored.md',
       ).writeAsString('# Ignored\n');
       await File('${directory.path}/binary.bin').writeAsBytes([0, 1, 2, 3]);
+      await Directory('${directory.path}/empty').create();
+      await Directory('${directory.path}/.idea').create();
+      await File(
+        '${directory.path}/.idea/.gitignore',
+      ).writeAsString('/cache\n');
+      await Directory('${directory.path}/.git').create();
+      await File('${directory.path}/.git/config').writeAsString('[core]\n');
 
       final workspace = await service.openPath(directory.path);
+      final files = workspace.files.map((file) => file.relativePath).toList();
+      final directories = workspace.directories
+          .map((directory) => directory.relativePath)
+          .toList();
 
       expect(
-        workspace.files.map((file) => file.relativePath),
-        contains('README.md'),
+        files,
+        containsAll([
+          'README.md',
+          'node_modules/ignored.md',
+          'binary.bin',
+          '.idea/.gitignore',
+        ]),
+      );
+      expect(directories, containsAll(['node_modules', 'empty', '.idea']));
+      expect(files, isNot(contains('.git/config')));
+      expect(directories, isNot(contains('.git')));
+      expect(
+        workspace.files
+            .singleWhere((file) => file.relativePath == '.idea/.gitignore')
+            .kind,
+        DocumentKind.gitIgnore,
       );
       expect(
-        workspace.files.map((file) => file.relativePath),
-        isNot(contains('node_modules/ignored.md')),
-      );
-      expect(
-        workspace.files.map((file) => file.relativePath),
-        isNot(contains('binary.bin')),
+        workspace.files
+            .singleWhere((file) => file.relativePath == 'binary.bin')
+            .kind,
+        DocumentKind.unknown,
       );
 
       await directory.delete(recursive: true);
     },
   );
 
-  test('folder scan excludes unsupported legacy Markdown extensions', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-legacy-markdown-',
-    );
-    await File('${directory.path}/README.md').writeAsString('# Readme\n');
-    await File('${directory.path}/legacy.mdown').writeAsString('# Legacy\n');
-    await File('${directory.path}/legacy.mkd').writeAsString('# Legacy\n');
+  test(
+    'folder workspace lists unsupported legacy Markdown extensions',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-legacy-markdown-',
+      );
+      await File('${directory.path}/README.md').writeAsString('# Readme\n');
+      await File('${directory.path}/legacy.mdown').writeAsString('# Legacy\n');
+      await File('${directory.path}/legacy.mkd').writeAsString('# Legacy\n');
 
-    final workspace = await service.openPath(directory.path);
-    final relativePaths = workspace.files.map((file) => file.relativePath);
+      final workspace = await service.openPath(directory.path);
+      final relativePaths = workspace.files.map((file) => file.relativePath);
 
-    expect(relativePaths, contains('README.md'));
-    expect(relativePaths, isNot(contains('legacy.mdown')));
-    expect(relativePaths, isNot(contains('legacy.mkd')));
+      expect(relativePaths, contains('README.md'));
+      expect(relativePaths, containsAll(['legacy.mdown', 'legacy.mkd']));
+      expect(
+        workspace.files
+            .where((file) => file.relativePath.startsWith('legacy.'))
+            .map((file) => file.kind),
+        everyElement(DocumentKind.unknown),
+      );
 
-    await directory.delete(recursive: true);
-  });
+      await directory.delete(recursive: true);
+    },
+  );
 
   test(
     'limited folder scan prefers shallow siblings before deep subtree',

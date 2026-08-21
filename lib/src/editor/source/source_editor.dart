@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
+import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
+import '../editor_text_context_menu.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -36,6 +38,8 @@ class BusyMarkSourceEditor extends StatefulWidget {
     required this.onOpenSearch,
     required this.onCloseSearch,
     this.onVisibleLineChanged,
+    this.onAiEdit,
+    this.editRevision = 0,
   });
 
   final String text;
@@ -51,6 +55,8 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
+  final BusyMarkAiEditCallback? onAiEdit;
+  final int editRevision;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -200,6 +206,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       keyboard,
     );
     if (shortcutAction != null) {
+      if (shortcutAction == BusyMarkEditorShortcutAction.refineWithAi &&
+          !_canRefineWithAi) {
+        return KeyEventResult.ignored;
+      }
       _applyShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
@@ -295,6 +305,15 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                             focusedBorder: InputBorder.none,
                             contentPadding: BusyMarkInsets.sourceEditor,
                           ),
+                          contextMenuBuilder: (context, editableTextState) =>
+                              buildBusyMarkEditorTextContextMenu(
+                                context,
+                                editableTextState,
+                                refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                onRefineWithAi: widget.onAiEdit == null
+                                    ? null
+                                    : () => unawaited(_runAiEdit()),
+                              ),
                           onChanged: (_) => _handleSourceChanged(),
                         ),
                       ),
@@ -337,6 +356,79 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  bool get _canRefineWithAi {
+    final selection = _controller.fullSelection;
+    return widget.onAiEdit != null &&
+        selection.isValid &&
+        !selection.isCollapsed;
+  }
+
+  Future<void> _runAiEdit() async {
+    final callback = widget.onAiEdit;
+    if (callback == null) {
+      return;
+    }
+    final value = _fullEditingValue();
+    final rawSelection = value.selection;
+    final anchorOffset = rawSelection.isValid
+        ? rawSelection.extentOffset.clamp(0, value.text.length).toInt()
+        : value.text.length;
+    final selection = rawSelection.isValid
+        ? TextSelection(
+            baseOffset: rawSelection.start.clamp(0, value.text.length).toInt(),
+            extentOffset: rawSelection.end.clamp(0, value.text.length).toInt(),
+          )
+        : TextSelection.collapsed(offset: value.text.length);
+    if (selection.isCollapsed) {
+      return;
+    }
+    final originalText = value.text;
+    final result = await callback(
+      AiEditorSnapshot(
+        documentSource: originalText,
+        selectionStart: selection.start,
+        selectionEnd: selection.end,
+        anchorOffset: anchorOffset,
+        sourceRevision: widget.editRevision,
+        targetId: widget.filePath ?? 'untitled',
+        documentPath: widget.filePath,
+      ),
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+    final invocation = result.invocation;
+    final replacementStart = invocation.replacementStart;
+    final replacementEnd = invocation.replacementEnd;
+    if (replacementStart == null || replacementEnd == null) {
+      return;
+    }
+    if (_controller.fullText != originalText) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+      return;
+    }
+    final replacement = result.replacement;
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: originalText.replaceRange(
+          replacementStart,
+          replacementEnd,
+          replacement,
+        ),
+        selection: replacementStart == replacementEnd
+            ? TextSelection.collapsed(
+                offset: replacementStart + replacement.length,
+              )
+            : TextSelection(
+                baseOffset: replacementStart,
+                extentOffset: replacementStart + replacement.length,
+              ),
       ),
     );
   }
@@ -517,6 +609,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _applyShortcutAction(BusyMarkEditorShortcutAction action) {
     switch (action) {
+      case BusyMarkEditorShortcutAction.refineWithAi:
+        unawaited(_runAiEdit());
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(SourceInlineCommand.bold);
         break;

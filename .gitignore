@@ -34,6 +34,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+**/node_modules/
 linux/flutter/ephemeral/
 *.snap
 *.assert

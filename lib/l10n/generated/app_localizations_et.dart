@@ -171,10 +171,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get cut => 'Lõika';
 
   @override
-  String get promoteHeading => 'Tõsta pealkirja taset';
+  String get promoteSection => 'Tõsta jaotise taset';
 
   @override
-  String get demoteHeading => 'Langeta pealkirja taset';
+  String get demoteSection => 'Langeta jaotise taset';
 
   @override
   String get moveSectionUp => 'Liiguta jaotis üles';
@@ -251,7 +251,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get pasteWithoutFormatting => 'Aseta vorminduseta';
 
   @override
-  String get preview => 'Eelvaade';
+  String get reading => 'Lugemisvaade';
 
   @override
   String get recent => 'Hiljutised';
@@ -392,11 +392,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupGeneral => 'Üldine';
 
   @override
-  String get shortcutNewDocument => 'Uus dokument';
+  String get shortcutNewDocument => 'Loo';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Loo uus salvestamata Markdowni dokument';
+      'Loo Markdowni fail või Writerside’i projekt';
 
   @override
   String get shortcutOpenDescription =>
@@ -1325,7 +1325,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Suur fail: esiletõstmine ja voltimine on peatatud';
 
   @override
-  String get noPreview => 'Eelvaade puudub';
+  String get nothingToRead => 'Pole midagi lugeda';
 
   @override
   String get note => 'Märkus';
@@ -1543,7 +1543,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside’i moodulil puudub abieksemplari puu.';
+      'Writerside’i moodulil puudub eksemplaripuu.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2027,16 +2027,25 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitChanges => 'Muudatused';
 
   @override
+  String get gitStaged => 'Indekseeritud';
+
+  @override
+  String get gitUnstaged => 'Indekseerimata';
+
+  @override
   String get gitHistory => 'Ajalugu';
 
   @override
   String get gitBranches => 'Harud';
 
   @override
-  String get gitBranchActions => 'Harutoimingud';
+  String get gitActions => 'Giti toimingud';
 
   @override
   String get gitPull => 'Pull';
+
+  @override
+  String get gitFetch => 'Hangi';
 
   @override
   String get gitPush => 'Push';
@@ -2045,10 +2054,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Vali commiti jaoks';
+  String get gitSelectForCommit => 'Lisa fail indeksisse';
 
   @override
-  String get gitRemoveFromCommit => 'Jäta commitist välja';
+  String get gitRemoveFromCommit => 'Eemalda fail indeksist';
 
   @override
   String get gitDiscard => 'Hülga';
@@ -2070,7 +2079,21 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Vali enne commiti loomist vähemalt üks fail.';
+      'Lisa enne commiti loomist vähemalt üks fail indeksisse.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count indekseeritud faili',
+      one: '1 indekseeritud fail',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Väljaspool tööruumi';
 
   @override
   String get gitCommitMessageRequired => 'Sisesta commiti sõnum.';
@@ -2079,7 +2102,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitCreateBranch => 'Loo haru';
 
   @override
-  String get gitNewBranch => '+ Uus haru';
+  String get gitNewBranch => 'Uus haru';
 
   @override
   String get gitBranchName => 'Haru nimi';
@@ -2101,6 +2124,11 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitBinaryFile => 'Binaarfail. BusyMark ei kuva binaarpaiku.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Kahendfail ($size baiti). BusyMark ei kuva kahendpaiku.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2168,6 +2196,76 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitFileHistory => 'Praegune fail';
 
   @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Failiajalugu nõuab avatud Markdowni faili.';
+
+  @override
+  String get gitLoadMore => 'Laadi veel';
+
+  @override
+  String get gitChangesInCommit => 'Selle sissekande muudatused';
+
+  @override
+  String get gitCompareWithCurrent => 'Võrdle praeguse versiooniga';
+
+  @override
+  String get gitRestoreVersion => 'Taasta see versioon';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Kas taastada see failiversioon?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.';
+
+  @override
+  String get gitCommitActions => 'Sissekande toimingud';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Lähtesta praegune haru siia…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Kas lähtestada $branch sissekandele $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'See liigutab haru $branch sissekandele $commit. Vali, kuidas Git indeksit ja tööpuud uuendab.';
+  }
+
+  @override
+  String get gitReset => 'Lähtesta';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Liiguta ainult haru. Jäta indeks ja tööpuu muutmata; erinevused valitud sissekandest jäävad indekseerituks.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Liiguta haru ja lähtesta indeks. Jäta tööpuu muutmata, nii et erinevused jäävad indekseerimata.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Liiguta haru ning lähtesta indeks ja tööpuu. Jälgitavad muudatused hüljatakse; toimingut takistavad jälgimata failid võidakse kustutada.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Liiguta haru ja lähtesta jälgitavad failid, säilitades kohalikud muudatused. Git katkestab, kui need muudatused on lähtestamisega vastuolus.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2230,6 +2328,18 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitErrorDirtyWorkspace =>
       'Enne haru vahetamist salvesta või hülga BusyMarki redaktori muudatused.';
+
+  @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Salvesta või hülga BusyMarki redaktori muudatused enne praeguse haru lähtestamist.';
+
+  @override
+  String get gitErrorRestoreStagedFile =>
+      'Eemalda fail enne varasema versiooni taastamist indeksist.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Enne lähtestamist võta kasutusele mõni haru.';
 
   @override
   String get gitErrorDiverged =>
@@ -2435,6 +2545,790 @@ class AppLocalizationsEt extends AppLocalizations {
       'BusyMark ei saanud seda dokumenti PDF-ina eksportida.';
 
   @override
+  String get visualizationRendering => 'Renderdamine…';
+
+  @override
+  String get visualizationStale => 'Kuvatakse viimast kehtivat renderdust';
+
+  @override
+  String get visualizationShowSource => 'Kuva lähtekood';
+
+  @override
+  String get visualizationShowRender => 'Kuva renderdus';
+
+  @override
+  String get visualizationFitWidth => 'Mahuta laiusele';
+
+  @override
+  String get visualizationSaveImage => 'Salvesta pilt';
+
+  @override
+  String get visualizationCopyImage => 'Kopeeri pilt';
+
+  @override
+  String get visualizationImageCopied => 'Pilt on kopeeritud';
+
+  @override
+  String get visualizationOpenApiReference => 'Ava API viitedokumentatsioon';
+
+  @override
+  String get visualizationValid => 'Kehtiv';
+
+  @override
+  String get visualizationInvalid => 'Kehtetu';
+
+  @override
+  String get visualizationServers => 'Serverid';
+
+  @override
+  String get visualizationPaths => 'Teed';
+
+  @override
+  String get visualizationOperations => 'Toimingud';
+
+  @override
+  String get visualizationTags => 'Sildid';
+
+  @override
+  String get visualizationNoOperations => 'Sobivaid toiminguid pole';
+
+  @override
+  String get visualizationSearchOperations => 'Otsi toiminguid';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Seda visualiseeringut ei saanud renderdada.';
+
+  @override
+  String get visualizationRetry => 'Proovi uuesti';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName on salvestatud';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
-      'Ekspordi aktiivne Markdowni dokument PDF-ina.';
+      'Ekspordi aktiivne dokument või Writerside’i moodul PDF-ina.';
+
+  @override
+  String get instances => 'Eksemplarid';
+
+  @override
+  String get newInstance => 'Uus eksemplar';
+
+  @override
+  String get newTocLibrary => 'Uus sisukorrateek';
+
+  @override
+  String get editInstance => 'Muuda eksemplari';
+
+  @override
+  String get openTocFile => 'Ava sisukorrafail';
+
+  @override
+  String get createInstance => 'Loo eksemplar';
+
+  @override
+  String get createTocLibrary => 'Loo sisukorrateek';
+
+  @override
+  String get instanceContent => 'Sisu';
+
+  @override
+  String get instanceContentSource => 'Loo allikast';
+
+  @override
+  String get emptyInstance => 'Tühi eksemplar';
+
+  @override
+  String get markdownFiles => 'Kohalikud Markdowni failid';
+
+  @override
+  String get chooseMarkdownFolder => 'Vali Markdowni kaust';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Vali Markdowni faile sisaldav kaust.';
+
+  @override
+  String get instanceAppearance => 'Välimus';
+
+  @override
+  String get instanceColor => 'Ikooni värv';
+
+  @override
+  String get instanceVersion => 'Versioon';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Kui see väli on tühi, on projekti versioon $version.';
+  }
+
+  @override
+  String get instanceWebPath => 'Veebitee';
+
+  @override
+  String get instanceStatus => 'Olek';
+
+  @override
+  String get instanceStatusRelease => 'Väljalase';
+
+  @override
+  String get instanceStatusEap => 'Varajane juurdepääs';
+
+  @override
+  String get instanceStatusDeprecated => 'Aegunud';
+
+  @override
+  String get allowSearchEngineIndexing => 'Luba otsingumootoritel indekseerida';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Luba välistel otsingumootoritel seda väljundit indekseerida.';
+
+  @override
+  String get offlineArtifact => 'Võrguühenduseta pakett';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Paki ressursid kaasa, et loodud dokumentatsioon oleks iseseisev.';
+
+  @override
+  String get instanceOutputSettings => 'Väljundi sätted';
+
+  @override
+  String get markdownImportSource => 'Markdowni allikas';
+
+  @override
+  String get markdownImportFiles => 'Markdowni failid';
+
+  @override
+  String get selectNone => 'Tühista kõik valikud';
+
+  @override
+  String markdownFilesFound(int count) {
+    return 'Leiti $count Markdowni faili';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'Sellest kaustast ei leitud Markdowni faile.';
+
+  @override
+  String get copyReferencedMedia => 'Kopeeri viidatud meedia';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Kopeeri valitud failides viidatud kohalikud pildid ja videod ning säilita suhtelised teed.';
+
+  @override
+  String get instanceIdRenameWarningTitle =>
+      'Kas nimetada eksemplari ID ümber?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark nimetab .tree-faili ümber ja värskendab Writerside’i projekti viited ID-lt „$oldId” ID-le „$newId”. Avaldamisskripte ei muudeta ja need tuleb eraldi värskendada.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'Nimeta ümber ja värskenda viited';
+
+  @override
+  String get tocLibraryDescription =>
+      'Sisukorrateek talletab korduskasutatavaid jaotisi ega loo oma väljundit.';
+
+  @override
+  String get defaultTocLibraryName => 'Ühine sisukord';
+
+  @override
+  String get instanceColorAutomatic => 'Automaatne';
+
+  @override
+  String get instanceColorBlue => 'Sinine';
+
+  @override
+  String get instanceColorGreen => 'Roheline';
+
+  @override
+  String get instanceColorOrange => 'Oranž';
+
+  @override
+  String get instanceColorPurple => 'Lilla';
+
+  @override
+  String get instanceColorRed => 'Punane';
+
+  @override
+  String get instanceColorTeal => 'Sinakasroheline';
+
+  @override
+  String get instanceColorYellow => 'Kollane';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'Sisesta eksemplari nimi.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'ID-ga „$id” eksemplar on juba olemas.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'Eksemplaripuu on juba olemas: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Markdowni lähtekausta pole olemas: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Vali importimiseks vähemalt üks Markdowni fail.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'See pole valitud allika sees asuv loetav Markdowni fail: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Import kirjutaks olemasoleva projektifaili üle: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Eksemplari failid on kettal muutunud. Vaata need üle ja proovi uuesti.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark ei saanud eksemplari muudatust täielikult tagasi võtta. Vaata enne jätkamist üle need failid: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Sisukorrateeki ei saa Markdowni teemasid importida.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Veebitee peab olema ühel real.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Writerside’i eksemplari konfiguratsioon ei kehti. Paranda diagnostikateated ja proovi uuesti.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark ei saanud eksemplari muudatusi turvaliselt ette valmistada.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Tundmatu eksemplari olek „$status”. Kasuta väärtust release, eap või deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'Eksemplari ID-d „$id” kasutab mitu puufaili.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'Faili buildprofiles.xml juurelement peab olema <buildprofiles>.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'Väärtuse $name väärtus „$value” peab olema true või false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Element <build-profile> peab määrama eksemplari ID.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Puu element <include> peab määrama nii atribuudi from kui ka element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Puu element <snippet> peab määrama atribuudi id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Eksemplariülene sisukorraviide peab määrama nii atribuudi ref kui ka in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Sisukorraelement ei saa sihtida korraga mitut teemat, viidet, linki ega ümbersuunamist.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Puuelemendi ID „$id” on määratud mitu korda.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Eksemplarirühmade faili juurelement peab olema <instance-groups>.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Eksemplarirühm peab määrama mittetühja ID ja eksemplaride loendi.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Eksemplarirühma ID „$id” on määratud mitu korda.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'Sisukorra kaasamine „$source#$id” kuulub välisesse moodulisse „$origin” ja seda ei saa selles tööruumis laiendada.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Puuelementi „$id” pole registreeritud puus „$source”.';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Puu kaasamine „$source#$id” tekitab tsükli.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Eksemplari tingimus viitab tundmatule rühmale „@$group”.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Eksemplariülene viide sihib tundmatut eksemplari „$instance”.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Teemat „$topic” pole viidatud eksemplaris „$instance”.';
+  }
+
+  @override
+  String get download => 'Laadi alla';
+
+  @override
+  String get exportWritersideAsPdf => 'Ekspordi Writerside PDF-ina';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Valige eksemplar ja PDF-i sätted. BusyMark kasutab JetBrainsi ametlikku Writerside’i koosturit.';
+
+  @override
+  String get writersidePdfContent => 'Ekspordi sisu';
+
+  @override
+  String get writersidePdfSettings => 'PDF-i sätted';
+
+  @override
+  String get writersidePdfConfigureHere => 'Seadista selle ekspordi jaoks';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'Kasuta projekti konfiguratsiooni';
+
+  @override
+  String get writersidePdfConfigurationFile => 'PDF-i konfiguratsioonifail';
+
+  @override
+  String get writersidePdfPage => 'Lehekülg';
+
+  @override
+  String get writersidePdfKeymap => 'Klahvipaigutus';
+
+  @override
+  String get writersidePdfNoKeymap => 'Klahvipaigutuseta';
+
+  @override
+  String get writersidePdfTocTitle => 'Sisukorra pealkiri';
+
+  @override
+  String get writersidePdfCover => 'Tiitelleht';
+
+  @override
+  String get writersidePdfIncludeCover => 'Lisa tiitelleht';
+
+  @override
+  String get writersidePdfCoverTitle => 'Tiitellehe pealkiri';
+
+  @override
+  String get writersidePdfCoverDescription => 'Tiitellehe kirjeldus';
+
+  @override
+  String get writersidePdfCopyright => 'Autoriõigus';
+
+  @override
+  String get writersidePdfCoverLogo => 'Tiitellehe logo';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Vali tiitellehe logo';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Päis ja jalus';
+
+  @override
+  String get writersidePdfHeader => 'Päis';
+
+  @override
+  String get writersidePdfFooter => 'Jalus';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Need väärtused seovad avatud mooduli koosturi lähtepaigutusega.';
+
+  @override
+  String get writersidePdfModuleName => 'Mooduli nimi';
+
+  @override
+  String get writersidePdfSourceRoot => 'Lähtejuur';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'Vali lähtejuur';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Koosturi versioon';
+
+  @override
+  String get writersidePdfAllowNetwork => 'Luba koostamise ajal võrk';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Vaikimisi keelatud. Luba ainult siis, kui projekt vajab teadlikult kaugkoostusressursse.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Sisesta mooduli nimi.';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'Vali lähtejuur.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Sisesta kehtiv koosturi versioon.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Writerside’i koostur on nõutav';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark kasutab ametlikku konteineripilti $image. Kas laadida see kohe alla? Pilt on suur ja Docker talletab selle.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Writerside’i koosturi allalaadimine…';
+
+  @override
+  String get exportingWritersidePdf => 'Writerside’i PDF-i eksportimine…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Writerside’i PDF-i eksportimiseks on vaja Dockerit. Paigalda ja käivita Docker ning proovi uuesti.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'Soovitud Writerside’i koosturi pilt pole saadaval.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Writerside’i PDF-i konfiguratsioon on vigane.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Writerside’i koostur ei suutnud PDF-i luua.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Writerside’i koostur ei loonud kehtivat PDF-i.';
+
+  @override
+  String get ai => 'TI';
+
+  @override
+  String get aiLocalOllama => 'Kohalik Ollama';
+
+  @override
+  String get aiDisabled => 'Keelatud';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.';
+
+  @override
+  String get aiProvider => 'TI-teenuse pakkuja';
+
+  @override
+  String get aiOllamaEndpoint => 'Ollama lõpp-punkt';
+
+  @override
+  String get aiOllamaModel => 'Ollama mudel';
+
+  @override
+  String get aiTestConnection => 'Testi ühendust';
+
+  @override
+  String get aiTestingConnection => 'Testimine…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Ühendatud. Leiti $count installitud mudelit.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama töötab, kuid installitud mudeleid ei leitud.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark ei saanud tehisintellekti tekstiloomet kontrollida.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Luba jaotises Sätted → TI teenusepakkuja ning kontrolli mudelit.';
+
+  @override
+  String get aiEditWithAi => 'Redigeeri TI abil';
+
+  @override
+  String get aiRefineWithAi => 'Täiusta TI abil';
+
+  @override
+  String get aiInstruction => 'Juhis';
+
+  @override
+  String get aiChangeTarget => 'Mida võib muuta';
+
+  @override
+  String get aiSharedContext => 'TI-ga jagatav kontekst';
+
+  @override
+  String get aiTargetSelection => 'Valitud sisu';
+
+  @override
+  String get aiTargetInsertAfterBlock => 'Lisa praeguse ploki järele';
+
+  @override
+  String get aiTargetCurrentBlock => 'Praegune plokk';
+
+  @override
+  String get aiTargetCurrentSection => 'Praegune jaotis';
+
+  @override
+  String get aiTargetCompleteDocument => 'Kogu dokument';
+
+  @override
+  String get aiContextNone => 'Dokumendi kontekst puudub';
+
+  @override
+  String get aiContextSelection => 'Valitud sisu';
+
+  @override
+  String get aiContextCurrentBlock => 'Praegune plokk';
+
+  @override
+  String get aiContextCurrentSection => 'Praegune jaotis';
+
+  @override
+  String get aiContextCompleteDocument => 'Kogu dokument';
+
+  @override
+  String get aiGenerating => 'Ettepaneku loomine…';
+
+  @override
+  String get aiProposal => 'TI ettepanek';
+
+  @override
+  String get aiGenerateProposal => 'Loo ettepanek';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Valitud teenusepakkuja saab kuvatud kontekstist $count märki.';
+  }
+
+  @override
+  String get aiOriginal => 'Algtekst';
+
+  @override
+  String get aiSuggested => 'Ettepanek';
+
+  @override
+  String get aiApplyProposal => 'Rakenda ettepanek';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input sisendtokenit · $output väljundtokenit';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Dokumenti muudeti ettepaneku loomise ajal. Käivita toiming uuesti.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Indekseeritud muudatused muutusid selle commit-sõnumi loomise ajal. Käivita toiming uuesti.';
+
+  @override
+  String get aiViewContext => 'Kuva saadetud kontekst';
+
+  @override
+  String get aiReviewExactContent => 'Vaata täpne sisu üle';
+
+  @override
+  String get aiContentToChange => 'Muudetav sisu';
+
+  @override
+  String get aiContentSentToAi => 'TI-le saadetav sisu';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'Tehisintellekt on keelatud. BusyMark ei saada dokumendi sisu kunagi ilma selgesõnalise TI-toiminguta.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult seadistatud kohalikule Ollama teenusele. Ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult teenusele $provider. Päringud on olekuta ja ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
+  }
+
+  @override
+  String get aiApiKey => 'API-võti';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Võti on salvestatud süsteemi mandaadihoidlasse';
+
+  @override
+  String get aiApiKeyEnterHint => 'Sisesta teenusepakkuja API-võti';
+
+  @override
+  String get aiReplaceApiKey => 'Asenda API-võti';
+
+  @override
+  String get aiSaveApiKey => 'Salvesta API-võti turvaliselt';
+
+  @override
+  String get aiRemoveApiKey => 'Eemalda salvestatud API-võti';
+
+  @override
+  String get aiCredentialSaved =>
+      'API-võti salvestati süsteemi mandaadihoidlasse.';
+
+  @override
+  String get aiCredentialRemoved => 'Salvestatud API-võti eemaldati.';
+
+  @override
+  String get aiModelRouting => 'Mudeli valimine';
+
+  @override
+  String get aiAutomaticRouting => 'Automaatselt ülesande järgi';
+
+  @override
+  String get aiFixedModelRouting => 'Kasuta valitud mudelit';
+
+  @override
+  String get aiPreferredModel => 'Eelistatud mudel';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests päringut · $input sisendmärgendit · $output väljundmärgendit';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Kas saata sisu teenusele $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Luba $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Saadetakse ainult igas TI ülevaatusdialoogis kuvatud sisu. Päringud on olekuta, ettepanekud vajavad ülevaatust ja API-võti salvestatakse Linuxi süsteemi mandaadihoidlasse.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Kinnita esmalt jaotises Sätted → TI andmete jagamine teenusega $provider.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Tekstiloome mudeliga $model on kontrollitud. Saadaval on $count ühilduvat mudelit.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'Tuvastati kohaliku mudeli külmkäivitus.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Ühilduvat tekstiloome mudelit ei ole saadaval.';
+
+  @override
+  String get aiEnableProvider => 'Luba esmalt TI teenusepakkuja.';
+
+  @override
+  String get aiDraftCommitMessage => 'Koosta sissekande sõnumi mustand';
+
+  @override
+  String get aiDrafting => 'Mustandi koostamine…';
+
+  @override
+  String get aiDraftWithAi => 'Koosta TI-ga mustand';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Loo/värskenda sisukord';
+
+  @override
+  String get markdownTocTitle => 'Sisukord';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Sisukord värskendati $count kirjega.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Lisa enne sisukorra loomist vähemalt üks jaotise pealkiri.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'BusyMarki sisukorra tähised puuduvad, korduvad või on vales järjekorras.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Taseme $level pealkiri järgneb tasemele $previousLevel; kontrolli jaotiste pesastust.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Kontrolli, kas lingi tekst „$text” kirjeldab kontekstis selle otstarvet.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
 }

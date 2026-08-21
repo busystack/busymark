@@ -38,6 +38,69 @@ class WritersideConfiguredInstance {
   final String? keymapsMode;
 }
 
+class WritersideBuildProfileValues {
+  const WritersideBuildProfileValues({this.noindexContent, this.offlineDocs});
+
+  final bool? noindexContent;
+  final bool? offlineDocs;
+
+  bool get isEmpty => noindexContent == null && offlineDocs == null;
+}
+
+class WritersideBuildProfilesConfig {
+  const WritersideBuildProfilesConfig({
+    required this.filePath,
+    this.globalValues = const WritersideBuildProfileValues(),
+    this.instanceValues = const {},
+    this.diagnostics = const [],
+  });
+
+  final String filePath;
+  final WritersideBuildProfileValues globalValues;
+  final Map<String, WritersideBuildProfileValues> instanceValues;
+  final List<Diagnostic> diagnostics;
+
+  WritersideBuildProfileValues valuesFor(String instanceId) {
+    return instanceValues[instanceId] ?? const WritersideBuildProfileValues();
+  }
+
+  bool allowsSearchEngineIndexing(String instanceId) {
+    final specific = valuesFor(instanceId).noindexContent;
+    final noindex = specific ?? globalValues.noindexContent ?? true;
+    return !noindex;
+  }
+
+  bool createsOfflineArtifact(String instanceId) {
+    return valuesFor(instanceId).offlineDocs ??
+        globalValues.offlineDocs ??
+        false;
+  }
+}
+
+class WritersideInstanceGroup {
+  const WritersideInstanceGroup({
+    required this.id,
+    required this.instanceIds,
+    required this.span,
+  });
+
+  final String id;
+  final Set<String> instanceIds;
+  final SourceSpan span;
+}
+
+class WritersideInstanceGroupsConfig {
+  const WritersideInstanceGroupsConfig({
+    required this.filePath,
+    this.groups = const {},
+    this.diagnostics = const [],
+  });
+
+  final String filePath;
+  final Map<String, WritersideInstanceGroup> groups;
+  final List<Diagnostic> diagnostics;
+}
+
 class WritersideSettingsConfig {
   const WritersideSettingsConfig({
     this.capsRules = const [],
@@ -125,24 +188,127 @@ class WritersideConfig {
   ];
 }
 
-class TocNode {
+sealed class WritersideTreeEntry {
+  const WritersideTreeEntry();
+
+  SourceSpan get span;
+  String? get instanceCondition;
+  String? get customFilter;
+  String? get origin;
+}
+
+class WritersideTocInclude extends WritersideTreeEntry {
+  const WritersideTocInclude({
+    required this.from,
+    required this.elementId,
+    required this.span,
+    this.instanceCondition,
+    this.customFilter,
+    this.origin,
+    this.useFilters = const [],
+  });
+
+  final String? from;
+  final String? elementId;
+  @override
+  final SourceSpan span;
+  @override
+  final String? instanceCondition;
+  @override
+  final String? customFilter;
+  @override
+  final String? origin;
+  final List<String> useFilters;
+}
+
+class WritersideTocSnippet extends WritersideTreeEntry {
+  const WritersideTocSnippet({
+    required this.id,
+    required this.entries,
+    required this.span,
+    this.instanceCondition,
+    this.customFilter,
+    this.origin,
+  });
+
+  final String? id;
+  final List<WritersideTreeEntry> entries;
+  @override
+  final SourceSpan span;
+  @override
+  final String? instanceCondition;
+  @override
+  final String? customFilter;
+  @override
+  final String? origin;
+}
+
+class TocNode extends WritersideTreeEntry {
   const TocNode({
     required this.hidden,
     required this.children,
     required this.span,
     this.topicFileName,
+    this.referenceTopicFileName,
+    this.referenceInstanceId,
     this.href,
     this.tocTitle,
     this.id,
+    this.acceptsWebFileNames,
+    this.acceptsWebFileNamesRef,
+    this.targetForAcceptWebFileNames,
+    this.instanceCondition,
+    this.customFilter,
+    this.origin,
+    this.workInProgress = false,
+    this.entries = const [],
+    this.sourceTreePath,
+    this.sourceTocPath,
+    this.included = false,
+    this.includeFrom,
+    this.includeElementId,
+    this.includeResolutionError,
   });
 
   final String? topicFileName;
+  final String? referenceTopicFileName;
+  final String? referenceInstanceId;
   final String? href;
   final String? tocTitle;
   final String? id;
+  final String? acceptsWebFileNames;
+  final String? acceptsWebFileNamesRef;
+  final String? targetForAcceptWebFileNames;
+  @override
+  final String? instanceCondition;
+  @override
+  final String? customFilter;
+  @override
+  final String? origin;
   final bool hidden;
+  final bool workInProgress;
   final List<TocNode> children;
+  final List<WritersideTreeEntry> entries;
+  final String? sourceTreePath;
+  final List<int>? sourceTocPath;
+  final bool included;
+  final String? includeFrom;
+  final String? includeElementId;
+  final String? includeResolutionError;
+  @override
   final SourceSpan span;
+
+  String? get topicReference => topicFileName ?? referenceTopicFileName;
+
+  List<WritersideTreeEntry> get childEntries {
+    if (entries.isNotEmpty || children.isEmpty) {
+      return entries;
+    }
+    return children;
+  }
+
+  bool get canEditStructure =>
+      !included && sourceTreePath != null && sourceTocPath != null;
 
   Iterable<TocNode> flatten() sync* {
     yield this;
@@ -162,6 +328,14 @@ class WritersideInstance {
     required this.isLibrary,
     required this.tocRoots,
     required this.diagnostics,
+    this.version,
+    this.globalVersion,
+    this.webPath,
+    this.keymapsMode,
+    this.allowSearchEngineIndexing = false,
+    this.offlineArtifact = false,
+    this.treeEntries = const [],
+    this.resolvedTocRoots,
   });
 
   final String id;
@@ -172,13 +346,46 @@ class WritersideInstance {
   final bool isLibrary;
   final List<TocNode> tocRoots;
   final List<Diagnostic> diagnostics;
+  final String? version;
+  final String? globalVersion;
+  final String? webPath;
+  final String? keymapsMode;
+  final bool allowSearchEngineIndexing;
+  final bool offlineArtifact;
+  final List<WritersideTreeEntry> treeEntries;
+  final List<TocNode>? resolvedTocRoots;
+
+  String? get effectiveVersion => version ?? globalVersion;
+
+  List<TocNode> get navigationTocRoots => resolvedTocRoots ?? tocRoots;
 
   Set<String> get topicFileSet {
-    return tocRoots
+    return navigationTocRoots
         .expand((node) => node.flatten())
-        .map((node) => node.topicFileName)
+        .map((node) => node.topicReference)
         .whereType<String>()
         .toSet();
+  }
+
+  WritersideInstance withResolvedTocRoots(List<TocNode> roots) {
+    return WritersideInstance(
+      id: id,
+      name: name,
+      sourceTreePath: sourceTreePath,
+      startPage: startPage,
+      status: status,
+      isLibrary: isLibrary,
+      tocRoots: tocRoots,
+      diagnostics: diagnostics,
+      version: version,
+      globalVersion: globalVersion,
+      webPath: webPath,
+      keymapsMode: keymapsMode,
+      allowSearchEngineIndexing: allowSearchEngineIndexing,
+      offlineArtifact: offlineArtifact,
+      treeEntries: treeEntries,
+      resolvedTocRoots: roots,
+    );
   }
 }
 
@@ -291,6 +498,8 @@ class WritersideModule {
     required this.categories,
     required this.diagnostics,
     required this.validatedImageDirs,
+    this.buildProfiles,
+    this.instanceGroups,
   });
 
   final String rootPath;
@@ -301,6 +510,8 @@ class WritersideModule {
   final List<WritersideCategory> categories;
   final List<Diagnostic> diagnostics;
   final List<String> validatedImageDirs;
+  final WritersideBuildProfilesConfig? buildProfiles;
+  final WritersideInstanceGroupsConfig? instanceGroups;
 
   String get effectiveImagesDir => validatedImageDirs.firstOrNull ?? 'images';
 

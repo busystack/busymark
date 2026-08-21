@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../ai/ai_models.dart';
+import '../../ai/ai_configuration.dart';
+import '../../ai/ai_policy.dart';
+import '../../ai/ai_providers.dart';
 import '../../app/app_router.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_locale.dart';
@@ -117,6 +121,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+      SettingsPage.ai => const _AiSettingsPage(),
       SettingsPage.window => BusyMarkGroupedList(
         title: l10n.settingsWindowSectionTitle,
         filled: true,
@@ -317,7 +322,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.sidebarToc:
       case HeaderBarAction.sidebarOutline:
       case HeaderBarAction.sidebarGit:
-      case HeaderBarAction.sidebarHistory:
         break;
     }
   }
@@ -329,6 +333,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
+      case BusyMarkMainMenuAction.generateMarkdownToc:
         break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
@@ -349,12 +354,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-enum SettingsPage { appearance, editor, validation, window, privacy, advanced }
+enum SettingsPage {
+  appearance,
+  editor,
+  validation,
+  ai,
+  window,
+  privacy,
+  advanced,
+}
 
 SettingsPage settingsPageFromRouteValue(String? value) {
   return switch (value) {
     'editor' => SettingsPage.editor,
     'validation' => SettingsPage.validation,
+    'ai' => SettingsPage.ai,
     'window' => SettingsPage.window,
     'privacy' => SettingsPage.privacy,
     'advanced' => SettingsPage.advanced,
@@ -370,6 +384,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.appearance => l10n.appearance,
     SettingsPage.editor => l10n.editor,
     SettingsPage.validation => l10n.validation,
+    SettingsPage.ai => l10n.ai,
     SettingsPage.window => l10n.settingsWindowSectionTitle,
     SettingsPage.privacy => l10n.privacy,
     SettingsPage.advanced => l10n.advanced,
@@ -381,6 +396,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.appearance => BusyMarkGlyphs.appearance,
     SettingsPage.editor => BusyMarkGlyphs.editorView,
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
+    SettingsPage.ai => BusyMarkGlyphs.ai,
     SettingsPage.window => BusyMarkGlyphs.desktop,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
     SettingsPage.advanced => BusyMarkGlyphs.settings,
@@ -942,5 +958,507 @@ class _EditorToolbarDirectionControl extends StatelessWidget {
       EditorToolbarDirection.horizontal => context.l10n.horizontal,
       EditorToolbarDirection.vertical => context.l10n.vertical,
     };
+  }
+}
+
+class _AiSettingsPage extends ConsumerStatefulWidget {
+  const _AiSettingsPage();
+
+  @override
+  ConsumerState<_AiSettingsPage> createState() => _AiSettingsPageState();
+}
+
+class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
+  late final TextEditingController _endpointController;
+  late final TextEditingController _apiKeyController;
+  List<AiModelInfo> _models = const [];
+  String? _status;
+  BusyMarkStatusKind _statusKind = BusyMarkStatusKind.information;
+  var _testing = false;
+  var _credentialConfigured = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _endpointController = TextEditingController(
+      text: ref.read(appSettingsControllerProvider).aiOllamaEndpoint,
+    );
+    _apiKeyController = TextEditingController();
+    unawaited(_loadCredentialState());
+  }
+
+  @override
+  void dispose() {
+    _endpointController.dispose();
+    _apiKeyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsControllerProvider);
+    final controller = ref.read(appSettingsControllerProvider.notifier);
+    final providerKind = settings.aiProviderKind;
+    final enabled = providerKind != null;
+    final local = providerKind == AiProviderKind.ollamaLocal;
+    final cloud = providerKind?.isCloud ?? false;
+    final provider = providerKind == null
+        ? null
+        : ref.watch(aiProviderRegistryProvider).require(providerKind);
+    final selectedModel = providerKind == null
+        ? ''
+        : settings.selectedAiModel(providerKind);
+    final modelNames = <String>{
+      if (selectedModel.isNotEmpty) selectedModel,
+      if (provider != null)
+        for (final values in provider.capabilities.recommendedModels.values)
+          ...values,
+      for (final model in _models) model.name,
+    }.toList(growable: false);
+    final usage = ref.watch(aiMonthlyUsageProvider).value;
+    return BusyMarkGroupedList(
+      title: context.l10n.ai,
+      filled: true,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.md),
+          child: BusyMarkStatusBox(
+            message: _privacyDescription(providerKind),
+            kind: BusyMarkStatusKind.information,
+          ),
+        ),
+        BusyMarkActionRow(
+          title: context.l10n.aiProvider,
+          leading: const Icon(BusyMarkGlyphs.ai),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: BusyMarkPopupSelector<AiProviderPreference>(
+              value: settings.aiProviderPreference,
+              label: _providerLabel(settings.aiProviderPreference),
+              tooltip: context.l10n.aiProvider,
+              options: [
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.disabled,
+                  label: context.l10n.aiDisabled,
+                ),
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.ollamaLocal,
+                  label: context.l10n.aiLocalOllama,
+                ),
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.openAi,
+                  label: AiProviderKind.openAi.displayName,
+                ),
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.gemini,
+                  label: AiProviderKind.gemini.displayName,
+                ),
+              ],
+              onSelected: (preference) =>
+                  unawaited(_selectProvider(preference)),
+            ),
+          ),
+        ),
+        if (local)
+          BusyMarkGroupedTextEntry(
+            key: const ValueKey('ai-ollama-endpoint'),
+            label: context.l10n.aiOllamaEndpoint,
+            controller: _endpointController,
+            enabled: !_testing,
+            textInputAction: TextInputAction.done,
+            onSubmitted: _saveEndpoint,
+          ),
+        if (cloud) ...[
+          BusyMarkGroupedTextEntry(
+            key: ValueKey('ai-api-key-${providerKind!.id}'),
+            label: context.l10n.aiApiKey,
+            hintText: _credentialConfigured
+                ? context.l10n.aiApiKeyStoredHint
+                : context.l10n.aiApiKeyEnterHint,
+            controller: _apiKeyController,
+            enabled: !_testing,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => unawaited(_saveApiKey(providerKind)),
+          ),
+          BusyMarkActionRow(
+            title: _credentialConfigured
+                ? context.l10n.aiReplaceApiKey
+                : context.l10n.aiSaveApiKey,
+            leading: const Icon(BusyMarkGlyphs.check),
+            onTap: !_testing && _apiKeyController.text.trim().isNotEmpty
+                ? () => _saveApiKey(providerKind)
+                : null,
+          ),
+          if (_credentialConfigured)
+            BusyMarkActionRow(
+              title: context.l10n.aiRemoveApiKey,
+              leading: const Icon(BusyMarkGlyphs.delete),
+              onTap: !_testing ? () => _removeApiKey(providerKind) : null,
+            ),
+        ],
+        if (enabled)
+          BusyMarkActionRow(
+            title: context.l10n.aiModelRouting,
+            leading: const Icon(BusyMarkGlyphs.ai),
+            trailing: SizedBox(
+              width: BusyMarkSizes.controlRowWidth,
+              child: BusyMarkPopupSelector<AiModelRoutingPreference>(
+                value: settings.aiModelRoutingPreference,
+                label:
+                    settings.aiModelRoutingPreference ==
+                        AiModelRoutingPreference.automatic
+                    ? context.l10n.aiAutomaticRouting
+                    : context.l10n.aiFixedModelRouting,
+                tooltip: context.l10n.aiModelRouting,
+                options: [
+                  BusyMarkPopupSelectorOption(
+                    value: AiModelRoutingPreference.automatic,
+                    label: context.l10n.aiAutomaticRouting,
+                  ),
+                  BusyMarkPopupSelectorOption(
+                    value: AiModelRoutingPreference.fixed,
+                    label: context.l10n.aiFixedModelRouting,
+                  ),
+                ],
+                onSelected: controller.setAiModelRoutingPreference,
+              ),
+            ),
+          ),
+        BusyMarkActionRow(
+          title: local
+              ? context.l10n.aiOllamaModel
+              : context.l10n.aiPreferredModel,
+          leading: const Icon(BusyMarkGlyphs.ai),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: modelNames.isEmpty
+                ? Text(
+                    selectedModel.isEmpty
+                        ? context.l10n.aiNoModels
+                        : selectedModel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : BusyMarkPopupSelector<String>(
+                    value: selectedModel.isEmpty
+                        ? modelNames.first
+                        : selectedModel,
+                    label: selectedModel.isEmpty
+                        ? modelNames.first
+                        : selectedModel,
+                    tooltip: local
+                        ? context.l10n.aiOllamaModel
+                        : context.l10n.aiPreferredModel,
+                    options: [
+                      for (final model in modelNames)
+                        BusyMarkPopupSelectorOption(value: model, label: model),
+                    ],
+                    onSelected: enabled
+                        ? (model) => _saveSelectedModel(providerKind, model)
+                        : (_) {},
+                  ),
+          ),
+        ),
+        BusyMarkActionRow(
+          title: _testing
+              ? context.l10n.aiTestingConnection
+              : context.l10n.aiTestConnection,
+          leading: _testing
+              ? const SizedBox.square(
+                  dimension: BusyMarkSizes.iconSm,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(BusyMarkGlyphs.refresh),
+          onTap: enabled && !_testing && (!cloud || _credentialConfigured)
+              ? _testConnection
+              : null,
+        ),
+        if (usage != null)
+          BusyMarkActionRow(
+            title: context.l10n.aiUsageThisMonth(
+              usage.requests,
+              usage.inputTokens,
+              usage.outputTokens,
+            ),
+            leading: const Icon(BusyMarkGlyphs.info),
+          ),
+        if (_status != null)
+          Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: BusyMarkStatusBox(message: _status!, kind: _statusKind),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _testConnection() async {
+    final l10n = context.l10n;
+    setState(() {
+      _testing = true;
+      _status = null;
+    });
+    final settingsController = ref.read(appSettingsControllerProvider.notifier);
+    final cancellationToken = AiCancellationToken();
+    final totalTestDeadline = Timer(
+      const Duration(minutes: 5),
+      cancellationToken.cancel,
+    );
+    try {
+      var settings = ref.read(appSettingsControllerProvider);
+      final providerKind = settings.aiProviderKind;
+      if (providerKind == null) {
+        throw AiException(
+          AiFailureCode.invalidConfiguration,
+          l10n.aiEnableProvider,
+        );
+      }
+      if (providerKind == AiProviderKind.ollamaLocal) {
+        final endpoint = AiPolicy.validateLocalOllamaEndpoint(
+          _endpointController.text,
+        );
+        await settingsController.setAiOllamaEndpoint(endpoint.origin);
+        settings = ref.read(appSettingsControllerProvider);
+      }
+      final provider = ref
+          .read(aiProviderRegistryProvider)
+          .require(providerKind);
+      final models = await provider.listModels(
+        cancellationToken: cancellationToken,
+      );
+      final selected = settings.selectedAiModel(providerKind);
+      final candidates =
+          selected.isNotEmpty && models.any((model) => model.name == selected)
+          ? [selected]
+          : [for (final model in models) model.name];
+      if (candidates.isEmpty) {
+        throw AiException(
+          AiFailureCode.invalidConfiguration,
+          l10n.aiNoCompatibleModels,
+        );
+      }
+      AiHealthResult? health;
+      AiException? lastFailure;
+      for (final model in candidates) {
+        try {
+          health = await provider.checkHealth(
+            model: model,
+            cancellationToken: cancellationToken,
+          );
+          break;
+        } on AiException catch (error) {
+          lastFailure = error;
+          if (selected.isNotEmpty) {
+            rethrow;
+          }
+        }
+      }
+      if (health == null) {
+        throw lastFailure ??
+            AiException(
+              AiFailureCode.invalidConfiguration,
+              l10n.aiNoCompatibleModels,
+            );
+      }
+      await _saveSelectedModel(providerKind, health.model.name);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _models = health!.models;
+        final verified = l10n.aiGenerationVerified(
+          health.model.displayName ?? health.model.name,
+          health.models.length,
+        );
+        _status = health.coldStartDuration == null
+            ? verified
+            : '$verified\n${l10n.aiColdStartObserved}';
+        _statusKind = BusyMarkStatusKind.success;
+      });
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _status = context.l10n.aiConnectionFailed;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    } finally {
+      totalTestDeadline.cancel();
+      await cancellationToken.dispose();
+      if (mounted) {
+        setState(() => _testing = false);
+      }
+    }
+  }
+
+  Future<void> _selectProvider(AiProviderPreference preference) async {
+    final kind = switch (preference) {
+      AiProviderPreference.disabled => null,
+      AiProviderPreference.ollamaLocal => AiProviderKind.ollamaLocal,
+      AiProviderPreference.openAi => AiProviderKind.openAi,
+      AiProviderPreference.gemini => AiProviderKind.gemini,
+    };
+    final settings = ref.read(appSettingsControllerProvider);
+    if (kind?.isCloud == true && !settings.hasCloudConsent(kind!)) {
+      final confirmed = await showBusyMarkModalDialog<bool>(
+        context,
+        builder: (dialogContext) => BusyMarkDialogShell(
+          title: dialogContext.l10n.aiCloudConsentTitle(kind.displayName),
+          actions: [
+            BusyMarkDialogButton(
+              label: dialogContext.l10n.cancel,
+              onPressed: () => Navigator.pop(dialogContext, false),
+            ),
+            BusyMarkDialogButton(
+              label: dialogContext.l10n.aiCloudConsentEnable(kind.displayName),
+              suggested: true,
+              onPressed: () => Navigator.pop(dialogContext, true),
+            ),
+          ],
+          children: [Text(dialogContext.l10n.aiCloudConsentMessage)],
+        ),
+      );
+      if (confirmed != true || !mounted) {
+        return;
+      }
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .grantAiCloudProviderConsent(kind.id);
+    }
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setAiProviderPreference(preference);
+    if (!mounted) {
+      return;
+    }
+    _apiKeyController.clear();
+    setState(() {
+      _models = const [];
+      _status = null;
+      _credentialConfigured = false;
+    });
+    await _loadCredentialState();
+  }
+
+  Future<void> _loadCredentialState() async {
+    final kind = ref.read(appSettingsControllerProvider).aiProviderKind;
+    if (kind?.isCloud != true) {
+      if (mounted) {
+        setState(() => _credentialConfigured = false);
+      }
+      return;
+    }
+    try {
+      final stored = await ref.read(aiSecretStoreProvider).read(kind!);
+      if (mounted &&
+          ref.read(appSettingsControllerProvider).aiProviderKind == kind) {
+        setState(() => _credentialConfigured = stored != null);
+      }
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveApiKey(AiProviderKind provider) async {
+    try {
+      await ref
+          .read(aiSecretStoreProvider)
+          .write(provider, _apiKeyController.text);
+      if (mounted) {
+        _apiKeyController.clear();
+        setState(() {
+          _credentialConfigured = true;
+          _status = context.l10n.aiCredentialSaved;
+          _statusKind = BusyMarkStatusKind.success;
+        });
+      }
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    }
+  }
+
+  Future<void> _removeApiKey(AiProviderKind provider) async {
+    try {
+      await ref.read(aiSecretStoreProvider).delete(provider);
+      if (mounted) {
+        _apiKeyController.clear();
+        setState(() {
+          _credentialConfigured = false;
+          _status = context.l10n.aiCredentialRemoved;
+          _statusKind = BusyMarkStatusKind.success;
+        });
+      }
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveSelectedModel(AiProviderKind provider, String model) {
+    final controller = ref.read(appSettingsControllerProvider.notifier);
+    return switch (provider) {
+      AiProviderKind.ollamaLocal => controller.setAiOllamaModel(model),
+      AiProviderKind.openAi => controller.setAiOpenAiModel(model),
+      AiProviderKind.gemini => controller.setAiGeminiModel(model),
+    };
+  }
+
+  String _providerLabel(AiProviderPreference preference) =>
+      switch (preference) {
+        AiProviderPreference.disabled => context.l10n.aiDisabled,
+        AiProviderPreference.ollamaLocal => context.l10n.aiLocalOllama,
+        AiProviderPreference.openAi => 'OpenAI',
+        AiProviderPreference.gemini => 'Google Gemini',
+      };
+
+  String _privacyDescription(AiProviderKind? provider) => switch (provider) {
+    null => context.l10n.aiPrivacyDisabled,
+    AiProviderKind.ollamaLocal => context.l10n.aiPrivacyLocal,
+    AiProviderKind.openAi ||
+    AiProviderKind.gemini => context.l10n.aiPrivacyCloud(provider.displayName),
+  };
+
+  Future<void> _saveEndpoint(String value) async {
+    try {
+      final endpoint = AiPolicy.validateLocalOllamaEndpoint(value);
+      _endpointController.text = endpoint.origin;
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setAiOllamaEndpoint(endpoint.origin);
+      if (mounted) {
+        setState(() => _status = null);
+      }
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    }
   }
 }

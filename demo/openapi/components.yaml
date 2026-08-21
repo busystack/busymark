@@ -1,0 +1,10 @@
+components:
+  schemas:
+    Node:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        parent:
+          $ref: "#/components/schemas/Node"

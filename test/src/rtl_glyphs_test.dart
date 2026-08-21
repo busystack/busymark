@@ -45,6 +45,17 @@ void main() {
     expect(BusyMarkGlyphs.branch.matchTextDirection, isFalse);
   });
 
+  test('Git action glyphs have native menu equivalents', () {
+    expect(
+      BusyMarkGlyphs.nativeMenuIconName(BusyMarkGlyphs.refresh),
+      'view-refresh-symbolic',
+    );
+    expect(
+      BusyMarkGlyphs.nativeMenuIconName(BusyMarkGlyphs.add),
+      'list-add-symbolic',
+    );
+  });
+
   test('Arabic and Persian font fallbacks are available in the snap', () {
     expect(BusyMarkTypography.fontFamilyFallback, contains('Noto Sans Arabic'));
     expect(

@@ -6,6 +6,8 @@ abstract final class BusyMarkGlyphs {
   const BusyMarkGlyphs._();
 
   static const IconData about = YaruIcons.information;
+  static const IconData add = YaruIcons.plus;
+  static const IconData ai = YaruIcons.star_filled;
   static const IconData appearance = YaruIcons.desktop_appearance;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;
@@ -17,6 +19,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData clear = YaruIcons.edit_clear;
   static const IconData clearAll = YaruIcons.edit_clear_all;
   static const IconData code = YaruIcons.code;
+  static const IconData codeBlock = YaruIcons.terminal;
   static const IconData downArrow = YaruIcons.pan_down;
   static const IconData copy = YaruIcons.copy;
   static const IconData cut = YaruIcons.cut;
@@ -32,6 +35,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData exportPdf = YaruIcons.save_as;
   static const IconData externalLink = YaruIcons.external_link;
   static const IconData feedback = YaruIcons.chat_text;
+  static const IconData fitWidth = YaruIcons.zoom_fit_best;
   static const IconData folder = YaruIcons.folder;
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;
@@ -42,6 +46,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData hide = YaruIcons.hide;
   static const IconData history = YaruIcons.history;
   static const IconData home = YaruIcons.home;
+  static const IconData htmlBlock = YaruIcons.code;
   static const IconData image = YaruIcons.image;
   static const IconData imageMissing = YaruIcons.image_missing;
   static const IconData indent = YaruIcons.indent_more;
@@ -65,6 +70,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
+  static const IconData refresh = YaruIcons.refresh;
   static const IconData save = YaruIcons.save;
   static const IconData search = YaruIcons.search;
   static const IconData searchUnavailable = YaruIcons.find_replace;
@@ -90,6 +96,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData unorderedList = YaruIcons.unordered_list;
   static const IconData upArrow = YaruIcons.pan_up;
   static const IconData warning = YaruIcons.warning;
+  static const IconData windowClose = YaruIcons.window_close;
   static const IconData writersideProject = YaruIcons.book;
 
   /// Maps Flutter menu glyphs to freedesktop themed-icon names for GTK.
@@ -103,6 +110,12 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == about || icon == info) {
       return 'help-about-symbolic';
+    }
+    if (icon == add) {
+      return 'list-add-symbolic';
+    }
+    if (icon == ai) {
+      return 'starred-symbolic';
     }
     if (icon == appearance || icon == settings) {
       return 'preferences-system-symbolic';
@@ -131,7 +144,13 @@ abstract final class BusyMarkGlyphs {
     if (icon == clearAll) {
       return 'edit-clear-all-symbolic';
     }
-    if (icon == code || icon == sourceView || icon == symbols) {
+    if (icon == codeBlock) {
+      return 'utilities-terminal-symbolic';
+    }
+    if (icon == code ||
+        icon == htmlBlock ||
+        icon == sourceView ||
+        icon == symbols) {
       return 'text-x-generic-symbolic';
     }
     if (icon == copy) {
@@ -244,6 +263,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == redo) {
       return 'edit-redo-symbolic';
+    }
+    if (icon == refresh) {
+      return 'view-refresh-symbolic';
     }
     if (icon == exportPdf) {
       return 'document-save-as-symbolic';

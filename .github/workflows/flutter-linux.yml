@@ -8,28 +8,62 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            apparmor-profiles \
+            bubblewrap \
             clang \
             cmake \
             ninja-build \
             pkg-config \
             libgtk-3-dev \
-            libhandy-1-dev
+            libhandy-1-dev \
+            libsecret-1-dev \
+            libwebkit2gtk-4.1-dev \
+            gir1.2-webkit2-4.1 \
+            poppler-utils \
+            python3-gi \
+            python3-gi-cairo \
+            xvfb \
+            weston \
+            xz-utils
+
+      - name: Enable Bubblewrap sandbox for WebKitGTK tests
+        run: |
+          probe_bwrap() {
+            bwrap --ro-bind / / --unshare-user --unshare-pid \
+              --unshare-net /usr/bin/true
+          }
+          if ! probe_bwrap; then
+            profile=/usr/share/apparmor/extra-profiles/bwrap-userns-restrict
+            test -f "$profile"
+            sudo install -m 0644 "$profile" \
+              /etc/apparmor.d/bwrap-userns-restrict
+            sudo apparmor_parser --replace \
+              /etc/apparmor.d/bwrap-userns-restrict
+          fi
+          probe_bwrap
+
+      - name: Set up Node.js for bundled web engines
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/visualization/package-lock.json
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.44.4'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable Linux desktop
@@ -50,8 +84,133 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Test
-        run: flutter test
-
       - name: Build Linux release
         run: flutter build linux --release
+
+      - name: Test including bundled D2 and Typst paths
+        env:
+          BUSYMARK_D2_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/d2
+          BUSYMARK_TYPST_PATH: ${{ github.workspace }}/build/linux/x64/release/bundle/libexec/busymark/typst
+        run: flutter test
+
+      - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2
+
+      - name: Exercise the release binary visualization and PDF paths under X11
+        run: |
+          report="${RUNNER_TEMP}/visualization-release-x11.json"
+          timeout --signal=TERM 300s \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env BUSYMARK_RELEASE_SMOKE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
+      - name: Run visualization smoke tests under Wayland
+        run: |
+          runtime_dir="/run/user/$(id -u)"
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
+          XDG_RUNTIME_DIR="$runtime_dir" \
+            weston --backend=headless-backend.so --socket=wayland-99 \
+            --idle-time=0 --log="${RUNNER_TEMP}/weston.log" &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if [ -S "$runtime_dir/wayland-99" ]; then
+              break
+            fi
+            if ! kill -0 "$weston_pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/weston.log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test -S "$runtime_dir/wayland-99"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            /usr/bin/python3 -u tools/visualization_smoke.py \
+            --assets build/linux/x64/release/bundle/share/busymark/visualization \
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2
+          report="${RUNNER_TEMP}/visualization-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s \
+            build/linux/x64/release/bundle/busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
+
+  snap:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build strict Snap from a clean core24 environment
+        id: snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Upload Snap artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: busymark-snap
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+      - name: Install desktop smoke dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston xvfb
+
+      - name: Install strict Snap
+        run: sudo snap install --dangerous "${{ steps.snapcraft.outputs.snap }}"
+
+      - name: Exercise strict Snap visualization and PDF paths under X11
+        run: |
+          report="$HOME/snap/busymark/common/visualization-release-x11.json"
+          mkdir -p "$(dirname "$report")"
+          timeout --signal=TERM 300s \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env BUSYMARK_RELEASE_SMOKE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
+
+      - name: Exercise strict Snap visualization and PDF paths under Wayland
+        run: |
+          runtime_dir="/run/user/$(id -u)"
+          sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
+          XDG_RUNTIME_DIR="$runtime_dir" \
+            weston --backend=headless-backend.so --socket=wayland-99 \
+            --idle-time=0 --log="${RUNNER_TEMP}/weston-snap.log" &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if [ -S "$runtime_dir/wayland-99" ]; then
+              break
+            fi
+            if ! kill -0 "$weston_pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/weston-snap.log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test -S "$runtime_dir/wayland-99"
+          report="$HOME/snap/busymark/common/visualization-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s snap run busymark \
+            --visualization-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
+          test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_model.dart';
+import '../../workspace/workspace_controller.dart';
+import '../../workspace/workspace_safety.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
 import 'git_changes_view.dart';
@@ -14,7 +19,6 @@ class GitSidebarTab extends ConsumerWidget {
   const GitSidebarTab({
     super.key,
     required this.workspace,
-    this.view = GitView.changes,
     required this.onOpenFile,
     required this.onConfirmDiscard,
     required this.onAfterWorkspaceFilesChanged,
@@ -23,7 +27,6 @@ class GitSidebarTab extends ConsumerWidget {
   });
 
   final Workspace workspace;
-  final GitView view;
   final ValueChanged<String> onOpenFile;
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
   final Future<void> Function() onAfterWorkspaceFilesChanged;
@@ -33,6 +36,9 @@ class GitSidebarTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gitControllerProvider);
+    final hasUnsavedEditorChanges = ref.watch(
+      workspaceControllerProvider.select((value) => value.isDirty),
+    );
     final controller = ref.read(gitControllerProvider.notifier);
     if (!state.availability.available) {
       return _GitEmptyState(
@@ -68,9 +74,11 @@ class GitSidebarTab extends ConsumerWidget {
             : null,
       );
     }
-    if (state.selectedView != view) {
+    if (state.selectedView == GitView.fileHistory &&
+        state.scopedFilePath != null &&
+        state.scopedFilePath != state.fileHistory.currentPath) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.selectView(view);
+        controller.loadActiveFileHistory();
       });
     }
     return GitCommitActions(
@@ -78,8 +86,12 @@ class GitSidebarTab extends ConsumerWidget {
       child: GitFileActions(
         select: (paths) => controller.stageFiles(paths),
         unselect: (paths) => controller.unstageFiles(paths),
-        discard: (paths) async {
-          await controller.discardFiles(paths);
+        rollback: (paths) async {
+          await controller.rollbackFiles(paths);
+          await onAfterWorkspaceFilesChanged();
+        },
+        deleteUntracked: (paths) async {
+          await controller.deleteUntrackedFiles(paths);
           await onAfterWorkspaceFilesChanged();
         },
         child: Column(
@@ -90,17 +102,50 @@ class GitSidebarTab extends ConsumerWidget {
             else if (state.lastOperationMessage?.isNotEmpty ?? false)
               _GitOperationMessage(message: state.lastOperationMessage!),
             Expanded(
-              child: switch (view) {
+              child: switch (state.selectedView) {
                 GitView.changes => GitChangesView(
                   state: state,
-                  onSelectFile: controller.selectChangedFile,
+                  onSelectFile: controller.selectChange,
                   onOpenFile: onOpenFile,
                   onConfirmDiscard: onConfirmDiscard,
+                  hasUnsavedEditorChanges: hasUnsavedEditorChanges,
+                  canOpenFile: (file) => _canOpenGitFile(workspace, file),
+                  outsideWorkspacePaths: {
+                    for (final file
+                        in state.statusSnapshot?.stagedFiles ??
+                            const <GitFileStatus>[])
+                      if (controller.isOutsideWorkspace(file.repoRelativePath))
+                        file.repoRelativePath,
+                    for (final file
+                        in state.statusSnapshot?.stagedFiles ??
+                            const <GitFileStatus>[])
+                      if (file.hasStagedRename &&
+                          file.originalRepoRelativePath != null &&
+                          controller.isOutsideWorkspace(
+                            file.originalRepoRelativePath!,
+                          ))
+                        file.originalRepoRelativePath!,
+                  },
+                  onDraftCommitMessage: () =>
+                      _draftCommitMessage(context, ref, controller),
                 ),
-                GitView.history => GitHistoryView(
+                GitView.fileHistory => GitFileHistoryView(
                   state: state,
-                  onSelectCommit: controller.loadCommitDetails,
+                  onSelectCommit: controller.selectFileHistoryCommit,
+                  onRestoreVersion: () => _confirmRestoreVersion(
+                    context,
+                    controller,
+                    hasUnsavedEditorChanges,
+                  ),
+                  onLoadMore: controller.loadMoreFileHistory,
+                ),
+                GitView.projectHistory => GitProjectHistoryView(
+                  state: state,
+                  onSelectCommit: controller.selectProjectCommit,
                   onShowFileDiff: controller.selectCommitFile,
+                  onResetCurrentBranch: () =>
+                      _confirmResetCurrentBranch(context, ref, controller),
+                  onLoadMore: controller.loadMoreProjectHistory,
                 ),
               },
             ),
@@ -108,6 +153,215 @@ class GitSidebarTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<String?> _draftCommitMessage(
+    BuildContext context,
+    WidgetRef ref,
+    GitController controller,
+  ) async {
+    final stagedDiff = await controller.stagedDiffForAi();
+    if (stagedDiff == null || !context.mounted) {
+      return null;
+    }
+    final repository = ref.read(gitControllerProvider).repositoryInfo;
+    return showBusyMarkAiProposal(
+      context,
+      ref,
+      AiEditInvocation(
+        feature: AiFeature.draftCommitMessage,
+        scope: AiScope.gitDiff,
+        input: stagedDiff.patch,
+        replacementOriginal: '',
+        sourceRevision: 0,
+        targetId: 'git-commit:${repository?.rootPath ?? 'repository'}',
+        documentPath: null,
+        contentFormat: AiContentFormat.plainText,
+        enforceDocumentRevision: false,
+      ),
+      validateBeforeApply: () =>
+          controller.stagedDiffMatches(stagedDiff.fingerprint),
+      staleMessage: context.l10n.gitAiStagedChangesChanged,
+    );
+  }
+
+  Future<void> _confirmRestoreVersion(
+    BuildContext context,
+    GitController controller,
+    bool hasUnsavedEditorChanges,
+  ) async {
+    if (hasUnsavedEditorChanges || controller.selectedFileHasStagedChanges) {
+      await controller.restoreSelectedFileVersion();
+      return;
+    }
+    await controller.compareFileHistoryWithCurrent();
+    if (!context.mounted) {
+      return;
+    }
+    final confirmed = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.gitConfirmRestoreTitle,
+        actions: [
+          BusyMarkDialogButton(
+            label: MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.gitRestoreVersion,
+            suggested: true,
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+        children: [Text(dialogContext.l10n.gitConfirmRestoreMessage)],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+    if (await controller.restoreSelectedFileVersion()) {
+      await onAfterWorkspaceFilesChanged();
+    }
+  }
+
+  Future<void> _confirmResetCurrentBranch(
+    BuildContext context,
+    WidgetRef ref,
+    GitController controller,
+  ) async {
+    final state = ref.read(gitControllerProvider);
+    final branch = state.repositoryInfo?.currentBranch;
+    final selectedHash = state.projectHistory.selectedCommitHash;
+    final selectedCommits = [
+      for (final entry in state.projectHistory.commits)
+        if (entry.fullHash == selectedHash) entry,
+    ];
+    if (branch == null || selectedCommits.isEmpty) {
+      return;
+    }
+    final commit = selectedCommits.first;
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    final mode = await showBusyMarkModalDialog<GitResetMode>(
+      context,
+      builder: (dialogContext) =>
+          _GitResetDialog(branch: branch, commit: commit),
+    );
+    if (mode == null || !context.mounted) {
+      return;
+    }
+    if (await controller.resetCurrentBranchToSelectedCommit(mode)) {
+      await onAfterWorkspaceFilesChanged();
+    }
+  }
+}
+
+bool _canOpenGitFile(Workspace workspace, GitFileStatus status) {
+  final matching = workspace.files
+      .where((file) => file.absolutePath == status.absolutePath)
+      .firstOrNull;
+  final kind = matching?.kind;
+  if (kind != null) {
+    return switch (kind) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic ||
+      DocumentKind.writersideXmlTopic ||
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories ||
+      DocumentKind.gitIgnore ||
+      DocumentKind.resource => true,
+      DocumentKind.image || DocumentKind.unknown => false,
+    };
+  }
+  final normalized = status.repoRelativePath.toLowerCase();
+  return normalized.endsWith('.md') ||
+      normalized.endsWith('.markdown') ||
+      normalized.endsWith('.topic') ||
+      normalized.endsWith('.tree') ||
+      normalized.endsWith('.cfg') ||
+      normalized.endsWith('.list') ||
+      normalized.endsWith('.xml') ||
+      normalized.endsWith('.css') ||
+      normalized.endsWith('.js') ||
+      normalized.endsWith('/.gitignore') ||
+      normalized == '.gitignore';
+}
+
+class _GitResetDialog extends StatefulWidget {
+  const _GitResetDialog({required this.branch, required this.commit});
+
+  final String branch;
+  final GitCommitSummary commit;
+
+  @override
+  State<_GitResetDialog> createState() => _GitResetDialogState();
+}
+
+class _GitResetDialogState extends State<_GitResetDialog> {
+  GitResetMode? _mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final commit = widget.commit.shortHash;
+    return BusyMarkDialogShell(
+      title: context.l10n.gitResetCurrentBranchTitle(widget.branch, commit),
+      maxWidth: BusyMarkSizes.dialogWide,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.gitReset,
+          destructive: true,
+          onPressed: _mode == null
+              ? null
+              : () => Navigator.of(context).pop(_mode),
+        ),
+      ],
+      children: [
+        Text(context.l10n.gitResetCurrentBranchMessage(widget.branch, commit)),
+        const SizedBox(height: BusyMarkSpacing.md),
+        RadioGroup<GitResetMode>(
+          groupValue: _mode,
+          onChanged: (mode) => setState(() => _mode = mode),
+          child: Column(
+            children: [
+              for (final mode in GitResetMode.values)
+                RadioListTile<GitResetMode>(
+                  key: ValueKey('git-reset-mode-${mode.name}'),
+                  value: mode,
+                  title: Text(_resetModeLabel(context, mode)),
+                  subtitle: Text(_resetModeDescription(context, mode)),
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _resetModeLabel(BuildContext context, GitResetMode mode) {
+    return switch (mode) {
+      GitResetMode.soft => context.l10n.gitResetModeSoft,
+      GitResetMode.mixed => context.l10n.gitResetModeMixed,
+      GitResetMode.hard => context.l10n.gitResetModeHard,
+      GitResetMode.keep => context.l10n.gitResetModeKeep,
+    };
+  }
+
+  String _resetModeDescription(BuildContext context, GitResetMode mode) {
+    return switch (mode) {
+      GitResetMode.soft => context.l10n.gitResetModeSoftDescription,
+      GitResetMode.mixed => context.l10n.gitResetModeMixedDescription,
+      GitResetMode.hard => context.l10n.gitResetModeHardDescription,
+      GitResetMode.keep => context.l10n.gitResetModeKeepDescription,
+    };
   }
 }
 
@@ -142,7 +396,12 @@ class _GitMessage extends StatelessWidget {
       GitFailureCode.noRemote => context.l10n.gitErrorNoRemote,
       GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
       GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,
-      GitFailureCode.dirtyWorkspace => context.l10n.gitErrorDirtyWorkspace,
+      GitFailureCode.dirtyWorkspace =>
+        failure.commandName == 'reset'
+            ? context.l10n.gitErrorResetDirtyWorkspace
+            : context.l10n.gitErrorDirtyWorkspace,
+      GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
+      GitFailureCode.detachedHead => context.l10n.gitErrorResetDetachedHead,
       GitFailureCode.diverged => context.l10n.gitErrorDiverged,
       GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
       GitFailureCode.network => context.l10n.gitErrorNetwork,
@@ -173,6 +432,8 @@ BusyMarkStatusKind _gitFailureStatusKind(GitFailureCode code) {
     GitFailureCode.noUpstream ||
     GitFailureCode.multipleRemotes => BusyMarkStatusKind.information,
     GitFailureCode.dirtyWorkspace ||
+    GitFailureCode.stagedChanges ||
+    GitFailureCode.detachedHead ||
     GitFailureCode.diverged ||
     GitFailureCode.conflict => BusyMarkStatusKind.warning,
     GitFailureCode.unavailable ||

@@ -12,7 +12,11 @@ import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
+import '../../visualization/visualization_card.dart';
+import '../../visualization/visualization_models.dart';
+import '../editor_text_context_menu.dart';
 import 'wysiwyg_inline_controller.dart';
+import 'wysiwyg_visualization_navigation.dart';
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -148,6 +152,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onHtmlEditRequested,
     required this.onTaskChanged,
     required this.onFocused,
+    this.onRefineWithAi,
+    this.editRevision = 0,
     this.selected = false,
     this.selectionRange,
     this.onPointerDown,
@@ -179,6 +185,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onHtmlEditRequested;
   final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
+  final VoidCallback? onRefineWithAi;
+  final int editRevision;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final ValueChanged<PointerDownEvent>? onPointerDown;
@@ -203,12 +211,34 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       constraints: BoxConstraints(minHeight: _minimumHeight(context)),
       child: _blockContent(context, style, prefix, readOnly),
     );
+    final visualization = block.kind == BusyBlockKind.codeBlock
+        ? VisualizationDescriptor.maybeForFenceLanguage(
+            block.attributes['language'],
+          )
+        : null;
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: onPointerDown,
       onPointerMove: onPointerMove,
       onPointerUp: onPointerUp,
-      child: block.kind == BusyBlockKind.codeBlock
+      child: visualization != null
+          ? BusyMarkVisualizationCard(
+              key: ValueKey('wysiwyg-visualization-${block.id}'),
+              descriptor: visualization,
+              source: block.plainText,
+              sourceFence:
+                  block.rawSource ??
+                  _visualizationFenceSource(block, visualization),
+              documentPath: documentFilePath,
+              workspaceRoot: workspaceRoot ?? '',
+              sourceStartLine: block.sourceSpan?.startLine ?? 1,
+              editRevision: editRevision,
+              blockKey: 'wysiwyg:$documentFilePath:${block.id}',
+              sourceEditor: content,
+              onEditSource: _focusBlock,
+              onDiagnosticSelected: _focusDiagnosticLine,
+            )
+          : block.kind == BusyBlockKind.codeBlock
           ? Directionality(
               textDirection: busyMarkWysiwygBlockTextDirection(
                 block,
@@ -406,6 +436,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                             hoverColor: BusyMarkLinuxPalette.transparent,
                             contentPadding: EdgeInsets.zero,
                           ),
+                          contextMenuBuilder: (context, editableTextState) =>
+                              buildBusyMarkEditorTextContextMenu(
+                                context,
+                                editableTextState,
+                                refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                onRefineWithAi: onRefineWithAi,
+                              ),
                           onTap: onFocused,
                           onChanged: onChanged,
                         ),
@@ -430,6 +467,17 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     }
   }
 
+  void _focusDiagnosticLine(int documentLine) {
+    _focusBlock();
+    controller.selection = TextSelection.collapsed(
+      offset: wysiwygVisualizationDiagnosticOffset(
+        text: controller.text,
+        blockStartLine: block.sourceSpan?.startLine ?? 1,
+        documentLine: documentLine,
+      ),
+    );
+  }
+
   void _editImageBlock() {
     onFocused();
     onImageEditRequested();
@@ -438,6 +486,16 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   void _editHtmlBlock() {
     onFocused();
     onHtmlEditRequested();
+  }
+
+  String _visualizationFenceSource(
+    BusyBlock block,
+    VisualizationDescriptor descriptor,
+  ) {
+    final source = block.plainText.endsWith('\n')
+        ? block.plainText
+        : '${block.plainText}\n';
+    return '```${descriptor.originalLanguage}\n$source```';
   }
 
   bool get _isRenderedHtmlBlock {

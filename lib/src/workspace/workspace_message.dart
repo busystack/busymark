@@ -73,6 +73,43 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
       'writerside.project.instance-id-invalid' => l10n.errorInstanceIdInvalid,
       'writerside.project.topic-file-invalid' => l10n.errorTopicFileInvalid,
       'writerside.project.topic-title-required' => l10n.errorTopicTitleRequired,
+      'writerside.instance.name-required' =>
+        l10n.errorWritersideInstanceNameRequired,
+      'writerside.instance.id-exists' => l10n.errorWritersideInstanceIdExists(
+        value('id'),
+      ),
+      'writerside.instance.tree-exists' =>
+        l10n.errorWritersideInstanceTreeExists(value('path')),
+      'writerside.instance.import-source-missing' =>
+        l10n.errorWritersideInstanceImportSourceMissing(value('path')),
+      'writerside.instance.import-selection-required' =>
+        l10n.errorWritersideInstanceImportSelectionRequired,
+      'writerside.instance.import-file-invalid' =>
+        l10n.errorWritersideInstanceImportFileInvalid(value('path')),
+      'writerside.instance.import-target-exists' =>
+        l10n.errorWritersideInstanceImportTargetExists(value('path')),
+      'writerside.instance.files-changed' =>
+        l10n.errorWritersideInstanceFilesChanged,
+      'writerside.instance.rollback-failed' =>
+        l10n.errorWritersideInstanceRollbackFailed(value('paths')),
+      'writerside.instance.library-cannot-import' =>
+        l10n.errorWritersideInstanceLibraryImport,
+      'writerside.instance.web-path-invalid' =>
+        l10n.errorWritersideInstanceWebPathInvalid,
+      'writerside.instance.build-profiles-invalid' ||
+      'writerside.instance.tree-invalid' ||
+      'writerside.instance.config-invalid' =>
+        l10n.errorWritersideInstanceConfigurationInvalid,
+      'writerside.instance.temporary-file-failed' =>
+        l10n.errorWritersideInstanceTemporaryFile,
+      'writerside.instance.path-unsafe' => l10n.errorFileOperationOutsideRoot,
+      'writerside.instance.config-missing' ||
+      'writerside.instance.tree-missing' => l10n.errorPathDoesNotExist(
+        value('path'),
+      ),
+      'writerside.instance.not-found' ||
+      'writerside.instance.config-entry-missing' =>
+        l10n.errorWritersideInstanceTreeMissing,
       'writerside.topic.module-root-missing' =>
         l10n.errorWritersideModuleRootMissing(value('path')),
       'writerside.topic.module-not-open' => l10n.errorWritersideModuleNotOpen,

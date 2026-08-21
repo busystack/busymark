@@ -771,6 +771,11 @@ void main() {
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.files')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.toc')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.git')));
+    expect(singleMarkdownClause, isNot(contains('_SidebarTab.gitFileHistory')));
+    expect(
+      singleMarkdownClause,
+      isNot(contains('_SidebarTab.gitProjectHistory')),
+    );
     expect(
       workspace,
       contains('showTabMenu: !widget.searchState.active && tabs.length > 1'),
@@ -896,8 +901,11 @@ void main() {
       ),
     );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
-    expect(workspace, contains('BusyMarkSidebarShortcutActivators.history'));
-    expect(workspace, contains('LogicalKeyboardKey.numpad5'));
+    expect(
+      workspace,
+      isNot(contains('BusyMarkSidebarShortcutActivators.history')),
+    );
+    expect(workspace, isNot(contains('LogicalKeyboardKey.numpad5')));
     expect(
       workspace,
       contains('_SidebarTab.files => BusyMarkGlyphs.documentOpen'),
@@ -907,17 +915,9 @@ void main() {
       contains('_SidebarTab.toc => BusyMarkGlyphs.orderedList'),
     );
     expect(workspace, contains('_SidebarTab.outline => BusyMarkGlyphs.indent'));
-    expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.checklist'));
-    expect(
-      workspace,
-      contains('_SidebarTab.gitHistory => BusyMarkGlyphs.history'),
-    );
-    expect(
-      workspace,
-      contains(
-        '_SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history',
-      ),
-    );
+    expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.branch'));
+    expect(workspace, isNot(contains('_SidebarTab.gitFileHistory')));
+    expect(workspace, isNot(contains('_SidebarTab.gitProjectHistory')));
     expect(workspace, contains('checked: tab == selectedTab'));
     expect(workspace, contains('trailingCheck: true'));
     expect(workspace, isNot(contains('SegmentedButton<int>')));
@@ -988,7 +988,7 @@ void main() {
     expect(popupItem, isNot(contains('InkWell(')));
   });
 
-  test('Git branch actions use the shared workspace-header popup', () {
+  test('Git actions use the shared workspace-header popup', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -999,20 +999,33 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(
       workspace,
-      contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>'),
+      contains('BusyMarkHeaderPopupMenuButton<_GitMenuAction>'),
     );
-    expect(workspace, contains('_loadWorkspaceBranchMenuItems'));
-    expect(workspace, contains('_sidebarBranchMenuItems'));
-    expect(workspace, contains('_performWorkspaceBranchAction'));
+    expect(workspace, contains('_loadWorkspaceGitMenuItems'));
+    expect(workspace, contains('_sidebarGitMenuItems'));
+    expect(workspace, contains('_performWorkspaceGitAction'));
     expect(workspace, contains('controller.loadBranches()'));
+    expect(workspace, contains('_SelectGitViewMenuAction(GitView.changes)'));
+    expect(
+      workspace,
+      contains('_SelectGitViewMenuAction(GitView.projectHistory)'),
+    );
+    expect(
+      workspace,
+      contains('_SelectGitViewMenuAction(GitView.fileHistory)'),
+    );
+    expect(workspace, contains('checked: selectedView == GitView.changes'));
+    expect(workspace, contains('trailingCheck: true'));
     expect(workspace, contains('label: context.l10n.gitNewBranch'));
+    expect(workspace, contains('label: context.l10n.gitFetch'));
     expect(workspace, contains('label: context.l10n.gitPull'));
     expect(workspace, contains('label: context.l10n.gitPush'));
+    expect(workspace, contains('value: const _FetchBranchMenuAction()'));
     expect(workspace, contains('value: const _PullBranchMenuAction()'));
     expect(workspace, contains('value: const _PushBranchMenuAction()'));
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
-    expect(workspace, contains('tooltip: context.l10n.gitBranchActions'));
+    expect(workspace, contains('tooltip: context.l10n.gitActions'));
     expect(workspace, contains("ValueKey('workspace-sidebar-branch-menu')"));
     expect(workspace, isNot(contains('_showWorkspaceBranchMenu')));
     expect(workspace, isNot(contains('_showSidebarBranchMenu')));
@@ -1040,7 +1053,14 @@ void main() {
       contains('widget.searchState.active ? null : selectedTab'),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
-    expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));
+    expect(
+      workspace,
+      isNot(contains('selectedTab == _SidebarTab.gitFileHistory')),
+    );
+    expect(
+      workspace,
+      isNot(contains('selectedTab == _SidebarTab.gitProjectHistory')),
+    );
     expect(workspace, contains('Future<void> _showWorkspacePathMenu'));
     expect(
       workspace,
@@ -1133,9 +1153,13 @@ void main() {
       contains('YaruCheckbox('),
     );
     expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
-    expect(gitChanges, contains('context.l10n.gitCommitSelectedFiles'));
+    expect(gitChanges, contains('context.l10n.gitRemoveFromCommit'));
+    expect(gitChanges, contains('context.l10n.gitStagedFileCount'));
+    expect(gitChanges, contains('context.l10n.gitUnsavedChangesBanner'));
+    expect(gitChanges, contains('stagedFiles: snapshot.stagedFiles'));
+    expect(gitChanges, isNot(contains('gitCommitSelectedFiles')));
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
-    expect(gitChanges, contains('busyMarkVcsFileColorForGitStatus(file)'));
+    expect(gitChanges, contains('busyMarkVcsFileColorForChangeStatus(status)'));
     expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
     expect(gitChanges, contains('BusyMarkPushButton.suggested('));
     expect(gitChanges, isNot(contains('BusyMarkDialogButton(')));
@@ -1147,8 +1171,6 @@ void main() {
     expect(gitChanges, isNot(contains('context.l10n.git${'Not'}Included')));
     expect(gitChanges, isNot(contains('_FileAction.${'include'}')));
     expect(gitChanges, isNot(contains('_FileAction.${'exclude'}')));
-    expect(gitChanges, isNot(contains('context.l10n.gitStage')));
-    expect(gitChanges, isNot(contains('context.l10n.gitUnstage')));
     expect(gitChanges, isNot(contains('FilledButton.icon')));
     expect(gitChanges, isNot(contains('showDialog<void>')));
     expect(gitChanges, isNot(contains('GitCommitDialog')));
@@ -1383,9 +1405,9 @@ void main() {
     expect(workspace, contains('label: context.l10n.copyPath'));
     expect(workspace, contains('label: context.l10n.openInFiles'));
     expect(workspace, contains('_FileTreeAction.openInFiles'));
-    expect(workspace, contains('class _FileHistorySidebar'));
-    expect(workspace, contains('_fileHistoryFile'));
-    expect(workspace, contains('onBack: _closeFileHistory'));
+    expect(workspace, isNot(contains('class _FileHistorySidebar')));
+    expect(workspace, isNot(contains('_fileHistoryFile')));
+    expect(workspace, isNot(contains('onBack: _closeFileHistory')));
     expect(workspace, contains('label: context.l10n.fileHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));
@@ -1406,10 +1428,7 @@ void main() {
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));
     expect(workspace, contains('label: context.l10n.newChildTopic'));
-    expect(
-      workspace,
-      isNot(contains('_selectTab(_SidebarTab.gitHistory, tabs)')),
-    );
+    expect(workspace, contains('_SidebarTab.git,'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
     expect(workspace, isNot(contains('title: file.relativePath')));
@@ -1568,7 +1587,7 @@ void main() {
     );
     expect(
       settings,
-      contains('documentViewMode: DocumentViewModePreference.split'),
+      contains('documentViewMode: DocumentViewModePreference.editor'),
     );
     expect(settings, contains('Future<void> setDocumentViewMode'));
     expect(workspace, contains('final editorVisible = widget.viewMode =='));
@@ -1623,7 +1642,6 @@ void main() {
       'context.l10n.toggleTaskChecked',
       'context.l10n.indentListItem',
       'context.l10n.outdentListItem',
-      'context.l10n.codeBlockLanguage',
       'context.l10n.inlineImage',
       'context.l10n.table',
       'context.l10n.hardLineBreak',
@@ -1632,20 +1650,28 @@ void main() {
     }
     for (final shortcut in [
       'BusyMarkEditorShortcutLabels.textStyle',
-      'BusyMarkEditorShortcutLabels.toggleTask',
       'BusyMarkEditorShortcutLabels.indent',
       'BusyMarkEditorShortcutLabels.outdent',
       'BusyMarkEditorShortcutLabels.blockquote',
       'BusyMarkEditorShortcutLabels.codeBlock',
-      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
       'BusyMarkEditorShortcutLabels.image',
-      'BusyMarkEditorShortcutLabels.inlineImage',
-      'BusyMarkEditorShortcutLabels.table',
-      'BusyMarkEditorShortcutLabels.thematicBreak',
       'BusyMarkEditorShortcutLabels.hardLineBreak',
     ]) {
       expect(toolbar, contains(shortcut));
     }
+    for (final shortcut in [
+      'BusyMarkEditorShortcutLabels.toggleTask',
+      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
+      'BusyMarkEditorShortcutLabels.inlineImage',
+      'BusyMarkEditorShortcutLabels.table',
+      'BusyMarkEditorShortcutLabels.htmlBlock',
+      'BusyMarkEditorShortcutLabels.thematicBreak',
+    ]) {
+      expect(toolbar, isNot(contains(shortcut)));
+    }
+    expect(toolbar, isNot(contains('context.l10n.codeBlockLanguage')));
+    expect(editor, contains('BusyMarkEditorShortcutAction.codeBlockLanguage'));
+    expect(editor, contains('_applyCodeLanguageCommand()'));
     expect(commands, contains('heading4'));
     expect(commands, contains('heading5'));
     expect(commands, contains('heading6'));

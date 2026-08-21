@@ -12,11 +12,15 @@ import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'writerside_model.dart';
 import 'writerside_parsers.dart';
+import 'writerside_tree_resolver.dart';
 
 class WritersideModuleService {
   const WritersideModuleService({
     this.configParser = const WritersideConfigParser(),
+    this.buildProfilesParser = const WritersideBuildProfilesParser(),
+    this.instanceGroupsParser = const WritersideInstanceGroupsParser(),
     this.treeParser = const WritersideTreeParser(),
+    this.treeResolver = const WritersideTreeResolver(),
     this.topicParser = const WritersideTopicParser(),
     this.variablesParser = const WritersideVariablesParser(),
     this.categoriesParser = const WritersideCategoriesParser(),
@@ -24,7 +28,10 @@ class WritersideModuleService {
   });
 
   final WritersideConfigParser configParser;
+  final WritersideBuildProfilesParser buildProfilesParser;
+  final WritersideInstanceGroupsParser instanceGroupsParser;
   final WritersideTreeParser treeParser;
+  final WritersideTreeResolver treeResolver;
   final WritersideTopicParser topicParser;
   final WritersideVariablesParser variablesParser;
   final WritersideCategoriesParser categoriesParser;
@@ -169,7 +176,7 @@ class WritersideModuleService {
       kind: 'categories',
       code: 'writerside.config.missing-categories-file',
     );
-    await _validateOptionalConfiguredFile(
+    final instanceGroupsResolution = await _validateOptionalConfiguredFile(
       diagnostics,
       anchor,
       config.instanceGroupsFile,
@@ -197,8 +204,52 @@ class WritersideModuleService {
       allowRoot: true,
     );
 
-    final instances = <WritersideInstance>[];
-    for (final source in config.instanceSources) {
+    WritersideBuildProfilesConfig? buildProfiles;
+    final buildProfilesResolution = await _resolveConfiguredPath(
+      diagnostics,
+      anchor,
+      p.join(config.buildConfigDir, 'buildprofiles.xml'),
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'buildProfiles',
+      allowRoot: false,
+    );
+    if (buildProfilesResolution?.type == FileSystemEntityType.file) {
+      final buildProfilesSource = await _readFileForParsing(
+        File(buildProfilesResolution!.path),
+        diagnostics,
+        effectiveScanOptions,
+        readFailureCode: 'workspace.file.read-failed',
+      );
+      if (buildProfilesSource != null) {
+        buildProfiles = buildProfilesParser.parse(
+          buildProfilesResolution.path,
+          buildProfilesSource,
+        );
+        diagnostics.addAll(buildProfiles.diagnostics);
+      }
+    }
+
+    WritersideInstanceGroupsConfig? instanceGroups;
+    if (instanceGroupsResolution?.type == FileSystemEntityType.file) {
+      final groupsSource = await _readFileForParsing(
+        File(instanceGroupsResolution!.path),
+        diagnostics,
+        effectiveScanOptions,
+        readFailureCode: 'workspace.file.read-failed',
+      );
+      if (groupsSource != null) {
+        instanceGroups = instanceGroupsParser.parse(
+          instanceGroupsResolution.path,
+          groupsSource,
+        );
+        diagnostics.addAll(instanceGroups.diagnostics);
+      }
+    }
+
+    var instances = <WritersideInstance>[];
+    for (final configuredInstance in config.instances) {
+      final source = configuredInstance.src;
       final resolution = await _resolveConfiguredPath(
         diagnostics,
         anchor,
@@ -233,10 +284,38 @@ class WritersideModuleService {
       if (treeSource == null) {
         continue;
       }
-      final instance = treeParser.parse(treePath, treeSource);
-      diagnostics.addAll(instance.diagnostics);
-      instances.add(instance);
+      final parsedInstance = treeParser.parse(treePath, treeSource);
+      diagnostics.addAll(parsedInstance.diagnostics);
+      instances.add(
+        WritersideInstance(
+          id: parsedInstance.id,
+          name: parsedInstance.name,
+          sourceTreePath: parsedInstance.sourceTreePath,
+          startPage: parsedInstance.startPage,
+          status: parsedInstance.status,
+          isLibrary: parsedInstance.isLibrary,
+          tocRoots: parsedInstance.tocRoots,
+          diagnostics: parsedInstance.diagnostics,
+          version: configuredInstance.version,
+          globalVersion: config.version,
+          webPath: configuredInstance.webPath,
+          keymapsMode: configuredInstance.keymapsMode,
+          allowSearchEngineIndexing:
+              buildProfiles?.allowsSearchEngineIndexing(parsedInstance.id) ??
+              false,
+          offlineArtifact:
+              buildProfiles?.createsOfflineArtifact(parsedInstance.id) ?? false,
+          treeEntries: parsedInstance.treeEntries,
+        ),
+      );
     }
+    final treeResolution = treeResolver.resolve(
+      moduleRoot: root,
+      instances: instances,
+      instanceGroups: instanceGroups,
+    );
+    instances = treeResolution.instances;
+    diagnostics.addAll(treeResolution.diagnostics);
 
     final topics = <WritersideTopic>[];
     final unparsedTopics = _UnparsedTopicIndex();
@@ -359,6 +438,8 @@ class WritersideModuleService {
       categories: categories,
       diagnostics: const [],
       validatedImageDirs: validatedImageDirs,
+      buildProfiles: buildProfiles,
+      instanceGroups: instanceGroups,
     );
     diagnostics.addAll(
       _resolve(
@@ -378,6 +459,8 @@ class WritersideModuleService {
       categories: module.categories,
       diagnostics: sortDiagnostics(diagnostics),
       validatedImageDirs: module.validatedImageDirs,
+      buildProfiles: module.buildProfiles,
+      instanceGroups: module.instanceGroups,
     );
   }
 
@@ -749,7 +832,38 @@ class WritersideModuleService {
         ),
       );
     }
+    final instanceIds = <String, WritersideInstance>{};
     for (final instance in module.instances) {
+      final previous = instanceIds[instance.id];
+      if (previous == null) {
+        instanceIds[instance.id] = instance;
+        continue;
+      }
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.tree.duplicate-instance-id',
+          severity: DiagnosticSeverity.error,
+          filePath: instance.sourceTreePath,
+          args: {'id': instance.id},
+          relatedSpans: [SourceSpan.entireFile(previous.sourceTreePath, '')],
+        ),
+      );
+    }
+    for (final instance in module.instances) {
+      if (!instance.isLibrary &&
+          instance.startPage == null &&
+          instance.tocRoots.isEmpty &&
+          instance.navigationTocRoots
+              .expand((node) => node.flatten())
+              .any((node) => node.topicReference != null)) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.tree.missing-start-page',
+            severity: DiagnosticSeverity.error,
+            filePath: instance.sourceTreePath,
+          ),
+        );
+      }
       if (instance.startPage != null) {
         final resolved = _resolveTopicReference(module, instance.startPage!);
         if (resolved.isMissing &&
@@ -771,9 +885,49 @@ class WritersideModuleService {
           );
         }
       }
-      for (final node in instance.tocRoots.expand((node) => node.flatten())) {
+      for (final node in instance.navigationTocRoots.expand(
+        (node) => node.flatten(),
+      )) {
+        final referencedInstanceId = node.referenceInstanceId;
+        if (node.referenceTopicFileName != null &&
+            referencedInstanceId != null &&
+            node.origin == null) {
+          final referencedInstance = instanceIds[referencedInstanceId];
+          if (referencedInstance == null) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.tree.missing-reference-instance',
+                severity: DiagnosticSeverity.error,
+                filePath: instance.sourceTreePath,
+                args: {'instance': referencedInstanceId},
+                sourceSpan: node.span,
+              ),
+            );
+          } else {
+            final resolvedReference = _resolveTopicReference(
+              module,
+              node.referenceTopicFileName!,
+            );
+            final referencedFileName = resolvedReference.topic?.fileName;
+            if (referencedFileName == null ||
+                !referencedInstance.topicFileSet.contains(referencedFileName)) {
+              diagnostics.add(
+                Diagnostic(
+                  code: 'writerside.tree.missing-reference-topic',
+                  severity: DiagnosticSeverity.error,
+                  filePath: instance.sourceTreePath,
+                  args: {
+                    'topic': node.referenceTopicFileName!,
+                    'instance': referencedInstanceId,
+                  },
+                  sourceSpan: node.span,
+                ),
+              );
+            }
+          }
+        }
         final topic = node.topicFileName;
-        if (topic != null) {
+        if (topic != null && node.origin == null) {
           final resolved = _resolveTopicReference(module, topic);
           if (resolved.isMissing && !unparsedTopics.matches(topic)) {
             diagnostics.add(

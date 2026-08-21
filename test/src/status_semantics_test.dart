@@ -90,6 +90,8 @@ void main() {
     const cases = {
       GitFailureCode.commandFailed: BusyMarkStatusKind.error,
       GitFailureCode.dirtyWorkspace: BusyMarkStatusKind.warning,
+      GitFailureCode.stagedChanges: BusyMarkStatusKind.warning,
+      GitFailureCode.detachedHead: BusyMarkStatusKind.warning,
       GitFailureCode.noUpstream: BusyMarkStatusKind.information,
     };
 

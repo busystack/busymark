@@ -49,6 +49,8 @@ enum GitFailureCode {
   noUpstream,
   multipleRemotes,
   dirtyWorkspace,
+  stagedChanges,
+  detachedHead,
   diverged,
   authentication,
   network,
@@ -56,7 +58,48 @@ enum GitFailureCode {
   commandFailed,
 }
 
-enum GitView { changes, history }
+enum GitResetMode { soft, mixed, hard, keep }
+
+enum GitView { changes, fileHistory, projectHistory }
+
+enum GitComparisonType {
+  staged,
+  unstaged,
+  untracked,
+  commitChange,
+  commitVersusCurrent,
+}
+
+class GitChangeSelection {
+  const GitChangeSelection({
+    required this.path,
+    required this.comparison,
+    this.originalRepoRelativePath,
+  });
+
+  final String path;
+  final GitComparisonType comparison;
+  final String? originalRepoRelativePath;
+
+  List<String> get repoRelativePaths {
+    final originalPath = originalRepoRelativePath;
+    return [
+      if (originalPath != null && originalPath != path) originalPath,
+      path,
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GitChangeSelection &&
+        other.path == path &&
+        other.comparison == comparison &&
+        other.originalRepoRelativePath == originalRepoRelativePath;
+  }
+
+  @override
+  int get hashCode => Object.hash(path, comparison, originalRepoRelativePath);
+}
 
 class GitAvailability {
   const GitAvailability({
@@ -180,6 +223,21 @@ class GitFileStatus {
   final bool copied;
   final bool conflicted;
   final bool ignored;
+
+  bool get hasStagedRename => indexStatus == GitFileChangeStatus.renamed;
+
+  bool get hasUnstagedRename => workTreeStatus == GitFileChangeStatus.renamed;
+
+  bool get hasWorkingTreeFile {
+    if (untracked) {
+      return true;
+    }
+    if (workTreeStatus == GitFileChangeStatus.deleted) {
+      return false;
+    }
+    return indexStatus != GitFileChangeStatus.deleted ||
+        workTreeStatus != GitFileChangeStatus.unmodified;
+  }
 }
 
 class GitStatusSnapshot {
@@ -224,6 +282,26 @@ class GitCommitSummary {
   final List<String> parentHashes;
 }
 
+class GitFileHistoryEntry {
+  const GitFileHistoryEntry({
+    required this.commit,
+    required this.pathAtCommit,
+    this.pathInParent,
+    required this.status,
+  });
+
+  final GitCommitSummary commit;
+  final String pathAtCommit;
+  final String? pathInParent;
+  final GitDiffFileStatus status;
+
+  String? get oldPath =>
+      status == GitDiffFileStatus.added ? null : (pathInParent ?? pathAtCommit);
+
+  String? get newPath =>
+      status == GitDiffFileStatus.deleted ? null : pathAtCommit;
+}
+
 class GitCommitDetails {
   const GitCommitDetails({
     required this.summary,
@@ -256,6 +334,24 @@ class GitDiff {
   final Map<String, String> fileSnapshots;
 }
 
+class GitHistoricalFileComparison {
+  const GitHistoricalFileComparison({
+    required this.oldPath,
+    required this.newPath,
+    required this.oldContent,
+    required this.newContent,
+    required this.diff,
+  });
+
+  final String? oldPath;
+  final String? newPath;
+  final String? oldContent;
+  final String? newContent;
+  final GitDiff diff;
+
+  bool get binary => oldContent == null || newContent == null;
+}
+
 class GitDiffFile {
   const GitDiffFile({
     this.oldPath,
@@ -265,6 +361,7 @@ class GitDiffFile {
     required this.binary,
     required this.additions,
     required this.deletions,
+    this.binarySize,
   });
 
   final String? oldPath;
@@ -274,6 +371,7 @@ class GitDiffFile {
   final bool binary;
   final int additions;
   final int deletions;
+  final int? binarySize;
 
   String get displayPath => newPath ?? oldPath ?? '';
 
@@ -288,6 +386,7 @@ class GitDiffFile {
     bool? binary,
     int? additions,
     int? deletions,
+    Object? binarySize = _unset,
   }) {
     return GitDiffFile(
       oldPath: oldPath ?? this.oldPath,
@@ -297,6 +396,9 @@ class GitDiffFile {
       binary: binary ?? this.binary,
       additions: additions ?? this.additions,
       deletions: deletions ?? this.deletions,
+      binarySize: identical(binarySize, _unset)
+          ? this.binarySize
+          : binarySize as int?,
     );
   }
 }

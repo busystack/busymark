@@ -499,38 +499,34 @@ void main() {
     },
   );
 
-  test(
-    'rename preserves topic and instance tree file modes',
-    () async {
-      final fixture = await _fixture(
-        trees: {
-          'guide.tree': '''
+  test('rename preserves topic and instance tree file modes', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
 <instance-profile id="guide" name="Guide" start-page="guide.md">
   <toc-element topic="guide.md"/>
 </instance-profile>
 ''',
-        },
-        topics: {'guide.md': '# Guide\n'},
-      );
-      final topic = _topic(fixture.module, 'guide.md');
-      final treeFile = File(p.join(fixture.root.path, 'guide.tree'));
-      final treeChmod = await Process.run('chmod', ['640', treeFile.path]);
-      expect(treeChmod.exitCode, 0, reason: '${treeChmod.stderr}');
-      final topicChmod = await Process.run('chmod', ['600', topic.filePath]);
-      expect(topicChmod.exitCode, 0, reason: '${topicChmod.stderr}');
+      },
+      topics: {'guide.md': '# Guide\n'},
+    );
+    final topic = _topic(fixture.module, 'guide.md');
+    final treeFile = File(p.join(fixture.root.path, 'guide.tree'));
+    final treeChmod = await Process.run('chmod', ['640', treeFile.path]);
+    expect(treeChmod.exitCode, 0, reason: '${treeChmod.stderr}');
+    final topicChmod = await Process.run('chmod', ['600', topic.filePath]);
+    expect(topicChmod.exitCode, 0, reason: '${topicChmod.stderr}');
 
-      await editor.rename(
-        module: fixture.module,
-        topic: topic,
-        newFileName: 'renamed.md',
-      );
+    await editor.rename(
+      module: fixture.module,
+      topic: topic,
+      newFileName: 'renamed.md',
+    );
 
-      expect((await treeFile.stat()).mode & 0xfff, 0x1a0);
-      final renamed = File(p.join(fixture.root.path, 'topics', 'renamed.md'));
-      expect((await renamed.stat()).mode & 0xfff, 0x180);
-    },
-    skip: Platform.isWindows ? 'POSIX file modes only.' : false,
-  );
+    expect((await treeFile.stat()).mode & 0xfff, 0x1a0);
+    final renamed = File(p.join(fixture.root.path, 'topics', 'renamed.md'));
+    expect((await renamed.stat()).mode & 0xfff, 0x180);
+  }, skip: Platform.isWindows ? 'POSIX file modes only.' : false);
 
   test(
     'delete removes every TOC entry and promotes children in place',

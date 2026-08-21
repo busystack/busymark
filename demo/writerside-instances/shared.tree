@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+<instance-profile id="shared" name="Shared TOC" is-library="true">
+  <snippet id="setup">
+    <toc-element topic="install.md"/>
+    <toc-element topic="desktop-settings.md" filter="desktop"/>
+    <toc-element topic="server-settings.md" filter="server"/>
+  </snippet>
+</instance-profile>

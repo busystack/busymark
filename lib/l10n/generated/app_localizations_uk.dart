@@ -173,10 +173,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cut => 'Вирізати';
 
   @override
-  String get promoteHeading => 'Підвищити рівень заголовка';
+  String get promoteSection => 'Підвищити рівень розділу';
 
   @override
-  String get demoteHeading => 'Знизити рівень заголовка';
+  String get demoteSection => 'Знизити рівень розділу';
 
   @override
   String get moveSectionUp => 'Перемістити розділ вище';
@@ -253,7 +253,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pasteWithoutFormatting => 'Вставити без форматування';
 
   @override
-  String get preview => 'Попередній перегляд';
+  String get reading => 'Режим читання';
 
   @override
   String get recent => 'Останні';
@@ -394,11 +394,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutGroupGeneral => 'Загальні';
 
   @override
-  String get shortcutNewDocument => 'Новий документ';
+  String get shortcutNewDocument => 'Створити';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Створити новий незбережений документ Markdown';
+      'Створити файл Markdown або проєкт Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -1131,7 +1131,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Вилучити «$topic» із вибраного екземпляра довідки. Файл теми буде збережено.';
+    return 'Вилучити «$topic» із вибраного екземпляра. Файл теми буде збережено.';
   }
 
   @override
@@ -1349,7 +1349,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Великий файл: підсвічування та згортання призупинено';
 
   @override
-  String get noPreview => 'Немає попереднього перегляду';
+  String get nothingToRead => 'Немає вмісту для читання';
 
   @override
   String get note => 'Примітка';
@@ -1568,7 +1568,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'У модулі Writerside немає дерева екземпляра довідки.';
+      'У модулі Writerside немає дерева екземпляра.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2058,16 +2058,25 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitChanges => 'Зміни';
 
   @override
+  String get gitStaged => 'Індексовані';
+
+  @override
+  String get gitUnstaged => 'Неіндексовані';
+
+  @override
   String get gitHistory => 'Історія';
 
   @override
   String get gitBranches => 'Гілки';
 
   @override
-  String get gitBranchActions => 'Дії з гілками';
+  String get gitActions => 'Дії Git';
 
   @override
   String get gitPull => 'Pull';
+
+  @override
+  String get gitFetch => 'Отримати';
 
   @override
   String get gitPush => 'Push';
@@ -2076,10 +2085,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitCommit => 'Зафіксувати';
 
   @override
-  String get gitSelectForCommit => 'Вибрати для коміту';
+  String get gitSelectForCommit => 'Додати файл до індексу';
 
   @override
-  String get gitRemoveFromCommit => 'Вилучити з коміту';
+  String get gitRemoveFromCommit => 'Вилучити файл з індексу';
 
   @override
   String get gitDiscard => 'Відкинути';
@@ -2101,7 +2110,21 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Перед створенням коміту виберіть принаймні один файл.';
+      'Перед створенням коміту додайте до індексу принаймні один файл.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count індексованих файлів',
+      one: '1 індексований файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Поза робочим простором';
 
   @override
   String get gitCommitMessageRequired => 'Введіть повідомлення коміту.';
@@ -2110,7 +2133,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitCreateBranch => 'Створити гілку';
 
   @override
-  String get gitNewBranch => '+ Нова гілка';
+  String get gitNewBranch => 'Нова гілка';
 
   @override
   String get gitBranchName => 'Назва гілки';
@@ -2133,6 +2156,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Двійковий файл. BusyMark не відображає двійкові патчі.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Двійковий файл ($size байтів). BusyMark не відображає двійкові патчі.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2208,6 +2236,76 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitFileHistory => 'Поточний файл';
 
   @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Для історії файлу потрібен відкритий файл Markdown.';
+
+  @override
+  String get gitLoadMore => 'Завантажити ще';
+
+  @override
+  String get gitChangesInCommit => 'Зміни в цьому коміті';
+
+  @override
+  String get gitCompareWithCurrent => 'Порівняти з поточною версією';
+
+  @override
+  String get gitRestoreVersion => 'Відновити цю версію';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Відновити цю версію файлу?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.';
+
+  @override
+  String get gitCommitActions => 'Дії з комітом';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Скинути поточну гілку сюди…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Скинути $branch на $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Гілку $branch буде переміщено на коміт $commit. Виберіть, як Git має оновити індекс і робоче дерево.';
+  }
+
+  @override
+  String get gitReset => 'Скинути';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Перемістити лише гілку. Залишити індекс і робоче дерево без змін; відмінності від вибраного коміту залишаться індексованими.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Перемістити гілку й скинути індекс. Залишити робоче дерево без змін, а відмінності — неіндексованими.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Перемістити гілку й скинути індекс і робоче дерево. Відстежувані зміни буде відкинуто; не відстежувані файли, що заважають операції, може бути видалено.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Перемістити гілку й скинути відстежувані файли, зберігши локальні зміни. Git перерве операцію, якщо ці зміни конфліктують зі скиданням.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2271,6 +2369,18 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get gitErrorDirtyWorkspace =>
       'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
+
+  @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Збережіть або відкиньте зміни в редакторі BusyMark перед скиданням поточної гілки.';
+
+  @override
+  String get gitErrorRestoreStagedFile =>
+      'Приберіть файл з індексу перед відновленням попередньої версії.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Перейдіть на гілку перед її скиданням.';
 
   @override
   String get gitErrorDiverged =>
@@ -2474,6 +2584,795 @@ class AppLocalizationsUk extends AppLocalizations {
       'BusyMark не вдалося експортувати цей документ як PDF.';
 
   @override
+  String get visualizationRendering => 'Візуалізація…';
+
+  @override
+  String get visualizationStale =>
+      'Відображається останній коректний результат';
+
+  @override
+  String get visualizationShowSource => 'Показати вихідний код';
+
+  @override
+  String get visualizationShowRender => 'Показати результат';
+
+  @override
+  String get visualizationFitWidth => 'Припасувати до ширини';
+
+  @override
+  String get visualizationSaveImage => 'Зберегти зображення';
+
+  @override
+  String get visualizationCopyImage => 'Копіювати зображення';
+
+  @override
+  String get visualizationImageCopied => 'Зображення скопійовано';
+
+  @override
+  String get visualizationOpenApiReference => 'Відкрити довідник API';
+
+  @override
+  String get visualizationValid => 'Коректно';
+
+  @override
+  String get visualizationInvalid => 'Некоректно';
+
+  @override
+  String get visualizationServers => 'Сервери';
+
+  @override
+  String get visualizationPaths => 'Шляхи';
+
+  @override
+  String get visualizationOperations => 'Операції';
+
+  @override
+  String get visualizationTags => 'Теги';
+
+  @override
+  String get visualizationNoOperations => 'Відповідних операцій не знайдено';
+
+  @override
+  String get visualizationSearchOperations => 'Пошук операцій';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Не вдалося відобразити цю візуалізацію.';
+
+  @override
+  String get visualizationRetry => 'Повторити';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'Файл $fileName збережено';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
-      'Експортувати активний документ Markdown як PDF.';
+      'Експортувати активний документ або модуль Writerside як PDF.';
+
+  @override
+  String get instances => 'Екземпляри';
+
+  @override
+  String get newInstance => 'Новий екземпляр';
+
+  @override
+  String get newTocLibrary => 'Нова бібліотека змісту';
+
+  @override
+  String get editInstance => 'Змінити екземпляр';
+
+  @override
+  String get openTocFile => 'Відкрити файл змісту';
+
+  @override
+  String get createInstance => 'Створити екземпляр';
+
+  @override
+  String get createTocLibrary => 'Створити бібліотеку змісту';
+
+  @override
+  String get instanceContent => 'Вміст';
+
+  @override
+  String get instanceContentSource => 'Створити з';
+
+  @override
+  String get emptyInstance => 'Порожній екземпляр';
+
+  @override
+  String get markdownFiles => 'Локальні файли Markdown';
+
+  @override
+  String get chooseMarkdownFolder => 'Вибрати папку Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Виберіть папку, що містить файли Markdown.';
+
+  @override
+  String get instanceAppearance => 'Вигляд';
+
+  @override
+  String get instanceColor => 'Колір піктограми';
+
+  @override
+  String get instanceVersion => 'Версія';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Коли це поле порожнє, використовується версія проєкту $version.';
+  }
+
+  @override
+  String get instanceWebPath => 'Вебшлях';
+
+  @override
+  String get instanceStatus => 'Стан';
+
+  @override
+  String get instanceStatusRelease => 'Випуск';
+
+  @override
+  String get instanceStatusEap => 'Ранній доступ';
+
+  @override
+  String get instanceStatusDeprecated => 'Застарілий';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'Дозволити індексацію пошуковими системами';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Дозволити зовнішнім пошуковим системам індексувати цей результат.';
+
+  @override
+  String get offlineArtifact => 'Пакунок для автономної роботи';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Додати ресурси, щоб зібрана документація була самодостатньою.';
+
+  @override
+  String get instanceOutputSettings => 'Налаштування результату';
+
+  @override
+  String get markdownImportSource => 'Джерело Markdown';
+
+  @override
+  String get markdownImportFiles => 'Файли Markdown';
+
+  @override
+  String get selectNone => 'Зняти всі позначки';
+
+  @override
+  String markdownFilesFound(int count) {
+    return 'Знайдено файлів Markdown: $count';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'У цьому каталозі файлів Markdown не знайдено.';
+
+  @override
+  String get copyReferencedMedia => 'Копіювати використані медіафайли';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Копіювати локальні зображення й відео, на які посилаються вибрані файли, зі збереженням відносних шляхів.';
+
+  @override
+  String get instanceIdRenameWarningTitle =>
+      'Перейменувати ідентифікатор екземпляра?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark перейменує файл .tree й оновить посилання проєкту Writerside з «$oldId» на «$newId». Скрипти публікації не змінюються — їх потрібно оновити окремо.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'Перейменувати й оновити посилання';
+
+  @override
+  String get tocLibraryDescription =>
+      'Бібліотека змісту зберігає повторно використовувані розділи й не створює власного результату.';
+
+  @override
+  String get defaultTocLibraryName => 'Спільний зміст';
+
+  @override
+  String get instanceColorAutomatic => 'Автоматично';
+
+  @override
+  String get instanceColorBlue => 'Синій';
+
+  @override
+  String get instanceColorGreen => 'Зелений';
+
+  @override
+  String get instanceColorOrange => 'Помаранчевий';
+
+  @override
+  String get instanceColorPurple => 'Фіолетовий';
+
+  @override
+  String get instanceColorRed => 'Червоний';
+
+  @override
+  String get instanceColorTeal => 'Бірюзовий';
+
+  @override
+  String get instanceColorYellow => 'Жовтий';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'Введіть назву екземпляра.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'Екземпляр з ідентифікатором «$id» уже існує.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'Дерево екземпляра вже існує: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Каталог джерела Markdown не існує: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Виберіть принаймні один файл Markdown для імпорту.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'Це не придатний для читання файл Markdown усередині вибраного джерела: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Імпорт перезапише наявний файл проєкту: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Файли екземпляра змінилися на диску. Перегляньте їх і повторіть спробу.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark не вдалося повністю відкотити зміну екземпляра. Перегляньте ці файли, перш ніж продовжити: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Бібліотека змісту не може імпортувати теми Markdown.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Вебшлях має складатися з одного рядка.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Конфігурація екземпляра Writerside некоректна. Виправте її діагностичні повідомлення й повторіть спробу.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark не вдалося безпечно підготувати зміни екземпляра.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Невідомий стан екземпляра «$status». Використовуйте release, eap або deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'Ідентифікатор екземпляра «$id» використовується в кількох файлах дерева.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'Кореневим елементом buildprofiles.xml має бути <buildprofiles>.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'Значення $name «$value» має бути true або false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Елемент <build-profile> має вказувати ідентифікатор екземпляра.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Елемент дерева <include> має вказувати й from, і element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Елемент дерева <snippet> має вказувати id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Міжекземплярне посилання змісту має вказувати й ref, і in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Елемент змісту не може одночасно посилатися на кілька тем, посилань, адрес або перенаправлень.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Ідентифікатор елемента дерева «$id» оголошено кілька разів.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Кореневим елементом файлу груп екземплярів має бути <instance-groups>.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Група екземплярів має вказувати непорожній ідентифікатор і список екземплярів.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Ідентифікатор групи екземплярів «$id» оголошено кілька разів.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'Включення змісту «$source#$id» належить зовнішньому модулю «$origin» і не може бути розгорнуте в цій робочій області.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Елемент дерева «$id» відсутній у зареєстрованому дереві «$source».';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Включення дерева «$source#$id» створює цикл.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Умова екземпляра посилається на невідому групу «@$group».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Міжекземплярне посилання вказує на невідомий екземпляр «$instance».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Теми «$topic» немає у вказаному екземплярі «$instance».';
+  }
+
+  @override
+  String get download => 'Завантажити';
+
+  @override
+  String get exportWritersideAsPdf => 'Експорт Writerside у PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Виберіть екземпляр і параметри PDF. BusyMark використовує офіційний збирач Writerside від JetBrains.';
+
+  @override
+  String get writersidePdfContent => 'Вміст експорту';
+
+  @override
+  String get writersidePdfSettings => 'Налаштування PDF';
+
+  @override
+  String get writersidePdfConfigureHere => 'Налаштувати для цього експорту';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'Використати конфігурацію проєкту';
+
+  @override
+  String get writersidePdfConfigurationFile => 'Файл конфігурації PDF';
+
+  @override
+  String get writersidePdfPage => 'Сторінка';
+
+  @override
+  String get writersidePdfKeymap => 'Розкладка клавіш';
+
+  @override
+  String get writersidePdfNoKeymap => 'Без розкладки клавіш';
+
+  @override
+  String get writersidePdfTocTitle => 'Заголовок змісту';
+
+  @override
+  String get writersidePdfCover => 'Титульна сторінка';
+
+  @override
+  String get writersidePdfIncludeCover => 'Додати титульну сторінку';
+
+  @override
+  String get writersidePdfCoverTitle => 'Заголовок обкладинки';
+
+  @override
+  String get writersidePdfCoverDescription => 'Опис на обкладинці';
+
+  @override
+  String get writersidePdfCopyright => 'Авторські права';
+
+  @override
+  String get writersidePdfCoverLogo => 'Логотип на обкладинці';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Вибрати логотип для обкладинки';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Верхній і нижній колонтитули';
+
+  @override
+  String get writersidePdfHeader => 'Верхній колонтитул';
+
+  @override
+  String get writersidePdfFooter => 'Нижній колонтитул';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Ці значення зіставляють відкритий модуль зі структурою вихідних файлів збирача.';
+
+  @override
+  String get writersidePdfModuleName => 'Назва модуля';
+
+  @override
+  String get writersidePdfSourceRoot => 'Коренева папка вихідних файлів';
+
+  @override
+  String get writersidePdfChooseSourceRoot =>
+      'Вибрати кореневу папку вихідних файлів';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Версія збирача';
+
+  @override
+  String get writersidePdfAllowNetwork => 'Дозволити мережу під час збирання';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Початково вимкнено. Увімкніть лише тоді, коли проєкт навмисно потребує віддалених ресурсів збирання.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Введіть назву модуля.';
+
+  @override
+  String get writersidePdfSourceRootRequired =>
+      'Виберіть кореневу папку вихідних файлів.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Введіть припустиму версію збирача.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Потрібен збирач Writerside';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark використовує офіційний образ контейнера $image. Завантажити його зараз? Образ має великий розмір і зберігатиметься в Docker.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Завантаження збирача Writerside…';
+
+  @override
+  String get exportingWritersidePdf => 'Експорт PDF Writerside…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Для експорту Writerside у PDF потрібен Docker. Установіть і запустіть Docker, а потім повторіть спробу.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'Запитаний образ збирача Writerside недоступний.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Конфігурація PDF Writerside є неприпустимою.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Збирачу Writerside не вдалося створити PDF.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Збирач Writerside не створив припустимий PDF.';
+
+  @override
+  String get ai => 'ШІ';
+
+  @override
+  String get aiLocalOllama => 'Локальний Ollama';
+
+  @override
+  String get aiDisabled => 'Вимкнено';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.';
+
+  @override
+  String get aiProvider => 'Постачальник ШІ';
+
+  @override
+  String get aiOllamaEndpoint => 'Кінцева точка Ollama';
+
+  @override
+  String get aiOllamaModel => 'Модель Ollama';
+
+  @override
+  String get aiTestConnection => 'Перевірити підключення';
+
+  @override
+  String get aiTestingConnection => 'Перевірка…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Підключено. Знайдено встановлених моделей: $count.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama запущено, але встановлених моделей не знайдено.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark не вдалося перевірити генерування тексту за допомогою ШІ.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Увімкніть постачальника ШІ та перевірте модель у розділі «Налаштування → ШІ».';
+
+  @override
+  String get aiEditWithAi => 'Редагувати за допомогою ШІ';
+
+  @override
+  String get aiRefineWithAi => 'Покращити за допомогою ШІ';
+
+  @override
+  String get aiInstruction => 'Інструкція';
+
+  @override
+  String get aiChangeTarget => 'Що можна змінити';
+
+  @override
+  String get aiSharedContext => 'Контекст, що передається ШІ';
+
+  @override
+  String get aiTargetSelection => 'Вибраний вміст';
+
+  @override
+  String get aiTargetInsertAfterBlock => 'Вставити після поточного блоку';
+
+  @override
+  String get aiTargetCurrentBlock => 'Поточний блок';
+
+  @override
+  String get aiTargetCurrentSection => 'Поточний розділ';
+
+  @override
+  String get aiTargetCompleteDocument => 'Увесь документ';
+
+  @override
+  String get aiContextNone => 'Без контексту документа';
+
+  @override
+  String get aiContextSelection => 'Вибраний вміст';
+
+  @override
+  String get aiContextCurrentBlock => 'Поточний блок';
+
+  @override
+  String get aiContextCurrentSection => 'Поточний розділ';
+
+  @override
+  String get aiContextCompleteDocument => 'Увесь документ';
+
+  @override
+  String get aiGenerating => 'Створення пропозиції…';
+
+  @override
+  String get aiProposal => 'Пропозиція ШІ';
+
+  @override
+  String get aiGenerateProposal => 'Створити пропозицію';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Вибраний постачальник отримає $count символів із показаного контексту.';
+  }
+
+  @override
+  String get aiOriginal => 'Початковий текст';
+
+  @override
+  String get aiSuggested => 'Пропозиція';
+
+  @override
+  String get aiApplyProposal => 'Застосувати пропозицію';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return 'Вхідні токени: $input · вихідні токени: $output';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Індексовані зміни змінилися під час створення цього повідомлення коміту. Запустіть дію ще раз.';
+
+  @override
+  String get aiViewContext => 'Показати надісланий контекст';
+
+  @override
+  String get aiReviewExactContent => 'Переглянути точний вміст';
+
+  @override
+  String get aiContentToChange => 'Вміст для зміни';
+
+  @override
+  String get aiContentSentToAi => 'Вміст, що надсилається ШІ';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'ШІ вимкнено. BusyMark ніколи не надсилає вміст документа без явної дії з ШІ.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark надсилає лише контекст, показаний у діалозі перевірки, налаштованій локальній службі Ollama. Пропозиції ніколи не застосовуються без перевірки.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark надсилає лише контекст, показаний у діалозі перевірки, постачальнику $provider. Запити не зберігають стан, а пропозиції ніколи не застосовуються без перевірки.';
+  }
+
+  @override
+  String get aiApiKey => 'Ключ API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Ключ збережено в системному сховищі облікових даних';
+
+  @override
+  String get aiApiKeyEnterHint => 'Введіть ключ API постачальника';
+
+  @override
+  String get aiReplaceApiKey => 'Замінити ключ API';
+
+  @override
+  String get aiSaveApiKey => 'Безпечно зберегти ключ API';
+
+  @override
+  String get aiRemoveApiKey => 'Видалити збережений ключ API';
+
+  @override
+  String get aiCredentialSaved =>
+      'Ключ API збережено в системному сховищі облікових даних.';
+
+  @override
+  String get aiCredentialRemoved => 'Збережений ключ API видалено.';
+
+  @override
+  String get aiModelRouting => 'Вибір моделі';
+
+  @override
+  String get aiAutomaticRouting => 'Автоматично за завданням';
+
+  @override
+  String get aiFixedModelRouting => 'Використовувати вибрану модель';
+
+  @override
+  String get aiPreferredModel => 'Бажана модель';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests запитів · $input вхідних токенів · $output вихідних токенів';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Надіслати вміст постачальнику $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Увімкнути $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Надсилається лише вміст, показаний у кожному діалозі перевірки ШІ. Запити не зберігають стан, пропозиції потребують перевірки, а ключ API зберігається в системному сховищі облікових даних Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Спочатку підтвердьте передавання даних постачальнику $provider у розділі «Налаштування → ШІ».';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Генерування за допомогою $model перевірено. Доступно сумісних моделей: $count.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Виявлено холодний запуск локальної моделі.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Немає доступної сумісної моделі генерування тексту.';
+
+  @override
+  String get aiEnableProvider => 'Спочатку ввімкніть постачальника ШІ.';
+
+  @override
+  String get aiDraftCommitMessage => 'Створити чернетку повідомлення коміту';
+
+  @override
+  String get aiDrafting => 'Створення чернетки…';
+
+  @override
+  String get aiDraftWithAi => 'Створити чернетку за допомогою ШІ';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Створити/оновити зміст';
+
+  @override
+  String get markdownTocTitle => 'Зміст';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Зміст оновлено, записів: $count.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Додайте принаймні один заголовок розділу перед створенням змісту.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Маркери змісту BusyMark відсутні, повторюються або розташовані в неправильному порядку.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Після заголовка рівня $previousLevel іде рівень $level; перевірте вкладеність розділів.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Текст посилання порожній; укажіть доступну назву, що описує його призначення.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Перевірте, чи описує текст посилання «$text» його призначення в контексті.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.';
 }

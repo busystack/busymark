@@ -8,7 +8,7 @@ projects.
 [![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
 
 <p align="center">
-  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split editor and preview view" width="900">
+  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
 </p>
 
 <p align="center">
@@ -22,8 +22,13 @@ projects.
 - Open Writerside-compatible project folders.
 - Create Writerside-compatible starter projects.
 - Create Writerside Markdown and XML topics from the TOC.
+- Create, select, import, edit, and reuse Writerside instances and TOC libraries.
 - Edit and save local files.
-- Preview Markdown content.
+- Read rendered Markdown without editing it.
+- Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
+- Edit Markdown with free-form AI instructions, an explicit change target, and
+  explicitly selected context through Ollama, OpenAI, or Gemini, with
+  diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
@@ -47,9 +52,9 @@ projects.
   </tr>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark preview view">
+      <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark reading view">
       <br>
-      <sub><b>Preview view</b> for rendered Markdown documentation.</sub>
+      <sub><b>Reading view</b> for rendered Markdown documentation.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
@@ -74,28 +79,70 @@ configuration locations for topics, images, variables, categories, instances,
 snippets, build configuration, API specifications, instance groups, and selected
 settings metadata. Topic support includes Markdown topics, XML `.topic` files,
 TOC registration, instance-specific topic titles, and custom web file names.
+Instance support includes local selection and icon colors, version/web-path and
+build settings, Markdown import, status, ID refactoring, instance groups,
+conditional and reusable TOC sections, and cross-instance topic references.
+See [Writerside instances](docs/writerside-instances.md) for behavior, safety
+rules, an openable example, and the authoritative JetBrains references.
 
-Folder workspaces include documentation-like files such as Markdown, Writerside
-topic files, `.tree`, `.cfg`, `.list`, and `.xml` files. Common resource files
-such as images, PDFs, CSS, and JavaScript can appear in the project tree, but
-binary resources are not opened in the text editor.
-
-Large folders are scanned defensively. Generated and vendor directories such as
-`.git`, `build`, `dist`, `node_modules`, `.dart_tool`, `.gradle`, and `target`
-are skipped to keep the app responsive.
+Folder workspaces show all files and directories, including hidden project
+files such as `.gitignore`. Unsupported and binary files remain visible but are
+disabled in the text editor. Version-control metadata directories such as
+`.git` are excluded, and traversal remains bounded for safety.
 
 ## PDF export
 
 Use **Main menu → Export as PDF** or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
-while a Markdown document is active. BusyMark exports the current editor
-contents, including unsaved changes, and offers A4 or Letter paper, portrait or
-landscape orientation, three margin sizes, and optional page numbers. Writerside
-topics are not exported yet.
+to export either the active Markdown document or the opened Writerside module.
+Markdown export uses the current editor contents, including unsaved changes,
+and offers A4 or Letter paper, portrait or landscape orientation, three margin
+sizes, and optional page numbers.
 
-PDF generation is local and offline. BusyMark bundles the pinned Typst compiler;
-users do not install or configure a separate program. Local PNG, JPEG, GIF, and
-safe SVG images are included. Remote images are deliberately not downloaded
-during export and are represented by their alternative text.
+Markdown PDF generation is local and offline. BusyMark bundles the pinned Typst
+compiler; users do not install or configure a separate program. Local PNG,
+JPEG, GIF, and safe SVG images are included. Remote images are deliberately not
+downloaded during export and are represented by their alternative text.
+
+Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
+SVG where possible and a local high-resolution raster fallback for browser-only
+labels. OpenAPI fences become static, selectable API reference content. Failed
+visualizations fall back to their original source and produce an export warning.
+
+See [offline visualizations](docs/visualizations.md) for supported fences,
+security policy, pinned engines, architecture, and verification. Working
+examples are in [demo/visualizations.md](demo/visualizations.md),
+[demo/openapi-local-reference.md](demo/openapi-local-reference.md), and
+[demo/plantuml-conformance.md](demo/plantuml-conformance.md).
+
+Writerside PDF export builds one selected output instance with JetBrains'
+official, versioned Writerside builder image. It supports generated settings or
+an existing project `PDF.xml`, including orientation, keymap, cover page,
+header, footer, and table-of-contents title. Docker is required, the large image
+is downloaded only after confirmation, project sources stay read-only, and
+builder network access is disabled unless explicitly enabled. See
+[Writerside PDF export](docs/writerside-pdf-export.md) for setup, customization,
+security boundaries, Snap limitations, and the authoritative JetBrains
+references. An exportable configuration is included in
+[demo/writerside-instances](demo/writerside-instances).
+
+## AI editing
+
+BusyMark's optional AI editing is disabled by default and supports loopback
+Ollama, OpenAI, and Google Gemini. In Source and Editor views, select text and
+choose **Refine with AI** from its context menu, or press **Ctrl+G**. The user
+then writes the instruction and independently chooses what may change and what
+document context may be shared. Staged-diff commit-message drafting is
+available separately in Git Changes. BusyMark discloses the exact context,
+streams into a temporary proposal, reparses and validates the complete
+candidate Markdown document, shows a unified diff, and never applies a proposal
+without confirmation. Cloud
+keys are stored in the operating-system credential service and cloud use
+requires explicit consent; provider routing never crosses provider boundaries.
+
+See [AI editing](docs/local-ai.md) for configuration, privacy and security
+boundaries, model routing, release qualification, and authoritative protocol
+references. An interactive exercise is available in
+[demo/ai-editing.md](demo/ai-editing.md).
 
 ## Run From Source
 
@@ -210,23 +257,35 @@ Store listing translations are managed outside `snap/snapcraft.yaml`.
 
 ## Build Linux Locally
 
-Source builds require the libhandy development headers, `curl`, and `xz-utils`.
-Packaged users receive every runtime component with BusyMark and do not install
-development packages.
+Source builds require the libhandy and WebKitGTK 4.1 development headers,
+`curl`, `xz-utils`, and Node.js 22 or newer with npm. Node.js is used only to
+assemble the checksum-pinned web bundle. Packaged users receive every runtime
+component with BusyMark and do not install development packages, Node.js, Java,
+or Chromium.
 
 ```bash
-sudo apt-get install curl libhandy-1-dev xz-utils
+sudo apt-get install curl libhandy-1-dev xz-utils libwebkit2gtk-4.1-dev
+# Install Node.js 22 or newer from https://nodejs.org/en/download
+node --version
+npm --version
 flutter build linux
 ```
 
-The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary from
-its official release and verifies its pinned SHA-256 checksum before bundling
-it. For an offline build, point the build at the matching official archive:
+The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary, the
+Linux amd64 D2 0.7.1 release, and exact JavaScript packages, then verifies the
+pinned artifacts before bundling them. D2 visualization is currently packaged
+only for amd64. To reuse already downloaded official Typst and D2 archives,
+point the build at them:
 
 ```bash
 BUSYMARK_TYPST_ARCHIVE=/path/to/typst-x86_64-unknown-linux-musl.tar.xz \
+BUSYMARK_D2_ARCHIVE=/path/to/d2-v0.7.1-linux-amd64.tar.gz \
   flutter build linux
 ```
+
+A clean source build still assembles the checksum-pinned JavaScript packages.
+The resulting BusyMark application is self-contained and performs no runtime
+downloads for visualization.
 
 The Linux desktop file uses the application id `io.busystack.busymark` and
 installs the app icon from `assets/branding/busymark_logo.svg`.
@@ -239,5 +298,7 @@ handling, and clear user-facing behavior.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE). The bundled Typst compiler's license and
-upstream notices are installed under `share/licenses/typst`.
+Apache-2.0. See [LICENSE](LICENSE). Bundled Typst and D2 licenses and notices are
+installed under `share/licenses`; visualization JavaScript licenses, package
+metadata, the exact lock file, and consolidated notices are installed with the
+offline web bundle.

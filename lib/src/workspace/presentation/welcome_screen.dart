@@ -244,7 +244,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.sidebarToc:
       case HeaderBarAction.sidebarOutline:
       case HeaderBarAction.sidebarGit:
-      case HeaderBarAction.sidebarHistory:
         break;
     }
   }
@@ -265,6 +264,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
+      case BusyMarkMainMenuAction.generateMarkdownToc:
         break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
@@ -381,7 +381,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
       maxWidth: BusyMarkSizes.dialogWide,
-      builder: (context) => _CreateWritersideProjectDialog(
+      builder: (context) => BusyMarkCreateWritersideProjectDialog(
         parentDirectoryPath: parentPath,
         onCreate: (request) => ref
             .read(workspaceControllerProvider.notifier)
@@ -524,8 +524,9 @@ String _displayPath(String path) {
   return name.isEmpty ? path : name;
 }
 
-class _CreateWritersideProjectDialog extends StatefulWidget {
-  const _CreateWritersideProjectDialog({
+class BusyMarkCreateWritersideProjectDialog extends StatefulWidget {
+  const BusyMarkCreateWritersideProjectDialog({
+    super.key,
     required this.parentDirectoryPath,
     required this.onCreate,
     required this.message,
@@ -536,12 +537,12 @@ class _CreateWritersideProjectDialog extends StatefulWidget {
   final WorkspaceMessage? Function() message;
 
   @override
-  State<_CreateWritersideProjectDialog> createState() =>
-      _CreateWritersideProjectDialogState();
+  State<BusyMarkCreateWritersideProjectDialog> createState() =>
+      _BusyMarkCreateWritersideProjectDialogState();
 }
 
-class _CreateWritersideProjectDialogState
-    extends State<_CreateWritersideProjectDialog> {
+class _BusyMarkCreateWritersideProjectDialogState
+    extends State<BusyMarkCreateWritersideProjectDialog> {
   static final _directorySlugCharacterPattern = RegExp(
     r'[\p{L}\p{M}\p{N}_-]',
     unicode: true,

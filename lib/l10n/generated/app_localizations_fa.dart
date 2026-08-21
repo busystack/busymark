@@ -171,10 +171,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get cut => 'برش';
 
   @override
-  String get promoteHeading => 'ارتقای عنوان';
+  String get promoteSection => 'ارتقای بخش';
 
   @override
-  String get demoteHeading => 'تنزل عنوان';
+  String get demoteSection => 'تنزل بخش';
 
   @override
   String get moveSectionUp => 'انتقال بخش به بالا';
@@ -251,7 +251,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get pasteWithoutFormatting => 'جای‌گذاری بدون قالب‌بندی';
 
   @override
-  String get preview => 'پیش‌نمایش';
+  String get reading => 'حالت مطالعه';
 
   @override
   String get recent => 'موارد اخیر';
@@ -392,11 +392,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutGroupGeneral => 'عمومی';
 
   @override
-  String get shortcutNewDocument => 'سند جدید';
+  String get shortcutNewDocument => 'ایجاد';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'ایجاد یک سند Markdown ذخیره‌نشدهٔ جدید';
+      'ایجاد فایل Markdown یا پروژهٔ Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -1137,7 +1137,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '«⁨$topic⁩» را از نمونهٔ راهنمای انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
+    return '«⁨$topic⁩» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
   }
 
   @override
@@ -1362,7 +1362,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند';
 
   @override
-  String get noPreview => 'پیش‌نمایشی وجود ندارد';
+  String get nothingToRead => 'محتوایی برای مطالعه وجود ندارد';
 
   @override
   String get note => 'یادداشت';
@@ -1584,7 +1584,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'ماژول Writerside درخت نمونهٔ راهنما ندارد.';
+      'ماژول Writerside درخت نمونه ندارد.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2077,16 +2077,25 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitChanges => 'تغییرات';
 
   @override
+  String get gitStaged => 'مرحله‌بندی‌شده';
+
+  @override
+  String get gitUnstaged => 'مرحله‌بندی‌نشده';
+
+  @override
   String get gitHistory => 'تاریخچه';
 
   @override
   String get gitBranches => 'شاخه‌ها';
 
   @override
-  String get gitBranchActions => 'عملیات شاخه‌ها';
+  String get gitActions => 'عملیات Git';
 
   @override
   String get gitPull => 'دریافت';
+
+  @override
+  String get gitFetch => 'دریافت';
 
   @override
   String get gitPush => 'ارسال';
@@ -2095,10 +2104,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitCommit => 'کامیت';
 
   @override
-  String get gitSelectForCommit => 'انتخاب برای کامیت';
+  String get gitSelectForCommit => 'مرحله‌بندی فایل';
 
   @override
-  String get gitRemoveFromCommit => 'حذف از کامیت';
+  String get gitRemoveFromCommit => 'خارج کردن فایل از مرحله‌بندی';
 
   @override
   String get gitDiscard => 'دور انداختن';
@@ -2120,7 +2129,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'پیش از کامیت، دست‌کم یک فایل را انتخاب کنید.';
+      'پیش از کامیت، دست‌کم یک فایل را مرحله‌بندی کنید.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فایل مرحله‌بندی‌شده',
+      one: '۱ فایل مرحله‌بندی‌شده',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'خارج از فضای کاری';
 
   @override
   String get gitCommitMessageRequired => 'پیام کامیت را وارد کنید.';
@@ -2129,7 +2152,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitCreateBranch => 'ایجاد شاخه';
 
   @override
-  String get gitNewBranch => '+ شاخهٔ جدید';
+  String get gitNewBranch => 'شاخهٔ جدید';
 
   @override
   String get gitBranchName => 'نام شاخه';
@@ -2152,6 +2175,11 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'فایل دودویی است. BusyMark وصله‌های دودویی را نمایش نمی‌دهد.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'فایل دودویی ($size بایت). BusyMark وصله‌های دودویی را نمایش نمی‌دهد.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2216,6 +2244,76 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'فایل فعلی';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'تاریخچهٔ فایل به یک فایل Markdown باز نیاز دارد.';
+
+  @override
+  String get gitLoadMore => 'بارگیری بیشتر';
+
+  @override
+  String get gitChangesInCommit => 'تغییرات این ثبت';
+
+  @override
+  String get gitCompareWithCurrent => 'مقایسه با نسخهٔ فعلی';
+
+  @override
+  String get gitRestoreVersion => 'بازیابی این نسخه';
+
+  @override
+  String get gitConfirmRestoreTitle => 'این نسخهٔ فایل بازیابی شود؟';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark فایل فعلی در درخت کاری را با نسخهٔ انتخاب‌شده از ثبت جایگزین می‌کند. فایل بازیابی‌شده مرحله‌بندی‌نشده باقی می‌ماند.';
+
+  @override
+  String get gitCommitActions => 'عملیات ثبت';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'بازنشانی شاخهٔ فعلی به اینجا…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return '⁨$branch⁩ روی ⁨$commit⁩ بازنشانی شود؟';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'این کار شاخهٔ ⁨$branch⁩ را به ثبت ⁨$commit⁩ منتقل می‌کند. نحوهٔ به‌روزرسانی فهرست و درخت کاری توسط Git را انتخاب کنید.';
+  }
+
+  @override
+  String get gitReset => 'بازنشانی';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'فقط شاخه را جابه‌جا کنید. فهرست و درخت کاری بدون تغییر می‌مانند؛ تفاوت‌ها با ثبت انتخاب‌شده همچنان مرحله‌بندی‌شده خواهند بود.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'شاخه را جابه‌جا و فهرست را بازنشانی کنید. درخت کاری بدون تغییر می‌ماند و تفاوت‌ها مرحله‌بندی‌نشده خواهند بود.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'شاخه را جابه‌جا و فهرست و درخت کاری را بازنشانی کنید. تغییرات فایل‌های رهگیری‌شده کنار گذاشته می‌شوند؛ فایل‌های رهگیری‌نشدهٔ مانع ممکن است حذف شوند.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'شاخه را جابه‌جا و فایل‌های رهگیری‌شده را بازنشانی کنید، اما تغییرات محلی را نگه دارید. اگر این تغییرات با بازنشانی تداخل داشته باشند، Git عملیات را متوقف می‌کند.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -2287,6 +2385,17 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitErrorDirtyWorkspace =>
       'پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.';
+
+  @override
+  String get gitErrorResetDirtyWorkspace =>
+      'پیش از بازنشانی شاخهٔ فعلی، تغییرات ویرایشگر BusyMark را ذخیره یا کنار بگذارید.';
+
+  @override
+  String get gitErrorRestoreStagedFile =>
+      'پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید.';
+
+  @override
+  String get gitErrorResetDetachedHead => 'پیش از بازنشانی، به یک شاخه بروید.';
 
   @override
   String get gitErrorDiverged =>
@@ -2488,6 +2597,787 @@ class AppLocalizationsFa extends AppLocalizations {
   String get pdfExportFailed => 'BusyMark نتوانست این سند را به PDF تبدیل کند.';
 
   @override
+  String get visualizationRendering => 'در حال رندر…';
+
+  @override
+  String get visualizationStale => 'نمایش آخرین رندر معتبر';
+
+  @override
+  String get visualizationShowSource => 'نمایش منبع';
+
+  @override
+  String get visualizationShowRender => 'نمایش رندر';
+
+  @override
+  String get visualizationFitWidth => 'تطبیق با عرض';
+
+  @override
+  String get visualizationSaveImage => 'ذخیره تصویر';
+
+  @override
+  String get visualizationCopyImage => 'کپی تصویر';
+
+  @override
+  String get visualizationImageCopied => 'تصویر کپی شد';
+
+  @override
+  String get visualizationOpenApiReference => 'باز کردن مرجع API';
+
+  @override
+  String get visualizationValid => 'معتبر';
+
+  @override
+  String get visualizationInvalid => 'نامعتبر';
+
+  @override
+  String get visualizationServers => 'سرورها';
+
+  @override
+  String get visualizationPaths => 'مسیرها';
+
+  @override
+  String get visualizationOperations => 'عملیات‌ها';
+
+  @override
+  String get visualizationTags => 'برچسب‌ها';
+
+  @override
+  String get visualizationNoOperations => 'عملیات منطبقی وجود ندارد';
+
+  @override
+  String get visualizationSearchOperations => 'جستجوی عملیات';
+
+  @override
+  String get visualizationRenderFailed => 'این تصویرسازی رندر نشد.';
+
+  @override
+  String get visualizationRetry => 'تلاش دوباره';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName ذخیره شد';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
-      'سند Markdown فعال را به PDF صادر کنید.';
+      'سند فعال یا ماژول Writerside را به PDF صادر کنید.';
+
+  @override
+  String get instances => 'نمونه‌ها';
+
+  @override
+  String get newInstance => 'نمونهٔ جدید';
+
+  @override
+  String get newTocLibrary => 'کتابخانهٔ جدید فهرست مطالب';
+
+  @override
+  String get editInstance => 'ویرایش نمونه';
+
+  @override
+  String get openTocFile => 'باز کردن فایل فهرست مطالب';
+
+  @override
+  String get createInstance => 'ایجاد نمونه';
+
+  @override
+  String get createTocLibrary => 'ایجاد کتابخانهٔ فهرست مطالب';
+
+  @override
+  String get instanceContent => 'محتوا';
+
+  @override
+  String get instanceContentSource => 'ایجاد از';
+
+  @override
+  String get emptyInstance => 'نمونهٔ خالی';
+
+  @override
+  String get markdownFiles => 'فایل‌های محلی Markdown';
+
+  @override
+  String get chooseMarkdownFolder => 'انتخاب پوشهٔ Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'پوشه‌ای حاوی فایل‌های Markdown انتخاب کنید.';
+
+  @override
+  String get instanceAppearance => 'ظاهر';
+
+  @override
+  String get instanceColor => 'رنگ نماد';
+
+  @override
+  String get instanceVersion => 'نسخه';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'وقتی این فیلد خالی باشد، نسخهٔ پروژه ⁨$version⁩ است.';
+  }
+
+  @override
+  String get instanceWebPath => 'مسیر وب';
+
+  @override
+  String get instanceStatus => 'وضعیت';
+
+  @override
+  String get instanceStatusRelease => 'انتشار نهایی';
+
+  @override
+  String get instanceStatusEap => 'دسترسی زودهنگام';
+
+  @override
+  String get instanceStatusDeprecated => 'منسوخ';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'اجازهٔ نمایه‌سازی به موتورهای جست‌وجو';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'به موتورهای جست‌وجوی خارجی اجازه دهید این خروجی را نمایه کنند.';
+
+  @override
+  String get offlineArtifact => 'بستهٔ آفلاین';
+
+  @override
+  String get offlineArtifactDescription =>
+      'منابع را بسته‌بندی کنید تا مستندات ساخته‌شده خودکفا باشند.';
+
+  @override
+  String get instanceOutputSettings => 'تنظیمات خروجی';
+
+  @override
+  String get markdownImportSource => 'منبع Markdown';
+
+  @override
+  String get markdownImportFiles => 'فایل‌های Markdown';
+
+  @override
+  String get selectNone => 'لغو انتخاب همه';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '⁨$count⁩ فایل Markdown پیدا شد';
+  }
+
+  @override
+  String get noMarkdownFilesFound => 'هیچ فایل Markdown در این پوشه پیدا نشد.';
+
+  @override
+  String get copyReferencedMedia => 'کپی رسانه‌های ارجاع‌شده';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'تصویرها و ویدیوهای محلی ارجاع‌شده در فایل‌های انتخابی را با حفظ مسیرهای نسبی کپی کنید.';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'شناسهٔ نمونه تغییر نام کند؟';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark نام فایل ⁨.tree⁩ را تغییر می‌دهد و ارجاع‌های پروژهٔ Writerside را از «⁨$oldId⁩» به «⁨$newId⁩» به‌روزرسانی می‌کند. اسکریپت‌های انتشار تغییر نمی‌کنند و باید جداگانه به‌روزرسانی شوند.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'تغییر نام و به‌روزرسانی ارجاع‌ها';
+
+  @override
+  String get tocLibraryDescription =>
+      'کتابخانهٔ فهرست مطالب بخش‌های قابل استفادهٔ مجدد را نگه می‌دارد و خروجی مستقلی تولید نمی‌کند.';
+
+  @override
+  String get defaultTocLibraryName => 'فهرست مطالب مشترک';
+
+  @override
+  String get instanceColorAutomatic => 'خودکار';
+
+  @override
+  String get instanceColorBlue => 'آبی';
+
+  @override
+  String get instanceColorGreen => 'سبز';
+
+  @override
+  String get instanceColorOrange => 'نارنجی';
+
+  @override
+  String get instanceColorPurple => 'بنفش';
+
+  @override
+  String get instanceColorRed => 'قرمز';
+
+  @override
+  String get instanceColorTeal => 'سبزآبی';
+
+  @override
+  String get instanceColorYellow => 'زرد';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'نام نمونه را وارد کنید.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'نمونه‌ای با شناسهٔ «⁨$id⁩» از قبل وجود دارد.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'درخت نمونه از قبل وجود دارد: ⁨$path⁩';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'پوشهٔ منبع Markdown وجود ندارد: ⁨$path⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'دست‌کم یک فایل Markdown برای وارد کردن انتخاب کنید.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'این یک فایل Markdown خواندنی درون منبع انتخاب‌شده نیست: ⁨$path⁩';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'وارد کردن، فایل موجود پروژه را بازنویسی می‌کند: ⁨$path⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'فایل‌های نمونه روی دیسک تغییر کرده‌اند. آن‌ها را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark نتوانست تغییر نمونه را کاملاً برگرداند. پیش از ادامه این فایل‌ها را بررسی کنید: ⁨$paths⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'کتابخانهٔ فهرست مطالب نمی‌تواند موضوع‌های Markdown را وارد کند.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'مسیر وب باید یک خط باشد.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'پیکربندی نمونهٔ Writerside نامعتبر است. عیب‌یابی‌های آن را اصلاح و دوباره تلاش کنید.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark نتوانست تغییرات نمونه را با ایمنی آماده کند.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'وضعیت نمونهٔ «⁨$status⁩» ناشناخته است. از ⁨release⁩، ⁨eap⁩ یا ⁨deprecated⁩ استفاده کنید.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'شناسهٔ نمونهٔ «⁨$id⁩» در بیش از یک فایل درخت استفاده شده است.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'عنصر ریشهٔ ⁨buildprofiles.xml⁩ باید ⁨<buildprofiles>⁩ باشد.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'مقدار ⁨$name⁩ یعنی «⁨$value⁩» باید ⁨true⁩ یا ⁨false⁩ باشد.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'عنصر ⁨<build-profile>⁩ باید شناسهٔ نمونه را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'عنصر ⁨<include>⁩ درخت باید هر دو مقدار ⁨from⁩ و ⁨element-id⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'عنصر ⁨<snippet>⁩ درخت باید ⁨id⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'ارجاع میان‌نمونه‌ای فهرست مطالب باید هر دو مقدار ⁨ref⁩ و ⁨in⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'یک عنصر فهرست مطالب نمی‌تواند بیش از یک موضوع، ارجاع، پیوند یا تغییرمسیر را هدف قرار دهد.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'شناسهٔ عنصر درخت «⁨$id⁩» بیش از یک بار تعریف شده است.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'عنصر ریشهٔ فایل گروه‌های نمونه باید ⁨<instance-groups>⁩ باشد.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'گروه نمونه باید یک شناسهٔ غیرخالی و فهرست نمونه‌ها را مشخص کند.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'شناسهٔ گروه نمونهٔ «⁨$id⁩» بیش از یک بار تعریف شده است.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'گنجاندن فهرست مطالب «⁨$source#$id⁩» به پیمانهٔ خارجی «⁨$origin⁩» تعلق دارد و در این فضای کاری قابل گسترش نیست.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'عنصر درخت «⁨$id⁩» در درخت ثبت‌شدهٔ «⁨$source⁩» وجود ندارد.';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'گنجاندن درخت «⁨$source#$id⁩» یک چرخه ایجاد می‌کند.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'شرط نمونه به گروه ناشناختهٔ «⁨@$group⁩» ارجاع می‌دهد.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'ارجاع میان‌نمونه‌ای، نمونهٔ ناشناختهٔ «⁨$instance⁩» را هدف قرار می‌دهد.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'موضوع «⁨$topic⁩» در نمونهٔ ارجاع‌شدهٔ «⁨$instance⁩» نیست.';
+  }
+
+  @override
+  String get download => 'بارگیری';
+
+  @override
+  String get exportWritersideAsPdf => 'صدور Writerside به‌صورت PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'یک نمونه و تنظیمات PDF را انتخاب کنید. BusyMark از سازندهٔ رسمی Writerside شرکت JetBrains استفاده می‌کند.';
+
+  @override
+  String get writersidePdfContent => 'محتوای صدور';
+
+  @override
+  String get writersidePdfSettings => 'تنظیمات PDF';
+
+  @override
+  String get writersidePdfConfigureHere => 'پیکربندی برای این صدور';
+
+  @override
+  String get writersidePdfProjectConfiguration => 'استفاده از پیکربندی پروژه';
+
+  @override
+  String get writersidePdfConfigurationFile => 'فایل پیکربندی PDF';
+
+  @override
+  String get writersidePdfPage => 'صفحه';
+
+  @override
+  String get writersidePdfKeymap => 'نگاشت کلیدها';
+
+  @override
+  String get writersidePdfNoKeymap => 'بدون نگاشت کلید';
+
+  @override
+  String get writersidePdfTocTitle => 'عنوان فهرست مطالب';
+
+  @override
+  String get writersidePdfCover => 'صفحهٔ جلد';
+
+  @override
+  String get writersidePdfIncludeCover => 'افزودن صفحهٔ جلد';
+
+  @override
+  String get writersidePdfCoverTitle => 'عنوان جلد';
+
+  @override
+  String get writersidePdfCoverDescription => 'توضیح جلد';
+
+  @override
+  String get writersidePdfCopyright => 'حق نشر';
+
+  @override
+  String get writersidePdfCoverLogo => 'نشان جلد';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'انتخاب نشان جلد';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'سرصفحه و پاصفحه';
+
+  @override
+  String get writersidePdfHeader => 'سرصفحه';
+
+  @override
+  String get writersidePdfFooter => 'پاصفحه';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'این مقادیر ماژول باز را به چیدمان منبع سازنده نگاشت می‌کنند.';
+
+  @override
+  String get writersidePdfModuleName => 'نام ماژول';
+
+  @override
+  String get writersidePdfSourceRoot => 'ریشهٔ منبع';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'انتخاب ریشهٔ منبع';
+
+  @override
+  String get writersidePdfBuilderVersion => 'نسخهٔ سازنده';
+
+  @override
+  String get writersidePdfAllowNetwork => 'اجازهٔ شبکه هنگام ساخت';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'به‌طور پیش‌فرض غیرفعال است. فقط وقتی فعال کنید که پروژه عمداً به منابع ساخت راه دور نیاز دارد.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'نام ماژول را وارد کنید.';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'ریشهٔ منبع را انتخاب کنید.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'نسخهٔ معتبر سازنده را وارد کنید.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'سازندهٔ Writerside لازم است';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark از تصویر کانتینر رسمی ⁨$image⁩ استفاده می‌کند. اکنون بارگیری شود؟ تصویر بزرگ است و Docker آن را ذخیره می‌کند.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'در حال بارگیری سازندهٔ Writerside…';
+
+  @override
+  String get exportingWritersidePdf => 'در حال صدور PDF از Writerside…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'برای صدور Writerside به PDF به Docker نیاز است. Docker را نصب و اجرا کنید و دوباره تلاش کنید.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'تصویر درخواستی سازندهٔ Writerside در دسترس نیست.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'پیکربندی PDF در Writerside معتبر نیست.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'سازندهٔ Writerside نتوانست PDF را ایجاد کند.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'سازندهٔ Writerside یک PDF معتبر تولید نکرد.';
+
+  @override
+  String get ai => 'هوش مصنوعی';
+
+  @override
+  String get aiLocalOllama => 'Ollama محلی';
+
+  @override
+  String get aiDisabled => 'غیرفعال';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.';
+
+  @override
+  String get aiProvider => 'ارائه‌دهندهٔ هوش مصنوعی';
+
+  @override
+  String get aiOllamaEndpoint => 'نقطهٔ پایانی Ollama';
+
+  @override
+  String get aiOllamaModel => 'مدل Ollama';
+
+  @override
+  String get aiTestConnection => 'آزمایش اتصال';
+
+  @override
+  String get aiTestingConnection => 'در حال آزمایش…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'متصل شد. ⁨$count⁩ مدل نصب‌شده پیدا شد.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama در حال اجرا است، اما هیچ مدل نصب‌شده‌ای پیدا نشد.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark نتوانست تولید متن با هوش مصنوعی را تأیید کند.';
+
+  @override
+  String get aiConfigureFirst =>
+      'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال و مدلی را در تنظیمات ← هوش مصنوعی تأیید کنید.';
+
+  @override
+  String get aiEditWithAi => 'ویرایش با هوش مصنوعی';
+
+  @override
+  String get aiRefineWithAi => 'بهبود با هوش مصنوعی';
+
+  @override
+  String get aiInstruction => 'دستور';
+
+  @override
+  String get aiChangeTarget => 'چه چیزی می‌تواند تغییر کند';
+
+  @override
+  String get aiSharedContext => 'زمینهٔ اشتراکی با هوش مصنوعی';
+
+  @override
+  String get aiTargetSelection => 'محتوای انتخاب‌شده';
+
+  @override
+  String get aiTargetInsertAfterBlock => 'درج پس از بلوک فعلی';
+
+  @override
+  String get aiTargetCurrentBlock => 'بلوک فعلی';
+
+  @override
+  String get aiTargetCurrentSection => 'بخش فعلی';
+
+  @override
+  String get aiTargetCompleteDocument => 'کل سند';
+
+  @override
+  String get aiContextNone => 'بدون زمینه از سند';
+
+  @override
+  String get aiContextSelection => 'محتوای انتخاب‌شده';
+
+  @override
+  String get aiContextCurrentBlock => 'بلوک فعلی';
+
+  @override
+  String get aiContextCurrentSection => 'بخش فعلی';
+
+  @override
+  String get aiContextCompleteDocument => 'کل سند';
+
+  @override
+  String get aiGenerating => 'در حال تولید پیشنهاد…';
+
+  @override
+  String get aiProposal => 'پیشنهاد هوش مصنوعی';
+
+  @override
+  String get aiGenerateProposal => 'ایجاد پیشنهاد';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'ارائه‌دهندهٔ انتخابی ⁨$count⁩ نویسه از زمینهٔ نمایش‌داده‌شده دریافت می‌کند.';
+  }
+
+  @override
+  String get aiOriginal => 'متن اصلی';
+
+  @override
+  String get aiSuggested => 'متن پیشنهادی';
+
+  @override
+  String get aiApplyProposal => 'اعمال پیشنهاد';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '⁨$input⁩ توکن ورودی · ⁨$output⁩ توکن خروجی';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'سند هنگام تولید این پیشنهاد تغییر کرد. کنش را دوباره اجرا کنید.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'تغییرات مرحله‌بندی‌شده هنگام تولید این پیام کامیت تغییر کرد. کنش را دوباره اجرا کنید.';
+
+  @override
+  String get aiViewContext => 'نمایش بافت ارسال‌شده';
+
+  @override
+  String get aiReviewExactContent => 'بازبینی محتوای دقیق';
+
+  @override
+  String get aiContentToChange => 'محتوایی که تغییر می‌کند';
+
+  @override
+  String get aiContentSentToAi => 'محتوای ارسال‌شده به هوش مصنوعی';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'هوش مصنوعی غیرفعال است. BusyMark هرگز بدون یک اقدام صریح هوش مصنوعی محتوای سند را ارسال نمی‌کند.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به سرویس محلی Ollama پیکربندی‌شده می‌فرستد. پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به ⁨$provider⁩ می‌فرستد. درخواست‌ها بدون حالت هستند و پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
+  }
+
+  @override
+  String get aiApiKey => 'کلید API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'یک کلید در مخزن اعتبارنامهٔ سیستم ذخیره شده است';
+
+  @override
+  String get aiApiKeyEnterHint => 'کلید API ارائه‌دهنده را وارد کنید';
+
+  @override
+  String get aiReplaceApiKey => 'جایگزینی کلید API';
+
+  @override
+  String get aiSaveApiKey => 'ذخیرهٔ امن کلید API';
+
+  @override
+  String get aiRemoveApiKey => 'حذف کلید API ذخیره‌شده';
+
+  @override
+  String get aiCredentialSaved =>
+      'کلید API در مخزن اعتبارنامهٔ سیستم ذخیره شد.';
+
+  @override
+  String get aiCredentialRemoved => 'کلید API ذخیره‌شده حذف شد.';
+
+  @override
+  String get aiModelRouting => 'انتخاب مدل';
+
+  @override
+  String get aiAutomaticRouting => 'خودکار بر اساس کار';
+
+  @override
+  String get aiFixedModelRouting => 'استفاده از مدل انتخابی';
+
+  @override
+  String get aiPreferredModel => 'مدل ترجیحی';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '⁨$requests⁩ درخواست · ⁨$input⁩ توکن ورودی · ⁨$output⁩ توکن خروجی';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'محتوا برای ⁨$provider⁩ ارسال شود؟';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'فعال‌کردن ⁨$provider⁩';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'فقط محتوای نمایش‌داده‌شده در هر کادر بازبینی هوش مصنوعی ارسال می‌شود. درخواست‌ها بدون حالت هستند، پیشنهادها نیاز به بازبینی دارند و کلید API در مخزن اعتبارنامهٔ سیستم Linux ذخیره می‌شود.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'ابتدا اشتراک‌گذاری داده با ⁨$provider⁩ را در تنظیمات ← هوش مصنوعی تأیید کنید.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'تولید با ⁨$model⁩ تأیید شد. ⁨$count⁩ مدل سازگار در دسترس است.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'راه‌اندازی سرد مدل محلی شناسایی شد.';
+
+  @override
+  String get aiNoCompatibleModels => 'هیچ مدل سازگار تولید متن در دسترس نیست.';
+
+  @override
+  String get aiEnableProvider =>
+      'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال کنید.';
+
+  @override
+  String get aiDraftCommitMessage => 'تهیهٔ پیش‌نویس پیام ثبت';
+
+  @override
+  String get aiDrafting => 'در حال تهیهٔ پیش‌نویس…';
+
+  @override
+  String get aiDraftWithAi => 'تهیهٔ پیش‌نویس با هوش مصنوعی';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'ایجاد/به‌روزرسانی فهرست مطالب';
+
+  @override
+  String get markdownTocTitle => 'فهرست مطالب';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'فهرست مطالب با ⁨$count⁩ مدخل به‌روزرسانی شد.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'پیش از ایجاد فهرست مطالب دست‌کم یک عنوان بخش اضافه کنید.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'نشانگرهای فهرست مطالب BusyMark وجود ندارند، تکراری‌اند یا ترتیب نادرستی دارند.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'عنوان سطح ⁨$level⁩ پس از سطح ⁨$previousLevel⁩ آمده است؛ تودرتویی بخش‌ها را بازبینی کنید.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'متن پیوند خالی است؛ نام دسترس‌پذیری وارد کنید که هدف آن را توضیح دهد.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'بررسی کنید که آیا متن پیوند «⁨$text⁩» هدف آن را در زمینه توضیح می‌دهد.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'سرستون‌های جدول باید ستون‌های خود را مشخص کنند؛ هر سرستون خالی را تکمیل کنید.';
 }

@@ -174,10 +174,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cut => 'Couper';
 
   @override
-  String get promoteHeading => 'Promouvoir le titre';
+  String get promoteSection => 'Promouvoir la section';
 
   @override
-  String get demoteHeading => 'Rétrograder le titre';
+  String get demoteSection => 'Rétrograder la section';
 
   @override
   String get moveSectionUp => 'Déplacer la section vers le haut';
@@ -254,7 +254,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pasteWithoutFormatting => 'Coller sans mise en forme';
 
   @override
-  String get preview => 'Aperçu';
+  String get reading => 'Lecture';
 
   @override
   String get recent => 'Récents';
@@ -395,11 +395,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shortcutGroupGeneral => 'Général';
 
   @override
-  String get shortcutNewDocument => 'Nouveau document';
+  String get shortcutNewDocument => 'Créer';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Créer un nouveau document Markdown non enregistré';
+      'Créer un fichier Markdown ou un projet Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -1125,7 +1125,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Retirez « $topic » de l’instance d’aide sélectionnée. Le fichier du sujet sera conservé.';
+    return 'Retirez « $topic » de l’instance sélectionnée. Le fichier du sujet sera conservé.';
   }
 
   @override
@@ -1340,7 +1340,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Fichier volumineux : la coloration et le repliage sont suspendus';
 
   @override
-  String get noPreview => 'Aucun aperçu';
+  String get nothingToRead => 'Aucun contenu à lire';
 
   @override
   String get note => 'Note';
@@ -1560,7 +1560,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Le module Writerside n’a pas d’arborescence d’instance d’aide.';
+      'Le module Writerside n’a pas d’arborescence d’instance.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2046,16 +2046,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitChanges => 'Modifications';
 
   @override
+  String get gitStaged => 'Indexés';
+
+  @override
+  String get gitUnstaged => 'Non indexés';
+
+  @override
   String get gitHistory => 'Historique';
 
   @override
   String get gitBranches => 'Branches';
 
   @override
-  String get gitBranchActions => 'Actions sur les branches';
+  String get gitActions => 'Actions Git';
 
   @override
   String get gitPull => 'Pull';
+
+  @override
+  String get gitFetch => 'Récupérer';
 
   @override
   String get gitPush => 'Push';
@@ -2064,10 +2073,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Sélectionner pour le commit';
+  String get gitSelectForCommit => 'Indexer le fichier';
 
   @override
-  String get gitRemoveFromCommit => 'Exclure du commit';
+  String get gitRemoveFromCommit => 'Désindexer le fichier';
 
   @override
   String get gitDiscard => 'Abandonner';
@@ -2089,7 +2098,21 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Sélectionnez au moins un fichier avant de créer le commit.';
+      'Indexez au moins un fichier avant de créer le commit.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers indexés',
+      one: '1 fichier indexé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Hors de l’espace de travail';
 
   @override
   String get gitCommitMessageRequired => 'Saisissez un message de commit.';
@@ -2098,7 +2121,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitCreateBranch => 'Créer une branche';
 
   @override
-  String get gitNewBranch => '+ Nouvelle branche';
+  String get gitNewBranch => 'Nouvelle branche';
 
   @override
   String get gitBranchName => 'Nom de la branche';
@@ -2121,6 +2144,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Fichier binaire. BusyMark n’affiche pas les patchs binaires.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Fichier binaire ($size octets). BusyMark n’affiche pas les correctifs binaires.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2188,6 +2216,77 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitFileHistory => 'Fichier actuel';
 
   @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'L’historique du fichier nécessite un fichier Markdown ouvert.';
+
+  @override
+  String get gitLoadMore => 'Charger plus';
+
+  @override
+  String get gitChangesInCommit => 'Modifications de ce commit';
+
+  @override
+  String get gitCompareWithCurrent => 'Comparer avec la version actuelle';
+
+  @override
+  String get gitRestoreVersion => 'Restaurer cette version';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Restaurer cette version du fichier ?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark remplacera le fichier actuel de l’arbre de travail par la version sélectionnée du commit. Le fichier restauré restera non indexé.';
+
+  @override
+  String get gitCommitActions => 'Actions du commit';
+
+  @override
+  String get gitResetCurrentBranchToHere =>
+      'Réinitialiser la branche actuelle ici…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Réinitialiser $branch sur $commit ?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Cette action déplace la branche $branch sur le commit $commit. Choisissez comment Git met à jour l’index et l’arbre de travail.';
+  }
+
+  @override
+  String get gitReset => 'Réinitialiser';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Déplacer uniquement la branche. Conserver l’index et l’arbre de travail ; les différences par rapport au commit sélectionné restent indexées.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Déplacer la branche et réinitialiser l’index. Conserver l’arbre de travail, en laissant les différences non indexées.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Déplacer la branche et réinitialiser l’index et l’arbre de travail. Les modifications suivies sont abandonnées ; les fichiers non suivis qui bloquent l’opération peuvent être supprimés.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Déplacer la branche et réinitialiser les fichiers suivis tout en conservant les modifications locales. Git abandonne si elles entrent en conflit avec la réinitialisation.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2251,6 +2350,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitErrorDirtyWorkspace =>
       'Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de changer de branche.';
+
+  @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de réinitialiser la branche actuelle.';
+
+  @override
+  String get gitErrorRestoreStagedFile =>
+      'Retirez le fichier de l’index avant de restaurer une version antérieure.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Basculez sur une branche avant de la réinitialiser.';
 
   @override
   String get gitErrorDiverged =>
@@ -2454,6 +2565,797 @@ class AppLocalizationsFr extends AppLocalizations {
       'BusyMark n’a pas pu exporter ce document en PDF.';
 
   @override
+  String get visualizationRendering => 'Rendu en cours…';
+
+  @override
+  String get visualizationStale => 'Affichage du dernier rendu valide';
+
+  @override
+  String get visualizationShowSource => 'Afficher la source';
+
+  @override
+  String get visualizationShowRender => 'Afficher le rendu';
+
+  @override
+  String get visualizationFitWidth => 'Ajuster à la largeur';
+
+  @override
+  String get visualizationSaveImage => 'Enregistrer l’image';
+
+  @override
+  String get visualizationCopyImage => 'Copier l’image';
+
+  @override
+  String get visualizationImageCopied => 'Image copiée';
+
+  @override
+  String get visualizationOpenApiReference => 'Ouvrir la référence de l’API';
+
+  @override
+  String get visualizationValid => 'Valide';
+
+  @override
+  String get visualizationInvalid => 'Invalide';
+
+  @override
+  String get visualizationServers => 'Serveurs';
+
+  @override
+  String get visualizationPaths => 'Chemins';
+
+  @override
+  String get visualizationOperations => 'Opérations';
+
+  @override
+  String get visualizationTags => 'Étiquettes';
+
+  @override
+  String get visualizationNoOperations => 'Aucune opération correspondante';
+
+  @override
+  String get visualizationSearchOperations => 'Rechercher des opérations';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Impossible de générer cette visualisation.';
+
+  @override
+  String get visualizationRetry => 'Réessayer';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'Fichier enregistré : $fileName';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
-      'Exporter le document Markdown actif en PDF.';
+      'Exporter le document actif ou le module Writerside en PDF.';
+
+  @override
+  String get instances => 'Instances';
+
+  @override
+  String get newInstance => 'Nouvelle instance';
+
+  @override
+  String get newTocLibrary => 'Nouvelle bibliothèque de sommaire';
+
+  @override
+  String get editInstance => 'Modifier l’instance';
+
+  @override
+  String get openTocFile => 'Ouvrir le fichier de sommaire';
+
+  @override
+  String get createInstance => 'Créer une instance';
+
+  @override
+  String get createTocLibrary => 'Créer une bibliothèque de sommaire';
+
+  @override
+  String get instanceContent => 'Contenu';
+
+  @override
+  String get instanceContentSource => 'Créer à partir de';
+
+  @override
+  String get emptyInstance => 'Instance vide';
+
+  @override
+  String get markdownFiles => 'Fichiers Markdown locaux';
+
+  @override
+  String get chooseMarkdownFolder => 'Choisir un dossier Markdown';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Choisissez un dossier contenant des fichiers Markdown.';
+
+  @override
+  String get instanceAppearance => 'Apparence';
+
+  @override
+  String get instanceColor => 'Couleur de l’icône';
+
+  @override
+  String get instanceVersion => 'Version';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Si ce champ est vide, la version du projet $version est utilisée.';
+  }
+
+  @override
+  String get instanceWebPath => 'Chemin web';
+
+  @override
+  String get instanceStatus => 'État';
+
+  @override
+  String get instanceStatusRelease => 'Version stable';
+
+  @override
+  String get instanceStatusEap => 'Accès anticipé';
+
+  @override
+  String get instanceStatusDeprecated => 'Obsolète';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'Autoriser l’indexation par les moteurs de recherche';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Autoriser les moteurs de recherche externes à indexer cette sortie.';
+
+  @override
+  String get offlineArtifact => 'Artefact hors ligne';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Regrouper les ressources pour que la documentation générée soit autonome.';
+
+  @override
+  String get instanceOutputSettings => 'Paramètres de sortie';
+
+  @override
+  String get markdownImportSource => 'Source Markdown';
+
+  @override
+  String get markdownImportFiles => 'Fichiers Markdown';
+
+  @override
+  String get selectNone => 'Ne rien sélectionner';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '$count fichier(s) Markdown trouvé(s)';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'Aucun fichier Markdown n’a été trouvé dans ce dossier.';
+
+  @override
+  String get copyReferencedMedia => 'Copier les médias référencés';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Copier les images et vidéos locales référencées par les fichiers sélectionnés en conservant les chemins relatifs.';
+
+  @override
+  String get instanceIdRenameWarningTitle =>
+      'Renommer l’identifiant de l’instance ?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark renommera le fichier .tree et mettra à jour les références du projet Writerside de « $oldId » vers « $newId ». Les scripts de publication ne sont pas modifiés et doivent être mis à jour séparément.';
+  }
+
+  @override
+  String get renameAndUpdateReferences =>
+      'Renommer et mettre à jour les références';
+
+  @override
+  String get tocLibraryDescription =>
+      'Une bibliothèque de sommaire stocke des sections réutilisables et ne produit pas sa propre sortie.';
+
+  @override
+  String get defaultTocLibraryName => 'Sommaire partagé';
+
+  @override
+  String get instanceColorAutomatic => 'Automatique';
+
+  @override
+  String get instanceColorBlue => 'Bleu';
+
+  @override
+  String get instanceColorGreen => 'Vert';
+
+  @override
+  String get instanceColorOrange => 'Orange';
+
+  @override
+  String get instanceColorPurple => 'Violet';
+
+  @override
+  String get instanceColorRed => 'Rouge';
+
+  @override
+  String get instanceColorTeal => 'Sarcelle';
+
+  @override
+  String get instanceColorYellow => 'Jaune';
+
+  @override
+  String get errorWritersideInstanceNameRequired =>
+      'Saisissez un nom d’instance.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'Une instance avec l’identifiant « $id » existe déjà.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'L’arbre de l’instance existe déjà : $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Le dossier source Markdown n’existe pas : $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Sélectionnez au moins un fichier Markdown à importer.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'Ce fichier n’est pas un fichier Markdown lisible dans la source sélectionnée : $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'L’importation écraserait un fichier de projet existant : $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Les fichiers de l’instance ont changé sur le disque. Vérifiez-les et réessayez.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark n’a pas pu annuler complètement la modification de l’instance. Vérifiez ces fichiers avant de continuer : $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Une bibliothèque de sommaire ne peut pas importer de rubriques Markdown.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Le chemin web doit tenir sur une seule ligne.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'La configuration de l’instance Writerside n’est pas valide. Corrigez ses diagnostics et réessayez.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark n’a pas pu préparer les modifications de l’instance en toute sécurité.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'État d’instance inconnu « $status ». Utilisez release, eap ou deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'L’identifiant d’instance « $id » est utilisé par plusieurs fichiers d’arbre.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml doit avoir un élément racine <buildprofiles>.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'La valeur $name « $value » doit être true ou false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Un élément <build-profile> doit indiquer un identifiant d’instance.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Un élément <include> d’arbre doit indiquer à la fois from et element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Un élément <snippet> d’arbre doit indiquer un id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Une référence de sommaire entre instances doit indiquer à la fois ref et in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Un élément de sommaire ne peut pas cibler plusieurs rubriques, références, liens ou redirections.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'L’identifiant d’élément d’arbre « $id » est déclaré plusieurs fois.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Le fichier de groupes d’instances doit avoir un élément racine <instance-groups>.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Un groupe d’instances doit indiquer un id et une liste d’instances non vides.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'L’identifiant de groupe d’instances « $id » est déclaré plusieurs fois.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'L’inclusion de sommaire « $source#$id » appartient au module externe « $origin » et ne peut pas être développée dans cet espace de travail.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'L’élément d’arbre « $id » n’existe pas dans l’arbre enregistré « $source ».';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'L’inclusion d’arbre « $source#$id » crée un cycle.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'La condition d’instance référence le groupe inconnu « @$group ».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'La référence entre instances cible l’instance inconnue « $instance ».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'La rubrique « $topic » ne fait pas partie de l’instance référencée « $instance ».';
+  }
+
+  @override
+  String get download => 'Télécharger';
+
+  @override
+  String get exportWritersideAsPdf => 'Exporter Writerside au format PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Choisissez une instance et les paramètres PDF. BusyMark utilise le générateur Writerside officiel de JetBrains.';
+
+  @override
+  String get writersidePdfContent => 'Contenu de l’exportation';
+
+  @override
+  String get writersidePdfSettings => 'Paramètres PDF';
+
+  @override
+  String get writersidePdfConfigureHere => 'Configurer pour cette exportation';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'Utiliser la configuration du projet';
+
+  @override
+  String get writersidePdfConfigurationFile => 'Fichier de configuration PDF';
+
+  @override
+  String get writersidePdfPage => 'Page';
+
+  @override
+  String get writersidePdfKeymap => 'Disposition des raccourcis';
+
+  @override
+  String get writersidePdfNoKeymap => 'Aucune disposition';
+
+  @override
+  String get writersidePdfTocTitle => 'Titre de la table des matières';
+
+  @override
+  String get writersidePdfCover => 'Page de couverture';
+
+  @override
+  String get writersidePdfIncludeCover => 'Inclure une page de couverture';
+
+  @override
+  String get writersidePdfCoverTitle => 'Titre de couverture';
+
+  @override
+  String get writersidePdfCoverDescription => 'Description de couverture';
+
+  @override
+  String get writersidePdfCopyright => 'Droits d’auteur';
+
+  @override
+  String get writersidePdfCoverLogo => 'Logo de couverture';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Choisir le logo de couverture';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'En-tête et pied de page';
+
+  @override
+  String get writersidePdfHeader => 'En-tête';
+
+  @override
+  String get writersidePdfFooter => 'Pied de page';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Ces valeurs associent le module ouvert à l’organisation des sources du générateur.';
+
+  @override
+  String get writersidePdfModuleName => 'Nom du module';
+
+  @override
+  String get writersidePdfSourceRoot => 'Racine des sources';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'Choisir la racine des sources';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Version du générateur';
+
+  @override
+  String get writersidePdfAllowNetwork =>
+      'Autoriser le réseau pendant la génération';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Désactivé par défaut. Activez cette option uniquement si le projet nécessite volontairement des ressources distantes.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Saisissez le nom du module.';
+
+  @override
+  String get writersidePdfSourceRootRequired =>
+      'Choisissez la racine des sources.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Saisissez une version valide du générateur.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Générateur Writerside requis';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark utilise l’image de conteneur officielle $image. La télécharger maintenant ? Cette image est volumineuse et stockée par Docker.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Téléchargement du générateur Writerside…';
+
+  @override
+  String get exportingWritersidePdf => 'Exportation du PDF Writerside…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Docker est requis pour exporter Writerside au format PDF. Installez et démarrez Docker, puis réessayez.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'L’image demandée du générateur Writerside n’est pas disponible.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'La configuration PDF Writerside n’est pas valide.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Le générateur Writerside n’a pas pu créer le PDF.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Le générateur Writerside n’a pas produit de PDF valide.';
+
+  @override
+  String get ai => 'IA';
+
+  @override
+  String get aiLocalOllama => 'Ollama local';
+
+  @override
+  String get aiDisabled => 'Désactivé';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'L’édition par IA est déclenchée explicitement. BusyMark envoie uniquement le contexte affiché au fournisseur sélectionné et n’applique jamais une proposition sans validation.';
+
+  @override
+  String get aiProvider => 'Fournisseur d’IA';
+
+  @override
+  String get aiOllamaEndpoint => 'Point de terminaison Ollama';
+
+  @override
+  String get aiOllamaModel => 'Modèle Ollama';
+
+  @override
+  String get aiTestConnection => 'Tester la connexion';
+
+  @override
+  String get aiTestingConnection => 'Test en cours…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Connecté. $count modèle(s) installé(s) trouvé(s).';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama est en cours d’exécution, mais aucun modèle installé n’a été trouvé.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark n’a pas pu vérifier la génération de texte par IA.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Activez un fournisseur d’IA et vérifiez un modèle dans Paramètres → IA.';
+
+  @override
+  String get aiEditWithAi => 'Modifier avec l’IA';
+
+  @override
+  String get aiRefineWithAi => 'Améliorer avec l’IA';
+
+  @override
+  String get aiInstruction => 'Consigne';
+
+  @override
+  String get aiChangeTarget => 'Ce qui peut être modifié';
+
+  @override
+  String get aiSharedContext => 'Contexte partagé avec l’IA';
+
+  @override
+  String get aiTargetSelection => 'Contenu sélectionné';
+
+  @override
+  String get aiTargetInsertAfterBlock => 'Insérer après le bloc actuel';
+
+  @override
+  String get aiTargetCurrentBlock => 'Bloc actuel';
+
+  @override
+  String get aiTargetCurrentSection => 'Section actuelle';
+
+  @override
+  String get aiTargetCompleteDocument => 'Document complet';
+
+  @override
+  String get aiContextNone => 'Aucun contexte du document';
+
+  @override
+  String get aiContextSelection => 'Contenu sélectionné';
+
+  @override
+  String get aiContextCurrentBlock => 'Bloc actuel';
+
+  @override
+  String get aiContextCurrentSection => 'Section actuelle';
+
+  @override
+  String get aiContextCompleteDocument => 'Document complet';
+
+  @override
+  String get aiGenerating => 'Génération de la proposition…';
+
+  @override
+  String get aiProposal => 'Proposition de l’IA';
+
+  @override
+  String get aiGenerateProposal => 'Générer la proposition';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Le fournisseur sélectionné recevra $count caractères du contexte affiché.';
+  }
+
+  @override
+  String get aiOriginal => 'Texte d’origine';
+
+  @override
+  String get aiSuggested => 'Suggestion';
+
+  @override
+  String get aiApplyProposal => 'Appliquer la proposition';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input jetons d’entrée · $output jetons de sortie';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Le document a changé pendant la génération de cette proposition. Relancez l’action.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'Les modifications indexées ont changé pendant la génération de ce message de commit. Relancez l’action.';
+
+  @override
+  String get aiViewContext => 'Afficher le contexte envoyé';
+
+  @override
+  String get aiReviewExactContent => 'Vérifier le contenu exact';
+
+  @override
+  String get aiContentToChange => 'Contenu à modifier';
+
+  @override
+  String get aiContentSentToAi => 'Contenu envoyé à l’IA';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'L’IA est désactivée. BusyMark n’envoie jamais le contenu du document sans action d’IA explicite.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation au service Ollama local configuré. Les propositions ne sont jamais appliquées sans validation.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation à $provider. Les requêtes sont sans état et les propositions ne sont jamais appliquées sans validation.';
+  }
+
+  @override
+  String get aiApiKey => 'Clé API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Une clé est enregistrée dans le trousseau d’identifiants du système';
+
+  @override
+  String get aiApiKeyEnterHint => 'Saisissez une clé API du fournisseur';
+
+  @override
+  String get aiReplaceApiKey => 'Remplacer la clé API';
+
+  @override
+  String get aiSaveApiKey => 'Enregistrer la clé API de manière sécurisée';
+
+  @override
+  String get aiRemoveApiKey => 'Supprimer la clé API enregistrée';
+
+  @override
+  String get aiCredentialSaved =>
+      'La clé API a été enregistrée dans le trousseau d’identifiants du système.';
+
+  @override
+  String get aiCredentialRemoved => 'La clé API enregistrée a été supprimée.';
+
+  @override
+  String get aiModelRouting => 'Sélection du modèle';
+
+  @override
+  String get aiAutomaticRouting => 'Automatique selon la tâche';
+
+  @override
+  String get aiFixedModelRouting => 'Utiliser le modèle sélectionné';
+
+  @override
+  String get aiPreferredModel => 'Modèle préféré';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests requêtes · $input jetons d’entrée · $output jetons de sortie';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Envoyer du contenu à $provider ?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Activer $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Seul le contenu affiché dans chaque boîte de dialogue de validation de l’IA est envoyé. Les requêtes sont sans état, les propositions doivent être validées et la clé API est conservée dans le trousseau d’identifiants du système Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Confirmez d’abord le partage de données avec $provider dans Paramètres → IA.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Génération vérifiée avec $model. $count modèles compatibles disponibles.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Un démarrage à froid du modèle local a été détecté.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Aucun modèle de génération de texte compatible n’est disponible.';
+
+  @override
+  String get aiEnableProvider => 'Activez d’abord un fournisseur d’IA.';
+
+  @override
+  String get aiDraftCommitMessage => 'Rédiger un message de commit';
+
+  @override
+  String get aiDrafting => 'Rédaction…';
+
+  @override
+  String get aiDraftWithAi => 'Rédiger avec l’IA';
+
+  @override
+  String get generateOrUpdateMarkdownToc =>
+      'Générer/actualiser la table des matières';
+
+  @override
+  String get markdownTocTitle => 'Table des matières';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Table des matières actualisée avec $count entrées.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Ajoutez au moins un titre de section avant de générer une table des matières.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Les marqueurs de table des matières BusyMark sont absents, en double ou dans le mauvais ordre.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Le titre de niveau $level suit le niveau $previousLevel ; vérifiez l’imbrication des sections.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Le texte du lien est vide ; fournissez un nom accessible qui décrit son objectif.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Vérifiez si le texte du lien « $text » décrit son objectif dans le contexte.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Les en-têtes de tableau doivent identifier leurs colonnes ; complétez chaque en-tête vide.';
 }

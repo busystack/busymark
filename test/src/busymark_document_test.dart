@@ -1570,20 +1570,20 @@ void main() {}
     await tester.pump();
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
 
     expect(markdown, '## Title\n');
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.digit0);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.digit0);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
 
@@ -3740,11 +3740,7 @@ void main() {}
 
     await tester.tap(find.byType(TextField).first);
     await tester.pump();
-    await tester.tap(
-      find.byTooltip(
-        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
-      ),
-    );
+    await tester.tap(find.byTooltip(l10n.htmlBlock));
     await tester.pumpAndSettle();
 
     final htmlSourceField = find.byKey(
@@ -3806,11 +3802,7 @@ void main() {}
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(TextField).first);
-      await tester.tap(
-        find.byTooltip(
-          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
-        ),
-      );
+      await tester.tap(find.byTooltip(l10n.htmlBlock));
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('wysiwyg-html-source-field')),
@@ -3879,11 +3871,7 @@ void main() {}
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(TextField).first);
-      await tester.tap(
-        find.byTooltip(
-          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
-        ),
-      );
+      await tester.tap(find.byTooltip(l10n.htmlBlock));
       await tester.pumpAndSettle();
 
       updateHost(() => activeDocument = replacement.busyDocument);
@@ -3949,11 +3937,7 @@ void main() {}
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(TextField).first);
-    await tester.tap(
-      find.byTooltip(
-        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
-      ),
-    );
+    await tester.tap(find.byTooltip(l10n.htmlBlock));
     await tester.pumpAndSettle();
     expect(find.text(l10n.editHtml), findsOneWidget);
 
@@ -4007,11 +3991,7 @@ void main() {}
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(TextField).first);
-    await tester.tap(
-      find.byTooltip(
-        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
-      ),
-    );
+    await tester.tap(find.byTooltip(l10n.htmlBlock));
     await tester.pumpAndSettle();
 
     expect(

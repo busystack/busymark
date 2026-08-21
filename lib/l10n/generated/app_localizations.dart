@@ -423,17 +423,17 @@ abstract class AppLocalizations {
   /// **'Cut'**
   String get cut;
 
-  /// Outline action that raises a heading and its descendants by one rank.
+  /// Outline action that raises a heading section, including descendant headings, by one rank.
   ///
   /// In en, this message translates to:
-  /// **'Promote heading'**
-  String get promoteHeading;
+  /// **'Promote section'**
+  String get promoteSection;
 
-  /// Outline action that lowers a heading and its descendants by one rank.
+  /// Outline action that lowers a heading section, including descendant headings, by one rank.
   ///
   /// In en, this message translates to:
-  /// **'Demote heading'**
-  String get demoteHeading;
+  /// **'Demote section'**
+  String get demoteSection;
 
   /// Outline action that swaps a heading section with its previous sibling section.
   ///
@@ -579,11 +579,11 @@ abstract class AppLocalizations {
   /// **'Paste without formatting'**
   String get pasteWithoutFormatting;
 
-  /// Preview view label.
+  /// Reading view label.
   ///
   /// In en, this message translates to:
-  /// **'Preview'**
-  String get preview;
+  /// **'Reading'**
+  String get reading;
 
   /// Recent workspaces section title.
   ///
@@ -855,16 +855,16 @@ abstract class AppLocalizations {
   /// **'General'**
   String get shortcutGroupGeneral;
 
-  /// Keyboard shortcut label for creating a document.
+  /// Keyboard shortcut label for opening the content creation chooser.
   ///
   /// In en, this message translates to:
-  /// **'New document'**
+  /// **'Create'**
   String get shortcutNewDocument;
 
-  /// Keyboard shortcut description for creating a document.
+  /// Keyboard shortcut description for creating Markdown files or Writerside projects.
   ///
   /// In en, this message translates to:
-  /// **'Create a new unsaved Markdown document'**
+  /// **'Create a Markdown file or Writerside project'**
   String get shortcutNewDocumentDescription;
 
   /// Keyboard shortcut description for opening content.
@@ -2130,7 +2130,7 @@ abstract class AppLocalizations {
   /// Summary in the dialog for removing a topic from one Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'Remove “{topic}” from the selected help instance. The topic file will be kept.'**
+  /// **'Remove “{topic}” from the selected instance. The topic file will be kept.'**
   String topicRemovalSummary(String topic);
 
   /// Summary in the Writerside safe-delete dialog.
@@ -2463,11 +2463,11 @@ abstract class AppLocalizations {
   /// **'Large file: highlighting and folding are paused'**
   String get sourceLargeFileFeaturesPaused;
 
-  /// Empty state shown when there is no preview.
+  /// Empty state shown when there is no content to read.
   ///
   /// In en, this message translates to:
-  /// **'No preview'**
-  String get noPreview;
+  /// **'Nothing to read'**
+  String get nothingToRead;
 
   /// Preview label for a note admonition.
   ///
@@ -2802,7 +2802,7 @@ abstract class AppLocalizations {
   /// Detail shown when creating a topic without a Writerside instance tree.
   ///
   /// In en, this message translates to:
-  /// **'The Writerside module has no help instance tree.'**
+  /// **'The Writerside module has no instance tree.'**
   String get errorWritersideInstanceTreeMissing;
 
   /// Detail for a missing Writerside tree file.
@@ -3434,6 +3434,18 @@ abstract class AppLocalizations {
   /// **'Changes'**
   String get gitChanges;
 
+  /// Git staged changes group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Staged'**
+  String get gitStaged;
+
+  /// Git unstaged changes group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstaged'**
+  String get gitUnstaged;
+
   /// Git history view label.
   ///
   /// In en, this message translates to:
@@ -3446,17 +3458,23 @@ abstract class AppLocalizations {
   /// **'Branches'**
   String get gitBranches;
 
-  /// Tooltip for the Git branch action menu button.
+  /// Tooltip for the Git action menu button.
   ///
   /// In en, this message translates to:
-  /// **'Branch actions'**
-  String get gitBranchActions;
+  /// **'Git actions'**
+  String get gitActions;
 
   /// Git pull action label.
   ///
   /// In en, this message translates to:
   /// **'Pull'**
   String get gitPull;
+
+  /// Git fetch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch'**
+  String get gitFetch;
 
   /// Git push action label.
   ///
@@ -3470,22 +3488,22 @@ abstract class AppLocalizations {
   /// **'Commit'**
   String get gitCommit;
 
-  /// Tooltip for selecting a Git file for the next commit.
+  /// Tooltip for staging a Git file.
   ///
   /// In en, this message translates to:
-  /// **'Select for commit'**
+  /// **'Stage file'**
   String get gitSelectForCommit;
 
-  /// Tooltip for removing a Git file from the next commit selection.
+  /// Tooltip for unstaging a Git file.
   ///
   /// In en, this message translates to:
-  /// **'Leave out of commit'**
+  /// **'Unstage file'**
   String get gitRemoveFromCommit;
 
-  /// Git discard action label.
+  /// Action that rolls a tracked file back to HEAD.
   ///
   /// In en, this message translates to:
-  /// **'Discard'**
+  /// **'Rollback'**
   String get gitDiscard;
 
   /// Action label for opening a file from a Git row or diff.
@@ -3503,7 +3521,7 @@ abstract class AppLocalizations {
   /// Git untracked files group label.
   ///
   /// In en, this message translates to:
-  /// **'Unversioned Files'**
+  /// **'Untracked'**
   String get gitUntracked;
 
   /// Commit message field label.
@@ -3518,11 +3536,23 @@ abstract class AppLocalizations {
   /// **'Selected files'**
   String get gitCommitSelectedFiles;
 
-  /// Commit validation error when no files are selected.
+  /// Commit validation error when the repository index is empty.
   ///
   /// In en, this message translates to:
-  /// **'Select at least one file before committing.'**
+  /// **'Stage at least one file before committing.'**
   String get gitCommitNoSelectedFiles;
+
+  /// Number of repository files currently staged for commit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 staged file} other{{count} staged files}}'**
+  String gitStagedFileCount(int count);
+
+  /// Marker for a staged repository file outside the opened workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside workspace'**
+  String get gitOutsideWorkspace;
 
   /// Commit validation error when the message is empty.
   ///
@@ -3539,7 +3569,7 @@ abstract class AppLocalizations {
   /// Git branch dropdown action for creating a new branch.
   ///
   /// In en, this message translates to:
-  /// **'+ New Branch'**
+  /// **'New Branch'**
   String get gitNewBranch;
 
   /// Branch name field label.
@@ -3584,6 +3614,12 @@ abstract class AppLocalizations {
   /// **'Binary file. BusyMark does not render binary patches.'**
   String get gitBinaryFile;
 
+  /// Git diff binary file message with file size.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary file ({size} bytes). BusyMark does not render binary patches.'**
+  String gitBinaryFileInfo(int size);
+
   /// Git diff banner for unsaved editor changes.
   ///
   /// In en, this message translates to:
@@ -3599,7 +3635,7 @@ abstract class AppLocalizations {
   /// Confirmation body for discarding tracked changes.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}'**
+  /// **'{count, plural, =1{All staged and unstaged changes in the selected tracked file will be restored to HEAD.} other{All staged and unstaged changes in the selected tracked files will be restored to HEAD.}}'**
   String gitConfirmDiscardTracked(int count);
 
   /// Confirmation body for deleting untracked files.
@@ -3641,14 +3677,134 @@ abstract class AppLocalizations {
   /// Project history action label.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Project History'**
   String get gitProjectHistory;
 
   /// Current file history action label.
   ///
   /// In en, this message translates to:
-  /// **'Current file'**
+  /// **'File History'**
   String get gitFileHistory;
+
+  /// File History empty state when no Markdown file is active.
+  ///
+  /// In en, this message translates to:
+  /// **'File History requires an open Markdown file.'**
+  String get gitFileHistoryRequiresOpenFile;
+
+  /// Action to load another page of Git history.
+  ///
+  /// In en, this message translates to:
+  /// **'Load More'**
+  String get gitLoadMore;
+
+  /// Historical comparison between a commit and its parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes in this commit'**
+  String get gitChangesInCommit;
+
+  /// Historical comparison between a commit and the working-tree file.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with current'**
+  String get gitCompareWithCurrent;
+
+  /// Action to restore one file from a selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version'**
+  String get gitRestoreVersion;
+
+  /// Confirmation title for restoring a historical file version.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this file version?'**
+  String get gitConfirmRestoreTitle;
+
+  /// Confirmation body for restoring a historical file version.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.'**
+  String get gitConfirmRestoreMessage;
+
+  /// Tooltip for actions on a selected Git commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit actions'**
+  String get gitCommitActions;
+
+  /// Project History action that moves the current branch to the selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset current branch to here…'**
+  String get gitResetCurrentBranchToHere;
+
+  /// Title for choosing how to reset the current branch to a selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset {branch} to {commit}?'**
+  String gitResetCurrentBranchTitle(String branch, String commit);
+
+  /// Explanation shown before resetting the current branch.
+  ///
+  /// In en, this message translates to:
+  /// **'This moves branch {branch} to commit {commit}. Choose how Git updates the index and working tree.'**
+  String gitResetCurrentBranchMessage(String branch, String commit);
+
+  /// Action that confirms resetting the current Git branch.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get gitReset;
+
+  /// Git soft reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get gitResetModeSoft;
+
+  /// Git soft reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch only. Keep the index and working tree unchanged; differences from the selected commit remain staged.'**
+  String get gitResetModeSoftDescription;
+
+  /// Git mixed reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get gitResetModeMixed;
+
+  /// Git mixed reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset the index. Keep the working tree unchanged, leaving differences unstaged.'**
+  String get gitResetModeMixedDescription;
+
+  /// Git hard reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get gitResetModeHard;
+
+  /// Git hard reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset the index and working tree. Tracked changes are discarded; obstructing untracked files may be deleted.'**
+  String get gitResetModeHardDescription;
+
+  /// Git keep reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get gitResetModeKeep;
+
+  /// Git keep reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset tracked files while preserving local changes. Git aborts if those changes conflict with the reset.'**
+  String get gitResetModeKeepDescription;
 
   /// Diff additions and deletions count.
   ///
@@ -3769,6 +3925,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save or discard BusyMark editor changes before switching branches.'**
   String get gitErrorDirtyWorkspace;
+
+  /// Git reset error shown when the editor has unsaved content.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard BusyMark editor changes before resetting the current branch.'**
+  String get gitErrorResetDirtyWorkspace;
+
+  /// Git error shown when historical restoration is blocked because the current file is staged.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage this file before restoring a historical version.'**
+  String get gitErrorRestoreStagedFile;
+
+  /// Git reset error shown while HEAD is detached.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out a branch before resetting it.'**
+  String get gitErrorResetDetachedHead;
 
   /// Git error message.
   ///
@@ -3998,7 +4172,7 @@ abstract class AppLocalizations {
   /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
   String get markdownHtmlSafeUrlsDescription;
 
-  /// Menu action and dialog title for exporting the active Markdown document as PDF.
+  /// Menu action and dialog title for exporting the active document or Writerside module as PDF.
   ///
   /// In en, this message translates to:
   /// **'Export as PDF'**
@@ -4106,10 +4280,10 @@ abstract class AppLocalizations {
   /// **'{fileName} was exported.'**
   String pdfExported(String fileName);
 
-  /// PDF export success message when some images were omitted.
+  /// PDF export success message when some content fell back or was omitted.
   ///
   /// In en, this message translates to:
-  /// **'{fileName} was exported. Images that could not be included: {count}.'**
+  /// **'{fileName} was exported with {count} warning(s).'**
   String pdfExportedWithWarnings(String fileName, int count);
 
   /// Error shown when the bundled PDF compiler is unavailable.
@@ -4130,11 +4304,1332 @@ abstract class AppLocalizations {
   /// **'BusyMark could not export this document as PDF.'**
   String get pdfExportFailed;
 
+  /// Status shown while a fenced visualization is rendering.
+  ///
+  /// In en, this message translates to:
+  /// **'Rendering…'**
+  String get visualizationRendering;
+
+  /// Status shown when a visualization displays its last valid result while newer source renders or is invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the last valid render'**
+  String get visualizationStale;
+
+  /// Action that reveals the original source fence for a visualization.
+  ///
+  /// In en, this message translates to:
+  /// **'Show source'**
+  String get visualizationShowSource;
+
+  /// Action that returns from visualization source to its rendered output.
+  ///
+  /// In en, this message translates to:
+  /// **'Show render'**
+  String get visualizationShowRender;
+
+  /// Action that resets diagram zoom to fit its card.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to width'**
+  String get visualizationFitWidth;
+
+  /// Action that saves a rendered diagram as an SVG or PNG file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save image'**
+  String get visualizationSaveImage;
+
+  /// Action that copies a rendered diagram to the image clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy image'**
+  String get visualizationCopyImage;
+
+  /// Confirmation after copying a rendered diagram to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Image copied'**
+  String get visualizationImageCopied;
+
+  /// Action that opens the complete interactive OpenAPI reference window.
+  ///
+  /// In en, this message translates to:
+  /// **'Open API Reference'**
+  String get visualizationOpenApiReference;
+
+  /// OpenAPI validation success state.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid'**
+  String get visualizationValid;
+
+  /// OpenAPI validation failure state.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid'**
+  String get visualizationInvalid;
+
+  /// OpenAPI server count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers'**
+  String get visualizationServers;
+
+  /// OpenAPI path count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Paths'**
+  String get visualizationPaths;
+
+  /// OpenAPI operation count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get visualizationOperations;
+
+  /// OpenAPI tag summary label.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get visualizationTags;
+
+  /// Empty state for the filtered OpenAPI operation list.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching operations'**
+  String get visualizationNoOperations;
+
+  /// Hint for the OpenAPI operation search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search operations'**
+  String get visualizationSearchOperations;
+
+  /// Fallback message for a failed visualization render.
+  ///
+  /// In en, this message translates to:
+  /// **'This visualization could not be rendered.'**
+  String get visualizationRenderFailed;
+
+  /// Action that retries a failed visualization render.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get visualizationRetry;
+
+  /// Confirmation after saving a rendered diagram.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {fileName}'**
+  String visualizationSaved(String fileName);
+
   /// Keyboard-shortcut description for PDF export.
   ///
   /// In en, this message translates to:
-  /// **'Export the active Markdown document as a PDF.'**
+  /// **'Export the active document or Writerside module as a PDF.'**
   String get shortcutExportPdfDescription;
+
+  /// Heading for the Writerside instances shown in the TOC sidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Instances'**
+  String get instances;
+
+  /// Action that creates a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'New instance'**
+  String get newInstance;
+
+  /// Action that creates a Writerside library instance for reusable TOC sections.
+  ///
+  /// In en, this message translates to:
+  /// **'New TOC library'**
+  String get newTocLibrary;
+
+  /// Action and dialog title for editing a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit instance'**
+  String get editInstance;
+
+  /// Action that opens the selected Writerside instance tree file.
+  ///
+  /// In en, this message translates to:
+  /// **'Open TOC file'**
+  String get openTocFile;
+
+  /// Dialog title for creating a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Create instance'**
+  String get createInstance;
+
+  /// Dialog title for creating a Writerside TOC library instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Create TOC library'**
+  String get createTocLibrary;
+
+  /// Group title for choosing the initial content of a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get instanceContent;
+
+  /// Field for choosing how a Writerside instance is initialized.
+  ///
+  /// In en, this message translates to:
+  /// **'Create from'**
+  String get instanceContentSource;
+
+  /// Option to create a Writerside instance without imported topics.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty instance'**
+  String get emptyInstance;
+
+  /// Option to initialize a Writerside instance from Markdown files.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Markdown files'**
+  String get markdownFiles;
+
+  /// Action to choose a folder containing Markdown files.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Markdown folder'**
+  String get chooseMarkdownFolder;
+
+  /// Validation shown when an imported instance has no source folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder containing Markdown files.'**
+  String get errorWritersideInstanceImportSourceRequired;
+
+  /// Group title for the local appearance of a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get instanceAppearance;
+
+  /// Writerside instance icon-color field.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon color'**
+  String get instanceColor;
+
+  /// Writerside instance version field.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get instanceVersion;
+
+  /// Explanation of an inherited Writerside project version.
+  ///
+  /// In en, this message translates to:
+  /// **'The project version is {version} when this field is empty.'**
+  String instanceVersionInherited(String version);
+
+  /// Writerside instance publication web-path field.
+  ///
+  /// In en, this message translates to:
+  /// **'Web path'**
+  String get instanceWebPath;
+
+  /// Writerside instance status field.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get instanceStatus;
+
+  /// Regular Writerside instance status.
+  ///
+  /// In en, this message translates to:
+  /// **'Release'**
+  String get instanceStatusRelease;
+
+  /// Writerside early-access instance status.
+  ///
+  /// In en, this message translates to:
+  /// **'Early access'**
+  String get instanceStatusEap;
+
+  /// Writerside deprecated instance status.
+  ///
+  /// In en, this message translates to:
+  /// **'Deprecated'**
+  String get instanceStatusDeprecated;
+
+  /// Per-instance Writerside search-engine indexing setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow search engine indexing'**
+  String get allowSearchEngineIndexing;
+
+  /// Description of the Writerside indexing setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow external search engines to index this output.'**
+  String get allowSearchEngineIndexingDescription;
+
+  /// Per-instance Writerside offline artifact setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline artifact'**
+  String get offlineArtifact;
+
+  /// Description of the Writerside offline artifact setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Bundle resources so the built documentation is self-contained.'**
+  String get offlineArtifactDescription;
+
+  /// Group title for Writerside instance build and publication settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Output settings'**
+  String get instanceOutputSettings;
+
+  /// Group title for the source directory of a Writerside Markdown import.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown source'**
+  String get markdownImportSource;
+
+  /// Group title for files selected for a Writerside Markdown import.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown files'**
+  String get markdownImportFiles;
+
+  /// Action that clears all items in a multiple selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select none'**
+  String get selectNone;
+
+  /// Count of discovered Markdown import files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Markdown file(s) found'**
+  String markdownFilesFound(int count);
+
+  /// Empty state for a Writerside Markdown import source.
+  ///
+  /// In en, this message translates to:
+  /// **'No Markdown files were found in this directory.'**
+  String get noMarkdownFilesFound;
+
+  /// Option to copy media used by imported Markdown files.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy referenced media'**
+  String get copyReferencedMedia;
+
+  /// Description of the Writerside Markdown media import option.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy local images and video referenced by the selected files while preserving relative paths.'**
+  String get copyReferencedMediaDescription;
+
+  /// Confirmation title before refactoring a Writerside instance ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename instance ID?'**
+  String get instanceIdRenameWarningTitle;
+
+  /// Warning shown before a Writerside instance ID refactor.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark will rename the .tree file and update Writerside project references from “{oldId}” to “{newId}”. Publication scripts are not changed and must be updated separately.'**
+  String instanceIdRenameWarning(String oldId, String newId);
+
+  /// Confirmation action for a Writerside instance ID refactor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename and update references'**
+  String get renameAndUpdateReferences;
+
+  /// Explanation shown while creating a Writerside TOC library.
+  ///
+  /// In en, this message translates to:
+  /// **'A TOC library stores reusable sections and does not produce its own output.'**
+  String get tocLibraryDescription;
+
+  /// Default name for a new Writerside TOC library instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared TOC'**
+  String get defaultTocLibraryName;
+
+  /// Automatic Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get instanceColorAutomatic;
+
+  /// Blue Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get instanceColorBlue;
+
+  /// Green Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get instanceColorGreen;
+
+  /// Orange Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get instanceColorOrange;
+
+  /// Purple Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get instanceColorPurple;
+
+  /// Red Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get instanceColorRed;
+
+  /// Teal Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get instanceColorTeal;
+
+  /// Yellow Writerside instance icon color option.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get instanceColorYellow;
+
+  /// Validation error for an empty Writerside instance name.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an instance name.'**
+  String get errorWritersideInstanceNameRequired;
+
+  /// Error for a duplicate Writerside instance ID.
+  ///
+  /// In en, this message translates to:
+  /// **'An instance with ID “{id}” already exists.'**
+  String errorWritersideInstanceIdExists(String id);
+
+  /// Error for an existing Writerside instance tree path.
+  ///
+  /// In en, this message translates to:
+  /// **'The instance tree already exists: {path}'**
+  String errorWritersideInstanceTreeExists(String path);
+
+  /// Error for a missing Writerside Markdown import source.
+  ///
+  /// In en, this message translates to:
+  /// **'The Markdown source directory does not exist: {path}'**
+  String errorWritersideInstanceImportSourceMissing(String path);
+
+  /// Validation error when no Markdown import files are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one Markdown file to import.'**
+  String get errorWritersideInstanceImportSelectionRequired;
+
+  /// Error for an invalid Writerside Markdown import file.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a readable Markdown file inside the selected source: {path}'**
+  String errorWritersideInstanceImportFileInvalid(String path);
+
+  /// Error for a colliding Writerside Markdown import target.
+  ///
+  /// In en, this message translates to:
+  /// **'Import would overwrite an existing project file: {path}'**
+  String errorWritersideInstanceImportTargetExists(String path);
+
+  /// Concurrent-change error for a Writerside instance mutation.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance files changed on disk. Review them and try again.'**
+  String get errorWritersideInstanceFilesChanged;
+
+  /// Error when a Writerside instance mutation rollback is incomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not completely roll back the instance change. Review these files before continuing: {paths}'**
+  String errorWritersideInstanceRollbackFailed(String paths);
+
+  /// Error when Markdown import is requested for a TOC library.
+  ///
+  /// In en, this message translates to:
+  /// **'A TOC library cannot import Markdown topics.'**
+  String get errorWritersideInstanceLibraryImport;
+
+  /// Validation error for an invalid Writerside instance web path.
+  ///
+  /// In en, this message translates to:
+  /// **'The web path must be a single line.'**
+  String get errorWritersideInstanceWebPathInvalid;
+
+  /// Error when an instance tree, project config, or build profiles file cannot be safely edited.
+  ///
+  /// In en, this message translates to:
+  /// **'The Writerside instance configuration is invalid. Correct its diagnostics and try again.'**
+  String get errorWritersideInstanceConfigurationInvalid;
+
+  /// Error when a temporary file for an instance mutation cannot be created.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not stage the instance changes safely.'**
+  String get errorWritersideInstanceTemporaryFile;
+
+  /// Diagnostic for an unsupported Writerside instance status.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown instance status “{status}”. Use release, eap, or deprecated.'**
+  String diagnosticWritersideTreeInvalidStatus(String status);
+
+  /// Diagnostic for a duplicate Writerside instance ID.
+  ///
+  /// In en, this message translates to:
+  /// **'The instance ID “{id}” is used by more than one tree file.'**
+  String diagnosticWritersideDuplicateInstanceId(String id);
+
+  /// Diagnostic for an invalid Writerside build profiles root.
+  ///
+  /// In en, this message translates to:
+  /// **'buildprofiles.xml must have a <buildprofiles> root element.'**
+  String get diagnosticWritersideBuildProfilesInvalidRoot;
+
+  /// Diagnostic for an invalid Writerside build profile Boolean.
+  ///
+  /// In en, this message translates to:
+  /// **'The {name} value “{value}” must be true or false.'**
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  );
+
+  /// Diagnostic for a Writerside build profile without an instance attribute.
+  ///
+  /// In en, this message translates to:
+  /// **'A <build-profile> element must specify an instance ID.'**
+  String get diagnosticWritersideBuildProfileMissingInstance;
+
+  /// Diagnostic for an incomplete Writerside tree include.
+  ///
+  /// In en, this message translates to:
+  /// **'A tree <include> must specify both from and element-id.'**
+  String get diagnosticWritersideTreeInvalidInclude;
+
+  /// Diagnostic for a Writerside tree snippet without an ID.
+  ///
+  /// In en, this message translates to:
+  /// **'A tree <snippet> must specify an id.'**
+  String get diagnosticWritersideTreeMissingSnippetId;
+
+  /// Diagnostic for an incomplete Writerside ref/in pair.
+  ///
+  /// In en, this message translates to:
+  /// **'A cross-instance TOC reference must specify both ref and in.'**
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference;
+
+  /// Diagnostic for conflicting Writerside TOC targets.
+  ///
+  /// In en, this message translates to:
+  /// **'A TOC element cannot target more than one topic, reference, link, or redirect.'**
+  String get diagnosticWritersideTreeConflictingTargets;
+
+  /// Diagnostic for a duplicate Writerside tree element ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree element ID “{id}” is declared more than once.'**
+  String diagnosticWritersideTreeDuplicateElementId(String id);
+
+  /// Diagnostic for an invalid Writerside instance groups root.
+  ///
+  /// In en, this message translates to:
+  /// **'The instance groups file must have an <instance-groups> root element.'**
+  String get diagnosticWritersideInstanceGroupsInvalidRoot;
+
+  /// Diagnostic for an invalid Writerside instance group.
+  ///
+  /// In en, this message translates to:
+  /// **'An instance group must specify a non-empty id and instances list.'**
+  String get diagnosticWritersideInstanceGroupInvalid;
+
+  /// Diagnostic for a duplicate Writerside instance group ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance group ID “{id}” is declared more than once.'**
+  String diagnosticWritersideInstanceGroupDuplicateId(String id);
+
+  /// Diagnostic for a tree include from another Writerside module.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC include “{source}#{id}” belongs to external module “{origin}” and cannot be expanded in this workspace.'**
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  );
+
+  /// Diagnostic for a missing reusable tree element.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree element “{id}” does not exist in registered tree “{source}”.'**
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  );
+
+  /// Diagnostic for a circular Writerside tree include.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree include “{source}#{id}” creates a cycle.'**
+  String diagnosticWritersideTreeCircularInclude(String source, String id);
+
+  /// Diagnostic for an unknown Writerside instance group.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance condition references unknown group “@{group}”.'**
+  String diagnosticWritersideUnknownInstanceGroup(String group);
+
+  /// Diagnostic for a missing Writerside reference instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-instance reference targets unknown instance “{instance}”.'**
+  String diagnosticWritersideReferenceInstanceMissing(String instance);
+
+  /// Diagnostic for a missing topic in a cross-instance Writerside reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic “{topic}” is not in referenced instance “{instance}”.'**
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  );
+
+  /// Button label that downloads a required component.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
+
+  /// Menu action and dialog title for exporting a Writerside instance as PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Writerside as PDF'**
+  String get exportWritersideAsPdf;
+
+  /// Introduction to Writerside PDF export.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an instance and PDF settings. BusyMark uses JetBrains’ official Writerside builder.'**
+  String get writersidePdfExportDescription;
+
+  /// Group title for selecting Writerside PDF content.
+  ///
+  /// In en, this message translates to:
+  /// **'Export content'**
+  String get writersidePdfContent;
+
+  /// Label for the source of Writerside PDF settings.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF settings'**
+  String get writersidePdfSettings;
+
+  /// Option to configure Writerside PDF settings in the export dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure for this export'**
+  String get writersidePdfConfigureHere;
+
+  /// Option to use an existing Writerside PDF configuration file.
+  ///
+  /// In en, this message translates to:
+  /// **'Use project configuration'**
+  String get writersidePdfProjectConfiguration;
+
+  /// Writerside PDF configuration file selector label.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF configuration file'**
+  String get writersidePdfConfigurationFile;
+
+  /// Writerside PDF page settings group title.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get writersidePdfPage;
+
+  /// Writerside PDF keymap selector label.
+  ///
+  /// In en, this message translates to:
+  /// **'Keymap'**
+  String get writersidePdfKeymap;
+
+  /// Writerside PDF option that omits a keymap layout.
+  ///
+  /// In en, this message translates to:
+  /// **'No keymap'**
+  String get writersidePdfNoKeymap;
+
+  /// Writerside PDF table-of-contents title field.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents title'**
+  String get writersidePdfTocTitle;
+
+  /// Writerside PDF cover-page settings group title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover page'**
+  String get writersidePdfCover;
+
+  /// Toggle that includes a cover page in a Writerside PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Include cover page'**
+  String get writersidePdfIncludeCover;
+
+  /// Writerside PDF cover title field.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover title'**
+  String get writersidePdfCoverTitle;
+
+  /// Writerside PDF cover description field.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover description'**
+  String get writersidePdfCoverDescription;
+
+  /// Writerside PDF cover copyright field.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright'**
+  String get writersidePdfCopyright;
+
+  /// Writerside PDF cover logo path field.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover logo'**
+  String get writersidePdfCoverLogo;
+
+  /// Action that selects a Writerside PDF cover logo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose cover logo'**
+  String get writersidePdfChooseCoverLogo;
+
+  /// Writerside PDF header and footer settings group title.
+  ///
+  /// In en, this message translates to:
+  /// **'Header and footer'**
+  String get writersidePdfHeaderAndFooter;
+
+  /// Writerside PDF page header field.
+  ///
+  /// In en, this message translates to:
+  /// **'Header'**
+  String get writersidePdfHeader;
+
+  /// Writerside PDF page footer field.
+  ///
+  /// In en, this message translates to:
+  /// **'Footer'**
+  String get writersidePdfFooter;
+
+  /// Description of advanced Writerside PDF settings.
+  ///
+  /// In en, this message translates to:
+  /// **'These values map the opened module to the builder’s source layout.'**
+  String get writersidePdfAdvancedDescription;
+
+  /// Writerside builder module-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Module name'**
+  String get writersidePdfModuleName;
+
+  /// Writerside builder source-root field.
+  ///
+  /// In en, this message translates to:
+  /// **'Source root'**
+  String get writersidePdfSourceRoot;
+
+  /// Action that selects the Writerside builder source root.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose source root'**
+  String get writersidePdfChooseSourceRoot;
+
+  /// JetBrains Writerside builder image version field.
+  ///
+  /// In en, this message translates to:
+  /// **'Builder version'**
+  String get writersidePdfBuilderVersion;
+
+  /// Toggle that allows network access in the Writerside builder container.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow network during build'**
+  String get writersidePdfAllowNetwork;
+
+  /// Security guidance for Writerside builder network access.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled by default. Enable only when the project intentionally needs remote build resources.'**
+  String get writersidePdfAllowNetworkDescription;
+
+  /// Validation error for a missing Writerside module name.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the module name.'**
+  String get writersidePdfModuleNameRequired;
+
+  /// Validation error for a missing Writerside source root.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the source root.'**
+  String get writersidePdfSourceRootRequired;
+
+  /// Validation error for an invalid Writerside builder version.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid builder version.'**
+  String get writersidePdfBuilderVersionInvalid;
+
+  /// Dialog title when the Writerside builder image is not installed.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside builder required'**
+  String get writersidePdfBuilderRequired;
+
+  /// Consent prompt before downloading the Writerside builder image.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark uses the official {image} container image. Download it now? The image is large and is stored by Docker.'**
+  String writersidePdfBuilderDownloadDescription(String image);
+
+  /// Progress title while downloading the Writerside builder image.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading Writerside builder…'**
+  String get writersidePdfDownloadingBuilder;
+
+  /// Progress title while building a Writerside PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting Writerside PDF…'**
+  String get exportingWritersidePdf;
+
+  /// Error shown when Docker is unavailable for Writerside PDF export.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker is required for Writerside PDF export. Install and start Docker, then try again.'**
+  String get writersidePdfDockerUnavailable;
+
+  /// Error shown when the Writerside builder image cannot be used.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested Writerside builder image is not available.'**
+  String get writersidePdfBuilderUnavailable;
+
+  /// Error shown for an invalid Writerside PDF configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'The Writerside PDF configuration is invalid.'**
+  String get writersidePdfConfigurationInvalid;
+
+  /// Error shown when the Writerside PDF build fails.
+  ///
+  /// In en, this message translates to:
+  /// **'The Writerside builder could not create the PDF.'**
+  String get writersidePdfBuildFailed;
+
+  /// Error shown when the Writerside builder output is missing or invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The Writerside builder did not produce a valid PDF.'**
+  String get writersidePdfInvalidOutput;
+
+  /// Settings section and editing menu label for artificial-intelligence features.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get ai;
+
+  /// AI provider option for a loopback Ollama service.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Ollama'**
+  String get aiLocalOllama;
+
+  /// AI provider option that disables AI features.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get aiDisabled;
+
+  /// Privacy description for BusyMark local AI.
+  ///
+  /// In en, this message translates to:
+  /// **'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.'**
+  String get aiLocalOnlyDescription;
+
+  /// Settings label for the active AI provider.
+  ///
+  /// In en, this message translates to:
+  /// **'AI provider'**
+  String get aiProvider;
+
+  /// Settings label for the local Ollama origin.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama endpoint'**
+  String get aiOllamaEndpoint;
+
+  /// Settings label for the installed Ollama model.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama model'**
+  String get aiOllamaModel;
+
+  /// Button that verifies generation with the configured AI provider and model.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get aiTestConnection;
+
+  /// Status while BusyMark verifies the configured AI provider and model.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get aiTestingConnection;
+
+  /// Successful Ollama connection status.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected. {count} installed model(s) found.'**
+  String aiConnectionReady(int count);
+
+  /// Ollama connection status when no model is installed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama is running, but no installed models were found.'**
+  String get aiNoModels;
+
+  /// Generic failure shown while testing AI generation.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not verify AI text generation.'**
+  String get aiConnectionFailed;
+
+  /// Message shown when an AI action is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable an AI provider and verify a model in Settings → AI.'**
+  String get aiConfigureFirst;
+
+  /// No description provided for @aiEditWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit with AI'**
+  String get aiEditWithAi;
+
+  /// Selected-text context-menu action that opens AI refinement.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine with AI'**
+  String get aiRefineWithAi;
+
+  /// No description provided for @aiInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Instruction'**
+  String get aiInstruction;
+
+  /// No description provided for @aiChangeTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'What may change'**
+  String get aiChangeTarget;
+
+  /// No description provided for @aiSharedContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context shared with AI'**
+  String get aiSharedContext;
+
+  /// No description provided for @aiTargetSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected content'**
+  String get aiTargetSelection;
+
+  /// No description provided for @aiTargetInsertAfterBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert after current block'**
+  String get aiTargetInsertAfterBlock;
+
+  /// No description provided for @aiTargetCurrentBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current block'**
+  String get aiTargetCurrentBlock;
+
+  /// No description provided for @aiTargetCurrentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Current section'**
+  String get aiTargetCurrentSection;
+
+  /// No description provided for @aiTargetCompleteDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete document'**
+  String get aiTargetCompleteDocument;
+
+  /// No description provided for @aiContextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No document context'**
+  String get aiContextNone;
+
+  /// No description provided for @aiContextSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected content'**
+  String get aiContextSelection;
+
+  /// No description provided for @aiContextCurrentBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current block'**
+  String get aiContextCurrentBlock;
+
+  /// No description provided for @aiContextCurrentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Current section'**
+  String get aiContextCurrentSection;
+
+  /// No description provided for @aiContextCompleteDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete document'**
+  String get aiContextCompleteDocument;
+
+  /// Progress text while an AI proposal streams.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating proposal…'**
+  String get aiGenerating;
+
+  /// Title of the AI proposal review dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'AI proposal'**
+  String get aiProposal;
+
+  /// Button that starts generation after the user reviews the AI instruction, change target, and shared context.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate proposal'**
+  String get aiGenerateProposal;
+
+  /// Disclosure of AI context size.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected provider will receive {count} characters from the displayed context.'**
+  String aiContextDisclosure(int count);
+
+  /// Label for original text in an AI proposal review.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get aiOriginal;
+
+  /// Label for proposed text in an AI proposal review.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested'**
+  String get aiSuggested;
+
+  /// Button that applies a reviewed AI proposal.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply proposal'**
+  String get aiApplyProposal;
+
+  /// Local Ollama token usage for one proposal.
+  ///
+  /// In en, this message translates to:
+  /// **'{input} input tokens · {output} output tokens'**
+  String aiTokenUsage(int input, int output);
+
+  /// Message for an AI result based on an old editor revision.
+  ///
+  /// In en, this message translates to:
+  /// **'The document changed while this proposal was generated. Run the action again.'**
+  String get aiStaleProposal;
+
+  /// Warning shown when an AI commit-message proposal was generated from an obsolete staged diff.
+  ///
+  /// In en, this message translates to:
+  /// **'The staged changes changed while this commit message was generated. Run the action again.'**
+  String get gitAiStagedChangesChanged;
+
+  /// Action that reveals the exact AI input context.
+  ///
+  /// In en, this message translates to:
+  /// **'View context sent'**
+  String get aiViewContext;
+
+  /// Action that reveals the exact content affected by and shared with an AI edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review exact content'**
+  String get aiReviewExactContent;
+
+  /// Label for the exact Markdown that an AI proposal may change.
+  ///
+  /// In en, this message translates to:
+  /// **'Content to change'**
+  String get aiContentToChange;
+
+  /// Label for the exact document context that will be sent to the configured AI provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Content sent to AI'**
+  String get aiContentSentToAi;
+
+  /// Privacy notice when AI is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is disabled. BusyMark never sends document content without an explicit AI action.'**
+  String get aiPrivacyDisabled;
+
+  /// Privacy notice for local Ollama.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark sends only the context shown in the review dialog to the configured loopback Ollama service. Proposals are never applied without review.'**
+  String get aiPrivacyLocal;
+
+  /// Privacy notice for a selected cloud provider.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark sends only the context shown in the review dialog to {provider}. Requests are stateless and proposals are never applied without review.'**
+  String aiPrivacyCloud(String provider);
+
+  /// Label for a cloud AI provider API key.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get aiApiKey;
+
+  /// Hint when a cloud API key is already stored.
+  ///
+  /// In en, this message translates to:
+  /// **'A key is stored in the system credential store'**
+  String get aiApiKeyStoredHint;
+
+  /// Hint for entering a cloud provider API key.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a provider API key'**
+  String get aiApiKeyEnterHint;
+
+  /// Action that replaces a stored cloud provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace API key'**
+  String get aiReplaceApiKey;
+
+  /// Action that saves a cloud provider key to the system credential store.
+  ///
+  /// In en, this message translates to:
+  /// **'Save API key securely'**
+  String get aiSaveApiKey;
+
+  /// Action that removes a cloud provider key from the system credential store.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved API key'**
+  String get aiRemoveApiKey;
+
+  /// Confirmation after saving an AI provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved in the system credential store.'**
+  String get aiCredentialSaved;
+
+  /// Confirmation after removing an AI provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved API key was removed.'**
+  String get aiCredentialRemoved;
+
+  /// Settings label for AI model routing.
+  ///
+  /// In en, this message translates to:
+  /// **'Model routing'**
+  String get aiModelRouting;
+
+  /// AI model routing option that chooses by task class.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic by task'**
+  String get aiAutomaticRouting;
+
+  /// AI model routing option that always uses the preferred model.
+  ///
+  /// In en, this message translates to:
+  /// **'Use selected model'**
+  String get aiFixedModelRouting;
+
+  /// Settings label for a preferred cloud AI model.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred model'**
+  String get aiPreferredModel;
+
+  /// Local monthly AI usage summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{requests} requests · {input} input tokens · {output} output tokens'**
+  String aiUsageThisMonth(int requests, int input, int output);
+
+  /// Cloud AI data-sharing confirmation title.
+  ///
+  /// In en, this message translates to:
+  /// **'Send content to {provider}?'**
+  String aiCloudConsentTitle(String provider);
+
+  /// Action that confirms use of a cloud AI provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable {provider}'**
+  String aiCloudConsentEnable(String provider);
+
+  /// Cloud AI data-sharing and credential disclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Only content shown in each AI review dialog is sent. Requests are stateless, proposals require review, and the API key is stored in the Linux system credential store.'**
+  String get aiCloudConsentMessage;
+
+  /// AI action error when cloud consent is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm {provider} data sharing in Settings → AI first.'**
+  String aiCloudConsentRequired(String provider);
+
+  /// Successful AI model generation qualification.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation verified with {model}. {count} compatible model(s) available.'**
+  String aiGenerationVerified(String model, int count);
+
+  /// Additional model qualification status when local generation required a cold start.
+  ///
+  /// In en, this message translates to:
+  /// **'A local model cold start was observed.'**
+  String get aiColdStartObserved;
+
+  /// AI connection status when no compatible generation model is available.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible text-generation model is available.'**
+  String get aiNoCompatibleModels;
+
+  /// AI settings error when no provider is enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable an AI provider first.'**
+  String get aiEnableProvider;
+
+  /// AI action that drafts a Git commit message.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft commit message'**
+  String get aiDraftCommitMessage;
+
+  /// Progress label while AI drafts a commit message.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafting…'**
+  String get aiDrafting;
+
+  /// Action that drafts a Git commit message with AI.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft with AI'**
+  String get aiDraftWithAi;
+
+  /// Deterministic action that creates or refreshes a Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate/update table of contents'**
+  String get generateOrUpdateMarkdownToc;
+
+  /// Heading inserted above a generated Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents'**
+  String get markdownTocTitle;
+
+  /// Confirmation after generating a Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents updated with {count} entries.'**
+  String markdownTocUpdated(int count);
+
+  /// Message when a Markdown document has no section headings for a generated table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one section heading before generating a table of contents.'**
+  String get markdownTocNoHeadings;
+
+  /// Message when a generated Markdown table-of-contents region cannot be safely updated.
+  ///
+  /// In en, this message translates to:
+  /// **'The BusyMark table-of-contents markers are missing, duplicated, or out of order.'**
+  String get markdownTocMalformedMarkers;
+
+  /// Accessibility diagnostic for a skipped Markdown heading level.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading level {level} follows level {previousLevel}; review the section nesting.'**
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel);
+
+  /// Accessibility diagnostic for a Markdown link without text.
+  ///
+  /// In en, this message translates to:
+  /// **'Link text is empty; provide an accessible name that describes its purpose.'**
+  String get diagnosticMarkdownLinkEmptyText;
+
+  /// Accessibility hint for potentially non-descriptive Markdown link text.
+  ///
+  /// In en, this message translates to:
+  /// **'Review whether the link text “{text}” describes its purpose in context.'**
+  String diagnosticMarkdownLinkReviewText(String text);
+
+  /// Accessibility diagnostic for an empty Markdown table header cell.
+  ///
+  /// In en, this message translates to:
+  /// **'Table header cells must identify their columns; complete each empty header.'**
+  String get diagnosticMarkdownTableEmptyHeader;
 }
 
 class _AppLocalizationsDelegate

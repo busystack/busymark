@@ -15,10 +15,10 @@ void main() {
     expect(settings.confirmCloseWithUnsavedChanges, isTrue);
   });
 
-  test('document view mode defaults to split', () {
+  test('document view mode defaults to editor', () {
     final settings = AppSettings.defaults();
 
-    expect(settings.documentViewMode, DocumentViewModePreference.split);
+    expect(settings.documentViewMode, DocumentViewModePreference.editor);
     expect(settings.previewVisible, isTrue);
   });
 
@@ -27,6 +27,42 @@ void main() {
 
     expect(settings.autoSave, isTrue);
     expect(settings.toJson()['autoSave'], isTrue);
+  });
+
+  test('AI defaults disabled and provider settings never persist secrets', () {
+    final defaults = AppSettings.defaults();
+    expect(defaults.aiProviderPreference, AiProviderPreference.disabled);
+    expect(defaults.aiOllamaEndpoint, 'http://127.0.0.1:11434');
+    expect(defaults.aiOllamaModel, isEmpty);
+    expect(defaults.aiOpenAiModel, 'gpt-5.6-terra');
+    expect(defaults.aiGeminiModel, 'gemini-3.6-flash');
+    expect(
+      defaults.aiModelRoutingPreference,
+      AiModelRoutingPreference.automatic,
+    );
+    expect(defaults.aiCloudProviderConsentIds, isEmpty);
+
+    final reloaded = AppSettings.fromJson(
+      defaults
+          .copyWith(
+            aiProviderPreference: AiProviderPreference.openAi,
+            aiOllamaModel: 'local-model',
+            aiOpenAiModel: 'gpt-5.6-sol',
+            aiModelRoutingPreference: AiModelRoutingPreference.fixed,
+            aiCloudProviderConsentIds: const ['openai'],
+          )
+          .toJson(),
+    );
+
+    expect(reloaded.aiProviderPreference, AiProviderPreference.openAi);
+    expect(reloaded.aiOllamaModel, 'local-model');
+    expect(reloaded.aiOpenAiModel, 'gpt-5.6-sol');
+    expect(reloaded.aiModelRoutingPreference, AiModelRoutingPreference.fixed);
+    expect(reloaded.aiCloudProviderConsentIds, ['openai']);
+    final serialized = jsonEncode(reloaded.toJson()).toLowerCase();
+    expect(serialized, isNot(contains('apikey')));
+    expect(serialized, isNot(contains('api_key')));
+    expect(serialized, isNot(contains('secret')));
   });
 
   test('editing button direction defaults to horizontal', () {
@@ -299,6 +335,48 @@ void main() {
   });
 
   test(
+    'Writerside instance selection and icon color persist across renames',
+    () async {
+      final store = _MemorySettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.selectWritersideInstance('/tmp/docs/../docs', 'guide');
+      await controller.setWritersideInstanceIconColor(
+        '/tmp/docs',
+        'guide',
+        WritersideInstanceIconColor.purple,
+      );
+      await controller.renameWritersideInstancePreferences(
+        '/tmp/docs',
+        'guide',
+        'product',
+      );
+
+      final settings = container.read(appSettingsControllerProvider);
+      expect(settings.selectedWritersideInstanceId('/tmp/docs'), 'product');
+      expect(
+        settings.writersideInstanceIconColor('/tmp/docs', 'product'),
+        WritersideInstanceIconColor.purple,
+      );
+      expect(
+        settings.writersideInstanceIconColor('/tmp/docs', 'guide'),
+        WritersideInstanceIconColor.automatic,
+      );
+      final reloaded = AppSettings.fromJson(store.value);
+      expect(reloaded.selectedWritersideInstanceId('/tmp/docs'), 'product');
+      expect(
+        reloaded.writersideInstanceIconColor('/tmp/docs', 'product'),
+        WritersideInstanceIconColor.purple,
+      );
+    },
+  );
+
+  test(
     'initial load preserves user actions made before it completes',
     () async {
       final store = _DelayedSettingsStore();
@@ -441,32 +519,28 @@ void main() {
     skip: Platform.isWindows,
   );
 
-  test(
-    'stored Git trust does not follow a replaced canonical path',
-    () async {
-      final root = await Directory.systemTemp.createTemp(
-        'busymark-stored-git-trust-',
-      );
-      addTearDown(() async {
-        if (await root.exists()) {
-          await root.delete(recursive: true);
-        }
-      });
-      final trustedPath = await Directory('${root.path}/trusted').create();
-      final replacement = await Directory('${root.path}/replacement').create();
-      final stored = AppSettings.defaults()
-          .copyWith(trustedGitWorkspacePaths: [trustedPath.path])
-          .toJson();
+  test('stored Git trust does not follow a replaced canonical path', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-stored-git-trust-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final trustedPath = await Directory('${root.path}/trusted').create();
+    final replacement = await Directory('${root.path}/replacement').create();
+    final stored = AppSettings.defaults()
+        .copyWith(trustedGitWorkspacePaths: [trustedPath.path])
+        .toJson();
 
-      await trustedPath.delete();
-      await Link(trustedPath.path).create(replacement.path);
-      final reloaded = AppSettings.fromJson(stored);
+    await trustedPath.delete();
+    await Link(trustedPath.path).create(replacement.path);
+    final reloaded = AppSettings.fromJson(stored);
 
-      expect(reloaded.trustsGitWorkspace(trustedPath.path), isFalse);
-      expect(reloaded.trustedGitWorkspacePaths, [trustedPath.path]);
-    },
-    skip: Platform.isWindows,
-  );
+    expect(reloaded.trustsGitWorkspace(trustedPath.path), isFalse);
+    expect(reloaded.trustedGitWorkspacePaths, [trustedPath.path]);
+  }, skip: Platform.isWindows);
 
   test('Git trust preserves leading and trailing path whitespace', () async {
     final root = await Directory.systemTemp.createTemp(

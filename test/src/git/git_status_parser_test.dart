@@ -46,6 +46,26 @@ void main() {
     expect(file.unstaged, isTrue);
   });
 
+  test('keeps staged addition and working-tree deletion separate', () {
+    final file = _parse('AD draft.md\x00').files.single;
+
+    expect(file.indexStatus, GitFileChangeStatus.added);
+    expect(file.workTreeStatus, GitFileChangeStatus.deleted);
+    expect(file.staged, isTrue);
+    expect(file.unstaged, isTrue);
+    expect(file.hasWorkingTreeFile, isFalse);
+  });
+
+  test('tracks rename state independently in each status column', () {
+    final staged = _parse('R  new.md\x00old.md\x00').files.single;
+    final unstaged = _parse(' R new.md\x00old.md\x00').files.single;
+
+    expect(staged.hasStagedRename, isTrue);
+    expect(staged.hasUnstagedRename, isFalse);
+    expect(unstaged.hasStagedRename, isFalse);
+    expect(unstaged.hasUnstagedRename, isTrue);
+  });
+
   test('parses untracked file', () {
     final file = _parse('?? draft.md\x00').files.single;
 

@@ -17,11 +17,22 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String repoRelativePath, {
     required bool staged,
+    String? originalRepoRelativePath,
   });
+  Future<GitDiff> diffUntrackedFile(
+    GitRepositoryInfo repository,
+    String repoRelativePath,
+  );
   Future<GitDiff> diffAll(GitRepositoryInfo repository, {required bool staged});
   Future<List<GitCommitSummary>> history(
     GitRepositoryInfo repository, {
     String? repoRelativePath,
+    int limit = 200,
+    int skip = 0,
+  });
+  Future<List<GitFileHistoryEntry>> fileHistory(
+    GitRepositoryInfo repository,
+    String repoRelativePath, {
     int limit = 200,
     int skip = 0,
   });
@@ -30,6 +41,34 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     String hash, {
     String? repoRelativePath,
   });
+  Future<String?> readFileAtCommit(
+    GitRepositoryInfo repository,
+    String hash,
+    String repoRelativePath,
+  );
+  Future<GitHistoricalFileComparison> compareFileWithParent(
+    GitRepositoryInfo repository,
+    String hash, {
+    String? oldPath,
+    String? newPath,
+  });
+  Future<GitHistoricalFileComparison> compareFileWithWorkingTree(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  });
+  Future<GitOperationResult> restoreFileFromCommit(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  });
+  Future<GitOperationResult> resetCurrentBranch(
+    GitRepositoryInfo repository,
+    String hash,
+    GitResetMode mode,
+  );
   Future<List<GitBranch>> branches(GitRepositoryInfo repository);
   Future<List<String>> remotes(GitRepositoryInfo repository);
   Future<GitOperationResult> stage(
@@ -40,7 +79,7 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   );
-  Future<GitOperationResult> discardTracked(
+  Future<GitOperationResult> rollbackTracked(
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   );
@@ -53,6 +92,7 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String message,
   );
+  Future<GitOperationResult> fetch(GitRepositoryInfo repository);
   Future<GitOperationResult> pullFastForwardOnly(GitRepositoryInfo repository);
   Future<GitOperationResult> push(GitRepositoryInfo repository);
   Future<GitOperationResult> pushSetUpstream(

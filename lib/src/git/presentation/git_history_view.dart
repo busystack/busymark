@@ -6,54 +6,223 @@ import '../../app/localization.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
 
-class GitHistoryView extends StatelessWidget {
-  const GitHistoryView({
+class GitFileHistoryView extends StatelessWidget {
+  const GitFileHistoryView({
+    super.key,
+    required this.state,
+    required this.onSelectCommit,
+    required this.onRestoreVersion,
+    required this.onLoadMore,
+  });
+
+  final GitState state;
+  final ValueChanged<String> onSelectCommit;
+  final VoidCallback onRestoreVersion;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final history = state.fileHistory;
+    if (state.scopedFilePath == null || history.currentPath == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+          child: Text(
+            context.l10n.gitFileHistoryRequiresOpenFile,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    if (history.entries.isEmpty) {
+      return Center(child: Text(context.l10n.gitNoHistory));
+    }
+    return ListView(
+      padding: BusyMarkInsets.sidebarList,
+      children: [
+        for (final entry in history.entries)
+          _CommitRow(
+            selected: entry.commit.fullHash == history.selectedCommitHash,
+            shortHash: entry.commit.shortHash,
+            subject: entry.commit.subject,
+            authorName: entry.commit.authorName,
+            date: entry.commit.authorDate,
+            trailing: entry.commit.fullHash == history.selectedCommitHash
+                ? _FileHistoryCommitMenu(
+                    canRestore: entry.newPath != null,
+                    onRestoreVersion: onRestoreVersion,
+                  )
+                : null,
+            onTap: () => onSelectCommit(entry.commit.fullHash),
+          ),
+        if (history.hasMore)
+          _LoadMoreButton(
+            loading: history.isLoadingMore,
+            onPressed: onLoadMore,
+          ),
+      ],
+    );
+  }
+}
+
+class GitProjectHistoryView extends StatelessWidget {
+  const GitProjectHistoryView({
     super.key,
     required this.state,
     required this.onSelectCommit,
     required this.onShowFileDiff,
+    required this.onResetCurrentBranch,
+    required this.onLoadMore,
   });
 
   final GitState state;
   final ValueChanged<String> onSelectCommit;
   final ValueChanged<String> onShowFileDiff;
+  final VoidCallback onResetCurrentBranch;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    final history = state.history;
+    final project = state.projectHistory;
+    final history = project.commits;
     return history.isEmpty
         ? Center(child: Text(context.l10n.gitNoHistory))
-        : ListView.builder(
+        : ListView(
             padding: BusyMarkInsets.sidebarList,
-            itemCount: history.length,
-            itemBuilder: (context, index) {
-              final commit = history[index];
-              final selected = commit.fullHash == state.selectedCommitHash;
-              final showFileMenu =
-                  selected &&
-                  state.historyFilePath == null &&
-                  (state.selectedDiff?.files.isNotEmpty ?? false);
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _CommitRow(
-                    selected: selected,
-                    shortHash: commit.shortHash,
-                    subject: commit.subject,
-                    authorName: commit.authorName,
-                    date: commit.authorDate,
-                    onTap: () => onSelectCommit(commit.fullHash),
-                  ),
-                  if (showFileMenu)
-                    _CommitFileMenu(
-                      files: state.selectedDiff!.files,
-                      selectedPath: state.selectedCommitFilePath,
-                      onShowFileDiff: onShowFileDiff,
-                    ),
-                ],
-              );
-            },
+            children: [
+              for (final commit in history) ...[
+                Builder(
+                  builder: (context) {
+                    final selected =
+                        commit.fullHash == project.selectedCommitHash;
+                    final showFileMenu =
+                        selected &&
+                        (project.details?.changedFiles.isNotEmpty ?? false);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _CommitRow(
+                          selected: selected,
+                          shortHash: commit.shortHash,
+                          subject: commit.subject,
+                          authorName: commit.authorName,
+                          date: commit.authorDate,
+                          trailing: selected
+                              ? _ProjectHistoryCommitMenu(
+                                  canReset:
+                                      state.repositoryInfo?.currentBranch !=
+                                      null,
+                                  onResetCurrentBranch: onResetCurrentBranch,
+                                )
+                              : null,
+                          onTap: () => onSelectCommit(commit.fullHash),
+                        ),
+                        if (showFileMenu)
+                          _CommitFileMenu(
+                            files: project.details!.changedFiles,
+                            selectedPath: project.selectedFilePath,
+                            onShowFileDiff: onShowFileDiff,
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+              if (project.hasMore)
+                _LoadMoreButton(
+                  loading: project.isLoadingMore,
+                  onPressed: onLoadMore,
+                ),
+            ],
           );
+  }
+}
+
+enum _ProjectHistoryCommitAction { resetCurrentBranch }
+
+class _ProjectHistoryCommitMenu extends StatelessWidget {
+  const _ProjectHistoryCommitMenu({
+    required this.canReset,
+    required this.onResetCurrentBranch,
+  });
+
+  final bool canReset;
+  final VoidCallback onResetCurrentBranch;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkHeaderPopupMenuButton<_ProjectHistoryCommitAction>(
+      tooltip: context.l10n.gitCommitActions,
+      icon: BusyMarkGlyphs.menuHorizontal,
+      transparent: true,
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: _ProjectHistoryCommitAction.resetCurrentBranch,
+          label: context.l10n.gitResetCurrentBranchToHere,
+          icon: BusyMarkGlyphs.undo,
+          enabled: canReset,
+        ),
+      ],
+      onSelected: (action) {
+        switch (action) {
+          case _ProjectHistoryCommitAction.resetCurrentBranch:
+            onResetCurrentBranch();
+        }
+      },
+    );
+  }
+}
+
+enum _FileHistoryCommitAction { restoreVersion }
+
+class _FileHistoryCommitMenu extends StatelessWidget {
+  const _FileHistoryCommitMenu({
+    required this.canRestore,
+    required this.onRestoreVersion,
+  });
+
+  final bool canRestore;
+  final VoidCallback onRestoreVersion;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkHeaderPopupMenuButton<_FileHistoryCommitAction>(
+      tooltip: context.l10n.fileActions,
+      icon: BusyMarkGlyphs.menuHorizontal,
+      transparent: true,
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: _FileHistoryCommitAction.restoreVersion,
+          label: context.l10n.gitRestoreVersion,
+          icon: BusyMarkGlyphs.undo,
+          enabled: canRestore,
+        ),
+      ],
+      onSelected: (action) {
+        switch (action) {
+          case _FileHistoryCommitAction.restoreVersion:
+            onRestoreVersion();
+        }
+      },
+    );
+  }
+}
+
+class _LoadMoreButton extends StatelessWidget {
+  const _LoadMoreButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+      child: BusyMarkPushButton.standard(
+        onPressed: loading ? null : onPressed,
+        child: Text(context.l10n.gitLoadMore),
+      ),
+    );
   }
 }
 
@@ -141,6 +310,12 @@ class _CommitFileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final path = file.displayPath;
+    final pathLabel =
+        file.oldPath != null &&
+            file.newPath != null &&
+            file.oldPath != file.newPath
+        ? '${file.oldPath} → ${file.newPath}'
+        : path;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
       child: Material(
@@ -178,7 +353,7 @@ class _CommitFileRow extends StatelessWidget {
                 const SizedBox(width: BusyMarkSpacing.xs),
                 Expanded(
                   child: Text(
-                    path,
+                    pathLabel,
                     textDirection: TextDirection.ltr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -216,6 +391,7 @@ class _CommitRow extends StatelessWidget {
     required this.authorName,
     required this.date,
     required this.onTap,
+    this.trailing,
   });
 
   final bool selected;
@@ -224,6 +400,7 @@ class _CommitRow extends StatelessWidget {
   final String authorName;
   final DateTime date;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -241,29 +418,40 @@ class _CommitRow extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  subject,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: BusyMarkSpacing.xs),
-                Text(
-                  '${busyMarkLtrIsolateFor(context, shortHash)} - '
-                  '${busyMarkBidiIsolateFor(context, authorName)} - '
-                  '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.mutedForeground,
-                    fontFamily: BusyMarkTypography.monoFontFamily,
-                    fontFamilyFallback:
-                        BusyMarkTypography.monoFontFamilyFallback,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.xs),
+                      Text(
+                        '${busyMarkLtrIsolateFor(context, shortHash)} - '
+                        '${busyMarkBidiIsolateFor(context, authorName)} - '
+                        '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
+                          fontFamily: BusyMarkTypography.monoFontFamily,
+                          fontFamilyFallback:
+                              BusyMarkTypography.monoFontFamilyFallback,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                if (trailing != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  trailing!,
+                ],
               ],
             ),
           ),

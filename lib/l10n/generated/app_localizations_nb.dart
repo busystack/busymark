@@ -174,10 +174,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get cut => 'Klipp ut';
 
   @override
-  String get promoteHeading => 'Hev overskrift';
+  String get promoteSection => 'Hev seksjonen';
 
   @override
-  String get demoteHeading => 'Senk overskrift';
+  String get demoteSection => 'Senk seksjonen';
 
   @override
   String get moveSectionUp => 'Flytt seksjonen opp';
@@ -254,7 +254,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get pasteWithoutFormatting => 'Lim inn uten formatering';
 
   @override
-  String get preview => 'Forhåndsvisning';
+  String get reading => 'Lesevisning';
 
   @override
   String get recent => 'Nylige';
@@ -395,11 +395,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutGroupGeneral => 'Generelt';
 
   @override
-  String get shortcutNewDocument => 'Nytt dokument';
+  String get shortcutNewDocument => 'Opprett';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Opprett et nytt ulagret Markdown-dokument';
+      'Opprett en Markdown-fil eller et Writerside-prosjekt';
 
   @override
   String get shortcutOpenDescription =>
@@ -1114,7 +1114,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Fjern «$topic» fra den valgte hjelpeinstansen. Emnefilen beholdes.';
+    return 'Fjern «$topic» fra den valgte instansen. Emnefilen beholdes.';
   }
 
   @override
@@ -1327,7 +1327,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Stor fil: utheving og folding er satt på pause';
 
   @override
-  String get noPreview => 'Ingen forhåndsvisning';
+  String get nothingToRead => 'Ingenting å lese';
 
   @override
   String get note => 'Merknad';
@@ -1544,7 +1544,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside-modulen har ikke noe tre for hjelpeinstansen.';
+      'Writerside-modulen har ikke noe instanstre.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -2028,16 +2028,25 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitChanges => 'Endringer';
 
   @override
+  String get gitStaged => 'Indeksert';
+
+  @override
+  String get gitUnstaged => 'Ikke indeksert';
+
+  @override
   String get gitHistory => 'Historikk';
 
   @override
   String get gitBranches => 'Grener';
 
   @override
-  String get gitBranchActions => 'Grenhandlinger';
+  String get gitActions => 'Git-handlinger';
 
   @override
   String get gitPull => 'Pull';
+
+  @override
+  String get gitFetch => 'Hent';
 
   @override
   String get gitPush => 'Push';
@@ -2046,10 +2055,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Velg for commit';
+  String get gitSelectForCommit => 'Legg fil i indeksen';
 
   @override
-  String get gitRemoveFromCommit => 'Utelat fra commit';
+  String get gitRemoveFromCommit => 'Fjern fil fra indeksen';
 
   @override
   String get gitDiscard => 'Forkast';
@@ -2071,7 +2080,21 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Velg minst én fil før du oppretter en commit.';
+      'Legg minst én fil i indeksen før du oppretter en commit.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count indekserte filer',
+      one: '1 indeksert fil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Utenfor arbeidsområdet';
 
   @override
   String get gitCommitMessageRequired => 'Skriv inn en commit-melding.';
@@ -2080,7 +2103,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitCreateBranch => 'Opprett gren';
 
   @override
-  String get gitNewBranch => '+ Ny gren';
+  String get gitNewBranch => 'Ny gren';
 
   @override
   String get gitBranchName => 'Grennavn';
@@ -2102,6 +2125,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitBinaryFile => 'Binærfil. BusyMark viser ikke binære patcher.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Binærfil ($size byte). BusyMark viser ikke binære patcher.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2168,6 +2196,76 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitFileHistory => 'Gjeldende fil';
 
   @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Filhistorikk krever en åpen Markdown-fil.';
+
+  @override
+  String get gitLoadMore => 'Last inn flere';
+
+  @override
+  String get gitChangesInCommit => 'Endringer i denne innsjekkingen';
+
+  @override
+  String get gitCompareWithCurrent => 'Sammenlign med gjeldende versjon';
+
+  @override
+  String get gitRestoreVersion => 'Gjenopprett denne versjonen';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Gjenopprette denne filversjonen?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.';
+
+  @override
+  String get gitCommitActions => 'Handlinger for innsjekking';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Tilbakestill gjeldende gren hit…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Tilbakestille $branch til $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Dette flytter grenen $branch til innsjekkingen $commit. Velg hvordan Git skal oppdatere indeksen og arbeidstreet.';
+  }
+
+  @override
+  String get gitReset => 'Tilbakestill';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Flytt bare grenen. Behold indeksen og arbeidstreet uendret; forskjeller fra den valgte innsjekkingen forblir indeksert.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Flytt grenen og tilbakestill indeksen. Behold arbeidstreet uendret, slik at forskjellene blir uindekserte.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Flytt grenen og tilbakestill indeksen og arbeidstreet. Sporede endringer forkastes; usporede filer som blokkerer operasjonen, kan bli slettet.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Flytt grenen og tilbakestill sporede filer, men behold lokale endringer. Git avbryter hvis endringene kommer i konflikt med tilbakestillingen.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2231,6 +2329,18 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get gitErrorDirtyWorkspace =>
       'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
+
+  @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Lagre eller forkast endringer i BusyMark-redigereren før du tilbakestiller gjeldende gren.';
+
+  @override
+  String get gitErrorRestoreStagedFile =>
+      'Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Bytt til en gren før du tilbakestiller den.';
 
   @override
   String get gitErrorDiverged =>
@@ -2434,6 +2544,790 @@ class AppLocalizationsNb extends AppLocalizations {
       'BusyMark kunne ikke eksportere dette dokumentet som PDF.';
 
   @override
+  String get visualizationRendering => 'Gjengir…';
+
+  @override
+  String get visualizationStale => 'Viser siste gyldige gjengivelse';
+
+  @override
+  String get visualizationShowSource => 'Vis kilde';
+
+  @override
+  String get visualizationShowRender => 'Vis gjengivelse';
+
+  @override
+  String get visualizationFitWidth => 'Tilpass til bredden';
+
+  @override
+  String get visualizationSaveImage => 'Lagre bilde';
+
+  @override
+  String get visualizationCopyImage => 'Kopier bilde';
+
+  @override
+  String get visualizationImageCopied => 'Bildet er kopiert';
+
+  @override
+  String get visualizationOpenApiReference => 'Åpne API-referanse';
+
+  @override
+  String get visualizationValid => 'Gyldig';
+
+  @override
+  String get visualizationInvalid => 'Ugyldig';
+
+  @override
+  String get visualizationServers => 'Servere';
+
+  @override
+  String get visualizationPaths => 'Baner';
+
+  @override
+  String get visualizationOperations => 'Operasjoner';
+
+  @override
+  String get visualizationTags => 'Tagger';
+
+  @override
+  String get visualizationNoOperations => 'Ingen samsvarende operasjoner';
+
+  @override
+  String get visualizationSearchOperations => 'Søk i operasjoner';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Denne visualiseringen kunne ikke gjengis.';
+
+  @override
+  String get visualizationRetry => 'Prøv igjen';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'Lagret $fileName';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
-      'Eksporter det aktive Markdown-dokumentet som PDF.';
+      'Eksporter det aktive dokumentet eller Writerside-modulen som PDF.';
+
+  @override
+  String get instances => 'Instanser';
+
+  @override
+  String get newInstance => 'Ny instans';
+
+  @override
+  String get newTocLibrary => 'Nytt innholdsfortegnelsesbibliotek';
+
+  @override
+  String get editInstance => 'Rediger instans';
+
+  @override
+  String get openTocFile => 'Åpne innholdsfortegnelsesfil';
+
+  @override
+  String get createInstance => 'Opprett instans';
+
+  @override
+  String get createTocLibrary => 'Opprett innholdsfortegnelsesbibliotek';
+
+  @override
+  String get instanceContent => 'Innhold';
+
+  @override
+  String get instanceContentSource => 'Opprett fra';
+
+  @override
+  String get emptyInstance => 'Tom instans';
+
+  @override
+  String get markdownFiles => 'Lokale Markdown-filer';
+
+  @override
+  String get chooseMarkdownFolder => 'Velg Markdown-mappe';
+
+  @override
+  String get errorWritersideInstanceImportSourceRequired =>
+      'Velg en mappe som inneholder Markdown-filer.';
+
+  @override
+  String get instanceAppearance => 'Utseende';
+
+  @override
+  String get instanceColor => 'Ikonfarge';
+
+  @override
+  String get instanceVersion => 'Versjon';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Når dette feltet er tomt, brukes prosjektversjonen $version.';
+  }
+
+  @override
+  String get instanceWebPath => 'Nettsti';
+
+  @override
+  String get instanceStatus => 'Status';
+
+  @override
+  String get instanceStatusRelease => 'Utgivelse';
+
+  @override
+  String get instanceStatusEap => 'Tidlig tilgang';
+
+  @override
+  String get instanceStatusDeprecated => 'Foreldet';
+
+  @override
+  String get allowSearchEngineIndexing => 'Tillat indeksering i søkemotorer';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Tillat eksterne søkemotorer å indeksere denne utdataen.';
+
+  @override
+  String get offlineArtifact => 'Frakoblet artefakt';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Pakk ressursene slik at den bygde dokumentasjonen er selvstendig.';
+
+  @override
+  String get instanceOutputSettings => 'Utdatainnstillinger';
+
+  @override
+  String get markdownImportSource => 'Markdown-kilde';
+
+  @override
+  String get markdownImportFiles => 'Markdown-filer';
+
+  @override
+  String get selectNone => 'Velg ingen';
+
+  @override
+  String markdownFilesFound(int count) {
+    return 'Fant $count Markdown-fil(er)';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'Ingen Markdown-filer ble funnet i denne mappen.';
+
+  @override
+  String get copyReferencedMedia => 'Kopier refererte medier';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Kopier lokale bilder og videoer som de valgte filene refererer til, og behold relative stier.';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'Gi instans-ID-en nytt navn?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark gir .tree-filen nytt navn og oppdaterer Writerside-prosjektreferanser fra «$oldId» til «$newId». Publiseringsskript endres ikke og må oppdateres separat.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'Gi nytt navn og oppdater referanser';
+
+  @override
+  String get tocLibraryDescription =>
+      'Et innholdsfortegnelsesbibliotek lagrer gjenbrukbare deler og produserer ikke egne utdata.';
+
+  @override
+  String get defaultTocLibraryName => 'Delt innholdsfortegnelse';
+
+  @override
+  String get instanceColorAutomatic => 'Automatisk';
+
+  @override
+  String get instanceColorBlue => 'Blå';
+
+  @override
+  String get instanceColorGreen => 'Grønn';
+
+  @override
+  String get instanceColorOrange => 'Oransje';
+
+  @override
+  String get instanceColorPurple => 'Lilla';
+
+  @override
+  String get instanceColorRed => 'Rød';
+
+  @override
+  String get instanceColorTeal => 'Blågrønn';
+
+  @override
+  String get instanceColorYellow => 'Gul';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'Skriv inn et instansnavn.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'Det finnes allerede en instans med ID-en «$id».';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'Instanstreet finnes allerede: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Markdown-kildemappen finnes ikke: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Velg minst én Markdown-fil som skal importeres.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'Dette er ikke en lesbar Markdown-fil i den valgte kilden: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Importen ville overskrevet en eksisterende prosjektfil: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Instansfilene er endret på disken. Se gjennom dem og prøv igjen.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark kunne ikke angre hele instansendringen. Se gjennom disse filene før du fortsetter: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Et innholdsfortegnelsesbibliotek kan ikke importere Markdown-emner.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Nettstien må være på én linje.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Writerside-instanskonfigurasjonen er ugyldig. Rett diagnostikken og prøv igjen.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark kunne ikke klargjøre instansendringene på en trygg måte.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Ukjent instansstatus «$status». Bruk release, eap eller deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'Instans-ID-en «$id» brukes av mer enn én tre-fil.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml må ha et <buildprofiles>-rotelement.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'Verdien $name «$value» må være true eller false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Et <build-profile>-element må angi en instans-ID.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'En <include> i treet må angi både from og element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'En <snippet> i treet må angi en id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'En innholdsfortegnelsesreferanse mellom instanser må angi både ref og in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Et innholdsfortegnelseselement kan ikke peke til mer enn ett emne, én referanse, én lenke eller én omadressering.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Treelement-ID-en «$id» er deklarert mer enn én gang.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Instansgruppefilen må ha et <instance-groups>-rotelement.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'En instansgruppe må angi en ikke-tom id og instansliste.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Instansgruppe-ID-en «$id» er deklarert mer enn én gang.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'Innholdsfortegnelsesinkluderingen «$source#$id» tilhører den eksterne modulen «$origin» og kan ikke utvides i dette arbeidsområdet.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Treelementet «$id» finnes ikke i det registrerte treet «$source».';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Treinkluderingen «$source#$id» oppretter en syklus.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Instansbetingelsen refererer til den ukjente gruppen «@$group».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Referansen mellom instanser peker til den ukjente instansen «$instance».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Emnet «$topic» finnes ikke i den refererte instansen «$instance».';
+  }
+
+  @override
+  String get download => 'Last ned';
+
+  @override
+  String get exportWritersideAsPdf => 'Eksporter Writerside som PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Velg en instans og PDF-innstillinger. BusyMark bruker JetBrains’ offisielle Writerside-byggeverktøy.';
+
+  @override
+  String get writersidePdfContent => 'Eksportinnhold';
+
+  @override
+  String get writersidePdfSettings => 'PDF-innstillinger';
+
+  @override
+  String get writersidePdfConfigureHere => 'Konfigurer for denne eksporten';
+
+  @override
+  String get writersidePdfProjectConfiguration => 'Bruk prosjektkonfigurasjon';
+
+  @override
+  String get writersidePdfConfigurationFile => 'PDF-konfigurasjonsfil';
+
+  @override
+  String get writersidePdfPage => 'Side';
+
+  @override
+  String get writersidePdfKeymap => 'Tastaturoppsett';
+
+  @override
+  String get writersidePdfNoKeymap => 'Uten tastaturoppsett';
+
+  @override
+  String get writersidePdfTocTitle => 'Tittel på innholdsfortegnelsen';
+
+  @override
+  String get writersidePdfCover => 'Forside';
+
+  @override
+  String get writersidePdfIncludeCover => 'Ta med forside';
+
+  @override
+  String get writersidePdfCoverTitle => 'Forsidetittel';
+
+  @override
+  String get writersidePdfCoverDescription => 'Forsidebeskrivelse';
+
+  @override
+  String get writersidePdfCopyright => 'Opphavsrett';
+
+  @override
+  String get writersidePdfCoverLogo => 'Forsidelogo';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Velg forsidelogo';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Topptekst og bunntekst';
+
+  @override
+  String get writersidePdfHeader => 'Topptekst';
+
+  @override
+  String get writersidePdfFooter => 'Bunntekst';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Disse verdiene kobler den åpne modulen til byggeverktøyets kildestruktur.';
+
+  @override
+  String get writersidePdfModuleName => 'Modulnavn';
+
+  @override
+  String get writersidePdfSourceRoot => 'Kilderot';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'Velg kilderot';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Byggeverktøyversjon';
+
+  @override
+  String get writersidePdfAllowNetwork => 'Tillat nettverk under bygging';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Deaktivert som standard. Aktiver bare når prosjektet bevisst trenger eksterne byggeressurser.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Skriv inn modulnavnet.';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'Velg kilderoten.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Skriv inn en gyldig byggeverktøyversjon.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Writerside-byggeverktøy kreves';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark bruker det offisielle containerbildet $image. Vil du laste det ned nå? Bildet er stort og lagres av Docker.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Laster ned Writerside-byggeverktøy…';
+
+  @override
+  String get exportingWritersidePdf => 'Eksporterer Writerside-PDF…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Docker kreves for Writerside PDF-eksport. Installer og start Docker, og prøv igjen.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'Det forespurte Writerside-byggebildet er ikke tilgjengelig.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Writerside PDF-konfigurasjonen er ugyldig.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Writerside-byggeverktøyet kunne ikke opprette PDF-filen.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Writerside-byggeverktøyet produserte ikke en gyldig PDF-fil.';
+
+  @override
+  String get ai => 'KI';
+
+  @override
+  String get aiLocalOllama => 'Lokal Ollama';
+
+  @override
+  String get aiDisabled => 'Deaktivert';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
+
+  @override
+  String get aiProvider => 'KI-leverandør';
+
+  @override
+  String get aiOllamaEndpoint => 'Ollama-endepunkt';
+
+  @override
+  String get aiOllamaModel => 'Ollama-modell';
+
+  @override
+  String get aiTestConnection => 'Test tilkobling';
+
+  @override
+  String get aiTestingConnection => 'Tester…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Tilkoblet. Fant $count installert(e) modell(er).';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama kjører, men ingen installerte modeller ble funnet.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark kunne ikke bekrefte KI-tekstgenerering.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Aktiver en KI-leverandør og bekreft en modell under Innstillinger → KI.';
+
+  @override
+  String get aiEditWithAi => 'Rediger med KI';
+
+  @override
+  String get aiRefineWithAi => 'Forbedre med KI';
+
+  @override
+  String get aiInstruction => 'Instruksjon';
+
+  @override
+  String get aiChangeTarget => 'Hva som kan endres';
+
+  @override
+  String get aiSharedContext => 'Kontekst som deles med KI';
+
+  @override
+  String get aiTargetSelection => 'Markert innhold';
+
+  @override
+  String get aiTargetInsertAfterBlock => 'Sett inn etter gjeldende blokk';
+
+  @override
+  String get aiTargetCurrentBlock => 'Gjeldende blokk';
+
+  @override
+  String get aiTargetCurrentSection => 'Gjeldende del';
+
+  @override
+  String get aiTargetCompleteDocument => 'Hele dokumentet';
+
+  @override
+  String get aiContextNone => 'Ingen dokumentkontekst';
+
+  @override
+  String get aiContextSelection => 'Markert innhold';
+
+  @override
+  String get aiContextCurrentBlock => 'Gjeldende blokk';
+
+  @override
+  String get aiContextCurrentSection => 'Gjeldende del';
+
+  @override
+  String get aiContextCompleteDocument => 'Hele dokumentet';
+
+  @override
+  String get aiGenerating => 'Genererer forslag…';
+
+  @override
+  String get aiProposal => 'KI-forslag';
+
+  @override
+  String get aiGenerateProposal => 'Generer forslag';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Den valgte leverandøren mottar $count tegn fra den viste konteksten.';
+  }
+
+  @override
+  String get aiOriginal => 'Opprinnelig tekst';
+
+  @override
+  String get aiSuggested => 'Forslag';
+
+  @override
+  String get aiApplyProposal => 'Bruk forslag';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input inndatatokener · $output utdatatokener';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Dokumentet ble endret mens forslaget ble generert. Kjør handlingen på nytt.';
+
+  @override
+  String get gitAiStagedChangesChanged =>
+      'De indekserte endringene ble endret mens denne commit-meldingen ble generert. Kjør handlingen på nytt.';
+
+  @override
+  String get aiViewContext => 'Vis sendt kontekst';
+
+  @override
+  String get aiReviewExactContent => 'Se gjennom nøyaktig innhold';
+
+  @override
+  String get aiContentToChange => 'Innhold som skal endres';
+
+  @override
+  String get aiContentSentToAi => 'Innhold sendt til KI';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'KI er deaktivert. BusyMark sender aldri dokumentinnhold uten en eksplisitt KI-handling.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til den konfigurerte lokale Ollama-tjenesten. Forslag brukes aldri uten gjennomgang.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til $provider. Forespørsler er tilstandsløse, og forslag brukes aldri uten gjennomgang.';
+  }
+
+  @override
+  String get aiApiKey => 'API-nøkkel';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'En nøkkel er lagret i systemets legitimasjonslager';
+
+  @override
+  String get aiApiKeyEnterHint => 'Skriv inn en API-nøkkel for leverandøren';
+
+  @override
+  String get aiReplaceApiKey => 'Erstatt API-nøkkel';
+
+  @override
+  String get aiSaveApiKey => 'Lagre API-nøkkel sikkert';
+
+  @override
+  String get aiRemoveApiKey => 'Fjern lagret API-nøkkel';
+
+  @override
+  String get aiCredentialSaved =>
+      'API-nøkkelen ble lagret i systemets legitimasjonslager.';
+
+  @override
+  String get aiCredentialRemoved => 'Den lagrede API-nøkkelen ble fjernet.';
+
+  @override
+  String get aiModelRouting => 'Modellvalg';
+
+  @override
+  String get aiAutomaticRouting => 'Automatisk etter oppgave';
+
+  @override
+  String get aiFixedModelRouting => 'Bruk valgt modell';
+
+  @override
+  String get aiPreferredModel => 'Foretrukket modell';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests forespørsler · $input inndata-tokener · $output utdata-tokener';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Sende innhold til $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Aktiver $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Bare innholdet som vises i hver KI-gjennomgangsdialog, sendes. Forespørsler er tilstandsløse, forslag krever gjennomgang, og API-nøkkelen lagres i legitimasjonslageret til Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Bekreft først datadeling med $provider under Innstillinger → KI.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generering bekreftet med $model. $count kompatible modeller er tilgjengelige.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'En kaldstart av den lokale modellen ble oppdaget.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Ingen kompatibel tekstgenereringsmodell er tilgjengelig.';
+
+  @override
+  String get aiEnableProvider => 'Aktiver en KI-leverandør først.';
+
+  @override
+  String get aiDraftCommitMessage => 'Lag utkast til commit-melding';
+
+  @override
+  String get aiDrafting => 'Lager utkast…';
+
+  @override
+  String get aiDraftWithAi => 'Lag utkast med KI';
+
+  @override
+  String get generateOrUpdateMarkdownToc =>
+      'Generer/oppdater innholdsfortegnelse';
+
+  @override
+  String get markdownTocTitle => 'Innholdsfortegnelse';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Innholdsfortegnelsen ble oppdatert med $count oppføringer.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Legg til minst én seksjonsoverskrift før du genererer en innholdsfortegnelse.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'BusyMark-markørene for innholdsfortegnelsen mangler, er duplisert eller står i feil rekkefølge.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Overskrift på nivå $level følger nivå $previousLevel; kontroller seksjonsnestingen.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Lenketeksten er tom. Oppgi et tilgjengelig navn som beskriver formålet.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Kontroller om lenketeksten «$text» beskriver formålet i konteksten.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
 }

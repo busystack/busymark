@@ -9,6 +9,7 @@ import '../markdown/markdown_parser.dart';
 import 'markdown_export_assets.dart';
 import 'markdown_export_mapper.dart';
 import 'markdown_pdf_models.dart';
+import 'markdown_visualization_export.dart';
 import 'typst_compiler.dart';
 import 'typst_payload_builder.dart';
 
@@ -26,6 +27,7 @@ class MarkdownPdfExportService {
     this.templateLoader = _loadBundledTemplate,
     this.compileTimeout = const Duration(seconds: 45),
     this.maximumPdfBytes = 100 * 1024 * 1024,
+    this.visualizationRenderer,
   });
 
   final MarkdownParser parser;
@@ -38,6 +40,7 @@ class MarkdownPdfExportService {
   final TypstTemplateLoader templateLoader;
   final Duration compileTimeout;
   final int maximumPdfBytes;
+  final MarkdownVisualizationExportRenderer? visualizationRenderer;
 
   Future<MarkdownPdfExportResult> export(
     MarkdownPdfExportRequest request, {
@@ -74,7 +77,23 @@ class MarkdownPdfExportService {
         validateLocalReferences: false,
       );
       token.throwIfCancelled();
-      final document = mapper.map(parsed.busyDocument);
+      final visualizationPreparation = visualizationRenderer == null
+          ? const MarkdownVisualizationExportPreparation(
+              blockOverrides: {},
+              warnings: [],
+            )
+          : await visualizationRenderer!.prepare(
+              document: parsed.busyDocument,
+              exportRoot: exportRoot,
+              documentPath: effectiveFilePath,
+              workspaceRoot: request.workspaceRoot,
+              cancellationToken: token,
+            );
+      token.throwIfCancelled();
+      final document = mapper.map(
+        parsed.busyDocument,
+        blockOverrides: visualizationPreparation.blockOverrides,
+      );
       final stagedAssets = await assetStager.stage(
         document: document,
         exportRoot: exportRoot,
@@ -154,7 +173,10 @@ class MarkdownPdfExportService {
       return MarkdownPdfExportResult(
         destinationPath: p.normalize(p.absolute(request.destinationPath)),
         pageCount: _pageCount(pdfBytes),
-        warnings: stagedAssets.warnings,
+        warnings: [
+          ...visualizationPreparation.warnings,
+          ...stagedAssets.warnings,
+        ],
       );
     } on MarkdownPdfExportException {
       rethrow;

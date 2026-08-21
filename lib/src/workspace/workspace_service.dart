@@ -14,6 +14,7 @@ import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
+import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_toc_editor.dart';
@@ -28,6 +29,7 @@ class WorkspaceService {
     this.previewBuilder = const MarkdownPreviewBuilder(),
     WritersideModuleService? writersideService,
     this.writersideProjectCreator = const WritersideProjectCreator(),
+    this.writersideInstanceService = const WritersideInstanceService(),
     this.writersideTopicCreator = const WritersideTopicCreator(),
     this.writersideTocEditor = const WritersideTocEditor(),
     this.writersideTopicFileEditor = const WritersideTopicFileEditor(),
@@ -42,6 +44,7 @@ class WorkspaceService {
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
   final WritersideProjectCreator writersideProjectCreator;
+  final WritersideInstanceService writersideInstanceService;
   final WritersideTopicCreator writersideTopicCreator;
   final WritersideTocEditor writersideTocEditor;
   final WritersideTopicFileEditor writersideTopicFileEditor;
@@ -138,6 +141,27 @@ class WorkspaceService {
       request,
     );
     return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
+  }
+
+  Future<List<WritersideMarkdownImportCandidate>>
+  discoverWritersideMarkdownImport(String sourceDirectoryPath) {
+    return writersideInstanceService.discoverMarkdownFiles(sourceDirectoryPath);
+  }
+
+  Future<WritersideInstanceMutationResult> createWritersideInstance(
+    Workspace workspace,
+    WritersideInstanceCreateRequest request,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    return writersideInstanceService.create(module: module, request: request);
+  }
+
+  Future<WritersideInstanceMutationResult> updateWritersideInstance(
+    Workspace workspace,
+    WritersideInstanceUpdateRequest request,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    return writersideInstanceService.update(module: module, request: request);
   }
 
   Future<void> moveWritersideTocEntry(
@@ -275,7 +299,10 @@ class WorkspaceService {
       throw const BusyMarkException('writerside.topic.instance-tree-missing');
     }
     if (treePath == null) {
-      return module.instances.first;
+      return module.instances
+              .where((instance) => !instance.isLibrary)
+              .firstOrNull ??
+          module.instances.first;
     }
     for (final instance in module.instances) {
       if (p.equals(instance.sourceTreePath, treePath)) {
@@ -1049,9 +1076,13 @@ class WorkspaceService {
   }
 
   Future<Workspace> _openMarkdownFolder(String rootPath) async {
-    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final scan = await scanWorkspaceEntities(
+      rootPath,
+      options: _workspaceDisplayScanOptions,
+    );
     final entities = scan.entities;
     final files = <DocumentFile>[];
+    final directories = _workspaceDirectories(entities, rootPath);
     final diagnostics = <Diagnostic>[...scan.diagnostics];
     ParsedMarkdownDocument? firstMarkdown;
     var parsedDocuments = 0;
@@ -1093,6 +1124,7 @@ class WorkspaceService {
           ? const []
           : [firstMarkdown.filePath],
       files: files,
+      directories: directories,
       diagnostics: sortDiagnostics(diagnostics),
       markdown: firstMarkdown,
     );
@@ -1103,9 +1135,13 @@ class WorkspaceService {
     String? activeFilePath,
   }) async {
     final module = await _loadWritersideModule(rootPath);
-    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final scan = await scanWorkspaceEntities(
+      rootPath,
+      options: _workspaceDisplayScanOptions,
+    );
     final entities = scan.entities;
     final files = <DocumentFile>[];
+    final directories = _workspaceDirectories(entities, rootPath);
     final diagnostics = <Diagnostic>[
       ...module.diagnostics,
       ...scan.diagnostics,
@@ -1131,6 +1167,7 @@ class WorkspaceService {
           : await fileSnapshot(firstTopic),
       openFilePaths: firstTopic == null ? const [] : [firstTopic],
       files: files,
+      directories: directories,
       diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,
       markdown: module.topics
@@ -1142,14 +1179,16 @@ class WorkspaceService {
   }
 
   String? _startTopicPath(WritersideModule module) {
-    if (module.instances.isEmpty) {
-      return null;
+    for (final instance in module.instances) {
+      if (instance.isLibrary || instance.startPage == null) {
+        continue;
+      }
+      final topic = module.topicByReference(instance.startPage!);
+      if (topic != null) {
+        return topic.filePath;
+      }
     }
-    final startPage = module.instances.first.startPage;
-    if (startPage == null) {
-      return null;
-    }
-    return module.topicByReference(startPage)?.filePath;
+    return null;
   }
 
   Future<DocumentFile> _documentFile(String path, String rootPath) async {
@@ -1169,7 +1208,7 @@ class WorkspaceService {
     List<Diagnostic> diagnostics,
   ) async {
     try {
-      return _documentFile(path, rootPath);
+      return await _documentFile(path, rootPath);
     } on Object catch (error) {
       diagnostics.add(
         Diagnostic(
@@ -1211,7 +1250,7 @@ class WorkspaceService {
       return null;
     }
     try {
-      return markdownParser.parseAsync(
+      return await markdownParser.parseAsync(
         filePath: file.path,
         source: await file.readAsString(),
         workspaceRoot: workspaceRoot,
@@ -1231,6 +1270,9 @@ class WorkspaceService {
 
   DocumentKind _documentKind(String path) {
     final extension = p.extension(path).toLowerCase();
+    if (p.basename(path) == '.gitignore') {
+      return DocumentKind.gitIgnore;
+    }
     if (extension == '.md' || extension == '.markdown') {
       return DocumentKind.markdown;
     }
@@ -1264,6 +1306,30 @@ class WorkspaceService {
     return isTextDocumentationPath(path)
         ? DocumentKind.resource
         : DocumentKind.unknown;
+  }
+
+  WorkspaceScanOptions get _workspaceDisplayScanOptions => WorkspaceScanOptions(
+    maxParsedFileBytes: scanOptions.maxParsedFileBytes,
+    maxParsedDocuments: scanOptions.maxParsedDocuments,
+    maxTreeEntries: scanOptions.maxTreeEntries,
+    followLinks: scanOptions.followLinks,
+    includeUnsupportedFiles: true,
+    includeDirectories: true,
+    includeHiddenDirectories: true,
+    includeExcludedDirectories: true,
+  );
+
+  List<WorkspaceDirectory> _workspaceDirectories(
+    List<FileSystemEntity> entities,
+    String rootPath,
+  ) {
+    return [
+      for (final entity in entities.whereType<Directory>())
+        WorkspaceDirectory(
+          absolutePath: entity.path,
+          relativePath: normalizedRelative(rootPath, entity.path),
+        ),
+    ];
   }
 
   bool _visibleSemanticElement(String name) {

@@ -263,6 +263,28 @@ void main() {
       expect(branchTitle, contains('${fsi}feature/rtl-v2$pdi'));
       expect(branchTitle.split(fsi).length - 1, 1);
       expect(branchTitle.split(pdi).length - 1, 1);
+      final resetTitle = l10n.gitResetCurrentBranchTitle(
+        'feature/rtl-v2',
+        'a1b2c3d',
+      );
+      expect(
+        resetTitle,
+        allOf(
+          contains('${fsi}feature/rtl-v2$pdi'),
+          contains('${fsi}a1b2c3d$pdi'),
+        ),
+      );
+      final resetMessage = l10n.gitResetCurrentBranchMessage(
+        'feature/rtl-v2',
+        'a1b2c3d',
+      );
+      expect(
+        resetMessage,
+        allOf(
+          contains('${fsi}feature/rtl-v2$pdi'),
+          contains('${fsi}a1b2c3d$pdi'),
+        ),
+      );
       expect(l10n.gitDetachedHeadAt('a1b2c3d'), contains('${fsi}a1b2c3d$pdi'));
       expect(
         l10n.gitDiffHunkRange('-12,4', '+12,6'),
@@ -271,6 +293,12 @@ void main() {
       expect(
         l10n.diagnosticWritersideVariableUnresolved('api-version'),
         contains('$fsi%api-version%$pdi'),
+      );
+      expect(
+        l10n.writersidePdfBuilderDownloadDescription(
+          'jetbrains/writerside-builder:2026.07.8925',
+        ),
+        contains('${fsi}jetbrains/writerside-builder:2026.07.8925$pdi'),
       );
     }
   });
@@ -593,6 +621,10 @@ const _sharedEnglishMatches = <String>{
   'gitPull',
   'gitPush',
   'gitAdditionsDeletions',
+  'gitResetModeSoft',
+  'gitResetModeMixed',
+  'gitResetModeHard',
+  'gitResetModeKeep',
 };
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
@@ -606,6 +638,9 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitDetachedHead',
     'gitBranches',
     'gitCommit',
+    'instanceColorOrange',
+    'instanceVersion',
+    'instanceStatus',
   },
   'et': {'link', 'gitCommit'},
   'es': {
@@ -628,6 +663,10 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'editorPlaceholderCode',
     'pdfOrientation',
     'pdfPortrait',
+    'instanceColorOrange',
+    'instances',
+    'instanceVersion',
+    'writersidePdfPage',
   },
   'it': {
     'editor',
@@ -638,7 +677,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'foldKindTag',
     'gitCommit',
   },
-  'nb': {'systemTheme', 'systemLanguage', 'gitCommit'},
+  'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
   'pl': {'folder', 'foldKindTag'},
   'pt': {
     'editor',

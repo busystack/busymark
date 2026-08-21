@@ -143,6 +143,35 @@ void main() {
     );
   });
 
+  test('first real topic under an empty group becomes the home page', () async {
+    final root = await tempModule();
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide">
+  <toc-element id="guides" toc-title="Guides"/>
+</instance-profile>
+''');
+
+    await creator.create(
+      WritersideTopicCreateTarget(
+        rootPath: root.path,
+        treePath: p.join(root.path, 'ug.tree'),
+        topicsRootDir: 'topics',
+        existingTopicIds: const {'intro'},
+      ),
+      const WritersideTopicCreateRequest(
+        title: 'First page',
+        fileName: 'first-page',
+        placement: WritersideTopicCreatePlacement.child,
+        referenceTocPath: [0],
+      ),
+    );
+
+    final tree = XmlDocument.parse(
+      File(p.join(root.path, 'ug.tree')).readAsStringSync(),
+    );
+    expect(tree.rootElement.getAttribute('start-page'), 'first-page.md');
+  });
+
   test('exact TOC path disambiguates sibling insertion', () async {
     final root = await tempModule();
     File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
@@ -451,30 +480,23 @@ void main() {
     },
   );
 
-  test(
-    'atomic tree publication preserves its POSIX mode',
-    () async {
-      final root = await tempModule();
-      final treeFile = File(p.join(root.path, 'ug.tree'));
-      final chmod = await Process.run('chmod', ['640', treeFile.path]);
-      expect(chmod.exitCode, 0, reason: '${chmod.stderr}');
-      final originalMode = (await treeFile.stat()).mode & 0xfff;
+  test('atomic tree publication preserves its POSIX mode', () async {
+    final root = await tempModule();
+    final treeFile = File(p.join(root.path, 'ug.tree'));
+    final chmod = await Process.run('chmod', ['640', treeFile.path]);
+    expect(chmod.exitCode, 0, reason: '${chmod.stderr}');
+    final originalMode = (await treeFile.stat()).mode & 0xfff;
 
-      await creator.create(
-        WritersideTopicCreateTarget(
-          rootPath: root.path,
-          treePath: treeFile.path,
-          topicsRootDir: 'topics',
-          existingTopicIds: const {'intro'},
-        ),
-        const WritersideTopicCreateRequest(
-          title: 'Details',
-          fileName: 'details',
-        ),
-      );
+    await creator.create(
+      WritersideTopicCreateTarget(
+        rootPath: root.path,
+        treePath: treeFile.path,
+        topicsRootDir: 'topics',
+        existingTopicIds: const {'intro'},
+      ),
+      const WritersideTopicCreateRequest(title: 'Details', fileName: 'details'),
+    );
 
-      expect((await treeFile.stat()).mode & 0xfff, originalMode);
-    },
-    skip: Platform.isWindows ? 'POSIX permissions only.' : false,
-  );
+    expect((await treeFile.stat()).mode & 0xfff, originalMode);
+  }, skip: Platform.isWindows ? 'POSIX permissions only.' : false);
 }

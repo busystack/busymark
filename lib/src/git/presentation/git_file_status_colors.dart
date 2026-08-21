@@ -15,3 +15,21 @@ BusyMarkVcsFileColor busyMarkVcsFileColorForGitStatus(GitFileStatus file) {
     GitFileStatusCategory.unknown => BusyMarkVcsFileColor.modified,
   };
 }
+
+BusyMarkVcsFileColor busyMarkVcsFileColorForChangeStatus(
+  GitFileChangeStatus status,
+) {
+  return switch (status) {
+    GitFileChangeStatus.added => BusyMarkVcsFileColor.added,
+    GitFileChangeStatus.deleted => BusyMarkVcsFileColor.deleted,
+    GitFileChangeStatus.renamed => BusyMarkVcsFileColor.renamed,
+    GitFileChangeStatus.copied => BusyMarkVcsFileColor.copied,
+    GitFileChangeStatus.untracked => BusyMarkVcsFileColor.untracked,
+    GitFileChangeStatus.unmerged => BusyMarkVcsFileColor.conflicted,
+    GitFileChangeStatus.unmodified ||
+    GitFileChangeStatus.modified ||
+    GitFileChangeStatus.typeChanged ||
+    GitFileChangeStatus.ignored ||
+    GitFileChangeStatus.unknown => BusyMarkVcsFileColor.modified,
+  };
+}

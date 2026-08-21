@@ -24,6 +24,9 @@ const ignoredDirectoryNames = {
   'venv',
 };
 
+/// Repository metadata must never be exposed as ordinary workspace content.
+const versionControlMetadataDirectoryNames = {'.git', '.hg', '.svn'};
+
 const documentationFileExtensions = {
   '.md',
   '.markdown',
@@ -52,6 +55,10 @@ class WorkspaceScanOptions {
     this.maxParsedDocuments = 5000,
     this.maxTreeEntries = 10000,
     this.followLinks = false,
+    this.includeUnsupportedFiles = false,
+    this.includeDirectories = false,
+    this.includeHiddenDirectories = false,
+    this.includeExcludedDirectories = false,
   });
 
   final int maxParsedFileBytes;
@@ -62,6 +69,10 @@ class WorkspaceScanOptions {
   /// Directories, links, and unsupported files all consume this budget.
   final int maxTreeEntries;
   final bool followLinks;
+  final bool includeUnsupportedFiles;
+  final bool includeDirectories;
+  final bool includeHiddenDirectories;
+  final bool includeExcludedDirectories;
 }
 
 typedef WorkspaceDirectoryLister =
@@ -193,16 +204,24 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       }
       if (type == FileSystemEntityType.directory) {
         final name = p.basename(entity.path);
-        if (!ignoredDirectoryNames.contains(name) && !name.startsWith('.')) {
-          pending.add(Directory(entity.path));
+        if (versionControlMetadataDirectoryNames.contains(name) ||
+            (!options.includeHiddenDirectories && name.startsWith('.')) ||
+            (!options.includeExcludedDirectories &&
+                ignoredDirectoryNames.contains(name))) {
+          continue;
         }
+        if (options.includeDirectories) {
+          entities.add(entity);
+        }
+        pending.add(Directory(entity.path));
         continue;
       }
       if (type == FileSystemEntityType.link && !options.followLinks) {
         continue;
       }
       if (type != FileSystemEntityType.file ||
-          !isWorkspaceTreePath(entity.path)) {
+          (!options.includeUnsupportedFiles &&
+              !isWorkspaceTreePath(entity.path))) {
         continue;
       }
       entities.add(entity);

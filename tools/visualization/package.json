@@ -1,0 +1,20 @@
+{
+  "name": "busymark-visualization-build",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@plantuml/core": "1.2026.6",
+    "@scalar/api-reference": "1.65.1",
+    "@scalar/json-magic": "0.13.0",
+    "@scalar/openapi-parser": "0.28.14",
+    "mermaid": "11.16.1",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

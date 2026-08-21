@@ -70,6 +70,7 @@ void main() {
     expect(settingsPageFromRouteValue(null), SettingsPage.appearance);
     expect(settingsPageFromRouteValue('editor'), SettingsPage.editor);
     expect(settingsPageFromRouteValue('validation'), SettingsPage.validation);
+    expect(settingsPageFromRouteValue('ai'), SettingsPage.ai);
     expect(settingsPageFromRouteValue('window'), SettingsPage.window);
     expect(settingsPageFromRouteValue('privacy'), SettingsPage.privacy);
     expect(settingsPageFromRouteValue('advanced'), SettingsPage.advanced);

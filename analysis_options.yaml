@@ -4,6 +4,12 @@ analyzer:
   exclude:
     - build/**
     - docs/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   rules:
