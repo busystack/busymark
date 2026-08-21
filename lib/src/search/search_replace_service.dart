@@ -61,6 +61,7 @@ enum WorkspaceReplacementIssueKind {
   changedSincePreview,
   bufferRevisionChanged,
   normalizationRequired,
+  applyFailed,
 }
 
 class WorkspaceReplacementIssue {
@@ -109,6 +110,10 @@ class WorkspaceReplacementPreview {
 
   int get matchCount =>
       files.fold(0, (total, file) => total + file.matches.length);
+
+  bool get isComplete => !issues.any(
+    (issue) => issue.kind == WorkspaceReplacementIssueKind.truncated,
+  );
 }
 
 class WorkspaceReplacementApplyResult {
@@ -316,8 +321,18 @@ class SearchReplacementService {
         const {},
   }) async {
     final issues = <WorkspaceReplacementIssue>[];
-    var appliedFiles = 0;
-    var appliedMatches = 0;
+    if (!preview.isComplete) {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: List.unmodifiable([
+          for (final issue in preview.issues)
+            if (issue.kind == WorkspaceReplacementIssueKind.truncated) issue,
+        ]),
+      );
+    }
+    final state = currentState();
+    final operations = <_WorkspaceReplacementOperation>[];
     for (final file in preview.files) {
       final selected = {
         for (final match in file.matches)
@@ -328,7 +343,7 @@ class SearchReplacementService {
       }
       final currentBuffer = file.bufferId == null
           ? null
-          : currentState().documentBuffers
+          : state.documentBuffers
                 .where((buffer) => buffer.id == file.bufferId)
                 .firstOrNull;
       if (file.bufferId != null) {
@@ -374,22 +389,71 @@ class SearchReplacementService {
         matches: file.matches,
       );
       final nextText = textPreview.apply(selectedMatchIds: selected);
-      if (file.bufferId case final bufferId?) {
-        updateBuffer(bufferId, nextText);
-      } else {
-        await workspaceService.saveFormattedText(
-          file.filePath,
-          nextText,
-          format: file.format,
-          mixedNormalization: normalization,
-        );
+      operations.add(
+        _WorkspaceReplacementOperation(
+          file: file,
+          nextText: nextText,
+          selectedMatchCount: selected.length,
+          normalization: normalization,
+        ),
+      );
+    }
+    if (issues.isNotEmpty) {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: List.unmodifiable(issues),
+      );
+    }
+    final diskOperations = operations
+        .where((operation) => operation.file.bufferId == null)
+        .toList(growable: false);
+    try {
+      await workspaceService.saveFormattedTextBatch([
+        for (final operation in diskOperations)
+          WorkspaceBatchTextWrite(
+            path: operation.file.filePath,
+            text: operation.nextText,
+            expectedSnapshot: operation.file.diskSnapshot!,
+            format: operation.file.format,
+            mixedNormalization: operation.normalization,
+          ),
+      ]);
+    } on WorkspaceBatchWriteConflict catch (error) {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: [
+          WorkspaceReplacementIssue(
+            kind: WorkspaceReplacementIssueKind.changedSincePreview,
+            filePath: error.path,
+          ),
+        ],
+      );
+    } on Object {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: [
+          for (final operation in diskOperations)
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.applyFailed,
+              filePath: operation.file.filePath,
+            ),
+        ],
+      );
+    }
+    for (final operation in operations) {
+      if (operation.file.bufferId case final bufferId?) {
+        updateBuffer(bufferId, operation.nextText);
       }
-      appliedFiles++;
-      appliedMatches += selected.length;
     }
     return WorkspaceReplacementApplyResult(
-      appliedFiles: appliedFiles,
-      appliedMatches: appliedMatches,
+      appliedFiles: operations.length,
+      appliedMatches: operations.fold(
+        0,
+        (total, operation) => total + operation.selectedMatchCount,
+      ),
       issues: List.unmodifiable(issues),
     );
   }
@@ -456,4 +520,18 @@ class SearchReplacementService {
       _ => false,
     };
   }
+}
+
+class _WorkspaceReplacementOperation {
+  const _WorkspaceReplacementOperation({
+    required this.file,
+    required this.nextText,
+    required this.selectedMatchCount,
+    required this.normalization,
+  });
+
+  final WorkspaceReplacementFilePreview file;
+  final String nextText;
+  final int selectedMatchCount;
+  final LineEndingNormalization? normalization;
 }

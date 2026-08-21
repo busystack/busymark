@@ -14,17 +14,25 @@ Future<void> showBusyMarkCommandPalette(
   BusyMarkCommandRegistry registry,
 ) async {
   final headerBar = LinuxHeaderBarService.instance;
+  final commandTarget = FocusManager.instance.primaryFocus?.context;
   await showBusyMarkModalDialog<void>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => _BusyMarkCommandPalette(registry: registry),
+    builder: (context) => _BusyMarkCommandPalette(
+      registry: registry,
+      commandTarget: commandTarget,
+    ),
   );
 }
 
 class _BusyMarkCommandPalette extends StatefulWidget {
-  const _BusyMarkCommandPalette({required this.registry});
+  const _BusyMarkCommandPalette({
+    required this.registry,
+    required this.commandTarget,
+  });
 
   final BusyMarkCommandRegistry registry;
+  final BuildContext? commandTarget;
 
   @override
   State<_BusyMarkCommandPalette> createState() =>
@@ -37,9 +45,6 @@ class _BusyMarkCommandPaletteState extends State<_BusyMarkCommandPalette> {
   List<BusyMarkCommand> get _commands {
     final query = _query.trim().toLowerCase();
     return widget.registry.visibleCommands().where((command) {
-      if (command.execute == null) {
-        return false;
-      }
       if (query.isEmpty) {
         return true;
       }
@@ -64,7 +69,7 @@ class _BusyMarkCommandPaletteState extends State<_BusyMarkCommandPalette> {
               autofocus: true,
               onChanged: (value) => setState(() => _query = value),
               onSubmitted: (_) {
-                if (commands.isNotEmpty && commands.first.canExecute) {
+                if (commands.isNotEmpty && _enabled(commands.first)) {
                   _execute(commands.first);
                 }
               },
@@ -87,13 +92,16 @@ class _BusyMarkCommandPaletteState extends State<_BusyMarkCommandPalette> {
               for (final command in commands)
                 BusyMarkActionRow(
                   title: command.label(context),
-                  subtitle: command.category(context),
+                  subtitle: _enabled(command)
+                      ? command.category(context)
+                      : command.disabledReason?.call(context) ??
+                            command.category(context),
                   leading: const Icon(BusyMarkGlyphs.search),
                   trailing: command.shortcut == null
                       ? null
                       : Text(command.shortcut!.label),
-                  enabled: command.enabled(),
-                  onTap: command.enabled() ? () => _execute(command) : null,
+                  enabled: _enabled(command),
+                  onTap: _enabled(command) ? () => _execute(command) : null,
                 ),
             ],
           ),
@@ -104,7 +112,17 @@ class _BusyMarkCommandPaletteState extends State<_BusyMarkCommandPalette> {
   void _execute(BusyMarkCommand command) {
     Navigator.pop(context);
     unawaited(
-      Future<void>.microtask(() => widget.registry.execute(command.id)),
+      Future<void>.microtask(
+        () =>
+            widget.registry.executeInContext(command.id, widget.commandTarget),
+      ),
+    );
+  }
+
+  bool _enabled(BusyMarkCommand command) {
+    return widget.registry.canExecuteInContext(
+      command.id,
+      widget.commandTarget,
     );
   }
 }

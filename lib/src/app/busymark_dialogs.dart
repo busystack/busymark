@@ -36,16 +36,16 @@ class _DismissBusyMarkModalIntent extends Intent {
 }
 
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
-  for (final shortcut in BusyMarkAppShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  for (final entry in BusyMarkEditorShortcuts.definitions.entries)
-    if (entry.key != BusyMarkEditorShortcutAction.pastePlainText)
-      entry.value.activator: const DoNothingAndStopPropagationIntent(),
-  for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  BusyMarkTextEditingShortcutActivators.escape:
+  for (final command in BusyMarkCommandCatalog.metadata.commands)
+    if (command.shortcut != null &&
+        command.id != BusyMarkCommandIds.textPastePlainText &&
+        command.scope != BusyMarkCommandScope.tree &&
+        command.scope != BusyMarkCommandScope.textEditing)
+      command.shortcut!.activator: const DoNothingAndStopPropagationIntent(),
+  BusyMarkCommandCatalog
+          .metadata[BusyMarkCommandIds.textEscape]!
+          .shortcut!
+          .activator:
       const _DismissBusyMarkModalIntent(),
 };
 
@@ -368,7 +368,9 @@ Future<void> _openApacheLicense() async {
 }
 
 void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
-  final registry = BusyMarkCommandCatalog.create();
+  final registry =
+      BusyMarkCommandRegistryScope.maybeOf(context) ??
+      BusyMarkCommandCatalog.metadata;
   final headerBar = LinuxHeaderBarService.instance;
   unawaited(
     showBusyMarkModalDialog<void>(

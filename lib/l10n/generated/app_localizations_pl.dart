@@ -229,6 +229,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get commandPaletteEmpty => 'Brak pasujących poleceń';
 
   @override
+  String get commandUnavailableInContext =>
+      'To polecenie nie jest dostępne w bieżącym kontekście.';
+
+  @override
   String get lightTheme => 'Jasny';
 
   @override
@@ -776,6 +780,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Masz niezapisane zmiany w $fileName. Zapisać je przed kontynuowaniem?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumenty zawierają niezapisane zmiany. Zapisać je przed kontynuowaniem?';
   }
 
   @override
@@ -1440,6 +1449,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przed zamianą wybierz normalizację LF lub CRLF.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Zmiany zewnętrzne — $fileName';
   }
@@ -1450,6 +1463,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Ten plik zmienił się na dysku, gdy masz niezapisane zmiany.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Odzyskano niezapisaną treść pliku $fileName. Przejrzyj ją, a następnie zapisz, zapisz jako lub odrzuć.';
+  }
 
   @override
   String get compare => 'Porównaj';
@@ -1599,6 +1617,16 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Sprawdzanie poprawności nie powiodło się: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Odzyskano $count niezapisanych dokumentów. Przejrzyj każdy odzyskany dokument przed kontynuowaniem.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe odzyskane dokumenty są nadal dostępne.';
   }
 
   @override

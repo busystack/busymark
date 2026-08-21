@@ -2722,6 +2722,12 @@
   "reloadFromDisk": "بارگیری دوباره از دیسک",
   "keepMine": "نگه‌داشتن نسخهٔ من",
   "saveAs": "ذخیره با نام",
+  "unsavedChangesMultipleMessage": "تعداد {count} سند تغییرات ذخیره‌نشده دارند. پیش از ادامه ذخیره شوند؟",
+  "workspaceReplaceIssueApplyFailed": "هیچ جایگزینی اعمال نشد، زیرا مجموعهٔ بازبینی‌شده را نمی‌شد با ایمنی ذخیره کرد.",
+  "workspaceRecoveryRestored": "تعداد {count} سند ذخیره‌نشده بازیابی شد. پیش از ادامه هر سند بازیابی‌شده را بررسی کنید.",
+  "workspaceRecoveryDamaged": "تعداد {count} رکورد بازیابی آسیب‌دیده قابل بازیابی نبود. سندهای معتبر بازیابی‌شده همچنان در دسترس‌اند.",
+  "recoveredDocumentReview": "محتوای ذخیره‌نشدهٔ {fileName} بازیابی شده است. آن را بررسی کنید و سپس ذخیره، ذخیره با نام یا رد کنید.",
+  "commandUnavailableInContext": "این فرمان در زمینهٔ فعلی در دسترس نیست.",
   "mathRenderFailed": "عبارت ریاضی قابل نمایش نبود.",
   "inlineMath": "ریاضی درون‌خطی",
   "displayMath": "ریاضی نمایشی"

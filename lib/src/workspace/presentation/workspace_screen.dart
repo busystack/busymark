@@ -22,7 +22,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_search_field.dart';
-import '../../app/busymark_shortcuts.dart';
+import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/diagnostic.dart';
@@ -44,6 +44,7 @@ import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../export/markdown_pdf_export_ui.dart';
 import '../../git/application/git_controller.dart';
@@ -596,6 +597,9 @@ class WorkspaceScreen extends ConsumerWidget {
           sidebarToggleVisible: hasSidebar,
           backVisible: true,
         );
+    final commandRegistry =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
 
     return HeaderBarConfigurationPublisher(
       synchronizer: headerBar.configurationSynchronizer,
@@ -603,23 +607,25 @@ class WorkspaceScreen extends ConsumerWidget {
       enabled: headerBar.isAvailable,
       child: Shortcuts(
         shortcuts: {
-          BusyMarkAppShortcutActivators.search: const _OpenSearchIntent(),
-          BusyMarkSidebarShortcutActivators.files:
+          commandRegistry[BusyMarkCommandIds.search]!.shortcut!.activator:
+              const _OpenSearchIntent(),
+          commandRegistry[BusyMarkCommandIds.sidebarFiles]!.shortcut!.activator:
               const _SelectSidebarTabIntent(_SidebarTab.files),
           const SingleActivator(LogicalKeyboardKey.numpad1, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.files),
-          BusyMarkSidebarShortcutActivators.toc: const _SelectSidebarTabIntent(
-            _SidebarTab.toc,
-          ),
+          commandRegistry[BusyMarkCommandIds.sidebarToc]!.shortcut!.activator:
+              const _SelectSidebarTabIntent(_SidebarTab.toc),
           const SingleActivator(LogicalKeyboardKey.numpad2, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.toc),
-          BusyMarkSidebarShortcutActivators.outline:
-              const _SelectSidebarTabIntent(_SidebarTab.outline),
+          commandRegistry[BusyMarkCommandIds.sidebarOutline]!
+              .shortcut!
+              .activator: const _SelectSidebarTabIntent(
+            _SidebarTab.outline,
+          ),
           const SingleActivator(LogicalKeyboardKey.numpad3, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.outline),
-          BusyMarkSidebarShortcutActivators.git: const _SelectSidebarTabIntent(
-            _SidebarTab.git,
-          ),
+          commandRegistry[BusyMarkCommandIds.sidebarGit]!.shortcut!.activator:
+              const _SelectSidebarTabIntent(_SidebarTab.git),
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.git),
         },
@@ -655,7 +661,9 @@ class WorkspaceScreen extends ConsumerWidget {
                         child: BusyMarkHeaderIconButton(
                           tooltip: context.l10n.welcome,
                           icon: BusyMarkGlyphs.home,
-                          shortcut: BusyMarkAppShortcutLabels.back,
+                          shortcut: commandRegistry[BusyMarkCommandIds.back]
+                              ?.shortcut
+                              ?.label,
                           onPressed: () async {
                             final router = GoRouter.of(context);
                             if (await confirmSafeToContinue(context, ref)) {
@@ -697,7 +705,10 @@ class WorkspaceScreen extends ConsumerWidget {
                               : context.l10n.showSidebar,
                           icon: BusyMarkGlyphs.sidebar,
                           selected: settings.sidebarVisible,
-                          shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                          shortcut:
+                              commandRegistry[BusyMarkCommandIds.toggleSidebar]
+                                  ?.shortcut
+                                  ?.label,
                           onPressed: () {
                             final visible = !settings.sidebarVisible;
                             if (!visible) {
@@ -712,7 +723,9 @@ class WorkspaceScreen extends ConsumerWidget {
                           tooltip: context.l10n.search,
                           icon: BusyMarkGlyphs.search,
                           selected: searchState.active,
-                          shortcut: BusyMarkAppShortcutLabels.search,
+                          shortcut: commandRegistry[BusyMarkCommandIds.search]
+                              ?.shortcut
+                              ?.label,
                           onPressed: () => _toggleSearch(ref),
                         ),
                         BusyMarkHeaderPopupMenuButton<
@@ -720,7 +733,10 @@ class WorkspaceScreen extends ConsumerWidget {
                         >(
                           tooltip: context.l10n.viewMode,
                           icon: _documentViewModeIcon(documentViewMode),
-                          shortcut: _documentViewModeShortcut(documentViewMode),
+                          shortcut: _documentViewModeShortcut(
+                            documentViewMode,
+                            commandRegistry,
+                          ),
                           itemBuilder: (context) => [
                             for (final mode
                                 in DocumentViewModePreference.values)
@@ -728,7 +744,10 @@ class WorkspaceScreen extends ConsumerWidget {
                                 value: mode,
                                 label: _documentViewModeLabel(context, mode),
                                 icon: _documentViewModeIcon(mode),
-                                shortcut: _documentViewModeShortcut(mode),
+                                shortcut: _documentViewModeShortcut(
+                                  mode,
+                                  commandRegistry,
+                                ),
                                 checked: mode == documentViewMode,
                                 trailingCheck: true,
                               ),
@@ -863,35 +882,29 @@ class WorkspaceScreen extends ConsumerWidget {
     WidgetRef ref,
     HeaderBarAction action,
   ) {
-    final settings = ref.read(appSettingsControllerProvider);
-    final settingsController = ref.read(appSettingsControllerProvider.notifier);
+    final commands =
+        BusyMarkCommandRegistryScope.read(context) ??
+        BusyMarkCommandCatalog.metadata;
+    void execute(String id) => unawaited(commands.execute(id));
     switch (action) {
       case HeaderBarAction.back:
-        unawaited(() async {
-          if (await confirmSafeToContinue(context, ref) && context.mounted) {
-            context.go('/');
-          }
-        }());
+        execute(BusyMarkCommandIds.back);
       case HeaderBarAction.sidebarToggle:
-        final visible = !settings.sidebarVisible;
-        if (!visible) {
-          _clearGitDetailSelection(ref);
-        }
-        unawaited(settingsController.setSidebarVisible(visible));
+        execute(BusyMarkCommandIds.toggleSidebar);
       case HeaderBarAction.refresh:
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
-        break;
+        execute(BusyMarkCommandIds.save);
       case HeaderBarAction.exportPdf:
-        unawaited(exportWorkspaceToPdf(context, ref));
+        execute(BusyMarkCommandIds.exportPdf);
       case HeaderBarAction.fullScreen:
-        break;
+        execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
-        context.go(settingsLocation(SettingsReturnTarget.workspace));
+        execute(BusyMarkCommandIds.settings);
       case HeaderBarAction.keyboardShortcuts:
-        showBusyMarkKeyboardShortcutsDialog(context);
+        execute(BusyMarkCommandIds.keyboardShortcuts);
       case HeaderBarAction.markdownAndHtml:
-        showBusyMarkMarkdownHtmlDialog(context);
+        execute(BusyMarkCommandIds.markdownAndHtml);
       case HeaderBarAction.reportIssue:
         final headerBar = ref.read(linuxHeaderBarServiceProvider);
         showBusyMarkFeedbackDialog(
@@ -901,41 +914,13 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.viewModeEditor:
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .updateActiveEditorMode(DocumentViewModePreference.editor);
-        unawaited(
-          settingsController.setDocumentViewMode(
-            DocumentViewModePreference.editor,
-          ),
-        );
+        execute(BusyMarkCommandIds.viewEditor);
       case HeaderBarAction.viewModeSource:
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .updateActiveEditorMode(DocumentViewModePreference.source);
-        unawaited(
-          settingsController.setDocumentViewMode(
-            DocumentViewModePreference.source,
-          ),
-        );
+        execute(BusyMarkCommandIds.viewSource);
       case HeaderBarAction.viewModePreview:
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .updateActiveEditorMode(DocumentViewModePreference.preview);
-        unawaited(
-          settingsController.setDocumentViewMode(
-            DocumentViewModePreference.preview,
-          ),
-        );
+        execute(BusyMarkCommandIds.viewReading);
       case HeaderBarAction.viewModeSplit:
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .updateActiveEditorMode(DocumentViewModePreference.split);
-        unawaited(
-          settingsController.setDocumentViewMode(
-            DocumentViewModePreference.split,
-          ),
-        );
+        execute(BusyMarkCommandIds.viewSplit);
       case HeaderBarAction.sidebarFiles:
         _selectSidebarShortcut(ref, _SidebarTab.files);
       case HeaderBarAction.sidebarToc:
@@ -945,7 +930,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
       case HeaderBarAction.search:
-        _toggleSearch(ref);
+        execute(BusyMarkCommandIds.search);
       case HeaderBarAction.menu:
         break;
     }
@@ -1079,17 +1064,17 @@ class WorkspaceScreen extends ConsumerWidget {
     };
   }
 
-  String _documentViewModeShortcut(DocumentViewModePreference mode) {
-    return switch (mode) {
-      DocumentViewModePreference.editor =>
-        BusyMarkDocumentViewShortcutLabels.editor,
-      DocumentViewModePreference.source =>
-        BusyMarkDocumentViewShortcutLabels.source,
-      DocumentViewModePreference.preview =>
-        BusyMarkDocumentViewShortcutLabels.reading,
-      DocumentViewModePreference.split =>
-        BusyMarkDocumentViewShortcutLabels.split,
+  String _documentViewModeShortcut(
+    DocumentViewModePreference mode,
+    BusyMarkCommandRegistry commands,
+  ) {
+    final id = switch (mode) {
+      DocumentViewModePreference.editor => BusyMarkCommandIds.viewEditor,
+      DocumentViewModePreference.source => BusyMarkCommandIds.viewSource,
+      DocumentViewModePreference.preview => BusyMarkCommandIds.viewReading,
+      DocumentViewModePreference.split => BusyMarkCommandIds.viewSplit,
     };
+    return commands[id]!.shortcut!.label;
   }
 
   Future<void> _openSearchResult(
@@ -2442,13 +2427,17 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
   };
 }
 
-String? _sidebarTabShortcut(_SidebarTab tab) {
-  return switch (tab) {
-    _SidebarTab.files => BusyMarkSidebarShortcutLabels.files,
-    _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
-    _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
-    _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
+String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
+  final commands =
+      BusyMarkCommandRegistryScope.read(context) ??
+      BusyMarkCommandCatalog.metadata;
+  final id = switch (tab) {
+    _SidebarTab.files => BusyMarkCommandIds.sidebarFiles,
+    _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
+    _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
+    _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
   };
+  return commands[id]?.shortcut?.label;
 }
 
 String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
@@ -2594,7 +2583,7 @@ class _SidebarHeader extends StatelessWidget {
                             tab,
                             Directionality.of(context),
                           ),
-                          shortcut: _sidebarTabShortcut(tab),
+                          shortcut: _sidebarTabShortcut(context, tab),
                           checked: tab == selectedTab,
                           trailingCheck: true,
                         ),
@@ -3616,7 +3605,11 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     }
     return Shortcuts(
       shortcuts: {
-        BusyMarkTreeShortcutActivators.deleteSelection:
+        (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                    BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                    .treeDeleteSelection]!
+                .shortcut!
+                .activator:
             const _DeleteSelectedFileTreeEntryIntent(),
       },
       child: Actions(
@@ -4016,7 +4009,12 @@ Future<_FileTreeAction?> _showFileTreeMenu(
             ? context.l10n.safeDeleteTopicFile
             : context.l10n.delete,
         icon: BusyMarkGlyphs.delete,
-        shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
+        shortcut:
+            (BusyMarkCommandRegistryScope.read(context) ??
+                    BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                    .treeDeleteSelection]
+                ?.shortcut
+                ?.label,
       ),
       const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
@@ -4832,7 +4830,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     return Shortcuts(
       shortcuts: {
-        BusyMarkTreeShortcutActivators.deleteSelection:
+        (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                    BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                    .treeDeleteSelection]!
+                .shortcut!
+                .activator:
             const _RemoveSelectedTocEntryIntent(),
       },
       child: Actions(
@@ -5794,7 +5796,12 @@ Future<_TocTreeAction?> _showTocTreeMenu(
           value: _TocTreeAction.removeFromToc,
           label: context.l10n.removeTocElement,
           icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
-          shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
+          shortcut:
+              (BusyMarkCommandRegistryScope.read(context) ??
+                      BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                      .treeDeleteSelection]
+                  ?.shortcut
+                  ?.label,
           enabled: canEditStructure,
         ),
         BusyMarkPopupMenuItem(
@@ -9461,6 +9468,25 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       decoration: BoxDecoration(color: colors.view),
       child: Column(
         children: [
+          if (activeBuffer?.recovered == true)
+            _RecoveredDocumentBanner(
+              buffer: activeBuffer!,
+              onSave: () => unawaited(
+                (BusyMarkCommandRegistryScope.read(context) ??
+                        BusyMarkCommandCatalog.metadata)
+                    .execute(BusyMarkCommandIds.save),
+              ),
+              onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
+              onDiscard: () => unawaited(
+                activeBuffer.deletedOnDisk
+                    ? ref
+                          .read(workspaceControllerProvider.notifier)
+                          .closeDocumentBuffer(activeBuffer.id, discard: true)
+                    : ref
+                          .read(workspaceControllerProvider.notifier)
+                          .discardActiveChanges(),
+              ),
+            ),
           if (activeBuffer != null &&
               activeBuffer.diskState != DocumentDiskState.present &&
               activeBuffer.diskState != DocumentDiskState.changed)
@@ -9479,6 +9505,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               onKeepMine: () => ref
                   .read(workspaceControllerProvider.notifier)
                   .keepBufferVersion(activeBuffer.id),
+              onSave: () => unawaited(
+                (BusyMarkCommandRegistryScope.read(context) ??
+                        BusyMarkCommandCatalog.metadata)
+                    .execute(BusyMarkCommandIds.save),
+              ),
               onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
             ),
           Expanded(
@@ -9488,6 +9519,33 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   Expanded(
                     child: BusyMarkWysiwygEditor(
                       document: wysiwygDocument,
+                      documentId: activeBuffer?.id,
+                      initialSessionState:
+                          activeBuffer?.editorState.wysiwygState ??
+                          const WysiwygEditorSessionState(),
+                      useExternalUndoHistory: true,
+                      onSessionChanged: (documentId, session) {
+                        final latest = ref
+                            .read(workspaceControllerProvider)
+                            .documentBuffers
+                            .where((buffer) => buffer.id == documentId)
+                            .firstOrNull;
+                        if (latest == null ||
+                            _sameWysiwygSession(
+                              latest.editorState.wysiwygState,
+                              session,
+                            )) {
+                          return;
+                        }
+                        ref
+                            .read(workspaceControllerProvider.notifier)
+                            .updateDocumentEditorState(
+                              documentId,
+                              latest.editorState.copyWith(
+                                wysiwygState: session,
+                              ),
+                            );
+                      },
                       headerBarService: headerBar,
                       workspaceRoot: _imageWorkspaceRoot(
                         widget.state.workspace,
@@ -10258,12 +10316,26 @@ DocumentOutlineHeading? _outlineHeadingAtOrBeforeLine(
   return result;
 }
 
+bool _sameWysiwygSession(
+  WysiwygEditorSessionState left,
+  WysiwygEditorSessionState right,
+) {
+  return left.activeBlockId == right.activeBlockId &&
+      left.anchorBlockId == right.anchorBlockId &&
+      left.anchorOffset == right.anchorOffset &&
+      left.extentBlockId == right.extentBlockId &&
+      left.extentOffset == right.extentOffset &&
+      left.viewportBlockId == right.viewportBlockId &&
+      (left.viewportAlignment - right.viewportAlignment).abs() < 0.001;
+}
+
 class _ExternalFileBanner extends StatelessWidget {
   const _ExternalFileBanner({
     required this.buffer,
     required this.onCompare,
     required this.onReload,
     required this.onKeepMine,
+    required this.onSave,
     required this.onSaveAs,
   });
 
@@ -10271,6 +10343,7 @@ class _ExternalFileBanner extends StatelessWidget {
   final VoidCallback? onCompare;
   final VoidCallback? onReload;
   final VoidCallback onKeepMine;
+  final VoidCallback onSave;
   final VoidCallback onSaveAs;
 
   @override
@@ -10320,8 +10393,70 @@ class _ExternalFileBanner extends StatelessWidget {
             ),
             const SizedBox(width: BusyMarkSpacing.xs),
             BusyMarkPushButton.standard(
+              onPressed: onSave,
+              child: Text(context.l10n.save),
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+            BusyMarkPushButton.standard(
               onPressed: onSaveAs,
               child: Text(context.l10n.saveAs),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecoveredDocumentBanner extends StatelessWidget {
+  const _RecoveredDocumentBanner({
+    required this.buffer,
+    required this.onSave,
+    required this.onSaveAs,
+    required this.onDiscard,
+  });
+
+  final DocumentBuffer buffer;
+  final VoidCallback onSave;
+  final VoidCallback onSaveAs;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.admonitionTip,
+        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.md,
+          vertical: BusyMarkSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            const Icon(BusyMarkGlyphs.history, size: BusyMarkSizes.iconSm),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: Text(
+                context.l10n.recoveredDocumentReview(buffer.displayName),
+              ),
+            ),
+            BusyMarkPushButton.standard(
+              onPressed: onSave,
+              child: Text(context.l10n.save),
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+            BusyMarkPushButton.standard(
+              onPressed: onSaveAs,
+              child: Text(context.l10n.saveAs),
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+            BusyMarkPushButton.destructive(
+              context: context,
+              onPressed: onDiscard,
+              child: Text(context.l10n.discard),
             ),
           ],
         ),
@@ -12124,7 +12259,7 @@ class _WorkspaceReplacementReviewDialogState
       cancelLabel: context.l10n.cancel,
       saveLabel: context.l10n.applyReplacements,
       onCancel: () => Navigator.pop(context),
-      onSave: _selected.isEmpty
+      onSave: _selected.isEmpty || !widget.preview.isComplete
           ? null
           : () => Navigator.pop(context, Set.unmodifiable(_selected)),
       children: [
@@ -12221,6 +12356,8 @@ String _workspaceReplacementIssueLabel(
       context.l10n.workspaceReplaceIssueBufferChanged,
     WorkspaceReplacementIssueKind.normalizationRequired =>
       context.l10n.workspaceReplaceIssueNormalizationRequired,
+    WorkspaceReplacementIssueKind.applyFailed =>
+      context.l10n.workspaceReplaceIssueApplyFailed,
   };
 }
 

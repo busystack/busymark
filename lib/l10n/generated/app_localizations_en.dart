@@ -228,6 +228,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteEmpty => 'No matching commands';
 
   @override
+  String get commandUnavailableInContext =>
+      'Unavailable in the current editor context';
+
+  @override
   String get lightTheme => 'Light';
 
   @override
@@ -761,6 +765,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'You have unsaved changes in $fileName. Save them before continuing?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documents have unsaved changes. Save them before continuing?',
+      one: '1 document has unsaved changes. Save it before continuing?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1414,6 +1430,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose LF or CRLF normalization before replacing.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'The reviewed replacement could not be committed; no files were changed.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'External changes — $fileName';
   }
@@ -1424,6 +1444,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'This file changed on disk while you have unsaved edits.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Recovered unsaved content for $fileName. Inspect it, then save, save as, or discard it.';
+  }
 
   @override
   String get compare => 'Compare';
@@ -1572,6 +1597,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validation failed: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Recovered $count unsaved documents. Review each one before saving or discarding it.',
+      one:
+          'Recovered 1 unsaved document. Review it before saving or discarding it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count damaged recovery records could not be restored. Valid recovery records remain available.',
+      one:
+          'One damaged recovery record could not be restored. The original recovery file was preserved for inspection.',
+    );
+    return '$_temp0';
   }
 
   @override

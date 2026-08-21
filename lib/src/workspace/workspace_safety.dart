@@ -28,12 +28,46 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   if (!state.hasUnsavedChanges) {
     return true;
   }
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  final target = controller.captureActiveDocumentSaveTarget();
-  if (target == null) {
-    return false;
+  return _confirmUnsavedChanges(
+    context,
+    ref,
+    dirtyBufferIds: state.dirtyBuffers.map((buffer) => buffer.id).toList(),
+  );
+}
+
+Future<bool> confirmSafeToCloseActiveDocument(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final active = ref.read(workspaceControllerProvider).activeBuffer;
+  if (active == null || !active.isDirty) {
+    return true;
   }
-  final fileName = target.path?.split('/').last ?? context.l10n.currentFile;
+  return _confirmUnsavedChanges(context, ref, dirtyBufferIds: [active.id]);
+}
+
+Future<bool> _confirmUnsavedChanges(
+  BuildContext context,
+  WidgetRef ref, {
+  required List<String> dirtyBufferIds,
+}) async {
+  final initialState = ref.read(workspaceControllerProvider);
+  final dirtyBuffers = [
+    for (final id in dirtyBufferIds)
+      if (initialState.documentBuffers
+              .where((buffer) => buffer.id == id && buffer.isDirty)
+              .firstOrNull
+          case final buffer?)
+        buffer,
+  ];
+  if (dirtyBuffers.isEmpty) {
+    return true;
+  }
+  final initialWorkspaceId = initialState.workspace?.id;
+  final initialActiveBufferId = initialState.activeBufferId;
+  final initialRevisions = {
+    for (final buffer in dirtyBuffers) buffer.id: buffer.revision,
+  };
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
@@ -61,20 +95,141 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.save),
         ),
       ],
-      children: [Text(context.l10n.unsavedChangesMessage(fileName))],
+      children: [
+        Text(
+          dirtyBuffers.length == 1
+              ? context.l10n.unsavedChangesMessage(
+                  dirtyBuffers.single.displayName,
+                )
+              : context.l10n.unsavedChangesMultipleMessage(dirtyBuffers.length),
+        ),
+        if (dirtyBuffers.length > 1) ...[
+          const SizedBox(height: BusyMarkSpacing.md),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              for (final buffer in dirtyBuffers)
+                BusyMarkActionRow(
+                  title: buffer.displayName,
+                  subtitle: buffer.filePath,
+                  leading: const Icon(BusyMarkGlyphs.document),
+                ),
+            ],
+          ),
+        ],
+      ],
     ),
   );
 
+  final currentState = ref.read(workspaceControllerProvider);
+  final currentDirtyIds = currentState.dirtyBuffers
+      .map((buffer) => buffer.id)
+      .toSet();
+  if (action != null &&
+      action != _UnsavedChangesAction.cancel &&
+      (currentState.workspace?.id != initialWorkspaceId ||
+          currentState.activeBufferId != initialActiveBufferId ||
+          currentDirtyIds.length != initialRevisions.length ||
+          !currentDirtyIds.containsAll(initialRevisions.keys) ||
+          initialRevisions.entries.any((entry) {
+            final current = currentState.documentBuffers
+                .where((buffer) => buffer.id == entry.key)
+                .firstOrNull;
+            return current == null || current.revision != entry.value;
+          }))) {
+    return false;
+  }
+
   if (action == _UnsavedChangesAction.discard) {
-    return controller.discardActiveChanges(target: target);
+    return _discardDirtyDocuments(ref, dirtyBufferIds);
   }
   if (action == _UnsavedChangesAction.save) {
     if (!context.mounted) {
       return false;
     }
-    return saveActiveWithOverwriteConfirmation(context, ref, target: target);
+    return _saveDirtyDocuments(context, ref, dirtyBufferIds);
   }
   return false;
+}
+
+Future<bool> _saveDirtyDocuments(
+  BuildContext context,
+  WidgetRef ref,
+  List<String> bufferIds,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final originalActiveId = ref.read(workspaceControllerProvider).activeBufferId;
+  for (final bufferId in bufferIds) {
+    final current = ref
+        .read(workspaceControllerProvider)
+        .documentBuffers
+        .where((buffer) => buffer.id == bufferId)
+        .firstOrNull;
+    if (current == null || !current.isDirty) {
+      continue;
+    }
+    if (!await controller.activateDocumentBuffer(bufferId) ||
+        !context.mounted ||
+        !await saveActiveWithOverwriteConfirmation(context, ref)) {
+      await _restoreActiveBuffer(ref, controller, originalActiveId);
+      return false;
+    }
+  }
+  await _restoreActiveBuffer(ref, controller, originalActiveId);
+  return bufferIds.every((id) {
+    final buffer = ref
+        .read(workspaceControllerProvider)
+        .documentBuffers
+        .where((candidate) => candidate.id == id)
+        .firstOrNull;
+    return buffer == null || !buffer.isDirty;
+  });
+}
+
+Future<bool> _discardDirtyDocuments(
+  WidgetRef ref,
+  List<String> bufferIds,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final originalActiveId = ref.read(workspaceControllerProvider).activeBufferId;
+  for (final bufferId in bufferIds) {
+    final current = ref
+        .read(workspaceControllerProvider)
+        .documentBuffers
+        .where((buffer) => buffer.id == bufferId)
+        .firstOrNull;
+    if (current == null || !current.isDirty) {
+      continue;
+    }
+    if (!await controller.activateDocumentBuffer(bufferId)) {
+      await _restoreActiveBuffer(ref, controller, originalActiveId);
+      return false;
+    }
+    final target = controller.captureActiveDocumentSaveTarget();
+    final discarded = current.deletedOnDisk
+        ? await controller.closeDocumentBuffer(bufferId, discard: true)
+        : await controller.discardActiveChanges(target: target);
+    if (!discarded) {
+      await _restoreActiveBuffer(ref, controller, originalActiveId);
+      return false;
+    }
+  }
+  await _restoreActiveBuffer(ref, controller, originalActiveId);
+  return true;
+}
+
+Future<void> _restoreActiveBuffer(
+  WidgetRef ref,
+  WorkspaceController controller,
+  String? bufferId,
+) async {
+  if (bufferId != null &&
+      ref
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .any((buffer) => buffer.id == bufferId)) {
+    await controller.activateDocumentBuffer(bufferId);
+  }
 }
 
 Future<bool> saveOrConfirmSafeToChangeActiveFile(
@@ -82,11 +237,11 @@ Future<bool> saveOrConfirmSafeToChangeActiveFile(
   WidgetRef ref,
 ) async {
   final state = ref.read(workspaceControllerProvider);
-  if (!state.hasUnsavedChanges) {
+  if (!state.isDirty) {
     return true;
   }
   if (!ref.read(appSettingsControllerProvider).autoSave) {
-    return confirmSafeToContinue(context, ref);
+    return confirmSafeToCloseActiveDocument(context, ref);
   }
   return ref
       .read(workspaceControllerProvider.notifier)

@@ -190,10 +190,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final recovery = await _recoveryStart;
     final session = await _sessionStore.load();
-    final recoverEntries = recovery.cleanShutdown
-        ? const <DocumentRecoveryEntry>[]
-        : recovery.entries;
+    // Entries are authoritative even if the last shutdown was marked clean.
+    // This protects users when close confirmation is disabled while dirty
+    // buffers still exist.
+    final recoverEntries = recovery.entries;
     if (session == null && recoverEntries.isEmpty) {
+      if (recovery.readErrors > 0) {
+        state = state.copyWith(
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.recoveryDamaged,
+            error: recovery.readErrors,
+          ),
+        );
+      }
       return false;
     }
     final workspacePath =
@@ -206,10 +215,54 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             .map((entry) => entry.filePath)
             .whereType<String>()
             .firstOrNull;
+    final sessionEntries = session?.tabs ?? const <DocumentSessionEntry>[];
     try {
-      final workspace = workspacePath == null
-          ? _service.createUntitledMarkdown()
-          : await _service.openPath(workspacePath);
+      late final Workspace workspace;
+      if (workspacePath == null) {
+        workspace = _service.createUntitledMarkdown();
+      } else if (await _service.pathExists(workspacePath)) {
+        workspace = await _service.openPath(workspacePath);
+      } else {
+        final activeEntry = sessionEntries
+            .where((entry) => entry.id == session?.activeBufferId)
+            .firstOrNull;
+        final activeRecovery = recoverEntries
+            .where((entry) => entry.id == session?.activeBufferId)
+            .firstOrNull;
+        final activePath =
+            activeEntry?.filePath ??
+            activeRecovery?.filePath ??
+            sessionEntries
+                .map((entry) => entry.filePath)
+                .whereType<String>()
+                .firstOrNull ??
+            recoverEntries
+                .map((entry) => entry.filePath)
+                .whereType<String>()
+                .firstOrNull;
+        final seedText =
+            activeRecovery?.text ?? activeEntry?.lastKnownText ?? '';
+        final parsed = _service.createUntitledMarkdown(source: seedText);
+        final standalone = p.extension(workspacePath).isNotEmpty;
+        workspace = Workspace(
+          id: 'missing:$workspacePath',
+          rootPath: workspacePath,
+          kind: standalone
+              ? WorkspaceKind.singleMarkdown
+              : WorkspaceKind.markdownFolder,
+          openedAt: DateTime.now(),
+          activeFilePath: activePath,
+          openFilePaths: [
+            for (final entry in sessionEntries)
+              if (entry.filePath != null) entry.filePath!,
+            for (final entry in recoverEntries)
+              if (entry.filePath != null) entry.filePath!,
+          ],
+          files: const [],
+          diagnostics: parsed.diagnostics,
+          markdown: parsed.markdown,
+        );
+      }
       final recoveryById = {
         for (final entry in recoverEntries) entry.id: entry,
       };
@@ -218,7 +271,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           if (entry.filePath != null) entry.filePath!: entry,
       };
       final buffers = <DocumentBuffer>[];
-      final sessionEntries = session?.tabs ?? const <DocumentSessionEntry>[];
       for (final entry in sessionEntries) {
         final recovered =
             recoveryById[entry.id] ??
@@ -260,6 +312,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         preview: _safePreview(reparsed, active.text),
         documentBuffers: buffers,
         activeBufferId: active.id,
+        message: recovery.readErrors > 0
+            ? WorkspaceMessage(
+                WorkspaceMessageCode.recoveryDamaged,
+                error: recovery.readErrors,
+              )
+            : recoverEntries.isNotEmpty
+            ? WorkspaceMessage(
+                WorkspaceMessageCode.recoveryRestored,
+                error: recoverEntries.length,
+              )
+            : null,
       );
       _editRevision = active.revision;
       await _startMonitoring(reparsed);
@@ -284,8 +347,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return _restoreRecoveryBuffer(recovery, editorState: session.editorState);
     }
     final path = session.filePath;
-    if (path == null || !await _service.pathExists(path)) {
+    if (path == null) {
       return null;
+    }
+    if (!await _service.pathExists(path)) {
+      final text = session.lastKnownText ?? '';
+      return DocumentBuffer(
+        id: session.id,
+        filePath: path,
+        text: text,
+        lastSavedText: text,
+        dirty: false,
+        diskSnapshot: session.diskSnapshot,
+        format: session.format ?? TextFormatMetadata.utf8Lf,
+        editorState: session.editorState,
+        diskState: DocumentDiskState.deleted,
+      );
     }
     final load = await _service.loadTextWithSnapshot(path);
     return _fileBuffer(path, load).copyWith(editorState: session.editorState);
@@ -394,6 +471,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               filePath: buffer.filePath,
               untitledName: buffer.untitledName,
               editorState: buffer.editorState,
+              lastKnownText: buffer.text,
+              diskSnapshot: buffer.diskSnapshot,
+              format: buffer.format,
             ),
         ],
       ),
@@ -410,6 +490,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> markCleanShutdown() async {
     await flushPersistence();
+    if (state.documentBuffers.any(
+      (buffer) => buffer.isDirty || buffer.isUntitled,
+    )) {
+      // Keep the run unclean while recovery data is still needed.
+      return;
+    }
     await _recoveryStore.markCleanShutdown();
   }
 
@@ -460,6 +546,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         .firstOrNull;
     final path = current?.filePath;
     if (current == null || path == null) {
+      return;
+    }
+    final destinationPath = event.destinationPath;
+    if (event.kind == WorkspaceFileEventKind.moved &&
+        destinationPath != null &&
+        p.equals(path, event.path)) {
+      await _applyExternalMove(current, destinationPath);
       return;
     }
     if (event.kind == WorkspaceFileEventKind.deleted &&
@@ -518,6 +611,93 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  Future<void> _applyExternalMove(
+    DocumentBuffer current,
+    String destinationPath,
+  ) async {
+    final oldPath = current.filePath;
+    if (oldPath == null) {
+      return;
+    }
+    try {
+      final disk = await _service.loadTextWithSnapshot(destinationPath);
+      final contentChanged = !_sameFileSnapshot(
+        current.diskSnapshot,
+        disk.snapshot,
+      );
+      final remapped = current.copyWith(
+        filePath: destinationPath,
+        text: current.isDirty || !contentChanged ? current.text : disk.text,
+        lastSavedText: contentChanged && !current.isDirty
+            ? disk.text
+            : current.lastSavedText,
+        dirty: current.isDirty,
+        diskSnapshot: contentChanged && !current.isDirty
+            ? disk.snapshot
+            : current.diskSnapshot,
+        format: contentChanged && !current.isDirty
+            ? disk.format
+            : current.format,
+        revision: contentChanged && !current.isDirty
+            ? current.revision + 1
+            : current.revision,
+        diskState: current.isDirty && contentChanged
+            ? DocumentDiskState.conflict
+            : DocumentDiskState.present,
+        diskVersionText: current.isDirty && contentChanged ? disk.text : null,
+        diskVersionSnapshot: current.isDirty && contentChanged
+            ? disk.snapshot
+            : null,
+      );
+      final workspace = state.workspace;
+      final remappedTabs = workspace == null
+          ? const <String>[]
+          : [
+              for (final openPath in workspace.openFilePaths)
+                p.equals(openPath, oldPath) ? destinationPath : openPath,
+            ];
+      final active = state.activeBufferId == current.id;
+      state = state.copyWith(
+        documentBuffers: _replaceBuffer(state.documentBuffers, remapped),
+        workspace: workspace?.copyWith(
+          activeFilePath: active ? destinationPath : workspace.activeFilePath,
+          activeFileSnapshot: active
+              ? remapped.diskSnapshot
+              : workspace.activeFileSnapshot,
+          openFilePaths: remappedTabs,
+        ),
+      );
+      _fileMonitor.updateOpenFilePaths(
+        state.documentBuffers
+            .map((buffer) => buffer.filePath)
+            .whereType<String>(),
+      );
+      if (active && state.workspace != null) {
+        final reparsed = await _service.reparseActive(
+          state.workspace!,
+          remapped.text,
+        );
+        if (state.activeBufferId == current.id &&
+            state.activeBuffer?.filePath == destinationPath) {
+          state = state.copyWith(
+            workspace: reparsed.copyWith(
+              activeFileSnapshot: remapped.diskSnapshot,
+              openFilePaths: remappedTabs,
+            ),
+            preview: _safePreview(reparsed, remapped.text),
+          );
+        }
+      }
+      _schedulePersistence();
+    } on FileSystemException {
+      _updateBufferFromMonitor(
+        current.copyWith(diskState: DocumentDiskState.deleted),
+      );
+    } on FormatException {
+      // Keep the old buffer and path when the move target cannot be decoded.
+    }
+  }
+
   void _updateBufferFromMonitor(DocumentBuffer buffer) {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, buffer),
@@ -570,10 +750,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (buffer == null) {
       return;
     }
-    final snapshot = buffer.diskVersionSnapshot ?? buffer.diskSnapshot;
     _updateBufferFromMonitor(
       buffer.copyWith(
-        diskSnapshot: snapshot,
         diskState: buffer.filePath == null
             ? DocumentDiskState.present
             : DocumentDiskState.changed,
@@ -1518,6 +1696,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final next = buffer.copyWith(
       text: text,
       dirty: text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
         undoState: undo.afterUndo(buffer.text),
@@ -1541,6 +1720,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final next = buffer.copyWith(
       text: text,
       dirty: text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
         undoState: undo.afterRedo(buffer.text),
@@ -2463,7 +2643,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   bool _canAutoSaveActive() {
-    return state.activeBuffer?.filePath != null;
+    final buffer = state.activeBuffer;
+    return buffer?.filePath != null &&
+        buffer!.diskState == DocumentDiskState.present;
   }
 
   void _resetSaveTracking({bool dirty = false}) {

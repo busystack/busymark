@@ -86,7 +86,9 @@ class _BusyMarkEditorTextContextMenuState
 
   List<PopupMenuEntry<VoidCallback>> _menuItems(BuildContext context) {
     final editable = widget.editableTextState;
-    final commands = BusyMarkCommandCatalog.create();
+    final commands =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
     final items = <PopupMenuEntry<VoidCallback>>[
       for (final item in editable.contextMenuButtonItems) ...[
         if (_commandIdFor(item.type) case final commandId?)

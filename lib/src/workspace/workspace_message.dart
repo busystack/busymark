@@ -13,6 +13,8 @@ enum WorkspaceMessageCode {
   saveFailed,
   fileOperationFailed,
   validationFailed,
+  recoveryRestored,
+  recoveryDamaged,
 }
 
 class WorkspaceMessage {
@@ -45,6 +47,12 @@ String localizeWorkspaceMessage(
       l10n.workspaceErrorFileOperationFailed(error),
     WorkspaceMessageCode.validationFailed =>
       l10n.workspaceErrorValidationFailed(error),
+    WorkspaceMessageCode.recoveryRestored => l10n.workspaceRecoveryRestored(
+      (message.error as num?)?.toInt() ?? 0,
+    ),
+    WorkspaceMessageCode.recoveryDamaged => l10n.workspaceRecoveryDamaged(
+      (message.error as num?)?.toInt() ?? 0,
+    ),
   };
 }
 

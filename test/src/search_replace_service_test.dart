@@ -186,6 +186,95 @@ void main() {
       WorkspaceReplacementIssueKind.bufferRevisionChanged,
     );
   });
+
+  test('truncated workspace previews cannot be applied', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-replace-truncated-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('cat cat');
+    const workspaceService = WorkspaceService();
+    const limitedService = SearchReplacementService(maximumMatches: 1);
+    final workspace = Workspace(
+      id: directory.path,
+      rootPath: directory.path,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      files: [await _documentFile(file, directory.path)],
+      diagnostics: const [],
+    );
+    final state = WorkspaceState(workspace: workspace);
+    final preview = await limitedService.previewWorkspace(
+      state: state,
+      workspaceService: workspaceService,
+      options: const SourceSearchOptions(query: 'cat'),
+      replacement: 'dog',
+    );
+
+    expect(preview.isComplete, isFalse);
+    final result = await limitedService.applyWorkspace(
+      preview: preview,
+      selectedMatchIds: {preview.files.single.matches.single.id},
+      currentState: () => state,
+      updateBuffer: (_, _) => fail('no buffers should be updated'),
+      workspaceService: workspaceService,
+    );
+
+    expect(result.appliedFiles, 0);
+    expect(result.issues.single.kind, WorkspaceReplacementIssueKind.truncated);
+    expect(await file.readAsString(), 'cat cat');
+  });
+
+  test('stale later files abort before earlier files are changed', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-replace-preflight-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final first = File(p.join(directory.path, 'a.md'));
+    final second = File(p.join(directory.path, 'b.md'));
+    await first.writeAsString('cat first');
+    await second.writeAsString('cat second');
+    const workspaceService = WorkspaceService();
+    final workspace = Workspace(
+      id: directory.path,
+      rootPath: directory.path,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      files: [
+        await _documentFile(first, directory.path),
+        await _documentFile(second, directory.path),
+      ],
+      diagnostics: const [],
+    );
+    final state = WorkspaceState(workspace: workspace);
+    final preview = await replacementService.previewWorkspace(
+      state: state,
+      workspaceService: workspaceService,
+      options: const SourceSearchOptions(query: 'cat'),
+      replacement: 'dog',
+    );
+    await second.writeAsString('changed after preview');
+
+    final result = await replacementService.applyWorkspace(
+      preview: preview,
+      selectedMatchIds: {
+        for (final file in preview.files)
+          for (final match in file.matches) match.id,
+      },
+      currentState: () => state,
+      updateBuffer: (_, _) => fail('no buffers should be updated'),
+      workspaceService: workspaceService,
+    );
+
+    expect(result.appliedFiles, 0);
+    expect(
+      result.issues.single.kind,
+      WorkspaceReplacementIssueKind.changedSincePreview,
+    );
+    expect(await first.readAsString(), 'cat first');
+    expect(await second.readAsString(), 'changed after preview');
+  });
 }
 
 Future<DocumentFile> _documentFile(File file, String root) async {

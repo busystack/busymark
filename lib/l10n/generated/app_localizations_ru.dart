@@ -230,6 +230,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commandPaletteEmpty => 'Нет подходящих команд';
 
   @override
+  String get commandUnavailableInContext =>
+      'Эта команда недоступна в текущем контексте.';
+
+  @override
   String get lightTheme => 'Светлая';
 
   @override
@@ -771,6 +775,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'В файле $fileName есть несохранённые изменения. Сохранить их перед продолжением?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'В документах ($count) есть несохранённые изменения. Сохранить их перед продолжением?';
   }
 
   @override
@@ -1434,6 +1443,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перед заменой выберите нормализацию LF или CRLF.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Замены не применены, поскольку проверенный набор не удалось безопасно сохранить.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Внешние изменения — $fileName';
   }
@@ -1444,6 +1457,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Этот файл изменился на диске, пока у вас были несохранённые изменения.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Восстановлено несохранённое содержимое файла $fileName. Проверьте его, затем сохраните, сохраните как новый файл или отбросьте.';
+  }
 
   @override
   String get compare => 'Сравнить';
@@ -1592,6 +1610,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Проверка не удалась: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Восстановлено несохранённых документов: $count. Проверьте каждый восстановленный документ перед продолжением.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Не удалось восстановить повреждённые записи ($count). Корректные восстановленные документы остаются доступными.';
   }
 
   @override

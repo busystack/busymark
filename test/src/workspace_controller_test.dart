@@ -2,7 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/recovery_persistence.dart';
+import 'package:busymark/src/workspace/session_persistence.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -1052,15 +1057,232 @@ void main() {
     settingsController.dispose();
     await directory.delete(recursive: true);
   });
+
+  test('saving preserves a manually removed final newline', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-final-newline-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('Saved\n');
+    final harness = await _createControllerHarness();
+
+    await harness.controller.openPath(file.path);
+    harness.controller.updateActiveText('Saved');
+
+    expect(await harness.controller.saveActive(), isTrue);
+    expect(await file.readAsString(), 'Saved');
+    expect(
+      harness.controller.state.activeBuffer?.format.hasFinalNewline,
+      false,
+    );
+  });
+
+  test(
+    'Keep Mine retains the conflict snapshot until explicit overwrite',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-keep-mine-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      File(p.join(directory.path, 'a.md')).writeAsStringSync('Original\n');
+      File(p.join(directory.path, 'b.md')).writeAsStringSync('Other\n');
+      final monitor = WorkspaceFileMonitor(
+        debounce: const Duration(milliseconds: 10),
+      );
+      addTearDown(monitor.dispose);
+      final harness = await _createControllerHarness(fileMonitor: monitor);
+
+      await harness.controller.openPath(directory.path);
+      final path = harness.controller.state.activeBuffer!.filePath!;
+      final originalSnapshot =
+          harness.controller.state.activeBuffer!.diskSnapshot;
+      harness.controller.updateActiveText('Mine\n');
+      await File(path).writeAsString('External\n');
+      await _waitFor(
+        () => harness.controller.state.activeBuffer?.hasConflict == true,
+      );
+
+      harness.controller.keepBufferVersion(
+        harness.controller.state.activeBuffer!.id,
+      );
+
+      expect(
+        harness.controller.state.activeBuffer?.diskSnapshot,
+        same(originalSnapshot),
+      );
+      expect(
+        harness.controller.state.activeBuffer?.diskState,
+        DocumentDiskState.changed,
+      );
+      expect(await harness.controller.saveActive(), isFalse);
+      expect(await File(path).readAsString(), 'External\n');
+    },
+  );
+
+  test('external file moves remap the open document buffer', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-external-move-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    File(p.join(directory.path, 'a.md')).writeAsStringSync('A\n');
+    File(p.join(directory.path, 'b.md')).writeAsStringSync('B\n');
+    final monitor = WorkspaceFileMonitor(
+      debounce: const Duration(milliseconds: 10),
+    );
+    addTearDown(monitor.dispose);
+    final harness = await _createControllerHarness(fileMonitor: monitor);
+
+    await harness.controller.openPath(directory.path);
+    final oldPath = harness.controller.state.activeBuffer!.filePath!;
+    final newPath = p.join(directory.path, 'moved.md');
+    await File(oldPath).rename(newPath);
+    await _waitFor(
+      () => harness.controller.state.activeBuffer?.filePath == newPath,
+    );
+
+    expect(harness.controller.state.workspace?.activeFilePath, newPath);
+    expect(
+      harness.controller.state.workspace?.openFilePaths,
+      contains(newPath),
+    );
+    expect(
+      harness.controller.state.activeBuffer?.diskState,
+      DocumentDiskState.present,
+    );
+  });
+
+  test('restored sessions retain tabs whose files are missing', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-missing-session-file-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final missingPath = p.join(directory.path, 'missing.md');
+    final sessionStore = MemoryDocumentSessionStore()
+      ..value = WorkspaceSessionSnapshot(
+        workspacePath: directory.path,
+        activeBufferId: 'missing',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'missing',
+            filePath: missingPath,
+            untitledName: null,
+            editorState: const DocumentEditorState(),
+            lastKnownText: 'Last disk contents\n',
+            format: const TextFormatMetadata(
+              hasUtf8Bom: false,
+              lineEnding: DocumentLineEnding.lf,
+              hasFinalNewline: true,
+            ),
+          ),
+        ],
+      );
+    final harness = await _createControllerHarness(sessionStore: sessionStore);
+
+    expect(await harness.controller.restorePreviousSession(), isTrue);
+    expect(harness.controller.state.activeBuffer?.filePath, missingPath);
+    expect(harness.controller.state.activeBuffer?.text, 'Last disk contents\n');
+    expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
+  });
+
+  test('restored standalone sessions retain a missing document', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-missing-standalone-session-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final missingPath = p.join(directory.path, 'missing.md');
+    final sessionStore = MemoryDocumentSessionStore()
+      ..value = WorkspaceSessionSnapshot(
+        workspacePath: missingPath,
+        activeBufferId: 'missing',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'missing',
+            filePath: missingPath,
+            untitledName: null,
+            editorState: const DocumentEditorState(),
+            lastKnownText: 'Standalone contents\n',
+            format: const TextFormatMetadata(
+              hasUtf8Bom: false,
+              lineEnding: DocumentLineEnding.lf,
+              hasFinalNewline: true,
+            ),
+          ),
+        ],
+      );
+    final harness = await _createControllerHarness(sessionStore: sessionStore);
+
+    expect(await harness.controller.restorePreviousSession(), isTrue);
+    expect(
+      harness.controller.state.workspace?.kind,
+      WorkspaceKind.singleMarkdown,
+    );
+    expect(harness.controller.state.activeBuffer?.filePath, missingPath);
+    expect(
+      harness.controller.state.activeBuffer?.text,
+      'Standalone contents\n',
+    );
+    expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
+  });
+
+  test('clean marker cannot hide remaining recovery entries', () async {
+    final recoveryStore = MemoryDocumentRecoveryStore();
+    final sessionStore = MemoryDocumentSessionStore();
+    final recoveredBuffer = DocumentBuffer.untitled(
+      id: 'untitled:recovered',
+      name: 'Recovered',
+      text: 'Unsaved recovery',
+    );
+    recoveryStore.value = RecoverySnapshot(
+      cleanShutdown: true,
+      entries: [
+        DocumentRecoveryEntry.fromBuffer(recoveredBuffer, workspacePath: null),
+      ],
+    );
+    final harness = await _createControllerHarness(
+      sessionStore: sessionStore,
+      recoveryStore: recoveryStore,
+    );
+
+    expect(await harness.controller.restorePreviousSession(), isTrue);
+    expect(harness.controller.state.activeBuffer?.recovered, isTrue);
+    expect(
+      harness.controller.state.message?.code,
+      WorkspaceMessageCode.recoveryRestored,
+    );
+
+    await harness.controller.markCleanShutdown();
+    expect(recoveryStore.value.cleanShutdown, isFalse);
+    expect(recoveryStore.value.entries, isNotEmpty);
+  });
+}
+
+Future<void> _waitFor(bool Function() condition) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 3));
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('Timed out waiting for workspace state');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  }
 }
 
 Future<_WorkspaceControllerHarness> _createControllerHarness({
   WorkspaceService service = const WorkspaceService(),
+  WorkspaceFileMonitor? fileMonitor,
+  DocumentSessionStore? sessionStore,
+  DocumentRecoveryStore? recoveryStore,
 }) async {
   final container = ProviderContainer(
     overrides: [
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
       workspaceServiceProvider.overrideWithValue(service),
+      if (fileMonitor != null)
+        workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
+      if (sessionStore != null)
+        documentSessionStoreProvider.overrideWithValue(sessionStore),
+      if (recoveryStore != null)
+        documentRecoveryStoreProvider.overrideWithValue(recoveryStore),
     ],
   );
   addTearDown(container.dispose);
@@ -1168,7 +1390,14 @@ class _WorkspaceControllerDriver {
 
   Future<bool> discardActiveChanges() => _notifier.discardActiveChanges();
 
+  void keepBufferVersion(String bufferId) =>
+      _notifier.keepBufferVersion(bufferId);
+
   Future<void> validateActive() => _notifier.validateActive();
+
+  Future<bool> restorePreviousSession() => _notifier.restorePreviousSession();
+
+  Future<void> markCleanShutdown() => _notifier.markCleanShutdown();
 
   void dispose() {}
 }

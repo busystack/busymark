@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../app/app_settings.dart';
 import '../editor/source/source_search.dart';
+import '../editor/wysiwyg/wysiwyg_session_state.dart';
 import 'text_format_metadata.dart';
 import 'workspace_file_snapshot.dart';
 
@@ -51,6 +52,7 @@ class DocumentEditorState {
     this.searchReplacement = '',
     this.searchCurrentMatchIndex,
     this.undoState = const DocumentUndoState(),
+    this.wysiwygState = const WysiwygEditorSessionState(),
   });
 
   final DocumentViewModePreference mode;
@@ -61,6 +63,7 @@ class DocumentEditorState {
   final String searchReplacement;
   final int? searchCurrentMatchIndex;
   final DocumentUndoState undoState;
+  final WysiwygEditorSessionState wysiwygState;
 
   DocumentEditorState copyWith({
     DocumentViewModePreference? mode,
@@ -71,6 +74,7 @@ class DocumentEditorState {
     String? searchReplacement,
     Object? searchCurrentMatchIndex = _bufferUnset,
     DocumentUndoState? undoState,
+    WysiwygEditorSessionState? wysiwygState,
   }) {
     return DocumentEditorState(
       mode: mode ?? this.mode,
@@ -85,6 +89,7 @@ class DocumentEditorState {
           ? this.searchCurrentMatchIndex
           : searchCurrentMatchIndex as int?,
       undoState: undoState ?? this.undoState,
+      wysiwygState: wysiwygState ?? this.wysiwygState,
     );
   }
 
@@ -100,6 +105,7 @@ class DocumentEditorState {
     'searchRegex': searchOptions.regex,
     'searchReplacement': searchReplacement,
     'searchCurrentMatchIndex': searchCurrentMatchIndex,
+    'wysiwygState': wysiwygState.toJson(),
   };
 
   factory DocumentEditorState.fromJson(Map<String, Object?> json) {
@@ -127,6 +133,9 @@ class DocumentEditorState {
       searchReplacement: json['searchReplacement']?.toString() ?? '',
       searchCurrentMatchIndex: (json['searchCurrentMatchIndex'] as num?)
           ?.toInt(),
+      wysiwygState: WysiwygEditorSessionState.fromJson(
+        (json['wysiwygState'] as Map?)?.cast<String, Object?>() ?? const {},
+      ),
     );
   }
 }
@@ -214,9 +223,7 @@ class DocumentBuffer {
     return copyWith(
       text: nextText,
       dirty: nextText != lastSavedText || isUntitled,
-      format: isUntitled
-          ? format.copyWith(hasFinalNewline: nextText.endsWith('\n'))
-          : format,
+      format: format.copyWith(hasFinalNewline: nextText.endsWith('\n')),
       revision: revision + 1,
       editorState: editorState.copyWith(
         undoState: editorState.undoState.push(text),

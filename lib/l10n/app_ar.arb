@@ -2703,6 +2703,12 @@
   "reloadFromDisk": "إعادة التحميل من القرص",
   "keepMine": "الاحتفاظ بنسختي",
   "saveAs": "حفظ باسم",
+  "unsavedChangesMultipleMessage": "يحتوي {count} من المستندات على تغييرات غير محفوظة. هل تريد حفظها قبل المتابعة؟",
+  "workspaceReplaceIssueApplyFailed": "لم تُطبّق أي استبدالات لأن المجموعة التي تمت مراجعتها تعذر حفظها بأمان.",
+  "workspaceRecoveryRestored": "تمت استعادة {count} من المستندات غير المحفوظة. راجع كل مستند تمت استعادته قبل المتابعة.",
+  "workspaceRecoveryDamaged": "تعذرت استعادة {count} من سجلات الاستعادة التالفة. تظل المستندات الصالحة التي تمت استعادتها متاحة.",
+  "recoveredDocumentReview": "تمت استعادة المحتوى غير المحفوظ للملف {fileName}. راجعه، ثم احفظه أو احفظه باسم جديد أو تجاهله.",
+  "commandUnavailableInContext": "هذا الأمر غير متاح في السياق الحالي.",
   "mathRenderFailed": "تعذر عرض التعبير الرياضي.",
   "inlineMath": "رياضيات مضمنة",
   "displayMath": "رياضيات معروضة"

@@ -230,6 +230,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get commandPaletteEmpty => 'Nenhum comando correspondente';
 
   @override
+  String get commandUnavailableInContext =>
+      'Este comando não está disponível no contexto atual.';
+
+  @override
   String get lightTheme => 'Claro';
 
   @override
@@ -772,6 +776,11 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Você tem alterações não salvas em $fileName. Salvá-las antes de continuar?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'Há $count documentos com alterações não salvas. Deseja salvá-los antes de continuar?';
   }
 
   @override
@@ -1430,6 +1439,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Escolha a normalização LF ou CRLF antes de substituir.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Nenhuma substituição foi aplicada porque o conjunto revisado não pôde ser salvo com segurança.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Alterações externas — $fileName';
   }
@@ -1440,6 +1453,11 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Este arquivo mudou no disco enquanto você tem alterações não salvas.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'O conteúdo não salvo de $fileName foi recuperado. Revise-o e depois salve, salve como ou descarte-o.';
+  }
 
   @override
   String get compare => 'Comparar';
@@ -1589,6 +1607,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Falha na validação: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Foram recuperados $count documentos não salvos. Revise cada documento recuperado antes de continuar.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Não foi possível restaurar $count registros de recuperação danificados. Os documentos recuperados válidos continuam disponíveis.';
   }
 
   @override

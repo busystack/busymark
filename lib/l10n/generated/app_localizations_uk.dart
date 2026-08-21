@@ -229,6 +229,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get commandPaletteEmpty => 'Немає відповідних команд';
 
   @override
+  String get commandUnavailableInContext =>
+      'Ця команда недоступна в поточному контексті.';
+
+  @override
   String get lightTheme => 'Світла';
 
   @override
@@ -776,6 +780,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return '$fileName містить незбережені зміни. Зберегти їх перед продовженням?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'У документах ($count) є незбережені зміни. Зберегти їх перед продовженням?';
   }
 
   @override
@@ -1442,6 +1451,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перед заміною виберіть нормалізацію LF або CRLF.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Зовнішні зміни — $fileName';
   }
@@ -1452,6 +1465,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Цей файл змінився на диску, поки у вас були незбережені зміни.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Відновлено незбережений вміст файлу $fileName. Перегляньте його, потім збережіть, збережіть як новий файл або відкиньте.';
+  }
 
   @override
   String get compare => 'Порівняти';
@@ -1600,6 +1618,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Помилка перевірки: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Відновлено незбережених документів: $count. Перегляньте кожен відновлений документ перед продовженням.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Не вдалося відновити пошкоджені записи ($count). Коректні відновлені документи залишаються доступними.';
   }
 
   @override

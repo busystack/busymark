@@ -5,6 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
 
 void main() {
+  test('catalog includes every editor command with an executable callback', () {
+    final registry = BusyMarkCommandCatalog.create();
+
+    for (final action in BusyMarkEditorShortcutAction.values) {
+      final command = registry['editor.${action.name}'];
+      expect(command, isNotNull, reason: action.name);
+      expect(command!.execute, isNotNull, reason: action.name);
+    }
+  });
+
   BusyMarkCommand command(
     String id, {
     BusyMarkShortcutDefinition? shortcut,
@@ -31,6 +41,11 @@ void main() {
     expect(
       registry.commands.map((command) => command.id).toSet().length,
       registry.commands.length,
+    );
+    expect(registry[BusyMarkCommandIds.editorRefineWithAi]?.execute, isNotNull);
+    expect(
+      registry[BusyMarkCommandIds.editorRefineWithAi]?.disabledReason,
+      isNotNull,
     );
   });
 
@@ -101,6 +116,48 @@ void main() {
     expect(await registry.execute('test.run'), isTrue);
     expect(await registry.execute('test.disabled'), isFalse);
     expect(await registry.execute('test.missing'), isFalse);
+    expect(calls, 1);
+  });
+
+  testWidgets('contextual commands execute against the captured editor', (
+    tester,
+  ) async {
+    final registry = BusyMarkCommandCatalog.create();
+    var calls = 0;
+    late BuildContext editorContext;
+    final focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Actions(
+          actions: {
+            BusyMarkContextCommandIntent: BusyMarkContextCommandAction(
+              isCommandEnabled: (id) => id == 'editor.bold',
+              onCommand: (_) => calls++,
+            ),
+          },
+          child: Focus(
+            focusNode: focusNode,
+            child: Builder(
+              builder: (context) {
+                editorContext = context;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    focusNode.requestFocus();
+    await tester.pump();
+
+    expect(registry.canExecuteInContext('editor.bold', editorContext), isTrue);
+    expect(
+      registry.canExecuteInContext('editor.italic', editorContext),
+      isFalse,
+    );
+    expect(await registry.executeInContext('editor.bold', editorContext), true);
     expect(calls, 1);
   });
 }

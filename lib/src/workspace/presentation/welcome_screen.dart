@@ -882,8 +882,9 @@ BusyMarkStatusKind busyMarkWorkspaceMessageStatusKind(
   return switch (code) {
     WorkspaceMessageCode.chooseWhereToSaveMarkdown =>
       BusyMarkStatusKind.information,
-    WorkspaceMessageCode.saveBlockedFileChangedOnDisk =>
-      BusyMarkStatusKind.warning,
+    WorkspaceMessageCode.recoveryRestored => BusyMarkStatusKind.information,
+    WorkspaceMessageCode.saveBlockedFileChangedOnDisk ||
+    WorkspaceMessageCode.recoveryDamaged => BusyMarkStatusKind.warning,
     WorkspaceMessageCode.openFailed ||
     WorkspaceMessageCode.createWritersideProjectFailed ||
     WorkspaceMessageCode.createWritersideTopicFailed ||

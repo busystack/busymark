@@ -227,6 +227,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get commandPaletteEmpty => 'Sobivaid käske pole';
 
   @override
+  String get commandUnavailableInContext =>
+      'See käsk pole praeguses kontekstis saadaval.';
+
+  @override
   String get lightTheme => 'Hele';
 
   @override
@@ -765,6 +769,11 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Failis $fileName on salvestamata muudatusi. Kas salvestada need enne jätkamist?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumendis on salvestamata muudatusi. Kas salvestada need enne jätkamist?';
   }
 
   @override
@@ -1417,6 +1426,10 @@ class AppLocalizationsEt extends AppLocalizations {
       'Vali enne asendamist LF- või CRLF-normaliseerimine.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Välised muudatused — $fileName';
   }
@@ -1427,6 +1440,11 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'See fail muutus kettal ajal, kui sul on salvestamata muudatusi.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Faili $fileName salvestamata sisu taastati. Vaadake see üle ning salvestage, salvestage nimega või hüljake.';
+  }
 
   @override
   String get compare => 'Võrdle';
@@ -1576,6 +1594,16 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Valideerimine nurjus: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Taastati $count salvestamata dokumenti. Vaadake iga taastatud dokument enne jätkamist üle.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count rikutud taastekirjet ei saanud taastada. Kehtivad taastatud dokumendid on endiselt saadaval.';
   }
 
   @override

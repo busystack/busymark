@@ -230,6 +230,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commandPaletteEmpty => 'Aucune commande correspondante';
 
   @override
+  String get commandUnavailableInContext =>
+      'Cette commande n’est pas disponible dans le contexte actuel.';
+
+  @override
   String get lightTheme => 'Clair';
 
   @override
@@ -775,6 +779,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Des modifications non enregistrées sont présentes dans $fileName. Les enregistrer avant de continuer ?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count documents contiennent des modifications non enregistrées. Les enregistrer avant de continuer ?';
   }
 
   @override
@@ -1436,6 +1445,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisissez la normalisation LF ou CRLF avant le remplacement.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Aucun remplacement n’a été appliqué, car l’ensemble vérifié n’a pas pu être enregistré en toute sécurité.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Modifications externes — $fileName';
   }
@@ -1446,6 +1459,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Ce fichier a été modifié sur le disque alors que vous avez des modifications non enregistrées.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Le contenu non enregistré de $fileName a été récupéré. Vérifiez-le, puis enregistrez-le, enregistrez-le sous un autre nom ou ignorez-le.';
+  }
 
   @override
   String get compare => 'Comparer';
@@ -1594,6 +1612,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Échec de la validation : $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count documents non enregistrés ont été récupérés. Vérifiez chaque document récupéré avant de continuer.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count enregistrements de récupération endommagés n’ont pas pu être restaurés. Les documents valides récupérés restent disponibles.';
   }
 
   @override

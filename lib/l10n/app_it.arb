@@ -2701,6 +2701,12 @@
   "reloadFromDisk": "Ricarica dal disco",
   "keepMine": "Mantieni la mia versione",
   "saveAs": "Salva con nome",
+  "unsavedChangesMultipleMessage": "{count} documenti contengono modifiche non salvate. Salvarli prima di continuare?",
+  "workspaceReplaceIssueApplyFailed": "Non è stata applicata alcuna sostituzione perché non è stato possibile salvare in sicurezza l’insieme verificato.",
+  "workspaceRecoveryRestored": "Sono stati recuperati {count} documenti non salvati. Controllare ogni documento recuperato prima di continuare.",
+  "workspaceRecoveryDamaged": "Non è stato possibile ripristinare {count} record di recupero danneggiati. I documenti recuperati validi restano disponibili.",
+  "recoveredDocumentReview": "È stato recuperato il contenuto non salvato di {fileName}. Controllarlo, quindi salvarlo, salvarlo con nome o eliminarlo.",
+  "commandUnavailableInContext": "Questo comando non è disponibile nel contesto corrente.",
   "mathRenderFailed": "Impossibile visualizzare l’espressione matematica.",
   "inlineMath": "Formula in linea",
   "displayMath": "Formula in blocco"

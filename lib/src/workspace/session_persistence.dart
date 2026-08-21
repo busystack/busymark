@@ -5,6 +5,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'document_buffer.dart';
+import 'text_format_metadata.dart';
+import 'workspace_file_snapshot.dart';
 
 class DocumentSessionEntry {
   const DocumentSessionEntry({
@@ -12,21 +14,32 @@ class DocumentSessionEntry {
     required this.filePath,
     required this.untitledName,
     required this.editorState,
+    this.lastKnownText,
+    this.diskSnapshot,
+    this.format,
   });
 
   final String id;
   final String? filePath;
   final String? untitledName;
   final DocumentEditorState editorState;
+  final String? lastKnownText;
+  final WorkspaceFileSnapshot? diskSnapshot;
+  final TextFormatMetadata? format;
 
   Map<String, Object?> toJson() => {
     'id': id,
     'filePath': filePath,
     'untitledName': untitledName,
     'editorState': editorState.toJson(),
+    'lastKnownText': lastKnownText,
+    'diskSnapshot': diskSnapshot?.toJson(),
+    'format': format?.toJson(),
   };
 
   factory DocumentSessionEntry.fromJson(Map<String, Object?> json) {
+    final diskSnapshot = json['diskSnapshot'];
+    final format = json['format'];
     return DocumentSessionEntry(
       id: json['id']?.toString() ?? '',
       filePath: json['filePath']?.toString(),
@@ -34,6 +47,13 @@ class DocumentSessionEntry {
       editorState: DocumentEditorState.fromJson(
         (json['editorState'] as Map?)?.cast<String, Object?>() ?? const {},
       ),
+      lastKnownText: json['lastKnownText']?.toString(),
+      diskSnapshot: diskSnapshot is Map
+          ? WorkspaceFileSnapshot.fromJson(diskSnapshot.cast<String, Object?>())
+          : null,
+      format: format is Map
+          ? TextFormatMetadata.fromJson(format.cast<String, Object?>())
+          : null,
     );
   }
 }
@@ -160,14 +180,18 @@ Future<void> writeAtomicJson(File target, Map<String, Object?> json) {
 
 Future<void> _writeAtomic(File target, Map<String, Object?> json) async {
   await target.parent.create(recursive: true);
+  await _setPrivatePermissions(target.parent, directory: true);
   final staging = await target.parent.createTemp('.busymark-state-');
+  await _setPrivatePermissions(staging, directory: true);
   final staged = File(p.join(staging.path, p.basename(target.path)));
   try {
     await staged.writeAsString(
       const JsonEncoder.withIndent('  ').convert(json),
       flush: true,
     );
+    await _setPrivatePermissions(staged, directory: false);
     await staged.rename(target.path);
+    await _setPrivatePermissions(target, directory: false);
   } finally {
     try {
       if (await staged.exists()) {
@@ -183,5 +207,24 @@ Future<void> _writeAtomic(File target, Map<String, Object?> json) async {
     } on Object {
       // Cleanup must not hide the persistence result.
     }
+  }
+}
+
+Future<void> _setPrivatePermissions(
+  FileSystemEntity entity, {
+  required bool directory,
+}) async {
+  if (Platform.isWindows) {
+    return;
+  }
+  final result = await Process.run('chmod', [
+    directory ? '700' : '600',
+    entity.path,
+  ]);
+  if (result.exitCode != 0) {
+    throw FileSystemException(
+      'Could not restrict application state permissions: ${result.stderr}',
+      entity.path,
+    );
   }
 }

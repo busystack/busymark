@@ -231,6 +231,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get commandPaletteEmpty => 'Keine passenden Befehle';
 
   @override
+  String get commandUnavailableInContext =>
+      'Dieser Befehl ist im aktuellen Kontext nicht verfügbar.';
+
+  @override
   String get lightTheme => 'Hell';
 
   @override
@@ -778,6 +782,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Für $fileName liegen ungespeicherte Änderungen vor. Vor dem Fortfahren speichern?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count Dokumente enthalten ungespeicherte Änderungen. Vor dem Fortfahren speichern?';
   }
 
   @override
@@ -1438,6 +1447,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wählen Sie vor dem Ersetzen die Normalisierung auf LF oder CRLF.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Es wurden keine Ersetzungen vorgenommen, da die geprüfte Auswahl nicht sicher gespeichert werden konnte.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Externe Änderungen — $fileName';
   }
@@ -1449,6 +1462,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Diese Datei wurde auf dem Datenträger geändert, während ungespeicherte Änderungen vorliegen.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Ungespeicherter Inhalt für $fileName wurde wiederhergestellt. Prüfen Sie ihn und speichern Sie ihn, speichern Sie ihn unter einem neuen Namen oder verwerfen Sie ihn.';
+  }
 
   @override
   String get compare => 'Vergleichen';
@@ -1597,6 +1615,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validierung fehlgeschlagen: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count ungespeicherte Dokumente wurden wiederhergestellt. Prüfen Sie jedes wiederhergestellte Dokument, bevor Sie fortfahren.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count beschädigte Wiederherstellungsdatensätze konnten nicht wiederhergestellt werden. Gültige wiederhergestellte Dokumente bleiben verfügbar.';
   }
 
   @override

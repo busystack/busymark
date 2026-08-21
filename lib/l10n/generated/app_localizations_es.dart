@@ -230,6 +230,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commandPaletteEmpty => 'No hay comandos coincidentes';
 
   @override
+  String get commandUnavailableInContext =>
+      'Este comando no está disponible en el contexto actual.';
+
+  @override
   String get lightTheme => 'Claro';
 
   @override
@@ -776,6 +780,11 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Hay cambios sin guardar en $fileName. ¿Guardarlos antes de continuar?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'Hay $count documentos con cambios sin guardar. ¿Desea guardarlos antes de continuar?';
   }
 
   @override
@@ -1435,6 +1444,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Elige la normalización LF o CRLF antes de reemplazar.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'No se aplicó ningún reemplazo porque el conjunto revisado no pudo guardarse de forma segura.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Cambios externos — $fileName';
   }
@@ -1445,6 +1458,11 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Este archivo cambió en el disco mientras tienes cambios sin guardar.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Se recuperó contenido sin guardar de $fileName. Revíselo y después guárdelo, use Guardar como o descártelo.';
+  }
 
   @override
   String get compare => 'Comparar';
@@ -1594,6 +1612,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Error de validación: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Se recuperaron $count documentos sin guardar. Revise cada documento recuperado antes de continuar.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'No se pudieron restaurar $count registros de recuperación dañados. Los documentos recuperados válidos siguen disponibles.';
   }
 
   @override

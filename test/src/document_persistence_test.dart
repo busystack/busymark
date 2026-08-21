@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -11,6 +12,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('file-backed edits update final-newline metadata', () {
+    final buffer = DocumentBuffer.file(
+      id: 'file:note',
+      filePath: '/workspace/note.md',
+      text: 'Saved\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime.utc(2026),
+        size: 6,
+        contentHash: 'saved',
+      ),
+      format: const TextFormatMetadata(
+        hasUtf8Bom: false,
+        lineEnding: DocumentLineEnding.lf,
+        hasFinalNewline: true,
+      ),
+    );
+
+    final removed = buffer.edited('Saved');
+    final restored = removed.edited('Saved\n');
+
+    expect(removed.format.hasFinalNewline, isFalse);
+    expect(removed.format.formattedText(removed.text), 'Saved');
+    expect(restored.format.hasFinalNewline, isTrue);
+    expect(restored.format.formattedText(restored.text), 'Saved\n');
+  });
+
   test('session store round-trips ordered tabs and editor state', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-session-',
@@ -32,6 +59,17 @@ void main() {
             selection: TextSelection(baseOffset: 2, extentOffset: 8),
             scrollOffset: 42,
             foldedRegionKeys: {'heading:2'},
+          ),
+          lastKnownText: '# First\n',
+          diskSnapshot: WorkspaceFileSnapshot(
+            modifiedAt: DateTime.utc(2026),
+            size: 8,
+            contentHash: 'first',
+          ),
+          format: const TextFormatMetadata(
+            hasUtf8Bom: false,
+            lineEnding: DocumentLineEnding.crlf,
+            hasFinalNewline: true,
           ),
         ),
         const DocumentSessionEntry(
@@ -59,6 +97,9 @@ void main() {
     );
     expect(restored?.tabs.first.editorState.scrollOffset, 42);
     expect(restored?.tabs.first.editorState.foldedRegionKeys, {'heading:2'});
+    expect(restored?.tabs.first.lastKnownText, '# First\n');
+    expect(restored?.tabs.first.diskSnapshot?.contentHash, 'first');
+    expect(restored?.tabs.first.format?.lineEnding, DocumentLineEnding.crlf);
   });
 
   test('recovery store distinguishes clean and unclean runs', () async {
@@ -100,6 +141,55 @@ void main() {
 
     await afterCrash.markCleanShutdown();
     final normalStart = JsonDocumentRecoveryStore(filePathOverride: path);
-    expect((await normalStart.beginRun()).cleanShutdown, isTrue);
+    final cleanRecovery = await normalStart.beginRun();
+    expect(cleanRecovery.cleanShutdown, isTrue);
+    expect(cleanRecovery.entries.single.text, '# Unsaved\n');
   });
+
+  test(
+    'recovery keeps valid entries when another record is malformed',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recovery-partial-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'recovery.json');
+      final store = JsonDocumentRecoveryStore(filePathOverride: path);
+      final buffer = DocumentBuffer.untitled(
+        id: 'untitled:1',
+        name: 'Untitled 1',
+        text: 'Keep me',
+      );
+      await store.writeEntries([
+        DocumentRecoveryEntry.fromBuffer(buffer, workspacePath: null),
+      ]);
+      final decoded = jsonDecode(await File(path).readAsString()) as Map;
+      (decoded['entries'] as List).add({'id': 'broken', 'text': 42});
+      await File(path).writeAsString(jsonEncode(decoded));
+
+      final recovered = await store.beginRun();
+
+      expect(recovered.entries.single.id, 'untitled:1');
+      expect(recovered.entries.single.text, 'Keep me');
+      expect(recovered.readErrors, 1);
+    },
+  );
+
+  test(
+    'recovery state is written with private POSIX permissions',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recovery-permissions-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'recovery.json');
+      final store = JsonDocumentRecoveryStore(filePathOverride: path);
+
+      await store.writeEntries(const []);
+
+      expect((await File(path).stat()).mode & 0x1ff, 0x180);
+      expect((await directory.stat()).mode & 0x1ff, 0x1c0);
+    },
+    skip: Platform.isWindows ? 'POSIX permissions only.' : false,
+  );
 }

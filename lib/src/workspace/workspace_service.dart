@@ -26,6 +26,28 @@ import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
 import 'text_format_metadata.dart';
 
+class WorkspaceBatchTextWrite {
+  const WorkspaceBatchTextWrite({
+    required this.path,
+    required this.text,
+    required this.expectedSnapshot,
+    required this.format,
+    this.mixedNormalization,
+  });
+
+  final String path;
+  final String text;
+  final WorkspaceFileSnapshot expectedSnapshot;
+  final TextFormatMetadata format;
+  final LineEndingNormalization? mixedNormalization;
+}
+
+class WorkspaceBatchWriteConflict implements Exception {
+  const WorkspaceBatchWriteConflict(this.path);
+
+  final String path;
+}
+
 class WorkspaceService {
   const WorkspaceService({
     this.markdownParser = const MarkdownParser(),
@@ -551,6 +573,143 @@ class WorkspaceService {
         await _deleteSaveArtifactBestEffort(temp);
       }
       rethrow;
+    }
+  }
+
+  /// Replaces a group of existing files as one recoverable transaction.
+  ///
+  /// Every source snapshot is checked before any target is changed. Staged
+  /// files are atomically exchanged with their targets; if a later exchange
+  /// fails, already-exchanged files are rolled back.
+  Future<Map<String, WorkspaceFileSnapshot>> saveFormattedTextBatch(
+    List<WorkspaceBatchTextWrite> writes,
+  ) async {
+    if (writes.isEmpty) {
+      return const {};
+    }
+    if (!Platform.isLinux || !LinuxAtomicFileApi.instance.isAvailable) {
+      throw UnsupportedError(
+        'Transactional workspace replacement requires Linux renameat2.',
+      );
+    }
+    final paths = <String>{};
+    final staged = <_StagedBatchTextWrite>[];
+    final committed = <_StagedBatchTextWrite>[];
+    try {
+      for (final write in writes) {
+        final savePath = await _saveTargetPath(write.path);
+        if (!paths.add(p.normalize(p.absolute(savePath)))) {
+          throw ArgumentError('Duplicate batch write path: ${write.path}');
+        }
+        final target = File(savePath);
+        final originalBytes = await target.readAsBytes();
+        final originalStat = await target.stat();
+        final originalSnapshot = _snapshotFromBytes(
+          originalStat,
+          originalBytes,
+        );
+        if (originalSnapshot.differsFrom(write.expectedSnapshot)) {
+          throw WorkspaceBatchWriteConflict(write.path);
+        }
+        final bytes = _encodeDocumentText(
+          write.text,
+          format: write.format,
+          mixedNormalization: write.mixedNormalization,
+        );
+        final directory = await target.parent.createTemp(
+          '.busymark-save-batch-',
+        );
+        final stagedFile = File(p.join(directory.path, 'contents'));
+        await stagedFile.writeAsBytes(bytes, flush: true);
+        await _copyFileMode(originalStat, stagedFile);
+        staged.add(
+          _StagedBatchTextWrite(
+            requestPath: write.path,
+            target: target,
+            directory: directory,
+            stagedFile: stagedFile,
+            expectedSnapshot: write.expectedSnapshot,
+            bytes: bytes,
+          ),
+        );
+      }
+      // Close the validation/staging race before the first exchange.
+      for (final write in staged) {
+        final current = await fileSnapshot(write.target.path);
+        if (current.differsFrom(write.expectedSnapshot)) {
+          throw WorkspaceBatchWriteConflict(write.requestPath);
+        }
+      }
+      for (final write in staged) {
+        final error = LinuxAtomicFileApi.instance.exchange(
+          write.stagedFile.absolute.path,
+          write.target.absolute.path,
+        );
+        if (error != null) {
+          throw FileSystemException(
+            'Could not commit workspace replacement batch',
+            write.requestPath,
+            OSError('atomic exchange failed', error),
+          );
+        }
+        final displacedBytes = await write.stagedFile.readAsBytes();
+        final displacedSnapshot = _snapshotFromBytes(
+          await write.stagedFile.stat(),
+          displacedBytes,
+        );
+        if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
+          final rollbackError = LinuxAtomicFileApi.instance.exchange(
+            write.stagedFile.absolute.path,
+            write.target.absolute.path,
+          );
+          if (rollbackError != null) {
+            throw FileSystemException(
+              'Could not roll back a concurrently changed replacement file',
+              write.requestPath,
+              OSError('atomic exchange rollback failed', rollbackError),
+            );
+          }
+          throw WorkspaceBatchWriteConflict(write.requestPath);
+        }
+        committed.add(write);
+      }
+      return {
+        for (final write in staged)
+          write.requestPath: _snapshotFromBytes(
+            await write.target.stat(),
+            write.bytes,
+          ),
+      };
+    } on Object {
+      Object? rollbackError;
+      for (final write in committed.reversed) {
+        final error = LinuxAtomicFileApi.instance.exchange(
+          write.stagedFile.absolute.path,
+          write.target.absolute.path,
+        );
+        if (error != null) {
+          rollbackError ??= FileSystemException(
+            'Could not roll back workspace replacement batch',
+            write.requestPath,
+            OSError('atomic exchange rollback failed', error),
+          );
+        }
+      }
+      if (rollbackError != null) {
+        throw rollbackError;
+      }
+      rethrow;
+    } finally {
+      for (final write in staged) {
+        await _deleteSaveArtifactBestEffort(write.stagedFile);
+        try {
+          if (await write.directory.exists()) {
+            await write.directory.delete();
+          }
+        } on Object {
+          // Cleanup must not hide a commit or rollback result.
+        }
+      }
     }
   }
 
@@ -1531,6 +1690,24 @@ class _StagedSave {
 
   final Directory directory;
   final File file;
+}
+
+class _StagedBatchTextWrite {
+  const _StagedBatchTextWrite({
+    required this.requestPath,
+    required this.target,
+    required this.directory,
+    required this.stagedFile,
+    required this.expectedSnapshot,
+    required this.bytes,
+  });
+
+  final String requestPath;
+  final File target;
+  final Directory directory;
+  final File stagedFile;
+  final WorkspaceFileSnapshot expectedSnapshot;
+  final List<int> bytes;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

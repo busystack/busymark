@@ -230,6 +230,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get commandPaletteEmpty => 'Ingen samsvarende kommandoer';
 
   @override
+  String get commandUnavailableInContext =>
+      'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
+
+  @override
   String get lightTheme => 'Lys';
 
   @override
@@ -764,6 +768,11 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Du har ulagrede endringer i $fileName. Vil du lagre dem før du fortsetter?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter?';
   }
 
   @override
@@ -1421,6 +1430,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Velg LF- eller CRLF-normalisering før du erstatter.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Eksterne endringer — $fileName';
   }
@@ -1431,6 +1444,11 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Denne filen ble endret på disken mens du har ulagrede endringer.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Ulagret innhold for $fileName ble gjenopprettet. Se gjennom det, og lagre, lagre som eller forkast det.';
+  }
 
   @override
   String get compare => 'Sammenlign';
@@ -1579,6 +1597,16 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validering mislyktes: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.';
   }
 
   @override

@@ -873,6 +873,70 @@ void main() {
     );
     expect(widgetRef.read(workspaceControllerProvider).isDirty, isTrue);
   });
+
+  testWidgets('workspace continuation resolves inactive dirty documents too', (
+    tester,
+  ) async {
+    final service = _IdentityWorkspaceService();
+    bool? safeToContinue;
+    late WidgetRef widgetRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore()
+              ..value = AppSettings.defaults()
+                  .copyWith(autoSave: false)
+                  .toJson(),
+          ),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: Colors.green,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) {
+                widgetRef = ref;
+                return TextButton(
+                  onPressed: () async {
+                    safeToContinue = await confirmSafeToContinue(context, ref);
+                  },
+                  child: const Text('Navigate'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final controller = widgetRef.read(workspaceControllerProvider.notifier);
+    await controller.openPath(service.rootPath);
+    controller.updateActiveText('# Edited A\n');
+    await controller.openActiveFile(service.secondPath);
+    controller.updateActiveText('# Edited B\n');
+    expect(
+      widgetRef.read(workspaceControllerProvider).dirtyBuffers,
+      hasLength(2),
+    );
+
+    await tester.tap(find.text('Navigate'));
+    await tester.pumpAndSettle();
+    expect(find.text('a.md'), findsOneWidget);
+    expect(find.text('b.md'), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await tester.pumpAndSettle();
+
+    expect(safeToContinue, isTrue);
+    expect(widgetRef.read(workspaceControllerProvider).dirtyBuffers, isEmpty);
+    expect(service.documents[service.firstPath], '# External A\n');
+    expect(service.documents[service.secondPath], '# Original B\n');
+  });
 }
 
 double _contrastRatio(Color foreground, Color background) {

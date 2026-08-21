@@ -2719,6 +2719,12 @@
   "reloadFromDisk": "Wczytaj ponownie z dysku",
   "keepMine": "Zachowaj moją wersję",
   "saveAs": "Zapisz jako",
+  "unsavedChangesMultipleMessage": "{count} dokumenty zawierają niezapisane zmiany. Zapisać je przed kontynuowaniem?",
+  "workspaceReplaceIssueApplyFailed": "Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.",
+  "workspaceRecoveryRestored": "Odzyskano {count} niezapisanych dokumentów. Przejrzyj każdy odzyskany dokument przed kontynuowaniem.",
+  "workspaceRecoveryDamaged": "Nie udało się przywrócić {count} uszkodzonych rekordów odzyskiwania. Prawidłowe odzyskane dokumenty są nadal dostępne.",
+  "recoveredDocumentReview": "Odzyskano niezapisaną treść pliku {fileName}. Przejrzyj ją, a następnie zapisz, zapisz jako lub odrzuć.",
+  "commandUnavailableInContext": "To polecenie nie jest dostępne w bieżącym kontekście.",
   "mathRenderFailed": "Nie udało się wyrenderować wyrażenia matematycznego.",
   "inlineMath": "Matematyka w tekście",
   "displayMath": "Matematyka blokowa"

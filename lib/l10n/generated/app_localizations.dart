@@ -531,6 +531,12 @@ abstract class AppLocalizations {
   /// **'No matching commands'**
   String get commandPaletteEmpty;
 
+  /// Reason shown for a disabled contextual command.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable in the current editor context'**
+  String get commandUnavailableInContext;
+
   /// Light theme option.
   ///
   /// In en, this message translates to:
@@ -1502,6 +1508,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have unsaved changes in {fileName}. Save them before continuing?'**
   String unsavedChangesMessage(String fileName);
+
+  /// Confirmation message before replacing workspace state when several documents are dirty.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 document has unsaved changes. Save it before continuing?} other{{count} documents have unsaved changes. Save them before continuing?}}'**
+  String unsavedChangesMultipleMessage(int count);
 
   /// File changed confirmation dialog title.
   ///
@@ -2625,6 +2637,12 @@ abstract class AppLocalizations {
   /// **'Choose LF or CRLF normalization before replacing.'**
   String get workspaceReplaceIssueNormalizationRequired;
 
+  /// Workspace replacement issue when the transactional file commit fails.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed replacement could not be committed; no files were changed.'**
+  String get workspaceReplaceIssueApplyFailed;
+
   /// Title of the external-file comparison dialog.
   ///
   /// In en, this message translates to:
@@ -2642,6 +2660,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This file changed on disk while you have unsaved edits.'**
   String get externalFileChanged;
+
+  /// Persistent recovery review banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered unsaved content for {fileName}. Inspect it, then save, save as, or discard it.'**
+  String recoveredDocumentReview(String fileName);
 
   /// Action that compares the editor buffer with the disk version.
   ///
@@ -2888,6 +2912,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Validation failed: {error}'**
   String workspaceErrorValidationFailed(String error);
+
+  /// Notice shown after crash recovery restores documents.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Recovered 1 unsaved document. Review it before saving or discarding it.} other{Recovered {count} unsaved documents. Review each one before saving or discarding it.}}'**
+  String workspaceRecoveryRestored(int count);
+
+  /// Notice shown when recovery data is partly or wholly malformed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One damaged recovery record could not be restored. The original recovery file was preserved for inspection.} other{{count} damaged recovery records could not be restored. Valid recovery records remain available.}}'**
+  String workspaceRecoveryDamaged(int count);
 
   /// Detail for a missing path error.
   ///

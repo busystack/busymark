@@ -1912,6 +1912,12 @@
   "reloadFromDisk": "Laadi kettalt uuesti",
   "keepMine": "Säilita minu versioon",
   "saveAs": "Salvesta nimega",
+  "unsavedChangesMultipleMessage": "{count} dokumendis on salvestamata muudatusi. Kas salvestada need enne jätkamist?",
+  "workspaceReplaceIssueApplyFailed": "Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.",
+  "workspaceRecoveryRestored": "Taastati {count} salvestamata dokumenti. Vaadake iga taastatud dokument enne jätkamist üle.",
+  "workspaceRecoveryDamaged": "{count} rikutud taastekirjet ei saanud taastada. Kehtivad taastatud dokumendid on endiselt saadaval.",
+  "recoveredDocumentReview": "Faili {fileName} salvestamata sisu taastati. Vaadake see üle ning salvestage, salvestage nimega või hüljake.",
+  "commandUnavailableInContext": "See käsk pole praeguses kontekstis saadaval.",
   "mathRenderFailed": "Matemaatilist avaldist ei saanud kuvada.",
   "inlineMath": "Reasisene matemaatika",
   "displayMath": "Plokina matemaatika"

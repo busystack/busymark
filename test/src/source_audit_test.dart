@@ -902,7 +902,7 @@ void main() {
         ),
       ),
     );
-    expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
+    expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
     expect(
       workspace,
       isNot(contains('BusyMarkSidebarShortcutActivators.history')),
@@ -1366,15 +1366,15 @@ void main() {
     expect(workspace, contains('onSecondaryTapUp'));
     expect(
       RegExp(
-        r'BusyMarkTreeShortcutActivators\.deleteSelection',
+        r'BusyMarkCommandIds\s*\.treeDeleteSelection',
       ).allMatches(workspace).length,
-      greaterThanOrEqualTo(2),
+      greaterThanOrEqualTo(4),
     );
     expect(
       RegExp(
-        r'shortcut: BusyMarkTreeShortcutLabels\.deleteSelection',
+        r'BusyMarkCommandRegistryScope\.(?:read|maybeOf)\(context\)',
       ).allMatches(workspace).length,
-      greaterThanOrEqualTo(2),
+      greaterThanOrEqualTo(4),
     );
     expect(
       RegExp(

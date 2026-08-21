@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,7 +36,9 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final commands = BusyMarkCommandCatalog.create();
+    final commands =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
     BusyMarkCommand command(String id) => commands[id]!;
     final fullScreen = ref.watch(
       windowControlServiceProvider.select((service) => service.isFullScreen),
@@ -103,14 +107,25 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
         ),
       ],
       onSelected: (action) {
-        if (action == BusyMarkMainMenuAction.commandPalette) {
-          Actions.maybeInvoke(
-            context,
-            const BusyMarkCommandIntent(BusyMarkCommandIds.commandPalette),
-          );
-          return;
+        final commandId = switch (action) {
+          BusyMarkMainMenuAction.exportPdf => BusyMarkCommandIds.exportPdf,
+          BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
+          BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
+          BusyMarkMainMenuAction.keyboardShortcuts =>
+            BusyMarkCommandIds.keyboardShortcuts,
+          BusyMarkMainMenuAction.commandPalette =>
+            BusyMarkCommandIds.commandPalette,
+          BusyMarkMainMenuAction.markdownAndHtml =>
+            BusyMarkCommandIds.markdownAndHtml,
+          BusyMarkMainMenuAction.generateMarkdownToc ||
+          BusyMarkMainMenuAction.reportIssue ||
+          BusyMarkMainMenuAction.aboutBusyMark => null,
+        };
+        if (commandId != null && commands[commandId]?.execute != null) {
+          unawaited(commands.execute(commandId));
+        } else {
+          onSelected(action);
         }
-        onSelected(action);
       },
     );
   }

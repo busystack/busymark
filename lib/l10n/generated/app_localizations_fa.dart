@@ -227,6 +227,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get commandPaletteEmpty => 'هیچ فرمان منطبقی وجود ندارد';
 
   @override
+  String get commandUnavailableInContext =>
+      'این فرمان در زمینهٔ فعلی در دسترس نیست.';
+
+  @override
   String get lightTheme => 'روشن';
 
   @override
@@ -761,6 +765,11 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'در ⁨$fileName⁩ تغییرات ذخیره‌نشده دارید. قبل از ادامه ذخیره شوند؟';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'تعداد $count سند تغییرات ذخیره‌نشده دارند. پیش از ادامه ذخیره شوند؟';
   }
 
   @override
@@ -1455,6 +1464,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'پیش از جایگزینی، یکسان‌سازی LF یا CRLF را انتخاب کنید.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'هیچ جایگزینی اعمال نشد، زیرا مجموعهٔ بازبینی‌شده را نمی‌شد با ایمنی ذخیره کرد.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'تغییرات بیرونی — ⁨$fileName⁩';
   }
@@ -1465,6 +1478,11 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'هنگامی که تغییرات ذخیره‌نشده داشتید، این فایل روی دیسک تغییر کرد.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'محتوای ذخیره‌نشدهٔ $fileName بازیابی شده است. آن را بررسی کنید و سپس ذخیره، ذخیره با نام یا رد کنید.';
+  }
 
   @override
   String get compare => 'مقایسه';
@@ -1618,6 +1636,16 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'اعتبارسنجی ناموفق بود: ⁨$error⁩';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'تعداد $count سند ذخیره‌نشده بازیابی شد. پیش از ادامه هر سند بازیابی‌شده را بررسی کنید.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'تعداد $count رکورد بازیابی آسیب‌دیده قابل بازیابی نبود. سندهای معتبر بازیابی‌شده همچنان در دسترس‌اند.';
   }
 
   @override

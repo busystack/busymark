@@ -21,7 +21,6 @@ import '../workspace/workspace_tabs.dart';
 import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
-import 'busymark_shortcuts.dart';
 import 'command_palette.dart';
 import 'command_registry.dart';
 import 'app_theme.dart';
@@ -31,6 +30,60 @@ import 'busymark_glyphs.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
+
+final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
+  ref,
+) {
+  final commandIntents = <String, Intent>{
+    BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
+    BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
+    BusyMarkCommandIds.save: const _SaveActiveIntent(),
+    BusyMarkCommandIds.exportPdf: const _ExportPdfIntent(),
+    BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
+    BusyMarkCommandIds.back: const _BackIntent(),
+    BusyMarkCommandIds.search: const _OpenSearchIntent(),
+    BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
+    BusyMarkCommandIds.commandPalette: const _CommandPaletteIntent(),
+    BusyMarkCommandIds.markdownAndHtml: const _MarkdownAndHtmlIntent(),
+    BusyMarkCommandIds.settings: const _SettingsIntent(),
+    BusyMarkCommandIds.nextTab: const _NextTabIntent(),
+    BusyMarkCommandIds.previousTab: const _PreviousTabIntent(),
+    BusyMarkCommandIds.closeTab: const _CloseTabIntent(),
+    BusyMarkCommandIds.closeAllTabs: const _CloseAllTabsIntent(),
+    BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
+    BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
+      DocumentViewModePreference.editor,
+    ),
+    BusyMarkCommandIds.viewSource: const _DocumentViewModeIntent(
+      DocumentViewModePreference.source,
+    ),
+    BusyMarkCommandIds.viewReading: const _DocumentViewModeIntent(
+      DocumentViewModePreference.preview,
+    ),
+    BusyMarkCommandIds.viewSplit: const _DocumentViewModeIntent(
+      DocumentViewModePreference.split,
+    ),
+  };
+  return BusyMarkCommandCatalog.create(
+    executions: {
+      for (final entry in commandIntents.entries)
+        entry.key: () {
+          final target = rootNavigatorKey.currentContext;
+          if (target != null) {
+            Actions.maybeInvoke(target, entry.value);
+          }
+        },
+    },
+    enabled: {
+      BusyMarkCommandIds.save: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
+      BusyMarkCommandIds.exportPdf: () =>
+          canExportWorkspacePdf(ref.read(workspaceControllerProvider)),
+      BusyMarkCommandIds.search: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
+    },
+  );
+});
 
 class BusyMarkApp extends ConsumerWidget {
   const BusyMarkApp({super.key});
@@ -84,63 +137,14 @@ class BusyMarkApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
-        final commandIntents = <String, Intent>{
-          BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
-          BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
-          BusyMarkCommandIds.save: const _SaveActiveIntent(),
-          BusyMarkCommandIds.exportPdf: const _ExportPdfIntent(),
-          BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
-          BusyMarkCommandIds.back: const _BackIntent(),
-          BusyMarkCommandIds.search: const _OpenSearchIntent(),
-          BusyMarkCommandIds.keyboardShortcuts:
-              const _KeyboardShortcutsIntent(),
-          BusyMarkCommandIds.commandPalette: const _CommandPaletteIntent(),
-          BusyMarkCommandIds.markdownAndHtml: const _MarkdownAndHtmlIntent(),
-          BusyMarkCommandIds.settings: const _SettingsIntent(),
-          BusyMarkCommandIds.nextTab: const _NextTabIntent(),
-          BusyMarkCommandIds.previousTab: const _PreviousTabIntent(),
-          BusyMarkCommandIds.closeTab: const _CloseTabIntent(),
-          BusyMarkCommandIds.closeAllTabs: const _CloseAllTabsIntent(),
-          BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
-          BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
-            DocumentViewModePreference.editor,
-          ),
-          BusyMarkCommandIds.viewSource: const _DocumentViewModeIntent(
-            DocumentViewModePreference.source,
-          ),
-          BusyMarkCommandIds.viewReading: const _DocumentViewModeIntent(
-            DocumentViewModePreference.preview,
-          ),
-          BusyMarkCommandIds.viewSplit: const _DocumentViewModeIntent(
-            DocumentViewModePreference.split,
-          ),
-        };
-        final commandRegistry = BusyMarkCommandCatalog.create(
-          executions: {
-            for (final entry in commandIntents.entries)
-              entry.key: () {
-                final target = rootNavigatorKey.currentContext;
-                if (target != null) {
-                  Actions.maybeInvoke(target, entry.value);
-                }
-              },
-          },
-          enabled: {
-            BusyMarkCommandIds.save: () =>
-                ref.read(workspaceControllerProvider).workspace != null,
-            BusyMarkCommandIds.exportPdf: () =>
-                canExportWorkspacePdf(ref.read(workspaceControllerProvider)),
-            BusyMarkCommandIds.search: () =>
-                ref.read(workspaceControllerProvider).workspace != null,
-          },
-        );
+        final commandRegistry = ref.read(busyMarkCommandRegistryProvider);
         final headerBarDefaults = _nativeHeaderBarDefaults(
           context,
           settings,
           commandRegistry,
           fullScreen: windowControls.isFullScreen,
         );
-        return HeaderBarConfigurationDefaults(
+        final appContent = HeaderBarConfigurationDefaults(
           configuration: headerBarDefaults,
           child: _BusyMarkWindowLifecycle(
             child: Shortcuts(
@@ -368,6 +372,10 @@ class BusyMarkApp extends ConsumerWidget {
               ),
             ),
           ),
+        );
+        return BusyMarkCommandRegistryScope(
+          registry: commandRegistry,
+          child: appContent,
         );
       },
       routerConfig: router,
@@ -639,7 +647,8 @@ class BusyMarkApp extends ConsumerWidget {
     final activeTab = tabs[activeIndex];
     if (activeTab.kind == WorkspaceTabKind.file) {
       if (activeTab.dirty &&
-          (!await confirmSafeToContinue(context, ref) || !context.mounted)) {
+          (!await confirmSafeToCloseActiveDocument(context, ref) ||
+              !context.mounted)) {
         return;
       }
     }
@@ -662,8 +671,7 @@ class BusyMarkApp extends ConsumerWidget {
         ).isEmpty) {
       return;
     }
-    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
-        !context.mounted) {
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
       return;
     }
     await ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
@@ -1021,14 +1029,21 @@ class _BusyMarkSearchShortcutHandlerState
       return false;
     }
     final keyboard = HardwareKeyboard.instance;
-    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
+    final commands =
+        BusyMarkCommandRegistryScope.read(context) ??
+        BusyMarkCommandCatalog.metadata;
+    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       if (rootNavigatorKey.currentState?.canPop() ?? false) {
         return false;
       }
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return true;
     }
-    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textEscape,
+      event,
+      keyboard,
+    )) {
       if (rootNavigatorKey.currentState?.canPop() ?? false) {
         return false;
       }

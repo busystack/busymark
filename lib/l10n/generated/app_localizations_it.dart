@@ -229,6 +229,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get commandPaletteEmpty => 'Nessun comando corrispondente';
 
   @override
+  String get commandUnavailableInContext =>
+      'Questo comando non è disponibile nel contesto corrente.';
+
+  @override
   String get lightTheme => 'Chiaro';
 
   @override
@@ -772,6 +776,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'Sono presenti modifiche non salvate in $fileName. Salvarle prima di continuare?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count documenti contengono modifiche non salvate. Salvarli prima di continuare?';
   }
 
   @override
@@ -1431,6 +1440,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scegli la normalizzazione LF o CRLF prima di sostituire.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Non è stata applicata alcuna sostituzione perché non è stato possibile salvare in sicurezza l’insieme verificato.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'Modifiche esterne — $fileName';
   }
@@ -1441,6 +1454,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'Questo file è cambiato sul disco mentre sono presenti modifiche non salvate.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'È stato recuperato il contenuto non salvato di $fileName. Controllarlo, quindi salvarlo, salvarlo con nome o eliminarlo.';
+  }
 
   @override
   String get compare => 'Confronta';
@@ -1590,6 +1608,16 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Convalida non riuscita: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Sono stati recuperati $count documenti non salvati. Controllare ogni documento recuperato prima di continuare.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Non è stato possibile ripristinare $count record di recupero danneggiati. I documenti recuperati validi restano disponibili.';
   }
 
   @override

@@ -2724,6 +2724,12 @@
   "reloadFromDisk": "Vom Datenträger neu laden",
   "keepMine": "Meine Version behalten",
   "saveAs": "Speichern unter",
+  "unsavedChangesMultipleMessage": "{count} Dokumente enthalten ungespeicherte Änderungen. Vor dem Fortfahren speichern?",
+  "workspaceReplaceIssueApplyFailed": "Es wurden keine Ersetzungen vorgenommen, da die geprüfte Auswahl nicht sicher gespeichert werden konnte.",
+  "workspaceRecoveryRestored": "{count} ungespeicherte Dokumente wurden wiederhergestellt. Prüfen Sie jedes wiederhergestellte Dokument, bevor Sie fortfahren.",
+  "workspaceRecoveryDamaged": "{count} beschädigte Wiederherstellungsdatensätze konnten nicht wiederhergestellt werden. Gültige wiederhergestellte Dokumente bleiben verfügbar.",
+  "recoveredDocumentReview": "Ungespeicherter Inhalt für {fileName} wurde wiederhergestellt. Prüfen Sie ihn und speichern Sie ihn, speichern Sie ihn unter einem neuen Namen oder verwerfen Sie ihn.",
+  "commandUnavailableInContext": "Dieser Befehl ist im aktuellen Kontext nicht verfügbar.",
   "mathRenderFailed": "Der mathematische Ausdruck konnte nicht dargestellt werden.",
   "inlineMath": "Mathematik im Text",
   "displayMath": "Mathematische Formel als Block"

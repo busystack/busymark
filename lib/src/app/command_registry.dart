@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'busymark_shortcuts.dart';
 import 'localization.dart';
@@ -14,6 +15,34 @@ class BusyMarkCommandIntent extends Intent {
   const BusyMarkCommandIntent(this.commandId);
 
   final String commandId;
+}
+
+class BusyMarkContextCommandIntent extends Intent {
+  const BusyMarkContextCommandIntent(this.commandId);
+
+  final String commandId;
+}
+
+class BusyMarkContextCommandAction
+    extends Action<BusyMarkContextCommandIntent> {
+  BusyMarkContextCommandAction({
+    required this.isCommandEnabled,
+    required this.onCommand,
+  });
+
+  final bool Function(String commandId) isCommandEnabled;
+  final void Function(String commandId) onCommand;
+
+  @override
+  bool isEnabled(BusyMarkContextCommandIntent intent) {
+    return isCommandEnabled(intent.commandId);
+  }
+
+  @override
+  Object? invoke(BusyMarkContextCommandIntent intent) {
+    onCommand(intent.commandId);
+    return null;
+  }
 }
 
 enum BusyMarkCommandScope {
@@ -34,6 +63,7 @@ class BusyMarkCommand {
     required this.scope,
     this.shortcut,
     this.description,
+    this.disabledReason,
     this.execute,
     this.enabled = _always,
     this.visible = _always,
@@ -45,6 +75,7 @@ class BusyMarkCommand {
   final BusyMarkCommandScope scope;
   final BusyMarkShortcutDefinition? shortcut;
   final BusyMarkCommandDescription? description;
+  final BusyMarkCommandDescription? disabledReason;
   final BusyMarkCommandCallback? execute;
   final BusyMarkCommandPredicate enabled;
   final BusyMarkCommandPredicate visible;
@@ -52,6 +83,34 @@ class BusyMarkCommand {
   bool get canExecute => execute != null && enabled();
 
   static bool _always() => true;
+}
+
+class BusyMarkCommandRegistryScope extends InheritedWidget {
+  const BusyMarkCommandRegistryScope({
+    super.key,
+    required this.registry,
+    required super.child,
+  });
+
+  final BusyMarkCommandRegistry registry;
+
+  static BusyMarkCommandRegistry? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<BusyMarkCommandRegistryScope>()
+        ?.registry;
+  }
+
+  static BusyMarkCommandRegistry? read(BuildContext context) {
+    final widget = context
+        .getElementForInheritedWidgetOfExactType<BusyMarkCommandRegistryScope>()
+        ?.widget;
+    return widget is BusyMarkCommandRegistryScope ? widget.registry : null;
+  }
+
+  @override
+  bool updateShouldNotify(BusyMarkCommandRegistryScope oldWidget) {
+    return !identical(registry, oldWidget.registry);
+  }
 }
 
 class BusyMarkCommandRegistryValidationException implements Exception {
@@ -87,6 +146,56 @@ class BusyMarkCommandRegistry {
     }
     await command.execute!();
     return true;
+  }
+
+  bool canExecuteInContext(String id, BuildContext? contextTarget) {
+    final command = _byId[id];
+    if (command == null || command.execute == null) {
+      return false;
+    }
+    if (!_isContextual(command) || contextTarget == null) {
+      return command.enabled();
+    }
+    final action = Actions.maybeFind<BusyMarkContextCommandIntent>(
+      contextTarget,
+    );
+    return action?.isEnabled(BusyMarkContextCommandIntent(id)) ?? false;
+  }
+
+  Future<bool> executeInContext(String id, BuildContext? contextTarget) async {
+    final command = _byId[id];
+    if (command == null || !canExecuteInContext(id, contextTarget)) {
+      return false;
+    }
+    if (_isContextual(command) && contextTarget != null) {
+      Actions.maybeInvoke(contextTarget, BusyMarkContextCommandIntent(id));
+      return true;
+    }
+    await command.execute!();
+    return true;
+  }
+
+  bool _isContextual(BusyMarkCommand command) {
+    return command.scope == BusyMarkCommandScope.editor ||
+        command.scope == BusyMarkCommandScope.textEditing;
+  }
+
+  bool shortcutAccepts(String id, KeyEvent event, HardwareKeyboard keyboard) {
+    return _byId[id]?.shortcut?.activator.accepts(event, keyboard) ?? false;
+  }
+
+  String? matchingCommandId(
+    KeyEvent event,
+    HardwareKeyboard keyboard, {
+    required BusyMarkCommandScope scope,
+  }) {
+    for (final command in commands) {
+      if (command.scope == scope &&
+          command.shortcut?.activator.accepts(event, keyboard) == true) {
+        return command.id;
+      }
+    }
+    return null;
   }
 
   Map<ShortcutActivator, Intent> shortcutIntents({
@@ -156,10 +265,23 @@ abstract final class BusyMarkCommandIds {
   static const textCut = 'text.cut';
   static const textCopy = 'text.copy';
   static const textPaste = 'text.paste';
+  static const textPastePlainText = 'text.pastePlainText';
+  static const textUndo = 'text.undo';
+  static const textRedo = 'text.redo';
+  static const textInsertIndentation = 'text.insertIndentation';
+  static const textOutdentSource = 'text.outdentSource';
+  static const textEscape = 'text.escape';
   static const editorRefineWithAi = 'editor.refineWithAi';
+  static const sidebarFiles = 'sidebar.files';
+  static const sidebarToc = 'sidebar.toc';
+  static const sidebarOutline = 'sidebar.outline';
+  static const sidebarGit = 'sidebar.git';
+  static const treeDeleteSelection = 'tree.deleteSelection';
 }
 
 abstract final class BusyMarkCommandCatalog {
+  static final BusyMarkCommandRegistry metadata = create();
+
   static BusyMarkCommandRegistry create({
     Map<String, BusyMarkCommandCallback> executions = const {},
     Map<String, BusyMarkCommandPredicate> enabled = const {},
@@ -170,9 +292,12 @@ abstract final class BusyMarkCommandCatalog {
       required BusyMarkCommandLabel label,
       required BusyMarkCommandLabel category,
       required BusyMarkCommandScope scope,
-      required BusyMarkShortcutDefinition shortcut,
+      BusyMarkShortcutDefinition? shortcut,
       BusyMarkCommandDescription? description,
     }) {
+      final contextual =
+          scope == BusyMarkCommandScope.editor ||
+          scope == BusyMarkCommandScope.textEditing;
       return BusyMarkCommand(
         id: id,
         label: label,
@@ -180,25 +305,32 @@ abstract final class BusyMarkCommandCatalog {
         scope: scope,
         shortcut: shortcut,
         description: description,
-        execute: executions[id],
-        enabled: enabled[id] ?? BusyMarkCommand._always,
+        disabledReason: (context) => context.l10n.commandUnavailableInContext,
+        execute:
+            executions[id] ??
+            (contextual ? () => _executeContextCommand(id) : null),
+        enabled:
+            enabled[id] ??
+            (contextual
+                ? () => _contextCommandAvailable(id)
+                : BusyMarkCommand._always),
         visible: visible[id] ?? BusyMarkCommand._always,
       );
     }
 
     final commands = <BusyMarkCommand>[
-      for (final entry in BusyMarkAppShortcuts.definitions.entries)
+      for (final action in BusyMarkAppShortcutAction.values)
         command(
-          id: _appId(entry.key),
-          label: (context) => _appLabel(context, entry.key),
-          category: (context) => _appCategory(context, entry.key),
+          id: _appId(action),
+          label: (context) => _appLabel(context, action),
+          category: (context) => _appCategory(context, action),
           scope: BusyMarkCommandScope.application,
-          shortcut: entry.value,
-          description: (context) => _appDescription(context, entry.key),
+          shortcut: BusyMarkAppShortcuts.definitions[action],
+          description: (context) => _appDescription(context, action),
         ),
-      for (final entry in BusyMarkDocumentViewShortcuts.definitions.entries)
+      for (final action in BusyMarkDocumentViewShortcutAction.values)
         command(
-          id: switch (entry.key) {
+          id: switch (action) {
             BusyMarkDocumentViewShortcutAction.editor =>
               BusyMarkCommandIds.viewEditor,
             BusyMarkDocumentViewShortcutAction.source =>
@@ -208,44 +340,44 @@ abstract final class BusyMarkCommandCatalog {
             BusyMarkDocumentViewShortcutAction.split =>
               BusyMarkCommandIds.viewSplit,
           },
-          label: (context) => _viewLabel(context, entry.key),
+          label: (context) => _viewLabel(context, action),
           category: (context) => context.l10n.viewMode,
           scope: BusyMarkCommandScope.documentView,
-          shortcut: entry.value,
+          shortcut: BusyMarkDocumentViewShortcuts.definitions[action],
         ),
-      for (final entry in BusyMarkTextEditingShortcuts.definitions.entries)
+      for (final action in BusyMarkTextEditingShortcutAction.values)
         command(
-          id: 'text.${entry.key.name}',
-          label: (context) => _textLabel(context, entry.key),
+          id: 'text.${action.name}',
+          label: (context) => _textLabel(context, action),
           category: (context) => context.l10n.shortcutGroupTextEditing,
           scope: BusyMarkCommandScope.textEditing,
-          shortcut: entry.value,
-          description: (context) => _textDescription(context, entry.key),
+          shortcut: BusyMarkTextEditingShortcuts.definitions[action],
+          description: (context) => _textDescription(context, action),
         ),
-      for (final entry in BusyMarkEditorShortcuts.definitions.entries)
+      for (final action in BusyMarkEditorShortcutAction.values)
         command(
-          id: 'editor.${entry.key.name}',
-          label: (context) => _editorLabel(context, entry.key),
-          category: (context) => _editorCategory(context, entry.key),
+          id: 'editor.${action.name}',
+          label: (context) => _editorLabel(context, action),
+          category: (context) => _editorCategory(context, action),
           scope: BusyMarkCommandScope.editor,
-          shortcut: entry.value,
-          description: (context) => _editorDescription(context, entry.key),
+          shortcut: BusyMarkEditorShortcuts.definitions[action],
+          description: (context) => _editorDescription(context, action),
         ),
-      for (final entry in BusyMarkSidebarShortcuts.definitions.entries)
+      for (final action in BusyMarkSidebarShortcutAction.values)
         command(
-          id: 'sidebar.${entry.key.name}',
-          label: (context) => _sidebarLabel(context, entry.key),
+          id: 'sidebar.${action.name}',
+          label: (context) => _sidebarLabel(context, action),
           category: (context) => context.l10n.shortcutGroupSidebar,
           scope: BusyMarkCommandScope.sidebar,
-          shortcut: entry.value,
+          shortcut: BusyMarkSidebarShortcuts.definitions[action],
         ),
-      for (final entry in BusyMarkTreeShortcuts.definitions.entries)
+      for (final action in BusyMarkTreeShortcutAction.values)
         command(
-          id: 'tree.${entry.key.name}',
+          id: 'tree.${action.name}',
           label: (context) => context.l10n.delete,
           category: (context) => context.l10n.shortcutGroupSidebar,
           scope: BusyMarkCommandScope.tree,
-          shortcut: entry.value,
+          shortcut: BusyMarkTreeShortcuts.definitions[action],
           description: (context) =>
               context.l10n.shortcutDeleteTreeItemDescription,
         ),
@@ -502,4 +634,22 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkSidebarShortcutAction.outline => context.l10n.outline,
     BusyMarkSidebarShortcutAction.git => context.l10n.git,
   };
+
+  static BuildContext? get _focusedContext =>
+      FocusManager.instance.primaryFocus?.context;
+
+  static bool _contextCommandAvailable(String commandId) {
+    final context = _focusedContext;
+    final action = context == null
+        ? null
+        : Actions.maybeFind<BusyMarkContextCommandIntent>(context);
+    return action?.isEnabled(BusyMarkContextCommandIntent(commandId)) ?? false;
+  }
+
+  static void _executeContextCommand(String commandId) {
+    final context = _focusedContext;
+    if (context != null) {
+      Actions.maybeInvoke(context, BusyMarkContextCommandIntent(commandId));
+    }
+  }
 }

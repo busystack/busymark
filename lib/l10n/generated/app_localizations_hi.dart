@@ -229,6 +229,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get commandPaletteEmpty => 'कोई मेल खाता कमांड नहीं';
 
   @override
+  String get commandUnavailableInContext =>
+      'यह आदेश वर्तमान संदर्भ में उपलब्ध नहीं है।';
+
+  @override
   String get lightTheme => 'लाइट';
 
   @override
@@ -757,6 +761,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return '$fileName में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count दस्तावेज़ों में सहेजे नहीं गए बदलाव हैं। जारी रखने से पहले इन्हें सहेजें?';
   }
 
   @override
@@ -1411,6 +1420,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'बदलने से पहले LF या CRLF सामान्यीकरण चुनें।';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'कोई प्रतिस्थापन लागू नहीं किया गया क्योंकि समीक्षा किए गए समूह को सुरक्षित रूप से सहेजा नहीं जा सका।';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'बाहरी बदलाव — $fileName';
   }
@@ -1421,6 +1434,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'आपके सहेजे न गए बदलावों के दौरान यह फ़ाइल डिस्क पर बदल गई।';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return '$fileName की सहेजी नहीं गई सामग्री पुनर्प्राप्त हुई। इसकी समीक्षा करें, फिर सहेजें, इस रूप में सहेजें या छोड़ दें।';
+  }
 
   @override
   String get compare => 'तुलना करें';
@@ -1569,6 +1587,16 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'सत्यापन विफल रहा: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count सहेजे नहीं गए दस्तावेज़ पुनर्प्राप्त किए गए। जारी रखने से पहले प्रत्येक पुनर्प्राप्त दस्तावेज़ की समीक्षा करें।';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड बहाल नहीं किए जा सके। मान्य पुनर्प्राप्त दस्तावेज़ उपलब्ध हैं।';
   }
 
   @override

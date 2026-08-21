@@ -227,6 +227,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get commandPaletteEmpty => 'لا توجد أوامر مطابقة';
 
   @override
+  String get commandUnavailableInContext =>
+      'هذا الأمر غير متاح في السياق الحالي.';
+
+  @override
   String get lightTheme => 'فاتح';
 
   @override
@@ -758,6 +762,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String unsavedChangesMessage(String fileName) {
     return 'لديك تغييرات غير محفوظة في ⁨$fileName⁩. هل تريد حفظها قبل المتابعة؟';
+  }
+
+  @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'يحتوي $count من المستندات على تغييرات غير محفوظة. هل تريد حفظها قبل المتابعة؟';
   }
 
   @override
@@ -1424,6 +1433,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر توحيد LF أو CRLF قبل الاستبدال.';
 
   @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'لم تُطبّق أي استبدالات لأن المجموعة التي تمت مراجعتها تعذر حفظها بأمان.';
+
+  @override
   String externalChangesTitle(String fileName) {
     return 'تغييرات خارجية — ⁨$fileName⁩';
   }
@@ -1434,6 +1447,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get externalFileChanged =>
       'تغيّر هذا الملف على القرص بينما لديك تعديلات غير محفوظة.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'تمت استعادة المحتوى غير المحفوظ للملف $fileName. راجعه، ثم احفظه أو احفظه باسم جديد أو تجاهله.';
+  }
 
   @override
   String get compare => 'مقارنة';
@@ -1582,6 +1600,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'فشل التحقق: ⁨$error⁩';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'تمت استعادة $count من المستندات غير المحفوظة. راجع كل مستند تمت استعادته قبل المتابعة.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'تعذرت استعادة $count من سجلات الاستعادة التالفة. تظل المستندات الصالحة التي تمت استعادتها متاحة.';
   }
 
   @override

@@ -2724,6 +2724,12 @@
   "reloadFromDisk": "Recharger depuis le disque",
   "keepMine": "Conserver ma version",
   "saveAs": "Enregistrer sous",
+  "unsavedChangesMultipleMessage": "{count} documents contiennent des modifications non enregistrées. Les enregistrer avant de continuer ?",
+  "workspaceReplaceIssueApplyFailed": "Aucun remplacement n’a été appliqué, car l’ensemble vérifié n’a pas pu être enregistré en toute sécurité.",
+  "workspaceRecoveryRestored": "{count} documents non enregistrés ont été récupérés. Vérifiez chaque document récupéré avant de continuer.",
+  "workspaceRecoveryDamaged": "{count} enregistrements de récupération endommagés n’ont pas pu être restaurés. Les documents valides récupérés restent disponibles.",
+  "recoveredDocumentReview": "Le contenu non enregistré de {fileName} a été récupéré. Vérifiez-le, puis enregistrez-le, enregistrez-le sous un autre nom ou ignorez-le.",
+  "commandUnavailableInContext": "Cette commande n’est pas disponible dans le contexte actuel.",
   "mathRenderFailed": "Impossible d’afficher l’expression mathématique.",
   "inlineMath": "Formule en ligne",
   "displayMath": "Formule en bloc"

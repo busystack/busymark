@@ -10,6 +10,7 @@ import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../search/search_replace_service.dart';
@@ -211,32 +212,45 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
-    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
+    final commands =
+        BusyMarkCommandRegistryScope.read(context) ??
+        BusyMarkCommandCatalog.metadata;
+    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch();
       return KeyEventResult.handled;
     }
-    if (BusyMarkTextEditingShortcutActivators.undo.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textUndo,
+      event,
+      keyboard,
+    )) {
       final text = widget.onUndo?.call();
       if (text != null) {
         _applyOwnedUndoText(text);
         return KeyEventResult.handled;
       }
     }
-    if (BusyMarkTextEditingShortcutActivators.redo.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textRedo,
+      event,
+      keyboard,
+    )) {
       final text = widget.onRedo?.call();
       if (text != null) {
         _applyOwnedUndoText(text);
         return KeyEventResult.handled;
       }
     }
-    if (BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textInsertIndentation,
       event,
       keyboard,
     )) {
       _insertTab();
       return KeyEventResult.handled;
     }
-    if (BusyMarkTextEditingShortcutActivators.outdentSource.accepts(
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textOutdentSource,
       event,
       keyboard,
     )) {
@@ -247,14 +261,24 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _applyFullEditingValue(SourceCommands.smartEnter(_fullEditingValue()));
       return KeyEventResult.handled;
     }
-    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textEscape,
+      event,
+      keyboard,
+    )) {
       widget.onCloseSearch();
       return KeyEventResult.handled;
     }
-    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
+    final commandId = commands.matchingCommandId(
       event,
       keyboard,
+      scope: BusyMarkCommandScope.editor,
     );
+    final shortcutAction = commandId == null
+        ? null
+        : BusyMarkEditorShortcutAction.values
+              .where((action) => commandId == 'editor.${action.name}')
+              .firstOrNull;
     if (shortcutAction != null) {
       if (shortcutAction == BusyMarkEditorShortcutAction.refineWithAi &&
           !_canRefineWithAi) {
@@ -302,11 +326,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 child: KeyedSubtree(
                   key: ValueKey(widget.documentId ?? widget.filePath),
                   child: Shortcuts(
-                    shortcuts: BusyMarkEditorShortcutActivators.intentMap(
-                      _SourceEditorShortcutIntent.new,
-                    ),
+                    shortcuts:
+                        (BusyMarkCommandRegistryScope.maybeOf(context) ??
+                                BusyMarkCommandCatalog.metadata)
+                            .shortcutIntents(
+                              scopes: const {BusyMarkCommandScope.editor},
+                              intentFor: BusyMarkContextCommandIntent.new,
+                            ),
                     child: Actions(
                       actions: {
+                        BusyMarkContextCommandIntent:
+                            BusyMarkContextCommandAction(
+                              isCommandEnabled: (commandId) =>
+                                  commandId.startsWith('editor.'),
+                              onCommand: (commandId) {
+                                final name = commandId.substring(
+                                  'editor.'.length,
+                                );
+                                final action = BusyMarkEditorShortcutAction
+                                    .values
+                                    .where(
+                                      (candidate) => candidate.name == name,
+                                    )
+                                    .firstOrNull;
+                                if (action != null) {
+                                  _applyShortcutAction(action);
+                                }
+                              },
+                            ),
                         _SourceEditorShortcutIntent:
                             CallbackAction<_SourceEditorShortcutIntent>(
                               onInvoke: (intent) {

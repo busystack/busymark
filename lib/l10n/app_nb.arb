@@ -2701,6 +2701,12 @@
   "reloadFromDisk": "Last inn fra disk på nytt",
   "keepMine": "Behold min versjon",
   "saveAs": "Lagre som",
+  "unsavedChangesMultipleMessage": "{count} dokumenter har ulagrede endringer. Lagre dem før du fortsetter?",
+  "workspaceReplaceIssueApplyFailed": "Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.",
+  "workspaceRecoveryRestored": "{count} ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.",
+  "workspaceRecoveryDamaged": "{count} skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.",
+  "recoveredDocumentReview": "Ulagret innhold for {fileName} ble gjenopprettet. Se gjennom det, og lagre, lagre som eller forkast det.",
+  "commandUnavailableInContext": "Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.",
   "mathRenderFailed": "Det matematiske uttrykket kunne ikke gjengis.",
   "inlineMath": "Integrert matematikk",
   "displayMath": "Matematikkblokk"

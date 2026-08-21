@@ -89,10 +89,15 @@ class DocumentRecoveryEntry {
 }
 
 class RecoverySnapshot {
-  const RecoverySnapshot({required this.cleanShutdown, required this.entries});
+  const RecoverySnapshot({
+    required this.cleanShutdown,
+    required this.entries,
+    this.readErrors = 0,
+  });
 
   final bool cleanShutdown;
   final List<DocumentRecoveryEntry> entries;
+  final int readErrors;
 }
 
 abstract interface class DocumentRecoveryStore {
@@ -175,22 +180,52 @@ class JsonDocumentRecoveryStore implements DocumentRecoveryStore {
     try {
       final decoded = (jsonDecode(await file.readAsString()) as Map)
           .cast<String, Object?>();
+      final entries = <DocumentRecoveryEntry>[];
+      var readErrors = 0;
+      final encodedEntries = decoded['entries'];
+      if (encodedEntries is List) {
+        for (final encodedEntry in encodedEntries) {
+          try {
+            if (encodedEntry is! Map || encodedEntry['text'] is! String) {
+              throw const FormatException('Invalid recovery entry');
+            }
+            final entry = DocumentRecoveryEntry.fromJson(
+              encodedEntry.cast<String, Object?>(),
+            );
+            if (entry.id.isEmpty) {
+              throw const FormatException('Recovery entry has no identity');
+            }
+            entries.add(entry);
+          } on Object {
+            readErrors++;
+          }
+        }
+      } else if (encodedEntries != null) {
+        readErrors++;
+      }
       return RecoverySnapshot(
         cleanShutdown: decoded['cleanShutdown'] as bool? ?? false,
-        entries:
-            (decoded['entries'] as List?)
-                ?.whereType<Map>()
-                .map(
-                  (entry) => DocumentRecoveryEntry.fromJson(
-                    entry.cast<String, Object?>(),
-                  ),
-                )
-                .where((entry) => entry.id.isNotEmpty)
-                .toList() ??
-            const [],
+        entries: List.unmodifiable(entries),
+        readErrors: readErrors,
       );
     } on Object {
-      return const RecoverySnapshot(cleanShutdown: false, entries: []);
+      await _quarantineMalformedFile(file);
+      return const RecoverySnapshot(
+        cleanShutdown: false,
+        entries: [],
+        readErrors: 1,
+      );
+    }
+  }
+
+  Future<void> _quarantineMalformedFile(File file) async {
+    final quarantine = File(
+      '${file.path}.corrupt-${DateTime.now().microsecondsSinceEpoch}',
+    );
+    try {
+      await file.rename(quarantine.path);
+    } on Object {
+      // The read error is still returned to the controller for user notice.
     }
   }
 
