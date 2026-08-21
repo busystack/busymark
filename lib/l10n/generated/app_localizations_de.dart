@@ -3385,19 +3385,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiContentSentToAi => 'An KI gesendeter Inhalt';
 
   @override
-  String get aiPrivacyDisabled =>
-      'KI ist deaktiviert. BusyMark sendet Dokumentinhalte niemals ohne eine ausdrückliche KI-Aktion.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark sendet nur den im Prüfdialog angezeigten Kontext an den konfigurierten lokalen Ollama-Dienst. Vorschläge werden nie ohne Prüfung übernommen.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark sendet nur den im Prüfdialog angezeigten Kontext an $provider. Anfragen sind zustandslos, und Vorschläge werden nie ohne Prüfung übernommen.';
-  }
-
-  @override
   String get aiApiKey => 'API-Schlüssel';
 
   @override

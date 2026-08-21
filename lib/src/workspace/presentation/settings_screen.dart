@@ -1022,13 +1022,6 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
       title: context.l10n.ai,
       filled: true,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(BusyMarkSpacing.md),
-          child: BusyMarkStatusBox(
-            message: _privacyDescription(providerKind),
-            kind: BusyMarkStatusKind.information,
-          ),
-        ),
         BusyMarkActionRow(
           title: context.l10n.aiProvider,
           leading: const Icon(BusyMarkGlyphs.ai),
@@ -1436,13 +1429,6 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
         AiProviderPreference.openAi => 'OpenAI',
         AiProviderPreference.gemini => 'Google Gemini',
       };
-
-  String _privacyDescription(AiProviderKind? provider) => switch (provider) {
-    null => context.l10n.aiPrivacyDisabled,
-    AiProviderKind.ollamaLocal => context.l10n.aiPrivacyLocal,
-    AiProviderKind.openAi ||
-    AiProviderKind.gemini => context.l10n.aiPrivacyCloud(provider.displayName),
-  };
 
   Future<void> _saveEndpoint(String value) async {
     try {

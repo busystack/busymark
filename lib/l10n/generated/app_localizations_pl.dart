@@ -3393,19 +3393,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiContentSentToAi => 'Treść wysyłana do SI';
 
   @override
-  String get aiPrivacyDisabled =>
-      'SI jest wyłączona. BusyMark nigdy nie wysyła treści dokumentu bez jawnego działania SI.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do skonfigurowanej lokalnej usługi Ollama. Propozycje nigdy nie są stosowane bez sprawdzenia.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do $provider. Żądania są bezstanowe, a propozycje nigdy nie są stosowane bez sprawdzenia.';
-  }
-
-  @override
   String get aiApiKey => 'Klucz API';
 
   @override

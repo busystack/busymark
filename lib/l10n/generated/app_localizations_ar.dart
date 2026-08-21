@@ -3370,19 +3370,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiContentSentToAi => 'المحتوى المُرسل إلى الذكاء الاصطناعي';
 
   @override
-  String get aiPrivacyDisabled =>
-      'الذكاء الاصطناعي معطّل. لا يرسل BusyMark محتوى المستند مطلقًا من دون إجراء صريح للذكاء الاصطناعي.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى خدمة Ollama المحلية المضبوطة. لا تُطبّق الاقتراحات مطلقًا من دون مراجعة.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى ⁨$provider⁩. الطلبات عديمة الحالة، ولا تُطبّق الاقتراحات مطلقًا من دون مراجعة.';
-  }
-
-  @override
   String get aiApiKey => 'مفتاح API';
 
   @override

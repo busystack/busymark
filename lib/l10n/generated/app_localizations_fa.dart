@@ -3401,19 +3401,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aiContentSentToAi => 'محتوای ارسال‌شده به هوش مصنوعی';
 
   @override
-  String get aiPrivacyDisabled =>
-      'هوش مصنوعی غیرفعال است. BusyMark هرگز بدون یک اقدام صریح هوش مصنوعی محتوای سند را ارسال نمی‌کند.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به سرویس محلی Ollama پیکربندی‌شده می‌فرستد. پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به ⁨$provider⁩ می‌فرستد. درخواست‌ها بدون حالت هستند و پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
-  }
-
-  @override
   String get aiApiKey => 'کلید API';
 
   @override

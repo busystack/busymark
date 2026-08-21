@@ -3377,19 +3377,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiContentSentToAi => 'Contenuto inviato all’IA';
 
   @override
-  String get aiPrivacyDisabled =>
-      'L’IA è disabilitata. BusyMark non invia mai il contenuto del documento senza un’azione IA esplicita.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark invia solo il contesto mostrato nella finestra di revisione al servizio Ollama locale configurato. Le proposte non vengono mai applicate senza revisione.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark invia solo il contesto mostrato nella finestra di revisione a $provider. Le richieste sono senza stato e le proposte non vengono mai applicate senza revisione.';
-  }
-
-  @override
   String get aiApiKey => 'Chiave API';
 
   @override

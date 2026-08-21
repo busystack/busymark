@@ -5673,24 +5673,6 @@ abstract class AppLocalizations {
   /// **'Content sent to AI'**
   String get aiContentSentToAi;
 
-  /// Privacy notice when AI is disabled.
-  ///
-  /// In en, this message translates to:
-  /// **'AI is disabled. BusyMark never sends document content without an explicit AI action.'**
-  String get aiPrivacyDisabled;
-
-  /// Privacy notice for local Ollama.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark sends only the context shown in the review dialog to the configured loopback Ollama service. Proposals are never applied without review.'**
-  String get aiPrivacyLocal;
-
-  /// Privacy notice for a selected cloud provider.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark sends only the context shown in the review dialog to {provider}. Requests are stateless and proposals are never applied without review.'**
-  String aiPrivacyCloud(String provider);
-
   /// Label for a cloud AI provider API key.
   ///
   /// In en, this message translates to:

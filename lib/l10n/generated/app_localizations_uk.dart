@@ -3395,19 +3395,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiContentSentToAi => 'Вміст, що надсилається ШІ';
 
   @override
-  String get aiPrivacyDisabled =>
-      'ШІ вимкнено. BusyMark ніколи не надсилає вміст документа без явної дії з ШІ.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark надсилає лише контекст, показаний у діалозі перевірки, налаштованій локальній службі Ollama. Пропозиції ніколи не застосовуються без перевірки.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark надсилає лише контекст, показаний у діалозі перевірки, постачальнику $provider. Запити не зберігають стан, а пропозиції ніколи не застосовуються без перевірки.';
-  }
-
-  @override
   String get aiApiKey => 'Ключ API';
 
   @override

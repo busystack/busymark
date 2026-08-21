@@ -3351,19 +3351,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiContentSentToAi => 'TI-le saadetav sisu';
 
   @override
-  String get aiPrivacyDisabled =>
-      'Tehisintellekt on keelatud. BusyMark ei saada dokumendi sisu kunagi ilma selgesõnalise TI-toiminguta.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult seadistatud kohalikule Ollama teenusele. Ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult teenusele $provider. Päringud on olekuta ja ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
-  }
-
-  @override
   String get aiApiKey => 'API-võti';
 
   @override
