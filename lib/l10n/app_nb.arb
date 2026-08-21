@@ -2214,6 +2214,7 @@
   "gitFileHistory": "Gjeldende fil",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Filhandlinger",
+  "actions": "Handlinger",
   "gitStatusAdded": "Lagt til",
   "gitStatusDeleted": "Slettet",
   "gitStatusRenamed": "Gitt nytt navn",

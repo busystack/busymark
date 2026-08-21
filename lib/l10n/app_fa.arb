@@ -2235,6 +2235,7 @@
     }
   },
   "fileActions": "عملیات فایل",
+  "actions": "عملیات",
   "gitStatusAdded": "افزوده‌شده",
   "gitStatusDeleted": "حذف‌شده",
   "gitStatusRenamed": "تغییرنام‌یافته",

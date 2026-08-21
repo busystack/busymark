@@ -2331,6 +2331,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get fileActions => 'عملیات فایل';
 
   @override
+  String get actions => 'عملیات';
+
+  @override
   String get gitStatusAdded => 'افزوده‌شده';
 
   @override

@@ -1565,6 +1565,8 @@
   },
   "fileActions": "File actions",
   "@fileActions": {"description": "Tooltip for a file action menu."},
+  "actions": "Actions",
+  "@actions": {"description": "Tooltip for a general action menu."},
   "gitStatusAdded": "Added",
   "@gitStatusAdded": {"description": "Git file status label."},
   "gitStatusDeleted": "Deleted",

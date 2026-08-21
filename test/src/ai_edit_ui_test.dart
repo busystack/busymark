@@ -140,6 +140,56 @@ void main() {
     expect(contextSelector.dy, lessThan(sharedContent.dy));
   });
 
+  testWidgets('fixed AI target cannot widen a sidebar selection', (
+    tester,
+  ) async {
+    const source = '# First\n\nSelected section.\n\n# Last\n';
+    final start = source.indexOf('# First');
+    final end = source.indexOf('# Last');
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () => unawaited(
+                  showBusyMarkAiEdit(
+                    context,
+                    ref,
+                    AiEditorSnapshot(
+                      documentSource: source,
+                      selectionStart: start,
+                      selectionEnd: end,
+                      anchorOffset: start,
+                      sourceRevision: 1,
+                      targetId: 'outline.md',
+                      documentPath: 'outline.md',
+                      blockTargetAvailable: false,
+                    ),
+                    fixedTarget: AiEditTargetKind.selection,
+                  ),
+                ),
+                child: const Text('Open fixed AI'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open fixed AI'));
+    await tester.pumpAndSettle();
+
+    final selector = tester.widget<BusyMarkComboRow<AiEditTargetKind>>(
+      find.byType(BusyMarkComboRow<AiEditTargetKind>),
+    );
+    expect(selector.values, [AiEditTargetKind.selection]);
+    expect(selector.selected, AiEditTargetKind.selection);
+    expect(find.textContaining('Selected section.'), findsNWidgets(2));
+  });
+
   testWidgets('proposal Apply refuses stale external source content', (
     tester,
   ) async {

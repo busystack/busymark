@@ -22,13 +22,16 @@ import 'ai_providers.dart';
 Future<AiEditApplication?> showBusyMarkAiEdit(
   BuildContext context,
   WidgetRef ref,
-  AiEditorSnapshot snapshot,
-) async {
+  AiEditorSnapshot snapshot, {
+  AiEditTargetKind? fixedTarget,
+}) async {
   final configuration =
       await showBusyMarkModalEditorDialog<_AiEditConfiguration>(
         context,
-        builder: (dialogContext) =>
-            _AiEditConfigurationDialog(snapshot: snapshot),
+        builder: (dialogContext) => _AiEditConfigurationDialog(
+          snapshot: snapshot,
+          fixedTarget: fixedTarget,
+        ),
       );
   if (configuration == null || !context.mounted) {
     return null;
@@ -175,9 +178,10 @@ class _AiEditConfiguration {
 }
 
 class _AiEditConfigurationDialog extends StatefulWidget {
-  const _AiEditConfigurationDialog({required this.snapshot});
+  const _AiEditConfigurationDialog({required this.snapshot, this.fixedTarget});
 
   final AiEditorSnapshot snapshot;
+  final AiEditTargetKind? fixedTarget;
 
   @override
   State<_AiEditConfigurationDialog> createState() =>
@@ -199,7 +203,14 @@ class _AiEditConfigurationDialogState
   @override
   void initState() {
     super.initState();
-    if (widget.snapshot.hasSelection) {
+    if (widget.fixedTarget case final fixedTarget?) {
+      _target = fixedTarget;
+      _context = fixedTarget == AiEditTargetKind.document
+          ? AiEditContextKind.document
+          : widget.snapshot.hasSelection
+          ? AiEditContextKind.selection
+          : AiEditContextKind.document;
+    } else if (widget.snapshot.hasSelection) {
       _target = AiEditTargetKind.selection;
       _context = AiEditContextKind.selection;
     } else if (_blockTargetAvailable) {
@@ -319,13 +330,14 @@ class _AiEditConfigurationDialogState
 
   List<AiEditTargetKind> get _availableTargets => [
     for (final value in AiEditTargetKind.values)
-      if (switch (value) {
-        AiEditTargetKind.selection => widget.snapshot.hasSelection,
-        AiEditTargetKind.insertAfterBlock ||
-        AiEditTargetKind.block ||
-        AiEditTargetKind.section => _blockTargetAvailable,
-        AiEditTargetKind.document => true,
-      })
+      if ((widget.fixedTarget == null || widget.fixedTarget == value) &&
+          switch (value) {
+            AiEditTargetKind.selection => widget.snapshot.hasSelection,
+            AiEditTargetKind.insertAfterBlock ||
+            AiEditTargetKind.block ||
+            AiEditTargetKind.section => _blockTargetAvailable,
+            AiEditTargetKind.document => true,
+          })
         value,
   ];
 

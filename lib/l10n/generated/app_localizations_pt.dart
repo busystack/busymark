@@ -2289,6 +2289,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fileActions => 'Ações do arquivo';
 
   @override
+  String get actions => 'Ações';
+
+  @override
   String get gitStatusAdded => 'Adicionado';
 
   @override

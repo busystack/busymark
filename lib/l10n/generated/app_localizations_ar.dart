@@ -2299,6 +2299,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fileActions => 'إجراءات الملف';
 
   @override
+  String get actions => 'إجراءات';
+
+  @override
   String get gitStatusAdded => 'مضاف';
 
   @override

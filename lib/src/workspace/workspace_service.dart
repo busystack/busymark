@@ -190,6 +190,30 @@ class WorkspaceService {
     );
   }
 
+  Future<void> moveWritersideTocEntries(
+    Workspace workspace, {
+    required String treePath,
+    required List<WritersideTocMoveEntry> sources,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.moveSubtrees(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      WritersideTocBatchMoveRequest(
+        sources: sources,
+        placement: placement,
+        referencePath: referencePath,
+        referenceIdentity: referenceIdentity,
+      ),
+    );
+  }
+
   Future<void> removeWritersideTocEntry(
     Workspace workspace, {
     required String treePath,
@@ -205,6 +229,22 @@ class WorkspaceService {
       ),
       nodePath,
       expectedIdentity: expectedIdentity,
+    );
+  }
+
+  Future<void> removeWritersideTocEntries(
+    Workspace workspace, {
+    required String treePath,
+    required List<WritersideTocRemovalRequest> requests,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.removeEntries(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      requests,
     );
   }
 

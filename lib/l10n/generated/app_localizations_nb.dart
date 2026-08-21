@@ -2274,6 +2274,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get fileActions => 'Filhandlinger';
 
   @override
+  String get actions => 'Handlinger';
+
+  @override
   String get gitStatusAdded => 'Lagt til';
 
   @override

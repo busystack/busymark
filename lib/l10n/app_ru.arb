@@ -2232,6 +2232,7 @@
   "gitFileHistory": "Текущий файл",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Действия с файлом",
+  "actions": "Действия",
   "gitStatusAdded": "Добавлен",
   "gitStatusDeleted": "Удалён",
   "gitStatusRenamed": "Переименован",

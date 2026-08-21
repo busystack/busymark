@@ -2216,6 +2216,7 @@
   "gitFileHistory": "الملف الحالي",
   "gitAdditionsDeletions": "\u2068+{additions} -{deletions}\u2069",
   "fileActions": "إجراءات الملف",
+  "actions": "إجراءات",
   "gitStatusAdded": "مضاف",
   "gitStatusDeleted": "محذوف",
   "gitStatusRenamed": "أُعيدت تسميته",

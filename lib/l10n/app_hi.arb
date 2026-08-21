@@ -2216,6 +2216,7 @@
   "gitFileHistory": "मौजूदा फ़ाइल",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "फ़ाइल कार्रवाइयाँ",
+  "actions": "कार्रवाइयाँ",
   "gitStatusAdded": "जोड़ा गया",
   "gitStatusDeleted": "हटाया गया",
   "gitStatusRenamed": "नाम बदला गया",

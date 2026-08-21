@@ -3818,6 +3818,12 @@ abstract class AppLocalizations {
   /// **'File actions'**
   String get fileActions;
 
+  /// Tooltip for a general action menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get actions;
+
   /// Git file status label.
   ///
   /// In en, this message translates to:

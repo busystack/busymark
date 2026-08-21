@@ -2314,6 +2314,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileActions => 'Дії з файлом';
 
   @override
+  String get actions => 'Дії';
+
+  @override
   String get gitStatusAdded => 'Додано';
 
   @override

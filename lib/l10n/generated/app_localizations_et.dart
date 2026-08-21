@@ -2274,6 +2274,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get fileActions => 'Failitoimingud';
 
   @override
+  String get actions => 'Toimingud';
+
+  @override
   String get gitStatusAdded => 'Lisatud';
 
   @override

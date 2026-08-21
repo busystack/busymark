@@ -14,6 +14,7 @@ import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
+import '../writerside/writerside_toc_editor.dart';
 import 'workspace_model.dart';
 import 'workspace_message.dart';
 import 'workspace_service.dart';
@@ -495,6 +496,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     });
   }
 
+  Future<bool> moveWritersideTocEntries({
+    required String treePath,
+    required List<WritersideTocMoveEntry> sources,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.moveWritersideTocEntries(
+        workspace,
+        treePath: treePath,
+        sources: sources,
+        placement: placement,
+        referencePath: referencePath,
+        referenceIdentity: referenceIdentity,
+      );
+      return null;
+    });
+  }
+
   Future<bool> removeWritersideTocEntry({
     required String treePath,
     required List<int> nodePath,
@@ -506,6 +527,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         treePath: treePath,
         nodePath: nodePath,
         expectedIdentity: expectedIdentity,
+      );
+      return null;
+    });
+  }
+
+  Future<bool> removeWritersideTocEntries({
+    required String treePath,
+    required List<WritersideTocRemovalRequest> requests,
+  }) {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.removeWritersideTocEntries(
+        workspace,
+        treePath: treePath,
+        requests: requests,
       );
       return null;
     });

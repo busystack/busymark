@@ -2268,6 +2268,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get fileActions => 'फ़ाइल कार्रवाइयाँ';
 
   @override
+  String get actions => 'कार्रवाइयाँ';
+
+  @override
   String get gitStatusAdded => 'जोड़ा गया';
 
   @override

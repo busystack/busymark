@@ -651,6 +651,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'actions',
     'source',
     'validation',
     'fileTypeImages',

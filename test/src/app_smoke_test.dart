@@ -1439,6 +1439,11 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Finder popupMenuItem(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+    );
+
     await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.files));
     await tester.pump(const Duration(milliseconds: 300));
@@ -1616,6 +1621,8 @@ void main() {
     await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     for (final label in [
+      l10n.copy,
+      l10n.aiRefineWithAi,
       l10n.newSiblingTopic,
       l10n.newChildTopic,
       l10n.renameTopicFile,
@@ -1624,13 +1631,14 @@ void main() {
       l10n.pasteAsChildTopic,
       l10n.removeTocElement,
       l10n.safeDeleteTopicFile,
+      l10n.delete,
       l10n.copyName,
       l10n.copyPath,
       l10n.openInFiles,
       l10n.addToGit,
       l10n.fileHistory,
     ]) {
-      expect(find.text(label), findsOneWidget);
+      expect(popupMenuItem(label), findsOneWidget);
     }
 
     await tester.tap(find.text(l10n.newChildTopic));
@@ -1667,6 +1675,39 @@ void main() {
       WritersideTopicCreatePlacement.sibling,
     );
     expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-2')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
+    for (final label in [
+      l10n.copy,
+      l10n.cut,
+      l10n.aiRefineWithAi,
+      l10n.delete,
+    ]) {
+      expect(popupMenuItem(label), findsOneWidget);
+    }
+    expect(find.text(l10n.newSiblingTopic), findsNothing);
+    expect(find.text(l10n.copyName), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-2')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
+    expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
+    expect(find.text(l10n.newSiblingTopic), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
 
     await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
@@ -2702,19 +2743,20 @@ void main() {
     );
     expect(outlineFileMenu, findsOneWidget);
     expect(find.byTooltip(first.path), findsOneWidget);
-    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+    expect(find.byTooltip(l10n.actions), findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.tap(find.byTooltip(l10n.actions));
     await tester.pumpAndSettle();
     expect(find.text(l10n.copyFileName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
 
     await tester.tap(find.text(l10n.copyFileName));
     await tester.pumpAndSettle();
     expect(clipboardText, 'Intro.md');
 
-    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.tap(find.byTooltip(l10n.actions));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.copyPath));
     await tester.pumpAndSettle();
@@ -5034,7 +5076,7 @@ After break.
       find.byKey(const ValueKey('workspace-sidebar-outline-file-menu')),
       findsOneWidget,
     );
-    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+    expect(find.byTooltip(l10n.actions), findsOneWidget);
     final primarySidebarLabel = find.descendant(
       of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
       matching: find.byType(Text),
@@ -5204,6 +5246,10 @@ Child body.
 Beta body.
 
 ''';
+    const gammaSection = '''### Gamma
+
+Gamma body.
+''';
     String? clipboardText;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -5303,6 +5349,7 @@ Beta body.
     for (final label in [
       l10n.copy,
       l10n.cut,
+      l10n.aiRefineWithAi,
       l10n.promoteSection,
       l10n.demoteSection,
       l10n.moveSectionUp,
@@ -5361,6 +5408,44 @@ Beta body.
     expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
     await expectSource(source.replaceFirst(betaSection, ''));
+
+    await resetSource();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(headingRow('Alpha'));
+    await tester.tap(headingRow('Gamma'));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await openMenu('Gamma');
+    expect(menuItem(l10n.copy), findsOneWidget);
+    expect(menuItem(l10n.cut), findsOneWidget);
+    expect(menuItem(l10n.aiRefineWithAi), findsOneWidget);
+    expect(menuItem(l10n.delete), findsOneWidget);
+    expect(menuItem(l10n.promoteSection), findsNothing);
+    await tester.tap(find.text(l10n.copy));
+    await tester.pumpAndSettle();
+    expect(clipboardText, '$alphaSection$gammaSection');
+
+    await openMenu('Gamma');
+    await tester.tap(find.text(l10n.cut));
+    await expectSource(
+      source.replaceFirst(alphaSection, '').replaceFirst(gammaSection, ''),
+    );
+    expect(clipboardText, '$alphaSection$gammaSection');
+
+    await resetSource();
+    await tester.tap(headingRow('Beta'));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tap(headingRow('Gamma'));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    await openMenu('Gamma');
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await expectSource(
+      source.replaceFirst(betaSection, '').replaceFirst(gammaSection, ''),
+    );
   });
 
   testWidgets('outline highlights the heading at the document viewport', (

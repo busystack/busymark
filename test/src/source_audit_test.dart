@@ -1098,7 +1098,7 @@ void main() {
       contains("ValueKey('workspace-sidebar-outline-file-menu')"),
     );
     expect(workspace, contains('copyNameLabel: menuContext.l10n.copyFileName'));
-    expect(workspace, contains('tooltip: context.l10n.fileActions'));
+    expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
     expect(workspace, isNot(contains('boldLeadingIcon')));

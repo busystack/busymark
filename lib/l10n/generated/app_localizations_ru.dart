@@ -2305,6 +2305,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fileActions => 'Действия с файлом';
 
   @override
+  String get actions => 'Действия';
+
+  @override
   String get gitStatusAdded => 'Добавлен';
 
   @override

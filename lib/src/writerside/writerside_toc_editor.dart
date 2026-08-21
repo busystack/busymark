@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
@@ -44,6 +45,27 @@ class WritersideTocMoveRequest {
   final WritersideTocNodeIdentity? referenceIdentity;
 }
 
+class WritersideTocMoveEntry {
+  const WritersideTocMoveEntry({required this.sourcePath, this.sourceIdentity});
+
+  final List<int> sourcePath;
+  final WritersideTocNodeIdentity? sourceIdentity;
+}
+
+class WritersideTocBatchMoveRequest {
+  const WritersideTocBatchMoveRequest({
+    required this.sources,
+    required this.placement,
+    this.referencePath,
+    this.referenceIdentity,
+  });
+
+  final List<WritersideTocMoveEntry> sources;
+  final WritersideTopicCreatePlacement placement;
+  final List<int>? referencePath;
+  final WritersideTocNodeIdentity? referenceIdentity;
+}
+
 class WritersideTocMutationResult {
   const WritersideTocMutationResult({required this.treePath, this.entryPath});
 
@@ -51,6 +73,16 @@ class WritersideTocMutationResult {
 
   /// The moved entry's structural path after a move, or `null` after removal.
   final List<int>? entryPath;
+}
+
+class WritersideTocRemovalRequest {
+  const WritersideTocRemovalRequest({
+    required this.entryPath,
+    this.expectedIdentity,
+  });
+
+  final List<int> entryPath;
+  final WritersideTocNodeIdentity? expectedIdentity;
 }
 
 /// Performs structural Writerside TOC mutations inside a guarded module root.
@@ -133,6 +165,105 @@ class WritersideTocEditor {
     );
   }
 
+  /// Moves several complete subtrees as one ordered group.
+  Future<WritersideTocMutationResult> moveSubtrees(
+    WritersideTocEditTarget target,
+    WritersideTocBatchMoveRequest request,
+  ) async {
+    if (request.sources.isEmpty) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    for (final source in request.sources) {
+      _validatePath(source.sourcePath, role: 'source');
+    }
+    for (var left = 0; left < request.sources.length; left += 1) {
+      for (var right = left + 1; right < request.sources.length; right += 1) {
+        final leftPath = request.sources[left].sourcePath;
+        final rightPath = request.sources[right].sourcePath;
+        if (_isSameOrDescendant(leftPath, rightPath) ||
+            _isSameOrDescendant(rightPath, leftPath)) {
+          throw const BusyMarkException('writerside.toc.move-invalid-target');
+        }
+      }
+    }
+    final referencePath = request.referencePath;
+    if (request.placement == WritersideTopicCreatePlacement.root) {
+      if (referencePath != null) {
+        throw _invalidPath(referencePath, role: 'destination');
+      }
+    } else if (referencePath == null) {
+      throw const BusyMarkException('writerside.toc.destination-required');
+    } else {
+      _validatePath(referencePath, role: 'destination');
+      for (final source in request.sources) {
+        if (_isSameOrDescendant(source.sourcePath, referencePath)) {
+          throw BusyMarkException(
+            'writerside.toc.move-invalid-target',
+            args: {
+              'source': _pathLabel(source.sourcePath),
+              'destination': _pathLabel(referencePath),
+            },
+          );
+        }
+      }
+    }
+
+    final session = await _load(target);
+    final elements = <XmlElement>[];
+    for (final source in request.sources) {
+      final element = _elementAtPath(
+        session.root,
+        source.sourcePath,
+        role: 'source',
+      );
+      if (!(source.sourceIdentity?.matches(element) ?? true)) {
+        throw _invalidPath(source.sourcePath, role: 'source');
+      }
+      elements.add(element);
+    }
+    if (elements.toSet().length != elements.length) {
+      throw const BusyMarkException('writerside.toc.move-invalid-target');
+    }
+    final reference = referencePath == null
+        ? null
+        : _elementAtPath(session.root, referencePath, role: 'destination');
+    if (reference != null &&
+        !(request.referenceIdentity?.matches(reference) ?? true)) {
+      throw _invalidPath(referencePath!, role: 'destination');
+    }
+    for (final element in elements) {
+      final parent = element.parent;
+      if (parent is! XmlElement || !parent.children.remove(element)) {
+        throw const BusyMarkException('writerside.toc.move-invalid-target');
+      }
+    }
+    switch (request.placement) {
+      case WritersideTopicCreatePlacement.root:
+        session.root.children.addAll(elements);
+      case WritersideTopicCreatePlacement.sibling:
+        final parent = reference!.parent;
+        if (parent is! XmlElement) {
+          throw const BusyMarkException('writerside.toc.move-invalid-target');
+        }
+        final index = parent.children.indexOf(reference);
+        if (index < 0) {
+          throw const BusyMarkException('writerside.toc.move-invalid-target');
+        }
+        parent.children.insertAll(index + 1, elements);
+      case WritersideTopicCreatePlacement.child:
+        reference!.children.addAll(elements);
+    }
+    final firstPath = _pathOfElement(session.root, elements.first);
+    if (firstPath == null) {
+      throw const BusyMarkException('writerside.toc.move-invalid-target');
+    }
+    await _write(session);
+    return WritersideTocMutationResult(
+      treePath: session.treePath,
+      entryPath: firstPath,
+    );
+  }
+
   /// Removes one TOC entry while retaining its direct `toc-element` children.
   ///
   /// Promoted children are inserted at the removed entry's position and keep
@@ -163,6 +294,70 @@ class WritersideTocEditor {
     parent.children.removeAt(rawIndex);
     parent.children.insertAll(rawIndex, promotedChildren);
 
+    await _write(session);
+    return WritersideTocMutationResult(treePath: session.treePath);
+  }
+
+  /// Removes several exact TOC entries in one guarded tree-file update.
+  ///
+  /// Descendants are removed before their selected ancestors, and siblings
+  /// are removed from the end backwards so every request keeps referring to
+  /// the tree snapshot the user selected.
+  Future<WritersideTocMutationResult> removeEntries(
+    WritersideTocEditTarget target,
+    List<WritersideTocRemovalRequest> requests,
+  ) async {
+    if (requests.isEmpty) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    for (final request in requests) {
+      _validatePath(request.entryPath, role: 'source');
+    }
+    final session = await _load(target);
+    final entries = <({List<int> path, XmlElement element})>[];
+    for (final request in requests) {
+      final entry = _elementAtPath(
+        session.root,
+        request.entryPath,
+        role: 'source',
+      );
+      if (!(request.expectedIdentity?.matches(entry) ?? true)) {
+        throw _invalidPath(request.entryPath, role: 'source');
+      }
+      entries.add((path: request.entryPath, element: entry));
+    }
+    entries.sort((left, right) {
+      final depth = right.path.length.compareTo(left.path.length);
+      if (depth != 0) {
+        return depth;
+      }
+      final length = math.min(left.path.length, right.path.length);
+      for (var index = 0; index < length; index += 1) {
+        final order = right.path[index].compareTo(left.path[index]);
+        if (order != 0) {
+          return order;
+        }
+      }
+      return 0;
+    });
+    for (final (:element, :path) in entries) {
+      final parent = element.parent;
+      if (parent is! XmlElement) {
+        throw _invalidPath(path, role: 'source');
+      }
+      final rawIndex = parent.children.indexOf(element);
+      if (rawIndex < 0) {
+        throw _invalidPath(path, role: 'source');
+      }
+      final promotedChildren = element.childElements
+          .where(_isTocElement)
+          .toList();
+      for (final child in promotedChildren) {
+        element.children.remove(child);
+      }
+      parent.children.removeAt(rawIndex);
+      parent.children.insertAll(rawIndex, promotedChildren);
+    }
     await _write(session);
     return WritersideTocMutationResult(treePath: session.treePath);
   }

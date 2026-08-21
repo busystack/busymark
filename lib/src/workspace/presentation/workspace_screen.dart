@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_models.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
@@ -60,6 +61,7 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_toc_editor.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
 import '../workspace_controller.dart';
@@ -1459,8 +1461,11 @@ Future<void> _performWorkspacePathAction(
   required String name,
   required String path,
   required _PathMenuAction action,
+  VoidCallback? onRefineWithAi,
 }) async {
-  if (path.isEmpty && action != _PathMenuAction.copyName) {
+  if (path.isEmpty &&
+      action != _PathMenuAction.copyName &&
+      action != _PathMenuAction.refineWithAi) {
     return;
   }
   switch (action) {
@@ -1470,15 +1475,18 @@ Future<void> _performWorkspacePathAction(
       await _copyToClipboard(path);
     case _PathMenuAction.openInFiles:
       await _openInFiles(context, path);
+    case _PathMenuAction.refineWithAi:
+      onRefineWithAi?.call();
   }
 }
 
-enum _PathMenuAction { copyName, copyPath, openInFiles }
+enum _PathMenuAction { copyName, copyPath, openInFiles, refineWithAi }
 
 List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
   BuildContext context, {
   String? copyNameLabel,
   bool pathActionsEnabled = true,
+  bool showRefineWithAi = false,
 }) {
   return [
     BusyMarkPopupMenuItem(
@@ -1499,6 +1507,13 @@ List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
       icon: BusyMarkGlyphs.folderOpen,
       enabled: pathActionsEnabled,
     ),
+    if (showRefineWithAi) const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    if (showRefineWithAi)
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.refineWithAi,
+        label: context.l10n.aiRefineWithAi,
+        icon: BusyMarkGlyphs.ai,
+      ),
   ];
 }
 
@@ -1869,6 +1884,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                 _loadWorkspaceGitMenuItems(menuContext, ref, repository),
             onGitAction: (menuContext, action) =>
                 _performWorkspaceGitAction(menuContext, ref, action),
+            onRefineActiveDocument: () =>
+                unawaited(_refineActiveDocumentWithAi(context)),
           ),
           Expanded(
             child: widget.searchState.active
@@ -1949,6 +1966,20 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     } else if (tab != _SidebarTab.git) {
       _clearGitDetailSelection(ref);
     }
+  }
+
+  Future<void> _refineActiveDocumentWithAi(BuildContext context) async {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    if (workspace == null ||
+        !(_activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
+            false) ||
+        state.activeText.isEmpty) {
+      return;
+    }
+    await _refineActiveSourceRangesWithAi(context, ref, const [
+      _SourceTextRange.fullDocument(),
+    ]);
   }
 
   Future<void> _showFileHistory(DocumentFile file) async {
@@ -2276,6 +2307,7 @@ class _SidebarHeader extends StatelessWidget {
     required this.onSelectTab,
     required this.loadGitMenuItems,
     required this.onGitAction,
+    required this.onRefineActiveDocument,
   });
 
   final Workspace workspace;
@@ -2291,6 +2323,7 @@ class _SidebarHeader extends StatelessWidget {
   loadGitMenuItems;
   final Future<void> Function(BuildContext context, _GitMenuAction action)
   onGitAction;
+  final VoidCallback onRefineActiveDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -2442,7 +2475,7 @@ class _SidebarHeader extends StatelessWidget {
                   const SizedBox(width: BusyMarkSpacing.sm),
                   BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
                     key: const ValueKey('workspace-sidebar-outline-file-menu'),
-                    tooltip: context.l10n.fileActions,
+                    tooltip: context.l10n.actions,
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
@@ -2451,6 +2484,7 @@ class _SidebarHeader extends StatelessWidget {
                       menuContext,
                       copyNameLabel: menuContext.l10n.copyFileName,
                       pathActionsEnabled: hasActiveDocumentPath,
+                      showRefineWithAi: true,
                     ),
                     onSelected: (action) => unawaited(
                       _performWorkspacePathAction(
@@ -2458,6 +2492,7 @@ class _SidebarHeader extends StatelessWidget {
                         name: activeDocumentName,
                         path: activeDocumentPath,
                         action: action,
+                        onRefineWithAi: onRefineActiveDocument,
                       ),
                     ),
                   ),
@@ -4437,7 +4472,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
   late Set<String> _expandedNodeKeys;
   late final FocusNode _treeFocusNode;
   String? _selectedNodePathKey;
-  _TocTreeClipboardEntry? _cutEntry;
+  Set<String> _selectedNodePathKeys = {};
+  String? _selectionAnchorPathKey;
+  List<_TocTreeClipboardEntry> _cutEntries = [];
 
   @override
   void initState() {
@@ -4478,7 +4515,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
         widget.workspace,
         treePath: _selectedInstanceTreePath,
       );
-      _cutEntry = null;
+      _cutEntries = [];
+      _selectedNodePathKeys = {};
+      _selectionAnchorPathKey = null;
       return;
     }
     if (nextStructureKey != _tocStructureKey) {
@@ -4493,7 +4532,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
         widget.workspace,
         treePath: _selectedInstanceTreePath,
       );
-      _cutEntry = null;
+      _cutEntries = [];
+      _selectedNodePathKeys = {};
+      _selectionAnchorPathKey = null;
       _selectedNodePathKey = _activeTocNodePathKey(
         widget.workspace,
         treePath: _selectedInstanceTreePath,
@@ -4595,14 +4636,26 @@ class _TocTabState extends ConsumerState<_TocTab> {
           _RemoveSelectedTocEntryIntent:
               CallbackAction<_RemoveSelectedTocEntryIntent>(
                 onInvoke: (_) {
-                  final entry = selectedEntry;
-                  if (entry != null) {
+                  final selectedEntries = entries
+                      .where(
+                        (entry) => _selectedNodePathKeys.isEmpty
+                            ? entry.pathKey == selectedEntry?.pathKey
+                            : _selectedNodePathKeys.contains(entry.pathKey),
+                      )
+                      .toList();
+                  if (selectedEntries.isNotEmpty) {
                     unawaited(
-                      _removeTocEntry(
-                        context,
-                        instanceTreePath: instance.sourceTreePath,
-                        entry: entry,
-                      ),
+                      selectedEntries.length == 1
+                          ? _removeTocEntry(
+                              context,
+                              instanceTreePath: instance.sourceTreePath,
+                              entry: selectedEntries.single,
+                            )
+                          : _removeTocEntries(
+                              context,
+                              instanceTreePath: instance.sourceTreePath,
+                              entries: selectedEntries,
+                            ),
                     );
                   }
                   return null;
@@ -4634,7 +4687,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
                         widget.workspace,
                         treePath: treePath,
                       );
-                      _cutEntry = null;
+                      _selectedNodePathKeys = {};
+                      _selectionAnchorPathKey = null;
+                      _cutEntries = [];
                     });
                     final selected = _tocInstanceForTreePath(module, treePath);
                     if (selected != null) {
@@ -4684,11 +4739,22 @@ class _TocTabState extends ConsumerState<_TocTab> {
               final topicPath = writersideTopic?.filePath;
               final rawLabel = _tocNodeLabel(context, node);
               final label = _tocNodeDisplayLabel(context, node);
-              void selectEntry() {
+              _TreeSelectionModifiers selectEntry() {
                 _treeFocusNode.requestFocus();
-                if (_selectedNodePathKey != entry.pathKey) {
-                  setState(() => _selectedNodePathKey = entry.pathKey);
-                }
+                final modifiers = _treeSelectionModifiers();
+                final update = _updatedTreeSelection(
+                  visibleKeys: [for (final item in entries) item.pathKey],
+                  selectedKeys: _selectedNodePathKeys,
+                  anchorKey: _selectionAnchorPathKey,
+                  clickedIndex: index - 1,
+                  modifiers: modifiers,
+                );
+                setState(() {
+                  _selectedNodePathKey = entry.pathKey;
+                  _selectedNodePathKeys = update.selectedKeys;
+                  _selectionAnchorPathKey = update.anchorKey;
+                });
+                return modifiers;
               }
 
               void toggle() {
@@ -4702,9 +4768,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
               }
 
               return _SidebarTreeRow(
+                key: ValueKey('workspace-sidebar-toc-row-${entry.pathKey}'),
                 title: label,
                 enabled: true,
-                selected: _selectedNodePathKey == null
+                selected: _selectedNodePathKeys.isNotEmpty
+                    ? _selectedNodePathKeys.contains(entry.pathKey)
+                    : _selectedNodePathKey == null
                     ? topicPath == widget.workspace.activeFilePath
                     : entry.pathKey == _selectedNodePathKey,
                 depth: entry.depth,
@@ -4721,7 +4790,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 onToggle: hasChildren ? toggle : null,
                 onTap: topicPath != null
                     ? () async {
-                        selectEntry();
+                        final modifiers = selectEntry();
+                        if (modifiers.control || modifiers.shift) {
+                          return;
+                        }
                         final canOpen =
                             await saveOrConfirmSafeToChangeActiveFile(
                               context,
@@ -4739,19 +4811,35 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       }
                     : hasChildren
                     ? () {
-                        selectEntry();
+                        final modifiers = selectEntry();
+                        if (modifiers.control || modifiers.shift) {
+                          return;
+                        }
                         toggle();
                       }
                     : () {
                         selectEntry();
                       },
                 onSecondaryTapUp: (details) {
-                  selectEntry();
+                  if (!_selectedNodePathKeys.contains(entry.pathKey)) {
+                    setState(() {
+                      _selectedNodePathKey = entry.pathKey;
+                      _selectedNodePathKeys = {entry.pathKey};
+                      _selectionAnchorPathKey = entry.pathKey;
+                    });
+                  }
+                  final selectedEntries = [
+                    for (final item in entries)
+                      if (_selectedNodePathKeys.contains(item.pathKey)) item,
+                  ];
                   unawaited(
                     _showTopicContextMenu(
                       context,
                       instanceTreePath: instance.sourceTreePath,
                       entry: entry,
+                      selectedEntries: selectedEntries.isEmpty
+                          ? [entry]
+                          : selectedEntries,
                       topic: writersideTopic,
                       rawLabel: rawLabel,
                       canEditStructure:
@@ -4808,8 +4896,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
         return;
       }
       setState(() {
-        _cutEntry = null;
+        _cutEntries = [];
         _selectedNodePathKey = null;
+        _selectedNodePathKeys = {};
+        _selectionAnchorPathKey = null;
       });
       _clearGitDetailSelection(ref);
       return;
@@ -4838,16 +4928,143 @@ class _TocTabState extends ConsumerState<_TocTab> {
       return;
     }
     setState(() {
-      _cutEntry = null;
+      _cutEntries = [];
       _selectedNodePathKey = null;
+      _selectedNodePathKeys = {};
+      _selectionAnchorPathKey = null;
     });
     _clearGitDetailSelection(ref);
+  }
+
+  Future<void> _removeTocEntries(
+    BuildContext context, {
+    required String instanceTreePath,
+    required List<_TocTreeEntry> entries,
+  }) async {
+    if (entries.isEmpty ||
+        entries.any((entry) => !entry.canEditStructureIn(instanceTreePath)) ||
+        entries.any(
+          (entry) => !_tocTreeEntryStillMatches(
+            widget.workspace,
+            instanceTreePath,
+            entry,
+          ),
+        )) {
+      return;
+    }
+    final requests = <WritersideTocRemovalRequest>[];
+    for (final entry in entries) {
+      final rawNode = _rawTocNodeForEntry(
+        widget.workspace,
+        instanceTreePath,
+        entry,
+      );
+      if (rawNode == null || entry.editPath == null) {
+        return;
+      }
+      requests.add(
+        WritersideTocRemovalRequest(
+          entryPath: entry.editPath!,
+          expectedIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
+        ),
+      );
+    }
+    final labels = entries
+        .map((entry) => _tocNodeLabel(context, entry.node))
+        .join(', ');
+    final confirmed = await _confirmRemoveTocEntry(context, ref, name: labels);
+    if (!confirmed || !context.mounted || !mounted) {
+      return;
+    }
+    final canRemove = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+    if (!canRemove || !context.mounted || !mounted) {
+      return;
+    }
+    final removed = await ref
+        .read(workspaceControllerProvider.notifier)
+        .removeWritersideTocEntries(
+          treePath: instanceTreePath,
+          requests: requests,
+        );
+    if (!mounted || !removed) {
+      return;
+    }
+    setState(() {
+      _cutEntries = [];
+      _selectedNodePathKey = null;
+      _selectedNodePathKeys = {};
+      _selectionAnchorPathKey = null;
+    });
+    _clearGitDetailSelection(ref);
+  }
+
+  Future<void> _copyTocEntries(List<_TocTreeEntry> entries) async {
+    final module = widget.workspace.writersideModule;
+    final pieces = <String>[];
+    final state = ref.read(workspaceControllerProvider);
+    final activePath = state.workspace?.activeFilePath;
+    for (final entry in entries) {
+      final reference = entry.node.topicReference;
+      final topic = reference == null || entry.node.origin != null
+          ? null
+          : module?.topicByReference(reference);
+      if (topic == null) {
+        pieces.add(_tocNodeLabel(context, entry.node));
+      } else if (activePath != null && p.equals(activePath, topic.filePath)) {
+        pieces.add(state.activeText);
+      } else {
+        pieces.add(
+          await ref.read(workspaceServiceProvider).loadText(topic.filePath),
+        );
+      }
+    }
+    await _copyToClipboard(pieces.join('\n'));
+  }
+
+  Future<void> _refineTocTopicsWithAi(
+    BuildContext context,
+    List<WritersideTopic> topics,
+  ) async {
+    final uniqueTopics = <String, WritersideTopic>{
+      for (final topic in topics) topic.filePath: topic,
+    }.values.toList();
+    for (final topic in uniqueTopics) {
+      if (!context.mounted || !mounted) {
+        return;
+      }
+      final currentPath = ref
+          .read(workspaceControllerProvider)
+          .workspace
+          ?.activeFilePath;
+      if (currentPath == null || !p.equals(currentPath, topic.filePath)) {
+        if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+            !context.mounted ||
+            !mounted) {
+          return;
+        }
+        final opened = await ref
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile(topic.filePath);
+        if (!opened || !mounted || !context.mounted) {
+          return;
+        }
+      }
+      final refined = await _refineActiveSourceRangesWithAi(
+        context,
+        ref,
+        const [_SourceTextRange.fullDocument()],
+      );
+      if (!refined) {
+        return;
+      }
+    }
   }
 
   Future<void> _showTopicContextMenu(
     BuildContext context, {
     required String instanceTreePath,
     required _TocTreeEntry entry,
+    required List<_TocTreeEntry> selectedEntries,
     required WritersideTopic? topic,
     required String rawLabel,
     required bool canEditStructure,
@@ -4860,16 +5077,32 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final gitRelativePath = topicPath == null
         ? null
         : _gitRelativePathForFileTreeEntry(ref, topicPath);
-    final cutEntry = _cutEntry;
     final rawNode = canEditStructure
         ? _rawTocNodeForEntry(widget.workspace, instanceTreePath, entry)
         : null;
     final canPaste =
-        cutEntry != null &&
-        _tocClipboardEntryStillMatches(widget.workspace, cutEntry) &&
+        _cutEntries.isNotEmpty &&
+        _cutEntries.every(
+          (source) => _tocClipboardEntryStillMatches(widget.workspace, source),
+        ) &&
         canEditStructure &&
         rawNode != null &&
-        _canPasteTocTreeEntry(cutEntry, instanceTreePath, entry.editPath!);
+        _canPasteTocTreeEntries(_cutEntries, instanceTreePath, entry.editPath!);
+    final selectedTopics = [
+      for (final selected in selectedEntries)
+        if (selected.node.topicReference case final reference?)
+          if (selected.node.origin == null)
+            widget.workspace.writersideModule?.topicByReference(reference),
+    ].nonNulls.toList();
+    final canRefineSelection =
+        selectedTopics.length == selectedEntries.length &&
+        selectedTopics.every(
+          (selectedTopic) =>
+              selectedTopic.format == WritersideTopicFormat.markdown,
+        );
+    final canEditSelection = selectedEntries.every(
+      (selected) => selected.canEditStructureIn(instanceTreePath),
+    );
     final action = await _showTocTreeMenu(
       context,
       position,
@@ -4878,6 +5111,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
       showPaste: canPaste,
       enableGitActions: gitRelativePath != null,
       canEditStructure: canEditStructure,
+      multipleSelection: selectedEntries.length > 1,
+      canRefineSelection: canRefineSelection,
+      canEditSelection: canEditSelection,
     );
     if (!mounted || !context.mounted || action == null) {
       return;
@@ -4888,6 +5124,20 @@ class _TocTabState extends ConsumerState<_TocTab> {
       return;
     }
     switch (action) {
+      case _TocTreeAction.copy:
+        await _copyTocEntries(selectedEntries);
+      case _TocTreeAction.refineWithAi:
+        if (canRefineSelection) {
+          await _refineTocTopicsWithAi(context, selectedTopics);
+        }
+      case _TocTreeAction.deleteSelection:
+        if (canEditSelection) {
+          await _removeTocEntries(
+            context,
+            instanceTreePath: instanceTreePath,
+            entries: selectedEntries,
+          );
+        }
       case _TocTreeAction.newSiblingTopic:
         if (!canEditStructure) {
           return;
@@ -4936,31 +5186,48 @@ class _TocTabState extends ConsumerState<_TocTab> {
           return;
         }
         if (renamed) {
-          setState(() => _cutEntry = null);
+          setState(() => _cutEntries = []);
           _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.cut:
-        if (!canEditStructure || rawNode == null) {
+        if (!canEditSelection) {
           return;
         }
-        setState(() {
-          _cutEntry = _TocTreeClipboardEntry(
-            treePath: instanceTreePath,
-            nodePath: entry.editPath!,
-            nodeFingerprint: _tocNodeFingerprint(rawNode),
-            nodeIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
+        final clipboardEntries = <_TocTreeClipboardEntry>[];
+        for (final selected in _topLevelTocEntries(selectedEntries)) {
+          final selectedRawNode = _rawTocNodeForEntry(
+            widget.workspace,
+            instanceTreePath,
+            selected,
           );
+          if (selectedRawNode == null || selected.editPath == null) {
+            return;
+          }
+          clipboardEntries.add(
+            _TocTreeClipboardEntry(
+              treePath: instanceTreePath,
+              nodePath: selected.editPath!,
+              nodeFingerprint: _tocNodeFingerprint(selectedRawNode),
+              nodeIdentity: WritersideTocNodeIdentity.fromNode(selectedRawNode),
+            ),
+          );
+        }
+        setState(() {
+          _cutEntries = clipboardEntries;
         });
       case _TocTreeAction.pasteAfter:
       case _TocTreeAction.pasteAsChild:
         if (!canEditStructure || rawNode == null) {
           return;
         }
-        final source = _cutEntry;
-        if (source == null ||
-            !_tocClipboardEntryStillMatches(widget.workspace, source)) {
-          if (source != null && mounted) {
-            setState(() => _cutEntry = null);
+        final sources = List<_TocTreeClipboardEntry>.of(_cutEntries);
+        if (sources.isEmpty ||
+            sources.any(
+              (source) =>
+                  !_tocClipboardEntryStillMatches(widget.workspace, source),
+            )) {
+          if (sources.isNotEmpty && mounted) {
+            setState(() => _cutEntries = []);
           }
           return;
         }
@@ -4969,28 +5236,47 @@ class _TocTabState extends ConsumerState<_TocTab> {
             !mounted ||
             !context.mounted ||
             !entryIsCurrent() ||
-            !_tocClipboardEntryStillMatches(widget.workspace, source)) {
+            sources.any(
+              (source) =>
+                  !_tocClipboardEntryStillMatches(widget.workspace, source),
+            )) {
           return;
         }
-        final moved = await ref
-            .read(workspaceControllerProvider.notifier)
-            .moveWritersideTocEntry(
-              treePath: instanceTreePath,
-              sourcePath: source.nodePath,
-              placement: action == _TocTreeAction.pasteAsChild
-                  ? WritersideTopicCreatePlacement.child
-                  : WritersideTopicCreatePlacement.sibling,
-              referencePath: entry.editPath!,
-              sourceIdentity: source.nodeIdentity,
-              referenceIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
-            );
+        final placement = action == _TocTreeAction.pasteAsChild
+            ? WritersideTopicCreatePlacement.child
+            : WritersideTopicCreatePlacement.sibling;
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        final moved = sources.length == 1
+            ? await controller.moveWritersideTocEntry(
+                treePath: instanceTreePath,
+                sourcePath: sources.single.nodePath,
+                placement: placement,
+                referencePath: entry.editPath!,
+                sourceIdentity: sources.single.nodeIdentity,
+                referenceIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
+              )
+            : await controller.moveWritersideTocEntries(
+                treePath: instanceTreePath,
+                sources: [
+                  for (final source in sources)
+                    WritersideTocMoveEntry(
+                      sourcePath: source.nodePath,
+                      sourceIdentity: source.nodeIdentity,
+                    ),
+                ],
+                placement: placement,
+                referencePath: entry.editPath!,
+                referenceIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
+              );
         if (!mounted) {
           return;
         }
         if (moved) {
           setState(() {
-            _cutEntry = null;
+            _cutEntries = [];
             _selectedNodePathKey = null;
+            _selectedNodePathKeys = {};
+            _selectionAnchorPathKey = null;
           });
           _clearGitDetailSelection(ref);
         }
@@ -5016,8 +5302,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
         );
         if (mounted && result != null) {
           setState(() {
-            _cutEntry = null;
+            _cutEntries = [];
             _selectedNodePathKey = null;
+            _selectedNodePathKeys = {};
+            _selectionAnchorPathKey = null;
           });
           _clearGitDetailSelection(ref);
         }
@@ -5095,7 +5383,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
       setState(() {
         _selectedInstanceTreePath = result.treePath;
         _selectedNodePathKey = null;
-        _cutEntry = null;
+        _selectedNodePathKeys = {};
+        _selectionAnchorPathKey = null;
+        _cutEntries = [];
       });
     }
   }
@@ -5166,15 +5456,31 @@ class _TocTreeClipboardEntry {
   final WritersideTocNodeIdentity nodeIdentity;
 }
 
+List<_TocTreeEntry> _topLevelTocEntries(List<_TocTreeEntry> entries) {
+  final result = <_TocTreeEntry>[];
+  for (final entry in entries) {
+    if (result.any(
+      (candidate) => _tocPathContains(candidate.path, entry.path),
+    )) {
+      continue;
+    }
+    result.add(entry);
+  }
+  return result;
+}
+
 class _RemoveSelectedTocEntryIntent extends Intent {
   const _RemoveSelectedTocEntryIntent();
 }
 
 enum _TocTreeAction {
+  copy,
   newSiblingTopic,
   newChildTopic,
   rename,
   cut,
+  refineWithAi,
+  deleteSelection,
   pasteAfter,
   pasteAsChild,
   removeFromToc,
@@ -5194,94 +5500,141 @@ Future<_TocTreeAction?> _showTocTreeMenu(
   required bool showPaste,
   required bool enableGitActions,
   required bool canEditStructure,
+  required bool multipleSelection,
+  required bool canRefineSelection,
+  required bool canEditSelection,
 }) {
   return _showSidebarTreeMenu<_TocTreeAction>(
     context,
     position,
     items: [
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.newSiblingTopic,
-        label: context.l10n.newSiblingTopic,
-        icon: BusyMarkGlyphs.newDocument,
-        enabled: canEditStructure,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.newChildTopic,
-        label: context.l10n.newChildTopic,
-        icon: BusyMarkGlyphs.tree,
-        enabled: canEditStructure,
-      ),
-      const PopupMenuDivider(height: BusyMarkSpacing.sm),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.rename,
-        label: context.l10n.renameTopicFile,
-        icon: BusyMarkGlyphs.edit,
-        enabled: hasTopicFile,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.cut,
-        label: context.l10n.cut,
-        icon: BusyMarkGlyphs.cut,
-        enabled: canEditStructure,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.pasteAfter,
-        label: context.l10n.pasteAfterTopic,
-        icon: BusyMarkGlyphs.paste,
-        enabled: showPaste,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.pasteAsChild,
-        label: context.l10n.pasteAsChildTopic,
-        icon: BusyMarkGlyphs.tree,
-        enabled: showPaste,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.removeFromToc,
-        label: context.l10n.removeTocElement,
-        icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
-        shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
-        enabled: canEditStructure,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.delete,
-        label: context.l10n.safeDeleteTopicFile,
-        icon: BusyMarkGlyphs.delete,
-        enabled: hasTopicFile,
-      ),
-      const PopupMenuDivider(height: BusyMarkSpacing.sm),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.copyName,
-        label: context.l10n.copyName,
-        icon: BusyMarkGlyphs.copy,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.copyPath,
-        label: context.l10n.copyPath,
-        icon: BusyMarkGlyphs.copy,
-        enabled: hasTopicFile,
-      ),
-      const PopupMenuDivider(height: BusyMarkSpacing.sm),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.openInFiles,
-        label: context.l10n.openInFiles,
-        icon: BusyMarkGlyphs.folderOpen,
-        enabled: hasTopicFile,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _TocTreeAction.addToGit,
-        label: context.l10n.addToGit,
-        icon: BusyMarkGlyphs.branch,
-        enabled: enableGitActions,
-      ),
-      if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
-      if (showHistory)
+      if (multipleSelection) ...[
         BusyMarkPopupMenuItem(
-          value: _TocTreeAction.fileHistory,
-          label: context.l10n.fileHistory,
-          icon: BusyMarkGlyphs.documentHistory,
+          value: _TocTreeAction.copy,
+          label: context.l10n.copy,
+          icon: BusyMarkGlyphs.copy,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.cut,
+          label: context.l10n.cut,
+          icon: BusyMarkGlyphs.cut,
+          enabled: canEditSelection,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.refineWithAi,
+          label: context.l10n.aiRefineWithAi,
+          icon: BusyMarkGlyphs.ai,
+          enabled: canRefineSelection,
+        ),
+        const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.deleteSelection,
+          label: context.l10n.delete,
+          icon: BusyMarkGlyphs.delete,
+          enabled: canEditSelection,
+        ),
+      ] else ...[
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.copy,
+          label: context.l10n.copy,
+          icon: BusyMarkGlyphs.copy,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.refineWithAi,
+          label: context.l10n.aiRefineWithAi,
+          icon: BusyMarkGlyphs.ai,
+          enabled: canRefineSelection,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.copyName,
+          label: context.l10n.copyName,
+          icon: BusyMarkGlyphs.copy,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.copyPath,
+          label: context.l10n.copyPath,
+          icon: BusyMarkGlyphs.copy,
+          enabled: hasTopicFile,
+        ),
+        const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.newSiblingTopic,
+          label: context.l10n.newSiblingTopic,
+          icon: BusyMarkGlyphs.newDocument,
+          enabled: canEditStructure,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.newChildTopic,
+          label: context.l10n.newChildTopic,
+          icon: BusyMarkGlyphs.tree,
+          enabled: canEditStructure,
+        ),
+        const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.rename,
+          label: context.l10n.renameTopicFile,
+          icon: BusyMarkGlyphs.edit,
+          enabled: hasTopicFile,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.cut,
+          label: context.l10n.cut,
+          icon: BusyMarkGlyphs.cut,
+          enabled: canEditStructure,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.pasteAfter,
+          label: context.l10n.pasteAfterTopic,
+          icon: BusyMarkGlyphs.paste,
+          enabled: showPaste,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.pasteAsChild,
+          label: context.l10n.pasteAsChildTopic,
+          icon: BusyMarkGlyphs.tree,
+          enabled: showPaste,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.removeFromToc,
+          label: context.l10n.removeTocElement,
+          icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+          shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
+          enabled: canEditStructure,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.delete,
+          label: context.l10n.safeDeleteTopicFile,
+          icon: BusyMarkGlyphs.delete,
+          enabled: hasTopicFile,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.deleteSelection,
+          label: context.l10n.delete,
+          icon: BusyMarkGlyphs.delete,
+          enabled: canEditSelection,
+        ),
+        const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.openInFiles,
+          label: context.l10n.openInFiles,
+          icon: BusyMarkGlyphs.folderOpen,
+          enabled: hasTopicFile,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TocTreeAction.addToGit,
+          label: context.l10n.addToGit,
+          icon: BusyMarkGlyphs.branch,
           enabled: enableGitActions,
         ),
+        if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        if (showHistory)
+          BusyMarkPopupMenuItem(
+            value: _TocTreeAction.fileHistory,
+            label: context.l10n.fileHistory,
+            icon: BusyMarkGlyphs.documentHistory,
+            enabled: enableGitActions,
+          ),
+      ],
     ],
   );
 }
@@ -5297,6 +5650,14 @@ bool _canPasteTocTreeEntry(
   }
   return !_tocPathContains(source.nodePath, targetPath);
 }
+
+bool _canPasteTocTreeEntries(
+  List<_TocTreeClipboardEntry> sources,
+  String targetTreePath,
+  List<int> targetPath,
+) => sources.every(
+  (source) => _canPasteTocTreeEntry(source, targetTreePath, targetPath),
+);
 
 bool _tocClipboardEntryStillMatches(
   Workspace workspace,
@@ -6270,6 +6631,196 @@ WritersideInstance _defaultWritersideInstance(WritersideModule module) {
       module.instances.first;
 }
 
+typedef _TreeSelectionModifiers = ({bool control, bool shift});
+typedef _TreeSelectionUpdate = ({Set<String> selectedKeys, String anchorKey});
+
+_TreeSelectionModifiers _treeSelectionModifiers() {
+  final keyboard = HardwareKeyboard.instance;
+  return (
+    control: keyboard.isControlPressed || keyboard.isMetaPressed,
+    shift: keyboard.isShiftPressed,
+  );
+}
+
+_TreeSelectionUpdate _updatedTreeSelection({
+  required List<String> visibleKeys,
+  required Set<String> selectedKeys,
+  required String? anchorKey,
+  required int clickedIndex,
+  required _TreeSelectionModifiers modifiers,
+}) {
+  final clickedKey = visibleKeys[clickedIndex];
+  if (modifiers.shift) {
+    final anchorIndex = anchorKey == null ? -1 : visibleKeys.indexOf(anchorKey);
+    final rangeStart = math.min(
+      anchorIndex < 0 ? clickedIndex : anchorIndex,
+      clickedIndex,
+    );
+    final rangeEnd = math.max(
+      anchorIndex < 0 ? clickedIndex : anchorIndex,
+      clickedIndex,
+    );
+    final range = visibleKeys.getRange(rangeStart, rangeEnd + 1);
+    return (
+      selectedKeys: modifiers.control
+          ? ({...selectedKeys, ...range})
+          : range.toSet(),
+      anchorKey: anchorIndex < 0 ? clickedKey : anchorKey!,
+    );
+  }
+  if (modifiers.control) {
+    final next = {...selectedKeys};
+    if (!next.remove(clickedKey)) {
+      next.add(clickedKey);
+    }
+    return (selectedKeys: next, anchorKey: clickedKey);
+  }
+  return (selectedKeys: {clickedKey}, anchorKey: clickedKey);
+}
+
+class _SourceTextRange {
+  const _SourceTextRange(this.start, this.end) : fullDocument = false;
+
+  const _SourceTextRange.fullDocument()
+    : start = 0,
+      end = 0,
+      fullDocument = true;
+
+  final int start;
+  final int end;
+  final bool fullDocument;
+}
+
+List<_SourceTextRange> _mergeSourceTextRanges(
+  Iterable<_SourceTextRange> ranges,
+) {
+  final sorted = ranges.toList()
+    ..sort((left, right) => left.start.compareTo(right.start));
+  final merged = <_SourceTextRange>[];
+  for (final range in sorted) {
+    if (range.end <= range.start) {
+      continue;
+    }
+    if (merged.isEmpty || range.start > merged.last.end) {
+      merged.add(range);
+      continue;
+    }
+    final previous = merged.removeLast();
+    merged.add(
+      _SourceTextRange(previous.start, math.max(previous.end, range.end)),
+    );
+  }
+  return merged;
+}
+
+String _sourceTextForRanges(String source, List<_SourceTextRange> ranges) =>
+    ranges.map((range) => source.substring(range.start, range.end)).join();
+
+String _sourceWithoutRanges(String source, List<_SourceTextRange> ranges) {
+  var result = source;
+  for (final range in ranges.reversed) {
+    result = result.replaceRange(range.start, range.end, '');
+  }
+  return result;
+}
+
+List<MarkdownSectionEditor> _selectedMarkdownSections(
+  String source,
+  List<MarkdownHeading> headings,
+  Set<int> selectedIndexes,
+) {
+  final sections = <MarkdownSectionEditor>[];
+  final sortedIndexes = selectedIndexes.toList()..sort();
+  for (final index in sortedIndexes) {
+    final section = MarkdownSectionEditor.fromHeadings(
+      source: source,
+      headings: headings,
+      headingIndex: index,
+    );
+    if (sections.isNotEmpty && section.startOffset < sections.last.endOffset) {
+      continue;
+    }
+    sections.add(section);
+  }
+  return sections;
+}
+
+Future<bool> _refineActiveSourceRangesWithAi(
+  BuildContext context,
+  WidgetRef ref,
+  List<_SourceTextRange> requestedRanges,
+) async {
+  for (final requestedRange in requestedRanges.reversed) {
+    if (!context.mounted) {
+      return false;
+    }
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final source = state.activeText;
+    final start = requestedRange.fullDocument ? 0 : requestedRange.start;
+    final end = requestedRange.fullDocument
+        ? source.length
+        : requestedRange.end;
+    if (start < 0 || end <= start || end > source.length) {
+      return false;
+    }
+    final result = await showBusyMarkAiEdit(
+      context,
+      ref,
+      AiEditorSnapshot(
+        documentSource: source,
+        selectionStart: start,
+        selectionEnd: end,
+        anchorOffset: start,
+        sourceRevision: ref
+            .read(workspaceControllerProvider.notifier)
+            .editRevision,
+        targetId: path ?? 'untitled',
+        documentPath: path,
+        blockTargetAvailable: false,
+      ),
+      fixedTarget: requestedRange.fullDocument
+          ? AiEditTargetKind.document
+          : AiEditTargetKind.selection,
+    );
+    if (result == null || !context.mounted) {
+      return false;
+    }
+    final invocation = result.invocation;
+    final replacementStart = invocation.replacementStart;
+    final replacementEnd = invocation.replacementEnd;
+    if (replacementStart == null ||
+        replacementEnd == null ||
+        replacementStart < 0 ||
+        replacementEnd < replacementStart ||
+        replacementEnd > source.length ||
+        invocation.documentSource != source ||
+        !_isSameActiveDocument(
+          ref.read(workspaceControllerProvider),
+          workspaceId: workspace.id,
+          activePath: path,
+          source: source,
+        )) {
+      return false;
+    }
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText(
+          source.replaceRange(
+            replacementStart,
+            replacementEnd,
+            result.replacement,
+          ),
+          sourceFilePath: path,
+        );
+  }
+  return true;
+}
+
 class _OutlineTab extends ConsumerStatefulWidget {
   const _OutlineTab({required this.workspace, required this.headings});
 
@@ -6288,6 +6839,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   late Set<String> _expandedNodeKeys;
   final _treeScrollController = ScrollController();
   String? _revealedActiveNodeKey;
+  Set<String> _selectedNodeKeys = {};
+  String? _selectionAnchorKey;
 
   @override
   void initState() {
@@ -6307,6 +6860,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
       _outlineStateKey = nextKey;
       _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
       _revealedActiveNodeKey = null;
+      _selectedNodeKeys = {};
+      _selectionAnchorKey = null;
     }
   }
 
@@ -6356,28 +6911,57 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   }
 
   Future<void> _showSectionMenu(
-    DocumentOutlineHeading heading,
-    int headingIndex,
+    List<_OutlineTreeEntry> entries,
+    Map<String, int> headingIndexes,
+    int clickedEntryIndex,
     Offset position,
   ) async {
-    final capabilities = _outlineSectionCapabilities(
-      widget.headings,
-      headingIndex,
-    );
+    final clickedHeading = entries[clickedEntryIndex].node.heading;
+    final clickedKey = _outlineNodeKey(clickedHeading);
+    if (!_selectedNodeKeys.contains(clickedKey)) {
+      setState(() {
+        _selectedNodeKeys = {clickedKey};
+        _selectionAnchorKey = clickedKey;
+      });
+    }
+    final selectedHeadings = <({DocumentOutlineHeading heading, int index})>[
+      for (final entry in entries)
+        if (_selectedNodeKeys.contains(_outlineNodeKey(entry.node.heading)))
+          (
+            heading: entry.node.heading,
+            index: headingIndexes[_outlineNodeKey(entry.node.heading)]!,
+          ),
+    ];
+    if (selectedHeadings.isEmpty) {
+      selectedHeadings.add((
+        heading: clickedHeading,
+        index: headingIndexes[clickedKey]!,
+      ));
+    }
+    final multiple = selectedHeadings.length > 1;
+    final capabilities = multiple
+        ? null
+        : _outlineSectionCapabilities(
+            widget.headings,
+            selectedHeadings.single.index,
+          );
     final action = await showBusyMarkContextMenu<_OutlineSectionAction>(
       context,
       position,
-      items: _outlineSectionMenuItems(context, capabilities),
+      items: _outlineSectionMenuItems(
+        context,
+        capabilities,
+        multipleSelection: multiple,
+      ),
     );
     if (action == null || !mounted) {
       return;
     }
-    await _runSectionAction(heading, headingIndex, action);
+    await _runSectionAction(selectedHeadings, action);
   }
 
   Future<void> _runSectionAction(
-    DocumentOutlineHeading heading,
-    int preferredIndex,
+    List<({DocumentOutlineHeading heading, int index})> selectedHeadings,
     _OutlineSectionAction action,
   ) async {
     final initialState = ref.read(workspaceControllerProvider);
@@ -6409,45 +6993,62 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         )) {
       return;
     }
-    final headingIndex = _resolveParsedOutlineHeadingIndex(
-      parsed.headings,
-      heading,
-      preferredIndex,
-    );
-    if (headingIndex < 0) {
+    final resolvedIndexes = <int>{};
+    for (final selected in selectedHeadings) {
+      final index = _resolveParsedOutlineHeadingIndex(
+        parsed.headings,
+        selected.heading,
+        selected.index,
+      );
+      if (index >= 0) {
+        resolvedIndexes.add(index);
+      }
+    }
+    if (resolvedIndexes.isEmpty) {
       return;
     }
-    final section = MarkdownSectionEditor.fromHeadings(
-      source: source,
-      headings: parsed.headings,
-      headingIndex: headingIndex,
+    final sections = _selectedMarkdownSections(
+      source,
+      parsed.headings,
+      resolvedIndexes,
     );
+    final ranges = _mergeSourceTextRanges([
+      for (final section in sections)
+        _SourceTextRange(section.startOffset, section.endOffset),
+    ]);
+    if (ranges.isEmpty) {
+      return;
+    }
+    final singleSection = sections.length == 1 ? sections.single : null;
     String? updatedSource;
     switch (action) {
       case _OutlineSectionAction.copy:
-        await _copyToClipboard(section.sectionText);
+        await _copyToClipboard(_sourceTextForRanges(source, ranges));
         return;
       case _OutlineSectionAction.cut:
-        await _copyToClipboard(section.sectionText);
-        updatedSource = section.withoutSection();
+        await _copyToClipboard(_sourceTextForRanges(source, ranges));
+        updatedSource = _sourceWithoutRanges(source, ranges);
+      case _OutlineSectionAction.refineWithAi:
+        await _refineActiveSourceRangesWithAi(context, ref, ranges);
+        return;
       case _OutlineSectionAction.delete:
         final confirmed = await _confirmDeleteOutlineSection(
           context,
           ref,
-          heading.text,
+          selectedHeadings.map((selected) => selected.heading.text).join(', '),
         );
         if (!confirmed || !mounted) {
           return;
         }
-        updatedSource = section.withoutSection();
+        updatedSource = _sourceWithoutRanges(source, ranges);
       case _OutlineSectionAction.promote:
-        updatedSource = section.promote();
+        updatedSource = singleSection?.promote();
       case _OutlineSectionAction.demote:
-        updatedSource = section.demote();
+        updatedSource = singleSection?.demote();
       case _OutlineSectionAction.moveUp:
-        updatedSource = section.moveUp();
+        updatedSource = singleSection?.moveUp();
       case _OutlineSectionAction.moveDown:
-        updatedSource = section.moveDown();
+        updatedSource = singleSection?.moveDown();
     }
     if (!mounted ||
         updatedSource == null ||
@@ -6502,6 +7103,9 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         final headingIndex = headingIndexes[key]!;
         final expanded = _expandedNodeKeys.contains(key);
         final hasChildren = node.children.isNotEmpty;
+        final selected = _selectedNodeKeys.isEmpty
+            ? key == activeNodeKey
+            : _selectedNodeKeys.contains(key);
         void toggle() {
           setState(() {
             _revealedActiveNodeKey = null;
@@ -6522,9 +7126,14 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
             leading: _HeadingBadge(level: heading.level),
             hasChildren: hasChildren,
             expanded: expanded,
-            selected: key == activeNodeKey,
+            selected: selected,
             onToggle: hasChildren ? toggle : null,
             onTap: () {
+              final modifiers = _treeSelectionModifiers();
+              _updateOutlineSelection(entries, index, modifiers);
+              if (modifiers.control || modifiers.shift) {
+                return;
+              }
               _setOutlineViewportTarget(
                 ref,
                 workspace: widget.workspace,
@@ -6543,18 +7152,45 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
                   );
             },
             onSecondaryTapUp: (details) => unawaited(
-              _showSectionMenu(heading, headingIndex, details.globalPosition),
+              _showSectionMenu(
+                entries,
+                headingIndexes,
+                index,
+                details.globalPosition,
+              ),
             ),
           ),
         );
       },
     );
   }
+
+  void _updateOutlineSelection(
+    List<_OutlineTreeEntry> entries,
+    int clickedIndex,
+    _TreeSelectionModifiers modifiers,
+  ) {
+    final keys = [
+      for (final entry in entries) _outlineNodeKey(entry.node.heading),
+    ];
+    final update = _updatedTreeSelection(
+      visibleKeys: keys,
+      selectedKeys: _selectedNodeKeys,
+      anchorKey: _selectionAnchorKey,
+      clickedIndex: clickedIndex,
+      modifiers: modifiers,
+    );
+    setState(() {
+      _selectedNodeKeys = update.selectedKeys;
+      _selectionAnchorKey = update.anchorKey;
+    });
+  }
 }
 
 enum _OutlineSectionAction {
   copy,
   cut,
+  refineWithAi,
   delete,
   promote,
   demote,
@@ -6603,8 +7239,9 @@ _OutlineSectionCapabilities _outlineSectionCapabilities(
 
 List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
   BuildContext context,
-  _OutlineSectionCapabilities capabilities,
-) {
+  _OutlineSectionCapabilities? capabilities, {
+  required bool multipleSelection,
+}) {
   final direction = Directionality.of(context);
   return [
     BusyMarkPopupMenuItem(
@@ -6617,32 +7254,39 @@ List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
       label: context.l10n.cut,
       icon: BusyMarkGlyphs.cut,
     ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
-      value: _OutlineSectionAction.promote,
-      label: context.l10n.promoteSection,
-      icon: BusyMarkGlyphs.outdentFor(direction),
-      enabled: capabilities.canPromote,
+      value: _OutlineSectionAction.refineWithAi,
+      label: context.l10n.aiRefineWithAi,
+      icon: BusyMarkGlyphs.ai,
     ),
-    BusyMarkPopupMenuItem(
-      value: _OutlineSectionAction.demote,
-      label: context.l10n.demoteSection,
-      icon: BusyMarkGlyphs.indentFor(direction),
-      enabled: capabilities.canDemote,
-    ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
-    BusyMarkPopupMenuItem(
-      value: _OutlineSectionAction.moveUp,
-      label: context.l10n.moveSectionUp,
-      icon: BusyMarkGlyphs.upArrow,
-      enabled: capabilities.canMoveUp,
-    ),
-    BusyMarkPopupMenuItem(
-      value: _OutlineSectionAction.moveDown,
-      label: context.l10n.moveSectionDown,
-      icon: BusyMarkGlyphs.downArrow,
-      enabled: capabilities.canMoveDown,
-    ),
+    if (!multipleSelection) ...[
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.promote,
+        label: context.l10n.promoteSection,
+        icon: BusyMarkGlyphs.outdentFor(direction),
+        enabled: capabilities!.canPromote,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.demote,
+        label: context.l10n.demoteSection,
+        icon: BusyMarkGlyphs.indentFor(direction),
+        enabled: capabilities.canDemote,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.moveUp,
+        label: context.l10n.moveSectionUp,
+        icon: BusyMarkGlyphs.upArrow,
+        enabled: capabilities.canMoveUp,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _OutlineSectionAction.moveDown,
+        label: context.l10n.moveSectionDown,
+        icon: BusyMarkGlyphs.downArrow,
+        enabled: capabilities.canMoveDown,
+      ),
+    ],
     const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
       value: _OutlineSectionAction.delete,

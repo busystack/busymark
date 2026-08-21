@@ -2293,6 +2293,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get fileActions => 'Azioni sul file';
 
   @override
+  String get actions => 'Azioni';
+
+  @override
   String get gitStatusAdded => 'Aggiunto';
 
   @override
