@@ -29,14 +29,23 @@ const _supportedRawHtmlInlineTags =
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
+
+class _DismissBusyMarkModalIntent extends Intent {
+  const _DismissBusyMarkModalIntent();
+}
+
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final shortcut in BusyMarkAppShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
   for (final entry in BusyMarkEditorShortcuts.definitions.entries)
     if (entry.key != BusyMarkEditorShortcutAction.pastePlainText)
       entry.value.activator: const DoNothingAndStopPropagationIntent(),
   for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  BusyMarkTextEditingShortcutActivators.escape:
+      const _DismissBusyMarkModalIntent(),
 };
 
 /// Prevents application and workspace shortcuts from escaping a modal surface.
@@ -50,7 +59,21 @@ class BusyMarkModalShortcutBoundary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shortcuts(shortcuts: _busyMarkModalShortcuts, child: child);
+    return Shortcuts(
+      shortcuts: _busyMarkModalShortcuts,
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _DismissBusyMarkModalIntent:
+              CallbackAction<_DismissBusyMarkModalIntent>(
+                onInvoke: (_) {
+                  unawaited(Navigator.maybePop(context));
+                  return null;
+                },
+              ),
+        },
+        child: child,
+      ),
+    );
   }
 }
 
@@ -479,6 +502,40 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             ],
           ),
           BusyMarkGroupedList(
+            title: context.l10n.viewMode,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.editor,
+                leading: const Icon(BusyMarkGlyphs.editorView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.editor,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.source,
+                leading: const Icon(BusyMarkGlyphs.sourceView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.source,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.reading,
+                leading: const Icon(BusyMarkGlyphs.previewView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.reading,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.split,
+                leading: const Icon(BusyMarkGlyphs.splitView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.split,
+                ),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
             title: context.l10n.shortcutGroupTextEditing,
             filled: true,
             children: [
@@ -568,6 +625,13 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.clear),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.escape,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.aiRefineWithAi,
+                leading: const Icon(BusyMarkGlyphs.ai),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.refineWithAi,
                 ),
               ),
             ],

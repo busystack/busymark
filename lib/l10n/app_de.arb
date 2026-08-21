@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Vorschau",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Leseansicht",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Zuletzt verwendet",
   "@recent": {
@@ -1319,9 +1319,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Große Datei: Hervorhebung und Faltung sind pausiert",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Keine Vorschau",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Nichts zu lesen",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Hinweis",
   "@note": {
@@ -2622,19 +2622,24 @@
   "aiNoModels": "Ollama wird ausgeführt, aber es wurden keine installierten Modelle gefunden.",
   "aiConnectionFailed": "BusyMark konnte die KI-Textgenerierung nicht überprüfen.",
   "aiConfigureFirst": "Aktivieren Sie unter Einstellungen → KI einen KI-Anbieter und überprüfen Sie ein Modell.",
-  "aiRewrite": "Umschreiben",
-  "aiShorten": "Kürzen",
-  "aiSummarize": "Zusammenfassen",
-  "aiChangeTone": "Ton ändern…",
-  "aiTranslate": "Übersetzen…",
-  "aiProofread": "Korrekturlesen",
-  "aiDraft": "Entwurf erstellen…",
-  "aiSelectionRequired": "Wählen Sie Text für diese KI-Aktion aus.",
-  "aiTonePrompt": "Beschreiben Sie den gewünschten Ton",
-  "aiLanguagePrompt": "Zielsprache",
-  "aiDraftPrompt": "Was soll BusyMark entwerfen?",
+  "aiEditWithAi": "Mit KI bearbeiten",
+  "aiRefineWithAi": "Mit KI verfeinern",
+  "aiInstruction": "Anweisung",
+  "aiChangeTarget": "Was geändert werden darf",
+  "aiSharedContext": "Mit KI geteilter Kontext",
+  "aiTargetSelection": "Ausgewählter Inhalt",
+  "aiTargetInsertAfterBlock": "Nach aktuellem Block einfügen",
+  "aiTargetCurrentBlock": "Aktueller Block",
+  "aiTargetCurrentSection": "Aktueller Abschnitt",
+  "aiTargetCompleteDocument": "Gesamtes Dokument",
+  "aiContextNone": "Kein Dokumentkontext",
+  "aiContextSelection": "Ausgewählter Inhalt",
+  "aiContextCurrentBlock": "Aktueller Block",
+  "aiContextCurrentSection": "Aktueller Abschnitt",
+  "aiContextCompleteDocument": "Gesamtes Dokument",
   "aiGenerating": "Vorschlag wird erstellt…",
   "aiProposal": "KI-Vorschlag",
+  "aiGenerateProposal": "Vorschlag erstellen",
   "aiContextDisclosure": "Der ausgewählte Anbieter erhält {count} Zeichen aus dem angezeigten Kontext.",
   "aiOriginal": "Originaltext",
   "aiSuggested": "Vorschlag",
@@ -2643,6 +2648,9 @@
   "aiStaleProposal": "Das Dokument wurde während der Erstellung dieses Vorschlags geändert. Führen Sie die Aktion erneut aus.",
   "gitAiStagedChangesChanged": "Die vorgemerkten Änderungen wurden geändert, während diese Commit-Nachricht erstellt wurde. Führen Sie die Aktion erneut aus.",
   "aiViewContext": "Gesendeten Kontext anzeigen",
+  "aiReviewExactContent": "Genaue Inhalte prüfen",
+  "aiContentToChange": "Zu ändernder Inhalt",
+  "aiContentSentToAi": "An KI gesendeter Inhalt",
   "aiPrivacyDisabled": "KI ist deaktiviert. BusyMark sendet Dokumentinhalte niemals ohne eine ausdrückliche KI-Aktion.",
   "aiPrivacyLocal": "BusyMark sendet nur den im Prüfdialog angezeigten Kontext an den konfigurierten lokalen Ollama-Dienst. Vorschläge werden nie ohne Prüfung übernommen.",
   "aiPrivacyCloud": "BusyMark sendet nur den im Prüfdialog angezeigten Kontext an {provider}. Anfragen sind zustandslos, und Vorschläge werden nie ohne Prüfung übernommen.",
@@ -2667,10 +2675,7 @@
   "aiColdStartObserved": "Ein Kaltstart des lokalen Modells wurde erkannt.",
   "aiNoCompatibleModels": "Es ist kein kompatibles Modell zur Textgenerierung verfügbar.",
   "aiEnableProvider": "Aktivieren Sie zuerst einen KI-Anbieter.",
-  "aiExplainCode": "Code erklären",
-  "aiImproveCode": "Code verbessern",
   "aiDraftCommitMessage": "Commit-Nachricht entwerfen",
-  "aiCodeBlockRequired": "Setzen Sie den Cursor zuerst in einen eingezäunten Codeblock.",
   "aiDrafting": "Entwurf wird erstellt…",
   "aiDraftWithAi": "Mit KI entwerfen",
   "generateOrUpdateMarkdownToc": "Inhaltsverzeichnis erstellen/aktualisieren",

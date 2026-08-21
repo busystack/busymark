@@ -50,20 +50,23 @@ void main() {
     final prompt = jsonDecode(request.userPrompt) as Map<String, dynamic>;
 
     expect(prompt['document_data'], input);
-    expect(prompt['task'], contains('clarity'));
+    expect(prompt['task'], contains('Rewrite for clarity'));
     expect(request.systemPrompt, contains('untrusted document data'));
   });
 
-  test('plain-text summary and draft prompts never request Markdown', () {
+  test('plain-text edit prompts never request Markdown', () {
     final request = AiPromptBuilder.build(
       id: 'plain-text',
       targetId: 'document:block',
-      feature: AiFeature.summarize,
-      scope: AiScope.document,
+      feature: AiFeature.editDocument,
+      scope: AiScope.markdownEdit,
       input: 'Original text.',
       model: 'test-model',
       sourceRevision: 4,
       contentFormat: AiContentFormat.plainText,
+      editTarget: AiEditTargetKind.selection,
+      editContext: AiEditContextKind.selection,
+      instruction: 'Summarize this text.',
     );
 
     expect(request.contentFormat, AiContentFormat.plainText);
@@ -73,20 +76,22 @@ void main() {
       contains('no commentary or Markdown formatting'),
     );
     expect(request.userPrompt, contains('plain text'));
-    expect(request.userPrompt, isNot(contains('Markdown summary')));
+    expect(request.userPrompt, isNot(contains('Markdown')));
 
     final draft = AiPromptBuilder.build(
       id: 'plain-draft',
       targetId: 'document:block',
-      feature: AiFeature.draft,
-      scope: AiScope.insertion,
+      feature: AiFeature.editDocument,
+      scope: AiScope.markdownEdit,
       input: '',
       model: 'test-model',
       sourceRevision: 4,
       contentFormat: AiContentFormat.plainText,
-      instruction: 'Release note',
+      editTarget: AiEditTargetKind.insertAfterBlock,
+      editContext: AiEditContextKind.none,
+      instruction: 'Draft a professional release note.',
     );
-    expect(draft.userPrompt, contains('professional plain text'));
+    expect(draft.userPrompt, contains('professional release note'));
   });
 
   group('Markdown proposal guard', () {
@@ -480,11 +485,14 @@ AiRequest _request({String id = 'request', String input = 'Original text.'}) {
   return AiPromptBuilder.build(
     id: id,
     targetId: 'document:0:13',
-    feature: AiFeature.rewrite,
-    scope: AiScope.selection,
+    feature: AiFeature.editDocument,
+    scope: AiScope.markdownEdit,
     input: input,
     model: 'test-model',
     sourceRevision: 4,
+    editTarget: AiEditTargetKind.selection,
+    editContext: AiEditContextKind.selection,
+    instruction: 'Rewrite for clarity.',
   );
 }
 

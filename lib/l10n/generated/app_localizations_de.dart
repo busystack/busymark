@@ -255,7 +255,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pasteWithoutFormatting => 'Ohne Formatierung einfügen';
 
   @override
-  String get preview => 'Vorschau';
+  String get reading => 'Leseansicht';
 
   @override
   String get recent => 'Zuletzt verwendet';
@@ -1344,7 +1344,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Große Datei: Hervorhebung und Faltung sind pausiert';
 
   @override
-  String get noPreview => 'Keine Vorschau';
+  String get nothingToRead => 'Nichts zu lesen';
 
   @override
   String get note => 'Hinweis';
@@ -3135,43 +3135,58 @@ class AppLocalizationsDe extends AppLocalizations {
       'Aktivieren Sie unter Einstellungen → KI einen KI-Anbieter und überprüfen Sie ein Modell.';
 
   @override
-  String get aiRewrite => 'Umschreiben';
+  String get aiEditWithAi => 'Mit KI bearbeiten';
 
   @override
-  String get aiShorten => 'Kürzen';
+  String get aiRefineWithAi => 'Mit KI verfeinern';
 
   @override
-  String get aiSummarize => 'Zusammenfassen';
+  String get aiInstruction => 'Anweisung';
 
   @override
-  String get aiChangeTone => 'Ton ändern…';
+  String get aiChangeTarget => 'Was geändert werden darf';
 
   @override
-  String get aiTranslate => 'Übersetzen…';
+  String get aiSharedContext => 'Mit KI geteilter Kontext';
 
   @override
-  String get aiProofread => 'Korrekturlesen';
+  String get aiTargetSelection => 'Ausgewählter Inhalt';
 
   @override
-  String get aiDraft => 'Entwurf erstellen…';
+  String get aiTargetInsertAfterBlock => 'Nach aktuellem Block einfügen';
 
   @override
-  String get aiSelectionRequired => 'Wählen Sie Text für diese KI-Aktion aus.';
+  String get aiTargetCurrentBlock => 'Aktueller Block';
 
   @override
-  String get aiTonePrompt => 'Beschreiben Sie den gewünschten Ton';
+  String get aiTargetCurrentSection => 'Aktueller Abschnitt';
 
   @override
-  String get aiLanguagePrompt => 'Zielsprache';
+  String get aiTargetCompleteDocument => 'Gesamtes Dokument';
 
   @override
-  String get aiDraftPrompt => 'Was soll BusyMark entwerfen?';
+  String get aiContextNone => 'Kein Dokumentkontext';
+
+  @override
+  String get aiContextSelection => 'Ausgewählter Inhalt';
+
+  @override
+  String get aiContextCurrentBlock => 'Aktueller Block';
+
+  @override
+  String get aiContextCurrentSection => 'Aktueller Abschnitt';
+
+  @override
+  String get aiContextCompleteDocument => 'Gesamtes Dokument';
 
   @override
   String get aiGenerating => 'Vorschlag wird erstellt…';
 
   @override
   String get aiProposal => 'KI-Vorschlag';
+
+  @override
+  String get aiGenerateProposal => 'Vorschlag erstellen';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3202,6 +3217,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Gesendeten Kontext anzeigen';
+
+  @override
+  String get aiReviewExactContent => 'Genaue Inhalte prüfen';
+
+  @override
+  String get aiContentToChange => 'Zu ändernder Inhalt';
+
+  @override
+  String get aiContentSentToAi => 'An KI gesendeter Inhalt';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3296,17 +3320,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiEnableProvider => 'Aktivieren Sie zuerst einen KI-Anbieter.';
 
   @override
-  String get aiExplainCode => 'Code erklären';
-
-  @override
-  String get aiImproveCode => 'Code verbessern';
-
-  @override
   String get aiDraftCommitMessage => 'Commit-Nachricht entwerfen';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Setzen Sie den Cursor zuerst in einen eingezäunten Codeblock.';
 
   @override
   String get aiDrafting => 'Entwurf wird erstellt…';

@@ -61,7 +61,6 @@ class OpenAiProvider implements AiProvider {
       AiModelClass.fast: ['gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol'],
       AiModelClass.balanced: ['gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6-sol'],
       AiModelClass.strong: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
-      AiModelClass.code: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
     },
   );
 
@@ -83,12 +82,15 @@ class OpenAiProvider implements AiProvider {
       id: 'openai-health',
       targetId: 'settings:openai-health',
       provider: AiProviderKind.openAi,
-      feature: AiFeature.rewrite,
-      scope: AiScope.selection,
+      feature: AiFeature.editDocument,
+      scope: AiScope.markdownEdit,
       input: 'Connection test.',
       modelCandidates: [model],
       sourceRevision: 0,
       contentFormat: AiContentFormat.plainText,
+      editTarget: AiEditTargetKind.selection,
+      editContext: AiEditContextKind.selection,
+      instruction: 'Return the requested connection-test value.',
       deadline: const Duration(seconds: 45),
       maxRetries: 0,
     );

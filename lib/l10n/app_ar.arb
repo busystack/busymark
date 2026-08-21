@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "معاينة",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "وضع القراءة",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "الأخيرة",
   "@recent": {
@@ -1321,9 +1321,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "ملف كبير: تم إيقاف التمييز والطي مؤقتًا",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "لا توجد معاينة",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "لا يوجد محتوى للقراءة",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "ملاحظة",
   "@note": {
@@ -2601,19 +2601,24 @@
   "aiNoModels": "يعمل Ollama، لكن لم يُعثر على نماذج مثبّتة.",
   "aiConnectionFailed": "تعذّر على BusyMark التحقق من إنشاء النص بالذكاء الاصطناعي.",
   "aiConfigureFirst": "فعّل مزوّد ذكاء اصطناعي وتحقق من نموذج في الإعدادات ← الذكاء الاصطناعي.",
-  "aiRewrite": "إعادة الصياغة",
-  "aiShorten": "الاختصار",
-  "aiSummarize": "التلخيص",
-  "aiChangeTone": "تغيير النبرة…",
-  "aiTranslate": "الترجمة…",
-  "aiProofread": "التدقيق اللغوي",
-  "aiDraft": "إنشاء مسودة…",
-  "aiSelectionRequired": "حدّد نصًا لإجراء هذا الإجراء بالذكاء الاصطناعي.",
-  "aiTonePrompt": "صِف النبرة المطلوبة",
-  "aiLanguagePrompt": "اللغة الهدف",
-  "aiDraftPrompt": "ما الذي ينبغي أن يصوغه BusyMark؟",
+  "aiEditWithAi": "تحرير باستخدام الذكاء الاصطناعي",
+  "aiRefineWithAi": "تحسين باستخدام الذكاء الاصطناعي",
+  "aiInstruction": "التعليمات",
+  "aiChangeTarget": "ما الذي يمكن تغييره",
+  "aiSharedContext": "السياق المُشارك مع الذكاء الاصطناعي",
+  "aiTargetSelection": "المحتوى المحدد",
+  "aiTargetInsertAfterBlock": "إدراج بعد الكتلة الحالية",
+  "aiTargetCurrentBlock": "الكتلة الحالية",
+  "aiTargetCurrentSection": "القسم الحالي",
+  "aiTargetCompleteDocument": "المستند بالكامل",
+  "aiContextNone": "بلا سياق من المستند",
+  "aiContextSelection": "المحتوى المحدد",
+  "aiContextCurrentBlock": "الكتلة الحالية",
+  "aiContextCurrentSection": "القسم الحالي",
+  "aiContextCompleteDocument": "المستند بالكامل",
   "aiGenerating": "جارٍ إنشاء الاقتراح…",
   "aiProposal": "اقتراح الذكاء الاصطناعي",
+  "aiGenerateProposal": "إنشاء الاقتراح",
   "aiContextDisclosure": "سيتلقى المزوّد المحدد ⁨{count}⁩ حرفًا من السياق المعروض.",
   "aiOriginal": "النص الأصلي",
   "aiSuggested": "النص المقترح",
@@ -2622,6 +2627,9 @@
   "aiStaleProposal": "تغيّر المستند أثناء إنشاء هذا الاقتراح. شغّل الإجراء مرة أخرى.",
   "gitAiStagedChangesChanged": "تغيّرت التغييرات المُرحَّلة أثناء إنشاء رسالة الالتزام هذه. شغّل الإجراء مرة أخرى.",
   "aiViewContext": "عرض السياق المُرسل",
+  "aiReviewExactContent": "مراجعة المحتوى الدقيق",
+  "aiContentToChange": "المحتوى المراد تغييره",
+  "aiContentSentToAi": "المحتوى المُرسل إلى الذكاء الاصطناعي",
   "aiPrivacyDisabled": "الذكاء الاصطناعي معطّل. لا يرسل BusyMark محتوى المستند مطلقًا من دون إجراء صريح للذكاء الاصطناعي.",
   "aiPrivacyLocal": "لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى خدمة Ollama المحلية المضبوطة. لا تُطبّق الاقتراحات مطلقًا من دون مراجعة.",
   "aiPrivacyCloud": "لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى ⁨{provider}⁩. الطلبات عديمة الحالة، ولا تُطبّق الاقتراحات مطلقًا من دون مراجعة.",
@@ -2646,10 +2654,7 @@
   "aiColdStartObserved": "تم اكتشاف بدء تشغيل بارد للنموذج المحلي.",
   "aiNoCompatibleModels": "لا يتوفر نموذج متوافق لإنشاء النص.",
   "aiEnableProvider": "فعّل مزوّد ذكاء اصطناعي أولًا.",
-  "aiExplainCode": "شرح الشفرة",
-  "aiImproveCode": "تحسين الشفرة",
   "aiDraftCommitMessage": "صياغة مسودة رسالة الإيداع",
-  "aiCodeBlockRequired": "ضع المؤشر أولًا داخل كتلة شفرة مسيّجة.",
   "aiDrafting": "جارٍ إعداد المسودة…",
   "aiDraftWithAi": "إعداد مسودة بالذكاء الاصطناعي",
   "generateOrUpdateMarkdownToc": "إنشاء/تحديث جدول المحتويات",

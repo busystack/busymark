@@ -254,7 +254,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pasteWithoutFormatting => 'Вставить без форматирования';
 
   @override
-  String get preview => 'Предварительный просмотр';
+  String get reading => 'Режим чтения';
 
   @override
   String get recent => 'Недавние';
@@ -1341,7 +1341,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Большой файл: подсветка и сворачивание приостановлены';
 
   @override
-  String get noPreview => 'Нет предварительного просмотра';
+  String get nothingToRead => 'Нет содержимого для чтения';
 
   @override
   String get note => 'Примечание';
@@ -3138,43 +3138,58 @@ class AppLocalizationsRu extends AppLocalizations {
       'Включите поставщика ИИ и проверьте модель в разделе «Настройки → ИИ».';
 
   @override
-  String get aiRewrite => 'Переписать';
+  String get aiEditWithAi => 'Редактировать с помощью ИИ';
 
   @override
-  String get aiShorten => 'Сократить';
+  String get aiRefineWithAi => 'Улучшить с помощью ИИ';
 
   @override
-  String get aiSummarize => 'Обобщить';
+  String get aiInstruction => 'Инструкция';
 
   @override
-  String get aiChangeTone => 'Изменить тон…';
+  String get aiChangeTarget => 'Что можно изменить';
 
   @override
-  String get aiTranslate => 'Перевести…';
+  String get aiSharedContext => 'Контекст, передаваемый ИИ';
 
   @override
-  String get aiProofread => 'Вычитать';
+  String get aiTargetSelection => 'Выбранное содержимое';
 
   @override
-  String get aiDraft => 'Создать черновик…';
+  String get aiTargetInsertAfterBlock => 'Вставить после текущего блока';
 
   @override
-  String get aiSelectionRequired => 'Выделите текст для этого действия ИИ.';
+  String get aiTargetCurrentBlock => 'Текущий блок';
 
   @override
-  String get aiTonePrompt => 'Опишите требуемый тон';
+  String get aiTargetCurrentSection => 'Текущий раздел';
 
   @override
-  String get aiLanguagePrompt => 'Целевой язык';
+  String get aiTargetCompleteDocument => 'Весь документ';
 
   @override
-  String get aiDraftPrompt => 'Что должен подготовить BusyMark?';
+  String get aiContextNone => 'Без контекста документа';
+
+  @override
+  String get aiContextSelection => 'Выбранное содержимое';
+
+  @override
+  String get aiContextCurrentBlock => 'Текущий блок';
+
+  @override
+  String get aiContextCurrentSection => 'Текущий раздел';
+
+  @override
+  String get aiContextCompleteDocument => 'Весь документ';
 
   @override
   String get aiGenerating => 'Создание предложения…';
 
   @override
   String get aiProposal => 'Предложение ИИ';
+
+  @override
+  String get aiGenerateProposal => 'Создать предложение';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3205,6 +3220,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Показать отправленный контекст';
+
+  @override
+  String get aiReviewExactContent => 'Просмотреть точное содержимое';
+
+  @override
+  String get aiContentToChange => 'Содержимое для изменения';
+
+  @override
+  String get aiContentSentToAi => 'Содержимое, отправляемое ИИ';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3298,17 +3322,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiEnableProvider => 'Сначала включите поставщика ИИ.';
 
   @override
-  String get aiExplainCode => 'Объяснить код';
-
-  @override
-  String get aiImproveCode => 'Улучшить код';
-
-  @override
   String get aiDraftCommitMessage => 'Создать черновик сообщения коммита';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Сначала поместите курсор в ограждённый блок кода.';
 
   @override
   String get aiDrafting => 'Создание черновика…';

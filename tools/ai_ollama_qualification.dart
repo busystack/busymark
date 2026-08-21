@@ -98,125 +98,101 @@ Iterable<String> releaseTags(Iterable<String> tags) sync* {
   const paragraph =
       'The documentation owner should carry out all of the release validation steps in the documented order so the published guide does not become inconsistent with the application.';
   final paragraphStart = source.indexOf(paragraph);
-  const code = '''```dart
-Iterable<String> releaseTags(Iterable<String> tags) sync* {
-  for (final tag in tags) {
-    if (tag.startsWith('release/')) yield tag.substring(8);
-  }
-}
-```''';
-  final codeStart = source.indexOf(code);
+  AiRequest edit({
+    required String id,
+    required String instruction,
+    required AiEditTargetKind target,
+    required AiEditContextKind context,
+    required String input,
+    required int replacementStart,
+    required int replacementEnd,
+    String replacementPrefix = '',
+  }) => AiPromptBuilder.build(
+    id: id,
+    targetId: 'qualification:$id',
+    provider: AiProviderKind.ollamaLocal,
+    feature: AiFeature.editDocument,
+    scope: AiScope.markdownEdit,
+    input: input,
+    modelCandidates: [model],
+    sourceRevision: 1,
+    instruction: instruction,
+    editTarget: target,
+    editContext: context,
+    replacementOriginal: source.substring(replacementStart, replacementEnd),
+    documentSource: source,
+    replacementStart: replacementStart,
+    replacementEnd: replacementEnd,
+    replacementPrefix: replacementPrefix,
+    trimReplacementOutput: target == AiEditTargetKind.insertAfterBlock,
+    deadline: const Duration(minutes: 5),
+    maxRetries: 0,
+  );
 
-  AiRequest selection(String id, AiFeature feature, {String? instruction}) =>
-      AiPromptBuilder.build(
-        id: id,
-        targetId: 'qualification:$id',
-        provider: AiProviderKind.ollamaLocal,
-        feature: feature,
-        scope: AiScope.selection,
+  final sectionStart = source.indexOf('# Release operations');
+  return [
+    _Fixture(
+      'Selection target and selection context',
+      edit(
+        id: 'selection',
+        instruction: 'Rewrite for clarity without changing meaning.',
+        target: AiEditTargetKind.selection,
+        context: AiEditContextKind.selection,
         input: paragraph,
-        modelCandidates: [model],
-        sourceRevision: 1,
-        instruction: instruction,
-        replacementOriginal: paragraph,
-        documentSource: source,
         replacementStart: paragraphStart,
         replacementEnd: paragraphStart + paragraph.length,
-        deadline: const Duration(minutes: 5),
-        maxRetries: 0,
-      );
-
-  return [
-    _Fixture('Rewrite', selection('rewrite', AiFeature.rewrite)),
-    _Fixture('Shorten', selection('shorten', AiFeature.shorten)),
-    _Fixture(
-      'Change tone',
-      selection(
-        'tone',
-        AiFeature.tone,
-        instruction: 'neutral technical documentation',
       ),
     ),
     _Fixture(
-      'Translate',
-      selection('translate', AiFeature.translate, instruction: 'German'),
-    ),
-    _Fixture('Proofread', selection('proofread', AiFeature.proofread)),
-    _Fixture(
-      'Whole-document summary',
-      AiPromptBuilder.build(
-        id: 'summary',
-        targetId: 'qualification:summary',
-        provider: AiProviderKind.ollamaLocal,
-        feature: AiFeature.summarize,
-        scope: AiScope.document,
+      'Block target and document context',
+      edit(
+        id: 'block',
+        instruction: 'Proofread the target paragraph.',
+        target: AiEditTargetKind.block,
+        context: AiEditContextKind.document,
         input: source,
-        modelCandidates: [model],
-        sourceRevision: 1,
-        documentSource: source,
-        replacementOriginal: '',
+        replacementStart: paragraphStart,
+        replacementEnd: paragraphStart + paragraph.length,
+      ),
+    ),
+    _Fixture(
+      'Section target and section context',
+      edit(
+        id: 'section',
+        instruction:
+            'Improve the prose while preserving every Markdown structure and protected construct exactly.',
+        target: AiEditTargetKind.section,
+        context: AiEditContextKind.section,
+        input: source.substring(sectionStart),
+        replacementStart: sectionStart,
+        replacementEnd: source.length,
+      ),
+    ),
+    _Fixture(
+      'Insertion target without document context',
+      edit(
+        id: 'insertion',
+        instruction:
+            'Write a concise deployment prerequisites section for Ubuntu 24.04, 8 GB RAM, and 20 GB free disk space.',
+        target: AiEditTargetKind.insertAfterBlock,
+        context: AiEditContextKind.none,
+        input: '',
         replacementStart: source.length,
         replacementEnd: source.length,
-        deadline: const Duration(minutes: 5),
-        maxRetries: 0,
+        replacementPrefix: '\n\n',
       ),
     ),
     _Fixture(
-      'Draft',
-      AiPromptBuilder.build(
-        id: 'draft',
-        targetId: 'qualification:draft',
-        provider: AiProviderKind.ollamaLocal,
-        feature: AiFeature.draft,
-        scope: AiScope.insertion,
-        input: '- Ubuntu 24.04\n- 8 GB RAM\n- 20 GB free disk space',
-        modelCandidates: [model],
-        sourceRevision: 1,
-        instruction: 'Write a concise deployment prerequisites section.',
-        documentSource: source,
-        replacementOriginal: '',
-        replacementStart: source.length,
+      'Document target',
+      edit(
+        id: 'document',
+        instruction:
+            'Proofread all prose while preserving every Markdown structure and protected construct exactly.',
+        target: AiEditTargetKind.document,
+        context: AiEditContextKind.document,
+        input: source,
+        replacementStart: 0,
         replacementEnd: source.length,
-        deadline: const Duration(minutes: 5),
-        maxRetries: 0,
-      ),
-    ),
-    _Fixture(
-      'Explain fenced code',
-      AiPromptBuilder.build(
-        id: 'explain-code',
-        targetId: 'qualification:explain-code',
-        provider: AiProviderKind.ollamaLocal,
-        feature: AiFeature.explainCode,
-        scope: AiScope.codeBlock,
-        input: code,
-        modelCandidates: [model],
-        sourceRevision: 1,
-        documentSource: source,
-        replacementOriginal: '',
-        replacementStart: codeStart + code.length,
-        replacementEnd: codeStart + code.length,
-        deadline: const Duration(minutes: 5),
-        maxRetries: 0,
-      ),
-    ),
-    _Fixture(
-      'Improve fenced code',
-      AiPromptBuilder.build(
-        id: 'improve-code',
-        targetId: 'qualification:improve-code',
-        provider: AiProviderKind.ollamaLocal,
-        feature: AiFeature.improveCode,
-        scope: AiScope.codeBlock,
-        input: code,
-        modelCandidates: [model],
-        sourceRevision: 1,
-        documentSource: source,
-        replacementOriginal: code,
-        replacementStart: codeStart,
-        replacementEnd: codeStart + code.length,
-        deadline: const Duration(minutes: 5),
-        maxRetries: 0,
       ),
     ),
     _Fixture(

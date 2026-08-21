@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "पूर्वावलोकन",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "पठन दृश्य",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "हालिया",
   "@recent": {
@@ -1321,9 +1321,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "कोई पूर्वावलोकन नहीं",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "पढ़ने के लिए कोई सामग्री नहीं",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "नोट",
   "@note": {
@@ -2601,19 +2601,24 @@
   "aiNoModels": "Ollama चल रहा है, लेकिन कोई इंस्टॉल किया गया मॉडल नहीं मिला।",
   "aiConnectionFailed": "BusyMark AI टेक्स्ट जनरेशन को सत्यापित नहीं कर सका।",
   "aiConfigureFirst": "पहले सेटिंग्स → AI में किसी AI प्रदाता को सक्षम करें और मॉडल सत्यापित करें।",
-  "aiRewrite": "पुनर्लेखन",
-  "aiShorten": "छोटा करें",
-  "aiSummarize": "सारांश बनाएँ",
-  "aiChangeTone": "लहजा बदलें…",
-  "aiTranslate": "अनुवाद करें…",
-  "aiProofread": "प्रूफ़रीड करें",
-  "aiDraft": "मसौदा बनाएँ…",
-  "aiSelectionRequired": "इस एआई क्रिया के लिए टेक्स्ट चुनें।",
-  "aiTonePrompt": "वांछित लहजे का वर्णन करें",
-  "aiLanguagePrompt": "लक्षित भाषा",
-  "aiDraftPrompt": "BusyMark को क्या लिखना चाहिए?",
+  "aiEditWithAi": "AI से संपादित करें",
+  "aiRefineWithAi": "AI से बेहतर बनाएँ",
+  "aiInstruction": "निर्देश",
+  "aiChangeTarget": "क्या बदला जा सकता है",
+  "aiSharedContext": "AI के साथ साझा संदर्भ",
+  "aiTargetSelection": "चयनित सामग्री",
+  "aiTargetInsertAfterBlock": "वर्तमान ब्लॉक के बाद डालें",
+  "aiTargetCurrentBlock": "वर्तमान ब्लॉक",
+  "aiTargetCurrentSection": "वर्तमान अनुभाग",
+  "aiTargetCompleteDocument": "पूरा दस्तावेज़",
+  "aiContextNone": "कोई दस्तावेज़ संदर्भ नहीं",
+  "aiContextSelection": "चयनित सामग्री",
+  "aiContextCurrentBlock": "वर्तमान ब्लॉक",
+  "aiContextCurrentSection": "वर्तमान अनुभाग",
+  "aiContextCompleteDocument": "पूरा दस्तावेज़",
   "aiGenerating": "सुझाव बनाया जा रहा है…",
   "aiProposal": "एआई सुझाव",
+  "aiGenerateProposal": "प्रस्ताव बनाएँ",
   "aiContextDisclosure": "चयनित प्रदाता को दिखाए गए संदर्भ के {count} वर्ण मिलेंगे।",
   "aiOriginal": "मूल टेक्स्ट",
   "aiSuggested": "सुझाया गया टेक्स्ट",
@@ -2622,6 +2627,9 @@
   "aiStaleProposal": "यह सुझाव बनते समय दस्तावेज़ बदल गया। क्रिया फिर से चलाएँ।",
   "gitAiStagedChangesChanged": "यह कमिट संदेश बनते समय स्टेज किए गए बदलाव बदल गए। क्रिया फिर से चलाएँ।",
   "aiViewContext": "भेजा गया संदर्भ देखें",
+  "aiReviewExactContent": "सटीक सामग्री की समीक्षा करें",
+  "aiContentToChange": "बदली जाने वाली सामग्री",
+  "aiContentSentToAi": "AI को भेजी गई सामग्री",
   "aiPrivacyDisabled": "AI अक्षम है। BusyMark किसी स्पष्ट AI कार्रवाई के बिना दस्तावेज़ की सामग्री कभी नहीं भेजता।",
   "aiPrivacyLocal": "BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल कॉन्फ़िगर की गई स्थानीय Ollama सेवा को भेजता है। प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।",
   "aiPrivacyCloud": "BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल {provider} को भेजता है। अनुरोध स्टेटलेस होते हैं और प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।",
@@ -2646,10 +2654,7 @@
   "aiColdStartObserved": "स्थानीय मॉडल का कोल्ड स्टार्ट पाया गया।",
   "aiNoCompatibleModels": "कोई संगत टेक्स्ट-जनरेशन मॉडल उपलब्ध नहीं है।",
   "aiEnableProvider": "पहले किसी AI प्रदाता को सक्षम करें।",
-  "aiExplainCode": "कोड समझाएँ",
-  "aiImproveCode": "कोड सुधारें",
   "aiDraftCommitMessage": "कमिट संदेश का मसौदा बनाएँ",
-  "aiCodeBlockRequired": "पहले कर्सर को किसी फ़ेंस्ड कोड ब्लॉक में रखें।",
   "aiDrafting": "मसौदा बनाया जा रहा है…",
   "aiDraftWithAi": "AI से मसौदा बनाएँ",
   "generateOrUpdateMarkdownToc": "विषय-सूची बनाएँ/अपडेट करें",

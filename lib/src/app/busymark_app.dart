@@ -116,6 +116,22 @@ class BusyMarkApp extends ConsumerWidget {
                 BusyMarkAppShortcutActivators.search: const _OpenSearchIntent(),
                 BusyMarkAppShortcutActivators.toggleSidebar:
                     const _ToggleSidebarIntent(),
+                BusyMarkDocumentViewShortcutActivators.editor:
+                    const _DocumentViewModeIntent(
+                      DocumentViewModePreference.editor,
+                    ),
+                BusyMarkDocumentViewShortcutActivators.source:
+                    const _DocumentViewModeIntent(
+                      DocumentViewModePreference.source,
+                    ),
+                BusyMarkDocumentViewShortcutActivators.reading:
+                    const _DocumentViewModeIntent(
+                      DocumentViewModePreference.preview,
+                    ),
+                BusyMarkDocumentViewShortcutActivators.split:
+                    const _DocumentViewModeIntent(
+                      DocumentViewModePreference.split,
+                    ),
               },
               child: Actions(
                 actions: {
@@ -290,6 +306,17 @@ class BusyMarkApp extends ConsumerWidget {
                       return null;
                     },
                   ),
+                  _DocumentViewModeIntent:
+                      CallbackAction<_DocumentViewModeIntent>(
+                        onInvoke: (intent) {
+                          unawaited(
+                            ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .setDocumentViewMode(intent.mode),
+                          );
+                          return null;
+                        },
+                      ),
                 },
                 child: _BusyMarkSearchShortcutHandler(
                   child: ColoredBox(
@@ -701,17 +728,18 @@ class BusyMarkApp extends ConsumerWidget {
     final labels = HeaderBarLabels(
       editor: l10n.editor,
       source: l10n.source,
-      preview: l10n.preview,
+      preview: l10n.reading,
       split: l10n.split,
       viewMode: l10n.viewMode,
-      editorShortcut: '',
-      editorGtkAccelerator: '',
-      sourceShortcut: '',
-      sourceGtkAccelerator: '',
-      previewShortcut: '',
-      previewGtkAccelerator: '',
-      splitShortcut: '',
-      splitGtkAccelerator: '',
+      editorShortcut: BusyMarkDocumentViewShortcutLabels.editor,
+      editorGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.editor,
+      sourceShortcut: BusyMarkDocumentViewShortcutLabels.source,
+      sourceGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.source,
+      previewShortcut: BusyMarkDocumentViewShortcutLabels.reading,
+      previewGtkAccelerator:
+          BusyMarkDocumentViewShortcutGtkAccelerators.reading,
+      splitShortcut: BusyMarkDocumentViewShortcutLabels.split,
+      splitGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.split,
       search: material.searchFieldLabel,
       searchShortcut: BusyMarkAppShortcutLabels.search,
       refresh: l10n.validate,
@@ -1007,4 +1035,10 @@ class _OpenSearchIntent extends Intent {
 
 class _ToggleSidebarIntent extends Intent {
   const _ToggleSidebarIntent();
+}
+
+class _DocumentViewModeIntent extends Intent {
+  const _DocumentViewModeIntent(this.mode);
+
+  final DocumentViewModePreference mode;
 }

@@ -8,7 +8,7 @@ projects.
 [![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
 
 <p align="center">
-  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split editor and preview view" width="900">
+  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
 </p>
 
 <p align="center">
@@ -24,11 +24,11 @@ projects.
 - Create Writerside Markdown and XML topics from the TOC.
 - Create, select, import, edit, and reuse Writerside instances and TOC libraries.
 - Edit and save local files.
-- Preview Markdown content.
+- Read rendered Markdown without editing it.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
-- Rewrite, shorten, summarize, translate, proofread, draft, and assist with
-  fenced code through an explicitly configured Ollama, OpenAI, or Gemini model
-  and diff-before-apply review.
+- Edit Markdown with free-form AI instructions, an explicit change target, and
+  explicitly selected context through Ollama, OpenAI, or Gemini, with
+  diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
@@ -52,9 +52,9 @@ projects.
   </tr>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark preview view">
+      <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark reading view">
       <br>
-      <sub><b>Preview view</b> for rendered Markdown documentation.</sub>
+      <sub><b>Reading view</b> for rendered Markdown documentation.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
@@ -128,11 +128,14 @@ references. An exportable configuration is included in
 ## AI editing
 
 BusyMark's optional AI editing is disabled by default and supports loopback
-Ollama, OpenAI, and Google Gemini. It exposes explicit Markdown actions in
-Source view, fenced-code assistance, and staged-diff commit-message drafting.
-BusyMark discloses the selected provider and context, streams into a temporary
-proposal, reparses and validates the complete candidate Markdown document,
-shows a unified diff, and never applies a proposal without confirmation. Cloud
+Ollama, OpenAI, and Google Gemini. In Source and Editor views, select text and
+choose **Refine with AI** from its context menu, or press **Ctrl+G**. The user
+then writes the instruction and independently chooses what may change and what
+document context may be shared. Staged-diff commit-message drafting is
+available separately in Git Changes. BusyMark discloses the exact context,
+streams into a temporary proposal, reparses and validates the complete
+candidate Markdown document, shows a unified diff, and never applies a proposal
+without confirmation. Cloud
 keys are stored in the operating-system credential service and cloud use
 requires explicit consent; provider routing never crosses provider boundaries.
 

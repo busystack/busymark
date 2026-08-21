@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Pré-visualização",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Leitura",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Recentes",
   "@recent": {
@@ -1319,9 +1319,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Arquivo grande: o realce e o recolhimento estão pausados",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Sem pré-visualização",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Nenhum conteúdo para ler",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Observação",
   "@note": {
@@ -2599,19 +2599,24 @@
   "aiNoModels": "O Ollama está em execução, mas nenhum modelo instalado foi encontrado.",
   "aiConnectionFailed": "O BusyMark não conseguiu verificar a geração de texto por IA.",
   "aiConfigureFirst": "Ative um provedor de IA e verifique um modelo em Configurações → IA.",
-  "aiRewrite": "Reescrever",
-  "aiShorten": "Encurtar",
-  "aiSummarize": "Resumir",
-  "aiChangeTone": "Alterar tom…",
-  "aiTranslate": "Traduzir…",
-  "aiProofread": "Revisar",
-  "aiDraft": "Redigir…",
-  "aiSelectionRequired": "Selecione um texto para esta ação de IA.",
-  "aiTonePrompt": "Descreva o tom desejado",
-  "aiLanguagePrompt": "Idioma de destino",
-  "aiDraftPrompt": "O que o BusyMark deve redigir?",
+  "aiEditWithAi": "Editar com IA",
+  "aiRefineWithAi": "Melhorar com IA",
+  "aiInstruction": "Instrução",
+  "aiChangeTarget": "O que pode ser alterado",
+  "aiSharedContext": "Contexto compartilhado com a IA",
+  "aiTargetSelection": "Conteúdo selecionado",
+  "aiTargetInsertAfterBlock": "Inserir após o bloco atual",
+  "aiTargetCurrentBlock": "Bloco atual",
+  "aiTargetCurrentSection": "Seção atual",
+  "aiTargetCompleteDocument": "Documento completo",
+  "aiContextNone": "Sem contexto do documento",
+  "aiContextSelection": "Conteúdo selecionado",
+  "aiContextCurrentBlock": "Bloco atual",
+  "aiContextCurrentSection": "Seção atual",
+  "aiContextCompleteDocument": "Documento completo",
   "aiGenerating": "Gerando proposta…",
   "aiProposal": "Proposta de IA",
+  "aiGenerateProposal": "Gerar proposta",
   "aiContextDisclosure": "O provedor selecionado receberá {count} caracteres do contexto exibido.",
   "aiOriginal": "Texto original",
   "aiSuggested": "Sugestão",
@@ -2620,6 +2625,9 @@
   "aiStaleProposal": "O documento foi alterado enquanto esta proposta era gerada. Execute a ação novamente.",
   "gitAiStagedChangesChanged": "As alterações preparadas mudaram enquanto esta mensagem de commit era gerada. Execute a ação novamente.",
   "aiViewContext": "Ver contexto enviado",
+  "aiReviewExactContent": "Revisar conteúdo exato",
+  "aiContentToChange": "Conteúdo a alterar",
+  "aiContentSentToAi": "Conteúdo enviado à IA",
   "aiPrivacyDisabled": "A IA está desativada. O BusyMark nunca envia o conteúdo do documento sem uma ação explícita de IA.",
   "aiPrivacyLocal": "O BusyMark envia apenas o contexto exibido na caixa de diálogo de revisão ao serviço Ollama local configurado. As propostas nunca são aplicadas sem revisão.",
   "aiPrivacyCloud": "O BusyMark envia apenas o contexto exibido na caixa de diálogo de revisão para {provider}. As solicitações não mantêm estado e as propostas nunca são aplicadas sem revisão.",
@@ -2644,10 +2652,7 @@
   "aiColdStartObserved": "Foi detetado um arranque a frio do modelo local.",
   "aiNoCompatibleModels": "Não há nenhum modelo compatível de geração de texto disponível.",
   "aiEnableProvider": "Primeiro, ative um provedor de IA.",
-  "aiExplainCode": "Explicar código",
-  "aiImproveCode": "Melhorar código",
   "aiDraftCommitMessage": "Criar rascunho da mensagem de commit",
-  "aiCodeBlockRequired": "Primeiro, posicione o cursor em um bloco de código delimitado.",
   "aiDrafting": "Criando rascunho…",
   "aiDraftWithAi": "Criar rascunho com IA",
   "generateOrUpdateMarkdownToc": "Gerar/atualizar sumário",

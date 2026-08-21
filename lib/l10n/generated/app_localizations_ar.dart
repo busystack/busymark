@@ -251,7 +251,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pasteWithoutFormatting => 'لصق بدون تنسيق';
 
   @override
-  String get preview => 'معاينة';
+  String get reading => 'وضع القراءة';
 
   @override
   String get recent => 'الأخيرة';
@@ -1332,7 +1332,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'ملف كبير: تم إيقاف التمييز والطي مؤقتًا';
 
   @override
-  String get noPreview => 'لا توجد معاينة';
+  String get nothingToRead => 'لا يوجد محتوى للقراءة';
 
   @override
   String get note => 'ملاحظة';
@@ -3123,44 +3123,58 @@ class AppLocalizationsAr extends AppLocalizations {
       'فعّل مزوّد ذكاء اصطناعي وتحقق من نموذج في الإعدادات ← الذكاء الاصطناعي.';
 
   @override
-  String get aiRewrite => 'إعادة الصياغة';
+  String get aiEditWithAi => 'تحرير باستخدام الذكاء الاصطناعي';
 
   @override
-  String get aiShorten => 'الاختصار';
+  String get aiRefineWithAi => 'تحسين باستخدام الذكاء الاصطناعي';
 
   @override
-  String get aiSummarize => 'التلخيص';
+  String get aiInstruction => 'التعليمات';
 
   @override
-  String get aiChangeTone => 'تغيير النبرة…';
+  String get aiChangeTarget => 'ما الذي يمكن تغييره';
 
   @override
-  String get aiTranslate => 'الترجمة…';
+  String get aiSharedContext => 'السياق المُشارك مع الذكاء الاصطناعي';
 
   @override
-  String get aiProofread => 'التدقيق اللغوي';
+  String get aiTargetSelection => 'المحتوى المحدد';
 
   @override
-  String get aiDraft => 'إنشاء مسودة…';
+  String get aiTargetInsertAfterBlock => 'إدراج بعد الكتلة الحالية';
 
   @override
-  String get aiSelectionRequired =>
-      'حدّد نصًا لإجراء هذا الإجراء بالذكاء الاصطناعي.';
+  String get aiTargetCurrentBlock => 'الكتلة الحالية';
 
   @override
-  String get aiTonePrompt => 'صِف النبرة المطلوبة';
+  String get aiTargetCurrentSection => 'القسم الحالي';
 
   @override
-  String get aiLanguagePrompt => 'اللغة الهدف';
+  String get aiTargetCompleteDocument => 'المستند بالكامل';
 
   @override
-  String get aiDraftPrompt => 'ما الذي ينبغي أن يصوغه BusyMark؟';
+  String get aiContextNone => 'بلا سياق من المستند';
+
+  @override
+  String get aiContextSelection => 'المحتوى المحدد';
+
+  @override
+  String get aiContextCurrentBlock => 'الكتلة الحالية';
+
+  @override
+  String get aiContextCurrentSection => 'القسم الحالي';
+
+  @override
+  String get aiContextCompleteDocument => 'المستند بالكامل';
 
   @override
   String get aiGenerating => 'جارٍ إنشاء الاقتراح…';
 
   @override
   String get aiProposal => 'اقتراح الذكاء الاصطناعي';
+
+  @override
+  String get aiGenerateProposal => 'إنشاء الاقتراح';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3191,6 +3205,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aiViewContext => 'عرض السياق المُرسل';
+
+  @override
+  String get aiReviewExactContent => 'مراجعة المحتوى الدقيق';
+
+  @override
+  String get aiContentToChange => 'المحتوى المراد تغييره';
+
+  @override
+  String get aiContentSentToAi => 'المحتوى المُرسل إلى الذكاء الاصطناعي';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3282,16 +3305,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiEnableProvider => 'فعّل مزوّد ذكاء اصطناعي أولًا.';
 
   @override
-  String get aiExplainCode => 'شرح الشفرة';
-
-  @override
-  String get aiImproveCode => 'تحسين الشفرة';
-
-  @override
   String get aiDraftCommitMessage => 'صياغة مسودة رسالة الإيداع';
-
-  @override
-  String get aiCodeBlockRequired => 'ضع المؤشر أولًا داخل كتلة شفرة مسيّجة.';
 
   @override
   String get aiDrafting => 'جارٍ إعداد المسودة…';

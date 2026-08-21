@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/ai/ai_edit_ui.dart';
 import 'package:busymark/src/ai/ai_models.dart';
@@ -9,9 +11,135 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('document-only AI snapshot opens a usable configuration', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.dark,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () => unawaited(
+                  showBusyMarkAiEdit(
+                    context,
+                    ref,
+                    const AiEditorSnapshot(
+                      documentSource: '',
+                      selectionStart: 0,
+                      selectionEnd: 0,
+                      anchorOffset: 0,
+                      sourceRevision: 0,
+                      targetId: 'empty.md',
+                      documentPath: 'empty.md',
+                      blockTargetAvailable: false,
+                    ),
+                  ),
+                ),
+                child: const Text('Open AI'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open AI'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Refine with AI'), findsOneWidget);
+    expect(find.text('Complete document'), findsOneWidget);
+    expect(find.text('No document context'), findsOneWidget);
+    expect(find.text('Generate proposal'), findsOneWidget);
+    expect(find.textContaining('cannot map'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Refine with AI'), findsNothing);
+  });
+
+  testWidgets('AI configuration uses native rows without duplicate choices', (
+    tester,
+  ) async {
+    const source = '# Guide\n\nText to refine.\n';
+    final selectionStart = source.indexOf('Text');
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.dark,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () => unawaited(
+                  showBusyMarkAiEdit(
+                    context,
+                    ref,
+                    AiEditorSnapshot(
+                      documentSource: source,
+                      selectionStart: selectionStart,
+                      selectionEnd: selectionStart + 'Text to refine.'.length,
+                      anchorOffset: selectionStart,
+                      sourceRevision: 1,
+                      targetId: 'guide.md',
+                      documentPath: 'guide.md',
+                    ),
+                  ),
+                ),
+                child: const Text('Open AI'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open AI'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkComboRow<AiEditTargetKind>), findsOneWidget);
+    expect(find.byType(BusyMarkComboRow<AiEditContextKind>), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField), findsNothing);
+    expect(find.byType(ExpansionTile), findsNothing);
+    expect(find.text('What may change'), findsOneWidget);
+    expect(find.text('Context shared with AI'), findsOneWidget);
+    expect(find.text('Review exact content'), findsNothing);
+    expect(find.text('Content to change'), findsNothing);
+    expect(find.text('Content sent to AI'), findsNothing);
+    expect(find.text('Text to refine.'), findsNWidgets(2));
+    final changeSelector = tester.getTopLeft(
+      find.byKey(const ValueKey('ai-edit-target')),
+    );
+    final changeContent = tester.getTopLeft(
+      find.byKey(const ValueKey('ai-content-to-change')),
+    );
+    final contextSelector = tester.getTopLeft(
+      find.byKey(const ValueKey('ai-edit-context')),
+    );
+    final sharedContent = tester.getTopLeft(
+      find.byKey(const ValueKey('ai-content-sent-to-ai')),
+    );
+    expect(changeSelector.dy, lessThan(changeContent.dy));
+    expect(changeContent.dy, lessThan(contextSelector.dy));
+    expect(contextSelector.dy, lessThan(sharedContent.dy));
+  });
+
   testWidgets('proposal Apply refuses stale external source content', (
     tester,
   ) async {

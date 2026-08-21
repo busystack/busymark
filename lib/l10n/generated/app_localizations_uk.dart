@@ -253,7 +253,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pasteWithoutFormatting => 'Вставити без форматування';
 
   @override
-  String get preview => 'Попередній перегляд';
+  String get reading => 'Режим читання';
 
   @override
   String get recent => 'Останні';
@@ -1349,7 +1349,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Великий файл: підсвічування та згортання призупинено';
 
   @override
-  String get noPreview => 'Немає попереднього перегляду';
+  String get nothingToRead => 'Немає вмісту для читання';
 
   @override
   String get note => 'Примітка';
@@ -3147,43 +3147,58 @@ class AppLocalizationsUk extends AppLocalizations {
       'Увімкніть постачальника ШІ та перевірте модель у розділі «Налаштування → ШІ».';
 
   @override
-  String get aiRewrite => 'Переписати';
+  String get aiEditWithAi => 'Редагувати за допомогою ШІ';
 
   @override
-  String get aiShorten => 'Скоротити';
+  String get aiRefineWithAi => 'Покращити за допомогою ШІ';
 
   @override
-  String get aiSummarize => 'Підсумувати';
+  String get aiInstruction => 'Інструкція';
 
   @override
-  String get aiChangeTone => 'Змінити тон…';
+  String get aiChangeTarget => 'Що можна змінити';
 
   @override
-  String get aiTranslate => 'Перекласти…';
+  String get aiSharedContext => 'Контекст, що передається ШІ';
 
   @override
-  String get aiProofread => 'Вичитати';
+  String get aiTargetSelection => 'Вибраний вміст';
 
   @override
-  String get aiDraft => 'Створити чернетку…';
+  String get aiTargetInsertAfterBlock => 'Вставити після поточного блоку';
 
   @override
-  String get aiSelectionRequired => 'Виділіть текст для цієї дії ШІ.';
+  String get aiTargetCurrentBlock => 'Поточний блок';
 
   @override
-  String get aiTonePrompt => 'Опишіть бажаний тон';
+  String get aiTargetCurrentSection => 'Поточний розділ';
 
   @override
-  String get aiLanguagePrompt => 'Цільова мова';
+  String get aiTargetCompleteDocument => 'Увесь документ';
 
   @override
-  String get aiDraftPrompt => 'Що має підготувати BusyMark?';
+  String get aiContextNone => 'Без контексту документа';
+
+  @override
+  String get aiContextSelection => 'Вибраний вміст';
+
+  @override
+  String get aiContextCurrentBlock => 'Поточний блок';
+
+  @override
+  String get aiContextCurrentSection => 'Поточний розділ';
+
+  @override
+  String get aiContextCompleteDocument => 'Увесь документ';
 
   @override
   String get aiGenerating => 'Створення пропозиції…';
 
   @override
   String get aiProposal => 'Пропозиція ШІ';
+
+  @override
+  String get aiGenerateProposal => 'Створити пропозицію';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3214,6 +3229,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Показати надісланий контекст';
+
+  @override
+  String get aiReviewExactContent => 'Переглянути точний вміст';
+
+  @override
+  String get aiContentToChange => 'Вміст для зміни';
+
+  @override
+  String get aiContentSentToAi => 'Вміст, що надсилається ШІ';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3307,17 +3331,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiEnableProvider => 'Спочатку ввімкніть постачальника ШІ.';
 
   @override
-  String get aiExplainCode => 'Пояснити код';
-
-  @override
-  String get aiImproveCode => 'Поліпшити код';
-
-  @override
   String get aiDraftCommitMessage => 'Створити чернетку повідомлення коміту';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Спочатку помістіть курсор в огороджений блок коду.';
 
   @override
   String get aiDrafting => 'Створення чернетки…';

@@ -253,7 +253,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get pasteWithoutFormatting => 'Wklej bez formatowania';
 
   @override
-  String get preview => 'Podgląd';
+  String get reading => 'Widok do czytania';
 
   @override
   String get recent => 'Ostatnie';
@@ -1347,7 +1347,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Duży plik: podświetlanie i zwijanie są wstrzymane';
 
   @override
-  String get noPreview => 'Brak podglądu';
+  String get nothingToRead => 'Brak treści do przeczytania';
 
   @override
   String get note => 'Uwaga';
@@ -3145,43 +3145,58 @@ class AppLocalizationsPl extends AppLocalizations {
       'Najpierw włącz dostawcę SI i zweryfikuj model w Ustawienia → SI.';
 
   @override
-  String get aiRewrite => 'Przepisz';
+  String get aiEditWithAi => 'Edytuj za pomocą SI';
 
   @override
-  String get aiShorten => 'Skróć';
+  String get aiRefineWithAi => 'Ulepsz za pomocą SI';
 
   @override
-  String get aiSummarize => 'Podsumuj';
+  String get aiInstruction => 'Polecenie';
 
   @override
-  String get aiChangeTone => 'Zmień ton…';
+  String get aiChangeTarget => 'Co może się zmienić';
 
   @override
-  String get aiTranslate => 'Przetłumacz…';
+  String get aiSharedContext => 'Kontekst udostępniany SI';
 
   @override
-  String get aiProofread => 'Wykonaj korektę';
+  String get aiTargetSelection => 'Zaznaczona treść';
 
   @override
-  String get aiDraft => 'Utwórz szkic…';
+  String get aiTargetInsertAfterBlock => 'Wstaw po bieżącym bloku';
 
   @override
-  String get aiSelectionRequired => 'Zaznacz tekst dla tej operacji SI.';
+  String get aiTargetCurrentBlock => 'Bieżący blok';
 
   @override
-  String get aiTonePrompt => 'Opisz docelowy ton';
+  String get aiTargetCurrentSection => 'Bieżąca sekcja';
 
   @override
-  String get aiLanguagePrompt => 'Język docelowy';
+  String get aiTargetCompleteDocument => 'Cały dokument';
 
   @override
-  String get aiDraftPrompt => 'Co ma przygotować BusyMark?';
+  String get aiContextNone => 'Bez kontekstu dokumentu';
+
+  @override
+  String get aiContextSelection => 'Zaznaczona treść';
+
+  @override
+  String get aiContextCurrentBlock => 'Bieżący blok';
+
+  @override
+  String get aiContextCurrentSection => 'Bieżąca sekcja';
+
+  @override
+  String get aiContextCompleteDocument => 'Cały dokument';
 
   @override
   String get aiGenerating => 'Generowanie propozycji…';
 
   @override
   String get aiProposal => 'Propozycja SI';
+
+  @override
+  String get aiGenerateProposal => 'Wygeneruj propozycję';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3212,6 +3227,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Pokaż wysłany kontekst';
+
+  @override
+  String get aiReviewExactContent => 'Przejrzyj dokładną treść';
+
+  @override
+  String get aiContentToChange => 'Treść do zmiany';
+
+  @override
+  String get aiContentSentToAi => 'Treść wysyłana do SI';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3303,17 +3327,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiEnableProvider => 'Najpierw włącz dostawcę SI.';
 
   @override
-  String get aiExplainCode => 'Wyjaśnij kod';
-
-  @override
-  String get aiImproveCode => 'Ulepsz kod';
-
-  @override
   String get aiDraftCommitMessage => 'Utwórz wersję roboczą komunikatu commita';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Najpierw umieść kursor w ogrodzonym bloku kodu.';
 
   @override
   String get aiDrafting => 'Tworzenie wersji roboczej…';

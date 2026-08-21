@@ -244,11 +244,14 @@ AiRequest _request({
 }) => AiPromptBuilder.build(
   id: id,
   targetId: target,
-  feature: AiFeature.rewrite,
-  scope: AiScope.selection,
+  feature: AiFeature.editDocument,
+  scope: AiScope.markdownEdit,
   input: 'Original text.',
   model: 'test-model',
   sourceRevision: 1,
+  editTarget: AiEditTargetKind.selection,
+  editContext: AiEditContextKind.selection,
+  instruction: 'Rewrite for clarity.',
   maxRetries: maxRetries,
   deadline: deadline,
 );
@@ -271,6 +274,8 @@ extension on AiRequest {
     maxRetries: maxRetries,
     deadline: deadline,
     contentFormat: contentFormat,
+    editTarget: editTarget,
+    editContext: editContext,
     promptVersion: promptVersion,
     replacementOriginal: replacementOriginal,
     documentSource: documentSource,
@@ -279,7 +284,6 @@ extension on AiRequest {
     replacementPrefix: replacementPrefix,
     replacementSuffix: replacementSuffix,
     trimReplacementOutput: trimReplacementOutput,
-    hierarchicalChunks: hierarchicalChunks,
   );
 }
 

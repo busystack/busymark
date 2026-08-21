@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "پیش‌نمایش",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "حالت مطالعه",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "موارد اخیر",
   "@recent": {
@@ -1321,9 +1321,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "پیش‌نمایشی وجود ندارد",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "محتوایی برای مطالعه وجود ندارد",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "یادداشت",
   "@note": {
@@ -2620,19 +2620,24 @@
   "aiNoModels": "Ollama در حال اجرا است، اما هیچ مدل نصب‌شده‌ای پیدا نشد.",
   "aiConnectionFailed": "BusyMark نتوانست تولید متن با هوش مصنوعی را تأیید کند.",
   "aiConfigureFirst": "ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال و مدلی را در تنظیمات ← هوش مصنوعی تأیید کنید.",
-  "aiRewrite": "بازنویسی",
-  "aiShorten": "کوتاه‌سازی",
-  "aiSummarize": "خلاصه‌سازی",
-  "aiChangeTone": "تغییر لحن…",
-  "aiTranslate": "ترجمه…",
-  "aiProofread": "ویرایش و اصلاح",
-  "aiDraft": "تهیهٔ پیش‌نویس…",
-  "aiSelectionRequired": "برای این کنش هوش مصنوعی متنی را انتخاب کنید.",
-  "aiTonePrompt": "لحن موردنظر را توصیف کنید",
-  "aiLanguagePrompt": "زبان مقصد",
-  "aiDraftPrompt": "BusyMark چه چیزی را پیش‌نویس کند؟",
+  "aiEditWithAi": "ویرایش با هوش مصنوعی",
+  "aiRefineWithAi": "بهبود با هوش مصنوعی",
+  "aiInstruction": "دستور",
+  "aiChangeTarget": "چه چیزی می‌تواند تغییر کند",
+  "aiSharedContext": "زمینهٔ اشتراکی با هوش مصنوعی",
+  "aiTargetSelection": "محتوای انتخاب‌شده",
+  "aiTargetInsertAfterBlock": "درج پس از بلوک فعلی",
+  "aiTargetCurrentBlock": "بلوک فعلی",
+  "aiTargetCurrentSection": "بخش فعلی",
+  "aiTargetCompleteDocument": "کل سند",
+  "aiContextNone": "بدون زمینه از سند",
+  "aiContextSelection": "محتوای انتخاب‌شده",
+  "aiContextCurrentBlock": "بلوک فعلی",
+  "aiContextCurrentSection": "بخش فعلی",
+  "aiContextCompleteDocument": "کل سند",
   "aiGenerating": "در حال تولید پیشنهاد…",
   "aiProposal": "پیشنهاد هوش مصنوعی",
+  "aiGenerateProposal": "ایجاد پیشنهاد",
   "aiContextDisclosure": "ارائه‌دهندهٔ انتخابی ⁨{count}⁩ نویسه از زمینهٔ نمایش‌داده‌شده دریافت می‌کند.",
   "aiOriginal": "متن اصلی",
   "aiSuggested": "متن پیشنهادی",
@@ -2641,6 +2646,9 @@
   "aiStaleProposal": "سند هنگام تولید این پیشنهاد تغییر کرد. کنش را دوباره اجرا کنید.",
   "gitAiStagedChangesChanged": "تغییرات مرحله‌بندی‌شده هنگام تولید این پیام کامیت تغییر کرد. کنش را دوباره اجرا کنید.",
   "aiViewContext": "نمایش بافت ارسال‌شده",
+  "aiReviewExactContent": "بازبینی محتوای دقیق",
+  "aiContentToChange": "محتوایی که تغییر می‌کند",
+  "aiContentSentToAi": "محتوای ارسال‌شده به هوش مصنوعی",
   "aiPrivacyDisabled": "هوش مصنوعی غیرفعال است. BusyMark هرگز بدون یک اقدام صریح هوش مصنوعی محتوای سند را ارسال نمی‌کند.",
   "aiPrivacyLocal": "BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به سرویس محلی Ollama پیکربندی‌شده می‌فرستد. پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.",
   "aiPrivacyCloud": "BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به ⁨{provider}⁩ می‌فرستد. درخواست‌ها بدون حالت هستند و پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.",
@@ -2665,10 +2673,7 @@
   "aiColdStartObserved": "راه‌اندازی سرد مدل محلی شناسایی شد.",
   "aiNoCompatibleModels": "هیچ مدل سازگار تولید متن در دسترس نیست.",
   "aiEnableProvider": "ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال کنید.",
-  "aiExplainCode": "توضیح کد",
-  "aiImproveCode": "بهبود کد",
   "aiDraftCommitMessage": "تهیهٔ پیش‌نویس پیام ثبت",
-  "aiCodeBlockRequired": "ابتدا مکان‌نما را در یک بلوک کد حصارشده قرار دهید.",
   "aiDrafting": "در حال تهیهٔ پیش‌نویس…",
   "aiDraftWithAi": "تهیهٔ پیش‌نویس با هوش مصنوعی",
   "generateOrUpdateMarkdownToc": "ایجاد/به‌روزرسانی فهرست مطالب",

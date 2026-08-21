@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Aperçu",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Lecture",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Récents",
   "@recent": {
@@ -1319,9 +1319,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Fichier volumineux : la coloration et le repliage sont suspendus",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Aucun aperçu",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Aucun contenu à lire",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Note",
   "@note": {
@@ -2622,19 +2622,24 @@
   "aiNoModels": "Ollama est en cours d’exécution, mais aucun modèle installé n’a été trouvé.",
   "aiConnectionFailed": "BusyMark n’a pas pu vérifier la génération de texte par IA.",
   "aiConfigureFirst": "Activez un fournisseur d’IA et vérifiez un modèle dans Paramètres → IA.",
-  "aiRewrite": "Réécrire",
-  "aiShorten": "Raccourcir",
-  "aiSummarize": "Résumer",
-  "aiChangeTone": "Changer le ton…",
-  "aiTranslate": "Traduire…",
-  "aiProofread": "Corriger",
-  "aiDraft": "Rédiger…",
-  "aiSelectionRequired": "Sélectionnez du texte pour cette action d’IA.",
-  "aiTonePrompt": "Décrivez le ton souhaité",
-  "aiLanguagePrompt": "Langue cible",
-  "aiDraftPrompt": "Que doit rédiger BusyMark ?",
+  "aiEditWithAi": "Modifier avec l’IA",
+  "aiRefineWithAi": "Améliorer avec l’IA",
+  "aiInstruction": "Consigne",
+  "aiChangeTarget": "Ce qui peut être modifié",
+  "aiSharedContext": "Contexte partagé avec l’IA",
+  "aiTargetSelection": "Contenu sélectionné",
+  "aiTargetInsertAfterBlock": "Insérer après le bloc actuel",
+  "aiTargetCurrentBlock": "Bloc actuel",
+  "aiTargetCurrentSection": "Section actuelle",
+  "aiTargetCompleteDocument": "Document complet",
+  "aiContextNone": "Aucun contexte du document",
+  "aiContextSelection": "Contenu sélectionné",
+  "aiContextCurrentBlock": "Bloc actuel",
+  "aiContextCurrentSection": "Section actuelle",
+  "aiContextCompleteDocument": "Document complet",
   "aiGenerating": "Génération de la proposition…",
   "aiProposal": "Proposition de l’IA",
+  "aiGenerateProposal": "Générer la proposition",
   "aiContextDisclosure": "Le fournisseur sélectionné recevra {count} caractères du contexte affiché.",
   "aiOriginal": "Texte d’origine",
   "aiSuggested": "Suggestion",
@@ -2643,6 +2648,9 @@
   "aiStaleProposal": "Le document a changé pendant la génération de cette proposition. Relancez l’action.",
   "gitAiStagedChangesChanged": "Les modifications indexées ont changé pendant la génération de ce message de commit. Relancez l’action.",
   "aiViewContext": "Afficher le contexte envoyé",
+  "aiReviewExactContent": "Vérifier le contenu exact",
+  "aiContentToChange": "Contenu à modifier",
+  "aiContentSentToAi": "Contenu envoyé à l’IA",
   "aiPrivacyDisabled": "L’IA est désactivée. BusyMark n’envoie jamais le contenu du document sans action d’IA explicite.",
   "aiPrivacyLocal": "BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation au service Ollama local configuré. Les propositions ne sont jamais appliquées sans validation.",
   "aiPrivacyCloud": "BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation à {provider}. Les requêtes sont sans état et les propositions ne sont jamais appliquées sans validation.",
@@ -2667,10 +2675,7 @@
   "aiColdStartObserved": "Un démarrage à froid du modèle local a été détecté.",
   "aiNoCompatibleModels": "Aucun modèle de génération de texte compatible n’est disponible.",
   "aiEnableProvider": "Activez d’abord un fournisseur d’IA.",
-  "aiExplainCode": "Expliquer le code",
-  "aiImproveCode": "Améliorer le code",
   "aiDraftCommitMessage": "Rédiger un message de commit",
-  "aiCodeBlockRequired": "Placez d’abord le curseur dans un bloc de code délimité.",
   "aiDrafting": "Rédaction…",
   "aiDraftWithAi": "Rédiger avec l’IA",
   "generateOrUpdateMarkdownToc": "Générer/actualiser la table des matières",

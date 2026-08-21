@@ -683,6 +683,9 @@ class WorkspaceScreen extends ConsumerWidget {
                           icon: _documentViewModeIcon(
                             settings.documentViewMode,
                           ),
+                          shortcut: _documentViewModeShortcut(
+                            settings.documentViewMode,
+                          ),
                           itemBuilder: (context) => [
                             for (final mode
                                 in DocumentViewModePreference.values)
@@ -690,6 +693,7 @@ class WorkspaceScreen extends ConsumerWidget {
                                 value: mode,
                                 label: _documentViewModeLabel(context, mode),
                                 icon: _documentViewModeIcon(mode),
+                                shortcut: _documentViewModeShortcut(mode),
                                 checked: mode == settings.documentViewMode,
                                 trailingCheck: true,
                               ),
@@ -1013,8 +1017,21 @@ class WorkspaceScreen extends ConsumerWidget {
     return switch (mode) {
       DocumentViewModePreference.editor => context.l10n.editor,
       DocumentViewModePreference.source => context.l10n.source,
-      DocumentViewModePreference.preview => context.l10n.preview,
+      DocumentViewModePreference.preview => context.l10n.reading,
       DocumentViewModePreference.split => context.l10n.split,
+    };
+  }
+
+  String _documentViewModeShortcut(DocumentViewModePreference mode) {
+    return switch (mode) {
+      DocumentViewModePreference.editor =>
+        BusyMarkDocumentViewShortcutLabels.editor,
+      DocumentViewModePreference.source =>
+        BusyMarkDocumentViewShortcutLabels.source,
+      DocumentViewModePreference.preview =>
+        BusyMarkDocumentViewShortcutLabels.reading,
+      DocumentViewModePreference.split =>
+        BusyMarkDocumentViewShortcutLabels.split,
     };
   }
 
@@ -8644,6 +8661,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 onCloseSearch: () => ref
                     .read(workspaceSearchCloseRequestProvider.notifier)
                     .request(),
+                onAiEdit:
+                    (_activeDocumentKind(
+                          widget.state.workspace,
+                        )?.supportsAiMarkdownEditing ??
+                        false)
+                    ? (snapshot) => showBusyMarkAiEdit(context, ref, snapshot)
+                    : null,
               ),
             ),
           if (sourceVisible)
@@ -8681,8 +8705,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           widget.state.workspace,
                         )?.supportsAiMarkdownEditing ??
                         false)
-                    ? (invocation) =>
-                          showBusyMarkAiProposal(context, ref, invocation)
+                    ? (snapshot) => showBusyMarkAiEdit(context, ref, snapshot)
                     : null,
               ),
             ),
@@ -9228,7 +9251,7 @@ class _PreviewPane extends StatelessWidget {
     if (document == null) {
       return _EmptyPane(
         icon: BusyMarkGlyphs.preview,
-        title: context.l10n.noPreview,
+        title: context.l10n.nothingToRead,
       );
     }
     return DecoratedBox(

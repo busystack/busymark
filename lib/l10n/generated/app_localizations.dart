@@ -579,11 +579,11 @@ abstract class AppLocalizations {
   /// **'Paste without formatting'**
   String get pasteWithoutFormatting;
 
-  /// Preview view label.
+  /// Reading view label.
   ///
   /// In en, this message translates to:
-  /// **'Preview'**
-  String get preview;
+  /// **'Reading'**
+  String get reading;
 
   /// Recent workspaces section title.
   ///
@@ -2463,11 +2463,11 @@ abstract class AppLocalizations {
   /// **'Large file: highlighting and folding are paused'**
   String get sourceLargeFileFeaturesPaused;
 
-  /// Empty state shown when there is no preview.
+  /// Empty state shown when there is no content to read.
   ///
   /// In en, this message translates to:
-  /// **'No preview'**
-  String get noPreview;
+  /// **'Nothing to read'**
+  String get nothingToRead;
 
   /// Preview label for a note admonition.
   ///
@@ -5241,71 +5241,95 @@ abstract class AppLocalizations {
   /// **'Enable an AI provider and verify a model in Settings → AI.'**
   String get aiConfigureFirst;
 
-  /// AI action that rewrites selected text for clarity.
+  /// No description provided for @aiEditWithAi.
   ///
   /// In en, this message translates to:
-  /// **'Rewrite'**
-  String get aiRewrite;
+  /// **'Edit with AI'**
+  String get aiEditWithAi;
 
-  /// AI action that shortens selected text.
+  /// Selected-text context-menu action that opens AI refinement.
   ///
   /// In en, this message translates to:
-  /// **'Shorten'**
-  String get aiShorten;
+  /// **'Refine with AI'**
+  String get aiRefineWithAi;
 
-  /// AI action that summarizes selected text or the document.
+  /// No description provided for @aiInstruction.
   ///
   /// In en, this message translates to:
-  /// **'Summarize'**
-  String get aiSummarize;
+  /// **'Instruction'**
+  String get aiInstruction;
 
-  /// AI action that changes the tone of selected text.
+  /// No description provided for @aiChangeTarget.
   ///
   /// In en, this message translates to:
-  /// **'Change tone…'**
-  String get aiChangeTone;
+  /// **'What may change'**
+  String get aiChangeTarget;
 
-  /// AI action that translates selected text.
+  /// No description provided for @aiSharedContext.
   ///
   /// In en, this message translates to:
-  /// **'Translate…'**
-  String get aiTranslate;
+  /// **'Context shared with AI'**
+  String get aiSharedContext;
 
-  /// AI action that proofreads selected text.
+  /// No description provided for @aiTargetSelection.
   ///
   /// In en, this message translates to:
-  /// **'Proofread'**
-  String get aiProofread;
+  /// **'Selected content'**
+  String get aiTargetSelection;
 
-  /// AI action that drafts Markdown from an instruction.
+  /// No description provided for @aiTargetInsertAfterBlock.
   ///
   /// In en, this message translates to:
-  /// **'Draft…'**
-  String get aiDraft;
+  /// **'Insert after current block'**
+  String get aiTargetInsertAfterBlock;
 
-  /// Message shown when an editing AI action requires a selection.
+  /// No description provided for @aiTargetCurrentBlock.
   ///
   /// In en, this message translates to:
-  /// **'Select text for this AI action.'**
-  String get aiSelectionRequired;
+  /// **'Current block'**
+  String get aiTargetCurrentBlock;
 
-  /// Prompt for the desired rewrite tone.
+  /// No description provided for @aiTargetCurrentSection.
   ///
   /// In en, this message translates to:
-  /// **'Describe the target tone'**
-  String get aiTonePrompt;
+  /// **'Current section'**
+  String get aiTargetCurrentSection;
 
-  /// Prompt for a translation target language.
+  /// No description provided for @aiTargetCompleteDocument.
   ///
   /// In en, this message translates to:
-  /// **'Target language'**
-  String get aiLanguagePrompt;
+  /// **'Complete document'**
+  String get aiTargetCompleteDocument;
 
-  /// Prompt for an AI drafting instruction.
+  /// No description provided for @aiContextNone.
   ///
   /// In en, this message translates to:
-  /// **'What should BusyMark draft?'**
-  String get aiDraftPrompt;
+  /// **'No document context'**
+  String get aiContextNone;
+
+  /// No description provided for @aiContextSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected content'**
+  String get aiContextSelection;
+
+  /// No description provided for @aiContextCurrentBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current block'**
+  String get aiContextCurrentBlock;
+
+  /// No description provided for @aiContextCurrentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Current section'**
+  String get aiContextCurrentSection;
+
+  /// No description provided for @aiContextCompleteDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete document'**
+  String get aiContextCompleteDocument;
 
   /// Progress text while an AI proposal streams.
   ///
@@ -5318,6 +5342,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI proposal'**
   String get aiProposal;
+
+  /// Button that starts generation after the user reviews the AI instruction, change target, and shared context.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate proposal'**
+  String get aiGenerateProposal;
 
   /// Disclosure of AI context size.
   ///
@@ -5366,6 +5396,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View context sent'**
   String get aiViewContext;
+
+  /// Action that reveals the exact content affected by and shared with an AI edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review exact content'**
+  String get aiReviewExactContent;
+
+  /// Label for the exact Markdown that an AI proposal may change.
+  ///
+  /// In en, this message translates to:
+  /// **'Content to change'**
+  String get aiContentToChange;
+
+  /// Label for the exact document context that will be sent to the configured AI provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Content sent to AI'**
+  String get aiContentSentToAi;
 
   /// Privacy notice when AI is disabled.
   ///
@@ -5511,29 +5559,11 @@ abstract class AppLocalizations {
   /// **'Enable an AI provider first.'**
   String get aiEnableProvider;
 
-  /// AI action that explains a fenced code block.
-  ///
-  /// In en, this message translates to:
-  /// **'Explain code'**
-  String get aiExplainCode;
-
-  /// AI action that proposes an improved fenced code block.
-  ///
-  /// In en, this message translates to:
-  /// **'Improve code'**
-  String get aiImproveCode;
-
   /// AI action that drafts a Git commit message.
   ///
   /// In en, this message translates to:
   /// **'Draft commit message'**
   String get aiDraftCommitMessage;
-
-  /// AI code action error when no fenced code block is selected.
-  ///
-  /// In en, this message translates to:
-  /// **'Place the cursor in a fenced code block first.'**
-  String get aiCodeBlockRequired;
 
   /// Progress label while AI drafts a commit message.
   ///

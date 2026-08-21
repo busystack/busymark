@@ -50,10 +50,18 @@ abstract final class AiPolicy {
         'This AI action does not support the requested context.',
       );
     }
-    if (request.input.trim().isEmpty && request.feature != AiFeature.draft) {
+    if (request.input.trim().isEmpty &&
+        request.feature == AiFeature.draftCommitMessage) {
       throw const AiException(
         AiFailureCode.validation,
-        'Select text or open a non-empty document first.',
+        'Stage changes before drafting a commit message.',
+      );
+    }
+    if (request.feature == AiFeature.editDocument &&
+        (request.editTarget == null || request.editContext == null)) {
+      throw const AiException(
+        AiFailureCode.validation,
+        'Choose both the AI change target and shared context.',
       );
     }
     if ((request.documentSource?.length ?? request.input.length) >
@@ -73,29 +81,13 @@ abstract final class AiPolicy {
         'The AI request limits are invalid.',
       );
     }
-    if (request.hierarchicalChunks.isEmpty &&
-        request.estimatedPromptTokens > request.maxInputTokens) {
+    if (request.estimatedPromptTokens > request.maxInputTokens) {
       throw AiException(
         AiFailureCode.validation,
         'The requested AI context exceeds the ${request.maxInputTokens}-token safety budget.',
       );
     }
-    for (final chunk in request.hierarchicalChunks) {
-      if (AiTokenEstimator.estimate(chunk) > request.maxInputTokens) {
-        throw const AiException(
-          AiFailureCode.validation,
-          'A document summary section exceeds the AI safety budget.',
-        );
-      }
-    }
-    if (request.hierarchicalChunks.isNotEmpty &&
-        request.hierarchicalChunks.length > 16) {
-      throw const AiException(
-        AiFailureCode.validation,
-        'The document exceeds the multi-stage summary budget.',
-      );
-    }
-    if (request.estimatedTotalPromptTokens > request.maxTotalInputTokens) {
+    if (request.estimatedPromptTokens > request.maxTotalInputTokens) {
       throw AiException(
         AiFailureCode.validation,
         'The requested AI context exceeds the ${request.maxTotalInputTokens}-token total prompt budget.',
@@ -153,13 +145,6 @@ class AiMarkdownGuard {
       _validateCommitMessage(normalized);
       return;
     }
-    if (_looksWrappedInFence(normalized) &&
-        request.feature != AiFeature.improveCode) {
-      throw const AiException(
-        AiFailureCode.validation,
-        'The model wrapped the proposal in a code fence.',
-      );
-    }
     if (request.contentFormat != AiContentFormat.markdown) {
       return;
     }
@@ -170,7 +155,7 @@ class AiMarkdownGuard {
         ? 'ai-proposal.md'
         : 'ai-candidate.md';
     final afterDocument = _parse(path, after);
-    if (!request.feature.preservesExistingMarkdown) {
+    if (request.editTarget == AiEditTargetKind.insertAfterBlock) {
       return;
     }
     final beforeDocument = _parse(path, before);
@@ -231,29 +216,11 @@ class AiMarkdownGuard {
       _rawBlocks(afterDocument.busyDocument.blocks, BusyBlockKind.table),
     );
 
-    if (request.feature == AiFeature.improveCode) {
-      _requireSame(
-        'code fence declaration',
-        _codeFenceDeclarations(before),
-        _codeFenceDeclarations(after),
-      );
-      final changedCount = _changedCodeBlockCount(
-        beforeDocument.codeBlocks,
-        afterDocument.codeBlocks,
-      );
-      if (changedCount != 1) {
-        throw const AiException(
-          AiFailureCode.validation,
-          'The proposal must change exactly one fenced code block.',
-        );
-      }
-    } else {
-      _requireSame(
-        'fenced code block',
-        _fencedCodeBlocks(before),
-        _fencedCodeBlocks(after),
-      );
-    }
+    _requireSame(
+      'fenced code block',
+      _fencedCodeBlocks(before),
+      _fencedCodeBlocks(after),
+    );
     _requireSame('inline code', _inlineCode(before), _inlineCode(after));
   }
 
@@ -289,15 +256,6 @@ class AiMarkdownGuard {
         'Separate the commit-message subject and body with a blank line.',
       );
     }
-  }
-
-  bool _looksWrappedInFence(String value) {
-    final lines = value.split('\n');
-    if (lines.length < 2) {
-      return false;
-    }
-    final opening = MarkdownFence.parse(lines.first);
-    return opening != null && opening.closes(lines.last);
   }
 
   List<String> _blockStructure(List<BusyBlock> blocks) {
@@ -439,30 +397,6 @@ class AiMarkdownGuard {
       value.substring(span.start, span.end),
   ];
 
-  List<String> _codeFenceDeclarations(String value) => [
-    for (final span in _fencedCodeSpans(value))
-      '${span.opening}\n${span.closing}',
-  ];
-
-  int _changedCodeBlockCount(
-    List<MarkdownCodeBlock> before,
-    List<MarkdownCodeBlock> after,
-  ) {
-    if (before.length != after.length) {
-      return -1;
-    }
-    var count = 0;
-    for (var index = 0; index < before.length; index += 1) {
-      if (before[index].language != after[index].language) {
-        return -1;
-      }
-      if (before[index].content != after[index].content) {
-        count += 1;
-      }
-    }
-    return count;
-  }
-
   List<String> _inlineCode(String value) {
     final source = _withoutFencedCode(value);
     final result = <String>[];
@@ -519,10 +453,8 @@ class AiMarkdownGuard {
         continue;
       }
       final start = offset;
-      final opening = line;
       offset += rawLine.length;
       lineIndex += 1;
-      var closing = '';
       while (lineIndex < rawLines.length) {
         final candidateRaw = rawLines[lineIndex];
         final candidate = candidateRaw.endsWith('\n')
@@ -531,11 +463,10 @@ class AiMarkdownGuard {
         offset += candidateRaw.length;
         lineIndex += 1;
         if (fence.closes(candidate)) {
-          closing = candidate;
           break;
         }
       }
-      spans.add(_AiFenceSpan(start, offset, opening, closing));
+      spans.add(_AiFenceSpan(start, offset));
     }
     return spans;
   }
@@ -571,10 +502,8 @@ class AiMarkdownGuard {
 }
 
 class _AiFenceSpan {
-  const _AiFenceSpan(this.start, this.end, this.opening, this.closing);
+  const _AiFenceSpan(this.start, this.end);
 
   final int start;
   final int end;
-  final String opening;
-  final String closing;
 }

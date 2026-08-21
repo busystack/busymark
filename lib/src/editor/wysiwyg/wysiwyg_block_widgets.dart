@@ -14,6 +14,7 @@ import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
+import '../editor_text_context_menu.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_visualization_navigation.dart';
 
@@ -151,6 +152,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onHtmlEditRequested,
     required this.onTaskChanged,
     required this.onFocused,
+    this.onRefineWithAi,
     this.editRevision = 0,
     this.selected = false,
     this.selectionRange,
@@ -183,6 +185,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onHtmlEditRequested;
   final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
+  final VoidCallback? onRefineWithAi;
   final int editRevision;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -433,6 +436,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                             hoverColor: BusyMarkLinuxPalette.transparent,
                             contentPadding: EdgeInsets.zero,
                           ),
+                          contextMenuBuilder: (context, editableTextState) =>
+                              buildBusyMarkEditorTextContextMenu(
+                                context,
+                                editableTextState,
+                                refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                onRefineWithAi: onRefineWithAi,
+                              ),
                           onTap: onFocused,
                           onChanged: onChanged,
                         ),

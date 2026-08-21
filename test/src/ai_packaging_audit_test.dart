@@ -23,18 +23,19 @@ void main() {
     ).readAsStringSync();
 
     for (final feature in [
-      'AiFeature.rewrite',
-      'AiFeature.shorten',
-      'AiFeature.summarize',
-      'AiFeature.tone',
-      'AiFeature.translate',
-      'AiFeature.proofread',
-      'AiFeature.draft',
-      'AiFeature.explainCode',
-      'AiFeature.improveCode',
+      'AiFeature.editDocument',
       'AiFeature.draftCommitMessage',
     ]) {
       expect(qualification, contains(feature));
+    }
+    for (final target in [
+      'AiEditTargetKind.selection',
+      'AiEditTargetKind.insertAfterBlock',
+      'AiEditTargetKind.block',
+      'AiEditTargetKind.section',
+      'AiEditTargetKind.document',
+    ]) {
+      expect(qualification, contains(target));
     }
     expect(qualification, contains('provider.checkHealth'));
     expect(qualification, contains('AiCoordinator'));

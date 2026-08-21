@@ -68,7 +68,7 @@ void main() {
       expect(body['stream'], isTrue);
       expect(body['store'], isFalse);
       expect(body['model'], 'gpt-5.6-luna');
-      expect(body['max_output_tokens'], 2400);
+      expect(body['max_output_tokens'], 4800);
       expect(
         events.whereType<AiTextDelta>().map((event) => event.text).join(),
         'Clear prose.',
@@ -284,11 +284,14 @@ AiRequest _request({required AiProviderKind provider, required String model}) =>
       id: 'cloud-request',
       targetId: 'document:selection',
       provider: provider,
-      feature: AiFeature.rewrite,
-      scope: AiScope.selection,
+      feature: AiFeature.editDocument,
+      scope: AiScope.markdownEdit,
       input: 'Unclear prose.',
       modelCandidates: [model],
       sourceRevision: 1,
+      editTarget: AiEditTargetKind.selection,
+      editContext: AiEditContextKind.selection,
+      instruction: 'Rewrite for clarity.',
     );
 
 http.StreamedResponse _sseResponse(List<Map<String, Object?>> records) {

@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Попередній перегляд",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Режим читання",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Останні",
   "@recent": {
@@ -1325,9 +1325,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Великий файл: підсвічування та згортання призупинено",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Немає попереднього перегляду",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Немає вмісту для читання",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Примітка",
   "@note": {
@@ -2617,19 +2617,24 @@
   "aiNoModels": "Ollama запущено, але встановлених моделей не знайдено.",
   "aiConnectionFailed": "BusyMark не вдалося перевірити генерування тексту за допомогою ШІ.",
   "aiConfigureFirst": "Увімкніть постачальника ШІ та перевірте модель у розділі «Налаштування → ШІ».",
-  "aiRewrite": "Переписати",
-  "aiShorten": "Скоротити",
-  "aiSummarize": "Підсумувати",
-  "aiChangeTone": "Змінити тон…",
-  "aiTranslate": "Перекласти…",
-  "aiProofread": "Вичитати",
-  "aiDraft": "Створити чернетку…",
-  "aiSelectionRequired": "Виділіть текст для цієї дії ШІ.",
-  "aiTonePrompt": "Опишіть бажаний тон",
-  "aiLanguagePrompt": "Цільова мова",
-  "aiDraftPrompt": "Що має підготувати BusyMark?",
+  "aiEditWithAi": "Редагувати за допомогою ШІ",
+  "aiRefineWithAi": "Покращити за допомогою ШІ",
+  "aiInstruction": "Інструкція",
+  "aiChangeTarget": "Що можна змінити",
+  "aiSharedContext": "Контекст, що передається ШІ",
+  "aiTargetSelection": "Вибраний вміст",
+  "aiTargetInsertAfterBlock": "Вставити після поточного блоку",
+  "aiTargetCurrentBlock": "Поточний блок",
+  "aiTargetCurrentSection": "Поточний розділ",
+  "aiTargetCompleteDocument": "Увесь документ",
+  "aiContextNone": "Без контексту документа",
+  "aiContextSelection": "Вибраний вміст",
+  "aiContextCurrentBlock": "Поточний блок",
+  "aiContextCurrentSection": "Поточний розділ",
+  "aiContextCompleteDocument": "Увесь документ",
   "aiGenerating": "Створення пропозиції…",
   "aiProposal": "Пропозиція ШІ",
+  "aiGenerateProposal": "Створити пропозицію",
   "aiContextDisclosure": "Вибраний постачальник отримає {count} символів із показаного контексту.",
   "aiOriginal": "Початковий текст",
   "aiSuggested": "Пропозиція",
@@ -2638,6 +2643,9 @@
   "aiStaleProposal": "Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.",
   "gitAiStagedChangesChanged": "Індексовані зміни змінилися під час створення цього повідомлення коміту. Запустіть дію ще раз.",
   "aiViewContext": "Показати надісланий контекст",
+  "aiReviewExactContent": "Переглянути точний вміст",
+  "aiContentToChange": "Вміст для зміни",
+  "aiContentSentToAi": "Вміст, що надсилається ШІ",
   "aiPrivacyDisabled": "ШІ вимкнено. BusyMark ніколи не надсилає вміст документа без явної дії з ШІ.",
   "aiPrivacyLocal": "BusyMark надсилає лише контекст, показаний у діалозі перевірки, налаштованій локальній службі Ollama. Пропозиції ніколи не застосовуються без перевірки.",
   "aiPrivacyCloud": "BusyMark надсилає лише контекст, показаний у діалозі перевірки, постачальнику {provider}. Запити не зберігають стан, а пропозиції ніколи не застосовуються без перевірки.",
@@ -2662,10 +2670,7 @@
   "aiColdStartObserved": "Виявлено холодний запуск локальної моделі.",
   "aiNoCompatibleModels": "Немає доступної сумісної моделі генерування тексту.",
   "aiEnableProvider": "Спочатку ввімкніть постачальника ШІ.",
-  "aiExplainCode": "Пояснити код",
-  "aiImproveCode": "Поліпшити код",
   "aiDraftCommitMessage": "Створити чернетку повідомлення коміту",
-  "aiCodeBlockRequired": "Спочатку помістіть курсор в огороджений блок коду.",
   "aiDrafting": "Створення чернетки…",
   "aiDraftWithAi": "Створити чернетку за допомогою ШІ",
   "generateOrUpdateMarkdownToc": "Створити/оновити зміст",

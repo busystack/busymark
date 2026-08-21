@@ -251,7 +251,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get pasteWithoutFormatting => 'جای‌گذاری بدون قالب‌بندی';
 
   @override
-  String get preview => 'پیش‌نمایش';
+  String get reading => 'حالت مطالعه';
 
   @override
   String get recent => 'موارد اخیر';
@@ -1362,7 +1362,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند';
 
   @override
-  String get noPreview => 'پیش‌نمایشی وجود ندارد';
+  String get nothingToRead => 'محتوایی برای مطالعه وجود ندارد';
 
   @override
   String get note => 'یادداشت';
@@ -3153,44 +3153,58 @@ class AppLocalizationsFa extends AppLocalizations {
       'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال و مدلی را در تنظیمات ← هوش مصنوعی تأیید کنید.';
 
   @override
-  String get aiRewrite => 'بازنویسی';
+  String get aiEditWithAi => 'ویرایش با هوش مصنوعی';
 
   @override
-  String get aiShorten => 'کوتاه‌سازی';
+  String get aiRefineWithAi => 'بهبود با هوش مصنوعی';
 
   @override
-  String get aiSummarize => 'خلاصه‌سازی';
+  String get aiInstruction => 'دستور';
 
   @override
-  String get aiChangeTone => 'تغییر لحن…';
+  String get aiChangeTarget => 'چه چیزی می‌تواند تغییر کند';
 
   @override
-  String get aiTranslate => 'ترجمه…';
+  String get aiSharedContext => 'زمینهٔ اشتراکی با هوش مصنوعی';
 
   @override
-  String get aiProofread => 'ویرایش و اصلاح';
+  String get aiTargetSelection => 'محتوای انتخاب‌شده';
 
   @override
-  String get aiDraft => 'تهیهٔ پیش‌نویس…';
+  String get aiTargetInsertAfterBlock => 'درج پس از بلوک فعلی';
 
   @override
-  String get aiSelectionRequired =>
-      'برای این کنش هوش مصنوعی متنی را انتخاب کنید.';
+  String get aiTargetCurrentBlock => 'بلوک فعلی';
 
   @override
-  String get aiTonePrompt => 'لحن موردنظر را توصیف کنید';
+  String get aiTargetCurrentSection => 'بخش فعلی';
 
   @override
-  String get aiLanguagePrompt => 'زبان مقصد';
+  String get aiTargetCompleteDocument => 'کل سند';
 
   @override
-  String get aiDraftPrompt => 'BusyMark چه چیزی را پیش‌نویس کند؟';
+  String get aiContextNone => 'بدون زمینه از سند';
+
+  @override
+  String get aiContextSelection => 'محتوای انتخاب‌شده';
+
+  @override
+  String get aiContextCurrentBlock => 'بلوک فعلی';
+
+  @override
+  String get aiContextCurrentSection => 'بخش فعلی';
+
+  @override
+  String get aiContextCompleteDocument => 'کل سند';
 
   @override
   String get aiGenerating => 'در حال تولید پیشنهاد…';
 
   @override
   String get aiProposal => 'پیشنهاد هوش مصنوعی';
+
+  @override
+  String get aiGenerateProposal => 'ایجاد پیشنهاد';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3221,6 +3235,15 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get aiViewContext => 'نمایش بافت ارسال‌شده';
+
+  @override
+  String get aiReviewExactContent => 'بازبینی محتوای دقیق';
+
+  @override
+  String get aiContentToChange => 'محتوایی که تغییر می‌کند';
+
+  @override
+  String get aiContentSentToAi => 'محتوای ارسال‌شده به هوش مصنوعی';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3313,17 +3336,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال کنید.';
 
   @override
-  String get aiExplainCode => 'توضیح کد';
-
-  @override
-  String get aiImproveCode => 'بهبود کد';
-
-  @override
   String get aiDraftCommitMessage => 'تهیهٔ پیش‌نویس پیام ثبت';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'ابتدا مکان‌نما را در یک بلوک کد حصارشده قرار دهید.';
 
   @override
   String get aiDrafting => 'در حال تهیهٔ پیش‌نویس…';

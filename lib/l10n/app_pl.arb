@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Podgląd",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Widok do czytania",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Ostatnie",
   "@recent": {
@@ -1325,9 +1325,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Duży plik: podświetlanie i zwijanie są wstrzymane",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Brak podglądu",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Brak treści do przeczytania",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Uwaga",
   "@note": {
@@ -2617,19 +2617,24 @@
   "aiNoModels": "Ollama działa, ale nie znaleziono zainstalowanych modeli.",
   "aiConnectionFailed": "BusyMark nie mógł zweryfikować generowania tekstu przez SI.",
   "aiConfigureFirst": "Najpierw włącz dostawcę SI i zweryfikuj model w Ustawienia → SI.",
-  "aiRewrite": "Przepisz",
-  "aiShorten": "Skróć",
-  "aiSummarize": "Podsumuj",
-  "aiChangeTone": "Zmień ton…",
-  "aiTranslate": "Przetłumacz…",
-  "aiProofread": "Wykonaj korektę",
-  "aiDraft": "Utwórz szkic…",
-  "aiSelectionRequired": "Zaznacz tekst dla tej operacji SI.",
-  "aiTonePrompt": "Opisz docelowy ton",
-  "aiLanguagePrompt": "Język docelowy",
-  "aiDraftPrompt": "Co ma przygotować BusyMark?",
+  "aiEditWithAi": "Edytuj za pomocą SI",
+  "aiRefineWithAi": "Ulepsz za pomocą SI",
+  "aiInstruction": "Polecenie",
+  "aiChangeTarget": "Co może się zmienić",
+  "aiSharedContext": "Kontekst udostępniany SI",
+  "aiTargetSelection": "Zaznaczona treść",
+  "aiTargetInsertAfterBlock": "Wstaw po bieżącym bloku",
+  "aiTargetCurrentBlock": "Bieżący blok",
+  "aiTargetCurrentSection": "Bieżąca sekcja",
+  "aiTargetCompleteDocument": "Cały dokument",
+  "aiContextNone": "Bez kontekstu dokumentu",
+  "aiContextSelection": "Zaznaczona treść",
+  "aiContextCurrentBlock": "Bieżący blok",
+  "aiContextCurrentSection": "Bieżąca sekcja",
+  "aiContextCompleteDocument": "Cały dokument",
   "aiGenerating": "Generowanie propozycji…",
   "aiProposal": "Propozycja SI",
+  "aiGenerateProposal": "Wygeneruj propozycję",
   "aiContextDisclosure": "Wybrany dostawca otrzyma {count} znaków z pokazanego kontekstu.",
   "aiOriginal": "Tekst oryginalny",
   "aiSuggested": "Propozycja",
@@ -2638,6 +2643,9 @@
   "aiStaleProposal": "Dokument zmienił się podczas generowania propozycji. Uruchom operację ponownie.",
   "gitAiStagedChangesChanged": "Zmiany w indeksie zmieniły się podczas generowania tego komunikatu commita. Uruchom operację ponownie.",
   "aiViewContext": "Pokaż wysłany kontekst",
+  "aiReviewExactContent": "Przejrzyj dokładną treść",
+  "aiContentToChange": "Treść do zmiany",
+  "aiContentSentToAi": "Treść wysyłana do SI",
   "aiPrivacyDisabled": "SI jest wyłączona. BusyMark nigdy nie wysyła treści dokumentu bez jawnego działania SI.",
   "aiPrivacyLocal": "BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do skonfigurowanej lokalnej usługi Ollama. Propozycje nigdy nie są stosowane bez sprawdzenia.",
   "aiPrivacyCloud": "BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do {provider}. Żądania są bezstanowe, a propozycje nigdy nie są stosowane bez sprawdzenia.",
@@ -2662,10 +2670,7 @@
   "aiColdStartObserved": "Wykryto zimny start modelu lokalnego.",
   "aiNoCompatibleModels": "Brak zgodnego modelu generowania tekstu.",
   "aiEnableProvider": "Najpierw włącz dostawcę SI.",
-  "aiExplainCode": "Wyjaśnij kod",
-  "aiImproveCode": "Ulepsz kod",
   "aiDraftCommitMessage": "Utwórz wersję roboczą komunikatu commita",
-  "aiCodeBlockRequired": "Najpierw umieść kursor w ogrodzonym bloku kodu.",
   "aiDrafting": "Tworzenie wersji roboczej…",
   "aiDraftWithAi": "Utwórz wersję roboczą z SI",
   "generateOrUpdateMarkdownToc": "Wygeneruj/zaktualizuj spis treści",

@@ -14,35 +14,49 @@ import '../app/localization.dart';
 import '../workspace/workspace_controller.dart';
 import 'ai_configuration.dart';
 import 'ai_coordinator.dart';
+import 'ai_markdown_edit_resolver.dart';
 import 'ai_models.dart';
 import 'ai_policy.dart';
 import 'ai_providers.dart';
 
-String aiFeatureLabel(BuildContext context, AiFeature feature) {
-  return switch (feature) {
-    AiFeature.rewrite => context.l10n.aiRewrite,
-    AiFeature.shorten => context.l10n.aiShorten,
-    AiFeature.summarize => context.l10n.aiSummarize,
-    AiFeature.tone => context.l10n.aiChangeTone,
-    AiFeature.translate => context.l10n.aiTranslate,
-    AiFeature.proofread => context.l10n.aiProofread,
-    AiFeature.draft => context.l10n.aiDraft,
-    AiFeature.explainCode => context.l10n.aiExplainCode,
-    AiFeature.improveCode => context.l10n.aiImproveCode,
-    AiFeature.draftCommitMessage => context.l10n.aiDraftCommitMessage,
-  };
-}
-
-List<PopupMenuEntry<AiFeature>> aiFeatureMenuItems(BuildContext context) {
-  return [
-    for (final feature in AiFeature.values)
-      if (feature != AiFeature.draftCommitMessage)
-        BusyMarkPopupMenuItem(
-          value: feature,
-          label: aiFeatureLabel(context, feature),
-          icon: BusyMarkGlyphs.ai,
-        ),
-  ];
+Future<AiEditApplication?> showBusyMarkAiEdit(
+  BuildContext context,
+  WidgetRef ref,
+  AiEditorSnapshot snapshot,
+) async {
+  final configuration =
+      await showBusyMarkModalEditorDialog<_AiEditConfiguration>(
+        context,
+        builder: (dialogContext) =>
+            _AiEditConfigurationDialog(snapshot: snapshot),
+      );
+  if (configuration == null || !context.mounted) {
+    return null;
+  }
+  final target = configuration.resolvedTarget;
+  final invocation = AiEditInvocation(
+    feature: AiFeature.editDocument,
+    scope: target.scope,
+    input: target.input,
+    replacementOriginal: target.replacementOriginal,
+    sourceRevision: snapshot.sourceRevision,
+    targetId:
+        '${snapshot.targetId}:${target.replacementStart}:${target.replacementEnd}',
+    documentPath: snapshot.documentPath,
+    instruction: configuration.instruction,
+    editTarget: target.editTarget,
+    editContext: target.editContext,
+    documentSource: snapshot.documentSource,
+    replacementStart: target.replacementStart,
+    replacementEnd: target.replacementEnd,
+    replacementPrefix: target.replacementPrefix,
+    replacementSuffix: target.replacementSuffix,
+    trimReplacementOutput: target.trimReplacementOutput,
+  );
+  final output = await showBusyMarkAiProposal(context, ref, invocation);
+  return output == null
+      ? null
+      : AiEditApplication(invocation: invocation, output: output);
 }
 
 Future<String?> showBusyMarkAiProposal(
@@ -85,37 +99,28 @@ Future<String?> showBusyMarkAiProposal(
   if (!context.mounted) {
     return null;
   }
-  var configured = invocation;
-  if (invocation.feature.requiresInstruction) {
-    final instruction = await _showAiInstructionDialog(
-      context,
-      invocation.feature,
-    );
-    if (instruction == null || !context.mounted) {
-      return null;
-    }
-    configured = invocation.copyWith(instruction: instruction);
-  }
   final AiRequest request;
   try {
     request = AiPromptBuilder.build(
       id: const Uuid().v4(),
-      targetId: configured.targetId,
+      targetId: invocation.targetId,
       provider: providerKind,
-      feature: configured.feature,
-      scope: configured.scope,
-      input: configured.input,
+      feature: invocation.feature,
+      scope: invocation.scope,
+      input: invocation.input,
       modelCandidates: modelCandidates,
-      sourceRevision: configured.sourceRevision,
-      contentFormat: configured.contentFormat,
-      instruction: configured.instruction,
-      replacementOriginal: configured.replacementOriginal,
-      documentSource: configured.documentSource,
-      replacementStart: configured.replacementStart,
-      replacementEnd: configured.replacementEnd,
-      replacementPrefix: configured.replacementPrefix,
-      replacementSuffix: configured.replacementSuffix,
-      trimReplacementOutput: configured.trimReplacementOutput,
+      sourceRevision: invocation.sourceRevision,
+      contentFormat: invocation.contentFormat,
+      editTarget: invocation.editTarget,
+      editContext: invocation.editContext,
+      instruction: invocation.instruction,
+      replacementOriginal: invocation.replacementOriginal,
+      documentSource: invocation.documentSource,
+      replacementStart: invocation.replacementStart,
+      replacementEnd: invocation.replacementEnd,
+      replacementPrefix: invocation.replacementPrefix,
+      replacementSuffix: invocation.replacementSuffix,
+      trimReplacementOutput: invocation.trimReplacementOutput,
       deadline: providerKind == AiProviderKind.ollamaLocal
           ? const Duration(minutes: 5)
           : const Duration(minutes: 2),
@@ -134,7 +139,7 @@ Future<String?> showBusyMarkAiProposal(
     barrierDismissible: false,
     builder: (dialogContext) => _AiProposalDialog(
       request: request,
-      invocation: configured,
+      invocation: invocation,
       validateBeforeApply: validateBeforeApply,
       staleMessage: staleMessage,
     ),
@@ -159,38 +164,55 @@ Future<void> _showAiMessage(BuildContext context, String message) {
   );
 }
 
-Future<String?> _showAiInstructionDialog(
-  BuildContext context,
-  AiFeature feature,
-) {
-  final label = switch (feature) {
-    AiFeature.tone => context.l10n.aiTonePrompt,
-    AiFeature.translate => context.l10n.aiLanguagePrompt,
-    AiFeature.draft => context.l10n.aiDraftPrompt,
-    _ => aiFeatureLabel(context, feature),
-  };
-  return showBusyMarkModalDialog<String>(
-    context,
-    barrierDismissible: false,
-    builder: (dialogContext) => _AiInstructionDialog(
-      title: aiFeatureLabel(context, feature),
-      label: label,
-    ),
-  );
+class _AiEditConfiguration {
+  const _AiEditConfiguration({
+    required this.instruction,
+    required this.resolvedTarget,
+  });
+
+  final String instruction;
+  final AiMarkdownEditTarget resolvedTarget;
 }
 
-class _AiInstructionDialog extends StatefulWidget {
-  const _AiInstructionDialog({required this.title, required this.label});
+class _AiEditConfigurationDialog extends StatefulWidget {
+  const _AiEditConfigurationDialog({required this.snapshot});
 
-  final String title;
-  final String label;
+  final AiEditorSnapshot snapshot;
 
   @override
-  State<_AiInstructionDialog> createState() => _AiInstructionDialogState();
+  State<_AiEditConfigurationDialog> createState() =>
+      _AiEditConfigurationDialogState();
 }
 
-class _AiInstructionDialogState extends State<_AiInstructionDialog> {
+class _AiEditConfigurationDialogState
+    extends State<_AiEditConfigurationDialog> {
   final _controller = TextEditingController();
+  late AiEditTargetKind _target;
+  late AiEditContextKind _context;
+  AiMarkdownEditTarget? _resolvedTarget;
+  String? _resolutionError;
+
+  bool get _blockTargetAvailable =>
+      widget.snapshot.blockTargetAvailable &&
+      widget.snapshot.documentSource.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.snapshot.hasSelection) {
+      _target = AiEditTargetKind.selection;
+      _context = AiEditContextKind.selection;
+    } else if (_blockTargetAvailable) {
+      _target = AiEditTargetKind.block;
+      _context = AiEditContextKind.block;
+    } else {
+      _target = AiEditTargetKind.document;
+      _context = widget.snapshot.documentSource.isEmpty
+          ? AiEditContextKind.none
+          : AiEditContextKind.document;
+    }
+    _resolveChoices(notify: false);
+  }
 
   @override
   void dispose() {
@@ -200,47 +222,236 @@ class _AiInstructionDialogState extends State<_AiInstructionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
-      title: widget.title,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.apply,
-          suggested: true,
-          onPressed: _controller.text.trim().isEmpty
-              ? null
-              : () => Navigator.pop(context, _controller.text.trim()),
-        ),
-      ],
+    final resolvedTarget = _resolvedTarget;
+    return BusyMarkModalEditorScaffold(
+      title: context.l10n.aiRefineWithAi,
+      cancelLabel: context.l10n.cancel,
+      saveLabel: context.l10n.aiGenerateProposal,
+      onCancel: () => Navigator.pop(context),
+      onSave: _controller.text.trim().isEmpty || _resolvedTarget == null
+          ? null
+          : () => Navigator.pop(
+              context,
+              _AiEditConfiguration(
+                instruction: _controller.text.trim(),
+                resolvedTarget: _resolvedTarget!,
+              ),
+            ),
       children: [
         BusyMarkGroupedList(
           filled: true,
           children: [
             BusyMarkGroupedTextEntry(
-              label: widget.label,
+              key: const ValueKey('ai-edit-instruction'),
+              label: context.l10n.aiInstruction,
               controller: _controller,
               autofocus: true,
-              minLines: widget.title == context.l10n.aiDraft ? 3 : 1,
-              maxLines: widget.title == context.l10n.aiDraft ? 6 : 1,
-              textInputAction: widget.title == context.l10n.aiDraft
-                  ? TextInputAction.newline
-                  : TextInputAction.done,
+              minLines: 3,
+              maxLines: 6,
+              textInputAction: TextInputAction.newline,
               onChanged: (_) => setState(() {}),
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty) {
-                  Navigator.pop(context, value.trim());
-                }
-              },
             ),
           ],
+        ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkComboRow<AiEditTargetKind>(
+              key: const ValueKey('ai-edit-target'),
+              title: context.l10n.aiChangeTarget,
+              values: _availableTargets,
+              selected: _target,
+              labelFor: (value) => _targetLabel(context, value),
+              onSelected: (value) {
+                _target = value;
+                _resolveChoices();
+              },
+            ),
+            if (resolvedTarget != null)
+              Semantics(
+                container: true,
+                label: context.l10n.aiContentToChange,
+                child: Padding(
+                  key: const ValueKey('ai-content-to-change'),
+                  padding: const EdgeInsets.all(BusyMarkSpacing.md),
+                  child: _AiContentPreview(
+                    content: resolvedTarget.replacementOriginal,
+                  ),
+                ),
+              ),
+            BusyMarkComboRow<AiEditContextKind>(
+              key: const ValueKey('ai-edit-context'),
+              title: context.l10n.aiSharedContext,
+              values: _availableContexts,
+              selected: _context,
+              labelFor: (value) => _contextLabel(context, value),
+              onSelected: (value) {
+                _context = value;
+                _resolveChoices();
+              },
+            ),
+            if (resolvedTarget != null)
+              Semantics(
+                container: true,
+                label: context.l10n.aiContentSentToAi,
+                child: Padding(
+                  key: const ValueKey('ai-content-sent-to-ai'),
+                  padding: const EdgeInsets.all(BusyMarkSpacing.md),
+                  child: _AiContentPreview(content: resolvedTarget.input),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        if (_resolutionError case final error?)
+          BusyMarkStatusBox(message: error, kind: BusyMarkStatusKind.warning)
+        else if (resolvedTarget != null) ...[
+          BusyMarkStatusBox(
+            message: context.l10n.aiContextDisclosure(
+              resolvedTarget.input.length,
+            ),
+            kind: BusyMarkStatusKind.information,
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<AiEditTargetKind> get _availableTargets => [
+    for (final value in AiEditTargetKind.values)
+      if (switch (value) {
+        AiEditTargetKind.selection => widget.snapshot.hasSelection,
+        AiEditTargetKind.insertAfterBlock ||
+        AiEditTargetKind.block ||
+        AiEditTargetKind.section => _blockTargetAvailable,
+        AiEditTargetKind.document => true,
+      })
+        value,
+  ];
+
+  List<AiEditContextKind> get _availableContexts => [
+    for (final value in AiEditContextKind.values)
+      if (switch (value) {
+        AiEditContextKind.selection => widget.snapshot.hasSelection,
+        AiEditContextKind.block ||
+        AiEditContextKind.section => _blockTargetAvailable,
+        AiEditContextKind.none || AiEditContextKind.document => true,
+      })
+        value,
+  ];
+
+  void _resolveChoices({bool notify = true}) {
+    late final VoidCallback update;
+    try {
+      final snapshot = widget.snapshot;
+      final resolved = const AiMarkdownEditResolver().resolve(
+        editTarget: _target,
+        editContext: _context,
+        source: snapshot.documentSource,
+        selectionStart: snapshot.selectionStart,
+        selectionEnd: snapshot.selectionEnd,
+        anchorOffset: snapshot.anchorOffset,
+        filePath: snapshot.documentPath ?? 'untitled.md',
+      );
+      update = () {
+        _resolvedTarget = resolved;
+        _resolutionError = null;
+      };
+    } on AiException catch (error) {
+      update = () {
+        _resolvedTarget = null;
+        _resolutionError = error.message;
+      };
+    }
+    if (notify) {
+      setState(update);
+    } else {
+      update();
+    }
+  }
+}
+
+class _AiContentDisclosure extends StatefulWidget {
+  const _AiContentDisclosure({required this.title, required this.content});
+
+  final String title;
+  final String content;
+
+  @override
+  State<_AiContentDisclosure> createState() => _AiContentDisclosureState();
+}
+
+class _AiContentDisclosureState extends State<_AiContentDisclosure> {
+  var _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkGroupedList(
+      filled: true,
+      children: [
+        BusyMarkActionRow(
+          title: widget.title,
+          leading: const Icon(BusyMarkGlyphs.preview),
+          trailing: Icon(
+            _expanded ? BusyMarkGlyphs.upArrow : BusyMarkGlyphs.downArrow,
+          ),
+          onTap: () => setState(() => _expanded = !_expanded),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: _AiContentPreview(content: widget.content),
+          ),
+      ],
+    );
+  }
+}
+
+class _AiContentPreview extends StatelessWidget {
+  const _AiContentPreview({required this.content});
+
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 140),
+          child: SingleChildScrollView(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SelectableText(
+                content.isEmpty ? '\u2014' : content,
+                style: _monospaceStyle(context),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 }
+
+String _targetLabel(BuildContext context, AiEditTargetKind target) =>
+    switch (target) {
+      AiEditTargetKind.selection => context.l10n.aiTargetSelection,
+      AiEditTargetKind.insertAfterBlock =>
+        context.l10n.aiTargetInsertAfterBlock,
+      AiEditTargetKind.block => context.l10n.aiTargetCurrentBlock,
+      AiEditTargetKind.section => context.l10n.aiTargetCurrentSection,
+      AiEditTargetKind.document => context.l10n.aiTargetCompleteDocument,
+    };
+
+String _contextLabel(BuildContext context, AiEditContextKind value) =>
+    switch (value) {
+      AiEditContextKind.none => context.l10n.aiContextNone,
+      AiEditContextKind.selection => context.l10n.aiContextSelection,
+      AiEditContextKind.block => context.l10n.aiContextCurrentBlock,
+      AiEditContextKind.section => context.l10n.aiContextCurrentSection,
+      AiEditContextKind.document => context.l10n.aiContextCompleteDocument,
+    };
 
 class _AiProposalDialog extends ConsumerStatefulWidget {
   const _AiProposalDialog({
@@ -381,19 +592,9 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
           kind: BusyMarkStatusKind.information,
         ),
         const SizedBox(height: BusyMarkSpacing.sm),
-        ExpansionTile(
-          title: Text(context.l10n.aiViewContext),
-          children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 160),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  widget.request.input,
-                  style: _monospaceStyle(context),
-                ),
-              ),
-            ),
-          ],
+        _AiContentDisclosure(
+          title: context.l10n.aiViewContext,
+          content: widget.request.input,
         ),
         const SizedBox(height: BusyMarkSpacing.sm),
         if (_error != null)

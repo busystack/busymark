@@ -7,6 +7,8 @@ import 'ai_models.dart';
 class AiMarkdownEditTarget {
   const AiMarkdownEditTarget({
     required this.scope,
+    required this.editTarget,
+    required this.editContext,
     required this.input,
     required this.replacementStart,
     required this.replacementEnd,
@@ -17,6 +19,8 @@ class AiMarkdownEditTarget {
   });
 
   final AiScope scope;
+  final AiEditTargetKind editTarget;
+  final AiEditContextKind editContext;
   final String input;
   final int replacementStart;
   final int replacementEnd;
@@ -38,8 +42,8 @@ class AiBlockInsertion {
   final String suffix;
 }
 
-/// Resolves source-editor AI actions to ranges that cannot split a Markdown
-/// block or a protected inline construct.
+/// Resolves the target and disclosed context selected by the user to exact
+/// Markdown source ranges.
 class AiMarkdownEditResolver {
   const AiMarkdownEditResolver({MarkdownParser parser = const MarkdownParser()})
     : _parser = parser;
@@ -47,15 +51,19 @@ class AiMarkdownEditResolver {
   final MarkdownParser _parser;
 
   AiMarkdownEditTarget resolve({
-    required AiFeature feature,
+    required AiEditTargetKind editTarget,
+    required AiEditContextKind editContext,
     required String source,
     required int selectionStart,
     required int selectionEnd,
+    required int anchorOffset,
     String filePath = 'ai-source.md',
   }) {
     if (selectionStart < 0 ||
         selectionEnd < selectionStart ||
-        selectionEnd > source.length) {
+        selectionEnd > source.length ||
+        anchorOffset < 0 ||
+        anchorOffset > source.length) {
       throw const AiException(
         AiFailureCode.validation,
         'The AI edit range is invalid.',
@@ -69,19 +77,51 @@ class AiMarkdownEditResolver {
     );
     final blocks = _topLevelBlocks(document);
     final hasSelection = selectionStart != selectionEnd;
-
-    if (feature == AiFeature.draft) {
-      final insertion = blockInsertion(
-        source,
-        hasSelection ? selectionEnd : selectionStart,
-        blocks: blocks,
-      );
-      final context = hasSelection
-          ? source.substring(selectionStart, selectionEnd)
-          : _nearbyContext(source, selectionStart, blocks);
+    final targetRange = switch (editTarget) {
+      AiEditTargetKind.selection =>
+        hasSelection
+            ? _safeSelectionRange(
+                document,
+                source,
+                selectionStart,
+                selectionEnd,
+              )
+            : throw const AiException(
+                AiFailureCode.validation,
+                'Select the Markdown content to replace first.',
+              ),
+      AiEditTargetKind.block => _blockRangeAt(blocks, anchorOffset),
+      AiEditTargetKind.section => _sectionRangeAt(blocks, anchorOffset),
+      AiEditTargetKind.document => _AiSourceRange(0, source.length),
+      AiEditTargetKind.insertAfterBlock => _blockRangeAt(
+        blocks,
+        anchorOffset,
+        allowPreviousAtBoundary: true,
+      ),
+    };
+    final contextRange = switch (editContext) {
+      AiEditContextKind.none => null,
+      AiEditContextKind.selection =>
+        hasSelection
+            ? _AiSourceRange(selectionStart, selectionEnd)
+            : throw const AiException(
+                AiFailureCode.validation,
+                'Select content before sharing the selection as AI context.',
+              ),
+      AiEditContextKind.block => _blockRangeAt(blocks, anchorOffset),
+      AiEditContextKind.section => _sectionRangeAt(blocks, anchorOffset),
+      AiEditContextKind.document => _AiSourceRange(0, source.length),
+    };
+    final input = contextRange == null
+        ? ''
+        : source.substring(contextRange.start, contextRange.end);
+    if (editTarget == AiEditTargetKind.insertAfterBlock) {
+      final insertion = blockInsertion(source, targetRange.end, blocks: blocks);
       return AiMarkdownEditTarget(
-        scope: AiScope.insertion,
-        input: context,
+        scope: AiScope.markdownEdit,
+        editTarget: editTarget,
+        editContext: editContext,
+        input: input,
         replacementStart: insertion.offset,
         replacementEnd: insertion.offset,
         replacementOriginal: '',
@@ -90,66 +130,14 @@ class AiMarkdownEditResolver {
         trimReplacementOutput: true,
       );
     }
-
-    if (feature == AiFeature.summarize) {
-      if (!hasSelection) {
-        final insertion = blockInsertion(
-          source,
-          selectionStart,
-          blocks: blocks,
-        );
-        return AiMarkdownEditTarget(
-          scope: AiScope.document,
-          input: source,
-          replacementStart: insertion.offset,
-          replacementEnd: insertion.offset,
-          replacementOriginal: '',
-          replacementPrefix: insertion.prefix,
-          replacementSuffix: insertion.suffix,
-          trimReplacementOutput: true,
-        );
-      }
-      _ensureNoHardProtectedSelection(
-        document,
-        source,
-        selectionStart,
-        selectionEnd,
-      );
-      final range = _wholeBlockRange(
-        source,
-        selectionStart,
-        selectionEnd,
-        blocks,
-      );
-      final original = source.substring(range.start, range.end);
-      return AiMarkdownEditTarget(
-        scope: AiScope.selection,
-        input: original,
-        replacementStart: range.start,
-        replacementEnd: range.end,
-        replacementOriginal: original,
-      );
-    }
-
-    if (!hasSelection) {
-      throw const AiException(
-        AiFailureCode.validation,
-        'Select the Markdown prose to edit first.',
-      );
-    }
-
-    final range = _safeSelectionRange(
-      document,
-      source,
-      selectionStart,
-      selectionEnd,
-    );
-    final original = source.substring(range.start, range.end);
+    final original = source.substring(targetRange.start, targetRange.end);
     return AiMarkdownEditTarget(
-      scope: AiScope.selection,
-      input: original,
-      replacementStart: range.start,
-      replacementEnd: range.end,
+      scope: AiScope.markdownEdit,
+      editTarget: editTarget,
+      editContext: editContext,
+      input: input,
+      replacementStart: targetRange.start,
+      replacementEnd: targetRange.end,
       replacementOriginal: original,
     );
   }
@@ -222,54 +210,64 @@ class AiMarkdownEditResolver {
     return blocks;
   }
 
-  String _nearbyContext(String source, int cursor, List<BusyBlock> blocks) {
+  _AiSourceRange _blockRangeAt(
+    List<BusyBlock> blocks,
+    int anchor, {
+    bool allowPreviousAtBoundary = false,
+  }) {
     BusyBlock? candidate;
     for (final block in blocks) {
       final span = block.sourceSpan!;
-      if (cursor >= span.startOffset && cursor <= span.endOffset) {
+      if (anchor >= span.startOffset && anchor <= span.endOffset) {
         candidate = block;
         break;
       }
-      if (span.endOffset <= cursor) {
+      if (allowPreviousAtBoundary && span.endOffset <= anchor) {
         candidate = block;
       }
     }
-    if (candidate == null || _isUnsafeContextBlock(candidate.kind)) {
-      return '';
+    if (candidate == null) {
+      throw const AiException(
+        AiFailureCode.validation,
+        'Place the cursor inside the Markdown block to use.',
+      );
     }
     final span = candidate.sourceSpan!;
-    return source.substring(span.startOffset, span.endOffset).trim();
+    return _AiSourceRange(span.startOffset, span.endOffset);
   }
 
-  bool _isUnsafeContextBlock(BusyBlockKind kind) => switch (kind) {
-    BusyBlockKind.codeBlock ||
-    BusyBlockKind.frontMatter ||
-    BusyBlockKind.htmlBlock ||
-    BusyBlockKind.table ||
-    BusyBlockKind.writersideAdmonition ||
-    BusyBlockKind.writersideTabs ||
-    BusyBlockKind.writersideProcedure ||
-    BusyBlockKind.writersideRawXml => true,
-    _ => false,
-  };
-
-  _AiSourceRange _wholeBlockRange(
-    String source,
-    int start,
-    int end,
-    List<BusyBlock> blocks,
-  ) {
-    final intersecting = [
-      for (final block in blocks)
-        if (_intersects(block.sourceSpan!, start, end)) block.sourceSpan!,
-    ];
-    if (intersecting.isEmpty) {
-      return _lineRange(source, start, end);
+  _AiSourceRange _sectionRangeAt(List<BusyBlock> blocks, int anchor) {
+    var headingIndex = -1;
+    for (var index = 0; index < blocks.length; index += 1) {
+      final block = blocks[index];
+      final span = block.sourceSpan!;
+      if (span.startOffset > anchor) {
+        break;
+      }
+      if (block.kind == BusyBlockKind.heading) {
+        headingIndex = index;
+      }
     }
-    return _AiSourceRange(
-      intersecting.first.startOffset,
-      intersecting.last.endOffset,
-    );
+    if (headingIndex < 0) {
+      throw const AiException(
+        AiFailureCode.validation,
+        'Place the cursor in a Markdown section that starts with a heading.',
+      );
+    }
+    final heading = blocks[headingIndex];
+    final level = int.tryParse(heading.attributes['level'] ?? '') ?? 1;
+    var end = blocks.last.sourceSpan!.endOffset;
+    for (final block in blocks.skip(headingIndex + 1)) {
+      if (block.kind != BusyBlockKind.heading) {
+        continue;
+      }
+      final nextLevel = int.tryParse(block.attributes['level'] ?? '') ?? 1;
+      if (nextLevel <= level) {
+        end = block.sourceSpan!.startOffset;
+        break;
+      }
+    }
+    return _AiSourceRange(heading.sourceSpan!.startOffset, end);
   }
 
   _AiSourceRange _safeSelectionRange(
@@ -278,42 +276,7 @@ class AiMarkdownEditResolver {
     int originalStart,
     int originalEnd,
   ) {
-    var start = originalStart;
-    var end = originalEnd;
-    _ensureNoHardProtectedSelection(document, source, start, end);
-
-    final expandable = <SourceSpan>[
-      ..._inlineLinkSpans(source),
-      ...document.variables.map((variable) => variable.span),
-      ..._inlineCodeSpans(source),
-      ..._referenceAndFootnoteSpans(source),
-    ];
-    var changed = true;
-    while (changed) {
-      changed = false;
-      for (final span in expandable) {
-        if (!_intersects(span, start, end)) {
-          continue;
-        }
-        final nextStart = start < span.startOffset ? start : span.startOffset;
-        final nextEnd = end > span.endOffset ? end : span.endOffset;
-        if (nextStart != start || nextEnd != end) {
-          start = nextStart;
-          end = nextEnd;
-          changed = true;
-        }
-      }
-    }
-    return _AiSourceRange(start, end);
-  }
-
-  void _ensureNoHardProtectedSelection(
-    ParsedMarkdownDocument document,
-    String source,
-    int start,
-    int end,
-  ) {
-    final hardProtected = <SourceSpan>[
+    final protected = <SourceSpan>[
       ...document.codeBlocks.map((block) => block.span),
       ...document.xmlBlocks.map((block) => block.span),
       if (_frontMatterRange(source) case final _AiSourceRange range)
@@ -323,19 +286,22 @@ class AiMarkdownEditResolver {
           startOffset: range.start,
           endOffset: range.end,
         ),
-      for (final block in document.busyDocument.blocks)
-        if (_isUnsafeContextBlock(block.kind) && block.sourceSpan != null)
-          block.sourceSpan!,
       ..._rawMarkupSpans(source),
+      ..._inlineLinkSpans(source),
+      ...document.variables.map((variable) => variable.span),
+      ..._inlineCodeSpans(source),
+      ..._referenceAndFootnoteSpans(source),
     ];
-    for (final span in hardProtected) {
-      if (_intersects(span, start, end)) {
+    for (final span in protected) {
+      if (_intersects(span, originalStart, originalEnd) &&
+          (originalStart > span.startOffset || originalEnd < span.endOffset)) {
         throw const AiException(
           AiFailureCode.validation,
-          'This selection intersects protected Markdown. Select complete prose blocks or use the dedicated code action.',
+          'The selected target cuts through protected Markdown. Select the complete construct or choose another target.',
         );
       }
     }
+    return _AiSourceRange(originalStart, originalEnd);
   }
 
   List<SourceSpan> _inlineCodeSpans(String source) {
@@ -508,13 +474,6 @@ class AiMarkdownEditResolver {
 
   bool _intersects(SourceSpan span, int start, int end) =>
       start < span.endOffset && end > span.startOffset;
-
-  _AiSourceRange _lineRange(String source, int start, int end) {
-    final lineStart = start == 0 ? 0 : source.lastIndexOf('\n', start - 1) + 1;
-    final newline = source.indexOf('\n', end);
-    final lineEnd = newline < 0 ? source.length : newline;
-    return _AiSourceRange(lineStart, lineEnd);
-  }
 }
 
 class _AiSourceRange {

@@ -259,6 +259,98 @@ abstract final class BusyMarkAppShortcutGtkAccelerators {
   static const settings = BusyMarkAppShortcuts.settingsGtkAccelerator;
 }
 
+enum BusyMarkDocumentViewShortcutAction { editor, source, reading, split }
+
+abstract final class BusyMarkDocumentViewShortcuts {
+  const BusyMarkDocumentViewShortcuts._();
+
+  static const editorLabel = 'Ctrl+Shift+1';
+  static const sourceLabel = 'Ctrl+Shift+2';
+  static const readingLabel = 'Ctrl+Shift+3';
+  static const splitLabel = 'Ctrl+Shift+4';
+
+  static const editorGtkAccelerator = '<Primary><Shift>1';
+  static const sourceGtkAccelerator = '<Primary><Shift>2';
+  static const readingGtkAccelerator = '<Primary><Shift>3';
+  static const splitGtkAccelerator = '<Primary><Shift>4';
+
+  static const editor = BusyMarkShortcutDefinition(
+    label: editorLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit1,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: editorGtkAccelerator,
+  );
+  static const source = BusyMarkShortcutDefinition(
+    label: sourceLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit2,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: sourceGtkAccelerator,
+  );
+  static const reading = BusyMarkShortcutDefinition(
+    label: readingLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit3,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: readingGtkAccelerator,
+  );
+  static const split = BusyMarkShortcutDefinition(
+    label: splitLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit4,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: splitGtkAccelerator,
+  );
+
+  static const definitions =
+      <BusyMarkDocumentViewShortcutAction, BusyMarkShortcutDefinition>{
+        BusyMarkDocumentViewShortcutAction.editor: editor,
+        BusyMarkDocumentViewShortcutAction.source: source,
+        BusyMarkDocumentViewShortcutAction.reading: reading,
+        BusyMarkDocumentViewShortcutAction.split: split,
+      };
+}
+
+abstract final class BusyMarkDocumentViewShortcutLabels {
+  const BusyMarkDocumentViewShortcutLabels._();
+
+  static const editor = BusyMarkDocumentViewShortcuts.editorLabel;
+  static const source = BusyMarkDocumentViewShortcuts.sourceLabel;
+  static const reading = BusyMarkDocumentViewShortcuts.readingLabel;
+  static const split = BusyMarkDocumentViewShortcuts.splitLabel;
+}
+
+abstract final class BusyMarkDocumentViewShortcutActivators {
+  const BusyMarkDocumentViewShortcutActivators._();
+
+  static ShortcutActivator get editor =>
+      BusyMarkDocumentViewShortcuts.editor.activator;
+  static ShortcutActivator get source =>
+      BusyMarkDocumentViewShortcuts.source.activator;
+  static ShortcutActivator get reading =>
+      BusyMarkDocumentViewShortcuts.reading.activator;
+  static ShortcutActivator get split =>
+      BusyMarkDocumentViewShortcuts.split.activator;
+}
+
+abstract final class BusyMarkDocumentViewShortcutGtkAccelerators {
+  const BusyMarkDocumentViewShortcutGtkAccelerators._();
+
+  static const editor = BusyMarkDocumentViewShortcuts.editorGtkAccelerator;
+  static const source = BusyMarkDocumentViewShortcuts.sourceGtkAccelerator;
+  static const reading = BusyMarkDocumentViewShortcuts.readingGtkAccelerator;
+  static const split = BusyMarkDocumentViewShortcuts.splitGtkAccelerator;
+}
+
 enum BusyMarkTextEditingShortcutAction {
   selectAll,
   cut,
@@ -393,6 +485,7 @@ abstract final class BusyMarkTextEditingShortcutActivators {
 }
 
 enum BusyMarkEditorShortcutAction {
+  refineWithAi,
   bold,
   italic,
   underline,
@@ -427,6 +520,7 @@ enum BusyMarkEditorShortcutAction {
 abstract final class BusyMarkEditorShortcuts {
   const BusyMarkEditorShortcuts._();
 
+  static const refineWithAiLabel = 'Ctrl+G';
   static const textStyleLabel = 'Ctrl+Alt+0-6';
   static const boldLabel = 'Ctrl+B';
   static const italicLabel = 'Ctrl+I';
@@ -451,6 +545,10 @@ abstract final class BusyMarkEditorShortcuts {
   static const imageLabel = 'Ctrl+Shift+I';
   static const hardLineBreakLabel = 'Shift+Enter';
 
+  static const refineWithAi = BusyMarkShortcutDefinition(
+    label: refineWithAiLabel,
+    activator: SingleActivator(LogicalKeyboardKey.keyG, control: true),
+  );
   static const bold = BusyMarkShortcutDefinition(
     label: boldLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyB, control: true),
@@ -603,6 +701,7 @@ abstract final class BusyMarkEditorShortcuts {
 
   static const definitions =
       <BusyMarkEditorShortcutAction, BusyMarkShortcutDefinition>{
+        BusyMarkEditorShortcutAction.refineWithAi: refineWithAi,
         BusyMarkEditorShortcutAction.bold: bold,
         BusyMarkEditorShortcutAction.italic: italic,
         BusyMarkEditorShortcutAction.underline: underline,
@@ -632,6 +731,7 @@ abstract final class BusyMarkEditorShortcuts {
 abstract final class BusyMarkEditorShortcutLabels {
   const BusyMarkEditorShortcutLabels._();
 
+  static const refineWithAi = BusyMarkEditorShortcuts.refineWithAiLabel;
   static const textStyle = BusyMarkEditorShortcuts.textStyleLabel;
   static const bold = BusyMarkEditorShortcuts.boldLabel;
   static const italic = BusyMarkEditorShortcuts.italicLabel;
@@ -686,6 +786,8 @@ abstract final class BusyMarkEditorShortcutActivators {
     return null;
   }
 
+  static ShortcutActivator get refineWithAi =>
+      BusyMarkEditorShortcuts.refineWithAi.activator;
   static ShortcutActivator get bold => BusyMarkEditorShortcuts.bold.activator;
   static ShortcutActivator get italic =>
       BusyMarkEditorShortcuts.italic.activator;

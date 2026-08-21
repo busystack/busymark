@@ -74,6 +74,7 @@ void main() {
           entry.key: entry.value.label,
       },
       {
+        BusyMarkEditorShortcutAction.refineWithAi: 'Ctrl+G',
         BusyMarkEditorShortcutAction.bold: 'Ctrl+B',
         BusyMarkEditorShortcutAction.italic: 'Ctrl+I',
         BusyMarkEditorShortcutAction.underline: 'Ctrl+U',
@@ -99,6 +100,42 @@ void main() {
         BusyMarkEditorShortcutAction.pastePlainText: 'Ctrl+Shift+V',
       },
     );
+  });
+
+  test('document view shortcuts are distinct from existing commands', () {
+    expect(
+      {
+        for (final entry in BusyMarkDocumentViewShortcuts.definitions.entries)
+          entry.key: entry.value.label,
+      },
+      {
+        BusyMarkDocumentViewShortcutAction.editor: 'Ctrl+Shift+1',
+        BusyMarkDocumentViewShortcutAction.source: 'Ctrl+Shift+2',
+        BusyMarkDocumentViewShortcutAction.reading: 'Ctrl+Shift+3',
+        BusyMarkDocumentViewShortcutAction.split: 'Ctrl+Shift+4',
+      },
+    );
+
+    final existingActivators = <ShortcutActivator>{
+      ...BusyMarkAppShortcuts.definitions.values.map(
+        (definition) => definition.activator,
+      ),
+      ...BusyMarkTextEditingShortcuts.definitions.values.map(
+        (definition) => definition.activator,
+      ),
+      ...BusyMarkEditorShortcuts.definitions.values.map(
+        (definition) => definition.activator,
+      ),
+      ...BusyMarkSidebarShortcuts.definitions.values.map(
+        (definition) => definition.activator,
+      ),
+      ...BusyMarkTreeShortcuts.definitions.values.map(
+        (definition) => definition.activator,
+      ),
+    };
+    for (final definition in BusyMarkDocumentViewShortcuts.definitions.values) {
+      expect(existingActivators, isNot(contains(definition.activator)));
+    }
   });
 
   testWidgets('app wires generated localization delegates and locales', (
@@ -946,10 +983,17 @@ void main() {
     expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.gitHistory), findsNothing);
     expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
-    expect(find.text(l10n.viewMode), findsNothing);
+    expect(find.text(l10n.viewMode), findsOneWidget);
+    expect(find.text(l10n.editor), findsOneWidget);
+    expect(find.text(l10n.source), findsOneWidget);
+    expect(find.text(l10n.reading), findsOneWidget);
+    expect(find.text(l10n.split), findsOneWidget);
 
     final expectedShortcutLabels = <String>{
       ...BusyMarkAppShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkDocumentViewShortcuts.definitions.values.map(
         (definition) => definition.label,
       ),
       ...BusyMarkTextEditingShortcuts.definitions.values.map(
@@ -1785,6 +1829,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+
+    for (final (key, expectedMode)
+        in <(LogicalKeyboardKey, DocumentViewModePreference)>[
+          (LogicalKeyboardKey.digit3, DocumentViewModePreference.preview),
+          (LogicalKeyboardKey.digit2, DocumentViewModePreference.source),
+          (LogicalKeyboardKey.digit1, DocumentViewModePreference.editor),
+          (LogicalKeyboardKey.digit4, DocumentViewModePreference.split),
+        ]) {
+      await pressControlShortcut(key, shift: true);
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
+    }
 
     final controller = container.read(workspaceControllerProvider.notifier);
     await controller.openActiveFile(second.path);
@@ -2748,6 +2806,7 @@ void main() {
       );
     }
 
+    await setDocumentViewMode(DocumentViewModePreference.source);
     final activeDocumentField = find.byWidgetPredicate(
       (widget) =>
           widget is TextField &&

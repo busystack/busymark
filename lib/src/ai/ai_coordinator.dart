@@ -59,40 +59,11 @@ class AiCoordinator {
       acquired = true;
       _requireCurrent(request, active);
       final totalDeadline = AiDeadline(request.deadline);
-      var effectiveRequest = request;
-      if (request.hierarchicalChunks.isNotEmpty) {
-        final summaries = <String>[];
-        for (
-          var index = 0;
-          index < request.hierarchicalChunks.length;
-          index += 1
-        ) {
-          _requireCurrent(request, active);
-          final stage = request.summaryStage(
-            stageId: 'section-$index',
-            stageInput: request.hierarchicalChunks[index],
-            task:
-                'Summarize this document section faithfully and concisely. Preserve technical names and do not add facts.',
-            outputTokens: 1200,
-          );
-          summaries.add(
-            await _collectValidated(stage, request, active, totalDeadline),
-          );
-        }
-        effectiveRequest = request.synthesisFromSummaries(
-          summaries
-              .asMap()
-              .entries
-              .map((entry) => 'Section ${entry.key + 1}:\n${entry.value}')
-              .join('\n\n'),
-        );
-        AiPolicy.validateRequest(effectiveRequest);
-      }
       final output = StringBuffer();
       var outputBytes = 0;
       var completed = false;
       await for (final event in _providerEvents(
-        effectiveRequest,
+        request,
         active.token,
         totalDeadline,
       )) {
@@ -145,42 +116,6 @@ class AiCoordinator {
       }
       await active.token.dispose();
     }
-  }
-
-  Future<String> _collectValidated(
-    AiRequest stage,
-    AiRequest parent,
-    _ActiveAiRequest active,
-    AiDeadline totalDeadline,
-  ) async {
-    final output = StringBuffer();
-    var completed = false;
-    await for (final event in _providerEvents(
-      stage,
-      active.token,
-      totalDeadline,
-    )) {
-      _requireCurrent(parent, active);
-      switch (event) {
-        case AiTextDelta(:final text):
-          output.write(text);
-        case AiUsageEvent(:final usage):
-          await _recordUsage(usage);
-        case AiCompleted():
-          completed = true;
-        case AiStarted():
-          break;
-      }
-    }
-    if (!completed) {
-      throw const AiException(
-        AiFailureCode.malformedResponse,
-        'The AI provider ended a summary stage before completion.',
-        retryable: true,
-      );
-    }
-    _markdownGuard.validate(stage, output.toString());
-    return output.toString();
   }
 
   Stream<AiStreamEvent> _providerEvents(

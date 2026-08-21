@@ -252,7 +252,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pasteWithoutFormatting => 'Paste without formatting';
 
   @override
-  String get preview => 'Preview';
+  String get reading => 'Reading';
 
   @override
   String get recent => 'Recent';
@@ -1321,7 +1321,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Large file: highlighting and folding are paused';
 
   @override
-  String get noPreview => 'No preview';
+  String get nothingToRead => 'Nothing to read';
 
   @override
   String get note => 'Note';
@@ -3098,43 +3098,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enable an AI provider and verify a model in Settings → AI.';
 
   @override
-  String get aiRewrite => 'Rewrite';
+  String get aiEditWithAi => 'Edit with AI';
 
   @override
-  String get aiShorten => 'Shorten';
+  String get aiRefineWithAi => 'Refine with AI';
 
   @override
-  String get aiSummarize => 'Summarize';
+  String get aiInstruction => 'Instruction';
 
   @override
-  String get aiChangeTone => 'Change tone…';
+  String get aiChangeTarget => 'What may change';
 
   @override
-  String get aiTranslate => 'Translate…';
+  String get aiSharedContext => 'Context shared with AI';
 
   @override
-  String get aiProofread => 'Proofread';
+  String get aiTargetSelection => 'Selected content';
 
   @override
-  String get aiDraft => 'Draft…';
+  String get aiTargetInsertAfterBlock => 'Insert after current block';
 
   @override
-  String get aiSelectionRequired => 'Select text for this AI action.';
+  String get aiTargetCurrentBlock => 'Current block';
 
   @override
-  String get aiTonePrompt => 'Describe the target tone';
+  String get aiTargetCurrentSection => 'Current section';
 
   @override
-  String get aiLanguagePrompt => 'Target language';
+  String get aiTargetCompleteDocument => 'Complete document';
 
   @override
-  String get aiDraftPrompt => 'What should BusyMark draft?';
+  String get aiContextNone => 'No document context';
+
+  @override
+  String get aiContextSelection => 'Selected content';
+
+  @override
+  String get aiContextCurrentBlock => 'Current block';
+
+  @override
+  String get aiContextCurrentSection => 'Current section';
+
+  @override
+  String get aiContextCompleteDocument => 'Complete document';
 
   @override
   String get aiGenerating => 'Generating proposal…';
 
   @override
   String get aiProposal => 'AI proposal';
+
+  @override
+  String get aiGenerateProposal => 'Generate proposal';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3165,6 +3180,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiViewContext => 'View context sent';
+
+  @override
+  String get aiReviewExactContent => 'Review exact content';
+
+  @override
+  String get aiContentToChange => 'Content to change';
+
+  @override
+  String get aiContentSentToAi => 'Content sent to AI';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3257,17 +3281,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiEnableProvider => 'Enable an AI provider first.';
 
   @override
-  String get aiExplainCode => 'Explain code';
-
-  @override
-  String get aiImproveCode => 'Improve code';
-
-  @override
   String get aiDraftCommitMessage => 'Draft commit message';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Place the cursor in a fenced code block first.';
 
   @override
   String get aiDrafting => 'Drafting…';

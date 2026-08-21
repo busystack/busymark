@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Anteprima",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Lettura",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Recenti",
   "@recent": {
@@ -1319,9 +1319,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Nessuna anteprima",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Nessun contenuto da leggere",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Nota",
   "@note": {
@@ -2599,19 +2599,24 @@
   "aiNoModels": "Ollama è in esecuzione, ma non sono stati trovati modelli installati.",
   "aiConnectionFailed": "BusyMark non è riuscito a verificare la generazione di testo con IA.",
   "aiConfigureFirst": "Abilita un fornitore di IA e verifica un modello in Impostazioni → IA.",
-  "aiRewrite": "Riscrivi",
-  "aiShorten": "Accorcia",
-  "aiSummarize": "Riassumi",
-  "aiChangeTone": "Cambia tono…",
-  "aiTranslate": "Traduci…",
-  "aiProofread": "Correggi",
-  "aiDraft": "Crea bozza…",
-  "aiSelectionRequired": "Seleziona del testo per questa azione IA.",
-  "aiTonePrompt": "Descrivi il tono desiderato",
-  "aiLanguagePrompt": "Lingua di destinazione",
-  "aiDraftPrompt": "Che cosa deve redigere BusyMark?",
+  "aiEditWithAi": "Modifica con l’IA",
+  "aiRefineWithAi": "Migliora con l’IA",
+  "aiInstruction": "Istruzione",
+  "aiChangeTarget": "Cosa può cambiare",
+  "aiSharedContext": "Contesto condiviso con l’IA",
+  "aiTargetSelection": "Contenuto selezionato",
+  "aiTargetInsertAfterBlock": "Inserisci dopo il blocco corrente",
+  "aiTargetCurrentBlock": "Blocco corrente",
+  "aiTargetCurrentSection": "Sezione corrente",
+  "aiTargetCompleteDocument": "Documento completo",
+  "aiContextNone": "Nessun contesto del documento",
+  "aiContextSelection": "Contenuto selezionato",
+  "aiContextCurrentBlock": "Blocco corrente",
+  "aiContextCurrentSection": "Sezione corrente",
+  "aiContextCompleteDocument": "Documento completo",
   "aiGenerating": "Generazione della proposta…",
   "aiProposal": "Proposta IA",
+  "aiGenerateProposal": "Genera proposta",
   "aiContextDisclosure": "Il fornitore selezionato riceverà {count} caratteri dal contesto mostrato.",
   "aiOriginal": "Testo originale",
   "aiSuggested": "Suggerimento",
@@ -2620,6 +2625,9 @@
   "aiStaleProposal": "Il documento è cambiato durante la generazione della proposta. Esegui di nuovo l’azione.",
   "gitAiStagedChangesChanged": "Le modifiche in stage sono cambiate durante la generazione di questo messaggio di commit. Esegui di nuovo l’azione.",
   "aiViewContext": "Visualizza contesto inviato",
+  "aiReviewExactContent": "Esamina contenuto esatto",
+  "aiContentToChange": "Contenuto da modificare",
+  "aiContentSentToAi": "Contenuto inviato all’IA",
   "aiPrivacyDisabled": "L’IA è disabilitata. BusyMark non invia mai il contenuto del documento senza un’azione IA esplicita.",
   "aiPrivacyLocal": "BusyMark invia solo il contesto mostrato nella finestra di revisione al servizio Ollama locale configurato. Le proposte non vengono mai applicate senza revisione.",
   "aiPrivacyCloud": "BusyMark invia solo il contesto mostrato nella finestra di revisione a {provider}. Le richieste sono senza stato e le proposte non vengono mai applicate senza revisione.",
@@ -2644,10 +2652,7 @@
   "aiColdStartObserved": "È stato rilevato un avvio a freddo del modello locale.",
   "aiNoCompatibleModels": "Non è disponibile alcun modello compatibile per la generazione di testo.",
   "aiEnableProvider": "Abilita prima un fornitore di IA.",
-  "aiExplainCode": "Spiega il codice",
-  "aiImproveCode": "Migliora il codice",
   "aiDraftCommitMessage": "Crea una bozza del messaggio di commit",
-  "aiCodeBlockRequired": "Posiziona prima il cursore in un blocco di codice delimitato.",
   "aiDrafting": "Creazione bozza…",
   "aiDraftWithAi": "Crea bozza con IA",
   "generateOrUpdateMarkdownToc": "Genera/aggiorna indice",

@@ -3,6 +3,7 @@ import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -436,6 +437,51 @@ void main() {
     expect(find.text(l10n.gitStagedFileCount(2)), findsOneWidget);
     expect(find.text(l10n.gitUnsavedChangesBanner), findsOneWidget);
     expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+  });
+
+  testWidgets('AI commit draft is an icon immediately before Commit', (
+    tester,
+  ) async {
+    var draftCalls = 0;
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onDraftCommitMessage: () async {
+                draftCalls += 1;
+                return null;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final draftButton = find.byTooltip(l10n.aiDraftWithAi);
+    final commitButton = find.text(l10n.gitCommit);
+    expect(draftButton, findsOneWidget);
+    expect(find.text(l10n.aiDraftWithAi), findsNothing);
+    expect(find.byIcon(BusyMarkGlyphs.ai), findsOneWidget);
+    expect(
+      tester.getCenter(draftButton).dx,
+      lessThan(tester.getCenter(commitButton).dx),
+    );
+
+    await tester.tap(draftButton);
+    await tester.pumpAndSettle();
+    expect(draftCalls, 1);
   });
 
   testWidgets('file history requires an active Markdown file', (tester) async {

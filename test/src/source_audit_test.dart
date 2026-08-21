@@ -1587,7 +1587,7 @@ void main() {
     );
     expect(
       settings,
-      contains('documentViewMode: DocumentViewModePreference.split'),
+      contains('documentViewMode: DocumentViewModePreference.editor'),
     );
     expect(settings, contains('Future<void> setDocumentViewMode'));
     expect(workspace, contains('final editorVisible = widget.viewMode =='));

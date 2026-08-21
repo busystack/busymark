@@ -253,7 +253,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pasteWithoutFormatting => 'Incolla senza formattazione';
 
   @override
-  String get preview => 'Anteprima';
+  String get reading => 'Lettura';
 
   @override
   String get recent => 'Recenti';
@@ -1337,7 +1337,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi';
 
   @override
-  String get noPreview => 'Nessuna anteprima';
+  String get nothingToRead => 'Nessun contenuto da leggere';
 
   @override
   String get note => 'Nota';
@@ -3128,43 +3128,58 @@ class AppLocalizationsIt extends AppLocalizations {
       'Abilita un fornitore di IA e verifica un modello in Impostazioni → IA.';
 
   @override
-  String get aiRewrite => 'Riscrivi';
+  String get aiEditWithAi => 'Modifica con l’IA';
 
   @override
-  String get aiShorten => 'Accorcia';
+  String get aiRefineWithAi => 'Migliora con l’IA';
 
   @override
-  String get aiSummarize => 'Riassumi';
+  String get aiInstruction => 'Istruzione';
 
   @override
-  String get aiChangeTone => 'Cambia tono…';
+  String get aiChangeTarget => 'Cosa può cambiare';
 
   @override
-  String get aiTranslate => 'Traduci…';
+  String get aiSharedContext => 'Contesto condiviso con l’IA';
 
   @override
-  String get aiProofread => 'Correggi';
+  String get aiTargetSelection => 'Contenuto selezionato';
 
   @override
-  String get aiDraft => 'Crea bozza…';
+  String get aiTargetInsertAfterBlock => 'Inserisci dopo il blocco corrente';
 
   @override
-  String get aiSelectionRequired => 'Seleziona del testo per questa azione IA.';
+  String get aiTargetCurrentBlock => 'Blocco corrente';
 
   @override
-  String get aiTonePrompt => 'Descrivi il tono desiderato';
+  String get aiTargetCurrentSection => 'Sezione corrente';
 
   @override
-  String get aiLanguagePrompt => 'Lingua di destinazione';
+  String get aiTargetCompleteDocument => 'Documento completo';
 
   @override
-  String get aiDraftPrompt => 'Che cosa deve redigere BusyMark?';
+  String get aiContextNone => 'Nessun contesto del documento';
+
+  @override
+  String get aiContextSelection => 'Contenuto selezionato';
+
+  @override
+  String get aiContextCurrentBlock => 'Blocco corrente';
+
+  @override
+  String get aiContextCurrentSection => 'Sezione corrente';
+
+  @override
+  String get aiContextCompleteDocument => 'Documento completo';
 
   @override
   String get aiGenerating => 'Generazione della proposta…';
 
   @override
   String get aiProposal => 'Proposta IA';
+
+  @override
+  String get aiGenerateProposal => 'Genera proposta';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3195,6 +3210,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Visualizza contesto inviato';
+
+  @override
+  String get aiReviewExactContent => 'Esamina contenuto esatto';
+
+  @override
+  String get aiContentToChange => 'Contenuto da modificare';
+
+  @override
+  String get aiContentSentToAi => 'Contenuto inviato all’IA';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3288,17 +3312,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiEnableProvider => 'Abilita prima un fornitore di IA.';
 
   @override
-  String get aiExplainCode => 'Spiega il codice';
-
-  @override
-  String get aiImproveCode => 'Migliora il codice';
-
-  @override
   String get aiDraftCommitMessage => 'Crea una bozza del messaggio di commit';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Posiziona prima il cursore in un blocco di codice delimitato.';
 
   @override
   String get aiDrafting => 'Creazione bozza…';

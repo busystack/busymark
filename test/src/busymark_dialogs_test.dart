@@ -95,6 +95,42 @@ void main() {
     expect(find.text('Dismiss'), findsOneWidget);
   });
 
+  testWidgets(
+    'Escape closes a modal even when its barrier is not dismissible',
+    (tester) async {
+      late BuildContext hostContext;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              hostContext = context;
+              return const Scaffold(body: SizedBox.expand());
+            },
+          ),
+        ),
+      );
+
+      final result = showBusyMarkModalDialog<void>(
+        hostContext,
+        barrierDismissible: false,
+        builder: (_) => const Dialog(
+          child: TextField(
+            autofocus: true,
+            decoration: InputDecoration(labelText: 'Modal input'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Modal input'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await result;
+
+      expect(find.text('Modal input'), findsNothing);
+    },
+  );
+
   testWidgets('overlapping dialogs synchronize native modal depth', (
     tester,
   ) async {

@@ -114,6 +114,9 @@ abstract final class BusyMarkGlyphs {
     if (icon == add) {
       return 'list-add-symbolic';
     }
+    if (icon == ai) {
+      return 'starred-symbolic';
+    }
     if (icon == appearance || icon == settings) {
       return 'preferences-system-symbolic';
     }

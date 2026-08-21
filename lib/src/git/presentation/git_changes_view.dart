@@ -255,19 +255,6 @@ class _CommitPanel extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
-            if (onDraftCommitMessage != null) ...[
-              BusyMarkPushButton.standard(
-                onPressed: !committing && !drafting && stagedFiles.isNotEmpty
-                    ? () => onDraftCommitMessage!()
-                    : null,
-                child: Text(
-                  drafting
-                      ? context.l10n.aiDrafting
-                      : context.l10n.aiDraftWithAi,
-                ),
-              ),
-              const SizedBox(height: BusyMarkSpacing.sm),
-            ],
             Row(
               children: [
                 Expanded(
@@ -281,6 +268,20 @@ class _CommitPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
+                if (onDraftCommitMessage != null) ...[
+                  BusyMarkHeaderIconButton(
+                    tooltip: drafting
+                        ? context.l10n.aiDrafting
+                        : context.l10n.aiDraftWithAi,
+                    icon: BusyMarkGlyphs.ai,
+                    transparent: false,
+                    onPressed:
+                        !committing && !drafting && stagedFiles.isNotEmpty
+                        ? () => onDraftCommitMessage!()
+                        : null,
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
                 BusyMarkPushButton.suggested(
                   onPressed: canCommit ? () => onCommit() : null,
                   child: Text(context.l10n.gitCommit),

@@ -253,7 +253,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get pasteWithoutFormatting => 'बिना फ़ॉर्मेटिंग पेस्ट करें';
 
   @override
-  String get preview => 'पूर्वावलोकन';
+  String get reading => 'पठन दृश्य';
 
   @override
   String get recent => 'हालिया';
@@ -1318,7 +1318,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं';
 
   @override
-  String get noPreview => 'कोई पूर्वावलोकन नहीं';
+  String get nothingToRead => 'पढ़ने के लिए कोई सामग्री नहीं';
 
   @override
   String get note => 'नोट';
@@ -3098,43 +3098,58 @@ class AppLocalizationsHi extends AppLocalizations {
       'पहले सेटिंग्स → AI में किसी AI प्रदाता को सक्षम करें और मॉडल सत्यापित करें।';
 
   @override
-  String get aiRewrite => 'पुनर्लेखन';
+  String get aiEditWithAi => 'AI से संपादित करें';
 
   @override
-  String get aiShorten => 'छोटा करें';
+  String get aiRefineWithAi => 'AI से बेहतर बनाएँ';
 
   @override
-  String get aiSummarize => 'सारांश बनाएँ';
+  String get aiInstruction => 'निर्देश';
 
   @override
-  String get aiChangeTone => 'लहजा बदलें…';
+  String get aiChangeTarget => 'क्या बदला जा सकता है';
 
   @override
-  String get aiTranslate => 'अनुवाद करें…';
+  String get aiSharedContext => 'AI के साथ साझा संदर्भ';
 
   @override
-  String get aiProofread => 'प्रूफ़रीड करें';
+  String get aiTargetSelection => 'चयनित सामग्री';
 
   @override
-  String get aiDraft => 'मसौदा बनाएँ…';
+  String get aiTargetInsertAfterBlock => 'वर्तमान ब्लॉक के बाद डालें';
 
   @override
-  String get aiSelectionRequired => 'इस एआई क्रिया के लिए टेक्स्ट चुनें।';
+  String get aiTargetCurrentBlock => 'वर्तमान ब्लॉक';
 
   @override
-  String get aiTonePrompt => 'वांछित लहजे का वर्णन करें';
+  String get aiTargetCurrentSection => 'वर्तमान अनुभाग';
 
   @override
-  String get aiLanguagePrompt => 'लक्षित भाषा';
+  String get aiTargetCompleteDocument => 'पूरा दस्तावेज़';
 
   @override
-  String get aiDraftPrompt => 'BusyMark को क्या लिखना चाहिए?';
+  String get aiContextNone => 'कोई दस्तावेज़ संदर्भ नहीं';
+
+  @override
+  String get aiContextSelection => 'चयनित सामग्री';
+
+  @override
+  String get aiContextCurrentBlock => 'वर्तमान ब्लॉक';
+
+  @override
+  String get aiContextCurrentSection => 'वर्तमान अनुभाग';
+
+  @override
+  String get aiContextCompleteDocument => 'पूरा दस्तावेज़';
 
   @override
   String get aiGenerating => 'सुझाव बनाया जा रहा है…';
 
   @override
   String get aiProposal => 'एआई सुझाव';
+
+  @override
+  String get aiGenerateProposal => 'प्रस्ताव बनाएँ';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3165,6 +3180,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiViewContext => 'भेजा गया संदर्भ देखें';
+
+  @override
+  String get aiReviewExactContent => 'सटीक सामग्री की समीक्षा करें';
+
+  @override
+  String get aiContentToChange => 'बदली जाने वाली सामग्री';
+
+  @override
+  String get aiContentSentToAi => 'AI को भेजी गई सामग्री';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3257,17 +3281,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiEnableProvider => 'पहले किसी AI प्रदाता को सक्षम करें।';
 
   @override
-  String get aiExplainCode => 'कोड समझाएँ';
-
-  @override
-  String get aiImproveCode => 'कोड सुधारें';
-
-  @override
   String get aiDraftCommitMessage => 'कमिट संदेश का मसौदा बनाएँ';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'पहले कर्सर को किसी फ़ेंस्ड कोड ब्लॉक में रखें।';
 
   @override
   String get aiDrafting => 'मसौदा बनाया जा रहा है…';

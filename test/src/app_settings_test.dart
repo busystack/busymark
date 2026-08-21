@@ -15,10 +15,10 @@ void main() {
     expect(settings.confirmCloseWithUnsavedChanges, isTrue);
   });
 
-  test('document view mode defaults to split', () {
+  test('document view mode defaults to editor', () {
     final settings = AppSettings.defaults();
 
-    expect(settings.documentViewMode, DocumentViewModePreference.split);
+    expect(settings.documentViewMode, DocumentViewModePreference.editor);
     expect(settings.previewVisible, isTrue);
   });
 

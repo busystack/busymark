@@ -203,9 +203,9 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Предварительный просмотр",
-  "@preview": {
-    "description": "Preview view label."
+  "reading": "Режим чтения",
+  "@reading": {
+    "description": "Reading view label."
   },
   "recent": "Недавние",
   "@recent": {
@@ -1325,9 +1325,9 @@
   "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
   "sourceLargeFileFeaturesPaused": "Большой файл: подсветка и сворачивание приостановлены",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
-  "noPreview": "Нет предварительного просмотра",
-  "@noPreview": {
-    "description": "Empty state shown when there is no preview."
+  "nothingToRead": "Нет содержимого для чтения",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
   },
   "note": "Примечание",
   "@note": {
@@ -2617,19 +2617,24 @@
   "aiNoModels": "Ollama запущен, но установленные модели не найдены.",
   "aiConnectionFailed": "BusyMark не удалось проверить генерацию текста с помощью ИИ.",
   "aiConfigureFirst": "Включите поставщика ИИ и проверьте модель в разделе «Настройки → ИИ».",
-  "aiRewrite": "Переписать",
-  "aiShorten": "Сократить",
-  "aiSummarize": "Обобщить",
-  "aiChangeTone": "Изменить тон…",
-  "aiTranslate": "Перевести…",
-  "aiProofread": "Вычитать",
-  "aiDraft": "Создать черновик…",
-  "aiSelectionRequired": "Выделите текст для этого действия ИИ.",
-  "aiTonePrompt": "Опишите требуемый тон",
-  "aiLanguagePrompt": "Целевой язык",
-  "aiDraftPrompt": "Что должен подготовить BusyMark?",
+  "aiEditWithAi": "Редактировать с помощью ИИ",
+  "aiRefineWithAi": "Улучшить с помощью ИИ",
+  "aiInstruction": "Инструкция",
+  "aiChangeTarget": "Что можно изменить",
+  "aiSharedContext": "Контекст, передаваемый ИИ",
+  "aiTargetSelection": "Выбранное содержимое",
+  "aiTargetInsertAfterBlock": "Вставить после текущего блока",
+  "aiTargetCurrentBlock": "Текущий блок",
+  "aiTargetCurrentSection": "Текущий раздел",
+  "aiTargetCompleteDocument": "Весь документ",
+  "aiContextNone": "Без контекста документа",
+  "aiContextSelection": "Выбранное содержимое",
+  "aiContextCurrentBlock": "Текущий блок",
+  "aiContextCurrentSection": "Текущий раздел",
+  "aiContextCompleteDocument": "Весь документ",
   "aiGenerating": "Создание предложения…",
   "aiProposal": "Предложение ИИ",
+  "aiGenerateProposal": "Создать предложение",
   "aiContextDisclosure": "Выбранный поставщик получит {count} символов из показанного контекста.",
   "aiOriginal": "Исходный текст",
   "aiSuggested": "Предложение",
@@ -2638,6 +2643,9 @@
   "aiStaleProposal": "Документ изменился во время создания этого предложения. Запустите действие ещё раз.",
   "gitAiStagedChangesChanged": "Индексированные изменения изменились во время создания этого сообщения коммита. Запустите действие ещё раз.",
   "aiViewContext": "Показать отправленный контекст",
+  "aiReviewExactContent": "Просмотреть точное содержимое",
+  "aiContentToChange": "Содержимое для изменения",
+  "aiContentSentToAi": "Содержимое, отправляемое ИИ",
   "aiPrivacyDisabled": "ИИ отключён. BusyMark никогда не отправляет содержимое документа без явного действия с ИИ.",
   "aiPrivacyLocal": "BusyMark отправляет только контекст, показанный в диалоге проверки, настроенной локальной службе Ollama. Предложения никогда не применяются без проверки.",
   "aiPrivacyCloud": "BusyMark отправляет только контекст, показанный в диалоге проверки, поставщику {provider}. Запросы не сохраняют состояние, а предложения никогда не применяются без проверки.",
@@ -2662,10 +2670,7 @@
   "aiColdStartObserved": "Обнаружен холодный запуск локальной модели.",
   "aiNoCompatibleModels": "Нет доступной совместимой модели генерации текста.",
   "aiEnableProvider": "Сначала включите поставщика ИИ.",
-  "aiExplainCode": "Объяснить код",
-  "aiImproveCode": "Улучшить код",
   "aiDraftCommitMessage": "Создать черновик сообщения коммита",
-  "aiCodeBlockRequired": "Сначала поместите курсор в ограждённый блок кода.",
   "aiDrafting": "Создание черновика…",
   "aiDraftWithAi": "Создать черновик с ИИ",
   "generateOrUpdateMarkdownToc": "Создать/обновить оглавление",

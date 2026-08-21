@@ -251,7 +251,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get pasteWithoutFormatting => 'Aseta vorminduseta';
 
   @override
-  String get preview => 'Eelvaade';
+  String get reading => 'Lugemisvaade';
 
   @override
   String get recent => 'Hiljutised';
@@ -1325,7 +1325,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Suur fail: esiletõstmine ja voltimine on peatatud';
 
   @override
-  String get noPreview => 'Eelvaade puudub';
+  String get nothingToRead => 'Pole midagi lugeda';
 
   @override
   String get note => 'Märkus';
@@ -3104,43 +3104,58 @@ class AppLocalizationsEt extends AppLocalizations {
       'Luba jaotises Sätted → TI teenusepakkuja ning kontrolli mudelit.';
 
   @override
-  String get aiRewrite => 'Sõnasta ümber';
+  String get aiEditWithAi => 'Redigeeri TI abil';
 
   @override
-  String get aiShorten => 'Lühenda';
+  String get aiRefineWithAi => 'Täiusta TI abil';
 
   @override
-  String get aiSummarize => 'Kokkuvõte';
+  String get aiInstruction => 'Juhis';
 
   @override
-  String get aiChangeTone => 'Muuda tooni…';
+  String get aiChangeTarget => 'Mida võib muuta';
 
   @override
-  String get aiTranslate => 'Tõlgi…';
+  String get aiSharedContext => 'TI-ga jagatav kontekst';
 
   @override
-  String get aiProofread => 'Korrektuur';
+  String get aiTargetSelection => 'Valitud sisu';
 
   @override
-  String get aiDraft => 'Koosta mustand…';
+  String get aiTargetInsertAfterBlock => 'Lisa praeguse ploki järele';
 
   @override
-  String get aiSelectionRequired => 'Vali selle TI-toimingu jaoks tekst.';
+  String get aiTargetCurrentBlock => 'Praegune plokk';
 
   @override
-  String get aiTonePrompt => 'Kirjelda soovitud tooni';
+  String get aiTargetCurrentSection => 'Praegune jaotis';
 
   @override
-  String get aiLanguagePrompt => 'Sihtkeel';
+  String get aiTargetCompleteDocument => 'Kogu dokument';
 
   @override
-  String get aiDraftPrompt => 'Mida peaks BusyMark koostama?';
+  String get aiContextNone => 'Dokumendi kontekst puudub';
+
+  @override
+  String get aiContextSelection => 'Valitud sisu';
+
+  @override
+  String get aiContextCurrentBlock => 'Praegune plokk';
+
+  @override
+  String get aiContextCurrentSection => 'Praegune jaotis';
+
+  @override
+  String get aiContextCompleteDocument => 'Kogu dokument';
 
   @override
   String get aiGenerating => 'Ettepaneku loomine…';
 
   @override
   String get aiProposal => 'TI ettepanek';
+
+  @override
+  String get aiGenerateProposal => 'Loo ettepanek';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3171,6 +3186,15 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Kuva saadetud kontekst';
+
+  @override
+  String get aiReviewExactContent => 'Vaata täpne sisu üle';
+
+  @override
+  String get aiContentToChange => 'Muudetav sisu';
+
+  @override
+  String get aiContentSentToAi => 'TI-le saadetav sisu';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3263,17 +3287,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiEnableProvider => 'Luba esmalt TI teenusepakkuja.';
 
   @override
-  String get aiExplainCode => 'Selgita koodi';
-
-  @override
-  String get aiImproveCode => 'Täiusta koodi';
-
-  @override
   String get aiDraftCommitMessage => 'Koosta sissekande sõnumi mustand';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Aseta kursor esmalt piiritletud koodiplokki.';
 
   @override
   String get aiDrafting => 'Mustandi koostamine…';

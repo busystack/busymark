@@ -254,7 +254,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get pasteWithoutFormatting => 'Lim inn uten formatering';
 
   @override
-  String get preview => 'Forhåndsvisning';
+  String get reading => 'Lesevisning';
 
   @override
   String get recent => 'Nylige';
@@ -1327,7 +1327,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Stor fil: utheving og folding er satt på pause';
 
   @override
-  String get noPreview => 'Ingen forhåndsvisning';
+  String get nothingToRead => 'Ingenting å lese';
 
   @override
   String get note => 'Merknad';
@@ -3101,43 +3101,58 @@ class AppLocalizationsNb extends AppLocalizations {
       'Aktiver en KI-leverandør og bekreft en modell under Innstillinger → KI.';
 
   @override
-  String get aiRewrite => 'Skriv om';
+  String get aiEditWithAi => 'Rediger med KI';
 
   @override
-  String get aiShorten => 'Forkort';
+  String get aiRefineWithAi => 'Forbedre med KI';
 
   @override
-  String get aiSummarize => 'Oppsummer';
+  String get aiInstruction => 'Instruksjon';
 
   @override
-  String get aiChangeTone => 'Endre tone…';
+  String get aiChangeTarget => 'Hva som kan endres';
 
   @override
-  String get aiTranslate => 'Oversett…';
+  String get aiSharedContext => 'Kontekst som deles med KI';
 
   @override
-  String get aiProofread => 'Korrekturles';
+  String get aiTargetSelection => 'Markert innhold';
 
   @override
-  String get aiDraft => 'Lag utkast…';
+  String get aiTargetInsertAfterBlock => 'Sett inn etter gjeldende blokk';
 
   @override
-  String get aiSelectionRequired => 'Marker tekst for denne KI-handlingen.';
+  String get aiTargetCurrentBlock => 'Gjeldende blokk';
 
   @override
-  String get aiTonePrompt => 'Beskriv ønsket tone';
+  String get aiTargetCurrentSection => 'Gjeldende del';
 
   @override
-  String get aiLanguagePrompt => 'Målspråk';
+  String get aiTargetCompleteDocument => 'Hele dokumentet';
 
   @override
-  String get aiDraftPrompt => 'Hva skal BusyMark skrive et utkast til?';
+  String get aiContextNone => 'Ingen dokumentkontekst';
+
+  @override
+  String get aiContextSelection => 'Markert innhold';
+
+  @override
+  String get aiContextCurrentBlock => 'Gjeldende blokk';
+
+  @override
+  String get aiContextCurrentSection => 'Gjeldende del';
+
+  @override
+  String get aiContextCompleteDocument => 'Hele dokumentet';
 
   @override
   String get aiGenerating => 'Genererer forslag…';
 
   @override
   String get aiProposal => 'KI-forslag';
+
+  @override
+  String get aiGenerateProposal => 'Generer forslag';
 
   @override
   String aiContextDisclosure(int count) {
@@ -3168,6 +3183,15 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Vis sendt kontekst';
+
+  @override
+  String get aiReviewExactContent => 'Se gjennom nøyaktig innhold';
+
+  @override
+  String get aiContentToChange => 'Innhold som skal endres';
+
+  @override
+  String get aiContentSentToAi => 'Innhold sendt til KI';
 
   @override
   String get aiPrivacyDisabled =>
@@ -3261,17 +3285,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiEnableProvider => 'Aktiver en KI-leverandør først.';
 
   @override
-  String get aiExplainCode => 'Forklar kode';
-
-  @override
-  String get aiImproveCode => 'Forbedre kode';
-
-  @override
   String get aiDraftCommitMessage => 'Lag utkast til commit-melding';
-
-  @override
-  String get aiCodeBlockRequired =>
-      'Plasser markøren i en inngjerdet kodeblokk først.';
 
   @override
   String get aiDrafting => 'Lager utkast…';

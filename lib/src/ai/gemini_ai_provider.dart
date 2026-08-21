@@ -77,11 +77,6 @@ class GeminiAiProvider implements AiProvider {
         'gemini-3.6-flash',
         'gemini-3.5-flash-lite',
       ],
-      AiModelClass.code: [
-        'gemini-3.5-flash',
-        'gemini-3.6-flash',
-        'gemini-3.5-flash-lite',
-      ],
     },
   );
 
@@ -103,12 +98,15 @@ class GeminiAiProvider implements AiProvider {
       id: 'gemini-health',
       targetId: 'settings:gemini-health',
       provider: AiProviderKind.gemini,
-      feature: AiFeature.rewrite,
-      scope: AiScope.selection,
+      feature: AiFeature.editDocument,
+      scope: AiScope.markdownEdit,
       input: 'Connection test.',
       modelCandidates: [model],
       sourceRevision: 0,
       contentFormat: AiContentFormat.plainText,
+      editTarget: AiEditTargetKind.selection,
+      editContext: AiEditContextKind.selection,
+      instruction: 'Return the requested connection-test value.',
       deadline: const Duration(seconds: 45),
       maxRetries: 0,
     );

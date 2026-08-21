@@ -108,7 +108,7 @@ class AppSettings {
       localeTag: null,
       sidebarVisible: true,
       previewVisible: true,
-      documentViewMode: DocumentViewModePreference.split,
+      documentViewMode: DocumentViewModePreference.editor,
       editorFontSize: 14,
       wordWrap: true,
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,

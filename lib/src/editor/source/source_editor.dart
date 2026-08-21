@@ -6,15 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
-import '../../ai/ai_edit_ui.dart';
-import '../../ai/ai_markdown_edit_resolver.dart';
 import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
-import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
-import '../../markdown/markdown_fence.dart';
+import '../editor_text_context_menu.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -209,6 +206,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       keyboard,
     );
     if (shortcutAction != null) {
+      if (shortcutAction == BusyMarkEditorShortcutAction.refineWithAi &&
+          !_canRefineWithAi) {
+        return KeyEventResult.ignored;
+      }
       _applyShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
@@ -304,6 +305,15 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                             focusedBorder: InputBorder.none,
                             contentPadding: BusyMarkInsets.sourceEditor,
                           ),
+                          contextMenuBuilder: (context, editableTextState) =>
+                              buildBusyMarkEditorTextContextMenu(
+                                context,
+                                editableTextState,
+                                refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                onRefineWithAi: widget.onAiEdit == null
+                                    ? null
+                                    : () => unawaited(_runAiEdit()),
+                              ),
                           onChanged: (_) => _handleSourceChanged(),
                         ),
                       ),
@@ -345,125 +355,56 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 onClose: widget.onCloseSearch,
               ),
             ),
-          if (widget.onAiEdit != null)
-            Positioned(
-              right: BusyMarkSpacing.sm,
-              bottom: BusyMarkSpacing.sm,
-              child: BusyMarkHeaderPopupMenuButton<AiFeature>(
-                tooltip: context.l10n.ai,
-                icon: BusyMarkGlyphs.ai,
-                itemBuilder: aiFeatureMenuItems,
-                onSelected: (feature) => unawaited(_runAiFeature(feature)),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Future<void> _runAiFeature(AiFeature feature) async {
+  bool get _canRefineWithAi {
+    final selection = _controller.fullSelection;
+    return widget.onAiEdit != null &&
+        selection.isValid &&
+        !selection.isCollapsed;
+  }
+
+  Future<void> _runAiEdit() async {
     final callback = widget.onAiEdit;
     if (callback == null) {
       return;
     }
     final value = _fullEditingValue();
     final rawSelection = value.selection;
+    final anchorOffset = rawSelection.isValid
+        ? rawSelection.extentOffset.clamp(0, value.text.length).toInt()
+        : value.text.length;
     final selection = rawSelection.isValid
         ? TextSelection(
             baseOffset: rawSelection.start.clamp(0, value.text.length).toInt(),
             extentOffset: rawSelection.end.clamp(0, value.text.length).toInt(),
           )
         : TextSelection.collapsed(offset: value.text.length);
-    final selected = selection.isCollapsed
-        ? ''
-        : value.text.substring(selection.start, selection.end);
+    if (selection.isCollapsed) {
+      return;
+    }
     final originalText = value.text;
-    if (feature == AiFeature.draftCommitMessage) {
-      return;
-    }
-    if (feature.requiresSelection && selected.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiSelectionRequired)));
-      return;
-    }
-    var replacementStart = selection.start;
-    var replacementEnd = selection.end;
-    var replacementOriginal = selected;
-    var replacementPrefix = '';
-    var replacementSuffix = '';
-    var trimReplacementOutput = false;
-    late final AiScope scope;
-    late final String input;
-    if (feature.requiresCodeBlock) {
-      final codeBlock = _fencedCodeBlockAt(value.text, selection);
-      if (codeBlock == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.aiCodeBlockRequired)),
-        );
-        return;
-      }
-      scope = AiScope.codeBlock;
-      input = value.text.substring(codeBlock.start, codeBlock.end);
-      if (feature == AiFeature.improveCode) {
-        replacementStart = codeBlock.start;
-        replacementEnd = codeBlock.end;
-        replacementOriginal = input;
-      } else {
-        final insertion = const AiMarkdownEditResolver().blockInsertion(
-          originalText,
-          codeBlock.end,
-        );
-        replacementStart = insertion.offset;
-        replacementEnd = insertion.offset;
-        replacementOriginal = '';
-        replacementPrefix = insertion.prefix;
-        replacementSuffix = insertion.suffix;
-        trimReplacementOutput = true;
-      }
-    } else {
-      final AiMarkdownEditTarget target;
-      try {
-        target = const AiMarkdownEditResolver().resolve(
-          feature: feature,
-          source: originalText,
-          selectionStart: selection.start,
-          selectionEnd: selection.end,
-          filePath: widget.filePath ?? 'untitled.md',
-        );
-      } on AiException catch (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
-        return;
-      }
-      scope = target.scope;
-      input = target.input;
-      replacementStart = target.replacementStart;
-      replacementEnd = target.replacementEnd;
-      replacementOriginal = target.replacementOriginal;
-      replacementPrefix = target.replacementPrefix;
-      replacementSuffix = target.replacementSuffix;
-      trimReplacementOutput = target.trimReplacementOutput;
-    }
-    final invocation = AiEditInvocation(
-      feature: feature,
-      scope: scope,
-      input: input,
-      replacementOriginal: replacementOriginal,
-      sourceRevision: widget.editRevision,
-      targetId:
-          '${widget.filePath ?? 'untitled'}:$replacementStart:$replacementEnd',
-      documentPath: widget.filePath,
-      documentSource: originalText,
-      replacementStart: replacementStart,
-      replacementEnd: replacementEnd,
-      replacementPrefix: replacementPrefix,
-      replacementSuffix: replacementSuffix,
-      trimReplacementOutput: trimReplacementOutput,
+    final result = await callback(
+      AiEditorSnapshot(
+        documentSource: originalText,
+        selectionStart: selection.start,
+        selectionEnd: selection.end,
+        anchorOffset: anchorOffset,
+        sourceRevision: widget.editRevision,
+        targetId: widget.filePath ?? 'untitled',
+        documentPath: widget.filePath,
+      ),
     );
-    final result = await callback(invocation);
     if (!mounted || result == null) {
+      return;
+    }
+    final invocation = result.invocation;
+    final replacementStart = invocation.replacementStart;
+    final replacementEnd = invocation.replacementEnd;
+    if (replacementStart == null || replacementEnd == null) {
       return;
     }
     if (_controller.fullText != originalText) {
@@ -472,7 +413,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
       return;
     }
-    final replacement = invocation.appliedReplacement(result);
+    final replacement = result.replacement;
     _applyFullEditingValue(
       TextEditingValue(
         text: originalText.replaceRange(
@@ -490,48 +431,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               ),
       ),
     );
-  }
-
-  _SourceFenceSpan? _fencedCodeBlockAt(String source, TextSelection selection) {
-    final lines = source.split(RegExp('(?<=\n)'));
-    var offset = 0;
-    var index = 0;
-    while (index < lines.length) {
-      final raw = lines[index];
-      final line = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
-      final fence = MarkdownFence.parse(line);
-      if (fence == null) {
-        offset += raw.length;
-        index += 1;
-        continue;
-      }
-      final start = offset;
-      offset += raw.length;
-      index += 1;
-      var closed = false;
-      while (index < lines.length) {
-        final candidateRaw = lines[index];
-        final candidate = candidateRaw.endsWith('\n')
-            ? candidateRaw.substring(0, candidateRaw.length - 1)
-            : candidateRaw;
-        offset += candidateRaw.length;
-        index += 1;
-        if (fence.closes(candidate)) {
-          closed = true;
-          break;
-        }
-      }
-      if (!closed) {
-        return null;
-      }
-      final intersects = selection.isCollapsed
-          ? selection.start >= start && selection.start <= offset
-          : selection.start < offset && selection.end > start;
-      if (intersects) {
-        return _SourceFenceSpan(start, offset);
-      }
-    }
-    return null;
   }
 
   void _syncSearchOptions() {
@@ -710,6 +609,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _applyShortcutAction(BusyMarkEditorShortcutAction action) {
     switch (action) {
+      case BusyMarkEditorShortcutAction.refineWithAi:
+        unawaited(_runAiEdit());
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(SourceInlineCommand.bold);
         break;
@@ -999,13 +901,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           _SourceEditorFrame.editorPaddingRight,
     );
   }
-}
-
-class _SourceFenceSpan {
-  const _SourceFenceSpan(this.start, this.end);
-
-  final int start;
-  final int end;
 }
 
 class _SourceEditorFrame extends StatelessWidget {
