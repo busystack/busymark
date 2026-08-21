@@ -35,6 +35,22 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return block == null ? '' : busyMarkWysiwygEditableText(block);
   }
 
+  String _sourceWithBlockStructure(BusyBlock block, String source) {
+    final prefix = switch (block.kind) {
+      BusyBlockKind.heading =>
+        '${'#' * (int.tryParse(block.attributes['level'] ?? '') ?? 1)} ',
+      BusyBlockKind.unorderedListItem =>
+        '${block.attributes['marker'] ?? '-'} ',
+      BusyBlockKind.orderedListItem => '${block.attributes['marker'] ?? '1.'} ',
+      BusyBlockKind.taskListItem =>
+        '${block.attributes['ordered'] == 'true' ? block.attributes['marker'] ?? '1.' : '-'} '
+            '[${block.attributes['task'] == 'true' ? 'x' : ' '}] ',
+      BusyBlockKind.blockquote => '> ',
+      _ => '',
+    };
+    return '$prefix$source';
+  }
+
   void updateMathSource(String blockId, String source) {
     final current = blockById(blockId);
     if (current == null) {
@@ -42,7 +58,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final parsed = const MarkdownParser().parse(
       filePath: _document.filePath,
-      source: source,
+      source: _sourceWithBlockStructure(current, source),
       mode: _document.mode,
       validateLocalReferences: false,
     );
@@ -71,10 +87,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                 kind: parsedBlock.kind,
                 inlines: parsedBlock.inlines,
                 children: parsedBlock.children,
-                attributes: {
-                  ...parsedBlock.attributes,
-                  'wysiwygMathSource': 'true',
-                },
+                attributes: parsedBlock.attributes,
                 rawSource: parsedBlock.rawSource,
                 sourceSpan: index == 0 ? current.sourceSpan : null,
                 preserveRaw: false,
@@ -115,7 +128,6 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             busyMarkMathDisplayAttribute: 'true',
             busyMarkMathSourceFormAttribute:
                 BusyMathSourceForm.doubleDollarDisplay.name,
-            'wysiwygMathSource': 'true',
           },
           rawSource: '\$\$\n$expression\n\$\$',
           preserveRaw: false,
@@ -171,7 +183,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           final cells = <BusyBlock>[];
           for (final cell in row.children) {
             if (cell.id == cellId) {
-              cells.add(_blockWithEditedText(cell, text));
+              cells.add(_tableCellWithEditedSource(cell, text));
               rowChanged = true;
               changed = true;
             } else {
@@ -191,6 +203,29 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (changed) {
       notifyListeners();
     }
+  }
+
+  BusyBlock _tableCellWithEditedSource(BusyBlock cell, String source) {
+    final parsed = const MarkdownParser().parse(
+      filePath: _document.filePath,
+      source: '$source\n',
+      mode: _document.mode,
+      validateLocalReferences: false,
+    );
+    final parsedBlock = parsed.busyDocument.blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+        )
+        .firstOrNull;
+    final inlines = parsedBlock?.inlines;
+    return cell.copyWith(
+      inlines: inlines == null || inlines.isEmpty
+          ? _textInlines(source)
+          : inlines,
+      preserveRaw: false,
+      dirty: true,
+    );
   }
 
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(

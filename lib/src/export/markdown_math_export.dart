@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../math/math_coordinator.dart';
 import '../math/math_models.dart';
+import '../math/math_svg_preprocessor.dart';
 import '../visualization/generated_svg_normalizer.dart';
 import 'markdown_export_document.dart';
 import 'markdown_pdf_models.dart';
@@ -34,6 +35,7 @@ class MarkdownMathExportRenderer {
   final GeneratedSvgNormalizer svgNormalizer;
   final int maximumExpressions;
   final int maximumGeneratedBytes;
+  static const _svgPreprocessor = MathSvgPreprocessor();
 
   Future<MarkdownMathExportPreparation> prepare({
     required MarkdownExportDocument document,
@@ -70,8 +72,8 @@ class MarkdownMathExportRenderer {
             display: item.display,
             blockKey: blockKeys[index],
             editRevision: 0,
-            em: 10.5,
-            ex: 5.25,
+            em: item.em,
+            ex: item.ex,
             containerWidth: containerWidth,
             renderProfile: 'pdf',
           ),
@@ -114,7 +116,9 @@ class MarkdownMathExportRenderer {
         continue;
       }
       try {
-        final normalized = svgNormalizer.normalize(result.vectorSvg);
+        final normalized = svgNormalizer.normalize(
+          _svgPreprocessor.resolveCurrentColor(result.vectorSvg, '#000000'),
+        );
         final svg = normalized.vectorSafeSvg;
         if (svg == null) {
           throw const GeneratedSvgException(
@@ -221,6 +225,8 @@ class MarkdownMathExportRenderer {
             renderKey: value.attributes['mathRenderKey']!,
             expression: value.text,
             display: false,
+            em: double.tryParse(value.attributes['renderEm'] ?? '') ?? 10.5,
+            ex: double.tryParse(value.attributes['renderEx'] ?? '') ?? 5.25,
           );
         }
         yield* inlines(value.children);
@@ -236,6 +242,8 @@ class MarkdownMathExportRenderer {
             renderKey: value.attributes['mathRenderKey']! as String,
             expression: value.text,
             display: true,
+            em: 10.5,
+            ex: 5.25,
           );
         }
         yield* inlines(value.inlines);
@@ -313,11 +321,15 @@ class _MathExportCandidate {
     required this.renderKey,
     required this.expression,
     required this.display,
+    required this.em,
+    required this.ex,
   });
 
   final String renderKey;
   final String expression;
   final bool display;
+  final double em;
+  final double ex;
 }
 
 class _PreparedMathAsset {

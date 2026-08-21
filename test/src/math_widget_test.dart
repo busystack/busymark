@@ -79,15 +79,17 @@ void main() {
     tester,
   ) async {
     final host = _MathWidgetHost(fail: true);
+    String? failureCode;
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [webRenderHostProvider.overrideWithValue(host)],
         child: _localizedApp(
-          const BusyMarkDisplayMath(
+          BusyMarkDisplayMath(
             expression: r'\frac{',
             expressionId: 'invalid',
             editRevision: 1,
+            onFailure: (failure) => failureCode = failure.code,
           ),
         ),
       ),
@@ -101,6 +103,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(SvgPicture), findsNothing);
+    expect(failureCode, 'math.invalidTex');
   });
 }
 

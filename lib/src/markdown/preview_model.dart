@@ -173,7 +173,7 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.heading,
         text: _plainText(block.inlines),
         level: int.tryParse(block.attributes['level'] ?? ''),
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: {
           ...block.attributes,
           if (block.attributes['id'] case final id?) 'id': id,
@@ -183,7 +183,7 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.paragraph => PreviewBlock(
         kind: PreviewBlockKind.paragraph,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: block.attributes,
       ),
       BusyBlockKind.math => PreviewBlock(
@@ -191,7 +191,7 @@ class BusyMarkPreviewBuilder {
         text:
             block.attributes[busyMarkMathExpressionAttribute] ??
             block.plainText,
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: {
           ...block.attributes,
           'expressionId': 'block-${block.id}',
@@ -212,7 +212,7 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.taskListItem => PreviewBlock(
         kind: PreviewBlockKind.list,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         children: [
           for (final (index, child) in block.children.indexed)
             _block(child, '$path.b$index'),
@@ -227,9 +227,12 @@ class BusyMarkPreviewBuilder {
         inlines:
             block.children.length == 1 &&
                 block.children.single.kind == BusyBlockKind.paragraph
-            ? _inlines(block.children.single.inlines, '$path.b0.i')
+            ? _inlines(
+                block.children.single.inlines,
+                'block-${block.children.single.id}.i',
+              )
             : block.children.isEmpty
-            ? _inlines(block.inlines, '$path.i')
+            ? _inlines(block.inlines, 'block-${block.id}.i')
             : const [],
         children: [
           for (final (index, child) in block.children.indexed)
@@ -246,7 +249,7 @@ class BusyMarkPreviewBuilder {
         text: block.inlines.isEmpty
             ? block.plainText
             : block.inlines.first.text,
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: block.attributes,
       ),
       BusyBlockKind.table => PreviewBlock(
@@ -261,7 +264,7 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.writersideAdmonition => PreviewBlock(
         kind: PreviewBlockKind.admonition,
         text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines, '$path.i'),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: {
           ...block.attributes,
           'style': block.attributes['element'] ?? 'note',

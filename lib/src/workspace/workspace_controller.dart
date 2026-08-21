@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../app/app_settings.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
+import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
@@ -44,6 +45,21 @@ final documentRecoveryStoreProvider = Provider<DocumentRecoveryStore>(
 final _runningUnderFlutterTest = Platform.environment.containsKey(
   'FLUTTER_TEST',
 );
+
+bool _sameRuntimeDiagnostics(List<Diagnostic> left, List<Diagnostic> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index++) {
+    if (left[index].code != right[index].code ||
+        left[index].filePath != right[index].filePath ||
+        left[index].args['runtimeMathKey'] !=
+            right[index].args['runtimeMathKey']) {
+      return false;
+    }
+  }
+  return true;
+}
 
 final workspaceFileMonitorProvider = Provider<WorkspaceFileMonitor>((ref) {
   final monitor = WorkspaceFileMonitor();
@@ -153,6 +169,40 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> _persistenceWrites = Future.value();
 
   int get editRevision => state.activeBuffer?.revision ?? _editRevision;
+
+  void updateMathRenderDiagnostic({
+    required String expressionId,
+    required String? code,
+    SourceSpan? sourceSpan,
+  }) {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return;
+    }
+    final filePath =
+        sourceSpan?.filePath ?? workspace.activeFilePath ?? workspace.rootPath;
+    final runtimeKey = '$filePath\u0000$expressionId';
+    final diagnostics = [
+      for (final diagnostic in workspace.runtimeDiagnostics)
+        if (diagnostic.args['runtimeMathKey'] != runtimeKey) diagnostic,
+      if (code != null)
+        Diagnostic(
+          code: code,
+          severity: DiagnosticSeverity.error,
+          filePath: filePath,
+          sourceSpan: sourceSpan,
+          args: {'runtimeMathKey': runtimeKey},
+        ),
+    ];
+    if (_sameRuntimeDiagnostics(workspace.runtimeDiagnostics, diagnostics)) {
+      return;
+    }
+    state = state.copyWith(
+      workspace: workspace.copyWith(
+        runtimeDiagnostics: List.unmodifiable(diagnostics),
+      ),
+    );
+  }
 
   @override
   WorkspaceState build() {
@@ -1792,6 +1842,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _editRevision = nextBuffer.revision;
     state = state.copyWith(
+      workspace: workspace?.copyWith(
+        runtimeDiagnostics: [
+          for (final diagnostic in workspace.runtimeDiagnostics)
+            if (diagnostic.filePath != activeEditorPath) diagnostic,
+        ],
+      ),
       documentBuffers: _replaceBuffer(state.documentBuffers, nextBuffer),
       liveOutline: workspace == null || liveOutline == null
           ? null

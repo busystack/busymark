@@ -80,12 +80,24 @@ class PlatformWebRenderHost implements WebRenderHost {
     this.renderTimeout = const Duration(seconds: 20),
     this.rasterTimeout = const Duration(seconds: 20),
     this.mathTimeout = const Duration(seconds: 10),
+    this.mathTimeoutPerAdditionalExpression = const Duration(milliseconds: 250),
+    this.maximumMathTimeout = const Duration(seconds: 45),
   }) : _channel = channel;
 
   final MethodChannel _channel;
   final Duration renderTimeout;
   final Duration rasterTimeout;
   final Duration mathTimeout;
+  final Duration mathTimeoutPerAdditionalExpression;
+  final Duration maximumMathTimeout;
+
+  Duration mathBatchTimeoutForExpressionCount(int expressionCount) {
+    final additional =
+        mathTimeoutPerAdditionalExpression *
+        (expressionCount - 1).clamp(0, 1 << 20);
+    final scaled = mathTimeout + additional;
+    return scaled > maximumMathTimeout ? maximumMathTimeout : scaled;
+  }
 
   @override
   Future<Map<Object?, Object?>> renderMathBatch({
@@ -95,7 +107,7 @@ class PlatformWebRenderHost implements WebRenderHost {
     return _invokeMap(
       'renderMathBatch',
       {'expressions': expressions},
-      mathTimeout,
+      mathBatchTimeoutForExpressionCount(expressions.length),
       cancellationToken,
     );
   }

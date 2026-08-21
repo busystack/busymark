@@ -17,6 +17,43 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('uses each heading level effective text size for inline math', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-heading-math-export-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final host = _PdfMathHost();
+    final coordinator = MathCoordinator(renderer: MathRenderer(host: host));
+    addTearDown(coordinator.dispose);
+    final source = [
+      for (var level = 1; level <= 6; level++)
+        '${'#' * level} Heading \$h$level\$\n',
+    ].join('\n');
+    final mapped = const MarkdownExportMapper().map(
+      const MarkdownParser()
+          .parse(filePath: '/workspace/headings.md', source: source)
+          .busyDocument,
+    );
+
+    await MarkdownMathExportRenderer(coordinator: coordinator).prepare(
+      document: mapped,
+      exportRoot: root,
+      containerWidth: 480,
+      cancellationToken: MarkdownPdfCancellationToken(),
+    );
+
+    final requests = host.batches.expand((batch) => batch).toList();
+    expect(requests, hasLength(6));
+    for (var level = 1; level <= 6; level++) {
+      final request = requests.singleWhere(
+        (item) => item['expression'] == 'h$level',
+      );
+      final expected = busyMarkPdfHeadingTextSize(level);
+      expect(request['em'], expected, reason: 'heading level $level');
+      expect(request['ex'], expected / 2, reason: 'heading level $level');
+    }
+  });
+
   test(
     'prepares inline and display math as deterministic vector assets',
     () async {
@@ -80,6 +117,13 @@ $$
             .length,
         3,
       );
+      await for (final asset in generated.list().where(
+        (entry) => entry.path.endsWith('.svg'),
+      )) {
+        final svg = await File(asset.path).readAsString();
+        expect(svg, isNot(contains('currentColor')));
+        expect(svg, contains('#000000'));
+      }
 
       final payload = const TypstPayloadBuilder().build(
         document: preparation.document,
@@ -142,11 +186,14 @@ Failed but visible: $BAD$.
 }
 
 class _PdfMathHost implements WebRenderHost {
+  final List<List<Map<String, Object?>>> batches = [];
+
   @override
   Future<Map<Object?, Object?>> renderMathBatch({
     required List<Map<String, Object?>> expressions,
     required VisualizationCancellationToken cancellationToken,
   }) async {
+    batches.add(expressions);
     return {
       'results': [
         for (final item in expressions)

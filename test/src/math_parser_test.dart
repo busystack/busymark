@@ -148,6 +148,39 @@ F = ma
   });
 
   test(
+    'Writerside semantic math decodes XML entities but preserves source',
+    () {
+      const cases = <(String, String)>[
+        ('&lt;', '<'),
+        ('&gt;', '>'),
+        ('&amp;', '&'),
+        ('&#60;', '<'),
+        ('&#x3E;', '>'),
+        ('&unknown;', '&unknown;'),
+        ('&#1;', '&#1;'),
+        ('&#x110000;', '&#x110000;'),
+        ('&lt', '&lt'),
+      ];
+
+      for (final (encoded, decoded) in cases) {
+        final source = 'Before <math>x $encoded y</math> after.\n';
+        final document = parse(source, writerside: true);
+        final math = document.blocks.single.inlines.singleWhere(
+          (inline) => inline.kind == BusyInlineKind.math,
+        );
+
+        expect(math.text, 'x $decoded y', reason: encoded);
+        expect(
+          math.attributes[busyMarkMathRawExpressionAttribute],
+          'x $encoded y',
+          reason: encoded,
+        );
+        expect(serializer.serialize(document), source, reason: encoded);
+      }
+    },
+  );
+
+  test(
     'escaped dollars, code, currency, empty and malformed forms stay text',
     () {
       final document = parse(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:busymark/src/visualization/visualization_models.dart';
+import 'package:busymark/src/math/math_models.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
 import 'package:flutter/services.dart';
@@ -59,6 +60,51 @@ void main() {
     final arguments = received?.arguments as Map<Object?, Object?>;
     expect(arguments['expressions'], expressions);
     expect(arguments['requestId'], isA<String>());
+  });
+
+  test('scales the MathJax timeout for sequential batch conversion', () {
+    const host = PlatformWebRenderHost(channel: channel);
+
+    expect(
+      host.mathBatchTimeoutForExpressionCount(1),
+      const Duration(seconds: 10),
+    );
+    expect(
+      host.mathBatchTimeoutForExpressionCount(128),
+      const Duration(milliseconds: 41750),
+    );
+    expect(
+      host.mathBatchTimeoutForExpressionCount(1000),
+      const Duration(seconds: 45),
+    );
+  });
+
+  test('applies the scaled timeout to a maximum accepted batch', () async {
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'renderMathBatch') {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        return <String, Object?>{'results': <Object?>[]};
+      }
+      return null;
+    });
+    const host = PlatformWebRenderHost(
+      channel: channel,
+      mathTimeout: Duration(milliseconds: 5),
+      mathTimeoutPerAdditionalExpression: Duration(milliseconds: 2),
+      maximumMathTimeout: Duration(seconds: 1),
+    );
+    final expressions = [
+      for (var index = 0; index < busyMarkMaximumMathBatchExpressions; index++)
+        <String, Object?>{'id': '$index', 'expression': 'x_$index'},
+    ];
+
+    await expectLater(
+      host.renderMathBatch(
+        expressions: expressions,
+        cancellationToken: VisualizationCancellationToken(),
+      ),
+      completes,
+    );
   });
 
   test(

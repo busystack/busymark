@@ -4,6 +4,17 @@ import '../core/uri_utils.dart';
 import '../markdown/busymark_document.dart';
 import 'markdown_export_document.dart';
 
+const double busyMarkPdfBodyTextSize = 10.5;
+
+double busyMarkPdfHeadingTextSize(int level) => switch (level.clamp(1, 6)) {
+  1 => 22,
+  2 => 17,
+  3 => 13.5,
+  4 => 11.5,
+  5 || 6 => busyMarkPdfBodyTextSize,
+  _ => busyMarkPdfBodyTextSize,
+};
+
 class MarkdownExportMapper {
   const MarkdownExportMapper();
 
@@ -126,15 +137,7 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
     return switch (block.kind) {
-      BusyBlockKind.heading => MarkdownExportBlock(
-        kind: MarkdownExportBlockKind.heading,
-        inlines: _mapInlines(block.inlines),
-        attributes: {
-          'level':
-              int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1,
-          if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
-        },
-      ),
+      BusyBlockKind.heading => _mapHeading(block),
       BusyBlockKind.paragraph => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.paragraph,
         inlines: _mapInlines(block.inlines),
@@ -196,6 +199,22 @@ class MarkdownExportMapper {
     };
   }
 
+  MarkdownExportBlock _mapHeading(BusyBlock block) {
+    final level =
+        int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1;
+    return MarkdownExportBlock(
+      kind: MarkdownExportBlockKind.heading,
+      inlines: _mapInlines(
+        block.inlines,
+        mathEm: busyMarkPdfHeadingTextSize(level),
+      ),
+      attributes: {
+        'level': level,
+        if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
+      },
+    );
+  }
+
   MarkdownExportBlock _mapTable(
     BusyBlock table,
     Map<String, MarkdownExportBlock> blockOverrides,
@@ -246,12 +265,20 @@ class MarkdownExportMapper {
     );
   }
 
-  List<MarkdownExportInline> _mapInlines(List<BusyInline> inlines) {
-    return List.unmodifiable(inlines.map(_mapInline));
+  List<MarkdownExportInline> _mapInlines(
+    List<BusyInline> inlines, {
+    double mathEm = busyMarkPdfBodyTextSize,
+  }) {
+    return List.unmodifiable(
+      inlines.map((inline) => _mapInline(inline, mathEm: mathEm)),
+    );
   }
 
-  MarkdownExportInline _mapInline(BusyInline inline) {
-    final children = _mapInlines(inline.children);
+  MarkdownExportInline _mapInline(
+    BusyInline inline, {
+    double mathEm = busyMarkPdfBodyTextSize,
+  }) {
+    final children = _mapInlines(inline.children, mathEm: mathEm);
     return switch (inline.kind) {
       BusyInlineKind.text => MarkdownExportInline(
         kind: MarkdownExportInlineKind.text,
@@ -287,6 +314,8 @@ class MarkdownExportMapper {
         attributes: {
           'mathId': inline.attributes['expressionId'] ?? inline.text,
           'display': 'false',
+          'renderEm': '$mathEm',
+          'renderEx': '${mathEm / 2}',
           if (inline.attributes['mathSourceForm'] case final sourceForm?)
             'sourceForm': sourceForm,
         },

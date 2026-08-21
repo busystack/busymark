@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -879,6 +880,56 @@ void main() {
     settingsController.dispose();
   });
 
+  test(
+    'math renderer failures become source-linked runtime diagnostics',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final path = controller.state.workspace!.activeFilePath!;
+      final span = SourceSpan.fromOffsets(
+        filePath: path,
+        source: controller.state.activeText,
+        startOffset: 0,
+        endOffset: 4,
+      );
+
+      controller.updateMathRenderDiagnostic(
+        expressionId: 'inline-b0-i0',
+        code: 'math.invalidTex',
+        sourceSpan: span,
+      );
+
+      final workspace = controller.state.workspace!;
+      expect(workspace.runtimeDiagnostics.single.code, 'math.invalidTex');
+      expect(workspace.runtimeDiagnostics.single.sourceSpan, same(span));
+      expect(
+        workspace.allDiagnostics,
+        contains(workspace.runtimeDiagnostics.single),
+      );
+
+      controller.updateMathRenderDiagnostic(
+        expressionId: 'inline-b0-i0',
+        code: null,
+        sourceSpan: span,
+      );
+      expect(controller.state.workspace!.runtimeDiagnostics, isEmpty);
+
+      controller.updateMathRenderDiagnostic(
+        expressionId: 'inline-b0-i0',
+        code: 'math.invalidTex',
+        sourceSpan: span,
+      );
+      controller.updateActiveText('${controller.state.activeText}\n');
+      expect(controller.state.workspace!.runtimeDiagnostics, isEmpty);
+      await _waitFor(
+        () =>
+            controller.state.workspace?.markdown?.source ==
+            controller.state.activeText,
+      );
+    },
+  );
+
   test('validate on edit setting controls live diagnostics only', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -1376,6 +1427,18 @@ class _WorkspaceControllerDriver {
 
   void updateActiveText(String text, {String? sourceFilePath}) {
     _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
+  }
+
+  void updateMathRenderDiagnostic({
+    required String expressionId,
+    required String? code,
+    SourceSpan? sourceSpan,
+  }) {
+    _notifier.updateMathRenderDiagnostic(
+      expressionId: expressionId,
+      code: code,
+      sourceSpan: sourceSpan,
+    );
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>

@@ -65,6 +65,27 @@ void main() {
     },
   );
 
+  test('deduplicates identical formulas pending in the same batch', () async {
+    final host = _MathHost();
+    final coordinator = MathCoordinator(renderer: MathRenderer(host: host));
+    addTearDown(coordinator.dispose);
+
+    final results = await coordinator.renderAll([
+      _request('first-instance', r'\mathbb{R}', blockKey: 'first-block'),
+      _request('second-instance', r'\mathbb{R}', blockKey: 'second-block'),
+    ]);
+
+    expect(host.calls, 1);
+    expect(host.batches.single, hasLength(1));
+    final first = results[0] as RenderedMathResult;
+    final second = results[1] as RenderedMathResult;
+    expect(first.expressionId, 'first-instance');
+    expect(second.expressionId, 'second-instance');
+    expect(first.svg, isNot(second.svg));
+    expect(first.svg, contains('first-instance'));
+    expect(second.svg, contains('second-instance'));
+  });
+
   test('discards an obsolete block revision', () async {
     final host = _MathHost(delay: const Duration(milliseconds: 20));
     final coordinator = MathCoordinator(renderer: MathRenderer(host: host));
@@ -162,6 +183,28 @@ void main() {
     expect(rebased, contains('id="formula-two-0"'));
     expect(rebased, contains('href="#formula-two-0"'));
     expect(rebased, contains('currentColor'));
+  });
+
+  test('resolves currentColor without flattening explicit SVG colors', () {
+    const source = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10">
+  <path d="M0 0L10 10" fill="currentColor" stroke="#ff0000"/>
+  <path d="M10 0L20 10" style="fill:CURRENTCOLOR;stroke:#00ff00"/>
+</svg>
+''';
+    const preprocessor = MathSvgPreprocessor();
+
+    final resolved = preprocessor.resolveCurrentColor(source, '#123456');
+
+    expect(resolved, isNot(contains('currentColor')));
+    expect(resolved, isNot(contains('CURRENTCOLOR')));
+    expect(resolved, contains('fill="#123456"'));
+    expect(resolved, contains('stroke="#ff0000"'));
+    expect(resolved, contains('stroke:#00ff00'));
+    expect(
+      const GeneratedSvgNormalizer().normalize(resolved).vectorSafeSvg,
+      isNotNull,
+    );
   });
 
   test('rebases wide MathJax coordinates before secure normalization', () {

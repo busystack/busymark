@@ -7,6 +7,7 @@ const busyMarkMathBlockTag = 'busymark-math-block';
 const busyMarkMathExpressionAttribute = 'mathExpression';
 const busyMarkMathDisplayAttribute = 'mathDisplay';
 const busyMarkMathSourceFormAttribute = 'mathSourceForm';
+const busyMarkMathRawExpressionAttribute = 'mathRawExpression';
 
 enum BusyMathSourceForm {
   dollarInline,
@@ -170,17 +171,19 @@ class BusyWritersideMathSyntax extends md.InlineSyntax {
     }
     final closeStart = close == null ? match.end + end.start : end.start;
     final closeEnd = close == null ? match.end + end.end : end.end;
-    final expression = parser.source.substring(match.end, closeStart);
-    if (expression.isEmpty || expression.contains('\n')) {
+    final rawExpression = parser.source.substring(match.end, closeStart);
+    if (rawExpression.isEmpty || rawExpression.contains('\n')) {
       parser.addNode(md.Text(match.group(0)!));
       return true;
     }
+    final expression = busyMarkDecodeXmlMathText(rawExpression);
     parser.addNode(
       _mathElement(
         busyMarkMathInlineTag,
         expression,
         BusyMathSourceForm.writersideElement,
         display: false,
+        rawExpression: rawExpression,
       ),
     );
     parser.consume(closeEnd - match.start);
@@ -272,12 +275,57 @@ md.Element _mathElement(
   String expression,
   BusyMathSourceForm sourceForm, {
   required bool display,
+  String? rawExpression,
 }) {
   return md.Element.text(tag, expression)
     ..attributes[busyMarkMathExpressionAttribute] = expression
     ..attributes[busyMarkMathDisplayAttribute] = '$display'
-    ..attributes[busyMarkMathSourceFormAttribute] = sourceForm.name;
+    ..attributes[busyMarkMathSourceFormAttribute] = sourceForm.name
+    ..attributes.addAll({
+      if (rawExpression != null)
+        busyMarkMathRawExpressionAttribute: rawExpression,
+    });
 }
+
+String busyMarkDecodeXmlMathText(String source) {
+  return source.replaceAllMapped(
+    RegExp(r'&(?:lt|gt|amp|quot|apos|#[0-9]+|#[xX][0-9A-Fa-f]+);'),
+    (match) {
+      final entity = match.group(0)!;
+      final named = switch (entity) {
+        '&lt;' => '<',
+        '&gt;' => '>',
+        '&amp;' => '&',
+        '&quot;' => '"',
+        '&apos;' => "'",
+        _ => null,
+      };
+      if (named != null) {
+        return named;
+      }
+      final hexadecimal = entity.startsWith('&#x') || entity.startsWith('&#X');
+      final digits = entity.substring(hexadecimal ? 3 : 2, entity.length - 1);
+      final codePoint = int.tryParse(digits, radix: hexadecimal ? 16 : 10);
+      final validXmlCharacter =
+          codePoint != null &&
+          (codePoint == 0x09 ||
+              codePoint == 0x0a ||
+              codePoint == 0x0d ||
+              (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+              (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+              (codePoint >= 0x10000 && codePoint <= 0x10ffff));
+      if (!validXmlCharacter) {
+        return entity;
+      }
+      return String.fromCharCode(codePoint);
+    },
+  );
+}
+
+String busyMarkEncodeXmlMathText(String source) => source
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 
 int? _displayClose(String source, int start) {
   var index = start;

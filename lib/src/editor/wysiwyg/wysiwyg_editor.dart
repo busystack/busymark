@@ -79,6 +79,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.documentLayout,
     this.visualizationRevision = 0,
     this.onAiEdit,
+    this.onMathDiagnostic,
   });
 
   final BusyDocument document;
@@ -114,6 +115,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final BusyMarkDocumentLayoutSpec? documentLayout;
   final int visualizationRevision;
   final BusyMarkAiEditCallback? onAiEdit;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -662,6 +664,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       imagesDir: widget.imagesDir,
       allowRemoteImages: widget.allowRemoteImages,
       onRemoteImageBlocked: widget.onRemoteImageBlocked,
+      onMathDiagnostic: widget.onMathDiagnostic,
       controller: _textControllerFor(block),
       undoController: _textUndoControllerFor(block),
       focusNode: _focusNodeFor(block),

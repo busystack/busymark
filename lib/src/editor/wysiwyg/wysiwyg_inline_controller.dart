@@ -8,8 +8,7 @@ bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
     (inline) => inline.kind == BusyInlineKind.math || contains(inline.children),
   );
-  return block.attributes['wysiwygMathSource'] == 'true' ||
-      block.kind == BusyBlockKind.math ||
+  return block.kind == BusyBlockKind.math ||
       contains(block.inlines) ||
       block.children.any(busyMarkWysiwygBlockContainsMath);
 }
@@ -17,6 +16,16 @@ bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
 String busyMarkWysiwygEditableText(BusyBlock block) {
   if (!busyMarkWysiwygBlockContainsMath(block)) {
     return block.plainText;
+  }
+  if (block.kind != BusyBlockKind.math && block.inlines.isNotEmpty) {
+    return const BusyMarkMarkdownSerializer().serializeBlock(
+      BusyBlock(
+        id: 'wysiwyg-inline-source',
+        kind: BusyBlockKind.paragraph,
+        inlines: block.inlines,
+        dirty: true,
+      ),
+    );
   }
   final source =
       block.rawSource ??

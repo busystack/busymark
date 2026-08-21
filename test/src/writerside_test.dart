@@ -191,9 +191,12 @@ void main() {
           .expand((block) => block.inlines)
           .where((inline) => inline.kind == PreviewInlineKind.math)
           .single;
-      expect(math.text, r'e^{i\pi}+1=0');
+      expect(math.text, r'e^{i\pi}+1=0 \land x < y');
       expect(math.attributes['mathSourceForm'], 'writersideElement');
-      expect(source, contains(r'<math>e^{i\pi}+1=0</math>'));
+      expect(
+        source,
+        contains(r'<math>e^{i\pi}+1=0 \land x &lt; y</math>'),
+      );
     },
   );
 

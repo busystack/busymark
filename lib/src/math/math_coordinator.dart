@@ -106,53 +106,68 @@ class MathCoordinator {
       if (active.isEmpty) {
         continue;
       }
+      final uncached = <_PendingMathRender>[];
+      for (final item in active) {
+        final cached = cache.get(item.request.cacheKey);
+        if (cached == null) {
+          uncached.add(item);
+        } else {
+          _completeRendered(item, cached);
+        }
+      }
+      if (uncached.isEmpty) {
+        continue;
+      }
+      final groups = <String, List<_PendingMathRender>>{};
+      for (final item in uncached) {
+        groups.putIfAbsent(item.request.cacheKey, () => []).add(item);
+      }
+      final leaders = [for (final group in groups.values) group.first];
       final batchToken = VisualizationCancellationToken();
       void cancelBatchWhenObsolete() {
-        if (active.every((item) => item.token.isCancelled)) {
+        if (uncached.every((item) => item.token.isCancelled)) {
           batchToken.cancel();
         }
       }
 
-      for (final item in active) {
+      for (final item in uncached) {
         item.token.onCancel(cancelBatchWhenObsolete);
       }
       try {
         final results = await renderer.renderBatch([
-          for (final item in active) item.request,
+          for (final item in leaders) item.request,
         ], batchToken);
-        for (var index = 0; index < active.length; index++) {
-          final item = active[index];
-          if (_isSuperseded(item)) {
-            _supersede(item);
-            continue;
-          }
+        for (var index = 0; index < leaders.length; index++) {
+          final leader = leaders[index];
           final result = results[index];
           if (result is RenderedMathResult) {
-            cache.put(item.request.cacheKey, result);
+            cache.put(leader.request.cacheKey, result);
           }
-          if (!item.completer.isCompleted) {
-            item.completer.complete(
-              result is RenderedMathResult
-                  ? _forInstance(result, item.request)
-                  : result,
-            );
-          }
-          if (identical(_activeTokens[item.request.blockKey], item.token)) {
-            _activeTokens.remove(item.request.blockKey);
+          for (final item in groups[leader.request.cacheKey]!) {
+            if (_isSuperseded(item)) {
+              _supersede(item);
+              continue;
+            }
+            if (result is RenderedMathResult) {
+              _completeRendered(item, result);
+            } else if (!item.completer.isCompleted) {
+              item.completer.complete(_failureForInstance(result, item));
+              _removeActiveToken(item);
+            }
           }
         }
       } on VisualizationCancelledException {
-        for (final item in active) {
+        for (final item in uncached) {
           _supersede(item);
         }
       } on Object catch (error, stackTrace) {
-        for (final item in active) {
+        for (final item in uncached) {
           if (!item.completer.isCompleted) {
             item.completer.completeError(error, stackTrace);
           }
         }
       } finally {
-        for (final item in active) {
+        for (final item in uncached) {
           item.token.removeListener(cancelBatchWhenObsolete);
         }
       }
@@ -168,6 +183,38 @@ class MathCoordinator {
   void _supersede(_PendingMathRender item) {
     if (!item.completer.isCompleted) {
       item.completer.completeError(const MathSupersededException());
+    }
+  }
+
+  void _completeRendered(_PendingMathRender item, RenderedMathResult result) {
+    if (_isSuperseded(item)) {
+      _supersede(item);
+      return;
+    }
+    if (!item.completer.isCompleted) {
+      item.completer.complete(_forInstance(result, item.request));
+    }
+    _removeActiveToken(item);
+  }
+
+  MathRenderResult _failureForInstance(
+    MathRenderResult result,
+    _PendingMathRender item,
+  ) {
+    if (result is FailedMathResult) {
+      return FailedMathResult(
+        expressionId: item.request.expressionId,
+        kind: result.kind,
+        code: result.code,
+        debugDetail: result.debugDetail,
+      );
+    }
+    return result;
+  }
+
+  void _removeActiveToken(_PendingMathRender item) {
+    if (identical(_activeTokens[item.request.blockKey], item.token)) {
+      _activeTokens.remove(item.request.blockKey);
     }
   }
 

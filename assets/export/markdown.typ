@@ -31,6 +31,8 @@
 #show heading.where(level: 2): set text(size: 17pt, weight: "bold")
 #show heading.where(level: 3): set text(size: 13.5pt, weight: "bold")
 #show heading.where(level: 4): set text(size: 11.5pt, weight: "bold")
+#show heading.where(level: 5): set text(size: 10.5pt, weight: "bold")
+#show heading.where(level: 6): set text(size: 10.5pt, weight: "bold")
 #show link: set text(fill: rgb("2563a5"))
 
 #let value-or(item, key, default) = item.at(key, default: default)

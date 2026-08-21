@@ -29,6 +29,7 @@ import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
     show isTextDocumentationPath, slugForHeading;
+import '../../core/source_span.dart';
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
@@ -1117,7 +1118,7 @@ class WorkspaceScreen extends ConsumerWidget {
       return;
     }
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final count = workspace.diagnostics.length;
+    final count = workspace.allDiagnostics.length;
     unawaited(
       showBusyMarkModalDialog<void>(
         context,
@@ -9615,6 +9616,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           ? (snapshot) =>
                                 showBusyMarkAiEdit(context, ref, snapshot)
                           : null,
+                      onMathDiagnostic: (expressionId, code, sourceSpan) => ref
+                          .read(workspaceControllerProvider.notifier)
+                          .updateMathRenderDiagnostic(
+                            expressionId: expressionId,
+                            code: code,
+                            sourceSpan: sourceSpan,
+                          ),
                     ),
                   ),
                 if (sourceVisible)
@@ -9626,7 +9634,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       filePath: activeEditorPath,
                       documentId: activeBuffer?.id,
                       diagnostics:
-                          widget.state.workspace?.diagnostics ??
+                          widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],
                       editorFontSize: widget.editorFontSize,
                       wordWrap: widget.wordWrap,
@@ -10649,7 +10657,7 @@ class _PreviewBlockContextAnchorState
   }
 }
 
-class _PreviewBlockView extends StatelessWidget {
+class _PreviewBlockView extends ConsumerWidget {
   const _PreviewBlockView(
     this.block, {
     required this.workspace,
@@ -10675,7 +10683,7 @@ class _PreviewBlockView extends StatelessWidget {
   final ValueChanged<int>? onEditVisualizationSource;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     final displayBlock = _localizedPreviewBlock(context, block);
     final inheritedDirection = Directionality.of(context);
@@ -10709,6 +10717,20 @@ class _PreviewBlockView extends StatelessWidget {
               displayBlock.attributes['expressionId'] ??
               'display-${displayBlock.sourceStartOffset ?? 0}',
           editRevision: editRevision,
+          onFailure: (failure) => _reportMathDiagnostic(
+            ref,
+            displayBlock,
+            displayBlock.attributes['expressionId'] ??
+                'display-${displayBlock.sourceStartOffset ?? 0}',
+            failure.code,
+          ),
+          onSuccess: () => _reportMathDiagnostic(
+            ref,
+            displayBlock,
+            displayBlock.attributes['expressionId'] ??
+                'display-${displayBlock.sourceStartOffset ?? 0}',
+            null,
+          ),
         ),
       ),
       PreviewBlockKind.code
@@ -10833,6 +10855,21 @@ class _PreviewBlockView extends StatelessWidget {
     return blockDirection == inheritedDirection
         ? child
         : Directionality(textDirection: blockDirection, child: child);
+  }
+
+  void _reportMathDiagnostic(
+    WidgetRef ref,
+    PreviewBlock sourceBlock,
+    String expressionId,
+    String? code,
+  ) {
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateMathRenderDiagnostic(
+          expressionId: expressionId,
+          code: code,
+          sourceSpan: _previewMathSourceSpan(workspace, sourceBlock),
+        );
   }
 
   Color _diffPreviewCodeBackground(BuildContext context, PreviewBlock block) {
@@ -11131,6 +11168,16 @@ class _PreviewInlineText extends ConsumerWidget {
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
         : block.inlines;
+    void reportMathDiagnostic(String expressionId, String? code) {
+      ref
+          .read(workspaceControllerProvider.notifier)
+          .updateMathRenderDiagnostic(
+            expressionId: expressionId,
+            code: code,
+            sourceSpan: _previewMathSourceSpan(workspace, block),
+          );
+    }
+
     return Padding(
       padding: const EdgeInsetsDirectional.only(
         end: BusyMarkDocumentTextGeometry.editableLayoutInset,
@@ -11151,6 +11198,7 @@ class _PreviewInlineText extends ConsumerWidget {
                 onLinkTap: (destination) =>
                     _openPreviewLink(context, ref, destination),
                 editRevision: editRevision,
+                onMathDiagnostic: reportMathDiagnostic,
               ),
           ],
         ),
@@ -11577,6 +11625,7 @@ InlineSpan _previewInlineSpan(
   required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
   required int editRevision,
+  required void Function(String expressionId, String? code) onMathDiagnostic,
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
 }) {
@@ -11617,6 +11666,7 @@ InlineSpan _previewInlineSpan(
       onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
       editRevision: editRevision,
+      onMathDiagnostic: onMathDiagnostic,
       inheritedLinkDestination: linkDestination,
       inheritedStyle: style,
     );
@@ -11755,9 +11805,43 @@ InlineSpan _previewInlineSpan(
             'inline-${Object.hash(inline.text, inline.attributes)}',
         editRevision: editRevision,
         textStyle: mergeStyle(null) ?? DefaultTextStyle.of(context).style,
+        onFailure: (failure) => onMathDiagnostic(
+          inline.attributes['expressionId'] ??
+              'inline-${Object.hash(inline.text, inline.attributes)}',
+          failure.code,
+        ),
+        onSuccess: () => onMathDiagnostic(
+          inline.attributes['expressionId'] ??
+              'inline-${Object.hash(inline.text, inline.attributes)}',
+          null,
+        ),
       ),
     ),
   };
+}
+
+SourceSpan? _previewMathSourceSpan(Workspace? workspace, PreviewBlock block) {
+  final filePath = workspace?.activeFilePath;
+  final startOffset = block.sourceStartOffset;
+  final endOffset = block.sourceEndOffset;
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (filePath == null ||
+      startOffset == null ||
+      endOffset == null ||
+      startLine == null ||
+      endLine == null) {
+    return null;
+  }
+  return SourceSpan(
+    filePath: filePath,
+    startOffset: startOffset,
+    endOffset: endOffset,
+    startLine: startLine,
+    startColumn: 1,
+    endLine: endLine,
+    endColumn: 1,
+  );
 }
 
 InlineSpan _previewInlineImageSpan(
@@ -12119,7 +12203,7 @@ class _ProblemsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final diagnostics = workspace.diagnostics;
+    final diagnostics = workspace.allDiagnostics;
     return BusyMarkGroupedSurface(
       child: diagnostics.isEmpty
           ? _EmptyPane(

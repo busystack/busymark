@@ -118,6 +118,20 @@ class MathSvgPreprocessor {
     return document.toXmlString(pretty: false);
   }
 
+  String resolveCurrentColor(String source, String color) {
+    final document = XmlDocument.parse(source);
+    final currentColor = RegExp(r'\bcurrentColor\b', caseSensitive: false);
+    for (final element in <XmlElement>[
+      document.rootElement,
+      ...document.rootElement.descendants.whereType<XmlElement>(),
+    ]) {
+      for (final attribute in element.attributes) {
+        attribute.value = attribute.value.replaceAll(currentColor, color);
+      }
+    }
+    return document.toXmlString(pretty: false);
+  }
+
   Map<String, String> _styleDeclarations(String source) {
     final result = <String, String>{};
     for (final declaration in source.split(';')) {

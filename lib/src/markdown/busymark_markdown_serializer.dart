@@ -381,12 +381,21 @@ class BusyMarkMarkdownSerializer {
     );
     return switch (form) {
       BusyMathSourceForm.githubDollarBacktick => '\$`${inline.text}`\$',
-      BusyMathSourceForm.writersideElement => '<math>${inline.text}</math>',
+      BusyMathSourceForm.writersideElement =>
+        '<math>${_writersideMathExpression(inline)}</math>',
       BusyMathSourceForm.dollarInline ||
       BusyMathSourceForm.doubleDollarDisplay ||
       BusyMathSourceForm.mathFence ||
       BusyMathSourceForm.writersideTexFence => '\$${inline.text}\$',
     };
+  }
+
+  String _writersideMathExpression(BusyInline inline) {
+    final raw = inline.attributes[busyMarkMathRawExpressionAttribute];
+    if (raw != null && busyMarkDecodeXmlMathText(raw) == inline.text) {
+      return raw;
+    }
+    return busyMarkEncodeXmlMathText(inline.text);
   }
 
   String _codeSpan(String text) {

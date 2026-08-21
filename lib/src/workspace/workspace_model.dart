@@ -96,6 +96,7 @@ class Workspace {
     required this.openedAt,
     required this.files,
     required this.diagnostics,
+    this.runtimeDiagnostics = const [],
     this.directories = const [],
     List<String> openFilePaths = const [],
     this.activeFilePath,
@@ -118,6 +119,9 @@ class Workspace {
   final List<DocumentFile> files;
   final List<WorkspaceDirectory> directories;
   final List<Diagnostic> diagnostics;
+  final List<Diagnostic> runtimeDiagnostics;
+  List<Diagnostic> get allDiagnostics =>
+      sortDiagnostics([...diagnostics, ...runtimeDiagnostics]);
   final ParsedMarkdownDocument? markdown;
   final WritersideModule? writersideModule;
 
@@ -129,6 +133,7 @@ class Workspace {
     List<DocumentFile>? files,
     List<WorkspaceDirectory>? directories,
     List<Diagnostic>? diagnostics,
+    List<Diagnostic>? runtimeDiagnostics,
     Object? markdown = _copyWithUnset,
     Object? writersideModule = _copyWithUnset,
   }) {
@@ -161,6 +166,7 @@ class Workspace {
       files: files ?? this.files,
       directories: directories ?? this.directories,
       diagnostics: diagnostics ?? this.diagnostics,
+      runtimeDiagnostics: runtimeDiagnostics ?? this.runtimeDiagnostics,
       markdown: nextMarkdown,
       writersideModule: nextWritersideModule,
     );

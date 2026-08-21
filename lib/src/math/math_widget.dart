@@ -9,6 +9,7 @@ import '../app/busymark_design.dart';
 import '../app/localization.dart';
 import 'math_models.dart';
 import 'math_providers.dart';
+import 'math_svg_preprocessor.dart';
 
 var _nextMathWidgetInstance = 0;
 
@@ -21,6 +22,7 @@ class BusyMarkInlineMath extends StatelessWidget {
     required this.textStyle,
     this.containerWidth = BusyMarkSizes.documentContentWidth,
     this.onFailure,
+    this.onSuccess,
   });
 
   final String expression;
@@ -29,6 +31,7 @@ class BusyMarkInlineMath extends StatelessWidget {
   final TextStyle textStyle;
   final double containerWidth;
   final ValueChanged<FailedMathResult>? onFailure;
+  final VoidCallback? onSuccess;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +47,7 @@ class BusyMarkInlineMath extends StatelessWidget {
       containerWidth: containerWidth,
       textStyle: textStyle,
       onFailure: onFailure,
+      onSuccess: onSuccess,
     );
   }
 }
@@ -55,12 +59,14 @@ class BusyMarkDisplayMath extends StatelessWidget {
     required this.expressionId,
     required this.editRevision,
     this.onFailure,
+    this.onSuccess,
   });
 
   final String expression;
   final String expressionId;
   final int editRevision;
   final ValueChanged<FailedMathResult>? onFailure;
+  final VoidCallback? onSuccess;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +87,7 @@ class BusyMarkDisplayMath extends StatelessWidget {
           containerWidth: availableWidth,
           textStyle: style,
           onFailure: onFailure,
+          onSuccess: onSuccess,
         );
       },
     );
@@ -98,6 +105,7 @@ class _MathFormula extends ConsumerStatefulWidget {
     required this.containerWidth,
     required this.textStyle,
     this.onFailure,
+    this.onSuccess,
   });
 
   final String expression;
@@ -109,6 +117,7 @@ class _MathFormula extends ConsumerStatefulWidget {
   final double containerWidth;
   final TextStyle textStyle;
   final ValueChanged<FailedMathResult>? onFailure;
+  final VoidCallback? onSuccess;
 
   @override
   ConsumerState<_MathFormula> createState() => _MathFormulaState();
@@ -118,6 +127,7 @@ class _MathFormulaState extends ConsumerState<_MathFormula> {
   late final String _blockKey = 'math-widget-${_nextMathWidgetInstance++}';
   late final _coordinator = ref.read(mathCoordinatorProvider);
   Future<MathRenderResult>? _render;
+  String? _reportedOutcome;
 
   @override
   void initState() {
@@ -145,6 +155,7 @@ class _MathFormulaState extends ConsumerState<_MathFormula> {
   }
 
   void _scheduleRender() {
+    _reportedOutcome = null;
     _render = _coordinator.render(
       MathRenderRequest(
         expressionId: widget.expressionId,
@@ -166,33 +177,48 @@ class _MathFormulaState extends ConsumerState<_MathFormula> {
       builder: (context, snapshot) {
         final result = snapshot.data;
         if (result is RenderedMathResult) {
+          _reportOutcome('success', widget.onSuccess);
           return _rendered(context, result);
         }
         if (result is FailedMathResult) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) widget.onFailure?.call(result);
-          });
+          _reportOutcome(
+            'failure:${result.code}',
+            widget.onFailure == null ? null : () => widget.onFailure!(result),
+          );
         }
         return _fallback(context, failed: result is FailedMathResult);
       },
     );
   }
 
+  void _reportOutcome(String outcome, VoidCallback? callback) {
+    if (_reportedOutcome == outcome) {
+      return;
+    }
+    _reportedOutcome = outcome;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) callback?.call();
+    });
+  }
+
   Widget _rendered(BuildContext context, RenderedMathResult result) {
     final foreground =
         widget.textStyle.color ?? DefaultTextStyle.of(context).style.color;
+    final svg = foreground == null
+        ? result.svg
+        : const MathSvgPreprocessor().resolveCurrentColor(
+            result.svg,
+            _svgColor(foreground),
+          );
     final picture = Semantics(
       image: true,
       label: widget.expression,
       child: ExcludeSemantics(
         child: SvgPicture.string(
-          result.svg,
+          svg,
           width: result.width,
           height: result.height,
           fit: BoxFit.fill,
-          colorFilter: foreground == null
-              ? null
-              : ColorFilter.mode(foreground, BlendMode.srcIn),
         ),
       ),
     );
@@ -247,4 +273,18 @@ class _MathFormulaState extends ConsumerState<_MathFormula> {
         ? Tooltip(message: context.l10n.mathRenderFailed, child: fallback)
         : fallback;
   }
+}
+
+String _svgColor(Color color) {
+  final value = color.toARGB32();
+  final red = (value >> 16) & 0xff;
+  final green = (value >> 8) & 0xff;
+  final blue = value & 0xff;
+  final alpha = ((value >> 24) & 0xff) / 255;
+  if (alpha >= 1) {
+    return '#${red.toRadixString(16).padLeft(2, '0')}'
+        '${green.toRadixString(16).padLeft(2, '0')}'
+        '${blue.toRadixString(16).padLeft(2, '0')}';
+  }
+  return 'rgba($red,$green,$blue,${alpha.toStringAsFixed(3)})';
 }
