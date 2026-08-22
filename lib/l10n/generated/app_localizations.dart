@@ -5769,6 +5769,12 @@ abstract class AppLocalizations {
   /// **'Preferred model'**
   String get aiPreferredModel;
 
+  /// Label for selecting a model for one AI request.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get aiModel;
+
   /// Local monthly AI usage summary.
   ///
   /// In en, this message translates to:

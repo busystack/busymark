@@ -3421,6 +3421,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiPreferredModel => 'النموذج المفضّل';
 
   @override
+  String get aiModel => 'النموذج';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '⁨$requests⁩ طلبات · ⁨$input⁩ رموز إدخال · ⁨$output⁩ رموز إخراج';
   }

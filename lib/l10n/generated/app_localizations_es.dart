@@ -3437,6 +3437,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiPreferredModel => 'Modelo preferido';
 
   @override
+  String get aiModel => 'Modelo';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests solicitudes · $input tokens de entrada · $output tokens de salida';
   }

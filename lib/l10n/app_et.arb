@@ -1855,6 +1855,7 @@
   "aiAutomaticRouting": "Automaatselt ülesande järgi",
   "aiFixedModelRouting": "Kasuta valitud mudelit",
   "aiPreferredModel": "Eelistatud mudel",
+  "aiModel": "Mudel",
   "aiUsageThisMonth": "{requests} päringut · {input} sisendmärgendit · {output} väljundmärgendit",
   "aiCloudConsentTitle": "Kas saata sisu teenusele {provider}?",
   "aiCloudConsentEnable": "Luba {provider}",

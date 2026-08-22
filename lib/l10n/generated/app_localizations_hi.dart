@@ -3396,6 +3396,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiPreferredModel => 'पसंदीदा मॉडल';
 
   @override
+  String get aiModel => 'मॉडल';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests अनुरोध · $input इनपुट टोकन · $output आउटपुट टोकन';
   }

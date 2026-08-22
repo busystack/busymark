@@ -2646,6 +2646,7 @@
   "aiAutomaticRouting": "تلقائي حسب المهمة",
   "aiFixedModelRouting": "استخدام النموذج المحدد",
   "aiPreferredModel": "النموذج المفضّل",
+  "aiModel": "النموذج",
   "aiUsageThisMonth": "⁨{requests}⁩ طلبات · ⁨{input}⁩ رموز إدخال · ⁨{output}⁩ رموز إخراج",
   "aiCloudConsentTitle": "هل تريد إرسال المحتوى إلى ⁨{provider}⁩؟",
   "aiCloudConsentEnable": "تفعيل ⁨{provider}⁩",

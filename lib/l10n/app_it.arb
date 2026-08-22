@@ -2644,6 +2644,7 @@
   "aiAutomaticRouting": "Automatica in base all’attività",
   "aiFixedModelRouting": "Usa il modello selezionato",
   "aiPreferredModel": "Modello preferito",
+  "aiModel": "Modello",
   "aiUsageThisMonth": "{requests} richieste · {input} token di input · {output} token di output",
   "aiCloudConsentTitle": "Inviare contenuti a {provider}?",
   "aiCloudConsentEnable": "Abilita {provider}",

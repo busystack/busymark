@@ -679,7 +679,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
   },
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
-  'pl': {'folder', 'foldKindTag'},
+  'pl': {'folder', 'foldKindTag', 'aiModel'},
   'pt': {
     'editor',
     'link',

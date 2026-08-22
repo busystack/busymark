@@ -3401,6 +3401,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiPreferredModel => 'Eelistatud mudel';
 
   @override
+  String get aiModel => 'Mudel';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests päringut · $input sisendmärgendit · $output väljundmärgendit';
   }

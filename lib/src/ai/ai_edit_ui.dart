@@ -86,6 +86,7 @@ Future<AiEditApplication?> showBusyMarkAiEdit(
     ref,
     invocation,
     providerKind: configuration.provider,
+    modelCandidates: configuration.modelCandidates,
   );
   return output == null
       ? null
@@ -97,6 +98,7 @@ Future<String?> showBusyMarkAiProposal(
   WidgetRef ref,
   AiEditInvocation invocation, {
   AiProviderKind? providerKind,
+  List<String>? modelCandidates,
   Future<bool> Function()? validateBeforeApply,
   String? staleMessage,
 }) async {
@@ -117,11 +119,10 @@ Future<String?> showBusyMarkAiProposal(
   final provider = ref
       .read(aiProviderRegistryProvider)
       .require(selectedProvider);
-  final modelCandidates = settings.modelCandidatesFor(
-    invocation.feature,
-    provider,
-  );
-  if (modelCandidates.isEmpty) {
+  final resolvedModelCandidates =
+      modelCandidates ??
+      settings.modelCandidatesFor(invocation.feature, provider);
+  if (resolvedModelCandidates.isEmpty) {
     await _showAiMessage(context, context.l10n.aiConfigureFirst);
     return null;
   }
@@ -145,7 +146,7 @@ Future<String?> showBusyMarkAiProposal(
       feature: invocation.feature,
       scope: invocation.scope,
       input: invocation.input,
-      modelCandidates: modelCandidates,
+      modelCandidates: resolvedModelCandidates,
       sourceRevision: invocation.sourceRevision,
       contentFormat: invocation.contentFormat,
       editTarget: invocation.editTarget,
@@ -283,14 +284,16 @@ class _AiEditConfiguration {
     required this.instruction,
     required this.resolvedTarget,
     required this.provider,
+    required this.modelCandidates,
   });
 
   final String instruction;
   final AiMarkdownEditTarget resolvedTarget;
   final AiProviderKind provider;
+  final List<String> modelCandidates;
 }
 
-class _AiEditConfigurationDialog extends StatefulWidget {
+class _AiEditConfigurationDialog extends ConsumerStatefulWidget {
   const _AiEditConfigurationDialog({
     required this.snapshot,
     required this.availableProviders,
@@ -304,13 +307,19 @@ class _AiEditConfigurationDialog extends StatefulWidget {
   final AiEditTargetKind? fixedTarget;
 
   @override
-  State<_AiEditConfigurationDialog> createState() =>
+  ConsumerState<_AiEditConfigurationDialog> createState() =>
       _AiEditConfigurationDialogState();
 }
 
 class _AiEditConfigurationDialogState
-    extends State<_AiEditConfigurationDialog> {
+    extends ConsumerState<_AiEditConfigurationDialog> {
+  static const _automaticModel = '';
+
   final _controller = TextEditingController();
+  final _modelsByProvider = <AiProviderKind, List<String>>{};
+  final _modelSelectionByProvider = <AiProviderKind, String>{};
+  final _modelDiscoveryTokens = <AiProviderKind, AiCancellationToken>{};
+  final _modelDiscoveryCompleted = <AiProviderKind>{};
   late AiEditTargetKind _target;
   late AiEditContextKind _context;
   late AiProviderKind _provider;
@@ -325,6 +334,24 @@ class _AiEditConfigurationDialogState
   void initState() {
     super.initState();
     _provider = widget.initialProvider;
+    final settings = ref.read(appSettingsControllerProvider);
+    final registry = ref.read(aiProviderRegistryProvider);
+    for (final providerKind in widget.availableProviders) {
+      final provider = registry.require(providerKind);
+      final selectedModel = settings.selectedAiModel(providerKind).trim();
+      _modelsByProvider[providerKind] = <String>{
+        if (selectedModel.isNotEmpty) selectedModel,
+        for (final models in provider.capabilities.recommendedModels.values)
+          ...models,
+      }.toList(growable: false);
+      _modelSelectionByProvider[providerKind] =
+          settings.aiModelRoutingPreference ==
+                  AiModelRoutingPreference.automatic ||
+              selectedModel.isEmpty
+          ? _automaticModel
+          : selectedModel;
+    }
+    unawaited(_discoverModels(_provider));
     if (widget.fixedTarget case final fixedTarget?) {
       _target = fixedTarget;
       _context = fixedTarget == AiEditTargetKind.document
@@ -349,6 +376,9 @@ class _AiEditConfigurationDialogState
 
   @override
   void dispose() {
+    for (final token in _modelDiscoveryTokens.values) {
+      token.cancel();
+    }
     _controller.dispose();
     super.dispose();
   }
@@ -356,6 +386,7 @@ class _AiEditConfigurationDialogState
   @override
   Widget build(BuildContext context) {
     final resolvedTarget = _resolvedTarget;
+    final providerKind = _provider;
     return BusyMarkModalEditorScaffold(
       title: context.l10n.aiRefineWithAi,
       cancelLabel: context.l10n.cancel,
@@ -369,6 +400,7 @@ class _AiEditConfigurationDialogState
                 instruction: _controller.text.trim(),
                 resolvedTarget: _resolvedTarget!,
                 provider: _provider,
+                modelCandidates: _selectedModelCandidates,
               ),
             ),
       children: [
@@ -381,7 +413,18 @@ class _AiEditConfigurationDialogState
               values: widget.availableProviders,
               selected: _provider,
               labelFor: (provider) => _providerLabel(context, provider),
-              onSelected: (provider) => setState(() => _provider = provider),
+              onSelected: _selectProvider,
+            ),
+            BusyMarkComboRow<String>(
+              key: const ValueKey('ai-edit-model'),
+              title: context.l10n.aiModel,
+              values: [_automaticModel, ..._modelsByProvider[providerKind]!],
+              selected: _modelSelectionByProvider[providerKind]!,
+              labelFor: (model) =>
+                  model.isEmpty ? context.l10n.aiAutomaticRouting : model,
+              onSelected: (model) => setState(
+                () => _modelSelectionByProvider[providerKind] = model,
+              ),
             ),
             BusyMarkGroupedTextEntry(
               key: const ValueKey('ai-edit-instruction'),
@@ -455,6 +498,10 @@ class _AiEditConfigurationDialogState
             kind: BusyMarkStatusKind.information,
           ),
         ],
+        const SizedBox(
+          key: ValueKey('ai-context-disclosure-bottom-spacing'),
+          height: BusyMarkSpacing.lg,
+        ),
       ],
     );
   }
@@ -482,6 +529,67 @@ class _AiEditConfigurationDialogState
       })
         value,
   ];
+
+  List<String> get _selectedModelCandidates {
+    final selection = _modelSelectionByProvider[_provider]!;
+    if (selection.isNotEmpty) {
+      return [selection];
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    final provider = ref.read(aiProviderRegistryProvider).require(_provider);
+    return <String>{
+      ...provider.capabilities.modelsFor(
+        AiFeature.editDocument.spec.modelClass,
+      ),
+      if (settings.selectedAiModel(_provider).trim().isNotEmpty)
+        settings.selectedAiModel(_provider).trim(),
+      if (provider.capabilities.modelDiscovery)
+        ..._modelsByProvider[_provider]!,
+    }.toList(growable: false);
+  }
+
+  void _selectProvider(AiProviderKind provider) {
+    if (provider == _provider) {
+      return;
+    }
+    setState(() => _provider = provider);
+    unawaited(_discoverModels(provider));
+  }
+
+  Future<void> _discoverModels(AiProviderKind providerKind) async {
+    final provider = ref.read(aiProviderRegistryProvider).require(providerKind);
+    if (!provider.capabilities.modelDiscovery ||
+        _modelDiscoveryCompleted.contains(providerKind) ||
+        _modelDiscoveryTokens.containsKey(providerKind)) {
+      return;
+    }
+    final token = AiCancellationToken();
+    _modelDiscoveryTokens[providerKind] = token;
+    try {
+      final models = await provider.listModels(cancellationToken: token);
+      if (!mounted || token.isCancelled) {
+        return;
+      }
+      final discovered = [
+        for (final model in models)
+          if (model.supportsTextGeneration) model.name.trim(),
+      ]..removeWhere((model) => model.isEmpty);
+      setState(() {
+        _modelsByProvider[providerKind] = <String>{
+          ..._modelsByProvider[providerKind]!,
+          ...discovered,
+        }.toList(growable: false);
+        _modelDiscoveryCompleted.add(providerKind);
+      });
+    } on AiException {
+      // The configured model remains usable when optional discovery fails.
+    } finally {
+      if (identical(_modelDiscoveryTokens[providerKind], token)) {
+        _modelDiscoveryTokens.remove(providerKind);
+      }
+      await token.dispose();
+    }
+  }
 
   void _resolveChoices({bool notify = true}) {
     late final VoidCallback update;

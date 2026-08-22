@@ -3451,6 +3451,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aiPreferredModel => 'مدل ترجیحی';
 
   @override
+  String get aiModel => 'مدل';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '⁨$requests⁩ درخواست · ⁨$input⁩ توکن ورودی · ⁨$output⁩ توکن خروجی';
   }

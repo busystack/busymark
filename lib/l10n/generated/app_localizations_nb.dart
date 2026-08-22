@@ -3400,6 +3400,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiPreferredModel => 'Foretrukket modell';
 
   @override
+  String get aiModel => 'Modell';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests forespørsler · $input inndata-tokener · $output utdata-tokener';
   }

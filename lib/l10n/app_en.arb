@@ -2211,6 +2211,8 @@
   "@aiFixedModelRouting": {"description": "AI model routing option that always uses the preferred model."},
   "aiPreferredModel": "Preferred model",
   "@aiPreferredModel": {"description": "Settings label for a preferred cloud AI model."},
+  "aiModel": "Model",
+  "@aiModel": {"description": "Label for selecting a model for one AI request."},
   "aiUsageThisMonth": "{requests} requests · {input} input tokens · {output} output tokens",
   "@aiUsageThisMonth": {"description": "Local monthly AI usage summary.", "placeholders": {"requests": {"type": "int"}, "input": {"type": "int"}, "output": {"type": "int"}}},
   "aiCloudConsentTitle": "Send content to {provider}?",

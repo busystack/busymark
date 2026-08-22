@@ -2644,6 +2644,7 @@
   "aiAutomaticRouting": "Automatisk etter oppgave",
   "aiFixedModelRouting": "Bruk valgt modell",
   "aiPreferredModel": "Foretrukket modell",
+  "aiModel": "Modell",
   "aiUsageThisMonth": "{requests} forespørsler · {input} inndata-tokener · {output} utdata-tokener",
   "aiCloudConsentTitle": "Sende innhold til {provider}?",
   "aiCloudConsentEnable": "Aktiver {provider}",

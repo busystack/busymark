@@ -2665,6 +2665,7 @@
   "aiAutomaticRouting": "خودکار بر اساس کار",
   "aiFixedModelRouting": "استفاده از مدل انتخابی",
   "aiPreferredModel": "مدل ترجیحی",
+  "aiModel": "مدل",
   "aiUsageThisMonth": "⁨{requests}⁩ درخواست · ⁨{input}⁩ توکن ورودی · ⁨{output}⁩ توکن خروجی",
   "aiCloudConsentTitle": "محتوا برای ⁨{provider}⁩ ارسال شود؟",
   "aiCloudConsentEnable": "فعال‌کردن ⁨{provider}⁩",

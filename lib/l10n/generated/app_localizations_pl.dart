@@ -3443,6 +3443,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiPreferredModel => 'Preferowany model';
 
   @override
+  String get aiModel => 'Model';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests żądań · $input tokenów wejściowych · $output tokenów wyjściowych';
   }

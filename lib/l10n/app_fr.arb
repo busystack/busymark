@@ -2667,6 +2667,7 @@
   "aiAutomaticRouting": "Automatique selon la tâche",
   "aiFixedModelRouting": "Utiliser le modèle sélectionné",
   "aiPreferredModel": "Modèle préféré",
+  "aiModel": "Modèle",
   "aiUsageThisMonth": "{requests} requêtes · {input} jetons d’entrée · {output} jetons de sortie",
   "aiCloudConsentTitle": "Envoyer du contenu à {provider} ?",
   "aiCloudConsentEnable": "Activer {provider}",

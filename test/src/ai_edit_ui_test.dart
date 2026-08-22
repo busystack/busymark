@@ -132,6 +132,11 @@ void main() {
       AiProviderKind.gemini,
     ]);
     expect(providerSelector.selected, AiProviderKind.ollamaLocal);
+    final localModelSelector = tester.widget<BusyMarkComboRow<String>>(
+      find.byKey(const ValueKey('ai-edit-model')),
+    );
+    expect(localModelSelector.values, ['', 'test-model']);
+    expect(localModelSelector.selected, '');
     providerSelector.onSelected(AiProviderKind.gemini);
     await tester.pump();
     expect(
@@ -141,6 +146,25 @@ void main() {
           )
           .selected,
       AiProviderKind.gemini,
+    );
+    final geminiModelSelector = tester.widget<BusyMarkComboRow<String>>(
+      find.byKey(const ValueKey('ai-edit-model')),
+    );
+    expect(geminiModelSelector.values, [
+      '',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-flash',
+    ]);
+    geminiModelSelector.onSelected('gemini-3.5-flash');
+    await tester.pump();
+    expect(
+      tester
+          .widget<BusyMarkComboRow<String>>(
+            find.byKey(const ValueKey('ai-edit-model')),
+          )
+          .selected,
+      'gemini-3.5-flash',
     );
     expect(find.byType(BusyMarkComboRow<AiEditTargetKind>), findsOneWidget);
     expect(find.byType(BusyMarkComboRow<AiEditContextKind>), findsOneWidget);
@@ -167,6 +191,89 @@ void main() {
     expect(changeSelector.dy, lessThan(changeContent.dy));
     expect(changeContent.dy, lessThan(contextSelector.dy));
     expect(contextSelector.dy, lessThan(sharedContent.dy));
+    final bottomSpacing = tester.widget<SizedBox>(
+      find.byKey(const ValueKey('ai-context-disclosure-bottom-spacing')),
+    );
+    expect(bottomSpacing.height, BusyMarkSpacing.lg);
+  });
+
+  testWidgets('Refine with AI sends the explicitly selected model', (
+    tester,
+  ) async {
+    const source = 'Text to refine.\n';
+    final settings = AppSettings.defaults().copyWith(
+      aiProviderPreference: AiProviderPreference.ollamaLocal,
+      aiOllamaModel: 'preferred-model',
+      aiModelRoutingPreference: AiModelRoutingPreference.automatic,
+    );
+    final provider = _ImmediateAiProvider(model: 'alternate-model');
+    final container = ProviderContainer(
+      overrides: [
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore(settings.toJson()),
+        ),
+        aiSecretStoreProvider.overrideWithValue(_MemoryAiSecretStore()),
+        aiProviderRegistryProvider.overrideWithValue(
+          AiProviderRegistry([provider]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(appSettingsControllerProvider);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () => unawaited(
+                  showBusyMarkAiEdit(
+                    context,
+                    ref,
+                    const AiEditorSnapshot(
+                      documentSource: source,
+                      selectionStart: 0,
+                      selectionEnd: 15,
+                      anchorOffset: 0,
+                      sourceRevision: 1,
+                      targetId: 'guide.md',
+                      documentPath: 'guide.md',
+                    ),
+                  ),
+                ),
+                child: const Text('Open AI'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await _pumpSettings(tester, container);
+
+    await tester.tap(find.text('Open AI'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('ai-edit-instruction')),
+      'Improve this text.',
+    );
+    final modelSelector = tester.widget<BusyMarkComboRow<String>>(
+      find.byKey(const ValueKey('ai-edit-model')),
+    );
+    expect(modelSelector.values, ['', 'preferred-model', 'alternate-model']);
+    modelSelector.onSelected('alternate-model');
+    await tester.pump();
+    await tester.tap(find.text('Generate proposal'));
+    await tester.pumpAndSettle();
+
+    expect(provider.requests, hasLength(1));
+    expect(provider.requests.single.modelCandidates, ['alternate-model']);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('AI proposal uses an explicitly selected provider', (
@@ -544,9 +651,21 @@ class _ImmediateAiProvider implements AiProvider {
   AiProviderCapabilities get capabilities => AiProviderCapabilities(
     kind: kind,
     streaming: true,
-    modelDiscovery: false,
+    modelDiscovery: kind == AiProviderKind.ollamaLocal,
     maximumConcurrentRequests: 1,
-    recommendedModels: {},
+    recommendedModels: switch (kind) {
+      AiProviderKind.ollamaLocal => {},
+      AiProviderKind.openAi => const {
+        AiModelClass.fast: ['gpt-5.6-luna'],
+        AiModelClass.balanced: ['gpt-5.6-terra'],
+        AiModelClass.strong: ['gpt-5.6-sol'],
+      },
+      AiProviderKind.gemini => const {
+        AiModelClass.fast: ['gemini-3.5-flash-lite'],
+        AiModelClass.balanced: ['gemini-3.6-flash'],
+        AiModelClass.strong: ['gemini-3.5-flash'],
+      },
+    },
   );
 
   @override
@@ -563,7 +682,7 @@ class _ImmediateAiProvider implements AiProvider {
   @override
   Future<List<AiModelInfo>> listModels({
     AiCancellationToken? cancellationToken,
-  }) async => const [AiModelInfo(name: 'test-model')];
+  }) async => [AiModelInfo(name: model)];
 
   @override
   Future<AiHealthResult> checkHealth({
@@ -616,6 +735,19 @@ ProviderContainer _aiContainer({Map<AiProviderKind, String>? secrets}) {
         _MemorySettingsStore(settings.toJson()),
       ),
       aiSecretStoreProvider.overrideWithValue(_MemoryAiSecretStore(secrets)),
+      aiProviderRegistryProvider.overrideWithValue(
+        AiProviderRegistry([
+          _ImmediateAiProvider(),
+          _ImmediateAiProvider(
+            kind: AiProviderKind.openAi,
+            model: 'gpt-5.6-terra',
+          ),
+          _ImmediateAiProvider(
+            kind: AiProviderKind.gemini,
+            model: 'gemini-3.6-flash',
+          ),
+        ]),
+      ),
     ],
   );
   container.read(appSettingsControllerProvider);

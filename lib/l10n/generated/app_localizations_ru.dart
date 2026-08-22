@@ -3436,6 +3436,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiPreferredModel => 'Предпочитаемая модель';
 
   @override
+  String get aiModel => 'Модель';
+
+  @override
   String aiUsageThisMonth(int requests, int input, int output) {
     return '$requests запросов · $input входных токенов · $output выходных токенов';
   }
