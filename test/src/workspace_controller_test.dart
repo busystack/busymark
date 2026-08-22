@@ -1317,6 +1317,43 @@ void main() {
     expect(recoveryStore.value.cleanShutdown, isFalse);
     expect(recoveryStore.value.entries, isNotEmpty);
   });
+
+  test(
+    'recovery text remains restorable when the later session save fails',
+    () async {
+      final recoveryStore = MemoryDocumentRecoveryStore();
+      final sessionStore = _FailingDocumentSessionStore();
+      final harness = await _createControllerHarness(
+        sessionStore: sessionStore,
+        recoveryStore: recoveryStore,
+      );
+
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Latest unsaved text');
+      await harness.controller.flushPersistence();
+
+      // Simulate an older or absent recovery file immediately before the
+      // persistence attempt whose session write fails.
+      await recoveryStore.writeEntries(const []);
+      sessionStore.failSave = true;
+
+      await expectLater(
+        harness.controller.flushPersistence(),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(recoveryStore.value.entries, hasLength(1));
+      expect(recoveryStore.value.entries.single.text, 'Latest unsaved text');
+
+      final restored = await _createControllerHarness(
+        sessionStore: MemoryDocumentSessionStore(),
+        recoveryStore: recoveryStore,
+      );
+      expect(await restored.controller.restorePreviousSession(), isTrue);
+      expect(restored.controller.state.activeText, 'Latest unsaved text');
+      expect(restored.controller.state.activeBuffer?.recovered, isTrue);
+    },
+  );
 }
 
 Future<void> _waitFor(bool Function() condition) async {
@@ -1485,6 +1522,8 @@ class _WorkspaceControllerDriver {
 
   Future<void> markCleanShutdown() => _notifier.markCleanShutdown();
 
+  Future<void> flushPersistence() => _notifier.flushPersistence();
+
   void dispose() {}
 }
 
@@ -1518,6 +1557,18 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _FailingDocumentSessionStore extends MemoryDocumentSessionStore {
+  bool failSave = false;
+
+  @override
+  Future<void> save(WorkspaceSessionSnapshot snapshot) {
+    if (failSave) {
+      throw StateError('simulated session save failure');
+    }
+    return super.save(snapshot);
   }
 }
 

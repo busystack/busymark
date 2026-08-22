@@ -497,8 +497,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _recoveryStart;
     final workspace = snapshot.workspace;
     if (workspace == null) {
-      await _sessionStore.clear();
       await _recoveryStore.writeEntries(const []);
+      await _sessionStore.clear();
       return;
     }
     final workspacePath = switch (workspace.kind) {
@@ -508,6 +508,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       WorkspaceKind.markdownFolder ||
       WorkspaceKind.writersideModule => workspace.rootPath,
     };
+    await _recoveryStore.writeEntries([
+      for (final buffer in snapshot.documentBuffers)
+        if (buffer.isDirty || buffer.isUntitled)
+          DocumentRecoveryEntry.fromBuffer(
+            buffer,
+            workspacePath: workspacePath,
+          ),
+    ]);
     await _sessionStore.save(
       WorkspaceSessionSnapshot(
         workspacePath: workspacePath,
@@ -523,14 +531,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         ],
       ),
     );
-    await _recoveryStore.writeEntries([
-      for (final buffer in snapshot.documentBuffers)
-        if (buffer.isDirty || buffer.isUntitled)
-          DocumentRecoveryEntry.fromBuffer(
-            buffer,
-            workspacePath: workspacePath,
-          ),
-    ]);
   }
 
   Future<void> markCleanShutdown() async {
