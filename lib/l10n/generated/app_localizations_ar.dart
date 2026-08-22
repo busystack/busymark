@@ -3249,6 +3249,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiProvider => 'موفّر الذكاء الاصطناعي';
 
   @override
+  String get aiDefaultProvider => 'موفّر الذكاء الاصطناعي الافتراضي';
+
+  @override
+  String get aiConfigureProvider => 'تهيئة موفّر الذكاء الاصطناعي';
+
+  @override
+  String get aiChooseProvider => 'اختر موفّر الذكاء الاصطناعي';
+
+  @override
   String get aiOllamaEndpoint => 'نقطة نهاية Ollama';
 
   @override
@@ -3266,7 +3275,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels => 'يعمل Ollama، لكن لم يُعثر على نماذج مثبّتة.';
+  String get aiNoModels => 'لم يتم تحديد نموذج.';
 
   @override
   String get aiConnectionFailed =>

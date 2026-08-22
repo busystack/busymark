@@ -25,12 +25,16 @@ Future<AiEditApplication?> showBusyMarkAiEdit(
   AiEditorSnapshot snapshot, {
   AiEditTargetKind? fixedTarget,
 }) async {
+  final defaultProvider = ref
+      .read(appSettingsControllerProvider)
+      .defaultAiProviderKind;
   final configuration =
       await showBusyMarkModalEditorDialog<_AiEditConfiguration>(
         context,
         builder: (dialogContext) => _AiEditConfigurationDialog(
           snapshot: snapshot,
           fixedTarget: fixedTarget,
+          initialProvider: defaultProvider ?? AiProviderKind.ollamaLocal,
         ),
       );
   if (configuration == null || !context.mounted) {
@@ -56,7 +60,12 @@ Future<AiEditApplication?> showBusyMarkAiEdit(
     replacementSuffix: target.replacementSuffix,
     trimReplacementOutput: target.trimReplacementOutput,
   );
-  final output = await showBusyMarkAiProposal(context, ref, invocation);
+  final output = await showBusyMarkAiProposal(
+    context,
+    ref,
+    invocation,
+    providerKind: configuration.provider,
+  );
   return output == null
       ? null
       : AiEditApplication(invocation: invocation, output: output);
@@ -66,23 +75,27 @@ Future<String?> showBusyMarkAiProposal(
   BuildContext context,
   WidgetRef ref,
   AiEditInvocation invocation, {
+  AiProviderKind? providerKind,
   Future<bool> Function()? validateBeforeApply,
   String? staleMessage,
 }) async {
   final settings = ref.read(appSettingsControllerProvider);
-  final providerKind = settings.aiProviderKind;
-  if (providerKind == null) {
+  final defaultProvider = settings.defaultAiProviderKind;
+  if (defaultProvider == null) {
     await _showAiMessage(context, context.l10n.aiConfigureFirst);
     return null;
   }
-  if (!settings.hasCloudConsent(providerKind)) {
+  final selectedProvider = providerKind ?? defaultProvider;
+  if (!settings.hasCloudConsent(selectedProvider)) {
     await _showAiMessage(
       context,
-      context.l10n.aiCloudConsentRequired(providerKind.displayName),
+      context.l10n.aiCloudConsentRequired(selectedProvider.displayName),
     );
     return null;
   }
-  final provider = ref.read(aiProviderRegistryProvider).require(providerKind);
+  final provider = ref
+      .read(aiProviderRegistryProvider)
+      .require(selectedProvider);
   final modelCandidates = settings.modelCandidatesFor(
     invocation.feature,
     provider,
@@ -92,7 +105,7 @@ Future<String?> showBusyMarkAiProposal(
     return null;
   }
   try {
-    if (providerKind == AiProviderKind.ollamaLocal) {
+    if (selectedProvider == AiProviderKind.ollamaLocal) {
       AiPolicy.validateLocalOllamaEndpoint(settings.aiOllamaEndpoint);
     }
   } on AiException catch (error) {
@@ -107,7 +120,7 @@ Future<String?> showBusyMarkAiProposal(
     request = AiPromptBuilder.build(
       id: const Uuid().v4(),
       targetId: invocation.targetId,
-      provider: providerKind,
+      provider: selectedProvider,
       feature: invocation.feature,
       scope: invocation.scope,
       input: invocation.input,
@@ -124,7 +137,7 @@ Future<String?> showBusyMarkAiProposal(
       replacementPrefix: invocation.replacementPrefix,
       replacementSuffix: invocation.replacementSuffix,
       trimReplacementOutput: invocation.trimReplacementOutput,
-      deadline: providerKind == AiProviderKind.ollamaLocal
+      deadline: selectedProvider == AiProviderKind.ollamaLocal
           ? const Duration(minutes: 5)
           : const Duration(minutes: 2),
     );
@@ -146,6 +159,27 @@ Future<String?> showBusyMarkAiProposal(
       validateBeforeApply: validateBeforeApply,
       staleMessage: staleMessage,
     ),
+  );
+}
+
+Future<AiProviderKind?> chooseBusyMarkAiProvider(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final defaultProvider = ref
+      .read(appSettingsControllerProvider)
+      .defaultAiProviderKind;
+  if (defaultProvider == null) {
+    await _showAiMessage(context, context.l10n.aiConfigureFirst);
+    return null;
+  }
+  if (!context.mounted) {
+    return null;
+  }
+  return showBusyMarkModalDialog<AiProviderKind>(
+    context,
+    builder: (dialogContext) =>
+        _AiProviderChoiceDialog(initialProvider: defaultProvider),
   );
 }
 
@@ -171,16 +205,23 @@ class _AiEditConfiguration {
   const _AiEditConfiguration({
     required this.instruction,
     required this.resolvedTarget,
+    required this.provider,
   });
 
   final String instruction;
   final AiMarkdownEditTarget resolvedTarget;
+  final AiProviderKind provider;
 }
 
 class _AiEditConfigurationDialog extends StatefulWidget {
-  const _AiEditConfigurationDialog({required this.snapshot, this.fixedTarget});
+  const _AiEditConfigurationDialog({
+    required this.snapshot,
+    required this.initialProvider,
+    this.fixedTarget,
+  });
 
   final AiEditorSnapshot snapshot;
+  final AiProviderKind initialProvider;
   final AiEditTargetKind? fixedTarget;
 
   @override
@@ -193,6 +234,7 @@ class _AiEditConfigurationDialogState
   final _controller = TextEditingController();
   late AiEditTargetKind _target;
   late AiEditContextKind _context;
+  late AiProviderKind _provider;
   AiMarkdownEditTarget? _resolvedTarget;
   String? _resolutionError;
 
@@ -203,6 +245,7 @@ class _AiEditConfigurationDialogState
   @override
   void initState() {
     super.initState();
+    _provider = widget.initialProvider;
     if (widget.fixedTarget case final fixedTarget?) {
       _target = fixedTarget;
       _context = fixedTarget == AiEditTargetKind.document
@@ -246,12 +289,21 @@ class _AiEditConfigurationDialogState
               _AiEditConfiguration(
                 instruction: _controller.text.trim(),
                 resolvedTarget: _resolvedTarget!,
+                provider: _provider,
               ),
             ),
       children: [
         BusyMarkGroupedList(
           filled: true,
           children: [
+            BusyMarkComboRow<AiProviderKind>(
+              key: const ValueKey('ai-edit-provider'),
+              title: context.l10n.aiProvider,
+              values: AiProviderKind.values,
+              selected: _provider,
+              labelFor: (provider) => _providerLabel(context, provider),
+              onSelected: (provider) => setState(() => _provider = provider),
+            ),
             BusyMarkGroupedTextEntry(
               key: const ValueKey('ai-edit-instruction'),
               label: context.l10n.aiInstruction,
@@ -382,6 +434,66 @@ class _AiEditConfigurationDialogState
     }
   }
 }
+
+class _AiProviderChoiceDialog extends StatefulWidget {
+  const _AiProviderChoiceDialog({required this.initialProvider});
+
+  final AiProviderKind initialProvider;
+
+  @override
+  State<_AiProviderChoiceDialog> createState() =>
+      _AiProviderChoiceDialogState();
+}
+
+class _AiProviderChoiceDialogState extends State<_AiProviderChoiceDialog> {
+  late AiProviderKind _provider;
+
+  @override
+  void initState() {
+    super.initState();
+    _provider = widget.initialProvider;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkDialogShell(
+      title: context.l10n.aiChooseProvider,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.aiGenerateProposal,
+          suggested: true,
+          onPressed: () => Navigator.pop(context, _provider),
+        ),
+      ],
+      children: [
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkComboRow<AiProviderKind>(
+              key: const ValueKey('ai-provider-choice'),
+              title: context.l10n.aiProvider,
+              values: AiProviderKind.values,
+              selected: _provider,
+              labelFor: (provider) => _providerLabel(context, provider),
+              onSelected: (provider) => setState(() => _provider = provider),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+String _providerLabel(BuildContext context, AiProviderKind provider) =>
+    switch (provider) {
+      AiProviderKind.ollamaLocal => context.l10n.aiLocalOllama,
+      AiProviderKind.openAi => 'OpenAI',
+      AiProviderKind.gemini => 'Google Gemini',
+    };
 
 class _AiContentDisclosure extends StatefulWidget {
   const _AiContentDisclosure({required this.title, required this.content});

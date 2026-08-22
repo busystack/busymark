@@ -3229,6 +3229,15 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiProvider => 'TI-teenuse pakkuja';
 
   @override
+  String get aiDefaultProvider => 'Vaikimisi teenusepakkuja';
+
+  @override
+  String get aiConfigureProvider => 'Seadista teenusepakkujat';
+
+  @override
+  String get aiChooseProvider => 'Vali TI-teenuse pakkuja';
+
+  @override
   String get aiOllamaEndpoint => 'Ollama lõpp-punkt';
 
   @override
@@ -3246,8 +3255,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama töötab, kuid installitud mudeleid ei leitud.';
+  String get aiNoModels => 'Mudelit pole valitud.';
 
   @override
   String get aiConnectionFailed =>

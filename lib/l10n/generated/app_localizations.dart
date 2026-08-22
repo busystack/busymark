@@ -5445,11 +5445,29 @@ abstract class AppLocalizations {
   /// **'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.'**
   String get aiLocalOnlyDescription;
 
-  /// Settings label for the active AI provider.
+  /// Label for an AI provider selection.
   ///
   /// In en, this message translates to:
   /// **'AI provider'**
   String get aiProvider;
+
+  /// Settings label for the provider selected by default for AI actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Default provider'**
+  String get aiDefaultProvider;
+
+  /// Settings label for choosing which AI provider configuration to edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure provider'**
+  String get aiConfigureProvider;
+
+  /// Dialog title shown before selecting the AI provider for an action.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose AI provider'**
+  String get aiChooseProvider;
 
   /// Settings label for the local Ollama origin.
   ///
@@ -5481,10 +5499,10 @@ abstract class AppLocalizations {
   /// **'Connected. {count} installed model(s) found.'**
   String aiConnectionReady(int count);
 
-  /// Ollama connection status when no model is installed.
+  /// AI model setting shown before a model has been selected or discovered.
   ///
   /// In en, this message translates to:
-  /// **'Ollama is running, but no installed models were found.'**
+  /// **'No model selected.'**
   String get aiNoModels;
 
   /// Generic failure shown while testing AI generation.

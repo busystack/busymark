@@ -46,8 +46,10 @@ void main() {
       defaults
           .copyWith(
             aiProviderPreference: AiProviderPreference.openAi,
+            aiOllamaEndpoint: 'http://localhost:11434',
             aiOllamaModel: 'local-model',
             aiOpenAiModel: 'gpt-5.6-sol',
+            aiGeminiModel: 'gemini-custom',
             aiModelRoutingPreference: AiModelRoutingPreference.fixed,
             aiCloudProviderConsentIds: const ['openai'],
           )
@@ -55,8 +57,10 @@ void main() {
     );
 
     expect(reloaded.aiProviderPreference, AiProviderPreference.openAi);
+    expect(reloaded.aiOllamaEndpoint, 'http://localhost:11434');
     expect(reloaded.aiOllamaModel, 'local-model');
     expect(reloaded.aiOpenAiModel, 'gpt-5.6-sol');
+    expect(reloaded.aiGeminiModel, 'gemini-custom');
     expect(reloaded.aiModelRoutingPreference, AiModelRoutingPreference.fixed);
     expect(reloaded.aiCloudProviderConsentIds, ['openai']);
     final serialized = jsonEncode(reloaded.toJson()).toLowerCase();

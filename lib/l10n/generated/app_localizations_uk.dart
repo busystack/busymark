@@ -3273,6 +3273,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiProvider => 'Постачальник ШІ';
 
   @override
+  String get aiDefaultProvider => 'Постачальник за замовчуванням';
+
+  @override
+  String get aiConfigureProvider => 'Налаштувати постачальника';
+
+  @override
+  String get aiChooseProvider => 'Виберіть постачальника ШІ';
+
+  @override
   String get aiOllamaEndpoint => 'Кінцева точка Ollama';
 
   @override
@@ -3290,8 +3299,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama запущено, але встановлених моделей не знайдено.';
+  String get aiNoModels => 'Модель не вибрана.';
 
   @override
   String get aiConnectionFailed =>

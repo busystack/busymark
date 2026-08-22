@@ -3271,6 +3271,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiProvider => 'Dostawca SI';
 
   @override
+  String get aiDefaultProvider => 'Domyślny dostawca';
+
+  @override
+  String get aiConfigureProvider => 'Skonfiguruj dostawcę';
+
+  @override
+  String get aiChooseProvider => 'Wybierz dostawcę SI';
+
+  @override
   String get aiOllamaEndpoint => 'Punkt końcowy Ollama';
 
   @override
@@ -3288,8 +3297,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama działa, ale nie znaleziono zainstalowanych modeli.';
+  String get aiNoModels => 'Nie wybrano modelu.';
 
   @override
   String get aiConnectionFailed =>

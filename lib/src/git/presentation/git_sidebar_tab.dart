@@ -164,6 +164,10 @@ class GitSidebarTab extends ConsumerWidget {
     if (stagedDiff == null || !context.mounted) {
       return null;
     }
+    final provider = await chooseBusyMarkAiProvider(context, ref);
+    if (provider == null || !context.mounted) {
+      return null;
+    }
     final repository = ref.read(gitControllerProvider).repositoryInfo;
     return showBusyMarkAiProposal(
       context,
@@ -179,6 +183,7 @@ class GitSidebarTab extends ConsumerWidget {
         contentFormat: AiContentFormat.plainText,
         enforceDocumentRevision: false,
       ),
+      providerKind: provider,
       validateBeforeApply: () =>
           controller.stagedDiffMatches(stagedDiff.fingerprint),
       staleMessage: context.l10n.gitAiStagedChangesChanged,

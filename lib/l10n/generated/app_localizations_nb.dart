@@ -3228,6 +3228,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiProvider => 'KI-leverandør';
 
   @override
+  String get aiDefaultProvider => 'Standardleverandør';
+
+  @override
+  String get aiConfigureProvider => 'Konfigurer leverandør';
+
+  @override
+  String get aiChooseProvider => 'Velg KI-leverandør';
+
+  @override
   String get aiOllamaEndpoint => 'Ollama-endepunkt';
 
   @override
@@ -3245,8 +3254,7 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama kjører, men ingen installerte modeller ble funnet.';
+  String get aiNoModels => 'Ingen modell er valgt.';
 
   @override
   String get aiConnectionFailed =>

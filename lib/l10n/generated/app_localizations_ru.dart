@@ -3264,6 +3264,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiProvider => 'Поставщик ИИ';
 
   @override
+  String get aiDefaultProvider => 'Поставщик по умолчанию';
+
+  @override
+  String get aiConfigureProvider => 'Настроить поставщика';
+
+  @override
+  String get aiChooseProvider => 'Выберите поставщика ИИ';
+
+  @override
   String get aiOllamaEndpoint => 'Конечная точка Ollama';
 
   @override
@@ -3281,8 +3290,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama запущен, но установленные модели не найдены.';
+  String get aiNoModels => 'Модель не выбрана.';
 
   @override
   String get aiConnectionFailed =>

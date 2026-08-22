@@ -113,6 +113,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    final providerSelector = tester.widget<BusyMarkComboRow<AiProviderKind>>(
+      find.byKey(const ValueKey('ai-edit-provider')),
+    );
+    expect(providerSelector.values, AiProviderKind.values);
+    expect(providerSelector.selected, AiProviderKind.ollamaLocal);
+    providerSelector.onSelected(AiProviderKind.gemini);
+    await tester.pump();
+    expect(
+      tester
+          .widget<BusyMarkComboRow<AiProviderKind>>(
+            find.byKey(const ValueKey('ai-edit-provider')),
+          )
+          .selected,
+      AiProviderKind.gemini,
+    );
     expect(find.byType(BusyMarkComboRow<AiEditTargetKind>), findsOneWidget);
     expect(find.byType(BusyMarkComboRow<AiEditContextKind>), findsOneWidget);
     expect(find.byType(DropdownButtonFormField), findsNothing);
@@ -138,6 +153,138 @@ void main() {
     expect(changeSelector.dy, lessThan(changeContent.dy));
     expect(changeContent.dy, lessThan(contextSelector.dy));
     expect(contextSelector.dy, lessThan(sharedContent.dy));
+  });
+
+  testWidgets('AI proposal uses an explicitly selected provider', (
+    tester,
+  ) async {
+    final settings = AppSettings.defaults().copyWith(
+      aiProviderPreference: AiProviderPreference.ollamaLocal,
+      aiOllamaModel: 'local-model',
+      aiGeminiModel: 'gemini-model',
+      aiModelRoutingPreference: AiModelRoutingPreference.fixed,
+      aiCloudProviderConsentIds: [AiProviderKind.gemini.id],
+    );
+    final local = _ImmediateAiProvider(
+      kind: AiProviderKind.ollamaLocal,
+      model: 'local-model',
+    );
+    final gemini = _ImmediateAiProvider(
+      kind: AiProviderKind.gemini,
+      model: 'gemini-model',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore(settings.toJson()),
+        ),
+        aiProviderRegistryProvider.overrideWithValue(
+          AiProviderRegistry([local, gemini]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(appSettingsControllerProvider);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () => unawaited(
+                  showBusyMarkAiProposal(
+                    context,
+                    ref,
+                    const AiEditInvocation(
+                      feature: AiFeature.draftCommitMessage,
+                      scope: AiScope.gitDiff,
+                      input: 'diff --git a/guide.md b/guide.md',
+                      replacementOriginal: '',
+                      sourceRevision: 0,
+                      targetId: 'git-commit:/repo',
+                      documentPath: null,
+                      contentFormat: AiContentFormat.plainText,
+                      enforceDocumentRevision: false,
+                    ),
+                    providerKind: AiProviderKind.gemini,
+                  ),
+                ),
+                child: const Text('Generate'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await _pumpSettings(tester, container);
+
+    await tester.tap(find.text('Generate'));
+    await tester.pumpAndSettle();
+
+    expect(local.requests, isEmpty);
+    expect(gemini.requests, hasLength(1));
+    expect(gemini.requests.single.provider, AiProviderKind.gemini);
+    expect(find.textContaining('Google Gemini'), findsWidgets);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('provider chooser exposes every supported provider kind', (
+    tester,
+  ) async {
+    final settings = AppSettings.defaults().copyWith(
+      aiProviderPreference: AiProviderPreference.ollamaLocal,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore(settings.toJson()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(appSettingsControllerProvider);
+    AiProviderKind? selected;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                onPressed: () async {
+                  selected = await chooseBusyMarkAiProvider(context, ref);
+                },
+                child: const Text('Choose provider'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await _pumpSettings(tester, container);
+
+    await tester.tap(find.text('Choose provider'));
+    await tester.pumpAndSettle();
+    final selector = tester.widget<BusyMarkComboRow<AiProviderKind>>(
+      find.byKey(const ValueKey('ai-provider-choice')),
+    );
+    expect(selector.values, AiProviderKind.values);
+    expect(selector.selected, AiProviderKind.ollamaLocal);
+    selector.onSelected(AiProviderKind.openAi);
+    await tester.pump();
+    await tester.tap(find.text('Generate proposal'));
+    await tester.pumpAndSettle();
+
+    expect(selected, AiProviderKind.openAi);
   });
 
   testWidgets('fixed AI target cannot widen a sidebar selection', (
@@ -287,13 +434,36 @@ void main() {
   });
 }
 
+Future<void> _pumpSettings(
+  WidgetTester tester,
+  ProviderContainer container,
+) async {
+  for (var index = 0; index < 20; index += 1) {
+    await tester.pump();
+    if (container.read(appSettingsControllerProvider).aiProviderPreference !=
+        AiProviderPreference.disabled) {
+      return;
+    }
+  }
+  fail('App settings did not finish loading.');
+}
+
 class _ImmediateAiProvider implements AiProvider {
-  @override
-  String get id => AiProviderKind.ollamaLocal.id;
+  _ImmediateAiProvider({
+    this.kind = AiProviderKind.ollamaLocal,
+    this.model = 'test-model',
+  });
+
+  final AiProviderKind kind;
+  final String model;
+  final List<AiRequest> requests = [];
 
   @override
-  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
-    kind: AiProviderKind.ollamaLocal,
+  String get id => kind.id;
+
+  @override
+  AiProviderCapabilities get capabilities => AiProviderCapabilities(
+    kind: kind,
     streaming: true,
     modelDiscovery: false,
     maximumConcurrentRequests: 1,
@@ -305,7 +475,8 @@ class _ImmediateAiProvider implements AiProvider {
     AiRequest request, {
     required AiCancellationToken cancellationToken,
   }) async* {
-    yield const AiStarted(providerId: 'ollama-local', model: 'test-model');
+    requests.add(request);
+    yield AiStarted(providerId: kind.id, model: model);
     yield const AiTextDelta('Improve documentation');
     yield const AiCompleted();
   }

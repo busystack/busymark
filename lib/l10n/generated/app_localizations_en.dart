@@ -3247,6 +3247,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProvider => 'AI provider';
 
   @override
+  String get aiDefaultProvider => 'Default provider';
+
+  @override
+  String get aiConfigureProvider => 'Configure provider';
+
+  @override
+  String get aiChooseProvider => 'Choose AI provider';
+
+  @override
   String get aiOllamaEndpoint => 'Ollama endpoint';
 
   @override
@@ -3264,8 +3273,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama is running, but no installed models were found.';
+  String get aiNoModels => 'No model selected.';
 
   @override
   String get aiConnectionFailed =>

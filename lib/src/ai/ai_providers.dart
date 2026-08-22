@@ -42,9 +42,11 @@ final aiProviderRegistryProvider = Provider<AiProviderRegistry>((ref) {
   ]);
 });
 
-final aiProviderProvider = Provider<AiProvider>((ref) {
+final defaultAiProviderProvider = Provider<AiProvider>((ref) {
   final kind = ref.watch(
-    appSettingsControllerProvider.select((value) => value.aiProviderKind),
+    appSettingsControllerProvider.select(
+      (value) => value.defaultAiProviderKind,
+    ),
   );
   if (kind == null) {
     throw const AiException(

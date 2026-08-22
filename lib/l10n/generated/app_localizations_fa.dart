@@ -3279,6 +3279,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aiProvider => 'ارائه‌دهندهٔ هوش مصنوعی';
 
   @override
+  String get aiDefaultProvider => 'ارائه‌دهندهٔ پیش‌فرض';
+
+  @override
+  String get aiConfigureProvider => 'پیکربندی ارائه‌دهنده';
+
+  @override
+  String get aiChooseProvider => 'انتخاب ارائه‌دهندهٔ هوش مصنوعی';
+
+  @override
   String get aiOllamaEndpoint => 'نقطهٔ پایانی Ollama';
 
   @override
@@ -3296,8 +3305,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama در حال اجرا است، اما هیچ مدل نصب‌شده‌ای پیدا نشد.';
+  String get aiNoModels => 'هیچ مدلی انتخاب نشده است.';
 
   @override
   String get aiConnectionFailed =>
