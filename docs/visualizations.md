@@ -19,6 +19,45 @@ Identifiers are classified case-insensitively. Saving preserves the exact
 source fence. History and diff views show source rather than generated output.
 Whole-file YAML/JSON OpenAPI editing is not part of this feature.
 
+## Writerside diagram forms
+
+Writerside Markdown and XML topics can also use semantic code blocks for
+Mermaid, PlantUML, and D2:
+
+```xml
+<code-block lang="mermaid">flowchart LR
+  A --&gt; B</code-block>
+
+<code-block lang="plantuml"><![CDATA[
+@startuml
+A -> B
+@enduml
+]]></code-block>
+
+<code-block lang="d2">a -> b</code-block>
+```
+
+Writerside's referenced-source form is supported for all three renderers. The
+path is relative to the current topic and must remain inside the open
+Writerside project:
+
+````markdown
+<code-block lang="D2" src="../codeSnippets/graph.d2"/>
+
+```mermaid
+```
+{ src="../codeSnippets/flow.mmd" }
+````
+
+Referenced files are read as strict UTF-8, size-limited, and resolved through
+BusyMark's anchored-path checks. Absolute paths, URI schemes, traversal outside
+the project, and symlink escapes are rejected. Semantic tags and the `src`
+attribute form are enabled only for Writerside projects; ordinary Markdown
+keeps them as ordinary HTML/text. These forms track the official Writerside
+documentation for [D2](https://www.jetbrains.com/help/writerside/d2-diagrams.html),
+[PlantUML](https://www.jetbrains.com/help/writerside/plantuml-diagrams.html),
+and [Mermaid](https://www.jetbrains.com/help/writerside/mermaid-diagrams.html).
+
 Demonstrations are available in:
 
 - [`demo/visualizations.md`](../demo/visualizations.md)

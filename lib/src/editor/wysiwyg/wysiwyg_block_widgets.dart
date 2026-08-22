@@ -248,6 +248,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
               key: ValueKey('wysiwyg-visualization-${block.id}'),
               descriptor: visualization,
               source: block.plainText,
+              sourceReference: block.attributes['src'],
               sourceFence:
                   block.rawSource ??
                   _visualizationFenceSource(block, visualization),

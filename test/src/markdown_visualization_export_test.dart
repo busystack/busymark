@@ -10,6 +10,7 @@ import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/markdown_visualization_export.dart';
 import 'package:busymark/src/export/openapi_static_export_mapper.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/visualization/visualization_cache.dart';
 import 'package:busymark/src/visualization/visualization_coordinator.dart';
 import 'package:busymark/src/visualization/visualization_models.dart';
@@ -138,6 +139,53 @@ void main() {
       );
     },
   );
+
+  test('loads a Writerside referenced diagram before PDF rendering', () async {
+    final topics = await Directory(
+      p.join(temporaryDirectory.path, 'topics'),
+    ).create();
+    final snippets = await Directory(
+      p.join(temporaryDirectory.path, 'codeSnippets'),
+    ).create();
+    final documentPath = p.join(topics.path, 'diagram.md');
+    await File(
+      p.join(snippets.path, 'graph.d2'),
+    ).writeAsString('loaded -> from_file\n');
+    const source = '''```D2
+```
+{ src="../codeSnippets/graph.d2" }
+''';
+    final parsed = const MarkdownParser().parse(
+      filePath: documentPath,
+      source: source,
+      mode: MarkdownMode.writersideMarkdown,
+      workspaceRoot: temporaryDirectory.path,
+      validateLocalReferences: false,
+    );
+    final recordingRenderer = _RecordingExportRenderer();
+    final recordingCoordinator = VisualizationCoordinator(
+      renderers: [recordingRenderer],
+      cache: VisualizationCache(
+        diskRoot: Directory(p.join(temporaryDirectory.path, 'recording-cache')),
+      ),
+    );
+    addTearDown(recordingCoordinator.dispose);
+
+    final preparation =
+        await MarkdownVisualizationExportRenderer(
+          coordinator: recordingCoordinator,
+        ).prepare(
+          document: parsed.busyDocument,
+          exportRoot: exportRoot,
+          documentPath: documentPath,
+          workspaceRoot: temporaryDirectory.path,
+          cancellationToken: MarkdownPdfCancellationToken(),
+        );
+
+    expect(preparation.blockOverrides, hasLength(1));
+    expect(recordingRenderer.requests, hasLength(1));
+    expect(recordingRenderer.requests.single.source, 'loaded -> from_file\n');
+  });
 
   test('static OpenAPI export contains selectable reference sections', () {
     const reference = OpenApiReferenceModel(
@@ -405,5 +453,18 @@ class _ExportRenderer implements VisualizationRenderer {
         ),
       ),
     };
+  }
+}
+
+class _RecordingExportRenderer extends _ExportRenderer {
+  final requests = <VisualizationRenderRequest>[];
+
+  @override
+  Future<VisualizationRenderResult> render(
+    VisualizationRenderRequest request,
+    VisualizationCancellationToken cancellationToken,
+  ) {
+    requests.add(request);
+    return super.render(request, cancellationToken);
   }
 }

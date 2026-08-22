@@ -35,18 +35,25 @@ d &= e + f
 ```
 ````
 
-Writerside Markdown additionally treats a `tex` fence as display math and
-supports inline semantic markup:
+Writerside Markdown additionally treats a `tex` fence and a semantic
+`code-block` with `lang="tex"` as display math, and supports inline semantic
+markup:
 
 ````markdown
 ```tex
 \ce{2H2 + O2 -> 2H2O}
 ```
 
+<code-block lang="tex">
+<![CDATA[\sum_{i=1}^n i < n^2]]>
+</code-block>
+
 The domain is <math>\mathbb{R}</math>.
 ````
 
-The same `<math>` element is recognized in Writerside XML `.topic` files.
+The same `<math>` and `<code-block lang="tex">` elements are recognized in
+Writerside XML `.topic` files. XML entities and CDATA are decoded for MathJax,
+while BusyMark retains the original source for lossless round trips.
 Outside Writerside mode, a `tex` fence remains an ordinary code block.
 BusyMark does not add `\(...\)` or `\[...\]` as Markdown delimiters.
 
@@ -89,3 +96,6 @@ WebKit renderer has no network connectivity, uses a restrictive content security
 policy, accepts only fixed packaged resources and operations, limits expression
 and batch sizes and render time, applies MathJax safe processing, and passes
 every SVG through BusyMark's generated-SVG normalizer before display or export.
+
+The supported Writerside forms follow the official
+[Writerside math syntax](https://www.jetbrains.com/help/writerside/math-support.html).

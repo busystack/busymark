@@ -15,6 +15,7 @@ enum BusyMathSourceForm {
   doubleDollarDisplay,
   mathFence,
   writersideTexFence,
+  writersideTexElement,
   writersideElement,
 }
 

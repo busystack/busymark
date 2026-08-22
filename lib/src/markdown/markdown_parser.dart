@@ -828,9 +828,7 @@ class MarkdownParser {
         }
         if (mode == MarkdownMode.writersideMarkdown &&
             index < indexedLines.length &&
-            _isWritersideCollapsibleAttributeLine(
-              indexedLines[index].trimmed,
-            )) {
+            _isWritersideCodeAttributeLine(indexedLines[index].trimmed)) {
           index += 1;
         }
         addChunk(startIndex, index);
@@ -916,9 +914,9 @@ class MarkdownParser {
     return chunks;
   }
 
-  bool _isWritersideCollapsibleAttributeLine(String line) {
+  bool _isWritersideCodeAttributeLine(String line) {
     return RegExp(
-      r'^\{[^{}]*\bcollapsible\s*=\s*"true"[^{}]*\}\s*$',
+      r'^\{[^{}]*(?:\bcollapsible\s*=\s*"true"|\bsrc\s*=\s*"[^"]+")[^{}]*\}\s*$',
       caseSensitive: false,
     ).hasMatch(line);
   }

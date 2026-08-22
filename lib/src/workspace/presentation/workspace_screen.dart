@@ -11025,6 +11025,7 @@ class _PreviewBlockView extends ConsumerWidget {
       key: ValueKey('visualization-$documentPath-$blockIdentity'),
       descriptor: descriptor,
       source: block.text,
+      sourceReference: block.attributes['src'],
       sourceFence: _visualizationSourceFence(block, descriptor),
       documentPath: documentPath,
       workspaceRoot: workspace?.rootPath ?? '',

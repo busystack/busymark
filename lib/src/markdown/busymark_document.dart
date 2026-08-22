@@ -12,6 +12,9 @@ const busyMarkWritersideAdmonitionSourceFormAttribute =
 const busyMarkWritersideCollapsibleAttribute = 'collapsible';
 const busyMarkWritersideDefaultStateAttribute = 'default-state';
 const busyMarkWritersideCollapsedTitleAttribute = 'collapsed-title';
+const busyMarkWritersideCodeBlockSourceFormAttribute =
+    'writersideCodeBlockSourceForm';
+const busyMarkWritersideCodeBlockElementSourceForm = 'element';
 
 bool busyMarkWritersideIsCollapsible(Map<String, String> attributes) {
   return attributes[busyMarkWritersideCollapsibleAttribute]

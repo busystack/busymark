@@ -435,13 +435,10 @@ class BusyMarkPreviewBuilder {
         children: children,
         attributes: {...attributes, 'ordered': 'true'},
       ),
-      'code-block' => PreviewBlock(
-        kind: PreviewBlockKind.code,
-        text: element.innerText
-            .replaceFirst(RegExp(r'^\n'), '')
-            .replaceFirst(RegExp(r'\n\s*$'), ''),
-        language: element.getAttribute('lang'),
-        attributes: attributes,
+      'code-block' => _writersideCodeBlockPreview(
+        element,
+        attributes,
+        expressionId: '$path.math',
       ),
       'deflist' => PreviewBlock(
         kind: PreviewBlockKind.definitionList,
@@ -479,6 +476,39 @@ class BusyMarkPreviewBuilder {
         attributes: attributes,
       ),
     };
+  }
+
+  PreviewBlock _writersideCodeBlockPreview(
+    XmlElement element,
+    Map<String, String> attributes, {
+    required String expressionId,
+  }) {
+    final language = element.getAttribute('lang');
+    final text = element.innerText
+        .replaceFirst(RegExp(r'^\n'), '')
+        .replaceFirst(RegExp(r'\n\s*$'), '');
+    if (language?.trim().toLowerCase() == 'tex') {
+      return PreviewBlock(
+        kind: PreviewBlockKind.math,
+        text: text,
+        attributes: {
+          ...attributes,
+          if (language != null) 'language': language,
+          busyMarkMathExpressionAttribute: text,
+          busyMarkMathDisplayAttribute: 'true',
+          busyMarkMathSourceFormAttribute:
+              BusyMathSourceForm.writersideTexElement.name,
+          'expressionId': expressionId,
+        },
+      );
+    }
+    return PreviewBlock(
+      kind: PreviewBlockKind.code,
+      text: text,
+      language: language,
+      visualization: VisualizationDescriptor.maybeForFenceLanguage(language),
+      attributes: attributes,
+    );
   }
 
   List<PreviewInline> _writersideXmlInlines(

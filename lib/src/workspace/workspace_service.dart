@@ -16,6 +16,7 @@ import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/math_syntax.dart';
 import '../markdown/preview_model.dart';
+import '../visualization/visualization_models.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_model.dart';
@@ -1756,6 +1757,16 @@ class WorkspaceService {
           );
           continue;
         }
+        if (name == 'code-block') {
+          blocks.add(
+            _xmlCodeBlockPreview(
+              element,
+              attributes,
+              nextMathId: () => 'topic-math-${mathIndex++}',
+            ),
+          );
+          continue;
+        }
         if ((name == 'chapter' || name == 'procedure' || name == 'deflist') &&
             busyMarkWritersideIsCollapsible(attributes)) {
           blocks.add(
@@ -1925,13 +1936,10 @@ class WorkspaceService {
         children: children,
         attributes: {...attributes, 'ordered': 'true'},
       ),
-      'code-block' => PreviewBlock(
-        kind: PreviewBlockKind.code,
-        text: element.innerText
-            .replaceFirst(RegExp(r'^\n'), '')
-            .replaceFirst(RegExp(r'\n\s*$'), ''),
-        language: element.getAttribute('lang'),
-        attributes: attributes,
+      'code-block' => _xmlCodeBlockPreview(
+        element,
+        attributes,
+        nextMathId: nextMathId,
       ),
       'deflist' => PreviewBlock(
         kind: PreviewBlockKind.definitionList,
@@ -1963,6 +1971,39 @@ class WorkspaceService {
         attributes: attributes,
       ),
     };
+  }
+
+  PreviewBlock _xmlCodeBlockPreview(
+    XmlElement element,
+    Map<String, String> attributes, {
+    required String Function() nextMathId,
+  }) {
+    final language = element.getAttribute('lang');
+    final text = element.innerText
+        .replaceFirst(RegExp(r'^\n'), '')
+        .replaceFirst(RegExp(r'\n\s*$'), '');
+    if (language?.trim().toLowerCase() == 'tex') {
+      return PreviewBlock(
+        kind: PreviewBlockKind.math,
+        text: text,
+        attributes: {
+          ...attributes,
+          if (language != null) 'language': language,
+          busyMarkMathExpressionAttribute: text,
+          busyMarkMathDisplayAttribute: 'true',
+          busyMarkMathSourceFormAttribute:
+              BusyMathSourceForm.writersideTexElement.name,
+          'expressionId': nextMathId(),
+        },
+      );
+    }
+    return PreviewBlock(
+      kind: PreviewBlockKind.code,
+      text: text,
+      language: language,
+      visualization: VisualizationDescriptor.maybeForFenceLanguage(language),
+      attributes: attributes,
+    );
   }
 
   List<PreviewInline> _xmlPreviewInlines(

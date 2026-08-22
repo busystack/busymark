@@ -124,7 +124,7 @@ class MarkdownAstAdapter {
         ..._blocksFromNode(node, nextId: nextId, mode: mode),
     ];
     return mode == MarkdownMode.writersideMarkdown
-        ? _attachWritersideCollapsibleCodeAttributes(blocks)
+        ? _attachWritersideCodeAttributes(blocks)
         : blocks;
   }
 
@@ -402,6 +402,16 @@ class MarkdownAstAdapter {
     }
 
     if (mode == MarkdownMode.writersideMarkdown && _writersideBlockTag(tag)) {
+      if (tag == 'code-block') {
+        return [
+          _writersideCodeBlock(
+            text: node.textContent,
+            attributes: node.attributes,
+            rawSource: node.textContent,
+            nextId: nextId,
+          ),
+        ];
+      }
       return [
         BusyBlock(
           id: nextId(),
@@ -751,6 +761,21 @@ class MarkdownAstAdapter {
                     .replaceFirst(RegExp(r'^\n'), '')
                     .replaceFirst(RegExp(r'\n\s*$'), '')
               : element.innerText.trim();
+          final attributes = <String, String>{
+            'element': tag,
+            for (final attribute in element.attributes)
+              attribute.name.local: attribute.value,
+            if (tag == 'code-block' && element.getAttribute('lang') != null)
+              'language': element.getAttribute('lang')!,
+          };
+          if (tag == 'code-block') {
+            return _writersideCodeBlock(
+              text: text,
+              attributes: attributes,
+              rawSource: value,
+              nextId: nextId,
+            );
+          }
           return BusyBlock(
             id: nextId(),
             kind: _writersideKind(tag),
@@ -758,11 +783,7 @@ class MarkdownAstAdapter {
                 ? const []
                 : [BusyInline(kind: BusyInlineKind.text, text: text)],
             attributes: {
-              'element': tag,
-              for (final attribute in element.attributes)
-                attribute.name.local: attribute.value,
-              if (tag == 'code-block' && element.getAttribute('lang') != null)
-                'language': element.getAttribute('lang')!,
+              ...attributes,
               if (_writersideAdmonitionTag(tag)) ...{
                 busyMarkWritersideAdmonitionAttribute: 'true',
                 busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
@@ -789,14 +810,26 @@ class MarkdownAstAdapter {
     if (!_writersideBlockTag(tag)) {
       return null;
     }
-    final text = match.group(3)!.trim();
+    final rawText = match.group(3)!.trim();
+    final attributes = <String, String>{
+      'element': tag,
+      ..._parseAttributePairs(match.group(2)!),
+    };
+    if (tag == 'code-block') {
+      final language = attributes['lang'];
+      return _writersideCodeBlock(
+        text: busyMarkDecodeXmlMathText(rawText),
+        attributes: {...attributes, if (language != null) 'language': language},
+        rawSource: value,
+        nextId: nextId,
+      );
+    }
     return BusyBlock(
       id: nextId(),
       kind: _writersideKind(tag),
-      inlines: [BusyInline(kind: BusyInlineKind.text, text: text)],
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: rawText)],
       attributes: {
-        'element': tag,
-        ..._parseAttributePairs(match.group(2)!),
+        ...attributes,
         if (_writersideAdmonitionTag(tag)) ...{
           busyMarkWritersideAdmonitionAttribute: 'true',
           busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
@@ -805,6 +838,61 @@ class MarkdownAstAdapter {
       },
       rawSource: value,
       preserveRaw: !_editableWritersideTag(tag),
+    );
+  }
+
+  BusyBlock _writersideCodeBlock({
+    required String text,
+    required Map<String, String> attributes,
+    required String rawSource,
+    required String Function() nextId,
+  }) {
+    final language = (attributes['language'] ?? attributes['lang'] ?? '')
+        .trim();
+    final normalizedLanguage = language.toLowerCase();
+    final commonAttributes = <String, String>{
+      ...attributes,
+      'element': 'code-block',
+      if (language.isNotEmpty) ...{'lang': language, 'language': language},
+      busyMarkWritersideCodeBlockSourceFormAttribute:
+          busyMarkWritersideCodeBlockElementSourceForm,
+    };
+    if (normalizedLanguage == 'tex') {
+      return BusyBlock(
+        id: nextId(),
+        kind: BusyBlockKind.math,
+        inlines: [
+          BusyInline(
+            kind: BusyInlineKind.math,
+            text: text,
+            attributes: {
+              busyMarkMathExpressionAttribute: text,
+              busyMarkMathDisplayAttribute: 'true',
+              busyMarkMathSourceFormAttribute:
+                  BusyMathSourceForm.writersideTexElement.name,
+            },
+          ),
+        ],
+        attributes: {
+          ...commonAttributes,
+          busyMarkMathExpressionAttribute: text,
+          busyMarkMathDisplayAttribute: 'true',
+          busyMarkMathSourceFormAttribute:
+              BusyMathSourceForm.writersideTexElement.name,
+        },
+        rawSource: rawSource,
+        preserveRaw: false,
+      );
+    }
+    return BusyBlock(
+      id: nextId(),
+      kind: BusyBlockKind.codeBlock,
+      inlines: text.isEmpty
+          ? const []
+          : [BusyInline(kind: BusyInlineKind.text, text: text)],
+      attributes: commonAttributes,
+      rawSource: rawSource,
+      preserveRaw: false,
     );
   }
 
@@ -886,9 +974,7 @@ class MarkdownAstAdapter {
     return match == null ? const {} : _parseAttributeBlock(match.group(1)!);
   }
 
-  List<BusyBlock> _attachWritersideCollapsibleCodeAttributes(
-    List<BusyBlock> blocks,
-  ) {
+  List<BusyBlock> _attachWritersideCodeAttributes(List<BusyBlock> blocks) {
     final result = <BusyBlock>[];
     var index = 0;
     while (index < blocks.length) {
@@ -898,7 +984,8 @@ class MarkdownAstAdapter {
         final attributes = attributeBlock.kind == BusyBlockKind.paragraph
             ? _standaloneAttributeBlock(attributeBlock.plainText)
             : const <String, String>{};
-        if (busyMarkWritersideIsCollapsible(attributes)) {
+        if (busyMarkWritersideIsCollapsible(attributes) ||
+            (attributes['src']?.trim().isNotEmpty ?? false)) {
           result.add(
             block.copyWith(attributes: {...block.attributes, ...attributes}),
           );

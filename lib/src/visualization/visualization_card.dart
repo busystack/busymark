@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
+import '../writerside/writerside_diagram_source_loader.dart';
 import 'visualization_coordinator.dart';
 import 'visualization_models.dart';
 import 'visualization_providers.dart';
@@ -29,6 +30,7 @@ class BusyMarkVisualizationCard extends ConsumerStatefulWidget {
     required this.sourceStartLine,
     required this.editRevision,
     required this.blockKey,
+    this.sourceReference,
     this.priority = VisualizationRenderPriority.visible,
     this.sourceEditor,
     this.onEditSource,
@@ -43,6 +45,7 @@ class BusyMarkVisualizationCard extends ConsumerStatefulWidget {
   final int sourceStartLine;
   final int editRevision;
   final String blockKey;
+  final String? sourceReference;
   final VisualizationRenderPriority priority;
   final Widget? sourceEditor;
   final VoidCallback? onEditSource;
@@ -106,6 +109,7 @@ class _BusyMarkVisualizationCardState
       _latestResult = null;
     }
     if (oldWidget.source != widget.source ||
+        oldWidget.sourceReference != widget.sourceReference ||
         oldWidget.documentPath != widget.documentPath ||
         oldWidget.workspaceRoot != widget.workspaceRoot ||
         oldWidget.descriptor.kind != widget.descriptor.kind ||
@@ -142,10 +146,36 @@ class _BusyMarkVisualizationCardState
   Future<void> _render() async {
     final serial = _requestSerial;
     final theme = _theme ?? VisualizationTheme.light;
+    var source = widget.source;
+    final sourceReference = widget.sourceReference?.trim() ?? '';
+    if (sourceReference.isNotEmpty) {
+      try {
+        source = await const WritersideDiagramSourceLoader().load(
+          reference: sourceReference,
+          documentPath: widget.documentPath,
+          workspaceRoot: widget.workspaceRoot,
+        );
+      } on WritersideDiagramSourceException {
+        if (!mounted || serial != _requestSerial) {
+          return;
+        }
+        setState(() {
+          _latestResult = FailedVisualizationResult(
+            code: 'visualization.sourceUnavailable',
+            message: context.l10n.visualizationRenderFailed,
+          );
+          _rendering = false;
+        });
+        return;
+      }
+    }
+    if (!mounted || serial != _requestSerial) {
+      return;
+    }
     final request = VisualizationRenderRequest(
       blockKey: widget.blockKey,
       kind: widget.descriptor.kind,
-      source: widget.source,
+      source: source,
       sourceStartLine: widget.sourceStartLine,
       documentPath: widget.documentPath,
       workspaceRoot: widget.workspaceRoot,
