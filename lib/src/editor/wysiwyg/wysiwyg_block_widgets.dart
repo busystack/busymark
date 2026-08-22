@@ -1788,7 +1788,9 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     if (cell == null) {
       return const SizedBox.shrink();
     }
-    if (busyMarkWysiwygBlockContainsMath(cell) && !_sourceEditing) {
+    if (busyMarkWysiwygBlockContainsMath(cell) &&
+        !_sourceEditing &&
+        !_focusNode.hasFocus) {
       return Padding(
         padding: BusyMarkInsets.documentTableCell,
         child: GestureDetector(

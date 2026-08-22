@@ -86,8 +86,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                     : _nextGeneratedBlockId('math-edit'),
                 kind: parsedBlock.kind,
                 inlines: parsedBlock.inlines,
-                children: parsedBlock.children,
-                attributes: parsedBlock.attributes,
+                children: index == 0 ? current.children : parsedBlock.children,
+                attributes: _mathEditedBlockAttributes(
+                  current,
+                  parsedBlock,
+                  firstReplacement: index == 0,
+                ),
                 rawSource: parsedBlock.rawSource,
                 sourceSpan: index == 0 ? current.sourceSpan : null,
                 preserveRaw: false,
@@ -98,6 +102,64 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
     notifyListeners();
+  }
+
+  ({int selectionStart, int selectionEnd})? insertInlineMath(
+    String blockId,
+    int selectionStart,
+    int selectionEnd, {
+    String fallbackExpression = 'x',
+  }) {
+    final current = blockById(blockId);
+    if (current == null || busyMarkWysiwygBlockContainsMath(current)) {
+      return null;
+    }
+    final text = current.plainText;
+    final rawStart = selectionStart < selectionEnd
+        ? selectionStart
+        : selectionEnd;
+    final rawEnd = selectionStart < selectionEnd
+        ? selectionEnd
+        : selectionStart;
+    final start = rawStart.clamp(0, text.length).toInt();
+    final end = rawEnd.clamp(start, text.length).toInt();
+    final expression = start == end
+        ? fallbackExpression
+        : text.substring(start, end);
+    final before = _sliceInlines(current.inlines, 0, start);
+    final after = _sliceInlines(current.inlines, end, text.length);
+    final math = BusyInline(
+      kind: BusyInlineKind.math,
+      text: expression,
+      attributes: {
+        busyMarkMathExpressionAttribute: expression,
+        busyMarkMathDisplayAttribute: 'false',
+        busyMarkMathSourceFormAttribute: BusyMathSourceForm.dollarInline.name,
+      },
+    );
+    final inlines = [...before, math, ...after];
+    final updated = current.copyWith(
+      inlines: inlines,
+      attributes: _attributesAfterInlineMathEdit(current, inlines),
+      preserveRaw: false,
+      dirty: true,
+    );
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(_document.blocks, blockId, (_) => updated),
+    );
+    final prefixSource = _serializer.serializeBlock(
+      BusyBlock(
+        id: 'wysiwyg-math-prefix',
+        kind: BusyBlockKind.paragraph,
+        inlines: before,
+        dirty: true,
+      ),
+    );
+    notifyListeners();
+    return (
+      selectionStart: prefixSource.length + 1,
+      selectionEnd: prefixSource.length + 1 + expression.length,
+    );
   }
 
   String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
@@ -1763,6 +1825,83 @@ Map<String, String> _attributesForText(
     updated[busyMarkPreserveEmptyParagraphAttribute] = 'true';
   }
   return updated;
+}
+
+Map<String, String> _mathEditedBlockAttributes(
+  BusyBlock current,
+  BusyBlock parsed, {
+  required bool firstReplacement,
+}) {
+  final attributes = {...parsed.attributes};
+  if (firstReplacement &&
+      current.kind == BusyBlockKind.heading &&
+      parsed.kind == BusyBlockKind.heading &&
+      current.attributes['generatedId'] == 'false') {
+    final explicitId = current.attributes['id'];
+    if (explicitId != null && explicitId.isNotEmpty) {
+      attributes['id'] = explicitId;
+      attributes['generatedId'] = 'false';
+    }
+  }
+  return attributes;
+}
+
+Map<String, String> _attributesAfterInlineMathEdit(
+  BusyBlock block,
+  List<BusyInline> inlines,
+) {
+  final attributes = {...block.attributes};
+  if (block.kind == BusyBlockKind.heading &&
+      attributes['generatedId'] != 'false') {
+    attributes['id'] = slugForHeading(
+      inlines.map((inline) => inline.plainText).join().trim(),
+    );
+    attributes['generatedId'] = 'true';
+  }
+  return attributes;
+}
+
+List<BusyInline> _sliceInlines(List<BusyInline> inlines, int start, int end) {
+  if (end <= start) {
+    return const [];
+  }
+  final result = <BusyInline>[];
+  var offset = 0;
+  for (final inline in inlines) {
+    final length = inline.plainText.length;
+    final inlineEnd = offset + length;
+    if (inlineEnd > start && offset < end) {
+      final localStart = (start - offset).clamp(0, length).toInt();
+      final localEnd = (end - offset).clamp(localStart, length).toInt();
+      final sliced = _sliceInline(inline, localStart, localEnd);
+      if (sliced != null) {
+        result.add(sliced);
+      }
+    }
+    offset = inlineEnd;
+  }
+  return result;
+}
+
+BusyInline? _sliceInline(BusyInline inline, int start, int end) {
+  final length = inline.plainText.length;
+  if (end <= start || length == 0) {
+    return null;
+  }
+  if (start == 0 && end == length) {
+    return inline;
+  }
+  if (inline.children.isNotEmpty) {
+    final children = _sliceInlines(inline.children, start, end);
+    if (children.isEmpty) {
+      return null;
+    }
+    return inline.copyWith(
+      text: children.map((child) => child.plainText).join(),
+      children: children,
+    );
+  }
+  return inline.copyWith(text: inline.text.substring(start, end));
 }
 
 bool _shouldSplitNewlines(BusyBlockKind kind) {

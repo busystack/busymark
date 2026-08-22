@@ -8,9 +8,15 @@ bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
     (inline) => inline.kind == BusyInlineKind.math || contains(inline.children),
   );
-  return block.kind == BusyBlockKind.math ||
-      contains(block.inlines) ||
-      block.children.any(busyMarkWysiwygBlockContainsMath);
+  return block.kind == BusyBlockKind.math || contains(block.inlines);
+}
+
+bool busyMarkWysiwygBlockDescendantsContainMath(BusyBlock block) {
+  return block.children.any(
+    (child) =>
+        busyMarkWysiwygBlockContainsMath(child) ||
+        busyMarkWysiwygBlockDescendantsContainMath(child),
+  );
 }
 
 String busyMarkWysiwygEditableText(BusyBlock block) {

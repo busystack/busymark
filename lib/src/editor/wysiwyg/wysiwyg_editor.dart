@@ -2652,6 +2652,23 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final end = math.max(selection.start, selection.end);
     final selected = controller.text.substring(start, end);
     final expression = selected.isEmpty ? 'x' : selected;
+    final currentBlock = _documentController.blockById(blockId);
+    if (currentBlock != null &&
+        !busyMarkWysiwygBlockContainsMath(currentBlock)) {
+      _recordUndoSnapshot();
+      final insertion = _documentController.insertInlineMath(
+        blockId,
+        start,
+        end,
+        fallbackExpression: expression,
+      );
+      if (insertion == null) {
+        return;
+      }
+      _emitMarkdown();
+      _focusBlockAfterFrame(blockId, offset: insertion.selectionEnd);
+      return;
+    }
     final insertion = '\$$expression\$';
     final nextText = controller.text.replaceRange(start, end, insertion);
     _recordUndoSnapshot();
