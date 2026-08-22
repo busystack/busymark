@@ -4,7 +4,10 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/math_syntax.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:busymark/src/visualization/web_render_host.dart';
@@ -254,6 +257,201 @@ void main() {
     final edited = controller.document.blocks.single;
     expect(edited.attributes['generatedId'], 'true');
     expect(edited.attributes['id'], 'old-heading-new');
+    expect(controller.markdown, '# Old heading \$New\$\n');
+    _expectFreshInlineMath(controller.markdown, 'New');
+  });
+
+  test('inline math insertion always emits reparsable source', () {
+    final cases =
+        <
+          ({
+            String source,
+            String selected,
+            String expression,
+            BusyMathSourceForm form,
+            String expected,
+          })
+        >[
+          (
+            source: 'before velocity\n',
+            selected: ' velocity',
+            expression: 'velocity',
+            form: BusyMathSourceForm.dollarInline,
+            expected: 'before \$velocity\$\n',
+          ),
+          (
+            source: 'velocity after\n',
+            selected: 'velocity ',
+            expression: 'velocity',
+            form: BusyMathSourceForm.dollarInline,
+            expected: '\$velocity\$ after\n',
+          ),
+          (
+            source: 'x2\n',
+            selected: 'x',
+            expression: 'x',
+            form: BusyMathSourceForm.githubDollarBacktick,
+            expected: '\$`x`\$2\n',
+          ),
+        ];
+
+    for (final item in cases) {
+      final document = const MarkdownParser()
+          .parse(filePath: 'math.md', source: item.source)
+          .busyDocument;
+      final block = document.blocks.single;
+      final start = block.plainText.indexOf(item.selected);
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+
+      final insertion = controller.insertInlineMath(
+        block.id,
+        start,
+        start + item.selected.length,
+      );
+
+      expect(insertion, isNotNull, reason: item.source);
+      expect(controller.markdown, item.expected, reason: item.source);
+      _expectFreshInlineMath(
+        controller.markdown,
+        item.expression,
+        form: item.form,
+      );
+    }
+
+    const backtickExpression = 'a`b';
+    final backtickDocument = BusyDocument(
+      filePath: 'math.md',
+      mode: MarkdownMode.commonMark,
+      blocks: const [
+        BusyBlock(
+          id: 'paragraph',
+          kind: BusyBlockKind.paragraph,
+          inlines: [
+            BusyInline(kind: BusyInlineKind.text, text: backtickExpression),
+          ],
+        ),
+      ],
+    );
+    final backtick = BusyMarkWysiwygDocumentController(
+      document: backtickDocument,
+    );
+    expect(
+      backtick.insertInlineMath('paragraph', 0, backtickExpression.length),
+      isNotNull,
+    );
+    expect(backtick.markdown, '\$`a`b`\$\n');
+    _expectFreshInlineMath(
+      backtick.markdown,
+      backtickExpression,
+      form: BusyMathSourceForm.githubDollarBacktick,
+    );
+  });
+
+  test('additional inline math uses the same reparsable insertion policy', () {
+    final document = const MarkdownParser()
+        .parse(filePath: 'math.md', source: 'before \$x\$ x2\n')
+        .busyDocument;
+    final block = document.blocks.single;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final source = controller.blockText(block.id);
+    final start = source.lastIndexOf('x');
+
+    final insertion = controller.buildInlineMathSourceInsertion(
+      block.id,
+      source,
+      start,
+      start + 1,
+    );
+
+    expect(insertion, isNotNull);
+    expect(insertion!.source, 'before \$x\$ \$`x`\$2');
+    controller.updateMathSource(block.id, insertion.source);
+    final reparsed = const MarkdownParser()
+        .parse(filePath: 'math.md', source: controller.markdown)
+        .busyDocument;
+    final math = _flattenDocumentInlines(
+      reparsed,
+    ).where((inline) => inline.kind == BusyInlineKind.math).toList();
+    expect(math.map((inline) => inline.text), ['x', 'x']);
+  });
+
+  test(
+    'inline math insertion rejects multiline selections without mutation',
+    () {
+      const text = 'first\nsecond';
+      const document = BusyDocument(
+        filePath: 'math.md',
+        mode: MarkdownMode.commonMark,
+        blocks: [
+          BusyBlock(
+            id: 'paragraph',
+            kind: BusyBlockKind.paragraph,
+            inlines: [BusyInline(kind: BusyInlineKind.text, text: text)],
+          ),
+        ],
+      );
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+
+      expect(controller.insertInlineMath('paragraph', 0, text.length), isNull);
+      expect(controller.blockById('paragraph')?.plainText, text);
+      expect(
+        _flattenInlines(
+          controller.document.blocks.single.inlines,
+        ).where((inline) => inline.kind == BusyInlineKind.math),
+        isEmpty,
+      );
+    },
+  );
+
+  test('inline math insertion preserves zero-width semantic inlines', () {
+    const cases = <(String, BusyInlineKind, String)>[
+      ('![](diagram.svg) velocity\n', BusyInlineKind.image, 'diagram.svg'),
+      ('velocity ![](diagram.svg)\n', BusyInlineKind.image, 'diagram.svg'),
+      ('[](docs.md) velocity\n', BusyInlineKind.link, 'docs.md'),
+    ];
+
+    for (final (source, semanticKind, destination) in cases) {
+      for (final collapsed in [false, true]) {
+        final document = const MarkdownParser()
+            .parse(filePath: 'math.md', source: source)
+            .busyDocument;
+        final block = document.blocks.single;
+        final start = block.plainText.indexOf('velocity');
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+
+        final insertion = controller.insertInlineMath(
+          block.id,
+          start,
+          collapsed ? start : start + 'velocity'.length,
+        );
+
+        expect(insertion, isNotNull, reason: '$source collapsed=$collapsed');
+        _expectSemanticInline(
+          controller.document,
+          semanticKind,
+          destination,
+          reason: '$source collapsed=$collapsed in memory',
+        );
+        final reparsed = const MarkdownParser()
+            .parse(filePath: 'math.md', source: controller.markdown)
+            .busyDocument;
+        _expectSemanticInline(
+          reparsed,
+          semanticKind,
+          destination,
+          reason: '$source collapsed=$collapsed after reparse',
+        );
+        expect(
+          _flattenDocumentInlines(
+            reparsed,
+          ).where((inline) => inline.kind == BusyInlineKind.math),
+          hasLength(1),
+          reason: '$source collapsed=$collapsed',
+        );
+      }
+    }
   });
 
   test('table-cell source editing retains and removes semantic math', () {
@@ -635,6 +833,57 @@ Iterable<BusyInline> _flattenInlines(List<BusyInline> inlines) sync* {
     yield inline;
     yield* _flattenInlines(inline.children);
   }
+}
+
+Iterable<BusyInline> _flattenDocumentInlines(BusyDocument document) sync* {
+  Iterable<BusyInline> walkBlocks(Iterable<BusyBlock> blocks) sync* {
+    for (final block in blocks) {
+      yield* _flattenInlines(block.inlines);
+      yield* walkBlocks(block.children);
+    }
+  }
+
+  yield* walkBlocks(document.blocks);
+}
+
+void _expectFreshInlineMath(
+  String source,
+  String expression, {
+  BusyMathSourceForm? form,
+}) {
+  const parser = MarkdownParser();
+  const serializer = BusyMarkMarkdownSerializer();
+  final first = parser.parse(filePath: 'math.md', source: source).busyDocument;
+  final serialized = serializer.serialize(first);
+  final reopened = parser
+      .parse(filePath: 'math.md', source: serialized)
+      .busyDocument;
+  final math = _flattenDocumentInlines(
+    reopened,
+  ).where((inline) => inline.kind == BusyInlineKind.math).toList();
+  expect(math, hasLength(1), reason: source);
+  expect(math.single.text, expression, reason: source);
+  if (form != null) {
+    expect(
+      math.single.attributes[busyMarkMathSourceFormAttribute],
+      form.name,
+      reason: source,
+    );
+  }
+}
+
+void _expectSemanticInline(
+  BusyDocument document,
+  BusyInlineKind kind,
+  String destination, {
+  required String reason,
+}) {
+  final matches = _flattenDocumentInlines(document)
+      .where(
+        (inline) => inline.kind == kind && inline.destination == destination,
+      )
+      .toList();
+  expect(matches, hasLength(1), reason: reason);
 }
 
 bool _containsNestedKinds(

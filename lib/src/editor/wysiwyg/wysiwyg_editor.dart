@@ -2669,19 +2669,27 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _focusBlockAfterFrame(blockId, offset: insertion.selectionEnd);
       return;
     }
-    final insertion = '\$$expression\$';
-    final nextText = controller.text.replaceRange(start, end, insertion);
+    final insertion = _documentController.buildInlineMathSourceInsertion(
+      blockId,
+      controller.text,
+      start,
+      end,
+      fallbackExpression: expression,
+    );
+    if (insertion == null) {
+      return;
+    }
     _recordUndoSnapshot();
     controller.value = TextEditingValue(
-      text: nextText,
+      text: insertion.source,
       selection: TextSelection(
-        baseOffset: start + 1,
-        extentOffset: start + 1 + expression.length,
+        baseOffset: insertion.selectionStart,
+        extentOffset: insertion.selectionEnd,
       ),
     );
-    _documentController.updateMathSource(blockId, nextText);
+    _documentController.updateMathSource(blockId, insertion.source);
     _emitMarkdown();
-    _focusBlockAfterFrame(blockId, offset: start + 1 + expression.length);
+    _focusBlockAfterFrame(blockId, offset: insertion.selectionEnd);
   }
 
   void _applyDisplayMathCommand() {

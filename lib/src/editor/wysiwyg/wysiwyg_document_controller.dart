@@ -4,6 +4,7 @@ import '../../core/path_utils.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
@@ -123,21 +124,54 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         : selectionStart;
     final start = rawStart.clamp(0, text.length).toInt();
     final end = rawEnd.clamp(start, text.length).toInt();
-    final expression = start == end
+    final rawExpression = start == end
         ? fallbackExpression
         : text.substring(start, end);
-    final before = _sliceInlines(current.inlines, 0, start);
-    final after = _sliceInlines(current.inlines, end, text.length);
-    final math = BusyInline(
-      kind: BusyInlineKind.math,
-      text: expression,
-      attributes: {
-        busyMarkMathExpressionAttribute: expression,
-        busyMarkMathDisplayAttribute: 'false',
-        busyMarkMathSourceFormAttribute: BusyMathSourceForm.dollarInline.name,
-      },
+    final parts = _inlineMathExpressionParts(rawExpression);
+    if (parts == null) {
+      return null;
+    }
+    final collapsed = start == end;
+    final contentStart = collapsed ? start : start + parts.leading.length;
+    final contentEnd = collapsed ? end : end - parts.trailing.length;
+    final partition = _partitionInlinesForReplacement(
+      current.inlines,
+      contentStart,
+      contentEnd,
     );
-    final inlines = [...before, math, ...after];
+    final before = [
+      ...partition.before,
+      if (collapsed && parts.leading.isNotEmpty)
+        BusyInline(kind: BusyInlineKind.text, text: parts.leading),
+    ];
+    final after = [
+      if (collapsed && parts.trailing.isNotEmpty)
+        BusyInline(kind: BusyInlineKind.text, text: parts.trailing),
+      ...partition.after,
+    ];
+    BusyInline? math;
+    List<BusyInline>? inlines;
+    for (final form in const [
+      BusyMathSourceForm.dollarInline,
+      BusyMathSourceForm.githubDollarBacktick,
+    ]) {
+      final candidate = _inlineMath(parts.expression, form);
+      final candidateInlines = [...before, candidate, ...after];
+      if (_serializedInlineMathParses(
+        candidateInlines,
+        expression: parts.expression,
+        form: form,
+        mode: _document.mode,
+        serializer: _serializer,
+      )) {
+        math = candidate;
+        inlines = candidateInlines;
+        break;
+      }
+    }
+    if (math == null || inlines == null) {
+      return null;
+    }
     final updated = current.copyWith(
       inlines: inlines,
       attributes: _attributesAfterInlineMathEdit(current, inlines),
@@ -155,11 +189,102 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         dirty: true,
       ),
     );
+    final form = busyMathSourceFormFromName(
+      math.attributes[busyMarkMathSourceFormAttribute],
+    );
+    final openingLength = form == BusyMathSourceForm.githubDollarBacktick
+        ? 2
+        : 1;
     notifyListeners();
     return (
-      selectionStart: prefixSource.length + 1,
-      selectionEnd: prefixSource.length + 1 + expression.length,
+      selectionStart: prefixSource.length + openingLength,
+      selectionEnd:
+          prefixSource.length + openingLength + parts.expression.length,
     );
+  }
+
+  ({String source, int selectionStart, int selectionEnd})?
+  buildInlineMathSourceInsertion(
+    String blockId,
+    String source,
+    int selectionStart,
+    int selectionEnd, {
+    String fallbackExpression = 'x',
+  }) {
+    final current = blockById(blockId);
+    if (current == null) {
+      return null;
+    }
+    final rawStart = selectionStart < selectionEnd
+        ? selectionStart
+        : selectionEnd;
+    final rawEnd = selectionStart < selectionEnd
+        ? selectionEnd
+        : selectionStart;
+    final start = rawStart.clamp(0, source.length).toInt();
+    final end = rawEnd.clamp(start, source.length).toInt();
+    final collapsed = start == end;
+    final rawExpression = collapsed
+        ? fallbackExpression
+        : source.substring(start, end);
+    final parts = _inlineMathExpressionParts(rawExpression);
+    if (parts == null) {
+      return null;
+    }
+    final replaceStart = collapsed ? start : start + parts.leading.length;
+    final replaceEnd = collapsed ? end : end - parts.trailing.length;
+    final existing = _parseMathEditSource(current, source);
+    final existingMath = _mathInlineCount(existing);
+    for (final form in const [
+      BusyMathSourceForm.dollarInline,
+      BusyMathSourceForm.githubDollarBacktick,
+    ]) {
+      final existingMatchingMath = _matchingMathInlineCount(
+        existing,
+        expression: parts.expression,
+        form: form,
+      );
+      final mathSource = _inlineMathSource(parts.expression, form);
+      final replacement = collapsed
+          ? '${parts.leading}$mathSource${parts.trailing}'
+          : mathSource;
+      final candidate = source.replaceRange(
+        replaceStart,
+        replaceEnd,
+        replacement,
+      );
+      final parsed = _parseMathEditSource(current, candidate);
+      if (_mathInlineCount(parsed) != existingMath + 1 ||
+          _matchingMathInlineCount(
+                parsed,
+                expression: parts.expression,
+                form: form,
+              ) !=
+              existingMatchingMath + 1) {
+        continue;
+      }
+      final expressionStart =
+          replaceStart +
+          (collapsed ? parts.leading.length : 0) +
+          (form == BusyMathSourceForm.githubDollarBacktick ? 2 : 1);
+      return (
+        source: candidate,
+        selectionStart: expressionStart,
+        selectionEnd: expressionStart + parts.expression.length,
+      );
+    }
+    return null;
+  }
+
+  BusyDocument _parseMathEditSource(BusyBlock current, String source) {
+    return const MarkdownParser()
+        .parse(
+          filePath: _document.filePath,
+          source: _sourceWithBlockStructure(current, source),
+          mode: _document.mode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
   }
 
   String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
@@ -1861,47 +1986,174 @@ Map<String, String> _attributesAfterInlineMathEdit(
   return attributes;
 }
 
-List<BusyInline> _sliceInlines(List<BusyInline> inlines, int start, int end) {
-  if (end <= start) {
-    return const [];
-  }
-  final result = <BusyInline>[];
+({List<BusyInline> before, List<BusyInline> after})
+_partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
+  final before = <BusyInline>[];
+  final after = <BusyInline>[];
   var offset = 0;
   for (final inline in inlines) {
     final length = inline.plainText.length;
     final inlineEnd = offset + length;
-    if (inlineEnd > start && offset < end) {
+    if (length == 0) {
+      // Text selections cannot address zero-width semantic nodes. Keep each
+      // one on a deterministic side of the replacement instead of silently
+      // treating it as selected content.
+      (offset <= start ? before : after).add(inline);
+    } else if (inlineEnd <= start) {
+      before.add(inline);
+    } else if (offset >= end) {
+      after.add(inline);
+    } else {
       final localStart = (start - offset).clamp(0, length).toInt();
       final localEnd = (end - offset).clamp(localStart, length).toInt();
-      final sliced = _sliceInline(inline, localStart, localEnd);
-      if (sliced != null) {
-        result.add(sliced);
+      final partition = _partitionInlineForReplacement(
+        inline,
+        localStart,
+        localEnd,
+      );
+      if (partition.before != null) {
+        before.add(partition.before!);
+      }
+      if (partition.after != null) {
+        after.add(partition.after!);
       }
     }
     offset = inlineEnd;
   }
-  return result;
+  return (before: before, after: after);
 }
 
-BusyInline? _sliceInline(BusyInline inline, int start, int end) {
+({BusyInline? before, BusyInline? after}) _partitionInlineForReplacement(
+  BusyInline inline,
+  int start,
+  int end,
+) {
   final length = inline.plainText.length;
-  if (end <= start || length == 0) {
-    return null;
-  }
-  if (start == 0 && end == length) {
-    return inline;
-  }
   if (inline.children.isNotEmpty) {
-    final children = _sliceInlines(inline.children, start, end);
-    if (children.isEmpty) {
-      return null;
-    }
-    return inline.copyWith(
-      text: children.map((child) => child.plainText).join(),
-      children: children,
+    final partition = _partitionInlinesForReplacement(
+      inline.children,
+      start,
+      end,
+    );
+    return (
+      before: partition.before.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.before.map((child) => child.plainText).join(),
+              children: partition.before,
+            ),
+      after: partition.after.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.after.map((child) => child.plainText).join(),
+              children: partition.after,
+            ),
     );
   }
-  return inline.copyWith(text: inline.text.substring(start, end));
+  return (
+    before: start == 0
+        ? null
+        : inline.copyWith(text: inline.text.substring(0, start)),
+    after: end == length
+        ? null
+        : inline.copyWith(text: inline.text.substring(end)),
+  );
+}
+
+({String expression, String leading, String trailing})?
+_inlineMathExpressionParts(String value) {
+  if (value.contains('\n') || value.contains('\r')) {
+    return null;
+  }
+  final withoutLeading = value.trimLeft();
+  final leadingLength = value.length - withoutLeading.length;
+  final expression = withoutLeading.trimRight();
+  if (expression.isEmpty) {
+    return null;
+  }
+  return (
+    expression: expression,
+    leading: value.substring(0, leadingLength),
+    trailing: withoutLeading.substring(expression.length),
+  );
+}
+
+BusyInline _inlineMath(String expression, BusyMathSourceForm form) {
+  return BusyInline(
+    kind: BusyInlineKind.math,
+    text: expression,
+    attributes: {
+      busyMarkMathExpressionAttribute: expression,
+      busyMarkMathDisplayAttribute: 'false',
+      busyMarkMathSourceFormAttribute: form.name,
+    },
+  );
+}
+
+String _inlineMathSource(String expression, BusyMathSourceForm form) {
+  return form == BusyMathSourceForm.githubDollarBacktick
+      ? '\$`$expression`\$'
+      : '\$$expression\$';
+}
+
+bool _serializedInlineMathParses(
+  List<BusyInline> inlines, {
+  required String expression,
+  required BusyMathSourceForm form,
+  required MarkdownMode mode,
+  required BusyMarkMarkdownSerializer serializer,
+}) {
+  final source = serializer.serializeBlock(
+    BusyBlock(
+      id: 'wysiwyg-inline-math-validation',
+      kind: BusyBlockKind.paragraph,
+      inlines: inlines,
+      dirty: true,
+    ),
+  );
+  final parsed = const MarkdownParser()
+      .parse(
+        filePath: 'wysiwyg-inline-math-validation.md',
+        source: source,
+        mode: mode,
+        validateLocalReferences: false,
+      )
+      .busyDocument;
+  return _mathInlineCount(parsed) == 1 &&
+      _matchingMathInlineCount(parsed, expression: expression, form: form) == 1;
+}
+
+int _mathInlineCount(BusyDocument document) {
+  return _walkInlines(
+    document.blocks,
+  ).where((inline) => inline.kind == BusyInlineKind.math).length;
+}
+
+int _matchingMathInlineCount(
+  BusyDocument document, {
+  required String expression,
+  BusyMathSourceForm? form,
+}) {
+  return _walkInlines(document.blocks).where((inline) {
+    return inline.kind == BusyInlineKind.math &&
+        inline.text == expression &&
+        (form == null ||
+            inline.attributes[busyMarkMathSourceFormAttribute] == form.name);
+  }).length;
+}
+
+Iterable<BusyInline> _walkInlines(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield* _walkInlineNodes(block.inlines);
+    yield* _walkInlines(block.children);
+  }
+}
+
+Iterable<BusyInline> _walkInlineNodes(Iterable<BusyInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _walkInlineNodes(inline.children);
+  }
 }
 
 bool _shouldSplitNewlines(BusyBlockKind kind) {
