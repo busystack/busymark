@@ -506,6 +506,149 @@ void main() {
     );
   });
 
+  test('math source editing preserves escaped literal dollars', () {
+    const paragraphCases = [
+      r'Literal \$x\$ and formula $y$.',
+      r'**Literal \$x\$** and formula $y$.',
+      r'[Literal \$x\$](docs.md) and formula $y$.',
+    ];
+    for (final source in paragraphCases) {
+      final document = const MarkdownParser()
+          .parse(filePath: 'math.md', source: '$source\n')
+          .busyDocument;
+      final block = document.blocks.single;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final editable = controller.blockText(block.id);
+
+      expect(editable, contains(r'\$x\$'), reason: source);
+      controller.updateMathSource(
+        block.id,
+        editable.replaceFirst('formula', 'updated formula'),
+      );
+
+      _expectOnlyFormulaYAndLiteralX(controller.markdown, reason: source);
+    }
+
+    const tableSource =
+        '| Value |\n| --- |\n'
+        r'| Literal \$x\$ and $y$ |'
+        '\n';
+    final tableDocument = const MarkdownParser()
+        .parse(filePath: 'math.md', source: tableSource)
+        .busyDocument;
+    final tableController = BusyMarkWysiwygDocumentController(
+      document: tableDocument,
+    );
+    final table = tableDocument.blocks.single;
+    final cell = table.children[1].children.single;
+    final editableCell = busyMarkWysiwygEditableText(cell);
+    expect(editableCell, contains(r'\$x\$'));
+    tableController.updateTableCellText(
+      table.id,
+      cell.id,
+      '$editableCell updated',
+    );
+    _expectOnlyFormulaYAndLiteralX(
+      tableController.markdown,
+      reason: tableSource,
+    );
+  });
+
+  test('inline math insertion preserves the intended inline position', () {
+    const cases = [
+      (source: r'\$xx', selection: 2),
+      (source: r'$xx', selection: 1),
+      (source: r'xx$', selection: 1),
+    ];
+    for (final item in cases) {
+      final document = const MarkdownParser()
+          .parse(filePath: 'math.md', source: '${item.source}\n')
+          .busyDocument;
+      final block = document.blocks.single;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final insertion = controller.insertInlineMath(
+        block.id,
+        item.selection,
+        item.selection + 1,
+      );
+
+      expect(insertion, isNotNull, reason: item.source);
+      final inMemory = _inlineSemanticSignature(
+        controller.document.blocks.single.inlines,
+      );
+      final reopened = const MarkdownParser()
+          .parse(filePath: 'math.md', source: controller.markdown)
+          .busyDocument;
+      expect(
+        _inlineSemanticSignature(reopened.blocks.single.inlines),
+        inMemory,
+        reason: item.source,
+      );
+    }
+  });
+
+  test('source-mode math insertion preserves the intended inline position', () {
+    const cases = [
+      (
+        source: r'\$xx',
+        selection: 3,
+        expected: [r'text:$x::', 'math:x::dollarInline'],
+      ),
+      (
+        source: r'$z$ \$xx',
+        selection: 7,
+        expected: [
+          'math:z::dollarInline',
+          r'text: $x::',
+          'math:x::dollarInline',
+        ],
+      ),
+      (source: r'$xx', selection: 1, expected: <String>[]),
+      (
+        source: r'xx$',
+        selection: 1,
+        expected: ['text:x::', 'math:x::dollarInline', r'text:$::'],
+      ),
+    ];
+    for (final item in cases) {
+      final document = const MarkdownParser()
+          .parse(filePath: 'math.md', source: '${item.source}\n')
+          .busyDocument;
+      final block = document.blocks.single;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final insertion = controller.buildInlineMathSourceInsertion(
+        block.id,
+        item.source,
+        item.selection,
+        item.selection + 1,
+      );
+
+      if (item.expected.isEmpty) {
+        expect(insertion, isNull, reason: item.source);
+        expect(controller.markdown, '${item.source}\n', reason: item.source);
+        continue;
+      }
+      expect(insertion, isNotNull, reason: item.source);
+      final directlyParsed = const MarkdownParser()
+          .parse(filePath: 'math.md', source: insertion!.source)
+          .busyDocument;
+      expect(
+        _inlineSemanticSignature(directlyParsed.blocks.single.inlines),
+        item.expected,
+        reason: item.source,
+      );
+      controller.updateMathSource(block.id, insertion.source);
+      final reopened = const MarkdownParser()
+          .parse(filePath: 'math.md', source: controller.markdown)
+          .busyDocument;
+      expect(
+        _inlineSemanticSignature(reopened.blocks.single.inlines),
+        _inlineSemanticSignature(directlyParsed.blocks.single.inlines),
+        reason: item.source,
+      );
+    }
+  });
+
   testWidgets(
     'WYSIWYG renders math, edits exact source, and reparses without corruption',
     (tester) async {
@@ -870,6 +1013,40 @@ void _expectFreshInlineMath(
       reason: source,
     );
   }
+}
+
+void _expectOnlyFormulaYAndLiteralX(String source, {required String reason}) {
+  final reopened = const MarkdownParser()
+      .parse(filePath: 'math.md', source: source)
+      .busyDocument;
+  final inlines = _flattenDocumentInlines(reopened).toList();
+  final math = inlines
+      .where((inline) => inline.kind == BusyInlineKind.math)
+      .toList();
+  expect(math.map((inline) => inline.text), ['y'], reason: reason);
+  expect(
+    inlines
+        .where((inline) => inline.kind == BusyInlineKind.text)
+        .map((inline) => inline.text)
+        .join(),
+    contains(r'$x$'),
+    reason: reason,
+  );
+}
+
+List<String> _inlineSemanticSignature(List<BusyInline> inlines) {
+  final result = <String>[];
+  for (final inline in inlines) {
+    result.add(
+      '${inline.kind.name}:${inline.text}:${inline.destination ?? ''}:'
+      '${inline.attributes[busyMarkMathSourceFormAttribute] ?? ''}',
+    );
+    result.addAll(_inlineSemanticSignature(inline.children));
+    if (inline.children.isNotEmpty) {
+      result.add('/${inline.kind.name}');
+    }
+  }
+  return result;
 }
 
 void _expectSemanticInline(

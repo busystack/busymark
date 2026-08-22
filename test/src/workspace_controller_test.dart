@@ -413,6 +413,53 @@ void main() {
   });
 
   test(
+    'saving multiple untitled documents creates normal file buffers',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-multiple-untitled-',
+      );
+      final firstFile = File(p.join(directory.path, 'first.md'));
+      final secondFile = File(p.join(directory.path, 'second.md'));
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# First draft\n');
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Second draft\n');
+      expect(controller.state.documentBuffers, hasLength(2));
+
+      expect(await controller.saveActiveAs(secondFile.path), isTrue);
+      expect(controller.state.workspace?.kind, WorkspaceKind.singleMarkdown);
+      expect(controller.state.activeBuffer?.filePath, secondFile.path);
+      controller.updateActiveText('# Second saved again\n');
+      expect(await controller.saveActive(), isTrue);
+      expect(await secondFile.readAsString(), '# Second saved again\n');
+
+      expect(await controller.activatePreviousOpenFileTab(), isTrue);
+      expect(controller.state.activeBuffer?.filePath, isNull);
+      expect(await controller.saveActiveAs(firstFile.path), isTrue);
+      expect(controller.state.documentBuffers, hasLength(2));
+      expect(
+        controller.state.documentBuffers.map((buffer) => buffer.filePath),
+        containsAll([firstFile.path, secondFile.path]),
+      );
+
+      final firstId = controller.state.activeBuffer!.id;
+      expect(await controller.closeDocumentBuffer(firstId), isTrue);
+      expect(controller.state.documentBuffers, hasLength(1));
+      final secondId = controller.state.activeBuffer!.id;
+      expect(await controller.closeDocumentBuffer(secondId), isTrue);
+      expect(controller.state.documentBuffers, isEmpty);
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+  );
+
+  test(
     'save as refuses an existing file unless overwrite is explicit',
     () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -972,6 +1019,27 @@ void main() {
     settingsController.dispose();
   });
 
+  test('auto save remains scheduled independently for inactive tabs', () async {
+    final service = _DelayedValidationWorkspaceService();
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await settingsController.setValidateOnEdit(false);
+    await controller.openPath(service.rootPath);
+    controller.updateActiveText('# Dirty A\n');
+    expect(await controller.openActiveFile(service.bPath), isTrue);
+    controller.updateActiveText('# Dirty B\n');
+
+    await _waitFor(() => service.savedTexts.length == 2);
+
+    expect(service.savedTexts, containsAll(['# Dirty A\n', '# Dirty B\n']));
+    expect(controller.state.dirtyBuffers, isEmpty);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
   test(
     'auto save preserves dirty state when edits happen during save',
     () async {
@@ -1470,6 +1538,9 @@ class _WorkspaceControllerDriver {
 
   Future<bool> closeOpenFileTab(String path) =>
       _notifier.closeOpenFileTab(path);
+
+  Future<bool> closeDocumentBuffer(String bufferId) =>
+      _notifier.closeDocumentBuffer(bufferId);
 
   Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 

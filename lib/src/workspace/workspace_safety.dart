@@ -129,7 +129,6 @@ Future<bool> _confirmUnsavedChanges(
       action != _UnsavedChangesAction.cancel &&
       (currentState.workspace?.id != initialWorkspaceId ||
           currentState.activeBufferId != initialActiveBufferId ||
-          currentDirtyIds.length != initialRevisions.length ||
           !currentDirtyIds.containsAll(initialRevisions.keys) ||
           initialRevisions.entries.any((entry) {
             final current = currentState.documentBuffers

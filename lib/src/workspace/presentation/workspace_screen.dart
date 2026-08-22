@@ -7967,7 +7967,7 @@ class _EditorTabStrip extends ConsumerWidget {
             await controller.activateDocumentBuffer(entry.bufferId!);
           }
           if (!context.mounted ||
-              !await confirmSafeToContinue(context, ref) ||
+              !await confirmSafeToCloseActiveDocument(context, ref) ||
               !context.mounted) {
             return;
           }

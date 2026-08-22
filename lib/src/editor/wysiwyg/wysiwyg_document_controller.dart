@@ -159,8 +159,6 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       final candidateInlines = [...before, candidate, ...after];
       if (_serializedInlineMathParses(
         candidateInlines,
-        expression: parts.expression,
-        form: form,
         mode: _document.mode,
         serializer: _serializer,
       )) {
@@ -239,11 +237,6 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       BusyMathSourceForm.dollarInline,
       BusyMathSourceForm.githubDollarBacktick,
     ]) {
-      final existingMatchingMath = _matchingMathInlineCount(
-        existing,
-        expression: parts.expression,
-        form: form,
-      );
       final mathSource = _inlineMathSource(parts.expression, form);
       final replacement = collapsed
           ? '${parts.leading}$mathSource${parts.trailing}'
@@ -254,13 +247,43 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         replacement,
       );
       final parsed = _parseMathEditSource(current, candidate);
-      if (_mathInlineCount(parsed) != existingMath + 1 ||
+      final validationExpression = _uniqueMathValidationExpression(
+        source,
+        parts.expression,
+      );
+      final validationSource = _inlineMathSource(validationExpression, form);
+      final validationReplacement = collapsed
+          ? '${parts.leading}$validationSource${parts.trailing}'
+          : validationSource;
+      final validationCandidate = source.replaceRange(
+        replaceStart,
+        replaceEnd,
+        validationReplacement,
+      );
+      final validationParsed = _parseMathEditSource(
+        current,
+        validationCandidate,
+      );
+      final expectedInlines = _singleEditableBlockInlines(validationParsed);
+      final actualInlines = _singleEditableBlockInlines(parsed);
+      if (_mathInlineCount(validationParsed) != existingMath + 1 ||
           _matchingMathInlineCount(
-                parsed,
-                expression: parts.expression,
+                validationParsed,
+                expression: validationExpression,
                 form: form,
               ) !=
-              existingMatchingMath + 1) {
+              1 ||
+          expectedInlines == null ||
+          actualInlines == null ||
+          !_inlineListsSemanticallyEqual(
+            _replaceValidationMath(
+              expectedInlines,
+              validationExpression: validationExpression,
+              expression: parts.expression,
+              form: form,
+            ),
+            actualInlines,
+          )) {
         continue;
       }
       final expressionStart =
@@ -2151,8 +2174,6 @@ String _inlineMathSource(String expression, BusyMathSourceForm form) {
 
 bool _serializedInlineMathParses(
   List<BusyInline> inlines, {
-  required String expression,
-  required BusyMathSourceForm form,
   required MarkdownMode mode,
   required BusyMarkMarkdownSerializer serializer,
 }) {
@@ -2172,8 +2193,98 @@ bool _serializedInlineMathParses(
         validateLocalReferences: false,
       )
       .busyDocument;
-  return _mathInlineCount(parsed) == 1 &&
-      _matchingMathInlineCount(parsed, expression: expression, form: form) == 1;
+  final parsedInlines = _singleEditableBlockInlines(parsed);
+  return parsedInlines != null &&
+      _inlineListsSemanticallyEqual(inlines, parsedInlines);
+}
+
+List<BusyInline>? _singleEditableBlockInlines(BusyDocument document) {
+  final blocks = document.blocks
+      .where(
+        (block) =>
+            block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+      )
+      .toList(growable: false);
+  return blocks.length == 1 ? blocks.single.inlines : null;
+}
+
+String _uniqueMathValidationExpression(String source, String expression) {
+  var value = 'BusyMarkMathValidationToken';
+  while (source.contains(value) || expression.contains(value)) {
+    value += 'X';
+  }
+  return value;
+}
+
+List<BusyInline> _replaceValidationMath(
+  List<BusyInline> inlines, {
+  required String validationExpression,
+  required String expression,
+  required BusyMathSourceForm form,
+}) {
+  return [
+    for (final inline in inlines)
+      if (inline.kind == BusyInlineKind.math &&
+          inline.text == validationExpression &&
+          inline.attributes[busyMarkMathSourceFormAttribute] == form.name)
+        _inlineMath(expression, form)
+      else if (inline.children.isNotEmpty)
+        inline.copyWith(
+          children: _replaceValidationMath(
+            inline.children,
+            validationExpression: validationExpression,
+            expression: expression,
+            form: form,
+          ),
+        )
+      else
+        inline,
+  ];
+}
+
+bool _inlineListsSemanticallyEqual(
+  List<BusyInline> expected,
+  List<BusyInline> actual,
+) {
+  final expectedNodes = _coalescedInlineNodes(expected);
+  final actualNodes = _coalescedInlineNodes(actual);
+  if (expectedNodes.length != actualNodes.length) {
+    return false;
+  }
+  for (var index = 0; index < expectedNodes.length; index++) {
+    final left = expectedNodes[index];
+    final right = actualNodes[index];
+    if (left.kind != right.kind ||
+        left.text != right.text ||
+        left.destination != right.destination ||
+        !_inlineListsSemanticallyEqual(left.children, right.children)) {
+      return false;
+    }
+    if (left.kind == BusyInlineKind.math &&
+        left.attributes[busyMarkMathSourceFormAttribute] !=
+            right.attributes[busyMarkMathSourceFormAttribute]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+List<BusyInline> _coalescedInlineNodes(List<BusyInline> inlines) {
+  final result = <BusyInline>[];
+  for (final inline in inlines) {
+    if (inline.kind == BusyInlineKind.text &&
+        inline.children.isEmpty &&
+        result.isNotEmpty &&
+        result.last.kind == BusyInlineKind.text &&
+        result.last.children.isEmpty) {
+      result[result.length - 1] = result.last.copyWith(
+        text: '${result.last.text}${inline.text}',
+      );
+    } else {
+      result.add(inline);
+    }
+  }
+  return result;
 }
 
 int _mathInlineCount(BusyDocument document) {

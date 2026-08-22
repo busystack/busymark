@@ -548,6 +548,7 @@ class BusyMarkMarkdownSerializer {
   String _escapeInlineText(String value) {
     return value
         .replaceAll('\\', r'\\')
+        .replaceAll(r'$', r'\$')
         .replaceAll('[', r'\[')
         .replaceAll(']', r'\]');
   }

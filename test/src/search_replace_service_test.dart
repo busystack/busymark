@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/editor/source/source_search.dart';
@@ -343,6 +344,96 @@ void main() {
       expect(await File(preservedPath!).readAsString(), 'cat first');
     },
   );
+
+  test('workspace apply revalidates open buffers after disk writes', () async {
+    if (!Platform.isLinux) {
+      return;
+    }
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-replace-open-race-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final openFile = File(p.join(directory.path, 'open.md'));
+    final closedFile = File(p.join(directory.path, 'closed.md'));
+    await openFile.writeAsString('open cat');
+    await closedFile.writeAsString('closed cat');
+    final workspaceService = _PausedBatchWorkspaceService();
+    final openLoad = await workspaceService.loadTextWithSnapshot(openFile.path);
+    final buffer = DocumentBuffer.file(
+      id: 'open',
+      filePath: openFile.path,
+      text: openLoad.text,
+      snapshot: openLoad.snapshot,
+      format: openLoad.format,
+    ).edited('dirty cat');
+    final workspace = Workspace(
+      id: directory.path,
+      rootPath: directory.path,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      activeFilePath: openFile.path,
+      openFilePaths: [openFile.path],
+      files: [
+        await _documentFile(openFile, directory.path),
+        await _documentFile(closedFile, directory.path),
+      ],
+      diagnostics: const [],
+    );
+    var state = WorkspaceState(
+      workspace: workspace,
+      documentBuffers: [buffer],
+      activeBufferId: buffer.id,
+    );
+    final preview = await replacementService.previewWorkspace(
+      state: state,
+      workspaceService: workspaceService,
+      options: const SourceSearchOptions(query: 'cat'),
+      replacement: 'dog',
+    );
+
+    final apply = replacementService.applyWorkspace(
+      preview: preview,
+      selectedMatchIds: {
+        for (final file in preview.files)
+          for (final match in file.matches) match.id,
+      },
+      currentState: () => state,
+      updateBuffer: (_, _) => fail('concurrent edit must not be overwritten'),
+      workspaceService: workspaceService,
+    );
+    await workspaceService.batchStarted.future;
+    state = state.copyWith(
+      documentBuffers: [state.documentBuffers.single.edited('newer edit')],
+    );
+    workspaceService.releaseBatch();
+    final result = await apply;
+
+    expect(result.appliedFiles, 1);
+    expect(result.appliedMatches, 1);
+    expect(result.issues, hasLength(1));
+    expect(
+      result.issues.single.kind,
+      WorkspaceReplacementIssueKind.bufferRevisionChanged,
+    );
+    expect(state.documentBuffers.single.text, 'newer edit');
+    expect(await closedFile.readAsString(), 'closed dog');
+  });
+}
+
+class _PausedBatchWorkspaceService extends WorkspaceService {
+  final batchStarted = Completer<void>();
+  final _release = Completer<void>();
+
+  void releaseBatch() => _release.complete();
+
+  @override
+  Future<Map<String, WorkspaceFileSnapshot>> saveFormattedTextBatch(
+    List<WorkspaceBatchTextWrite> writes,
+  ) async {
+    batchStarted.complete();
+    await _release.future;
+    return super.saveFormattedTextBatch(writes);
+  }
 }
 
 Future<DocumentFile> _documentFile(File file, String root) async {

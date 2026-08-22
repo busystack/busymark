@@ -937,6 +937,79 @@ void main() {
     expect(service.documents[service.firstPath], '# External A\n');
     expect(service.documents[service.secondPath], '# Original B\n');
   });
+
+  for (final action in [
+    (label: 'save', discard: false),
+    (label: 'discard', discard: true),
+  ]) {
+    testWidgets(
+      'closing one dirty tab can ${action.label} it while another stays dirty',
+      (tester) async {
+        final service = _IdentityWorkspaceService();
+        bool? safeToClose;
+        late WidgetRef widgetRef;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              localSettingsStoreProvider.overrideWithValue(
+                _MemorySettingsStore()
+                  ..value = AppSettings.defaults()
+                      .copyWith(autoSave: false)
+                      .toJson(),
+              ),
+              workspaceServiceProvider.overrideWithValue(service),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              theme: buildBusyMarkTheme(
+                brightness: Brightness.light,
+                accentColor: Colors.green,
+              ),
+              home: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, child) {
+                    widgetRef = ref;
+                    return TextButton(
+                      onPressed: () async {
+                        safeToClose = await confirmSafeToCloseActiveDocument(
+                          context,
+                          ref,
+                        );
+                      },
+                      child: const Text('Close active'),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final controller = widgetRef.read(workspaceControllerProvider.notifier);
+        await controller.openPath(service.rootPath);
+        controller.updateActiveText('# Edited A\n');
+        await controller.openActiveFile(service.secondPath);
+        controller.updateActiveText('# Edited B\n');
+        expect(
+          widgetRef.read(workspaceControllerProvider).dirtyBuffers,
+          hasLength(2),
+        );
+
+        await tester.tap(find.text('Close active'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(action.discard ? l10n.discard : l10n.save));
+        await tester.pumpAndSettle();
+
+        expect(safeToClose, isTrue);
+        final state = widgetRef.read(workspaceControllerProvider);
+        expect(state.dirtyBuffers, hasLength(1));
+        expect(state.dirtyBuffers.single.filePath, service.firstPath);
+        expect(state.activeBuffer?.filePath, service.secondPath);
+        expect(state.activeBuffer?.isDirty, isFalse);
+      },
+    );
+  }
 }
 
 double _contrastRatio(Color foreground, Color background) {

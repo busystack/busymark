@@ -462,6 +462,38 @@ class SearchReplacementService {
         ],
       );
     }
+    final postWriteState = currentState();
+    final staleOpenOperations = <_WorkspaceReplacementOperation>[];
+    for (final operation in operations) {
+      final bufferId = operation.file.bufferId;
+      if (bufferId == null) {
+        continue;
+      }
+      final buffer = postWriteState.documentBuffers
+          .where((candidate) => candidate.id == bufferId)
+          .firstOrNull;
+      if (buffer == null ||
+          buffer.revision != operation.file.bufferRevision ||
+          buffer.text != operation.file.originalText) {
+        staleOpenOperations.add(operation);
+      }
+    }
+    if (staleOpenOperations.isNotEmpty) {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: diskOperations.length,
+        appliedMatches: diskOperations.fold(
+          0,
+          (total, operation) => total + operation.selectedMatchCount,
+        ),
+        issues: List.unmodifiable([
+          for (final operation in staleOpenOperations)
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.bufferRevisionChanged,
+              filePath: operation.file.filePath,
+            ),
+        ]),
+      );
+    }
     for (final operation in operations) {
       if (operation.file.bufferId case final bufferId?) {
         updateBuffer(bufferId, operation.nextText);
