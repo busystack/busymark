@@ -843,6 +843,14 @@
     "description": "Dialog title and toolbar tooltip for code block language."
   },
   "image": "صورة",
+  "video": "فيديو",
+  "openVideo": "فتح الفيديو",
+  "videoUnavailable": "الفيديو غير متاح",
+  "videoPreview": "معاينة الفيديو",
+  "diagnosticWritersideVideoMissingSource": "يفتقد الفيديو سمة src.",
+  "diagnosticWritersideVideoUnsupportedSource": "مصدر فيديو غير مدعوم: {source}",
+  "diagnosticWritersideVideoMissingFile": "ملف الفيديو غير موجود: {source}",
+  "diagnosticWritersideVideoMissingPreview": "صورة معاينة الفيديو غير موجودة: {preview}",
   "@image": {
     "description": "Image command and document kind label."
   },

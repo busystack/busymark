@@ -828,6 +828,37 @@ class AppLocalizationsUk extends AppLocalizations {
   String get image => 'Зображення';
 
   @override
+  String get video => 'Відео';
+
+  @override
+  String get openVideo => 'Відкрити відео';
+
+  @override
+  String get videoUnavailable => 'Відео недоступне';
+
+  @override
+  String get videoPreview => 'Попередній перегляд відео';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'У відео відсутній атрибут src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Непідтримуване джерело відео: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Відеофайл не існує: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Зображення попереднього перегляду відео не існує: $preview';
+  }
+
+  @override
   String get inlineImage => 'Вбудоване зображення';
 
   @override

@@ -1665,6 +1665,7 @@ class WorkspaceService {
       'tab',
       'code-block',
       'img',
+      'video',
       'a',
       'math',
     }.contains(name);
@@ -1678,6 +1679,7 @@ class WorkspaceService {
       'tabs' || 'tab' => PreviewBlockKind.tabs,
       'code-block' => PreviewBlockKind.code,
       'img' => PreviewBlockKind.image,
+      'video' => PreviewBlockKind.video,
       _ => PreviewBlockKind.paragraph,
     };
   }
@@ -1695,26 +1697,66 @@ class WorkspaceService {
       'tab' ||
       'code-block' ||
       'img' ||
+      'video' ||
       'a' => '',
       _ => name,
     };
   }
 
   List<PreviewBlock> _xmlPreviewBlocks(String source, String? title) {
-    final mathExpressions = <String>[];
     try {
       final document = XmlDocument.parse(source);
-      mathExpressions.addAll(
-        document.descendants
-            .whereType<XmlElement>()
-            .where((element) => element.name.local == 'math')
-            .map((element) => element.innerText),
-      );
-    } on XmlParserException {
+      final blocks = <PreviewBlock>[];
+      var mathIndex = 0;
+      for (final element in document.descendants.whereType<XmlElement>()) {
+        final name = element.name.local;
+        if (!_visibleSemanticElement(name)) {
+          continue;
+        }
+        final attributes = {
+          'element': name,
+          for (final attribute in element.attributes)
+            attribute.name.local: attribute.value,
+        };
+        if (name == 'math') {
+          final expression = element.innerText;
+          blocks.add(
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: expression,
+              inlines: [
+                PreviewInline(
+                  kind: PreviewInlineKind.math,
+                  text: expression,
+                  attributes: {
+                    busyMarkMathSourceFormAttribute:
+                        BusyMathSourceForm.writersideElement.name,
+                    'expressionId': 'topic-math-${mathIndex++}',
+                  },
+                ),
+              ],
+              attributes: attributes,
+            ),
+          );
+          continue;
+        }
+        blocks.add(
+          PreviewBlock(
+            kind: _semanticKind(name),
+            text: name == 'video'
+                ? element.getAttribute('src') ?? ''
+                : _semanticText(name, title),
+            attributes: attributes,
+          ),
+        );
+      }
+      if (blocks.isNotEmpty) {
+        return blocks;
+      }
+    } on Object {
       // The ordinary semantic-element fallback below still provides a useful
       // preview while the user repairs malformed topic XML.
     }
-    var mathIndex = 0;
     final names = RegExp(
       r'<\s*([A-Za-z][A-Za-z0-9_-]*)\b',
     ).allMatches(source).map((match) => match.group(1)!).toList();
@@ -1724,29 +1766,11 @@ class WorkspaceService {
     return [
       for (final name in names)
         if (_visibleSemanticElement(name))
-          if (name == 'math' && mathIndex < mathExpressions.length)
-            PreviewBlock(
-              kind: PreviewBlockKind.paragraph,
-              text: mathExpressions[mathIndex],
-              inlines: [
-                PreviewInline(
-                  kind: PreviewInlineKind.math,
-                  text: mathExpressions[mathIndex],
-                  attributes: {
-                    busyMarkMathSourceFormAttribute:
-                        BusyMathSourceForm.writersideElement.name,
-                    'expressionId': 'topic-math-${mathIndex++}',
-                  },
-                ),
-              ],
-              attributes: const {'element': 'math'},
-            )
-          else
-            PreviewBlock(
-              kind: _semanticKind(name),
-              text: _semanticText(name, title),
-              attributes: {'element': name},
-            ),
+          PreviewBlock(
+            kind: _semanticKind(name),
+            text: _semanticText(name, title),
+            attributes: {'element': name},
+          ),
     ];
   }
 }

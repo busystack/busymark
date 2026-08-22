@@ -9,6 +9,7 @@ enum MarkdownExportBlockKind {
   blockquote,
   thematicBreak,
   image,
+  video,
   table,
   tableRow,
   tableCell,
@@ -110,6 +111,12 @@ class MarkdownExportBlock {
   }
 
   Iterable<String> get imageDestinations sync* {
+    final preview = attributes['preview'];
+    if (kind == MarkdownExportBlockKind.video &&
+        preview is String &&
+        preview.trim().isNotEmpty) {
+      yield preview;
+    }
     for (final inline in inlines) {
       yield* inline.imageDestinations;
     }

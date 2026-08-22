@@ -228,6 +228,7 @@ class MarkdownParser {
         source: source,
         line: line,
         lineOffset: offset,
+        mode: mode,
         diagnostics: diagnostics,
       );
 
@@ -1360,8 +1361,16 @@ class MarkdownParser {
     required String source,
     required String line,
     required int lineOffset,
+    required MarkdownMode mode,
     required List<Diagnostic> diagnostics,
   }) {
+    if (mode == MarkdownMode.writersideMarkdown &&
+        RegExp(
+          r'^\s{0,3}<video(?:\s|/?>)',
+          caseSensitive: false,
+        ).hasMatch(line)) {
+      return;
+    }
     if (!hasUnsafeHtml(line)) {
       return;
     }
@@ -1397,6 +1406,7 @@ class MarkdownParser {
       'note',
       'tip',
       'warning',
+      'video',
     }.contains(tag);
   }
 

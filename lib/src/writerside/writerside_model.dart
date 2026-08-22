@@ -422,6 +422,26 @@ class WritersideTopicTitleOverride {
   final String title;
 }
 
+class WritersideVideo {
+  const WritersideVideo({
+    required this.source,
+    required this.span,
+    this.previewSource,
+    this.width,
+    this.height,
+    this.miniPlayer = false,
+    this.borderEffect = 'none',
+  });
+
+  final String source;
+  final String? previewSource;
+  final String? width;
+  final String? height;
+  final bool miniPlayer;
+  final String borderEffect;
+  final SourceSpan span;
+}
+
 class WritersideTopic {
   const WritersideTopic({
     required this.id,
@@ -433,6 +453,7 @@ class WritersideTopic {
     required this.elementIds,
     required this.links,
     required this.images,
+    required this.videos,
     required this.variables,
     required this.includes,
     required this.diagnostics,
@@ -451,6 +472,7 @@ class WritersideTopic {
   final List<WritersideElementId> elementIds;
   final List<MarkdownLink> links;
   final List<MarkdownImage> images;
+  final List<WritersideVideo> videos;
   final List<MarkdownVariableToken> variables;
   final List<WritersideInclude> includes;
   final List<Diagnostic> diagnostics;

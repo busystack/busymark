@@ -14,6 +14,24 @@ String? resolveLocalImagePath({
   String? writersideRoot,
   String imagesDir = 'images',
   int maxRecursiveEntries = 10000,
+}) => resolveLocalMediaPath(
+  activeFilePath: activeFilePath,
+  destination: destination,
+  workspaceRoot: workspaceRoot,
+  writersideRoot: writersideRoot,
+  imagesDir: imagesDir,
+  maxRecursiveEntries: maxRecursiveEntries,
+);
+
+/// Resolves an authored local media reference inside the same roots used for
+/// Writerside images and videos.
+String? resolveLocalMediaPath({
+  required String activeFilePath,
+  required String destination,
+  String? workspaceRoot,
+  String? writersideRoot,
+  String imagesDir = 'images',
+  int maxRecursiveEntries = 10000,
 }) {
   final decoded = _decodeImageDestination(destination.trim());
   if (decoded.isEmpty) {

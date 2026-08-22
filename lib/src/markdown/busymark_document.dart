@@ -78,6 +78,7 @@ enum BusyBlockKind {
   blockquote,
   thematicBreak,
   image,
+  video,
   table,
   htmlBlock,
   writersideAdmonition,

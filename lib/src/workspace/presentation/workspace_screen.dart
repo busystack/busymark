@@ -46,6 +46,7 @@ import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
+import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../export/markdown_pdf_export_ui.dart';
 import '../../git/application/git_controller.dart';
@@ -69,6 +70,7 @@ import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_toc_editor.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
+import '../../writerside/writerside_video.dart';
 import '../workspace_controller.dart';
 import '../document_buffer.dart';
 import '../text_format_metadata.dart';
@@ -10724,6 +10726,10 @@ class _PreviewBlockView extends ConsumerWidget {
         block: displayBlock,
         workspace: workspace,
       ),
+      PreviewBlockKind.video => _PreviewVideoBlock(
+        block: displayBlock,
+        workspace: workspace,
+      ),
       PreviewBlockKind.admonition => BusyMarkDocumentAdmonition(
         style: displayBlock.attributes['style'],
         child: _PreviewInlineText(
@@ -11000,6 +11006,7 @@ class _PreviewBlockView extends ConsumerWidget {
         element == 'chapter' ? context.l10n.chapter : context.l10n.topic,
       PreviewBlockKind.code => context.l10n.codeBlock,
       PreviewBlockKind.image => context.l10n.image,
+      PreviewBlockKind.video => context.l10n.video,
       PreviewBlockKind.admonition => switch (block.attributes['style']) {
         'warning' => context.l10n.warning,
         'tip' => context.l10n.tip,
@@ -11535,6 +11542,50 @@ class _PreviewImageBlock extends ConsumerWidget {
             width: width,
             maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewVideoBlock extends ConsumerWidget {
+  const _PreviewVideoBlock({required this.block, required this.workspace});
+
+  final PreviewBlock block;
+  final Workspace? workspace;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeFilePath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath ?? '';
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(workspace),
+    );
+    final source = block.attributes['src'] ?? block.text;
+    return Padding(
+      padding: BusyMarkInsets.documentImageBlock,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: BusyMarkWritersideVideoView(
+          source: source,
+          previewSource: block.attributes['preview-src'],
+          activeFilePath: activeFilePath,
+          workspaceRoot: _imageWorkspaceRoot(workspace),
+          writersideRoot: workspace?.writersideModule?.rootPath,
+          imagesDir:
+              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: () =>
+              unawaited(_showRemoteImagesPrompt(context, ref)),
+          onOpenFailed: () => _showPreviewLinkMessage(
+            context,
+            context.l10n.couldNotOpenTarget(source),
+          ),
+          width: busyMarkVideoDimension(block.attributes['width']),
+          height: busyMarkVideoDimension(block.attributes['height']),
+          miniPlayer: block.attributes['mini-player'] == 'true',
+          borderEffect: block.attributes['border-effect'] ?? 'none',
         ),
       ),
     );

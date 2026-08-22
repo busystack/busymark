@@ -843,6 +843,14 @@
     "description": "Dialog title and toolbar tooltip for code block language."
   },
   "image": "Изображение",
+  "video": "Видео",
+  "openVideo": "Открыть видео",
+  "videoUnavailable": "Видео недоступно",
+  "videoPreview": "Предпросмотр видео",
+  "diagnosticWritersideVideoMissingSource": "У видео отсутствует атрибут src.",
+  "diagnosticWritersideVideoUnsupportedSource": "Неподдерживаемый источник видео: {source}",
+  "diagnosticWritersideVideoMissingFile": "Видеофайл не существует: {source}",
+  "diagnosticWritersideVideoMissingPreview": "Изображение предпросмотра видео не существует: {preview}",
   "@image": {
     "description": "Image command and document kind label."
   },

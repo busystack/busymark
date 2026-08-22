@@ -56,6 +56,7 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.blockquote => _blockquote(block),
       BusyBlockKind.thematicBreak => '---',
       BusyBlockKind.image => _image(block),
+      BusyBlockKind.video => block.rawSource ?? _inlineMarkdown(block.inlines),
       BusyBlockKind.table => _table(block),
       BusyBlockKind.writersideAdmonition => _writersideAdmonition(block),
       BusyBlockKind.writersideTabs ||

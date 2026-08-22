@@ -4561,6 +4561,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         text.isNotEmpty
             ? text
             : (block.attributes['src'] ?? block.rawSource ?? ''),
+      BusyBlockKind.video => block.attributes['src'] ?? block.rawSource ?? '',
       _ => text.isNotEmpty ? text : (block.rawSource ?? ''),
     };
   }

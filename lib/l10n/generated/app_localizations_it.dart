@@ -824,6 +824,37 @@ class AppLocalizationsIt extends AppLocalizations {
   String get image => 'Immagine';
 
   @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Apri video';
+
+  @override
+  String get videoUnavailable => 'Video non disponibile';
+
+  @override
+  String get videoPreview => 'Anteprima video';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Al video manca l’attributo src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Sorgente video non supportata: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Il file video non esiste: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'L’immagine di anteprima del video non esiste: $preview';
+  }
+
+  @override
   String get inlineImage => 'Immagine in linea';
 
   @override

@@ -816,6 +816,37 @@ class AppLocalizationsNb extends AppLocalizations {
   String get image => 'Bilde';
 
   @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Åpne video';
+
+  @override
+  String get videoUnavailable => 'Videoen er utilgjengelig';
+
+  @override
+  String get videoPreview => 'Videoforhåndsvisning';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videoen mangler src-attributtet.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Videokilden støttes ikke: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Videofilen finnes ikke: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Forhåndsvisningsbildet finnes ikke: $preview';
+  }
+
+  @override
   String get inlineImage => 'Innebygd bilde';
 
   @override

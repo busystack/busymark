@@ -809,6 +809,37 @@ class AppLocalizationsHi extends AppLocalizations {
   String get image => 'छवि';
 
   @override
+  String get video => 'वीडियो';
+
+  @override
+  String get openVideo => 'वीडियो खोलें';
+
+  @override
+  String get videoUnavailable => 'वीडियो उपलब्ध नहीं है';
+
+  @override
+  String get videoPreview => 'वीडियो पूर्वावलोकन';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'वीडियो में src विशेषता मौजूद नहीं है।';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'असमर्थित वीडियो स्रोत: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'वीडियो फ़ाइल मौजूद नहीं है: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'वीडियो पूर्वावलोकन छवि मौजूद नहीं है: $preview';
+  }
+
+  @override
   String get inlineImage => 'इनलाइन छवि';
 
   @override

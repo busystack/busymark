@@ -10,6 +10,7 @@ import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../core/uri_utils.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import 'writerside_model.dart';
@@ -514,6 +515,19 @@ class WritersideInstanceService {
         yield link.destination;
       }
     }
+    for (final block in _walkBusyBlocks(document.busyDocument.blocks)) {
+      if (block.kind != BusyBlockKind.video) {
+        continue;
+      }
+      final source = block.attributes['src'];
+      if (source != null) {
+        yield source;
+      }
+      final previewSource = block.attributes['preview-src'];
+      if (previewSource != null) {
+        yield previewSource;
+      }
+    }
     for (final block in document.xmlBlocks) {
       try {
         final fragment = XmlDocumentFragment.parse(block.rawXml);
@@ -525,10 +539,23 @@ class WritersideInstanceService {
           if (source != null) {
             yield source;
           }
+          if (element.name.local == 'video') {
+            final previewSource = element.getAttribute('preview-src');
+            if (previewSource != null) {
+              yield previewSource;
+            }
+          }
         }
       } on XmlParserException {
         // The Markdown parser reports malformed semantic XML separately.
       }
+    }
+  }
+
+  Iterable<BusyBlock> _walkBusyBlocks(Iterable<BusyBlock> blocks) sync* {
+    for (final block in blocks) {
+      yield block;
+      yield* _walkBusyBlocks(block.children);
     }
   }
 

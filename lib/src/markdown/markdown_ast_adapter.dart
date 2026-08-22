@@ -1,4 +1,5 @@
 import 'package:markdown/markdown.dart' as md;
+import 'package:xml/xml.dart';
 
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
@@ -129,6 +130,16 @@ class MarkdownAstAdapter {
       if (text.isEmpty) {
         return const [];
       }
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final writerside = _writersideBlockFromText(
+          rawText,
+          nextId: nextId,
+          allowVideo: true,
+        );
+        if (writerside != null) {
+          return [writerside];
+        }
+      }
       final html = _rawHtmlAdapter.parseRawHtmlBlock(rawText, nextId);
       if (html != null) {
         return [
@@ -204,6 +215,7 @@ class MarkdownAstAdapter {
       final writerside = _writersideBlockFromText(
         node.textContent,
         nextId: nextId,
+        allowVideo: mode == MarkdownMode.writersideMarkdown,
       );
       if (writerside != null) {
         return [writerside];
@@ -334,7 +346,8 @@ class MarkdownAstAdapter {
       ];
     }
 
-    if (_writersideBlockTag(tag)) {
+    if (_writersideBlockTag(tag) &&
+        (tag != 'video' || mode == MarkdownMode.writersideMarkdown)) {
       return [
         BusyBlock(
           id: nextId(),
@@ -645,7 +658,39 @@ class MarkdownAstAdapter {
   BusyBlock? _writersideBlockFromText(
     String value, {
     required String Function() nextId,
+    required bool allowVideo,
   }) {
+    try {
+      final fragment = XmlDocumentFragment.parse(value.trim());
+      final elements = fragment.children.whereType<XmlElement>().toList();
+      if (elements.length == 1 &&
+          !fragment.children.whereType<XmlText>().any(
+            (node) => node.value.trim().isNotEmpty,
+          )) {
+        final element = elements.single;
+        final tag = element.name.local.toLowerCase();
+        if (tag == 'video' && allowVideo) {
+          final text = element.innerText.trim();
+          return BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.video,
+            inlines: text.isEmpty
+                ? const []
+                : [BusyInline(kind: BusyInlineKind.text, text: text)],
+            attributes: {
+              'element': tag,
+              for (final attribute in element.attributes)
+                attribute.name.local: attribute.value,
+            },
+            rawSource: value,
+            preserveRaw: true,
+          );
+        }
+      }
+    } on Object {
+      // The established paired-tag fallback below remains tolerant while the
+      // Markdown topic is being edited.
+    }
     final match = RegExp(
       r'^\s*<([A-Za-z][A-Za-z0-9_-]*)\b([^>]*)>(.*?)</\1>\s*$',
       dotAll: true,
@@ -904,6 +949,7 @@ class MarkdownAstAdapter {
       'tab',
       'procedure',
       'chapter',
+      'video',
     }.contains(tag);
   }
 
@@ -916,6 +962,7 @@ class MarkdownAstAdapter {
       'note' || 'tip' || 'warning' => BusyBlockKind.writersideAdmonition,
       'tabs' || 'tab' => BusyBlockKind.writersideTabs,
       'procedure' => BusyBlockKind.writersideProcedure,
+      'video' => BusyBlockKind.video,
       _ => BusyBlockKind.writersideRawXml,
     };
   }
@@ -990,7 +1037,7 @@ class MarkdownAstAdapter {
 
       if (mode == MarkdownMode.writersideMarkdown &&
           RegExp(
-            r'^\s{0,3}<math(?:\s[^>]*)?>',
+            r'^\s{0,3}<(?:math|video)(?:\s|/?>)',
             caseSensitive: false,
           ).hasMatch(line)) {
         index += 1;

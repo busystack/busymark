@@ -823,6 +823,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get image => 'Изображение';
 
   @override
+  String get video => 'Видео';
+
+  @override
+  String get openVideo => 'Открыть видео';
+
+  @override
+  String get videoUnavailable => 'Видео недоступно';
+
+  @override
+  String get videoPreview => 'Предпросмотр видео';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'У видео отсутствует атрибут src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Неподдерживаемый источник видео: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Видеофайл не существует: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Изображение предпросмотра видео не существует: $preview';
+  }
+
+  @override
   String get inlineImage => 'Встроенное изображение';
 
   @override

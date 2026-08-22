@@ -94,6 +94,7 @@ const unsafeHtmlTags = {
   'iframe',
   'object',
   'embed',
+  'video',
   'applet',
   'canvas',
   'svg',

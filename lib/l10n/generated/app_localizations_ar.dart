@@ -810,6 +810,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String get image => 'صورة';
 
   @override
+  String get video => 'فيديو';
+
+  @override
+  String get openVideo => 'فتح الفيديو';
+
+  @override
+  String get videoUnavailable => 'الفيديو غير متاح';
+
+  @override
+  String get videoPreview => 'معاينة الفيديو';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource => 'يفتقد الفيديو سمة src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'مصدر فيديو غير مدعوم: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'ملف الفيديو غير موجود: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'صورة معاينة الفيديو غير موجودة: $preview';
+  }
+
+  @override
   String get inlineImage => 'صورة مضمنة';
 
   @override

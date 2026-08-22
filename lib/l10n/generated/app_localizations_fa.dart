@@ -813,6 +813,37 @@ class AppLocalizationsFa extends AppLocalizations {
   String get image => 'تصویر';
 
   @override
+  String get video => 'ویدیو';
+
+  @override
+  String get openVideo => 'باز کردن ویدیو';
+
+  @override
+  String get videoUnavailable => 'ویدیو در دسترس نیست';
+
+  @override
+  String get videoPreview => 'پیش‌نمایش ویدیو';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'ویژگی src برای ویدیو وجود ندارد.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'منبع ویدیو پشتیبانی نمی‌شود: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'فایل ویدیو وجود ندارد: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'تصویر پیش‌نمایش ویدیو وجود ندارد: $preview';
+  }
+
+  @override
   String get inlineImage => 'تصویر درون‌خطی';
 
   @override

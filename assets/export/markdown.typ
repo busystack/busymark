@@ -274,6 +274,28 @@
     } else {
       link(destination, image-body)
     })
+  } else if kind == "video" {
+    let asset = value-or(block-data, "asset", "")
+    let source = value-or(block-data, "source", "")
+    let body = if asset == "" {
+      block(
+        width: 100%,
+        fill: rgb("f7f7f8"),
+        inset: 10pt,
+        radius: 3pt,
+        align(center, emph("Video: " + source)),
+      )
+    } else {
+      block(
+        breakable: false,
+        align(center, image(asset, width: 100%, fit: "contain", alt: "Video")),
+      )
+    }
+    block(
+      above: 0.8em,
+      below: 0.8em,
+      if source.starts-with("https://") { link(source, body) } else { body },
+    )
   } else if kind == "table" {
     render-table(block-data)
   } else if kind == "visualization" {

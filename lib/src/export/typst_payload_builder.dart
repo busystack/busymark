@@ -30,6 +30,8 @@ class TypstPayloadBuilder {
         ],
       if (block.children.isNotEmpty)
         'children': [for (final child in block.children) _block(child, assets)],
+      if (block.kind == MarkdownExportBlockKind.video)
+        'asset': assets[block.attributes['preview']] ?? '',
       ...block.attributes,
     };
   }

@@ -830,6 +830,37 @@ class AppLocalizationsDe extends AppLocalizations {
   String get image => 'Bild';
 
   @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Video öffnen';
+
+  @override
+  String get videoUnavailable => 'Video nicht verfügbar';
+
+  @override
+  String get videoPreview => 'Videovorschau';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Dem Video fehlt das src-Attribut.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Nicht unterstützte Videoquelle: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Videodatei ist nicht vorhanden: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Videovorschaubild ist nicht vorhanden: $preview';
+  }
+
+  @override
   String get inlineImage => 'Inline-Bild';
 
   @override

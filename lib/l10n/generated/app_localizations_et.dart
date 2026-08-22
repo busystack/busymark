@@ -817,6 +817,37 @@ class AppLocalizationsEt extends AppLocalizations {
   String get image => 'Pilt';
 
   @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Ava video';
+
+  @override
+  String get videoUnavailable => 'Video pole saadaval';
+
+  @override
+  String get videoPreview => 'Video eelvaade';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videol puudub atribuut src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Toetamata videoallikas: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Videofaili pole olemas: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Video eelvaatepilti pole olemas: $preview';
+  }
+
+  @override
   String get inlineImage => 'Reasisene pilt';
 
   @override

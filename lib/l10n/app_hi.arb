@@ -843,6 +843,14 @@
     "description": "Dialog title and toolbar tooltip for code block language."
   },
   "image": "छवि",
+  "video": "वीडियो",
+  "openVideo": "वीडियो खोलें",
+  "videoUnavailable": "वीडियो उपलब्ध नहीं है",
+  "videoPreview": "वीडियो पूर्वावलोकन",
+  "diagnosticWritersideVideoMissingSource": "वीडियो में src विशेषता मौजूद नहीं है।",
+  "diagnosticWritersideVideoUnsupportedSource": "असमर्थित वीडियो स्रोत: {source}",
+  "diagnosticWritersideVideoMissingFile": "वीडियो फ़ाइल मौजूद नहीं है: {source}",
+  "diagnosticWritersideVideoMissingPreview": "वीडियो पूर्वावलोकन छवि मौजूद नहीं है: {preview}",
   "@image": {
     "description": "Image command and document kind label."
   },

@@ -824,6 +824,37 @@ class AppLocalizationsPt extends AppLocalizations {
   String get image => 'Imagem';
 
   @override
+  String get video => 'Vídeo';
+
+  @override
+  String get openVideo => 'Abrir vídeo';
+
+  @override
+  String get videoUnavailable => 'Vídeo indisponível';
+
+  @override
+  String get videoPreview => 'Pré-visualização do vídeo';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'O vídeo não tem o atributo src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Fonte de vídeo não suportada: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'O ficheiro de vídeo não existe: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'A imagem de pré-visualização do vídeo não existe: $preview';
+  }
+
+  @override
   String get inlineImage => 'Imagem embutida';
 
   @override

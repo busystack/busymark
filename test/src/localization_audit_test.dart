@@ -613,6 +613,7 @@ const _sharedEnglishMatches = <String>{
   'languageHindi',
   'languageEstonian',
   'writerside',
+  'video',
   'xml',
   'fileTypeMarkdown',
   'pdfPageSizeA4',

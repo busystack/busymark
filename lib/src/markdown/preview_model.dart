@@ -15,6 +15,7 @@ enum PreviewBlockKind {
   quote,
   thematicBreak,
   image,
+  video,
   table,
   container,
   raw,
@@ -251,6 +252,11 @@ class BusyMarkPreviewBuilder {
             : block.inlines.first.text,
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         attributes: block.attributes,
+      ),
+      BusyBlockKind.video => PreviewBlock(
+        kind: PreviewBlockKind.video,
+        text: block.attributes['src'] ?? block.plainText,
+        attributes: {...block.attributes, 'editorBlockId': block.id},
       ),
       BusyBlockKind.table => PreviewBlock(
         kind: PreviewBlockKind.table,

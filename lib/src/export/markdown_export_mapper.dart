@@ -2,6 +2,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/uri_utils.dart';
 import '../markdown/busymark_document.dart';
+import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
 
 const double busyMarkPdfBodyTextSize = 10.5;
@@ -170,6 +171,7 @@ class MarkdownExportMapper {
         kind: MarkdownExportBlockKind.thematicBreak,
       ),
       BusyBlockKind.image => _mapImageBlock(block),
+      BusyBlockKind.video => _mapVideoBlock(block),
       BusyBlockKind.table => _mapTable(block, blockOverrides),
       BusyBlockKind.htmlBlock when block.children.isNotEmpty =>
         MarkdownExportBlock(
@@ -262,6 +264,23 @@ class MarkdownExportMapper {
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.image,
       inlines: _mapInlines(block.inlines),
+    );
+  }
+
+  MarkdownExportBlock _mapVideoBlock(BusyBlock block) {
+    final source = block.attributes['src']?.trim() ?? '';
+    final preview = writersideVideoPreviewSource(
+      source,
+      block.attributes['preview-src'],
+    );
+    return MarkdownExportBlock(
+      kind: MarkdownExportBlockKind.video,
+      attributes: {
+        'source': source,
+        if (preview.isNotEmpty) 'preview': preview,
+        if (block.attributes['width'] case final width?) 'width': width,
+        if (block.attributes['height'] case final height?) 'height': height,
+      },
     );
   }
 

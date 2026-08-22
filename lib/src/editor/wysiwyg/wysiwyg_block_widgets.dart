@@ -12,10 +12,12 @@ import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
+import '../writerside_video_view.dart';
 import '../../markdown/busymark_document.dart';
 import '../../math/math_widget.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
+import '../../writerside/writerside_video.dart';
 import '../editor_text_context_menu.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_visualization_navigation.dart';
@@ -66,7 +68,8 @@ EdgeInsets busyMarkWysiwygOuterPadding(
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
     BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
-    BusyBlockKind.image => BusyMarkInsets.documentImageBlock,
+    BusyBlockKind.image ||
+    BusyBlockKind.video => BusyMarkInsets.documentImageBlock,
     BusyBlockKind.thematicBreak => EdgeInsets.zero,
     BusyBlockKind.unorderedListItem ||
     BusyBlockKind.orderedListItem ||
@@ -215,7 +218,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final style = _textStyle(context);
     final prefix = _prefix(context);
     final readOnly = _readOnly;
-    final tapHandler = block.kind == BusyBlockKind.table
+    final VoidCallback? tapHandler = block.kind == BusyBlockKind.video
+        ? null
+        : block.kind == BusyBlockKind.table
         ? onFocused
         : block.kind == BusyBlockKind.image
         ? _editImageBlock
@@ -350,6 +355,26 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           editRevision: editRevision,
           onMathDiagnostic: onMathDiagnostic,
         ),
+      );
+    }
+    if (block.kind == BusyBlockKind.video) {
+      final source = block.attributes['src'] ?? '';
+      return BusyMarkWritersideVideoView(
+        source: source,
+        previewSource: block.attributes['preview-src'],
+        activeFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
+        onOpenFailed: () => ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(context.l10n.couldNotOpenTarget(source))),
+        ),
+        width: busyMarkVideoDimension(block.attributes['width']),
+        height: busyMarkVideoDimension(block.attributes['height']),
+        miniPlayer: block.attributes['mini-player'] == 'true',
+        borderEffect: block.attributes['border-effect'] ?? 'none',
       );
     }
     if (_isRenderedHtmlBlock) {
@@ -558,7 +583,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => fontSize * 2.4,
-      BusyBlockKind.image => BusyMarkSizes.documentImageMinHeight,
+      BusyBlockKind.image ||
+      BusyBlockKind.video => BusyMarkSizes.documentImageMinHeight,
       _ => 0,
     };
   }

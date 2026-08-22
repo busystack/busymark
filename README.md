@@ -86,6 +86,9 @@ build settings, Markdown import, status, ID refactoring, instance groups,
 conditional and reusable TOC sections, and cross-instance topic references.
 See [Writerside instances](docs/writerside-instances.md) for behavior, safety
 rules, an openable example, and the authoritative JetBrains references.
+Writerside `<video>` elements are recognized in Markdown and XML topics, with
+local preview images plus HTTPS YouTube and Vimeo sources. See
+[Writerside videos](docs/videos.md) for syntax and preview/export behavior.
 
 Folder workspaces show all files and directories, including hidden project
 files such as `.gitignore`. Unsupported and binary files remain visible but are

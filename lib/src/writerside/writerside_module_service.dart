@@ -13,6 +13,7 @@ import '../core/uri_utils.dart';
 import 'writerside_model.dart';
 import 'writerside_parsers.dart';
 import 'writerside_tree_resolver.dart';
+import 'writerside_video.dart';
 
 class WritersideModuleService {
   const WritersideModuleService({
@@ -1081,6 +1082,69 @@ class WritersideModuleService {
               filePath: topic.filePath,
               args: {'destination': image.destination},
               sourceSpan: image.span,
+            ),
+          );
+        }
+      }
+      for (final video in topic.videos) {
+        final source = video.source.trim();
+        if (source.isEmpty) {
+          continue;
+        }
+        final uri = Uri.tryParse(source);
+        if (uri != null && uri.hasScheme) {
+          if (uri.scheme.toLowerCase() != 'https' ||
+              !isSupportedWritersideVideoHost(uri.host)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.video.unsupported-source',
+                severity: DiagnosticSeverity.warning,
+                filePath: topic.filePath,
+                args: {'source': source},
+                sourceSpan: video.span,
+              ),
+            );
+          }
+          continue;
+        }
+        if (!busyMarkWritersideVideoExtensions.contains(
+              p.extension(source).toLowerCase(),
+            ) ||
+            !_localImageExistsInAnyRoot(
+              module,
+              topic,
+              source,
+              validatedImageDirs,
+            )) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.video.missing-file',
+              severity: DiagnosticSeverity.error,
+              filePath: topic.filePath,
+              args: {'source': source},
+              sourceSpan: video.span,
+            ),
+          );
+          continue;
+        }
+        final preview = writersideVideoPreviewSource(
+          source,
+          video.previewSource,
+        );
+        if (preview.isEmpty ||
+            !_localImageExistsInAnyRoot(
+              module,
+              topic,
+              preview,
+              validatedImageDirs,
+            )) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.video.missing-preview',
+              severity: DiagnosticSeverity.warning,
+              filePath: topic.filePath,
+              args: {'preview': preview},
+              sourceSpan: video.span,
             ),
           );
         }

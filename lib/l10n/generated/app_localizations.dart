@@ -1593,6 +1593,54 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get image;
 
+  /// No description provided for @video.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get video;
+
+  /// No description provided for @openVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Open video'**
+  String get openVideo;
+
+  /// No description provided for @videoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video unavailable'**
+  String get videoUnavailable;
+
+  /// No description provided for @videoPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Video preview'**
+  String get videoPreview;
+
+  /// No description provided for @diagnosticWritersideVideoMissingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Video is missing its src attribute.'**
+  String get diagnosticWritersideVideoMissingSource;
+
+  /// No description provided for @diagnosticWritersideVideoUnsupportedSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported video source: {source}'**
+  String diagnosticWritersideVideoUnsupportedSource(String source);
+
+  /// No description provided for @diagnosticWritersideVideoMissingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Video file does not exist: {source}'**
+  String diagnosticWritersideVideoMissingFile(String source);
+
+  /// No description provided for @diagnosticWritersideVideoMissingPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Video preview image does not exist: {preview}'**
+  String diagnosticWritersideVideoMissingPreview(String preview);
+
   /// Inline image command label.
   ///
   /// In en, this message translates to:

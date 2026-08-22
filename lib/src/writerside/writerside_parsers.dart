@@ -4,6 +4,7 @@ import 'package:xml/xml.dart';
 import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import 'writerside_model.dart';
@@ -1004,6 +1005,39 @@ class WritersideTopicParser {
         )
         .toList();
     final titleOverrides = _topicTitleOverrides(source);
+    final videos = <WritersideVideo>[];
+    void collectVideos(Iterable<BusyBlock> blocks) {
+      for (final block in blocks) {
+        if (block.kind == BusyBlockKind.video) {
+          final src = block.attributes['src']?.trim() ?? '';
+          videos.add(
+            WritersideVideo(
+              source: src,
+              previewSource: _trimmedOrNull(block.attributes['preview-src']),
+              width: _trimmedOrNull(block.attributes['width']),
+              height: _trimmedOrNull(block.attributes['height']),
+              miniPlayer: block.attributes['mini-player'] == 'true',
+              borderEffect: block.attributes['border-effect'] ?? 'none',
+              span: block.sourceSpan ?? SourceSpan.entireFile(filePath, source),
+            ),
+          );
+        }
+        collectVideos(block.children);
+      }
+    }
+
+    collectVideos(parsed.busyDocument.blocks);
+    final topicDiagnostics = <Diagnostic>[
+      ..._writersideMarkdownDiagnostics(parsed.diagnostics),
+      for (final video in videos)
+        if (video.source.isEmpty)
+          Diagnostic(
+            code: 'writerside.video.missing-source',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            sourceSpan: video.span,
+          ),
+    ];
     return WritersideTopic(
       id: p.basenameWithoutExtension(filePath),
       filePath: filePath,
@@ -1014,9 +1048,10 @@ class WritersideTopicParser {
       elementIds: ids,
       links: parsed.links,
       images: parsed.images,
+      videos: videos,
       variables: parsed.variables,
       includes: includes,
-      diagnostics: _writersideMarkdownDiagnostics(parsed.diagnostics),
+      diagnostics: sortDiagnostics(topicDiagnostics),
       webFileName: _webFileName(source),
       markdown: parsed,
       titleOverrides: titleOverrides,
@@ -1035,6 +1070,7 @@ class WritersideTopicParser {
     final ids = <WritersideElementId>[];
     final links = <MarkdownLink>[];
     final images = <MarkdownImage>[];
+    final videos = <WritersideVideo>[];
     final variables = <MarkdownVariableToken>[];
     final includes = <WritersideInclude>[];
     final titleOverrides = <WritersideTopicTitleOverride>[];
@@ -1164,6 +1200,32 @@ class WritersideTopicParser {
                 span: _elementSpan(filePath, source, 'img', src),
               ),
             );
+          case 'video':
+            final src = element.getAttribute('src')?.trim() ?? '';
+            final span = _elementSpan(filePath, source, 'video', src);
+            videos.add(
+              WritersideVideo(
+                source: src,
+                previewSource: _trimmedOrNull(
+                  element.getAttribute('preview-src'),
+                ),
+                width: _trimmedOrNull(element.getAttribute('width')),
+                height: _trimmedOrNull(element.getAttribute('height')),
+                miniPlayer: element.getAttribute('mini-player') == 'true',
+                borderEffect: element.getAttribute('border-effect') ?? 'none',
+                span: span,
+              ),
+            );
+            if (src.isEmpty) {
+              diagnostics.add(
+                Diagnostic(
+                  code: 'writerside.video.missing-source',
+                  severity: DiagnosticSeverity.warning,
+                  filePath: filePath,
+                  sourceSpan: span,
+                ),
+              );
+            }
           case 'include':
             includes.add(
               WritersideInclude(
@@ -1209,6 +1271,7 @@ class WritersideTopicParser {
       elementIds: ids,
       links: links,
       images: images,
+      videos: videos,
       variables: variables,
       includes: includes,
       diagnostics: sortDiagnostics(diagnostics),
@@ -1261,6 +1324,11 @@ String? _webFileName(String source) {
   ).firstMatch(source);
   final value = match?.group(1)?.trim();
   return value == null || value.isEmpty ? null : value;
+}
+
+String? _trimmedOrNull(String? value) {
+  final trimmed = value?.trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 Diagnostic _xmlError(
