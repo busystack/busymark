@@ -2717,6 +2717,8 @@
   "workspaceReplaceDiskContent": "محتوای ذخیره‌شده روی دیسک",
   "selectFileMatches": "انتخاب هر {count} مورد",
   "workspaceReplaceApplied": "{matches} مورد در {files} فایل جایگزین شد؛ {skipped} مورد نادیده گرفته شد.",
+  "documentFormatWithFinalNewline": "⁨{encoding}⁩ · ⁨{lineEnding}⁩ · خط جدید پایانی",
+  "documentFormatWithoutFinalNewline": "⁨{encoding}⁩ · ⁨{lineEnding}⁩ · بدون خط جدید پایانی",
   "normalizeLineEndings": "یکسان‌سازی پایان خط‌ها",
   "workspaceReplaceMixedLineEndings": "فایل ⁨{fileName}⁩ پایان خط‌های ترکیبی دارد. پیش از جایگزینی قالب را انتخاب کنید.",
   "mixedLineEndingsSavePrompt": "این سند پایان خط‌های ترکیبی دارد. یک قالب انتخاب کنید.",

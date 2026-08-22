@@ -2714,6 +2714,8 @@
   "workspaceReplaceDiskContent": "Zawartość zapisana na dysku",
   "selectFileMatches": "Wybierz wszystkie dopasowania ({count})",
   "workspaceReplaceApplied": "Zamieniono {matches} dopasowań w {files} plikach; pominięto {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Końcowy znak nowego wiersza",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Brak końcowego znaku nowego wiersza",
   "normalizeLineEndings": "Normalizuj zakończenia wierszy",
   "workspaceReplaceMixedLineEndings": "{fileName} używa mieszanych zakończeń wierszy. Wybierz format przed zamianą.",
   "mixedLineEndingsSavePrompt": "Ten dokument zawiera mieszane zakończenia wierszy. Wybierz format.",

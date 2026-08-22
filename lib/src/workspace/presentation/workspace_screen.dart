@@ -74,6 +74,7 @@ import '../../writerside/writerside_topic_removal_service.dart';
 import '../../writerside/writerside_video.dart';
 import '../workspace_controller.dart';
 import '../document_buffer.dart';
+import 'document_format_indicator.dart';
 import '../text_format_metadata.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
@@ -7872,29 +7873,41 @@ class _EditorTabStrip extends ConsumerWidget {
       ),
       child: SizedBox(
         height: BusyMarkSizes.paneHeaderHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(
-            BusyMarkSpacing.sm,
-            BusyMarkSpacing.xs,
-            BusyMarkSpacing.sm,
-            0,
-          ),
-          itemBuilder: (context, index) {
-            final entry = entries[index];
-            return _WorkspaceTabButton(
-              title: _tabTitle(context, workspace, entry),
-              icon: _tabIcon(workspace, entry),
-              diff: entry.kind == WorkspaceTabKind.gitDiff,
-              active: entry.active,
-              dirty: _tabDirty(workspace, entry),
-              onSelected: () => _selectTab(context, ref, workspace, entry),
-              onClose: () => _closeTab(context, ref, workspace, entry),
-            );
-          },
-          separatorBuilder: (context, index) =>
-              const SizedBox(width: BusyMarkSpacing.xs),
-          itemCount: entries.length,
+        child: Row(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(
+                  BusyMarkSpacing.sm,
+                  BusyMarkSpacing.xs,
+                  BusyMarkSpacing.sm,
+                  0,
+                ),
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  return _WorkspaceTabButton(
+                    title: _tabTitle(context, workspace, entry),
+                    icon: _tabIcon(workspace, entry),
+                    diff: entry.kind == WorkspaceTabKind.gitDiff,
+                    active: entry.active,
+                    dirty: _tabDirty(workspace, entry),
+                    onSelected: () =>
+                        _selectTab(context, ref, workspace, entry),
+                    onClose: () => _closeTab(context, ref, workspace, entry),
+                  );
+                },
+                separatorBuilder: (context, index) =>
+                    const SizedBox(width: BusyMarkSpacing.xs),
+                itemCount: entries.length,
+              ),
+            ),
+            if (gitState.selectedDiffForDisplay == null)
+              if (state.activeBuffer case final buffer?) ...[
+                BusyMarkDocumentFormatIndicator(format: buffer.format),
+                const SizedBox(width: BusyMarkSpacing.xs),
+              ],
+          ],
         ),
       ),
     );

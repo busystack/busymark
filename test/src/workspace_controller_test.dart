@@ -1095,6 +1095,108 @@ void main() {
   });
 
   test(
+    'manual save waits for an in-flight autosave of the same buffer',
+    () async {
+      final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller;
+
+      await controller.openPath(service.path);
+      controller.updateActiveText('# Autosave revision\n');
+      final autosave = controller.autoSaveActiveIfNeeded();
+      await service.firstSaveStarted.future;
+
+      controller.updateActiveText('# Manual revision\n');
+      final manualSave = controller.saveActive();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.savedTexts, ['# Autosave revision\n']);
+      service.releaseFirstSave();
+
+      expect(await autosave, isTrue);
+      expect(await manualSave, isTrue);
+      expect(service.completedTexts, [
+        '# Autosave revision\n',
+        '# Manual revision\n',
+      ]);
+      expect(service.diskText, '# Manual revision\n');
+      expect(controller.state.isDirty, isFalse);
+    },
+  );
+
+  test('Save All waits for an in-flight autosave of the same buffer', () async {
+    final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+    final harness = await _createControllerHarness(service: service);
+    final controller = harness.controller;
+
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Autosave revision\n');
+    final autosave = controller.autoSaveActiveIfNeeded();
+    await service.firstSaveStarted.future;
+
+    controller.updateActiveText('# Save All revision\n');
+    final saveAll = controller.saveAll();
+    await Future<void>.delayed(Duration.zero);
+    expect(service.savedTexts, ['# Autosave revision\n']);
+
+    service.releaseFirstSave();
+    expect(await autosave, isTrue);
+    expect((await saveAll).succeeded, isTrue);
+    expect(service.diskText, '# Save All revision\n');
+    expect(controller.state.isDirty, isFalse);
+  });
+
+  test('Save As waits for an in-flight autosave of the same buffer', () async {
+    final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+    final harness = await _createControllerHarness(service: service);
+    final controller = harness.controller;
+
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Autosave revision\n');
+    final autosave = controller.autoSaveActiveIfNeeded();
+    await service.firstSaveStarted.future;
+
+    controller.updateActiveText('# Save As revision\n');
+    final saveAs = controller.saveActiveAs('/tmp/busymark-save-as-copy.md');
+    await Future<void>.delayed(Duration.zero);
+    expect(service.savedTexts, ['# Autosave revision\n']);
+
+    service.releaseFirstSave();
+    expect(await autosave, isTrue);
+    expect(await saveAs, isTrue);
+    expect(service.diskText, '# Save As revision\n');
+    expect(
+      controller.state.activeBuffer?.filePath,
+      '/tmp/busymark-save-as-copy.md',
+    );
+    expect(controller.state.isDirty, isFalse);
+  });
+
+  test('clean shutdown waits for in-flight document writes', () async {
+    final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+    final harness = await _createControllerHarness(service: service);
+    final controller = harness.controller;
+
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Pending autosave\n');
+    final autosave = controller.autoSaveActiveIfNeeded();
+    await service.firstSaveStarted.future;
+
+    var shutdownCompleted = false;
+    final shutdown = controller.markCleanShutdown().then(
+      (_) => shutdownCompleted = true,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(shutdownCompleted, isFalse);
+
+    service.releaseFirstSave();
+    expect(await autosave, isTrue);
+    await shutdown;
+    expect(shutdownCompleted, isTrue);
+    expect(service.diskText, '# Pending autosave\n');
+  });
+
+  test(
     'save refuses to overwrite external file changes without force',
     () async {
       final directory = await Directory.systemTemp.createTemp('busymark-save-');
@@ -1297,6 +1399,44 @@ void main() {
     );
   });
 
+  test('monitors saved standalone tabs outside the workspace root', () async {
+    final firstDirectory = await Directory.systemTemp.createTemp(
+      'busymark-monitor-first-',
+    );
+    final secondDirectory = await Directory.systemTemp.createTemp(
+      'busymark-monitor-second-',
+    );
+    addTearDown(() => firstDirectory.delete(recursive: true));
+    addTearDown(() => secondDirectory.delete(recursive: true));
+    final firstPath = p.join(firstDirectory.path, 'first.md');
+    final secondPath = p.join(secondDirectory.path, 'second.md');
+    final monitor = WorkspaceFileMonitor(
+      debounce: const Duration(milliseconds: 10),
+    );
+    addTearDown(monitor.dispose);
+    final harness = await _createControllerHarness(fileMonitor: monitor);
+
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('First\n');
+    expect(await harness.controller.saveActiveAs(firstPath), isTrue);
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('Second\n');
+    expect(await harness.controller.saveActiveAs(secondPath), isTrue);
+
+    await File(secondPath).writeAsString('Changed externally\n');
+    await _waitFor(
+      () =>
+          harness.controller.state.activeBuffer?.text == 'Changed externally\n',
+    );
+
+    expect(harness.controller.state.activeBuffer?.filePath, secondPath);
+    expect(
+      harness.controller.state.activeBuffer?.diskState,
+      DocumentDiskState.present,
+    );
+    expect(harness.controller.state.workspace?.rootPath, firstDirectory.path);
+  });
+
   test('restored sessions retain tabs whose files are missing', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-missing-session-file-',
@@ -1354,6 +1494,57 @@ void main() {
     expect(harness.controller.state.activeBuffer?.text, isEmpty);
     expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
   });
+
+  test(
+    'mixed untitled and saved session restores as a standalone workspace',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-mixed-standalone-session-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final savedFile = File(p.join(directory.path, 'saved.md'));
+      final sessionStore = MemoryDocumentSessionStore();
+      final recoveryStore = MemoryDocumentRecoveryStore();
+      final initial = await _createControllerHarness(
+        sessionStore: sessionStore,
+        recoveryStore: recoveryStore,
+      );
+
+      await initial.controller.createMarkdownFile();
+      initial.controller.updateActiveText('First untitled text');
+      await initial.controller.createMarkdownFile();
+      initial.controller.updateActiveText('Second saved text');
+      expect(await initial.controller.saveActiveAs(savedFile.path), isTrue);
+      await initial.controller.flushPersistence();
+
+      expect(sessionStore.value?.workspacePath, savedFile.path);
+
+      final restored = await _createControllerHarness(
+        sessionStore: sessionStore,
+        recoveryStore: recoveryStore,
+      );
+      expect(await restored.controller.restorePreviousSession(), isTrue);
+      expect(
+        restored.controller.state.workspace?.kind,
+        WorkspaceKind.singleMarkdown,
+      );
+      expect(restored.controller.state.documentBuffers, hasLength(2));
+      expect(
+        restored.controller.state.documentBuffers.any(
+          (buffer) => buffer.isUntitled && buffer.text == 'First untitled text',
+        ),
+        isTrue,
+      );
+      expect(
+        restored.controller.state.documentBuffers.any(
+          (buffer) =>
+              buffer.filePath == savedFile.path &&
+              buffer.text == 'Second saved text',
+        ),
+        isTrue,
+      );
+    },
+  );
 
   test('clean marker cannot hide remaining recovery entries', () async {
     final recoveryStore = MemoryDocumentRecoveryStore();
@@ -1693,6 +1884,8 @@ class _AutosaveWorkspaceService extends WorkspaceService {
   final bool pauseFirstSave;
   final path = '/tmp/busymark-autosave.md';
   final savedTexts = <String>[];
+  final completedTexts = <String>[];
+  String? diskText;
   final firstSaveStarted = Completer<void>();
   final _releaseFirstSave = Completer<void>();
 
@@ -1744,6 +1937,15 @@ class _AutosaveWorkspaceService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    return _recordSave(text);
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+    return _recordSave(text);
+  }
+
+  Future<WorkspaceFileSnapshot> _recordSave(String text) async {
     savedTexts.add(text);
     if (pauseFirstSave && savedTexts.length == 1) {
       firstSaveStarted.complete();
@@ -1751,6 +1953,8 @@ class _AutosaveWorkspaceService extends WorkspaceService {
     } else if (!firstSaveStarted.isCompleted) {
       firstSaveStarted.complete();
     }
+    completedTexts.add(text);
+    diskText = text;
     return WorkspaceFileSnapshot(
       modifiedAt: DateTime(2026, 1, savedTexts.length + 1),
       size: text.length,

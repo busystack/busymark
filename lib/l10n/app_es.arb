@@ -2719,6 +2719,8 @@
   "workspaceReplaceDiskContent": "Contenido guardado en disco",
   "selectFileMatches": "Seleccionar las {count} coincidencias",
   "workspaceReplaceApplied": "Se reemplazaron {matches} coincidencias en {files} archivos; se omitieron {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Salto de línea final",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Sin salto de línea final",
   "normalizeLineEndings": "Normalizar finales de línea",
   "workspaceReplaceMixedLineEndings": "{fileName} usa finales de línea mezclados. Elige el formato antes de reemplazar.",
   "mixedLineEndingsSavePrompt": "Este documento contiene finales de línea mezclados. Elige un formato.",

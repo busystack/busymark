@@ -24,10 +24,11 @@ class WorkspaceFileMonitor {
 
   final Duration debounce;
   final _controller = StreamController<WorkspaceFileMonitorEvent>.broadcast();
-  StreamSubscription<FileSystemEvent>? _subscription;
+  final _subscriptions = <String, StreamSubscription<FileSystemEvent>>{};
   Timer? _debounceTimer;
   final _pending = <String, WorkspaceFileMonitorEvent>{};
   Set<String> _openFilePaths = const {};
+  String? _rootPath;
 
   Stream<WorkspaceFileMonitorEvent> get events => _controller.stream;
 
@@ -36,29 +37,29 @@ class WorkspaceFileMonitor {
     required Iterable<String> openFilePaths,
   }) async {
     await stop();
-    final normalizedRoot = p.normalize(p.absolute(rootPath));
+    _rootPath = p.normalize(p.absolute(rootPath));
     _openFilePaths = {
       for (final path in openFilePaths) p.normalize(p.absolute(path)),
     };
-    final directory = Directory(normalizedRoot);
-    if (!directory.existsSync()) {
-      return;
-    }
-    _subscription = directory
-        .watch(recursive: true, events: FileSystemEvent.all)
-        .listen(_receive, onError: (_) {});
+    _syncSubscriptions();
   }
 
   void updateOpenFilePaths(Iterable<String> paths) {
     _openFilePaths = {for (final path in paths) p.normalize(p.absolute(path))};
+    _syncSubscriptions();
   }
 
   Future<void> stop() async {
     _debounceTimer?.cancel();
     _debounceTimer = null;
     _pending.clear();
-    await _subscription?.cancel();
-    _subscription = null;
+    final subscriptions = _subscriptions.values.toList(growable: false);
+    _subscriptions.clear();
+    await Future.wait([
+      for (final subscription in subscriptions) subscription.cancel(),
+    ]);
+    _rootPath = null;
+    _openFilePaths = const {};
   }
 
   Future<void> dispose() async {
@@ -66,7 +67,47 @@ class WorkspaceFileMonitor {
     await _controller.close();
   }
 
-  void _receive(FileSystemEvent event) {
+  void _syncSubscriptions() {
+    final rootPath = _rootPath;
+    if (rootPath == null) {
+      return;
+    }
+    final desired = <String, bool>{
+      if (Directory(rootPath).existsSync()) rootPath: true,
+      for (final path in _openFilePaths)
+        if (!p.equals(p.dirname(path), rootPath) &&
+            !p.isWithin(rootPath, path) &&
+            Directory(p.dirname(path)).existsSync())
+          p.dirname(path): false,
+    };
+    for (final path in _subscriptions.keys.toList(growable: false)) {
+      if (desired.containsKey(path)) {
+        continue;
+      }
+      final subscription = _subscriptions.remove(path);
+      if (subscription != null) {
+        unawaited(subscription.cancel());
+      }
+    }
+    for (final entry in desired.entries) {
+      if (_subscriptions.containsKey(entry.key)) {
+        continue;
+      }
+      try {
+        _subscriptions[entry.key] = Directory(entry.key)
+            .watch(recursive: entry.value, events: FileSystemEvent.all)
+            .listen(
+              (event) => _receive(event, workspaceRoot: entry.value),
+              onError: (_) {},
+            );
+      } on FileSystemException {
+        // A directory can disappear between existsSync and watch(). A later
+        // open-path update or monitor restart will attempt it again.
+      }
+    }
+  }
+
+  void _receive(FileSystemEvent event, {required bool workspaceRoot}) {
     final path = p.normalize(p.absolute(event.path));
     if (_isBusyMarkTemporaryPath(path)) {
       return;
@@ -78,6 +119,9 @@ class WorkspaceFileMonitor {
     final openPath =
         _openFilePaths.contains(path) ||
         (destination != null && _openFilePaths.contains(destination));
+    if (!workspaceRoot && !openPath) {
+      return;
+    }
     final kind = event is FileSystemDeleteEvent
         ? WorkspaceFileEventKind.deleted
         : event is FileSystemMoveEvent

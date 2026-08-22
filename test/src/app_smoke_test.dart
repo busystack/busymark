@@ -1889,8 +1889,14 @@ void main() {
     await controller.openActiveFile(third.path);
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('LF'), findsNothing);
+    expect(find.text('LF'), findsOneWidget);
     expect(find.text('CRLF'), findsNothing);
+    expect(
+      find.ancestor(of: find.text('LF'), matching: find.byType(InkWell)),
+      findsNothing,
+    );
+    expect(find.textContaining('UTF-8'), findsNothing);
+    expect(find.textContaining('Final newline'), findsNothing);
     expect(
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path, third.path],

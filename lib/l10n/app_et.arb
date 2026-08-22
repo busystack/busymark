@@ -1907,6 +1907,8 @@
   "workspaceReplaceDiskContent": "Kettale salvestatud sisu",
   "selectFileMatches": "Vali kõik {count} vastet",
   "workspaceReplaceApplied": "Asendati {matches} vastet {files} failis; vahele jäeti {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Lõpus on reavahetus",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Lõpus pole reavahetust",
   "normalizeLineEndings": "Normaliseeri reavahetused",
   "workspaceReplaceMixedLineEndings": "Fail {fileName} kasutab eri tüüpi reavahetusi. Vali enne asendamist vorming.",
   "mixedLineEndingsSavePrompt": "See dokument sisaldab eri tüüpi reavahetusi. Vali vorming.",

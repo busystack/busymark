@@ -1439,6 +1439,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Конечный перевод строки';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Нет конечного перевода строки';
+  }
+
+  @override
   String get normalizeLineEndings => 'Нормализовать окончания строк';
 
   @override

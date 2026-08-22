@@ -2719,6 +2719,8 @@
   "workspaceReplaceDiskContent": "Contenu enregistré sur le disque",
   "selectFileMatches": "Sélectionner les {count} occurrences",
   "workspaceReplaceApplied": "{matches} occurrences remplacées dans {files} fichiers ; {skipped} ignorées.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Saut de ligne final",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Aucun saut de ligne final",
   "normalizeLineEndings": "Normaliser les fins de ligne",
   "workspaceReplaceMixedLineEndings": "{fileName} utilise plusieurs types de fins de ligne. Choisissez le format avant le remplacement.",
   "mixedLineEndingsSavePrompt": "Ce document contient plusieurs types de fins de ligne. Choisissez un format.",

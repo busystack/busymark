@@ -2696,6 +2696,8 @@
   "workspaceReplaceDiskContent": "Innhold lagret på disk",
   "selectFileMatches": "Velg alle {count} treff",
   "workspaceReplaceApplied": "Erstattet {matches} treff i {files} filer; hoppet over {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Avsluttende linjeskift",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Ingen avsluttende linjeskift",
   "normalizeLineEndings": "Normaliser linjeslutt",
   "workspaceReplaceMixedLineEndings": "{fileName} bruker blandede linjeslutt. Velg format før du erstatter.",
   "mixedLineEndingsSavePrompt": "Dette dokumentet inneholder blandede linjeslutt. Velg et format.",
