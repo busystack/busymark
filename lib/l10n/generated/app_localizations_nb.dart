@@ -3137,133 +3137,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get exportWritersideAsPdf => 'Eksporter Writerside som PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Velg en instans og PDF-innstillinger. BusyMark bruker JetBrains’ offisielle Writerside-byggeverktøy.';
-
-  @override
   String get writersidePdfContent => 'Eksportinnhold';
-
-  @override
-  String get writersidePdfSettings => 'PDF-innstillinger';
-
-  @override
-  String get writersidePdfConfigureHere => 'Konfigurer for denne eksporten';
-
-  @override
-  String get writersidePdfProjectConfiguration => 'Bruk prosjektkonfigurasjon';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF-konfigurasjonsfil';
 
   @override
   String get writersidePdfPage => 'Side';
 
   @override
-  String get writersidePdfKeymap => 'Tastaturoppsett';
-
-  @override
-  String get writersidePdfNoKeymap => 'Uten tastaturoppsett';
-
-  @override
-  String get writersidePdfTocTitle => 'Tittel på innholdsfortegnelsen';
-
-  @override
-  String get writersidePdfCover => 'Forside';
-
-  @override
-  String get writersidePdfIncludeCover => 'Ta med forside';
-
-  @override
-  String get writersidePdfCoverTitle => 'Forsidetittel';
-
-  @override
-  String get writersidePdfCoverDescription => 'Forsidebeskrivelse';
-
-  @override
-  String get writersidePdfCopyright => 'Opphavsrett';
-
-  @override
-  String get writersidePdfCoverLogo => 'Forsidelogo';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Velg forsidelogo';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Topptekst og bunntekst';
-
-  @override
-  String get writersidePdfHeader => 'Topptekst';
-
-  @override
-  String get writersidePdfFooter => 'Bunntekst';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Disse verdiene kobler den åpne modulen til byggeverktøyets kildestruktur.';
-
-  @override
-  String get writersidePdfModuleName => 'Modulnavn';
-
-  @override
-  String get writersidePdfSourceRoot => 'Kilderot';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Velg kilderot';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Byggeverktøyversjon';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Tillat nettverk under bygging';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Deaktivert som standard. Aktiver bare når prosjektet bevisst trenger eksterne byggeressurser.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Skriv inn modulnavnet.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'Velg kilderoten.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Skriv inn en gyldig byggeverktøyversjon.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside-byggeverktøy kreves';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark bruker det offisielle containerbildet $image. Vil du laste det ned nå? Bildet er stort og lagres av Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Laster ned Writerside-byggeverktøy…';
-
-  @override
   String get exportingWritersidePdf => 'Eksporterer Writerside-PDF…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Docker kreves for Writerside PDF-eksport. Installer og start Docker, og prøv igjen.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Det forespurte Writerside-byggebildet er ikke tilgjengelig.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside PDF-konfigurasjonen er ugyldig.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Writerside-byggeverktøyet kunne ikke opprette PDF-filen.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside-byggeverktøyet produserte ikke en gyldig PDF-fil.';
 
   @override
   String get ai => 'KI';

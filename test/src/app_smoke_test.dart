@@ -31,9 +31,6 @@ import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
-import 'package:busymark/src/export/writerside_pdf_export_service.dart';
-import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
-import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
@@ -1411,9 +1408,6 @@ void main() {
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-        writersidePdfExportServiceProvider.overrideWithValue(
-          const _OptionsOnlyWritersidePdfExportService(),
-        ),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
@@ -1808,7 +1802,8 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-    expect(find.text(l10n.writersidePdfExportDescription), findsOneWidget);
+    expect(find.text(l10n.pdfPageSize), findsOneWidget);
+    expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });
@@ -7601,24 +7596,6 @@ class _FallbackHeaderBarService extends LinuxHeaderBarService {
 
   @override
   Stream<HeaderBarAction> get actions => const Stream.empty();
-}
-
-class _OptionsOnlyWritersidePdfExportService
-    extends WritersidePdfExportService {
-  const _OptionsOnlyWritersidePdfExportService();
-
-  @override
-  Future<List<String>> discoverProjectConfigurations({
-    required String moduleRoot,
-    required String buildConfigDirectory,
-  }) async => const [];
-
-  @override
-  Future<List<WritersidePdfKeymapLayout>> discoverLayouts({
-    required String moduleRoot,
-    required String buildConfigDirectory,
-    required String instanceId,
-  }) async => const [];
 }
 
 class _MutableWorkspaceController extends WorkspaceController {

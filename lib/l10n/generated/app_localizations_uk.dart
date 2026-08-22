@@ -3179,136 +3179,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get exportWritersideAsPdf => 'Експорт Writerside у PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Виберіть екземпляр і параметри PDF. BusyMark використовує офіційний збирач Writerside від JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Вміст експорту';
-
-  @override
-  String get writersidePdfSettings => 'Налаштування PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Налаштувати для цього експорту';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Використати конфігурацію проєкту';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Файл конфігурації PDF';
 
   @override
   String get writersidePdfPage => 'Сторінка';
 
   @override
-  String get writersidePdfKeymap => 'Розкладка клавіш';
-
-  @override
-  String get writersidePdfNoKeymap => 'Без розкладки клавіш';
-
-  @override
-  String get writersidePdfTocTitle => 'Заголовок змісту';
-
-  @override
-  String get writersidePdfCover => 'Титульна сторінка';
-
-  @override
-  String get writersidePdfIncludeCover => 'Додати титульну сторінку';
-
-  @override
-  String get writersidePdfCoverTitle => 'Заголовок обкладинки';
-
-  @override
-  String get writersidePdfCoverDescription => 'Опис на обкладинці';
-
-  @override
-  String get writersidePdfCopyright => 'Авторські права';
-
-  @override
-  String get writersidePdfCoverLogo => 'Логотип на обкладинці';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Вибрати логотип для обкладинки';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Верхній і нижній колонтитули';
-
-  @override
-  String get writersidePdfHeader => 'Верхній колонтитул';
-
-  @override
-  String get writersidePdfFooter => 'Нижній колонтитул';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Ці значення зіставляють відкритий модуль зі структурою вихідних файлів збирача.';
-
-  @override
-  String get writersidePdfModuleName => 'Назва модуля';
-
-  @override
-  String get writersidePdfSourceRoot => 'Коренева папка вихідних файлів';
-
-  @override
-  String get writersidePdfChooseSourceRoot =>
-      'Вибрати кореневу папку вихідних файлів';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Версія збирача';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Дозволити мережу під час збирання';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Початково вимкнено. Увімкніть лише тоді, коли проєкт навмисно потребує віддалених ресурсів збирання.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Введіть назву модуля.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Виберіть кореневу папку вихідних файлів.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Введіть припустиму версію збирача.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Потрібен збирач Writerside';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark використовує офіційний образ контейнера $image. Завантажити його зараз? Образ має великий розмір і зберігатиметься в Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Завантаження збирача Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Експорт PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Для експорту Writerside у PDF потрібен Docker. Установіть і запустіть Docker, а потім повторіть спробу.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Запитаний образ збирача Writerside недоступний.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Конфігурація PDF Writerside є неприпустимою.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Збирачу Writerside не вдалося створити PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Збирач Writerside не створив припустимий PDF.';
 
   @override
   String get ai => 'ШІ';

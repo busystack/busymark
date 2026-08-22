@@ -63,8 +63,8 @@ the separate offline WebKit renderer used for MathJax and visualizations.
 Markdown PDF export carries video as a first-class export node. Since PDF is
 not an interactive video container, it stages a local poster image and links
 HTTPS sources when available; a readable source fallback is emitted when no
-poster can be staged. Writerside module export continues to use JetBrains'
-official Writerside builder.
+poster can be staged. Writerside module export uses the same native offline PDF
+pipeline and does not require a container runtime.
 
 The syntax follows JetBrains' [Writerside video documentation](https://www.jetbrains.com/help/writerside/videos.html)
 and [semantic markup reference](https://www.jetbrains.com/help/writerside/semantic-markup-reference.html).

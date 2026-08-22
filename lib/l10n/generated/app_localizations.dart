@@ -5271,41 +5271,11 @@ abstract class AppLocalizations {
   /// **'Export Writerside as PDF'**
   String get exportWritersideAsPdf;
 
-  /// Introduction to Writerside PDF export.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose an instance and PDF settings. BusyMark uses JetBrains’ official Writerside builder.'**
-  String get writersidePdfExportDescription;
-
   /// Group title for selecting Writerside PDF content.
   ///
   /// In en, this message translates to:
   /// **'Export content'**
   String get writersidePdfContent;
-
-  /// Label for the source of Writerside PDF settings.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF settings'**
-  String get writersidePdfSettings;
-
-  /// Option to configure Writerside PDF settings in the export dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure for this export'**
-  String get writersidePdfConfigureHere;
-
-  /// Option to use an existing Writerside PDF configuration file.
-  ///
-  /// In en, this message translates to:
-  /// **'Use project configuration'**
-  String get writersidePdfProjectConfiguration;
-
-  /// Writerside PDF configuration file selector label.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF configuration file'**
-  String get writersidePdfConfigurationFile;
 
   /// Writerside PDF page settings group title.
   ///
@@ -5313,197 +5283,11 @@ abstract class AppLocalizations {
   /// **'Page'**
   String get writersidePdfPage;
 
-  /// Writerside PDF keymap selector label.
-  ///
-  /// In en, this message translates to:
-  /// **'Keymap'**
-  String get writersidePdfKeymap;
-
-  /// Writerside PDF option that omits a keymap layout.
-  ///
-  /// In en, this message translates to:
-  /// **'No keymap'**
-  String get writersidePdfNoKeymap;
-
-  /// Writerside PDF table-of-contents title field.
-  ///
-  /// In en, this message translates to:
-  /// **'Table of contents title'**
-  String get writersidePdfTocTitle;
-
-  /// Writerside PDF cover-page settings group title.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover page'**
-  String get writersidePdfCover;
-
-  /// Toggle that includes a cover page in a Writerside PDF.
-  ///
-  /// In en, this message translates to:
-  /// **'Include cover page'**
-  String get writersidePdfIncludeCover;
-
-  /// Writerside PDF cover title field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover title'**
-  String get writersidePdfCoverTitle;
-
-  /// Writerside PDF cover description field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover description'**
-  String get writersidePdfCoverDescription;
-
-  /// Writerside PDF cover copyright field.
-  ///
-  /// In en, this message translates to:
-  /// **'Copyright'**
-  String get writersidePdfCopyright;
-
-  /// Writerside PDF cover logo path field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover logo'**
-  String get writersidePdfCoverLogo;
-
-  /// Action that selects a Writerside PDF cover logo.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose cover logo'**
-  String get writersidePdfChooseCoverLogo;
-
-  /// Writerside PDF header and footer settings group title.
-  ///
-  /// In en, this message translates to:
-  /// **'Header and footer'**
-  String get writersidePdfHeaderAndFooter;
-
-  /// Writerside PDF page header field.
-  ///
-  /// In en, this message translates to:
-  /// **'Header'**
-  String get writersidePdfHeader;
-
-  /// Writerside PDF page footer field.
-  ///
-  /// In en, this message translates to:
-  /// **'Footer'**
-  String get writersidePdfFooter;
-
-  /// Description of advanced Writerside PDF settings.
-  ///
-  /// In en, this message translates to:
-  /// **'These values map the opened module to the builder’s source layout.'**
-  String get writersidePdfAdvancedDescription;
-
-  /// Writerside builder module-name field.
-  ///
-  /// In en, this message translates to:
-  /// **'Module name'**
-  String get writersidePdfModuleName;
-
-  /// Writerside builder source-root field.
-  ///
-  /// In en, this message translates to:
-  /// **'Source root'**
-  String get writersidePdfSourceRoot;
-
-  /// Action that selects the Writerside builder source root.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose source root'**
-  String get writersidePdfChooseSourceRoot;
-
-  /// JetBrains Writerside builder image version field.
-  ///
-  /// In en, this message translates to:
-  /// **'Builder version'**
-  String get writersidePdfBuilderVersion;
-
-  /// Toggle that allows network access in the Writerside builder container.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow network during build'**
-  String get writersidePdfAllowNetwork;
-
-  /// Security guidance for Writerside builder network access.
-  ///
-  /// In en, this message translates to:
-  /// **'Disabled by default. Enable only when the project intentionally needs remote build resources.'**
-  String get writersidePdfAllowNetworkDescription;
-
-  /// Validation error for a missing Writerside module name.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter the module name.'**
-  String get writersidePdfModuleNameRequired;
-
-  /// Validation error for a missing Writerside source root.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the source root.'**
-  String get writersidePdfSourceRootRequired;
-
-  /// Validation error for an invalid Writerside builder version.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid builder version.'**
-  String get writersidePdfBuilderVersionInvalid;
-
-  /// Dialog title when the Writerside builder image is not installed.
-  ///
-  /// In en, this message translates to:
-  /// **'Writerside builder required'**
-  String get writersidePdfBuilderRequired;
-
-  /// Consent prompt before downloading the Writerside builder image.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark uses the official {image} container image. Download it now? The image is large and is stored by Docker.'**
-  String writersidePdfBuilderDownloadDescription(String image);
-
-  /// Progress title while downloading the Writerside builder image.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading Writerside builder…'**
-  String get writersidePdfDownloadingBuilder;
-
   /// Progress title while building a Writerside PDF.
   ///
   /// In en, this message translates to:
   /// **'Exporting Writerside PDF…'**
   String get exportingWritersidePdf;
-
-  /// Error shown when Docker is unavailable for Writerside PDF export.
-  ///
-  /// In en, this message translates to:
-  /// **'Docker is required for Writerside PDF export. Install and start Docker, then try again.'**
-  String get writersidePdfDockerUnavailable;
-
-  /// Error shown when the Writerside builder image cannot be used.
-  ///
-  /// In en, this message translates to:
-  /// **'The requested Writerside builder image is not available.'**
-  String get writersidePdfBuilderUnavailable;
-
-  /// Error shown for an invalid Writerside PDF configuration.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside PDF configuration is invalid.'**
-  String get writersidePdfConfigurationInvalid;
-
-  /// Error shown when the Writerside PDF build fails.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside builder could not create the PDF.'**
-  String get writersidePdfBuildFailed;
-
-  /// Error shown when the Writerside builder output is missing or invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside builder did not produce a valid PDF.'**
-  String get writersidePdfInvalidOutput;
 
   /// Settings section and editing menu label for artificial-intelligence features.
   ///

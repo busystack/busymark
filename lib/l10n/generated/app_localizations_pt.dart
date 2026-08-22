@@ -3156,135 +3156,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get exportWritersideAsPdf => 'Exportar Writerside como PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Escolha uma instância e as configurações de PDF. O BusyMark usa o compilador oficial do Writerside da JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Conteúdo da exportação';
-
-  @override
-  String get writersidePdfSettings => 'Configurações do PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Configurar para esta exportação';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Usar configuração do projeto';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Arquivo de configuração do PDF';
 
   @override
   String get writersidePdfPage => 'Página';
 
   @override
-  String get writersidePdfKeymap => 'Mapa de teclas';
-
-  @override
-  String get writersidePdfNoKeymap => 'Sem mapa de teclas';
-
-  @override
-  String get writersidePdfTocTitle => 'Título do sumário';
-
-  @override
-  String get writersidePdfCover => 'Página de capa';
-
-  @override
-  String get writersidePdfIncludeCover => 'Incluir página de capa';
-
-  @override
-  String get writersidePdfCoverTitle => 'Título da capa';
-
-  @override
-  String get writersidePdfCoverDescription => 'Descrição da capa';
-
-  @override
-  String get writersidePdfCopyright => 'Direitos autorais';
-
-  @override
-  String get writersidePdfCoverLogo => 'Logotipo da capa';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Escolher logotipo da capa';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Cabeçalho e rodapé';
-
-  @override
-  String get writersidePdfHeader => 'Cabeçalho';
-
-  @override
-  String get writersidePdfFooter => 'Rodapé';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Esses valores mapeiam o módulo aberto para a estrutura de fontes do compilador.';
-
-  @override
-  String get writersidePdfModuleName => 'Nome do módulo';
-
-  @override
-  String get writersidePdfSourceRoot => 'Raiz das fontes';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Escolher raiz das fontes';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Versão do compilador';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Permitir rede durante a compilação';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Desativado por padrão. Ative somente se o projeto precisar intencionalmente de recursos remotos de compilação.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Digite o nome do módulo.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'Escolha a raiz das fontes.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Digite uma versão válida do compilador.';
-
-  @override
-  String get writersidePdfBuilderRequired =>
-      'Compilador do Writerside necessário';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'O BusyMark usa a imagem de contêiner oficial $image. Baixá-la agora? A imagem é grande e será armazenada pelo Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Baixando o compilador do Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Exportando PDF do Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'O Docker é necessário para exportar Writerside como PDF. Instale e inicie o Docker e tente novamente.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'A imagem solicitada do compilador do Writerside não está disponível.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'A configuração de PDF do Writerside é inválida.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'O compilador do Writerside não conseguiu criar o PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'O compilador do Writerside não produziu um PDF válido.';
 
   @override
   String get ai => 'IA';

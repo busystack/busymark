@@ -3132,134 +3132,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'Writerside को PDF के रूप में निर्यात करें';
 
   @override
-  String get writersidePdfExportDescription =>
-      'एक इंस्टेंस और PDF सेटिंग चुनें। BusyMark, JetBrains के आधिकारिक Writerside बिल्डर का उपयोग करता है।';
-
-  @override
   String get writersidePdfContent => 'निर्यात सामग्री';
-
-  @override
-  String get writersidePdfSettings => 'PDF सेटिंग';
-
-  @override
-  String get writersidePdfConfigureHere => 'इस निर्यात के लिए कॉन्फ़िगर करें';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'प्रोजेक्ट कॉन्फ़िगरेशन का उपयोग करें';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF कॉन्फ़िगरेशन फ़ाइल';
 
   @override
   String get writersidePdfPage => 'पृष्ठ';
 
   @override
-  String get writersidePdfKeymap => 'कीमैप';
-
-  @override
-  String get writersidePdfNoKeymap => 'कोई कीमैप नहीं';
-
-  @override
-  String get writersidePdfTocTitle => 'विषय-सूची का शीर्षक';
-
-  @override
-  String get writersidePdfCover => 'आवरण पृष्ठ';
-
-  @override
-  String get writersidePdfIncludeCover => 'आवरण पृष्ठ शामिल करें';
-
-  @override
-  String get writersidePdfCoverTitle => 'आवरण शीर्षक';
-
-  @override
-  String get writersidePdfCoverDescription => 'आवरण विवरण';
-
-  @override
-  String get writersidePdfCopyright => 'कॉपीराइट';
-
-  @override
-  String get writersidePdfCoverLogo => 'आवरण लोगो';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'आवरण लोगो चुनें';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'शीर्षलेख और पादलेख';
-
-  @override
-  String get writersidePdfHeader => 'शीर्षलेख';
-
-  @override
-  String get writersidePdfFooter => 'पादलेख';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'ये मान खुले मॉड्यूल को बिल्डर की स्रोत संरचना से जोड़ते हैं।';
-
-  @override
-  String get writersidePdfModuleName => 'मॉड्यूल का नाम';
-
-  @override
-  String get writersidePdfSourceRoot => 'स्रोत रूट';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'स्रोत रूट चुनें';
-
-  @override
-  String get writersidePdfBuilderVersion => 'बिल्डर संस्करण';
-
-  @override
-  String get writersidePdfAllowNetwork =>
-      'बिल्ड के दौरान नेटवर्क की अनुमति दें';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'डिफ़ॉल्ट रूप से बंद। केवल तभी चालू करें जब प्रोजेक्ट को जानबूझकर दूरस्थ बिल्ड संसाधनों की आवश्यकता हो।';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'मॉड्यूल का नाम दर्ज करें।';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'स्रोत रूट चुनें।';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'मान्य बिल्डर संस्करण दर्ज करें।';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside बिल्डर आवश्यक है';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark आधिकारिक $image कंटेनर इमेज का उपयोग करता है। इसे अभी डाउनलोड करें? इमेज बड़ी है और Docker इसे संग्रहित करेगा।';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Writerside बिल्डर डाउनलोड हो रहा है…';
-
-  @override
   String get exportingWritersidePdf => 'Writerside PDF निर्यात हो रहा है…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Writerside PDF निर्यात के लिए Docker आवश्यक है। Docker इंस्टॉल करके चालू करें, फिर दोबारा प्रयास करें।';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'अनुरोधित Writerside बिल्डर इमेज उपलब्ध नहीं है।';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside PDF कॉन्फ़िगरेशन अमान्य है।';
-
-  @override
-  String get writersidePdfBuildFailed => 'Writerside बिल्डर PDF नहीं बना सका।';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside बिल्डर ने मान्य PDF नहीं बनाया।';
 
   @override
   String get ai => 'एआई';

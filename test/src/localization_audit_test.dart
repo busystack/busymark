@@ -294,12 +294,6 @@ void main() {
         l10n.diagnosticWritersideVariableUnresolved('api-version'),
         contains('$fsi%api-version%$pdi'),
       );
-      expect(
-        l10n.writersidePdfBuilderDownloadDescription(
-          'jetbrains/writerside-builder:2026.07.8925',
-        ),
-        contains('${fsi}jetbrains/writerside-builder:2026.07.8925$pdi'),
-      );
     }
   });
 

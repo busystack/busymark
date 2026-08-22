@@ -74,6 +74,7 @@ class MarkdownPdfExportService {
       final parsed = await parser.parseAsync(
         filePath: effectiveFilePath,
         source: request.source,
+        mode: request.mode,
         workspaceRoot: request.workspaceRoot.isEmpty
             ? null
             : request.workspaceRoot,

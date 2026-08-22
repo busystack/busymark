@@ -3164,136 +3164,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get exportWritersideAsPdf => 'Exporter Writerside au format PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Choisissez une instance et les paramètres PDF. BusyMark utilise le générateur Writerside officiel de JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Contenu de l’exportation';
-
-  @override
-  String get writersidePdfSettings => 'Paramètres PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Configurer pour cette exportation';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Utiliser la configuration du projet';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Fichier de configuration PDF';
 
   @override
   String get writersidePdfPage => 'Page';
 
   @override
-  String get writersidePdfKeymap => 'Disposition des raccourcis';
-
-  @override
-  String get writersidePdfNoKeymap => 'Aucune disposition';
-
-  @override
-  String get writersidePdfTocTitle => 'Titre de la table des matières';
-
-  @override
-  String get writersidePdfCover => 'Page de couverture';
-
-  @override
-  String get writersidePdfIncludeCover => 'Inclure une page de couverture';
-
-  @override
-  String get writersidePdfCoverTitle => 'Titre de couverture';
-
-  @override
-  String get writersidePdfCoverDescription => 'Description de couverture';
-
-  @override
-  String get writersidePdfCopyright => 'Droits d’auteur';
-
-  @override
-  String get writersidePdfCoverLogo => 'Logo de couverture';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Choisir le logo de couverture';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'En-tête et pied de page';
-
-  @override
-  String get writersidePdfHeader => 'En-tête';
-
-  @override
-  String get writersidePdfFooter => 'Pied de page';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Ces valeurs associent le module ouvert à l’organisation des sources du générateur.';
-
-  @override
-  String get writersidePdfModuleName => 'Nom du module';
-
-  @override
-  String get writersidePdfSourceRoot => 'Racine des sources';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Choisir la racine des sources';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Version du générateur';
-
-  @override
-  String get writersidePdfAllowNetwork =>
-      'Autoriser le réseau pendant la génération';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Désactivé par défaut. Activez cette option uniquement si le projet nécessite volontairement des ressources distantes.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Saisissez le nom du module.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Choisissez la racine des sources.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Saisissez une version valide du générateur.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Générateur Writerside requis';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark utilise l’image de conteneur officielle $image. La télécharger maintenant ? Cette image est volumineuse et stockée par Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Téléchargement du générateur Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Exportation du PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Docker est requis pour exporter Writerside au format PDF. Installez et démarrez Docker, puis réessayez.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'L’image demandée du générateur Writerside n’est pas disponible.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'La configuration PDF Writerside n’est pas valide.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Le générateur Writerside n’a pas pu créer le PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Le générateur Writerside n’a pas produit de PDF valide.';
 
   @override
   String get ai => 'IA';

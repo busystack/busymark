@@ -3137,134 +3137,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get exportWritersideAsPdf => 'Ekspordi Writerside PDF-ina';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Valige eksemplar ja PDF-i sätted. BusyMark kasutab JetBrainsi ametlikku Writerside’i koosturit.';
-
-  @override
   String get writersidePdfContent => 'Ekspordi sisu';
-
-  @override
-  String get writersidePdfSettings => 'PDF-i sätted';
-
-  @override
-  String get writersidePdfConfigureHere => 'Seadista selle ekspordi jaoks';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Kasuta projekti konfiguratsiooni';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF-i konfiguratsioonifail';
 
   @override
   String get writersidePdfPage => 'Lehekülg';
 
   @override
-  String get writersidePdfKeymap => 'Klahvipaigutus';
-
-  @override
-  String get writersidePdfNoKeymap => 'Klahvipaigutuseta';
-
-  @override
-  String get writersidePdfTocTitle => 'Sisukorra pealkiri';
-
-  @override
-  String get writersidePdfCover => 'Tiitelleht';
-
-  @override
-  String get writersidePdfIncludeCover => 'Lisa tiitelleht';
-
-  @override
-  String get writersidePdfCoverTitle => 'Tiitellehe pealkiri';
-
-  @override
-  String get writersidePdfCoverDescription => 'Tiitellehe kirjeldus';
-
-  @override
-  String get writersidePdfCopyright => 'Autoriõigus';
-
-  @override
-  String get writersidePdfCoverLogo => 'Tiitellehe logo';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Vali tiitellehe logo';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Päis ja jalus';
-
-  @override
-  String get writersidePdfHeader => 'Päis';
-
-  @override
-  String get writersidePdfFooter => 'Jalus';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Need väärtused seovad avatud mooduli koosturi lähtepaigutusega.';
-
-  @override
-  String get writersidePdfModuleName => 'Mooduli nimi';
-
-  @override
-  String get writersidePdfSourceRoot => 'Lähtejuur';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Vali lähtejuur';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Koosturi versioon';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Luba koostamise ajal võrk';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Vaikimisi keelatud. Luba ainult siis, kui projekt vajab teadlikult kaugkoostusressursse.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Sisesta mooduli nimi.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'Vali lähtejuur.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Sisesta kehtiv koosturi versioon.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside’i koostur on nõutav';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark kasutab ametlikku konteineripilti $image. Kas laadida see kohe alla? Pilt on suur ja Docker talletab selle.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Writerside’i koosturi allalaadimine…';
-
-  @override
   String get exportingWritersidePdf => 'Writerside’i PDF-i eksportimine…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Writerside’i PDF-i eksportimiseks on vaja Dockerit. Paigalda ja käivita Docker ning proovi uuesti.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Soovitud Writerside’i koosturi pilt pole saadaval.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside’i PDF-i konfiguratsioon on vigane.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Writerside’i koostur ei suutnud PDF-i luua.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside’i koostur ei loonud kehtivat PDF-i.';
 
   @override
   String get ai => 'TI';

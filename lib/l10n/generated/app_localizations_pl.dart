@@ -3178,135 +3178,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get exportWritersideAsPdf => 'Eksportuj Writerside jako PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Wybierz instancję i ustawienia PDF. BusyMark używa oficjalnego programu budującego Writerside firmy JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Zawartość eksportu';
-
-  @override
-  String get writersidePdfSettings => 'Ustawienia PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Skonfiguruj dla tego eksportu';
-
-  @override
-  String get writersidePdfProjectConfiguration => 'Użyj konfiguracji projektu';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Plik konfiguracji PDF';
 
   @override
   String get writersidePdfPage => 'Strona';
 
   @override
-  String get writersidePdfKeymap => 'Mapa klawiszy';
-
-  @override
-  String get writersidePdfNoKeymap => 'Bez mapy klawiszy';
-
-  @override
-  String get writersidePdfTocTitle => 'Tytuł spisu treści';
-
-  @override
-  String get writersidePdfCover => 'Strona tytułowa';
-
-  @override
-  String get writersidePdfIncludeCover => 'Dołącz stronę tytułową';
-
-  @override
-  String get writersidePdfCoverTitle => 'Tytuł na okładce';
-
-  @override
-  String get writersidePdfCoverDescription => 'Opis na okładce';
-
-  @override
-  String get writersidePdfCopyright => 'Prawa autorskie';
-
-  @override
-  String get writersidePdfCoverLogo => 'Logo na okładce';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Wybierz logo na okładkę';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Nagłówek i stopka';
-
-  @override
-  String get writersidePdfHeader => 'Nagłówek';
-
-  @override
-  String get writersidePdfFooter => 'Stopka';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Te wartości odwzorowują otwarty moduł na układ źródeł programu budującego.';
-
-  @override
-  String get writersidePdfModuleName => 'Nazwa modułu';
-
-  @override
-  String get writersidePdfSourceRoot => 'Katalog główny źródeł';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Wybierz katalog główny źródeł';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Wersja programu budującego';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Zezwól na sieć podczas budowania';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Domyślnie wyłączone. Włącz tylko wtedy, gdy projekt świadomie wymaga zdalnych zasobów do budowania.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Wprowadź nazwę modułu.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Wybierz katalog główny źródeł.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Wprowadź prawidłową wersję programu budującego.';
-
-  @override
-  String get writersidePdfBuilderRequired =>
-      'Wymagany program budujący Writerside';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark używa oficjalnego obrazu kontenera $image. Pobrać go teraz? Obraz jest duży i zostanie zapisany przez Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Pobieranie programu budującego Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Eksportowanie PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Docker jest wymagany do eksportu Writerside do PDF. Zainstaluj i uruchom Docker, a następnie spróbuj ponownie.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Żądany obraz programu budującego Writerside jest niedostępny.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Konfiguracja PDF Writerside jest nieprawidłowa.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Program budujący Writerside nie mógł utworzyć pliku PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Program budujący Writerside nie utworzył prawidłowego pliku PDF.';
 
   @override
   String get ai => 'SI';

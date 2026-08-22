@@ -3157,133 +3157,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exportWritersideAsPdf => 'تصدير Writerside بصيغة PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'اختر مثيلاً وإعدادات PDF. يستخدم BusyMark أداة البناء الرسمية لـ Writerside من JetBrains.';
-
-  @override
   String get writersidePdfContent => 'محتوى التصدير';
-
-  @override
-  String get writersidePdfSettings => 'إعدادات PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'تهيئة لهذا التصدير';
-
-  @override
-  String get writersidePdfProjectConfiguration => 'استخدام تهيئة المشروع';
-
-  @override
-  String get writersidePdfConfigurationFile => 'ملف تهيئة PDF';
 
   @override
   String get writersidePdfPage => 'الصفحة';
 
   @override
-  String get writersidePdfKeymap => 'تخطيط المفاتيح';
-
-  @override
-  String get writersidePdfNoKeymap => 'بلا تخطيط مفاتيح';
-
-  @override
-  String get writersidePdfTocTitle => 'عنوان جدول المحتويات';
-
-  @override
-  String get writersidePdfCover => 'صفحة الغلاف';
-
-  @override
-  String get writersidePdfIncludeCover => 'تضمين صفحة غلاف';
-
-  @override
-  String get writersidePdfCoverTitle => 'عنوان الغلاف';
-
-  @override
-  String get writersidePdfCoverDescription => 'وصف الغلاف';
-
-  @override
-  String get writersidePdfCopyright => 'حقوق النشر';
-
-  @override
-  String get writersidePdfCoverLogo => 'شعار الغلاف';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'اختيار شعار الغلاف';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'رأس الصفحة وتذييلها';
-
-  @override
-  String get writersidePdfHeader => 'رأس الصفحة';
-
-  @override
-  String get writersidePdfFooter => 'تذييل الصفحة';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'تربط هذه القيم الوحدة المفتوحة بتخطيط المصادر في أداة البناء.';
-
-  @override
-  String get writersidePdfModuleName => 'اسم الوحدة';
-
-  @override
-  String get writersidePdfSourceRoot => 'جذر المصادر';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'اختيار جذر المصادر';
-
-  @override
-  String get writersidePdfBuilderVersion => 'إصدار أداة البناء';
-
-  @override
-  String get writersidePdfAllowNetwork => 'السماح بالشبكة أثناء البناء';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'معطل افتراضيًا. مكّنه فقط إذا كان المشروع يحتاج عمدًا إلى موارد بناء بعيدة.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'أدخل اسم الوحدة.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'اختر جذر المصادر.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'أدخل إصدارًا صالحًا لأداة البناء.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'أداة بناء Writerside مطلوبة';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'يستخدم BusyMark صورة الحاوية الرسمية ⁨$image⁩. هل تريد تنزيلها الآن؟ الصورة كبيرة وسيخزنها Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'جارٍ تنزيل أداة بناء Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'جارٍ تصدير ملف Writerside PDF…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'يلزم Docker لتصدير Writerside إلى PDF. ثبّت Docker وشغّله ثم حاول مجددًا.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'صورة أداة بناء Writerside المطلوبة غير متاحة.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'تهيئة Writerside PDF غير صالحة.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'تعذر على أداة بناء Writerside إنشاء ملف PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'لم تُنتج أداة بناء Writerside ملف PDF صالحًا.';
 
   @override
   String get ai => 'الذكاء الاصطناعي';
