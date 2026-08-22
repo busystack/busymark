@@ -27,6 +27,7 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
     this.height,
     this.miniPlayer = false,
     this.borderEffect = 'none',
+    this.hostedPosterLoader = loadWritersideHostedVideoPoster,
   });
 
   final String source;
@@ -43,6 +44,7 @@ class BusyMarkWritersideVideoView extends StatefulWidget {
   final double? height;
   final bool miniPlayer;
   final String borderEffect;
+  final WritersideVideoPosterLoader hostedPosterLoader;
 
   @override
   State<BusyMarkWritersideVideoView> createState() =>
@@ -61,11 +63,19 @@ class _BusyMarkWritersideVideoViewState
   bool _playing = false;
   bool _syncing = false;
   int _generation = 0;
+  late Future<String?> _hostedPoster;
+
+  @override
+  void initState() {
+    super.initState();
+    _hostedPoster = _loadHostedPoster();
+  }
 
   @override
   void didUpdateWidget(BusyMarkWritersideVideoView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.source != widget.source ||
+        oldWidget.previewSource != widget.previewSource ||
         oldWidget.activeFilePath != widget.activeFilePath ||
         oldWidget.workspaceRoot != widget.workspaceRoot ||
         oldWidget.writersideRoot != widget.writersideRoot ||
@@ -74,6 +84,11 @@ class _BusyMarkWritersideVideoViewState
       _stopPlayer(updateState: false);
       _starting = false;
       _playing = false;
+    }
+    if (oldWidget.source != widget.source ||
+        oldWidget.previewSource != widget.previewSource ||
+        oldWidget.hostedPosterLoader != widget.hostedPosterLoader) {
+      _hostedPoster = _loadHostedPoster();
     }
   }
 
@@ -88,7 +103,7 @@ class _BusyMarkWritersideVideoViewState
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final poster = writersideVideoPreviewSource(
+    final authoredPoster = writersideVideoPreviewSource(
       widget.source,
       widget.previewSource,
     );
@@ -110,7 +125,7 @@ class _BusyMarkWritersideVideoViewState
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = _videoSize(constraints.maxWidth);
-        final body = _playing || _starting
+        final activePlayer = _playing || _starting
             ? ColoredBox(
                 key: _playerBodyKey,
                 color: BusyMarkLinuxPalette.black,
@@ -118,7 +133,25 @@ class _BusyMarkWritersideVideoViewState
                     ? const Center(child: CircularProgressIndicator())
                     : const SizedBox.expand(),
               )
-            : _posterCard(context, target, poster);
+            : null;
+        final body =
+            activePlayer ??
+            FutureBuilder<String?>(
+              future: _hostedPoster,
+              builder: (context, snapshot) {
+                final hostedPoster = authoredPoster.isEmpty
+                    ? snapshot.data
+                    : null;
+                return _posterCard(
+                  context,
+                  target,
+                  authoredPoster.isNotEmpty
+                      ? authoredPoster
+                      : hostedPoster ?? '',
+                  trustedHostedPoster: hostedPoster != null,
+                );
+              },
+            );
         return Align(
           alignment: AlignmentDirectional.centerStart,
           child: Semantics(
@@ -154,8 +187,9 @@ class _BusyMarkWritersideVideoViewState
   Widget _posterCard(
     BuildContext context,
     WritersideVideoPlaybackSource? target,
-    String poster,
-  ) {
+    String poster, {
+    required bool trustedHostedPoster,
+  }) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Material(
       color: colors.panel,
@@ -166,7 +200,16 @@ class _BusyMarkWritersideVideoViewState
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (poster.isNotEmpty)
+            if (poster.isNotEmpty && trustedHostedPoster)
+              Image.network(
+                poster,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+                semanticLabel: context.l10n.videoPreview,
+                errorBuilder: (context, error, stackTrace) =>
+                    _posterFallback(colors),
+              )
+            else if (poster.isNotEmpty)
               MarkdownImageView(
                 source: poster,
                 alt: context.l10n.videoPreview,
@@ -178,13 +221,7 @@ class _BusyMarkWritersideVideoViewState
                 onRemoteImageBlocked: widget.onRemoteImageBlocked,
               )
             else
-              Center(
-                child: Icon(
-                  BusyMarkGlyphs.video,
-                  size: 48,
-                  color: colors.mutedForeground,
-                ),
-              ),
+              _posterFallback(colors),
             Center(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -224,6 +261,31 @@ class _BusyMarkWritersideVideoViewState
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<String?> _loadHostedPoster() async {
+    if ((widget.previewSource?.trim().isNotEmpty ?? false)) {
+      return null;
+    }
+    final target = resolveWritersideHostedVideoSource(widget.source);
+    if (target == null) {
+      return null;
+    }
+    try {
+      return await widget.hostedPosterLoader(target);
+    } on Object {
+      return null;
+    }
+  }
+
+  Widget _posterFallback(BusyMarkSurfaceColors colors) {
+    return Center(
+      child: Icon(
+        BusyMarkGlyphs.video,
+        size: 48,
+        color: colors.mutedForeground,
       ),
     );
   }

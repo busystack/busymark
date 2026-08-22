@@ -45,12 +45,13 @@ Writerside element.
 
 ## Desktop preview and PDF
 
-The BusyMark preview and Editor view show the configured poster until Play is
-pressed, then replace it in place with an interactive player. Local files play
-through the packaged WebKit/GStreamer media stack. YouTube and Vimeo use their
-embedded players, so they require a network connection; BusyMark starts no
-remote video request before the explicit Play action. `mini-player="true"`
-hides controls other than play/pause.
+The BusyMark preview and Editor view show a poster until Play is pressed, then
+replace it in place with an interactive player. YouTube thumbnails are loaded
+from YouTube's image host, while Vimeo thumbnails are resolved through Vimeo's
+official oEmbed endpoint. An explicit `preview-src` overrides the provider
+thumbnail. Local files play through the packaged WebKit/GStreamer media stack.
+YouTube and Vimeo posters and players require a network connection.
+`mini-player="true"` hides controls other than play/pause.
 
 Only validated HTTPS YouTube and Vimeo video identifiers reach the hosted
 player. Arbitrary schemes, unrelated hosts, absolute authored paths, and paths

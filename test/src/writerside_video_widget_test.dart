@@ -17,6 +17,7 @@ void main() {
     tester,
   ) async {
     final host = _FakeVideoPlayerHost();
+    WritersideVideoPlaybackSource? posterRequest;
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -31,6 +32,10 @@ void main() {
             imagesDir: 'images',
             allowRemoteImages: false,
             playerHost: host,
+            hostedPosterLoader: (source) async {
+              posterRequest = source;
+              return 'https://i.ytimg.com/vi/${source.value}/hqdefault.jpg';
+            },
           ),
         ),
       ),
@@ -38,6 +43,13 @@ void main() {
 
     expect(find.text('YouTube'), findsOneWidget);
     expect(find.byIcon(BusyMarkGlyphs.play), findsOneWidget);
+    await tester.pump();
+    expect(posterRequest?.kind, WritersideVideoPlaybackKind.youtube);
+    final poster = tester.widget<Image>(find.byType(Image));
+    expect(
+      (poster.image as NetworkImage).url,
+      'https://i.ytimg.com/vi/BeJu9bMPLGU/hqdefault.jpg',
+    );
     await tester.tap(find.byType(BusyMarkWritersideVideoView));
     await tester.pump();
     await tester.pump();
@@ -73,6 +85,7 @@ void main() {
             allowRemoteImages: false,
             miniPlayer: true,
             playerHost: host,
+            hostedPosterLoader: (_) async => null,
           ),
         ),
       ),

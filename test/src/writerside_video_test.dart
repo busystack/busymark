@@ -12,6 +12,8 @@ import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_video.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -327,6 +329,67 @@ After.
     expect(
       writersideVideoPreviewSource('https://youtu.be/BeJu9bMPLGU', null),
       isEmpty,
+    );
+  });
+
+  test('hosted video posters resolve from trusted provider sources', () async {
+    expect(
+      await loadWritersideHostedVideoPoster(
+        const WritersideVideoPlaybackSource(
+          kind: WritersideVideoPlaybackKind.youtube,
+          value: 'BeJu9bMPLGU',
+        ),
+      ),
+      'https://i.ytimg.com/vi/BeJu9bMPLGU/hqdefault.jpg',
+    );
+    expect(
+      await loadWritersideHostedVideoPoster(
+        const WritersideVideoPlaybackSource(
+          kind: WritersideVideoPlaybackKind.youtube,
+          value: '../tracking',
+        ),
+      ),
+      isNull,
+    );
+
+    final client = MockClient((request) async {
+      expect(request.url.host, 'vimeo.com');
+      expect(request.url.path, '/api/oembed.json');
+      expect(request.url.queryParameters['url'], 'https://vimeo.com/76979871');
+      return http.Response(
+        '{"thumbnail_url":"https://i.vimeocdn.com/video/123_1280x720"}',
+        200,
+      );
+    });
+    expect(
+      await loadWritersideHostedVideoPoster(
+        const WritersideVideoPlaybackSource(
+          kind: WritersideVideoPlaybackKind.vimeo,
+          value: '76979871',
+        ),
+        client: client,
+      ),
+      'https://i.vimeocdn.com/video/123_1280x720',
+    );
+  });
+
+  test('Vimeo poster metadata cannot point images to another host', () async {
+    final client = MockClient(
+      (_) async => http.Response(
+        '{"thumbnail_url":"https://example.com/tracker.png"}',
+        200,
+      ),
+    );
+
+    expect(
+      await loadWritersideHostedVideoPoster(
+        const WritersideVideoPlaybackSource(
+          kind: WritersideVideoPlaybackKind.vimeo,
+          value: '76979871',
+        ),
+        client: client,
+      ),
+      isNull,
     );
   });
 

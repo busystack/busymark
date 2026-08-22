@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 
 import '../core/local_image_resolver.dart';
@@ -12,7 +15,16 @@ const busyMarkWritersideVideoExtensions = {
   '.webm',
 };
 
+const _hostedVideoPosterTimeout = Duration(seconds: 5);
+const _maximumHostedVideoMetadataBytes = 64 * 1024;
+const _maximumHostedVideoPosterCacheEntries = 64;
+final _hostedVideoPosterCache = <String, String>{};
+final _pendingHostedVideoPosters = <String, Future<String?>>{};
+
 enum WritersideVideoPlaybackKind { localFile, youtube, vimeo }
+
+typedef WritersideVideoPosterLoader =
+    Future<String?> Function(WritersideVideoPlaybackSource source);
 
 class WritersideVideoPlaybackSource {
   const WritersideVideoPlaybackSource({
@@ -184,6 +196,106 @@ String writersideVideoPreviewSource(String source, String? previewSource) {
   final suffixStart = value.indexOf(RegExp(r'[?#]'));
   final path = suffixStart < 0 ? value : value.substring(0, suffixStart);
   return p.setExtension(path, '.png');
+}
+
+/// Resolves the provider-owned poster for a validated hosted video.
+///
+/// YouTube has a deterministic thumbnail URL. Vimeo exposes its thumbnail via
+/// the official unauthenticated oEmbed endpoint. Only HTTPS image URLs on
+/// Vimeo's image CDN are accepted from that metadata response.
+Future<String?> loadWritersideHostedVideoPoster(
+  WritersideVideoPlaybackSource source, {
+  http.Client? client,
+}) async {
+  if (source.kind == WritersideVideoPlaybackKind.youtube) {
+    if (!RegExp(r'^[A-Za-z0-9_-]{6,64}$').hasMatch(source.value)) {
+      return null;
+    }
+    return 'https://i.ytimg.com/vi/${source.value}/hqdefault.jpg';
+  }
+  if (source.kind != WritersideVideoPlaybackKind.vimeo) {
+    return null;
+  }
+  if (!RegExp(r'^\d{1,20}$').hasMatch(source.value)) {
+    return null;
+  }
+  final cacheKey = '${source.kind.name}:${source.value}';
+  if (client == null) {
+    final cached = _hostedVideoPosterCache[cacheKey];
+    if (cached != null) {
+      return cached;
+    }
+    final pending = _pendingHostedVideoPosters[cacheKey];
+    if (pending != null) {
+      return pending;
+    }
+  }
+  final future = _loadVimeoPoster(source.value, client: client);
+  if (client != null) {
+    return future;
+  }
+  _pendingHostedVideoPosters[cacheKey] = future;
+  try {
+    final poster = await future;
+    if (poster != null) {
+      _hostedVideoPosterCache[cacheKey] = poster;
+      if (_hostedVideoPosterCache.length >
+          _maximumHostedVideoPosterCacheEntries) {
+        _hostedVideoPosterCache.remove(_hostedVideoPosterCache.keys.first);
+      }
+    }
+    return poster;
+  } finally {
+    _pendingHostedVideoPosters.remove(cacheKey);
+  }
+}
+
+Future<String?> _loadVimeoPoster(String videoId, {http.Client? client}) async {
+  final ownedClient = client == null;
+  final effectiveClient = client ?? http.Client();
+  try {
+    final requestUri = Uri.https('vimeo.com', '/api/oembed.json', {
+      'url': 'https://vimeo.com/$videoId',
+      'width': '1280',
+    });
+    final response = await effectiveClient
+        .get(requestUri, headers: const {'Accept': 'application/json'})
+        .timeout(_hostedVideoPosterTimeout);
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        response.bodyBytes.length > _maximumHostedVideoMetadataBytes) {
+      return null;
+    }
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map<String, dynamic>) {
+      return null;
+    }
+    final value = decoded['thumbnail_url'];
+    if (value is! String) {
+      return null;
+    }
+    final poster = Uri.tryParse(value);
+    if (poster == null ||
+        poster.scheme != 'https' ||
+        poster.userInfo.isNotEmpty ||
+        poster.host.isEmpty ||
+        (poster.hasPort && poster.port != 443) ||
+        !_isVimeoImageHost(poster.host)) {
+      return null;
+    }
+    return poster.toString();
+  } on Object {
+    return null;
+  } finally {
+    if (ownedClient) {
+      effectiveClient.close();
+    }
+  }
+}
+
+bool _isVimeoImageHost(String host) {
+  final value = host.toLowerCase();
+  return value == 'vimeocdn.com' || value.endsWith('.vimeocdn.com');
 }
 
 double? busyMarkVideoDimension(String? value) {
