@@ -1433,16 +1433,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Quebra de linha final';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Sem quebra de linha final';
-  }
-
-  @override
   String get normalizeLineEndings => 'Normalizar finais de linha';
 
   @override

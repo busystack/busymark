@@ -79,7 +79,6 @@ import '../workspace_model.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
-import 'document_format_indicator.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 
@@ -7888,12 +7887,6 @@ class _EditorTabStrip extends ConsumerWidget {
               diff: entry.kind == WorkspaceTabKind.gitDiff,
               active: entry.active,
               dirty: _tabDirty(workspace, entry),
-              format: entry.active && entry.bufferId != null
-                  ? state.documentBuffers
-                        .where((buffer) => buffer.id == entry.bufferId)
-                        .firstOrNull
-                        ?.format
-                  : null,
               onSelected: () => _selectTab(context, ref, workspace, entry),
               onClose: () => _closeTab(context, ref, workspace, entry),
             );
@@ -7997,7 +7990,6 @@ class _WorkspaceTabButton extends StatelessWidget {
     required this.diff,
     required this.active,
     required this.dirty,
-    required this.format,
     required this.onSelected,
     required this.onClose,
   });
@@ -8007,7 +7999,6 @@ class _WorkspaceTabButton extends StatelessWidget {
   final bool diff;
   final bool active;
   final bool dirty;
-  final TextFormatMetadata? format;
   final VoidCallback onSelected;
   final VoidCallback onClose;
 
@@ -8076,10 +8067,6 @@ class _WorkspaceTabButton extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: BusyMarkSpacing.xs),
-              if (format case final format?) ...[
-                BusyMarkDocumentFormatIndicator(format: format),
-                const SizedBox(width: BusyMarkSpacing.xs),
-              ],
               BusyMarkCompactIconButton(
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 icon: BusyMarkGlyphs.clear,

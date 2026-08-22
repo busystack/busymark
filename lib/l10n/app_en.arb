@@ -921,10 +921,6 @@
       "skipped": {"type": "int"}
     }
   },
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Final newline",
-  "@documentFormatWithFinalNewline": {"description": "Document format tooltip when the file ends with a newline.", "placeholders": {"encoding": {"type": "String"}, "lineEnding": {"type": "String"}}},
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · No final newline",
-  "@documentFormatWithoutFinalNewline": {"description": "Document format tooltip when the file does not end with a newline.", "placeholders": {"encoding": {"type": "String"}, "lineEnding": {"type": "String"}}},
   "normalizeLineEndings": "Normalize line endings",
   "@normalizeLineEndings": {"description": "Dialog title for selecting a line-ending style."},
   "mixedLineEndingsSavePrompt": "This document contains mixed line endings. Choose a format.",

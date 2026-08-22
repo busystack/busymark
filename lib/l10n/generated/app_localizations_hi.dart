@@ -1415,16 +1415,6 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · अंतिम नई पंक्ति';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · अंतिम नई पंक्ति नहीं';
-  }
-
-  @override
   String get normalizeLineEndings => 'पंक्ति अंत सामान्य करें';
 
   @override

@@ -1441,16 +1441,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Abschließender Zeilenumbruch';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Kein abschließender Zeilenumbruch';
-  }
-
-  @override
   String get normalizeLineEndings => 'Zeilenenden normalisieren';
 
   @override

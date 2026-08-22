@@ -2717,8 +2717,6 @@
   "workspaceReplaceDiskContent": "Gespeicherter Festplatteninhalt",
   "selectFileMatches": "Alle {count} Treffer auswählen",
   "workspaceReplaceApplied": "{matches} Treffer in {files} Dateien ersetzt; {skipped} übersprungen.",
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Abschließender Zeilenumbruch",
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Kein abschließender Zeilenumbruch",
   "normalizeLineEndings": "Zeilenenden normalisieren",
   "workspaceReplaceMixedLineEndings": "{fileName} verwendet gemischte Zeilenenden. Wählen Sie vor dem Ersetzen das gewünschte Format.",
   "mixedLineEndingsSavePrompt": "Dieses Dokument enthält gemischte Zeilenenden. Wählen Sie ein Format.",

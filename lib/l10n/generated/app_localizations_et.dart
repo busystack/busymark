@@ -1422,16 +1422,6 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Lõpus on reavahetus';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Lõpus pole reavahetust';
-  }
-
-  @override
   String get normalizeLineEndings => 'Normaliseeri reavahetused';
 
   @override

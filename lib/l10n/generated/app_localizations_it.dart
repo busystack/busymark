@@ -1434,16 +1434,6 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · A capo finale';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Nessun a capo finale';
-  }
-
-  @override
   String get normalizeLineEndings => 'Normalizza terminatori di riga';
 
   @override

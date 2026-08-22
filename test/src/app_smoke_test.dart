@@ -1888,6 +1888,8 @@ void main() {
     await controller.openActiveFile(third.path);
     await tester.pump(const Duration(milliseconds: 100));
 
+    expect(find.text('LF'), findsNothing);
+    expect(find.text('CRLF'), findsNothing);
     expect(
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path, third.path],

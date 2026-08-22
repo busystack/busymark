@@ -1459,16 +1459,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '⁨$encoding⁩ · ⁨$lineEnding⁩ · خط جدید پایانی';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '⁨$encoding⁩ · ⁨$lineEnding⁩ · بدون خط جدید پایانی';
-  }
-
-  @override
   String get normalizeLineEndings => 'یکسان‌سازی پایان خط‌ها';
 
   @override

@@ -2694,8 +2694,6 @@
   "workspaceReplaceDiskContent": "Contenuto salvato su disco",
   "selectFileMatches": "Seleziona tutte le {count} corrispondenze",
   "workspaceReplaceApplied": "Sostituite {matches} corrispondenze in {files} file; {skipped} ignorate.",
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · A capo finale",
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Nessun a capo finale",
   "normalizeLineEndings": "Normalizza terminatori di riga",
   "workspaceReplaceMixedLineEndings": "{fileName} usa terminatori di riga misti. Scegli il formato prima di sostituire.",
   "mixedLineEndingsSavePrompt": "Questo documento contiene terminatori di riga misti. Scegli un formato.",

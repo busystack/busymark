@@ -1444,16 +1444,6 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Końcowy znak nowego wiersza';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Brak końcowego znaku nowego wiersza';
-  }
-
-  @override
   String get normalizeLineEndings => 'Normalizuj zakończenia wierszy';
 
   @override

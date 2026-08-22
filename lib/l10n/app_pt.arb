@@ -2694,8 +2694,6 @@
   "workspaceReplaceDiskContent": "Conteúdo salvo no disco",
   "selectFileMatches": "Selecionar todas as {count} correspondências",
   "workspaceReplaceApplied": "Foram substituídas {matches} correspondências em {files} arquivos; {skipped} ignoradas.",
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Quebra de linha final",
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Sem quebra de linha final",
   "normalizeLineEndings": "Normalizar finais de linha",
   "workspaceReplaceMixedLineEndings": "{fileName} usa finais de linha mistos. Escolha o formato antes de substituir.",
   "mixedLineEndingsSavePrompt": "Este documento contém finais de linha mistos. Escolha um formato.",

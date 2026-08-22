@@ -2696,8 +2696,6 @@
   "workspaceReplaceDiskContent": "डिस्क पर सहेजी सामग्री",
   "selectFileMatches": "सभी {count} मिलान चुनें",
   "workspaceReplaceApplied": "{files} फ़ाइलों में {matches} मिलान बदले गए; {skipped} छोड़े गए।",
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · अंतिम नई पंक्ति",
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · अंतिम नई पंक्ति नहीं",
   "normalizeLineEndings": "पंक्ति अंत सामान्य करें",
   "workspaceReplaceMixedLineEndings": "{fileName} में मिले-जुले पंक्ति अंत हैं। बदलने से पहले प्रारूप चुनें।",
   "mixedLineEndingsSavePrompt": "इस दस्तावेज़ में मिले-जुले पंक्ति अंत हैं। कोई प्रारूप चुनें।",

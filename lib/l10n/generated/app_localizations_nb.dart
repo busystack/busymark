@@ -1424,16 +1424,6 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Avsluttende linjeskift';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Ingen avsluttende linjeskift';
-  }
-
-  @override
   String get normalizeLineEndings => 'Normaliser linjeslutt';
 
   @override

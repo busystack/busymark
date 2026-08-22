@@ -1446,16 +1446,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Кінцеве перенесення рядка';
-  }
-
-  @override
-  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Немає кінцевого перенесення рядка';
-  }
-
-  @override
   String get normalizeLineEndings => 'Нормалізувати закінчення рядків';
 
   @override

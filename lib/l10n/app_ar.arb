@@ -2696,8 +2696,6 @@
   "workspaceReplaceDiskContent": "المحتوى المحفوظ على القرص",
   "selectFileMatches": "تحديد كل المطابقات وعددها {count}",
   "workspaceReplaceApplied": "تم استبدال {matches} مطابقة في {files} ملفًا؛ وتم تخطي {skipped}.",
-  "documentFormatWithFinalNewline": "⁨{encoding}⁩ · ⁨{lineEnding}⁩ · سطر جديد نهائي",
-  "documentFormatWithoutFinalNewline": "⁨{encoding}⁩ · ⁨{lineEnding}⁩ · بلا سطر جديد نهائي",
   "normalizeLineEndings": "توحيد نهايات الأسطر",
   "workspaceReplaceMixedLineEndings": "يستخدم الملف ⁨{fileName}⁩ نهايات أسطر مختلطة. اختر التنسيق قبل الاستبدال.",
   "mixedLineEndingsSavePrompt": "يحتوي هذا المستند على نهايات أسطر مختلطة. اختر تنسيقًا.",
