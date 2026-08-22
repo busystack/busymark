@@ -38,6 +38,7 @@ import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -4675,7 +4676,7 @@ After break.
 <warning>Shared warning.</warning>
 
 ![Shared image](missing.png){ width="320" }
-''');
+''', writerside: true);
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -7966,13 +7967,20 @@ GitFileStatus _gitStatusFile(
 }
 
 class _SearchWorkspaceService extends WorkspaceService {
-  const _SearchWorkspaceService(this.source);
+  const _SearchWorkspaceService(this.source, {this.writerside = false});
 
   final String source;
+  final bool writerside;
 
   @override
   Future<Workspace> openPath(String path) async {
-    final markdown = markdownParser.parse(filePath: path, source: source);
+    final markdown = markdownParser.parse(
+      filePath: path,
+      source: source,
+      mode: writerside
+          ? MarkdownMode.writersideMarkdown
+          : MarkdownMode.commonMark,
+    );
     return Workspace(
       id: path,
       rootPath: path,
@@ -7984,7 +7992,9 @@ class _SearchWorkspaceService extends WorkspaceService {
         DocumentFile(
           absolutePath: path,
           relativePath: 'search-scroll.md',
-          kind: DocumentKind.markdown,
+          kind: writerside
+              ? DocumentKind.writersideMarkdownTopic
+              : DocumentKind.markdown,
           size: source.length,
           lastModified: DateTime(2026),
         ),

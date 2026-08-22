@@ -1666,6 +1666,8 @@ class WorkspaceService {
       'tabs',
       'tab',
       'code-block',
+      'deflist',
+      'def',
       'img',
       'video',
       'a',
@@ -1681,6 +1683,8 @@ class WorkspaceService {
       'quote' => PreviewBlockKind.quote,
       'tabs' || 'tab' => PreviewBlockKind.tabs,
       'code-block' => PreviewBlockKind.code,
+      'deflist' => PreviewBlockKind.definitionList,
+      'def' => PreviewBlockKind.definition,
       'img' => PreviewBlockKind.image,
       'video' => PreviewBlockKind.video,
       _ => PreviewBlockKind.paragraph,
@@ -1700,6 +1704,8 @@ class WorkspaceService {
       'tabs' ||
       'tab' ||
       'code-block' ||
+      'deflist' ||
+      'def' ||
       'img' ||
       'video' ||
       'a' => '',
@@ -1718,6 +1724,9 @@ class WorkspaceService {
           continue;
         }
         if (_insideXmlAdmonition(element)) {
+          continue;
+        }
+        if (_insideOwnedXmlCollapsible(element)) {
           continue;
         }
         final attributes = {
@@ -1747,6 +1756,16 @@ class WorkspaceService {
           );
           continue;
         }
+        if ((name == 'chapter' || name == 'procedure' || name == 'deflist') &&
+            busyMarkWritersideIsCollapsible(attributes)) {
+          blocks.add(
+            _xmlSemanticPreviewBlock(
+              element,
+              nextMathId: () => 'topic-math-${mathIndex++}',
+            ),
+          );
+          continue;
+        }
         final admonitionStyle = busyAdmonitionStyleFromName(name);
         if (admonitionStyle != null) {
           final text = element.innerText.trim();
@@ -1771,9 +1790,20 @@ class WorkspaceService {
         blocks.add(
           PreviewBlock(
             kind: _semanticKind(name),
-            text: name == 'video'
-                ? element.getAttribute('src') ?? ''
-                : _semanticText(name, title),
+            text: switch (name) {
+              'video' => element.getAttribute('src') ?? '',
+              'chapter' ||
+              'procedure' ||
+              'def' => element.getAttribute('title') ?? '',
+              'code-block' =>
+                element.innerText
+                    .replaceFirst(RegExp(r'^\n'), '')
+                    .replaceFirst(RegExp(r'\n\s*$'), ''),
+              _ => _semanticText(name, title),
+            },
+            language: name == 'code-block'
+                ? element.getAttribute('lang')
+                : null,
             attributes: attributes,
           ),
         );
@@ -1812,6 +1842,127 @@ class WorkspaceService {
       parent = parent.parent;
     }
     return false;
+  }
+
+  bool _insideOwnedXmlCollapsible(XmlElement element) {
+    XmlNode? parent = element.parent;
+    while (parent != null) {
+      if (parent is XmlElement) {
+        final name = parent.name.local.toLowerCase();
+        if ({'chapter', 'procedure', 'deflist'}.contains(name) &&
+            busyMarkWritersideIsCollapsible({
+              for (final attribute in parent.attributes)
+                attribute.name.local: attribute.value,
+            })) {
+          return true;
+        }
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  PreviewBlock _xmlSemanticPreviewBlock(
+    XmlElement element, {
+    required String Function() nextMathId,
+    Map<String, String> inheritedAttributes = const {},
+  }) {
+    final name = element.name.local.toLowerCase();
+    final attributes = <String, String>{
+      ...inheritedAttributes,
+      'element': name,
+      for (final attribute in element.attributes)
+        attribute.name.local: attribute.value,
+    };
+    final title = element.getAttribute('title')?.trim() ?? '';
+    final children = <PreviewBlock>[];
+    for (final child in element.children.whereType<XmlElement>()) {
+      final childName = child.name.local.toLowerCase();
+      if (!_visibleSemanticElement(childName) || childName == 'math') {
+        continue;
+      }
+      if (name == 'step' && childName == 'p') {
+        continue;
+      }
+      children.add(
+        _xmlSemanticPreviewBlock(
+          child,
+          nextMathId: nextMathId,
+          inheritedAttributes: name == 'deflist' && childName == 'def'
+              ? {
+                  if (busyMarkWritersideIsCollapsible(attributes))
+                    busyMarkWritersideCollapsibleAttribute: 'true',
+                }
+              : const {},
+        ),
+      );
+    }
+    final inlines = _xmlPreviewInlines(
+      element.children,
+      nextMathId: nextMathId,
+    );
+    final text = inlines.map((inline) => inline.text).join().trim();
+    return switch (name) {
+      'chapter' => PreviewBlock(
+        kind: PreviewBlockKind.heading,
+        text: title,
+        level: 2,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'procedure' => PreviewBlock(
+        kind: PreviewBlockKind.procedure,
+        text: title,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'step' => PreviewBlock(
+        kind: PreviewBlockKind.list,
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: {...attributes, 'ordered': 'true'},
+      ),
+      'code-block' => PreviewBlock(
+        kind: PreviewBlockKind.code,
+        text: element.innerText
+            .replaceFirst(RegExp(r'^\n'), '')
+            .replaceFirst(RegExp(r'\n\s*$'), ''),
+        language: element.getAttribute('lang'),
+        attributes: attributes,
+      ),
+      'deflist' => PreviewBlock(
+        kind: PreviewBlockKind.definitionList,
+        text: '',
+        children: children,
+        attributes: attributes,
+      ),
+      'def' => PreviewBlock(
+        kind: PreviewBlockKind.definition,
+        text: title,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'note' || 'tip' || 'warning' || 'quote' => PreviewBlock(
+        kind: name == 'quote'
+            ? PreviewBlockKind.quote
+            : PreviewBlockKind.admonition,
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: {...attributes, 'style': name},
+      ),
+      _ => PreviewBlock(
+        kind: _semanticKind(name),
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: attributes,
+      ),
+    };
   }
 
   List<PreviewInline> _xmlPreviewInlines(

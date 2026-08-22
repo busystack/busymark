@@ -33,6 +33,7 @@ import '../../core/source_span.dart';
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
+import '../../editor/document_collapsible.dart';
 import '../../editor/document_layout.dart';
 import '../../editor/document_list_marker.dart';
 import '../../editor/document_surface.dart';
@@ -10659,6 +10660,33 @@ class _PreviewBlockView extends ConsumerWidget {
       inheritedDirection,
     );
     final child = switch (displayBlock.kind) {
+      PreviewBlockKind.heading
+          when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
+        BusyMarkDocumentCollapsible(
+          key: ValueKey(
+            'preview-collapsible-${displayBlock.attributes['editorBlockId'] ?? displayBlock.attributes['id'] ?? displayBlock.sourceStartOffset}',
+          ),
+          initiallyExpanded: busyMarkWritersideInitiallyExpanded(
+            displayBlock.attributes,
+          ),
+          kindLabel: displayBlock.text.isEmpty
+              ? context.l10n.chapter
+              : displayBlock.text,
+          margin: first
+              ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
+              : BusyMarkInsets.documentHeadingBlock,
+          header: _PreviewInlineText(
+            key: headingKey,
+            block: displayBlock,
+            style: _diffPreviewTextStyle(
+              context,
+              displayBlock,
+              busyMarkDocumentHeadingTextStyle(context, displayBlock.level),
+            ),
+            editRevision: editRevision,
+          ),
+          child: _previewChildBlocks(displayBlock.children, first: true),
+        ),
       PreviewBlockKind.heading => Padding(
         padding: first
             ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
@@ -10701,8 +10729,38 @@ class _PreviewBlockView extends ConsumerWidget {
         ),
       ),
       PreviewBlockKind.code
-          when visualizationsEnabled && displayBlock.visualization != null =>
+          when visualizationsEnabled &&
+              displayBlock.visualization != null &&
+              !busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
         _visualizationCard(displayBlock),
+      PreviewBlockKind.code
+          when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
+        BusyMarkDocumentCollapsible(
+          key: ValueKey(
+            'preview-collapsible-${displayBlock.attributes['editorBlockId'] ?? displayBlock.sourceStartOffset}',
+          ),
+          initiallyExpanded: busyMarkWritersideInitiallyExpanded(
+            displayBlock.attributes,
+          ),
+          kindLabel: _collapsibleCodeTitle(context, displayBlock),
+          framed: true,
+          margin: BusyMarkInsets.documentCodeBlock,
+          header: Text(
+            _collapsibleCodeTitle(context, displayBlock),
+            style: busyMarkDocumentCodeTextStyle(context),
+          ),
+          child: Padding(
+            padding: BusyMarkInsets.documentCodeContent,
+            child: Text.rich(
+              _diffPreviewCodeTextSpan(
+                context,
+                displayBlock,
+                busyMarkDocumentCodeTextStyle(context),
+              ),
+              textDirection: blockDirection,
+            ),
+          ),
+        ),
       PreviewBlockKind.code => BusyMarkDocumentCodeBlock(
         backgroundColor: _diffPreviewCodeBackground(context, displayBlock),
         child: Text.rich(
@@ -10736,9 +10794,92 @@ class _PreviewBlockView extends ConsumerWidget {
         icon: BusyMarkGlyphs.tab,
         child: Text(displayBlock.text),
       ),
+      PreviewBlockKind.procedure
+          when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
+        BusyMarkDocumentCollapsible(
+          key: ValueKey(
+            'preview-collapsible-${displayBlock.attributes['editorBlockId'] ?? displayBlock.sourceStartOffset}',
+          ),
+          initiallyExpanded: busyMarkWritersideInitiallyExpanded(
+            displayBlock.attributes,
+          ),
+          kindLabel: displayBlock.text.isEmpty
+              ? context.l10n.procedure
+              : displayBlock.text,
+          framed: true,
+          header: Text(
+            displayBlock.text,
+            style: busyMarkDocumentBodyTextStyle(
+              context,
+            ).copyWith(fontWeight: FontWeight.w600),
+          ),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: BusyMarkSpacing.md,
+              end: BusyMarkSpacing.md,
+              bottom: BusyMarkSpacing.md,
+            ),
+            child: _previewChildBlocks(displayBlock.children, first: true),
+          ),
+        ),
       PreviewBlockKind.procedure => BusyMarkDocumentCallout(
         icon: BusyMarkGlyphs.orderedList,
-        child: Text(displayBlock.text),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (displayBlock.text.isNotEmpty) Text(displayBlock.text),
+            if (displayBlock.children.isNotEmpty)
+              _previewChildBlocks(displayBlock.children, first: true),
+          ],
+        ),
+      ),
+      PreviewBlockKind.definitionList => _previewChildBlocks(
+        displayBlock.children,
+        first: true,
+      ),
+      PreviewBlockKind.definition
+          when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
+        BusyMarkDocumentCollapsible(
+          key: ValueKey(
+            'preview-definition-${displayBlock.text}-${displayBlock.sourceStartOffset}',
+          ),
+          initiallyExpanded: busyMarkWritersideInitiallyExpanded(
+            displayBlock.attributes,
+          ),
+          kindLabel: displayBlock.text,
+          framed: true,
+          header: _PreviewInlineText(
+            block: displayBlock,
+            style: busyMarkDocumentBodyTextStyle(
+              context,
+            ).copyWith(fontWeight: FontWeight.w600),
+            editRevision: editRevision,
+          ),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: BusyMarkSpacing.md,
+              end: BusyMarkSpacing.md,
+              bottom: BusyMarkSpacing.md,
+            ),
+            child: _previewChildBlocks(displayBlock.children, first: true),
+          ),
+        ),
+      PreviewBlockKind.definition => BusyMarkDocumentCallout(
+        icon: BusyMarkGlyphs.info,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PreviewInlineText(
+              block: displayBlock,
+              style: busyMarkDocumentBodyTextStyle(
+                context,
+              ).copyWith(fontWeight: FontWeight.w600),
+              editRevision: editRevision,
+            ),
+            if (displayBlock.children.isNotEmpty)
+              _previewChildBlocks(displayBlock.children, first: true),
+          ],
+        ),
       ),
       PreviewBlockKind.list => Padding(
         padding: busyMarkDocumentListItemPadding(
@@ -10843,6 +10984,20 @@ class _PreviewBlockView extends ConsumerWidget {
           code: code,
           sourceSpan: _previewMathSourceSpan(workspace, sourceBlock),
         );
+  }
+
+  String _collapsibleCodeTitle(BuildContext context, PreviewBlock block) {
+    final configured = block
+        .attributes[busyMarkWritersideCollapsedTitleAttribute]
+        ?.trim();
+    if (configured != null && configured.isNotEmpty) {
+      return configured;
+    }
+    final firstLine = block.text
+        .split('\n')
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+    return firstLine.isEmpty ? context.l10n.codeBlock : firstLine;
   }
 
   Color _diffPreviewCodeBackground(BuildContext context, PreviewBlock block) {
@@ -11010,6 +11165,8 @@ class _PreviewBlockView extends ConsumerWidget {
         element == 'tab' ? context.l10n.tab : context.l10n.tabs,
       PreviewBlockKind.procedure =>
         element == 'step' ? context.l10n.step : context.l10n.procedure,
+      PreviewBlockKind.definitionList ||
+      PreviewBlockKind.definition => block.text,
       PreviewBlockKind.paragraph =>
         element == 'a'
             ? context.l10n.link

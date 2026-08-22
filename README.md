@@ -92,6 +92,10 @@ local preview images plus HTTPS YouTube and Vimeo sources. See
 Writerside tip, note, warning, and quote blocks render as native document
 callouts and can be inserted from the WYSIWYG toolbar. See
 [Writerside admonitions](docs/admonitions.md) for supported syntax.
+Writerside chapters, procedures, code blocks, and definition lists support
+documented collapsed and expanded states in Preview and WYSIWYG views. See
+[Writerside collapsible elements](docs/collapsible-elements.md) for syntax and
+the ordinary-Markdown boundary.
 
 Folder workspaces show all files and directories, including hidden project
 files such as `.gitignore`. Unsupported and binary files remain visible but are

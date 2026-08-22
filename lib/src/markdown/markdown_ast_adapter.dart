@@ -60,6 +60,32 @@ class MarkdownAstAdapter {
     final blocks = <BusyBlock>[];
     for (final segment in _rawHtmlAwareSegments(source, mode)) {
       if (segment.rawHtml) {
+        if (mode == MarkdownMode.writersideMarkdown) {
+          final writerside = _writersideBlockFromText(
+            segment.text,
+            nextId: nextId,
+            allowVideo: true,
+          );
+          if (writerside != null) {
+            blocks.add(writerside);
+            continue;
+          }
+        }
+        final customTag = RegExp(
+          r'^\s*<([A-Za-z][A-Za-z0-9_-]*)\b',
+        ).firstMatch(segment.text)?.group(1)?.toLowerCase();
+        if (customTag != null && _writersideBlockTag(customTag)) {
+          blocks.add(
+            BusyBlock(
+              id: nextId(),
+              kind: BusyBlockKind.htmlBlock,
+              rawSource: segment.text.trimRight(),
+              preserveRaw: true,
+              attributes: const {'sourceFormat': 'html'},
+            ),
+          );
+          continue;
+        }
         final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
         if (html != null) {
           blocks.add(
@@ -93,10 +119,13 @@ class MarkdownAstAdapter {
     );
     final document = busyMarkMarkdownDocument(mode);
     final nodes = document.parse(packageSource);
-    return [
+    final blocks = [
       for (final node in nodes)
         ..._blocksFromNode(node, nextId: nextId, mode: mode),
     ];
+    return mode == MarkdownMode.writersideMarkdown
+        ? _attachWritersideCollapsibleCodeAttributes(blocks)
+        : blocks;
   }
 
   List<BusyBlock> _applyImageAttributes(
@@ -195,28 +224,41 @@ class MarkdownAstAdapter {
     if (_headingLevel(tag) case final level?) {
       final rawText = node.textContent.trim();
       final attrId = _attributeValue(rawText, 'id');
-      final text = _stripTrailingAttributeBlock(rawText);
+      final trailingAttributes = mode == MarkdownMode.writersideMarkdown
+          ? _trailingAttributeBlock(rawText)
+          : const <String, String>{};
+      final hasSupportedAttributeBlock =
+          attrId != null || trailingAttributes.isNotEmpty;
+      final text = hasSupportedAttributeBlock
+          ? _stripTrailingAttributeBlock(rawText)
+          : rawText;
       final anchorId = attrId ?? slugForHeading(text);
+      final parsedInlines = _inlinesFromNodes(children);
       return [
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.heading,
-          inlines: _stripTrailingAttributeInline(_inlinesFromNodes(children)),
+          inlines: hasSupportedAttributeBlock
+              ? _stripTrailingAttributeInline(parsedInlines)
+              : parsedInlines,
           attributes: {
             'level': '$level',
             'id': anchorId,
             'generatedId': '${attrId == null}',
+            ...trailingAttributes,
           },
         ),
       ];
     }
 
     if (tag == 'p') {
-      final writerside = _writersideBlockFromText(
-        node.textContent,
-        nextId: nextId,
-        allowVideo: mode == MarkdownMode.writersideMarkdown,
-      );
+      final writerside = mode == MarkdownMode.writersideMarkdown
+          ? _writersideBlockFromText(
+              node.textContent,
+              nextId: nextId,
+              allowVideo: true,
+            )
+          : null;
       if (writerside != null) {
         return [writerside];
       }
@@ -359,8 +401,7 @@ class MarkdownAstAdapter {
       ];
     }
 
-    if (_writersideBlockTag(tag) &&
-        (tag != 'video' || mode == MarkdownMode.writersideMarkdown)) {
+    if (mode == MarkdownMode.writersideMarkdown && _writersideBlockTag(tag)) {
       return [
         BusyBlock(
           id: nextId(),
@@ -377,6 +418,20 @@ class MarkdownAstAdapter {
           },
           rawSource: node.textContent,
           preserveRaw: !_editableWritersideTag(tag),
+        ),
+      ];
+    }
+
+    // These names remain protected custom HTML outside Writerside mode. They
+    // deliberately receive neither Writerside kinds nor Writerside attributes.
+    if (_writersideBlockTag(tag)) {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.htmlBlock,
+          rawSource: node.textContent,
+          preserveRaw: true,
+          attributes: const {'sourceFormat': 'html'},
         ),
       ];
     }
@@ -690,11 +745,15 @@ class MarkdownAstAdapter {
           )) {
         final element = elements.single;
         final tag = element.name.local.toLowerCase();
-        if (tag == 'video' && allowVideo) {
-          final text = element.innerText.trim();
+        if (_writersideBlockTag(tag) && (tag != 'video' || allowVideo)) {
+          final text = tag == 'code-block'
+              ? element.innerText
+                    .replaceFirst(RegExp(r'^\n'), '')
+                    .replaceFirst(RegExp(r'\n\s*$'), '')
+              : element.innerText.trim();
           return BusyBlock(
             id: nextId(),
-            kind: BusyBlockKind.video,
+            kind: _writersideKind(tag),
             inlines: text.isEmpty
                 ? const []
                 : [BusyInline(kind: BusyInlineKind.text, text: text)],
@@ -702,9 +761,16 @@ class MarkdownAstAdapter {
               'element': tag,
               for (final attribute in element.attributes)
                 attribute.name.local: attribute.value,
+              if (tag == 'code-block' && element.getAttribute('lang') != null)
+                'language': element.getAttribute('lang')!,
+              if (_writersideAdmonitionTag(tag)) ...{
+                busyMarkWritersideAdmonitionAttribute: 'true',
+                busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+                'style': tag,
+              },
             },
             rawSource: value,
-            preserveRaw: true,
+            preserveRaw: !_editableWritersideTag(tag),
           );
         }
       }
@@ -813,6 +879,45 @@ class MarkdownAstAdapter {
 
   String _stripTrailingAttributeBlock(String value) {
     return value.replaceFirst(RegExp(r'\s*\{[^}]+\}\s*$'), '').trim();
+  }
+
+  Map<String, String> _trailingAttributeBlock(String value) {
+    final match = RegExp(r'(\{[^{}]+\})\s*$').firstMatch(value);
+    return match == null ? const {} : _parseAttributeBlock(match.group(1)!);
+  }
+
+  List<BusyBlock> _attachWritersideCollapsibleCodeAttributes(
+    List<BusyBlock> blocks,
+  ) {
+    final result = <BusyBlock>[];
+    var index = 0;
+    while (index < blocks.length) {
+      final block = blocks[index];
+      if (block.kind == BusyBlockKind.codeBlock && index + 1 < blocks.length) {
+        final attributeBlock = blocks[index + 1];
+        final attributes = attributeBlock.kind == BusyBlockKind.paragraph
+            ? _standaloneAttributeBlock(attributeBlock.plainText)
+            : const <String, String>{};
+        if (busyMarkWritersideIsCollapsible(attributes)) {
+          result.add(
+            block.copyWith(attributes: {...block.attributes, ...attributes}),
+          );
+          index += 2;
+          continue;
+        }
+      }
+      result.add(block);
+      index += 1;
+    }
+    return result;
+  }
+
+  Map<String, String> _standaloneAttributeBlock(String value) {
+    final trimmed = value.trim();
+    if (!RegExp(r'^\{[^{}]+\}$').hasMatch(trimmed)) {
+      return const {};
+    }
+    return _parseAttributeBlock(trimmed);
   }
 
   String? _attributeValue(String raw, String key) {
@@ -978,7 +1083,11 @@ class MarkdownAstAdapter {
       'tabs',
       'tab',
       'procedure',
+      'step',
       'chapter',
+      'code-block',
+      'deflist',
+      'def',
       'video',
     }.contains(tag);
   }
@@ -1155,10 +1264,33 @@ class MarkdownAstAdapter {
 
       if (mode == MarkdownMode.writersideMarkdown &&
           RegExp(
-            r'^\s{0,3}<(?:math|video)(?:\s|/?>)',
+            r'^\s{0,3}<math(?:\s|/?>)',
             caseSensitive: false,
           ).hasMatch(line)) {
         index += 1;
+        continue;
+      }
+
+      final writersideEndIndex = _writersideContainerEndIndex(lines, index);
+      if (writersideEndIndex != null) {
+        final startOffset = lines[index].offset;
+        final endOffset = lines[writersideEndIndex - 1].endOffset;
+        if (segmentStart < startOffset) {
+          segments.add(
+            _MarkdownSourceSegment(
+              text: source.substring(segmentStart, startOffset),
+              rawHtml: false,
+            ),
+          );
+        }
+        segments.add(
+          _MarkdownSourceSegment(
+            text: source.substring(startOffset, endOffset),
+            rawHtml: true,
+          ),
+        );
+        segmentStart = endOffset;
+        index = writersideEndIndex;
         continue;
       }
 
@@ -1222,6 +1354,27 @@ class MarkdownAstAdapter {
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
       if (balance <= 0 && index > startIndex || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  int? _writersideContainerEndIndex(
+    List<_MarkdownSourceLine> lines,
+    int startIndex,
+  ) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(lines[startIndex].line);
+    final tag = match?.group(1)?.toLowerCase();
+    if (tag == null || !_writersideBlockTag(tag)) {
+      return null;
+    }
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (balance <= 0) {
         return index + 1;
       }
     }

@@ -163,7 +163,15 @@ class BusyMarkMarkdownSerializer {
     final text = _inlineMarkdown(block.inlines);
     final id = block.attributes['id'];
     final generated = block.attributes['generatedId'] != 'false';
-    final suffix = id == null || id.isEmpty || generated ? '' : ' {id="$id"}';
+    final attributes = <String>[
+      if (id != null && id.isNotEmpty && !generated) 'id="${_attribute(id)}"',
+      if (busyMarkWritersideIsCollapsible(block.attributes))
+        'collapsible="true"',
+      if (block.attributes[busyMarkWritersideDefaultStateAttribute]
+          case final state? when state.trim().isNotEmpty)
+        'default-state="${_attribute(state)}"',
+    ];
+    final suffix = attributes.isEmpty ? '' : ' {${attributes.join(' ')}}';
     return '${'#' * level} $text$suffix';
   }
 
@@ -173,8 +181,23 @@ class BusyMarkMarkdownSerializer {
     final delimiter = language.contains('`') ? '~' : '`';
     final fence = delimiter * _delimiterLength(text, delimiter, minimum: 3);
     final infoSeparator = language.startsWith(delimiter) ? ' ' : '';
-    return '$fence$infoSeparator$language\n$text\n$fence';
+    final source = '$fence$infoSeparator$language\n$text\n$fence';
+    if (!busyMarkWritersideIsCollapsible(block.attributes)) {
+      return source;
+    }
+    final attributes = <String>[
+      'collapsible="true"',
+      if (block.attributes[busyMarkWritersideCollapsedTitleAttribute]
+          case final title? when title.trim().isNotEmpty)
+        'collapsed-title="${_attribute(title)}"',
+      if (block.attributes[busyMarkWritersideDefaultStateAttribute]
+          case final state? when state.trim().isNotEmpty)
+        'default-state="${_attribute(state)}"',
+    ];
+    return '$source\n{${attributes.join(' ')}}';
   }
+
+  String _attribute(String value) => value.replaceAll('"', '&quot;');
 
   String _mathBlock(BusyBlock block) {
     final expression =

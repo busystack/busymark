@@ -9,6 +9,24 @@ const busyMarkWritersideAdmonitionAttribute = 'writersideAdmonition';
 const busyMarkWritersideAdmonitionSourceFormAttribute =
     'writersideAdmonitionSourceForm';
 
+const busyMarkWritersideCollapsibleAttribute = 'collapsible';
+const busyMarkWritersideDefaultStateAttribute = 'default-state';
+const busyMarkWritersideCollapsedTitleAttribute = 'collapsed-title';
+
+bool busyMarkWritersideIsCollapsible(Map<String, String> attributes) {
+  return attributes[busyMarkWritersideCollapsibleAttribute]
+          ?.trim()
+          .toLowerCase() ==
+      'true';
+}
+
+bool busyMarkWritersideInitiallyExpanded(Map<String, String> attributes) {
+  return attributes[busyMarkWritersideDefaultStateAttribute]
+          ?.trim()
+          .toLowerCase() ==
+      'expanded';
+}
+
 enum BusyAdmonitionStyle { tip, note, warning, quote }
 
 BusyAdmonitionStyle? busyAdmonitionStyleFromName(String? value) {

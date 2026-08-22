@@ -29,6 +29,7 @@ import '../../markdown/markdown_parser.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
+import '../document_collapsible.dart';
 import '../document_layout.dart';
 import '../document_surface.dart';
 import '../document_text_geometry.dart';
@@ -560,7 +561,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       block,
       fallback: Directionality.of(context),
     );
-    final content = entry.children == null
+    final content = entry.collapsible
+        ? _buildCollapsibleEntry(
+            context,
+            entry,
+            documentLayout: documentLayout,
+            first: first,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : entry.children == null
         ? _buildEditableBlockField(
             block,
             first: first,
@@ -590,6 +600,95 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       contentKey: first ? const ValueKey('wysiwyg-document-content') : null,
       child: indentedContent,
     );
+  }
+
+  Widget _buildCollapsibleEntry(
+    BuildContext context,
+    _EditorRenderEntry entry, {
+    required BusyMarkDocumentLayoutSpec documentLayout,
+    required bool first,
+    required Set<String> selectedBlockIds,
+    required Map<String, BusyMarkWysiwygSelectionRange>
+    selectionRangesByBlockId,
+  }) {
+    final block = entry.block;
+    final heading = block.kind == BusyBlockKind.heading;
+    final title = heading
+        ? block.plainText
+        : _wysiwygCollapsibleTitle(context, block);
+    final header = heading
+        ? _buildEditableBlockField(
+            block,
+            first: first,
+            listRunEnd: false,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : Text(
+            title,
+            style: block.kind == BusyBlockKind.codeBlock
+                ? busyMarkDocumentCodeTextStyle(context)
+                : busyMarkDocumentBodyTextStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600),
+          );
+    final children = entry.children;
+    final expandedChild = children == null
+        ? _buildEditableBlockField(
+            block,
+            first: false,
+            listRunEnd: entry.listRunEnd,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (index, child) in children.indexed)
+                _buildRenderEntry(
+                  context,
+                  child,
+                  documentLayout: documentLayout,
+                  applyDocumentFrame: false,
+                  first: index == 0,
+                  selectedBlockIds: selectedBlockIds,
+                  selectionRangesByBlockId: selectionRangesByBlockId,
+                ),
+            ],
+          );
+    return BusyMarkDocumentCollapsible(
+      key: ValueKey('wysiwyg-collapsible-${block.id}'),
+      initiallyExpanded: busyMarkWritersideInitiallyExpanded(block.attributes),
+      kindLabel: title,
+      framed: !heading,
+      toggleOnHeaderTap: false,
+      margin: heading
+          ? (first
+                ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
+                : BusyMarkInsets.documentHeadingBlock)
+          : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
+      header: header,
+      child: expandedChild,
+    );
+  }
+
+  String _wysiwygCollapsibleTitle(BuildContext context, BusyBlock block) {
+    final configured = block
+        .attributes[busyMarkWritersideCollapsedTitleAttribute]
+        ?.trim();
+    if (configured != null && configured.isNotEmpty) {
+      return configured;
+    }
+    if (block.kind == BusyBlockKind.codeBlock) {
+      final firstLine = block.plainText
+          .split('\n')
+          .map((line) => line.trim())
+          .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+      return firstLine.isEmpty ? context.l10n.codeBlock : firstLine;
+    }
+    return block.attributes['title']?.trim().isNotEmpty == true
+        ? block.attributes['title']!.trim()
+        : block.plainText;
   }
 
   Widget _buildBlockquoteEntry(
@@ -866,7 +965,34 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
         )
         .toList();
-    for (final (index, block) in visibleBlocks.indexed) {
+    var index = 0;
+    while (index < visibleBlocks.length) {
+      final block = visibleBlocks[index];
+      if (_isWritersideCollapsibleHeading(block)) {
+        final level = int.tryParse(block.attributes['level'] ?? '') ?? 6;
+        var end = index + 1;
+        while (end < visibleBlocks.length) {
+          final candidate = visibleBlocks[end];
+          if (candidate.kind == BusyBlockKind.heading &&
+              (int.tryParse(candidate.attributes['level'] ?? '') ?? 6) <=
+                  level) {
+            break;
+          }
+          end += 1;
+        }
+        entries.add(
+          _EditorRenderEntry.collapsible(
+            block: block,
+            depth: depth,
+            children: _editorRenderEntries(
+              visibleBlocks.sublist(index + 1, end),
+              depth,
+            ),
+          ),
+        );
+        index = end;
+        continue;
+      }
       if (_isStructuralBlockquote(block)) {
         entries.add(
           _EditorRenderEntry.blockquote(
@@ -875,25 +1001,48 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             children: _editorRenderEntries(block.children),
           ),
         );
+        index += 1;
         continue;
       }
       final nextBlock = index + 1 < visibleBlocks.length
           ? visibleBlocks[index + 1]
           : null;
-      entries.add(
-        _EditorRenderEntry.block(
-          block: block,
-          depth: depth,
-          listRunEnd:
-              _isListItemBlock(block) &&
-              (nextBlock == null || !_isListItemBlock(nextBlock)),
-        ),
-      );
+      final entry = _isWritersideCollapsibleLeaf(block)
+          ? _EditorRenderEntry.collapsible(
+              block: block,
+              depth: depth,
+              listRunEnd:
+                  _isListItemBlock(block) &&
+                  (nextBlock == null || !_isListItemBlock(nextBlock)),
+            )
+          : _EditorRenderEntry.block(
+              block: block,
+              depth: depth,
+              listRunEnd:
+                  _isListItemBlock(block) &&
+                  (nextBlock == null || !_isListItemBlock(nextBlock)),
+            );
+      entries.add(entry);
       if (_showsNestedEditorBlocks(block)) {
         entries.addAll(_editorRenderEntries(block.children, depth + 1));
       }
+      index += 1;
     }
     return entries;
+  }
+
+  bool _isWritersideCollapsibleHeading(BusyBlock block) {
+    return _documentController.document.mode ==
+            MarkdownMode.writersideMarkdown &&
+        block.kind == BusyBlockKind.heading &&
+        busyMarkWritersideIsCollapsible(block.attributes);
+  }
+
+  bool _isWritersideCollapsibleLeaf(BusyBlock block) {
+    return _documentController.document.mode ==
+            MarkdownMode.writersideMarkdown &&
+        block.kind != BusyBlockKind.heading &&
+        busyMarkWritersideIsCollapsible(block.attributes);
   }
 
   bool _isStructuralBlockquote(BusyBlock block) =>
@@ -4823,18 +4972,28 @@ class _EditorRenderEntry {
     required this.block,
     required this.depth,
     required this.listRunEnd,
-  }) : children = null;
+  }) : children = null,
+       collapsible = false;
 
   const _EditorRenderEntry.blockquote({
     required this.block,
     required this.depth,
     required this.children,
-  }) : listRunEnd = false;
+  }) : listRunEnd = false,
+       collapsible = false;
+
+  const _EditorRenderEntry.collapsible({
+    required this.block,
+    required this.depth,
+    this.listRunEnd = false,
+    this.children,
+  }) : collapsible = true;
 
   final BusyBlock block;
   final int depth;
   final bool listRunEnd;
   final List<_EditorRenderEntry>? children;
+  final bool collapsible;
 }
 
 class _FloatingWysiwygToolbar extends StatelessWidget {

@@ -428,7 +428,11 @@ class MarkdownParser {
   ) {
     final sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
-        : _scannedBlockSources(document.filePath, document.source!);
+        : _scannedBlockSources(
+            document.filePath,
+            document.source!,
+            mode: document.mode,
+          );
     final contentBlocks = document.blocks
         .where(
           (block) =>
@@ -747,8 +751,9 @@ class MarkdownParser {
 
   List<_ScannedBlockSource> _scannedBlockSources(
     String filePath,
-    String source,
-  ) {
+    String source, {
+    required MarkdownMode mode,
+  }) {
     var scanOffset = _frontMatterEndOffset(source);
     final sourceLocationMapper = SourceLocationMapper(source);
     final chunks = <_ScannedBlockSource>[];
@@ -821,6 +826,13 @@ class MarkdownParser {
           }
           index += 1;
         }
+        if (mode == MarkdownMode.writersideMarkdown &&
+            index < indexedLines.length &&
+            _isWritersideCollapsibleAttributeLine(
+              indexedLines[index].trimmed,
+            )) {
+          index += 1;
+        }
         addChunk(startIndex, index);
         continue;
       }
@@ -837,6 +849,17 @@ class MarkdownParser {
         addChunk(startIndex, htmlEndIndex);
         index = htmlEndIndex;
         continue;
+      }
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final writersideEndIndex = _writersideContainerSourceEndIndex(
+          indexedLines,
+          index,
+        );
+        if (writersideEndIndex != null) {
+          addChunk(startIndex, writersideEndIndex);
+          index = writersideEndIndex;
+          continue;
+        }
       }
 
       if (_isAtxHeading(indexedLines[index].line) ||
@@ -891,6 +914,13 @@ class MarkdownParser {
       addChunk(startIndex, index);
     }
     return chunks;
+  }
+
+  bool _isWritersideCollapsibleAttributeLine(String line) {
+    return RegExp(
+      r'^\{[^{}]*\bcollapsible\s*=\s*"true"[^{}]*\}\s*$',
+      caseSensitive: false,
+    ).hasMatch(line);
   }
 
   bool _containsNestedDefinitions(String source) {
@@ -1173,6 +1203,42 @@ class MarkdownParser {
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
       if ((balance <= 0 && index > startIndex) || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  int? _writersideContainerSourceEndIndex(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(lines[startIndex].line);
+    final tag = match?.group(1)?.toLowerCase();
+    if (tag == null ||
+        !{
+          'note',
+          'tip',
+          'warning',
+          'quote',
+          'tabs',
+          'tab',
+          'procedure',
+          'step',
+          'chapter',
+          'code-block',
+          'deflist',
+          'def',
+          'video',
+        }.contains(tag)) {
+      return null;
+    }
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (balance <= 0) {
         return index + 1;
       }
     }
