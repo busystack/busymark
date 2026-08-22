@@ -290,8 +290,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
                 .map((entry) => entry.filePath)
                 .whereType<String>()
                 .firstOrNull;
-        final seedText =
-            activeRecovery?.text ?? activeEntry?.lastKnownText ?? '';
+        final seedText = activeRecovery?.text ?? '';
         final parsed = _service.createUntitledMarkdown(source: seedText);
         final standalone = p.extension(workspacePath).isNotEmpty;
         workspace = Workspace(
@@ -401,15 +400,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return null;
     }
     if (!await _service.pathExists(path)) {
-      final text = session.lastKnownText ?? '';
+      const text = '';
       return DocumentBuffer(
         id: session.id,
         filePath: path,
         text: text,
         lastSavedText: text,
         dirty: false,
-        diskSnapshot: session.diskSnapshot,
-        format: session.format ?? TextFormatMetadata.utf8Lf,
+        format: TextFormatMetadata.utf8Lf,
         editorState: session.editorState,
         diskState: DocumentDiskState.deleted,
       );
@@ -521,9 +519,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               filePath: buffer.filePath,
               untitledName: buffer.untitledName,
               editorState: buffer.editorState,
-              lastKnownText: buffer.text,
-              diskSnapshot: buffer.diskSnapshot,
-              format: buffer.format,
             ),
         ],
       ),
@@ -1804,6 +1799,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       sourceFilePath: sourceFilePath,
       rebuildPreview: false,
       liveOutline: document.outline,
+      preserveFinalNewline: true,
     );
   }
 
@@ -1825,6 +1821,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required bool rebuildPreview,
     String? sourceFilePath,
     List<DocumentOutlineHeading>? liveOutline,
+    bool preserveFinalNewline = false,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -1836,7 +1833,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (activeBuffer == null) {
       return;
     }
-    final nextBuffer = activeBuffer.edited(text);
+    final effectiveText = preserveFinalNewline
+        ? _withFinalNewlinePolicy(text, activeBuffer.format.hasFinalNewline)
+        : text;
+    final nextBuffer = activeBuffer.edited(effectiveText);
     if (identical(nextBuffer, activeBuffer)) {
       return;
     }
@@ -2839,6 +2839,13 @@ List<DocumentBuffer> _replaceBuffer(
     for (final buffer in buffers)
       if (buffer.id == replacement.id) replacement else buffer,
   ]);
+}
+
+String _withFinalNewlinePolicy(String text, bool hasFinalNewline) {
+  if (hasFinalNewline) {
+    return text.endsWith('\n') ? text : '$text\n';
+  }
+  return text.replaceFirst(RegExp(r'\n+$'), '');
 }
 
 extension _ControllerFirstOrNull<T> on Iterable<T> {

@@ -2702,6 +2702,7 @@
   "keepMine": "Behold min versjon",
   "saveAs": "Lagre som",
   "unsavedChangesMultipleMessage": "{count} dokumenter har ulagrede endringer. Lagre dem før du fortsetter?",
+  "workspaceReplaceIssuePartialConflict": "Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.",
   "workspaceReplaceIssueApplyFailed": "Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.",
   "workspaceRecoveryRestored": "{count} ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.",
   "workspaceRecoveryDamaged": "{count} skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.",

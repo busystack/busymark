@@ -1426,6 +1426,10 @@ class AppLocalizationsEt extends AppLocalizations {
       'Vali enne asendamist LF- või CRLF-normaliseerimine.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Tagasivõtmine peatati, sest faili muudeti samal ajal. Mõned asendused võivad alles jääda; väljatõrjutud sisu säilitati alloleval teel.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.';
 

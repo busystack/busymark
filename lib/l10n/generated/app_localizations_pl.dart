@@ -1449,6 +1449,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przed zamianą wybierz normalizację LF lub CRLF.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Wycofywanie zatrzymano, ponieważ plik został jednocześnie zmieniony. Niektóre zamiany mogą pozostać; zastąpioną zawartość zachowano w poniższej ścieżce.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.';
 

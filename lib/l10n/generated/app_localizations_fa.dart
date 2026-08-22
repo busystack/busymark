@@ -1464,6 +1464,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'پیش از جایگزینی، یکسان‌سازی LF یا CRLF را انتخاب کنید.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'بازگردانی متوقف شد، زیرا فایل هم‌زمان تغییر کرد. ممکن است برخی جایگزینی‌ها باقی مانده باشند؛ محتوای جابه‌جا‌شده در مسیر زیر حفظ شد.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'هیچ جایگزینی اعمال نشد، زیرا مجموعهٔ بازبینی‌شده را نمی‌شد با ایمنی ذخیره کرد.';
 

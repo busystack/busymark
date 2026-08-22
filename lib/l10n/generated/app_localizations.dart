@@ -2637,6 +2637,12 @@ abstract class AppLocalizations {
   /// **'Choose LF or CRLF normalization before replacing.'**
   String get workspaceReplaceIssueNormalizationRequired;
 
+  /// Workspace replacement issue when a concurrent edit prevents safe transactional rollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback stopped because the file changed concurrently. Some replacements may remain; displaced content was preserved at the path below.'**
+  String get workspaceReplaceIssuePartialConflict;
+
   /// Workspace replacement issue when the transactional file commit fails.
   ///
   /// In en, this message translates to:

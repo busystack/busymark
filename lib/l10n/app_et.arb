@@ -1913,6 +1913,7 @@
   "keepMine": "Säilita minu versioon",
   "saveAs": "Salvesta nimega",
   "unsavedChangesMultipleMessage": "{count} dokumendis on salvestamata muudatusi. Kas salvestada need enne jätkamist?",
+  "workspaceReplaceIssuePartialConflict": "Tagasivõtmine peatati, sest faili muudeti samal ajal. Mõned asendused võivad alles jääda; väljatõrjutud sisu säilitati alloleval teel.",
   "workspaceReplaceIssueApplyFailed": "Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.",
   "workspaceRecoveryRestored": "Taastati {count} salvestamata dokumenti. Vaadake iga taastatud dokument enne jätkamist üle.",
   "workspaceRecoveryDamaged": "{count} rikutud taastekirjet ei saanud taastada. Kehtivad taastatud dokumendid on endiselt saadaval.",

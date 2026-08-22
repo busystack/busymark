@@ -1451,6 +1451,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перед заміною виберіть нормалізацію LF або CRLF.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.';
 

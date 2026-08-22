@@ -1433,6 +1433,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر توحيد LF أو CRLF قبل الاستبدال.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'توقف التراجع لأن الملف تغير بالتزامن. قد تبقى بعض الاستبدالات؛ حُفظ المحتوى المُزاح في المسار أدناه.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'لم تُطبّق أي استبدالات لأن المجموعة التي تمت مراجعتها تعذر حفظها بأمان.';
 

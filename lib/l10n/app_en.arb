@@ -932,6 +932,8 @@
   "@workspaceReplaceIssueBufferChanged": {"description": "Workspace replacement issue for stale in-memory content."},
   "workspaceReplaceIssueNormalizationRequired": "Choose LF or CRLF normalization before replacing.",
   "@workspaceReplaceIssueNormalizationRequired": {"description": "Workspace replacement issue for mixed line endings without a selected format."},
+  "workspaceReplaceIssuePartialConflict": "Rollback stopped because the file changed concurrently. Some replacements may remain; displaced content was preserved at the path below.",
+  "@workspaceReplaceIssuePartialConflict": {"description": "Workspace replacement issue when a concurrent edit prevents safe transactional rollback."},
   "workspaceReplaceIssueApplyFailed": "The reviewed replacement could not be committed; no files were changed.",
   "@workspaceReplaceIssueApplyFailed": {"description": "Workspace replacement issue when the transactional file commit fails."},
   "externalChangesTitle": "External changes — {fileName}",

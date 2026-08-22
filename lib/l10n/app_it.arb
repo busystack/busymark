@@ -2702,6 +2702,7 @@
   "keepMine": "Mantieni la mia versione",
   "saveAs": "Salva con nome",
   "unsavedChangesMultipleMessage": "{count} documenti contengono modifiche non salvate. Salvarli prima di continuare?",
+  "workspaceReplaceIssuePartialConflict": "Il rollback è stato interrotto perché il file è stato modificato contemporaneamente. Alcune sostituzioni potrebbero rimanere; il contenuto spostato è stato conservato nel percorso seguente.",
   "workspaceReplaceIssueApplyFailed": "Non è stata applicata alcuna sostituzione perché non è stato possibile salvare in sicurezza l’insieme verificato.",
   "workspaceRecoveryRestored": "Sono stati recuperati {count} documenti non salvati. Controllare ogni documento recuperato prima di continuare.",
   "workspaceRecoveryDamaged": "Non è stato possibile ripristinare {count} record di recupero danneggiati. I documenti recuperati validi restano disponibili.",

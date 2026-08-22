@@ -2720,6 +2720,7 @@
   "keepMine": "Zachowaj moją wersję",
   "saveAs": "Zapisz jako",
   "unsavedChangesMultipleMessage": "{count} dokumenty zawierają niezapisane zmiany. Zapisać je przed kontynuowaniem?",
+  "workspaceReplaceIssuePartialConflict": "Wycofywanie zatrzymano, ponieważ plik został jednocześnie zmieniony. Niektóre zamiany mogą pozostać; zastąpioną zawartość zachowano w poniższej ścieżce.",
   "workspaceReplaceIssueApplyFailed": "Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.",
   "workspaceRecoveryRestored": "Odzyskano {count} niezapisanych dokumentów. Przejrzyj każdy odzyskany dokument przed kontynuowaniem.",
   "workspaceRecoveryDamaged": "Nie udało się przywrócić {count} uszkodzonych rekordów odzyskiwania. Prawidłowe odzyskane dokumenty są nadal dostępne.",

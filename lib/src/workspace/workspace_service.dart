@@ -48,6 +48,26 @@ class WorkspaceBatchWriteConflict implements Exception {
   final String path;
 }
 
+class WorkspaceBatchPartialApplicationFile {
+  const WorkspaceBatchPartialApplicationFile({
+    required this.targetPath,
+    required this.preservedPath,
+  });
+
+  final String targetPath;
+  final String preservedPath;
+}
+
+class WorkspaceBatchPartialApplicationConflict implements Exception {
+  const WorkspaceBatchPartialApplicationConflict({
+    required this.files,
+    required this.cause,
+  });
+
+  final List<WorkspaceBatchPartialApplicationFile> files;
+  final Object cause;
+}
+
 class WorkspaceService {
   const WorkspaceService({
     this.markdownParser = const MarkdownParser(),
@@ -61,9 +81,12 @@ class WorkspaceService {
     this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
+    Future<void> Function(String targetPath, int committedCount)?
+    afterBatchFileCommit,
   }) : writersideService = writersideService ?? const WritersideModuleService(),
        _useWorkspaceScanOptionsForWriterside = writersideService == null,
-       _beforeNewFilePublish = beforeNewFilePublish;
+       _beforeNewFilePublish = beforeNewFilePublish,
+       _afterBatchFileCommit = afterBatchFileCommit;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -77,6 +100,8 @@ class WorkspaceService {
   final WorkspaceScanOptions scanOptions;
   final bool _useWorkspaceScanOptionsForWriterside;
   final Future<void> Function(String targetPath)? _beforeNewFilePublish;
+  final Future<void> Function(String targetPath, int committedCount)?
+  _afterBatchFileCommit;
 
   Workspace createUntitledMarkdown({String source = ''}) {
     const fileName = '';
@@ -595,6 +620,7 @@ class WorkspaceService {
     final paths = <String>{};
     final staged = <_StagedBatchTextWrite>[];
     final committed = <_StagedBatchTextWrite>[];
+    final preservedArtifacts = <String>{};
     try {
       for (final write in writes) {
         final savePath = await _saveTargetPath(write.path);
@@ -658,20 +684,18 @@ class WorkspaceService {
           displacedBytes,
         );
         if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
-          final rollbackError = LinuxAtomicFileApi.instance.exchange(
-            write.stagedFile.absolute.path,
-            write.target.absolute.path,
-          );
-          if (rollbackError != null) {
-            throw FileSystemException(
-              'Could not roll back a concurrently changed replacement file',
-              write.requestPath,
-              OSError('atomic exchange rollback failed', rollbackError),
+          final conflict = await _rollbackBatchWrite(write);
+          if (conflict != null) {
+            preservedArtifacts.add(conflict.preservedPath);
+            throw WorkspaceBatchPartialApplicationConflict(
+              files: [conflict],
+              cause: WorkspaceBatchWriteConflict(write.requestPath),
             );
           }
           throw WorkspaceBatchWriteConflict(write.requestPath);
         }
         committed.add(write);
+        await _afterBatchFileCommit?.call(write.target.path, committed.length);
       }
       return {
         for (final write in staged)
@@ -680,27 +704,35 @@ class WorkspaceService {
             write.bytes,
           ),
       };
-    } on Object {
-      Object? rollbackError;
+    } on Object catch (error, stackTrace) {
+      final conflicts = <WorkspaceBatchPartialApplicationFile>[
+        if (error case WorkspaceBatchPartialApplicationConflict partial)
+          ...partial.files,
+      ];
+      preservedArtifacts.addAll(
+        conflicts.map((conflict) => conflict.preservedPath),
+      );
       for (final write in committed.reversed) {
-        final error = LinuxAtomicFileApi.instance.exchange(
-          write.stagedFile.absolute.path,
-          write.target.absolute.path,
-        );
-        if (error != null) {
-          rollbackError ??= FileSystemException(
-            'Could not roll back workspace replacement batch',
-            write.requestPath,
-            OSError('atomic exchange rollback failed', error),
-          );
+        final conflict = await _rollbackBatchWrite(write);
+        if (conflict != null) {
+          conflicts.add(conflict);
+          preservedArtifacts.add(conflict.preservedPath);
         }
       }
-      if (rollbackError != null) {
-        throw rollbackError;
+      if (conflicts.isNotEmpty) {
+        throw WorkspaceBatchPartialApplicationConflict(
+          files: List.unmodifiable(conflicts),
+          cause: error is WorkspaceBatchPartialApplicationConflict
+              ? error.cause
+              : error,
+        );
       }
-      rethrow;
+      Error.throwWithStackTrace(error, stackTrace);
     } finally {
       for (final write in staged) {
+        if (preservedArtifacts.contains(write.stagedFile.path)) {
+          continue;
+        }
         await _deleteSaveArtifactBestEffort(write.stagedFile);
         try {
           if (await write.directory.exists()) {
@@ -710,6 +742,50 @@ class WorkspaceService {
           // Cleanup must not hide a commit or rollback result.
         }
       }
+    }
+  }
+
+  Future<WorkspaceBatchPartialApplicationFile?> _rollbackBatchWrite(
+    _StagedBatchTextWrite write,
+  ) async {
+    final conflict = WorkspaceBatchPartialApplicationFile(
+      targetPath: write.requestPath,
+      preservedPath: write.stagedFile.path,
+    );
+    if (!await _fileMatchesBytes(write.target, write.bytes)) {
+      return conflict;
+    }
+    final rollbackError = LinuxAtomicFileApi.instance.exchange(
+      write.stagedFile.absolute.path,
+      write.target.absolute.path,
+    );
+    if (rollbackError != null) {
+      return conflict;
+    }
+    if (await _fileMatchesBytes(write.stagedFile, write.bytes)) {
+      return null;
+    }
+
+    // The target changed after validation but before the exchange. Put that
+    // concurrent version back when possible, and preserve the displaced data.
+    LinuxAtomicFileApi.instance.exchange(
+      write.stagedFile.absolute.path,
+      write.target.absolute.path,
+    );
+    return conflict;
+  }
+
+  Future<bool> _fileMatchesBytes(File file, List<int> expected) async {
+    try {
+      final type = await FileSystemEntity.type(file.path, followLinks: false);
+      if (type != FileSystemEntityType.file) {
+        return false;
+      }
+      final actual = await file.readAsBytes();
+      return actual.length == expected.length &&
+          crypto.sha256.convert(actual) == crypto.sha256.convert(expected);
+    } on Object {
+      return false;
     }
   }
 

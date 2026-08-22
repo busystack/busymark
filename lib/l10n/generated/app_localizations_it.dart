@@ -1440,6 +1440,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scegli la normalizzazione LF o CRLF prima di sostituire.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Il rollback è stato interrotto perché il file è stato modificato contemporaneamente. Alcune sostituzioni potrebbero rimanere; il contenuto spostato è stato conservato nel percorso seguente.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Non è stata applicata alcuna sostituzione perché non è stato possibile salvare in sicurezza l’insieme verificato.';
 

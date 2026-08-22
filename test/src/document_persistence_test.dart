@@ -38,7 +38,7 @@ void main() {
     expect(restored.format.formattedText(restored.text), 'Saved\n');
   });
 
-  test('session store round-trips ordered tabs and editor state', () async {
+  test('session store keeps only tab identity and editor state', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-session-',
     );
@@ -59,17 +59,6 @@ void main() {
             selection: TextSelection(baseOffset: 2, extentOffset: 8),
             scrollOffset: 42,
             foldedRegionKeys: {'heading:2'},
-          ),
-          lastKnownText: '# First\n',
-          diskSnapshot: WorkspaceFileSnapshot(
-            modifiedAt: DateTime.utc(2026),
-            size: 8,
-            contentHash: 'first',
-          ),
-          format: const TextFormatMetadata(
-            hasUtf8Bom: false,
-            lineEnding: DocumentLineEnding.crlf,
-            hasFinalNewline: true,
           ),
         ),
         const DocumentSessionEntry(
@@ -97,9 +86,20 @@ void main() {
     );
     expect(restored?.tabs.first.editorState.scrollOffset, 42);
     expect(restored?.tabs.first.editorState.foldedRegionKeys, {'heading:2'});
-    expect(restored?.tabs.first.lastKnownText, '# First\n');
-    expect(restored?.tabs.first.diskSnapshot?.contentHash, 'first');
-    expect(restored?.tabs.first.format?.lineEnding, DocumentLineEnding.crlf);
+    final persisted =
+        jsonDecode(
+              await File(p.join(directory.path, 'session.json')).readAsString(),
+            )
+            as Map<String, Object?>;
+    final firstTab = ((persisted['tabs'] as List).first as Map)
+        .cast<String, Object?>();
+    expect(firstTab, isNot(contains('lastKnownText')));
+    expect(firstTab, isNot(contains('diskSnapshot')));
+    expect(firstTab, isNot(contains('format')));
+    expect(
+      await File(p.join(directory.path, 'session.json')).readAsString(),
+      isNot(contains('# First')),
+    );
   });
 
   test('recovery store distinguishes clean and unclean runs', () async {

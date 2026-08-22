@@ -1447,6 +1447,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wählen Sie vor dem Ersetzen die Normalisierung auf LF oder CRLF.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Das Zurücksetzen wurde abgebrochen, da die Datei gleichzeitig geändert wurde. Einige Ersetzungen können bestehen bleiben; verdrängte Inhalte wurden unter dem folgenden Pfad gesichert.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Es wurden keine Ersetzungen vorgenommen, da die geprüfte Auswahl nicht sicher gespeichert werden konnte.';
 

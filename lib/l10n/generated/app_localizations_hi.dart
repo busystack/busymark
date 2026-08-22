@@ -1420,6 +1420,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'बदलने से पहले LF या CRLF सामान्यीकरण चुनें।';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'रोलबैक रोक दिया गया क्योंकि फ़ाइल उसी समय बदल गई थी। कुछ प्रतिस्थापन बने रह सकते हैं; हटाई गई सामग्री नीचे दिए गए पथ पर सुरक्षित रखी गई है।';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'कोई प्रतिस्थापन लागू नहीं किया गया क्योंकि समीक्षा किए गए समूह को सुरक्षित रूप से सहेजा नहीं जा सका।';
 

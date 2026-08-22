@@ -1444,6 +1444,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Elige la normalización LF o CRLF antes de reemplazar.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'La reversión se detuvo porque el archivo cambió al mismo tiempo. Es posible que queden algunos reemplazos; el contenido desplazado se conservó en la ruta indicada abajo.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'No se aplicó ningún reemplazo porque el conjunto revisado no pudo guardarse de forma segura.';
 

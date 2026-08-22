@@ -1430,6 +1430,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose LF or CRLF normalization before replacing.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Rollback stopped because the file changed concurrently. Some replacements may remain; displaced content was preserved at the path below.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'The reviewed replacement could not be committed; no files were changed.';
 

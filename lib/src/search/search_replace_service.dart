@@ -61,14 +61,20 @@ enum WorkspaceReplacementIssueKind {
   changedSincePreview,
   bufferRevisionChanged,
   normalizationRequired,
+  partialApplicationConflict,
   applyFailed,
 }
 
 class WorkspaceReplacementIssue {
-  const WorkspaceReplacementIssue({required this.kind, required this.filePath});
+  const WorkspaceReplacementIssue({
+    required this.kind,
+    required this.filePath,
+    this.preservedPath,
+  });
 
   final WorkspaceReplacementIssueKind kind;
   final String filePath;
+  final String? preservedPath;
 }
 
 class WorkspaceReplacementFilePreview {
@@ -428,6 +434,19 @@ class SearchReplacementService {
             kind: WorkspaceReplacementIssueKind.changedSincePreview,
             filePath: error.path,
           ),
+        ],
+      );
+    } on WorkspaceBatchPartialApplicationConflict catch (error) {
+      return WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: [
+          for (final file in error.files)
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.partialApplicationConflict,
+              filePath: file.targetPath,
+              preservedPath: file.preservedPath,
+            ),
         ],
       );
     } on Object {

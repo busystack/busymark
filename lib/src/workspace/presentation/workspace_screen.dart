@@ -12440,6 +12440,9 @@ String _workspaceReplacementIssueLabel(
       context.l10n.workspaceReplaceIssueBufferChanged,
     WorkspaceReplacementIssueKind.normalizationRequired =>
       context.l10n.workspaceReplaceIssueNormalizationRequired,
+    WorkspaceReplacementIssueKind.partialApplicationConflict =>
+      '${context.l10n.workspaceReplaceIssuePartialConflict}'
+          '${issue.preservedPath == null ? '' : '\n${busyMarkLtrIsolateFor(context, issue.preservedPath!)}'}',
     WorkspaceReplacementIssueKind.applyFailed =>
       context.l10n.workspaceReplaceIssueApplyFailed,
   };

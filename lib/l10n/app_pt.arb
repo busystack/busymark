@@ -2702,6 +2702,7 @@
   "keepMine": "Manter minha versão",
   "saveAs": "Salvar como",
   "unsavedChangesMultipleMessage": "Há {count} documentos com alterações não salvas. Deseja salvá-los antes de continuar?",
+  "workspaceReplaceIssuePartialConflict": "A reversão foi interrompida porque o ficheiro foi alterado em simultâneo. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.",
   "workspaceReplaceIssueApplyFailed": "Nenhuma substituição foi aplicada porque o conjunto revisado não pôde ser salvo com segurança.",
   "workspaceRecoveryRestored": "Foram recuperados {count} documentos não salvos. Revise cada documento recuperado antes de continuar.",
   "workspaceRecoveryDamaged": "Não foi possível restaurar {count} registros de recuperação danificados. Os documentos recuperados válidos continuam disponíveis.",

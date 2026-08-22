@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
-import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
@@ -1129,6 +1129,32 @@ void main() {
     );
   });
 
+  test('WYSIWYG list edits preserve a missing final newline', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-wysiwyg-final-newline-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('- original');
+    final harness = await _createControllerHarness();
+
+    await harness.controller.openPath(file.path);
+    final document = harness.controller.state.workspace!.markdown!.busyDocument;
+    harness.controller.updateActiveWysiwygText(
+      '- changed\n',
+      document: document,
+      sourceFilePath: file.path,
+    );
+
+    expect(harness.controller.state.activeBuffer?.text, '- changed');
+    expect(
+      harness.controller.state.activeBuffer?.format.hasFinalNewline,
+      isFalse,
+    );
+    expect(await harness.controller.saveActive(), isTrue);
+    expect(await file.readAsString(), '- changed');
+  });
+
   test(
     'Keep Mine retains the conflict snapshot until explicit overwrite',
     () async {
@@ -1219,12 +1245,6 @@ void main() {
             filePath: missingPath,
             untitledName: null,
             editorState: const DocumentEditorState(),
-            lastKnownText: 'Last disk contents\n',
-            format: const TextFormatMetadata(
-              hasUtf8Bom: false,
-              lineEnding: DocumentLineEnding.lf,
-              hasFinalNewline: true,
-            ),
           ),
         ],
       );
@@ -1232,7 +1252,7 @@ void main() {
 
     expect(await harness.controller.restorePreviousSession(), isTrue);
     expect(harness.controller.state.activeBuffer?.filePath, missingPath);
-    expect(harness.controller.state.activeBuffer?.text, 'Last disk contents\n');
+    expect(harness.controller.state.activeBuffer?.text, isEmpty);
     expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
   });
 
@@ -1252,12 +1272,6 @@ void main() {
             filePath: missingPath,
             untitledName: null,
             editorState: const DocumentEditorState(),
-            lastKnownText: 'Standalone contents\n',
-            format: const TextFormatMetadata(
-              hasUtf8Bom: false,
-              lineEnding: DocumentLineEnding.lf,
-              hasFinalNewline: true,
-            ),
           ),
         ],
       );
@@ -1269,10 +1283,7 @@ void main() {
       WorkspaceKind.singleMarkdown,
     );
     expect(harness.controller.state.activeBuffer?.filePath, missingPath);
-    expect(
-      harness.controller.state.activeBuffer?.text,
-      'Standalone contents\n',
-    );
+    expect(harness.controller.state.activeBuffer?.text, isEmpty);
     expect(harness.controller.state.activeBuffer?.deletedOnDisk, isTrue);
   });
 
@@ -1427,6 +1438,18 @@ class _WorkspaceControllerDriver {
 
   void updateActiveText(String text, {String? sourceFilePath}) {
     _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
+  }
+
+  void updateActiveWysiwygText(
+    String text, {
+    required BusyDocument document,
+    String? sourceFilePath,
+  }) {
+    _notifier.updateActiveWysiwygText(
+      text,
+      document: document,
+      sourceFilePath: sourceFilePath,
+    );
   }
 
   void updateMathRenderDiagnostic({

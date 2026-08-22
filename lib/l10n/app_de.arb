@@ -2725,6 +2725,7 @@
   "keepMine": "Meine Version behalten",
   "saveAs": "Speichern unter",
   "unsavedChangesMultipleMessage": "{count} Dokumente enthalten ungespeicherte Änderungen. Vor dem Fortfahren speichern?",
+  "workspaceReplaceIssuePartialConflict": "Das Zurücksetzen wurde abgebrochen, da die Datei gleichzeitig geändert wurde. Einige Ersetzungen können bestehen bleiben; verdrängte Inhalte wurden unter dem folgenden Pfad gesichert.",
   "workspaceReplaceIssueApplyFailed": "Es wurden keine Ersetzungen vorgenommen, da die geprüfte Auswahl nicht sicher gespeichert werden konnte.",
   "workspaceRecoveryRestored": "{count} ungespeicherte Dokumente wurden wiederhergestellt. Prüfen Sie jedes wiederhergestellte Dokument, bevor Sie fortfahren.",
   "workspaceRecoveryDamaged": "{count} beschädigte Wiederherstellungsdatensätze konnten nicht wiederhergestellt werden. Gültige wiederhergestellte Dokumente bleiben verfügbar.",

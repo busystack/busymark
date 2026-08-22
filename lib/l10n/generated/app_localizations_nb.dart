@@ -1430,6 +1430,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Velg LF- eller CRLF-normalisering før du erstatter.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.';
 

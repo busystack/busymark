@@ -1445,6 +1445,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisissez la normalisation LF ou CRLF avant le remplacement.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'L’annulation a été interrompue car le fichier a été modifié simultanément. Certains remplacements peuvent subsister ; le contenu déplacé a été conservé à l’emplacement ci-dessous.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Aucun remplacement n’a été appliqué, car l’ensemble vérifié n’a pas pu être enregistré en toute sécurité.';
 

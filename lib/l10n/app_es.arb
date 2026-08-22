@@ -2725,6 +2725,7 @@
   "keepMine": "Conservar mi versión",
   "saveAs": "Guardar como",
   "unsavedChangesMultipleMessage": "Hay {count} documentos con cambios sin guardar. ¿Desea guardarlos antes de continuar?",
+  "workspaceReplaceIssuePartialConflict": "La reversión se detuvo porque el archivo cambió al mismo tiempo. Es posible que queden algunos reemplazos; el contenido desplazado se conservó en la ruta indicada abajo.",
   "workspaceReplaceIssueApplyFailed": "No se aplicó ningún reemplazo porque el conjunto revisado no pudo guardarse de forma segura.",
   "workspaceRecoveryRestored": "Se recuperaron {count} documentos sin guardar. Revise cada documento recuperado antes de continuar.",
   "workspaceRecoveryDamaged": "No se pudieron restaurar {count} registros de recuperación dañados. Los documentos recuperados válidos siguen disponibles.",

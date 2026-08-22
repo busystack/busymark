@@ -2725,6 +2725,7 @@
   "keepMine": "Conserver ma version",
   "saveAs": "Enregistrer sous",
   "unsavedChangesMultipleMessage": "{count} documents contiennent des modifications non enregistrées. Les enregistrer avant de continuer ?",
+  "workspaceReplaceIssuePartialConflict": "L’annulation a été interrompue car le fichier a été modifié simultanément. Certains remplacements peuvent subsister ; le contenu déplacé a été conservé à l’emplacement ci-dessous.",
   "workspaceReplaceIssueApplyFailed": "Aucun remplacement n’a été appliqué, car l’ensemble vérifié n’a pas pu être enregistré en toute sécurité.",
   "workspaceRecoveryRestored": "{count} documents non enregistrés ont été récupérés. Vérifiez chaque document récupéré avant de continuer.",
   "workspaceRecoveryDamaged": "{count} enregistrements de récupération endommagés n’ont pas pu être restaurés. Les documents valides récupérés restent disponibles.",

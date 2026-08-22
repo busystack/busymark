@@ -275,6 +275,74 @@ void main() {
     expect(await first.readAsString(), 'cat first');
     expect(await second.readAsString(), 'changed after preview');
   });
+
+  test(
+    'rollback preserves a concurrent edit and reports displaced content',
+    () async {
+      if (!Platform.isLinux) {
+        return;
+      }
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-replace-rollback-conflict-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'a.md'));
+      final second = File(p.join(directory.path, 'b.md'));
+      await first.writeAsString('cat first');
+      await second.writeAsString('cat second');
+      var injected = false;
+      final workspaceService = WorkspaceService(
+        afterBatchFileCommit: (targetPath, committedCount) async {
+          if (!injected && committedCount == 1) {
+            injected = true;
+            await first.writeAsString('external first');
+            await second.delete();
+          }
+        },
+      );
+      final workspace = Workspace(
+        id: directory.path,
+        rootPath: directory.path,
+        kind: WorkspaceKind.markdownFolder,
+        openedAt: DateTime(2026),
+        files: [
+          await _documentFile(first, directory.path),
+          await _documentFile(second, directory.path),
+        ],
+        diagnostics: const [],
+      );
+      final state = WorkspaceState(workspace: workspace);
+      final preview = await replacementService.previewWorkspace(
+        state: state,
+        workspaceService: workspaceService,
+        options: const SourceSearchOptions(query: 'cat'),
+        replacement: 'dog',
+      );
+
+      final result = await replacementService.applyWorkspace(
+        preview: preview,
+        selectedMatchIds: {
+          for (final file in preview.files)
+            for (final match in file.matches) match.id,
+        },
+        currentState: () => state,
+        updateBuffer: (_, _) => fail('no buffers should be updated'),
+        workspaceService: workspaceService,
+      );
+
+      expect(result.appliedFiles, 0);
+      expect(result.issues, hasLength(1));
+      expect(
+        result.issues.single.kind,
+        WorkspaceReplacementIssueKind.partialApplicationConflict,
+      );
+      expect(result.issues.single.filePath, first.path);
+      expect(await first.readAsString(), 'external first');
+      final preservedPath = result.issues.single.preservedPath;
+      expect(preservedPath, isNotNull);
+      expect(await File(preservedPath!).readAsString(), 'cat first');
+    },
+  );
 }
 
 Future<DocumentFile> _documentFile(File file, String root) async {

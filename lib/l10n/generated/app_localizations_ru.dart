@@ -1443,6 +1443,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перед заменой выберите нормализацию LF или CRLF.';
 
   @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Откат остановлен, поскольку файл был одновременно изменён. Некоторые замены могли сохраниться; вытесненное содержимое сохранено по указанному ниже пути.';
+
+  @override
   String get workspaceReplaceIssueApplyFailed =>
       'Замены не применены, поскольку проверенный набор не удалось безопасно сохранить.';
 

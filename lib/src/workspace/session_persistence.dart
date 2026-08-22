@@ -5,8 +5,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'document_buffer.dart';
-import 'text_format_metadata.dart';
-import 'workspace_file_snapshot.dart';
 
 class DocumentSessionEntry {
   const DocumentSessionEntry({
@@ -14,32 +12,21 @@ class DocumentSessionEntry {
     required this.filePath,
     required this.untitledName,
     required this.editorState,
-    this.lastKnownText,
-    this.diskSnapshot,
-    this.format,
   });
 
   final String id;
   final String? filePath;
   final String? untitledName;
   final DocumentEditorState editorState;
-  final String? lastKnownText;
-  final WorkspaceFileSnapshot? diskSnapshot;
-  final TextFormatMetadata? format;
 
   Map<String, Object?> toJson() => {
     'id': id,
     'filePath': filePath,
     'untitledName': untitledName,
     'editorState': editorState.toJson(),
-    'lastKnownText': lastKnownText,
-    'diskSnapshot': diskSnapshot?.toJson(),
-    'format': format?.toJson(),
   };
 
   factory DocumentSessionEntry.fromJson(Map<String, Object?> json) {
-    final diskSnapshot = json['diskSnapshot'];
-    final format = json['format'];
     return DocumentSessionEntry(
       id: json['id']?.toString() ?? '',
       filePath: json['filePath']?.toString(),
@@ -47,13 +34,6 @@ class DocumentSessionEntry {
       editorState: DocumentEditorState.fromJson(
         (json['editorState'] as Map?)?.cast<String, Object?>() ?? const {},
       ),
-      lastKnownText: json['lastKnownText']?.toString(),
-      diskSnapshot: diskSnapshot is Map
-          ? WorkspaceFileSnapshot.fromJson(diskSnapshot.cast<String, Object?>())
-          : null,
-      format: format is Map
-          ? TextFormatMetadata.fromJson(format.cast<String, Object?>())
-          : null,
     );
   }
 }
