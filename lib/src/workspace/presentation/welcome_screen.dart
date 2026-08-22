@@ -42,9 +42,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     extensions: <String>['md', 'markdown'],
     mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
-  var _startupPathConsumed = false;
-  var _restoreAttempted = false;
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
@@ -59,18 +56,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       });
     });
     final startupPath = ref.watch(startupPathProvider);
-    if (!_startupPathConsumed &&
-        startupPath != null &&
-        startupPath.isNotEmpty) {
-      _startupPathConsumed = true;
+    final startupNavigation = ref.read(startupNavigationGuardProvider);
+    if (startupNavigation.claimStartupPath(startupPath)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          unawaited(_openPath(startupPath));
+          unawaited(_openPath(startupPath!));
         }
       });
-    } else if (!_restoreAttempted &&
-        (startupPath == null || startupPath.isEmpty)) {
-      _restoreAttempted = true;
+    } else if (startupNavigation.claimSessionRestore(startupPath)) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) {
           return;

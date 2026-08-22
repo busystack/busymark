@@ -123,6 +123,49 @@ void main() {
       expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     },
   );
+
+  testWidgets('returning to Welcome does not restore the session again', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(
+            _FallbackHeaderBarService(),
+          ),
+          workspaceControllerProvider.overrideWith(
+            _RestoringWorkspaceController.new,
+          ),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})')
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+    expect(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      findsNothing,
+    );
+  });
 }
 
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
@@ -152,5 +195,34 @@ class _StaleWorkspaceController extends WorkspaceController {
         diagnostics: const [],
       ),
     );
+  }
+}
+
+class _RestoringWorkspaceController extends WorkspaceController {
+  @override
+  WorkspaceState build() => const WorkspaceState();
+
+  @override
+  Future<bool> restorePreviousSession() async {
+    state = WorkspaceState(
+      workspace: Workspace(
+        id: 'restored-workspace',
+        rootPath: '/tmp/restored.md',
+        kind: WorkspaceKind.singleMarkdown,
+        openedAt: DateTime(2026),
+        activeFilePath: '/tmp/restored.md',
+        files: [
+          DocumentFile(
+            absolutePath: '/tmp/restored.md',
+            relativePath: 'restored.md',
+            kind: DocumentKind.markdown,
+            size: 20,
+            lastModified: DateTime(2026),
+          ),
+        ],
+        diagnostics: const [],
+      ),
+    );
+    return true;
   }
 }
