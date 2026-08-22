@@ -88,8 +88,24 @@ void main() {
       contains('set_media_playback_requires_user_gesture(settings, FALSE)'),
     );
     expect(native, contains('autoplay=1'));
-    expect(native, contains('resource_send_request_cb'));
+    expect(native, contains('resource_load_started_cb'));
+    expect(
+      native,
+      contains('webkit_uri_request_set_uri(request, "about:blank")'),
+    );
+    expect(
+      native,
+      contains(
+        'soup_message_headers_replace(headers, "Referer", '
+        'kHostedPlayerBaseUri)',
+      ),
+    );
+    expect(native, contains('kHostedPlayerOriginParameter'));
+    expect(native, contains('"https://github.com/busystack/busymark/"'));
+    expect(native, isNot(contains('"send-request"')));
     expect(native, contains('youtube-nocookie.com'));
+    expect(native, contains('jnn-pa.googleapis.com'));
+    expect(native, contains('yt3.ggpht.com'));
     expect(native, contains('player.vimeo.com'));
     expect(native, contains("connect-src 'none'"));
     expect(native, isNot(contains('javascript:')));

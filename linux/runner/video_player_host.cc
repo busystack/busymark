@@ -15,16 +15,19 @@ constexpr gdouble kMaximumPlayerCoordinate = 32768.0;
 constexpr gsize kMaximumPlayerIdLength = 128;
 constexpr gsize kMaximumSourceLength = 8192;
 constexpr gsize kMaximumLabelLength = 256;
+// Hosted players require an HTTPS page identity. In particular, YouTube
+// rejects embeds without an HTTP Referer (player error 153). BusyMark's
+// published homepage is its source repository, so use that stable identity
+// instead of the opaque about:blank origin produced by load_html().
+constexpr char kHostedPlayerBaseUri[] =
+    "https://github.com/busystack/busymark/";
+constexpr char kHostedPlayerOriginParameter[] =
+    "https%3A%2F%2Fgithub.com";
 
 enum class PlayerKind { kLocalFile, kYoutube, kVimeo };
 
 struct VideoPlayer {
   GtkWidget* web_view;
-  PlayerKind kind;
-  gchar* allowed_local_uri;
-};
-
-struct VideoResourcePolicy {
   PlayerKind kind;
   gchar* allowed_local_uri;
 };
@@ -230,7 +233,9 @@ gboolean is_embedded_service_host(PlayerKind kind, const gchar* host) {
            host_matches(host, "googlevideo.com") ||
            host_matches(host, "ytimg.com") ||
            host_matches(host, "gstatic.com") ||
-           host_matches(host, "google.com");
+           host_matches(host, "google.com") ||
+           g_ascii_strcasecmp(host, "jnn-pa.googleapis.com") == 0 ||
+           g_ascii_strcasecmp(host, "yt3.ggpht.com") == 0;
   }
   if (kind == PlayerKind::kVimeo) {
     return host_matches(host, "vimeo.com") ||
@@ -252,8 +257,18 @@ gboolean is_allowed_player_uri(PlayerKind kind,
     return TRUE;
   }
   if (kind == PlayerKind::kLocalFile) {
+    // load_html() uses this exact URI for BusyMark's fixed local-player shell.
+    // It does not grant access to any path below the filesystem root.
+    if (g_strcmp0(uri, "file:///") == 0) {
+      return TRUE;
+    }
     return allowed_local_uri != nullptr &&
            g_strcmp0(uri, allowed_local_uri) == 0;
+  }
+  // This exact URI identifies BusyMark's in-memory hosted-player shell. No
+  // network request is made for it by load_html().
+  if (g_strcmp0(uri, kHostedPlayerBaseUri) == 0) {
+    return TRUE;
   }
   g_autoptr(GError) error = nullptr;
   g_autoptr(GUri) parsed = g_uri_parse(uri, G_URI_FLAGS_NONE, &error);
@@ -262,33 +277,32 @@ gboolean is_allowed_player_uri(PlayerKind kind,
          is_embedded_service_host(kind, g_uri_get_host(parsed));
 }
 
-void video_resource_policy_free(gpointer data, GClosure*) {
-  auto* policy = static_cast<VideoResourcePolicy*>(data);
-  g_free(policy->allowed_local_uri);
-  g_free(policy);
-}
-
-gboolean resource_send_request_cb(WebKitWebResource*,
-                                  WebKitURIRequest* request,
-                                  WebKitURIResponse*,
-                                  gpointer user_data) {
-  auto* policy = static_cast<VideoResourcePolicy*>(user_data);
-  return !is_allowed_player_uri(policy->kind, policy->allowed_local_uri,
-                                webkit_uri_request_get_uri(request));
-}
-
 void resource_load_started_cb(WebKitWebView*,
-                              WebKitWebResource* resource,
-                              WebKitURIRequest*,
+                              WebKitWebResource*,
+                              WebKitURIRequest* request,
                               gpointer user_data) {
   auto* player = static_cast<VideoPlayer*>(user_data);
-  auto* policy = g_new0(VideoResourcePolicy, 1);
-  policy->kind = player->kind;
-  policy->allowed_local_uri = g_strdup(player->allowed_local_uri);
-  g_signal_connect_data(resource, "send-request",
-                        G_CALLBACK(resource_send_request_cb), policy,
-                        video_resource_policy_free,
-                        static_cast<GConnectFlags>(0));
+  const gchar* uri = webkit_uri_request_get_uri(request);
+  if (!is_allowed_player_uri(player->kind, player->allowed_local_uri, uri)) {
+    // resource-load-started exposes the request before it is sent. Replacing a
+    // rejected request with about:blank keeps it inside the fixed player shell
+    // without relying on a nonexistent WebKitWebResource::send-request signal.
+    webkit_uri_request_set_uri(request, "about:blank");
+    return;
+  }
+  if (player->kind != PlayerKind::kYoutube) {
+    return;
+  }
+  g_autoptr(GError) error = nullptr;
+  g_autoptr(GUri) parsed = g_uri_parse(uri, G_URI_FLAGS_NONE, &error);
+  if (parsed == nullptr ||
+      !host_matches(g_uri_get_host(parsed), "youtube-nocookie.com")) {
+    return;
+  }
+  SoupMessageHeaders* headers = webkit_uri_request_get_http_headers(request);
+  if (headers != nullptr) {
+    soup_message_headers_replace(headers, "Referer", kHostedPlayerBaseUri);
+  }
 }
 
 gboolean decide_policy_cb(WebKitWebView* web_view,
@@ -415,8 +429,8 @@ gchar* player_html(PlayerKind kind,
         "%s<iframe allow=\"autoplay; encrypted-media; picture-in-picture\" "
         "referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen "
         "src=\"https://www.youtube-nocookie.com/embed/%s?autoplay=1&playsinline=1&rel=0&"
-        "controls=%d\"></iframe>%s",
-        head, value, mini_player ? 0 : 1, kTail);
+        "controls=%d&origin=%s\"></iframe>%s",
+        head, value, mini_player ? 0 : 1, kHostedPlayerOriginParameter, kTail);
   }
   return g_strdup_printf(
       "%s<iframe allow=\"autoplay; encrypted-media; picture-in-picture\" "
@@ -475,7 +489,7 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
                   border_effect);
   webkit_web_view_load_html(WEBKIT_WEB_VIEW(player->web_view), html,
                             kind == PlayerKind::kLocalFile ? "file:///"
-                                                          : "about:blank");
+                                                          : kHostedPlayerBaseUri);
   return player;
 }
 
