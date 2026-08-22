@@ -823,7 +823,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get video => 'Video';
 
   @override
-  String get openVideo => 'Open video';
+  String get openVideo => 'Play video';
+
+  @override
+  String get pauseVideo => 'Pause video';
 
   @override
   String get videoUnavailable => 'Video unavailable';

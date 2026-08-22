@@ -812,7 +812,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get video => 'वीडियो';
 
   @override
-  String get openVideo => 'वीडियो खोलें';
+  String get openVideo => 'वीडियो चलाएँ';
+
+  @override
+  String get pauseVideo => 'वीडियो रोकें';
 
   @override
   String get videoUnavailable => 'वीडियो उपलब्ध नहीं है';

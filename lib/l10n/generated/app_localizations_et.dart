@@ -820,7 +820,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get video => 'Video';
 
   @override
-  String get openVideo => 'Ava video';
+  String get openVideo => 'Esita videot';
+
+  @override
+  String get pauseVideo => 'Peata video';
 
   @override
   String get videoUnavailable => 'Video pole saadaval';

@@ -826,7 +826,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get video => 'Видео';
 
   @override
-  String get openVideo => 'Открыть видео';
+  String get openVideo => 'Воспроизвести видео';
+
+  @override
+  String get pauseVideo => 'Приостановить видео';
 
   @override
   String get videoUnavailable => 'Видео недоступно';

@@ -833,7 +833,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get video => 'Video';
 
   @override
-  String get openVideo => 'Video öffnen';
+  String get openVideo => 'Video abspielen';
+
+  @override
+  String get pauseVideo => 'Video pausieren';
 
   @override
   String get videoUnavailable => 'Video nicht verfügbar';

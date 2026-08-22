@@ -816,7 +816,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get video => 'ویدیو';
 
   @override
-  String get openVideo => 'باز کردن ویدیو';
+  String get openVideo => 'پخش ویدیو';
+
+  @override
+  String get pauseVideo => 'مکث ویدیو';
 
   @override
   String get videoUnavailable => 'ویدیو در دسترس نیست';

@@ -4059,6 +4059,9 @@ void main() {
       tester.widget<ScrollablePositionedList>(previewScroll).padding,
       editorPadding,
     );
+    final previewControllerBeforeSplit = tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemScrollController;
 
     container
         .read(workspaceControllerProvider.notifier)
@@ -4067,6 +4070,14 @@ void main() {
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.split);
     await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widget<ScrollablePositionedList>(previewScroll)
+          .itemScrollController,
+      same(previewControllerBeforeSplit),
+    );
 
     final splitPaneRect = tester.getRect(previewScroll);
     final splitContentRect = tester.getRect(previewContent);

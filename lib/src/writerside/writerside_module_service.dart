@@ -1093,8 +1093,7 @@ class WritersideModuleService {
         }
         final uri = Uri.tryParse(source);
         if (uri != null && uri.hasScheme) {
-          if (uri.scheme.toLowerCase() != 'https' ||
-              !isSupportedWritersideVideoHost(uri.host)) {
+          if (resolveWritersideHostedVideoSource(source) == null) {
             diagnostics.add(
               Diagnostic(
                 code: 'writerside.video.unsupported-source',

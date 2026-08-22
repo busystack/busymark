@@ -8326,6 +8326,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
               children: [
                 if (sourceVisible)
                   Expanded(
+                    key: const ValueKey('git-diff-source-pane'),
                     child: GitDiffViewer(
                       diff: diff,
                       hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
@@ -8354,6 +8355,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                   ),
                 if (previewVisible)
                   Expanded(
+                    key: const ValueKey('git-diff-preview-pane'),
                     child: Column(
                       children: [
                         if (widget.comparisonLabel == null &&
@@ -9531,6 +9533,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               children: [
                 if (wysiwygVisible)
                   Expanded(
+                    key: const ValueKey('document-wysiwyg-pane'),
                     child: BusyMarkWysiwygEditor(
                       document: wysiwygDocument,
                       documentId: activeBuffer?.id,
@@ -9640,6 +9643,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   ),
                 if (sourceVisible)
                   Expanded(
+                    key: const ValueKey('document-source-pane'),
                     child: BusyMarkSourceEditor(
                       key: _sourceEditorKey,
                       text: widget.state.activeText,
@@ -9758,6 +9762,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   ),
                 if (previewVisible)
                   Expanded(
+                    key: const ValueKey('document-preview-pane'),
                     child: _PreviewPane(
                       preview: widget.state.preview,
                       workspace: widget.state.workspace,

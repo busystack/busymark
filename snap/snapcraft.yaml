@@ -39,6 +39,7 @@ apps:
       - desktop
       - desktop-legacy
       - browser-support
+      - audio-playback
       - gsettings
       - opengl
       - wayland
@@ -72,6 +73,11 @@ parts:
       - libhandy-1-0
       - libsecret-1-0
       - libwebkit2gtk-4.1-0
+      - gstreamer1.0-libav
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-ugly
       - libx11-6
       - libxdamage1
       - libxext6

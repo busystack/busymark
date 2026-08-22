@@ -28,7 +28,7 @@ Imported Writerside topics copy both the local video and an explicit preview
 image. Missing sources and preview images appear in document diagnostics.
 
 BusyMark accepts the documented `width`, `height`, `mini-player`, and
-`border-effect` presentation attributes in its preview card:
+`border-effect` presentation attributes in its embedded player:
 
 ```xml
 <video src="sample.mp4"
@@ -45,17 +45,25 @@ Writerside element.
 
 ## Desktop preview and PDF
 
-The BusyMark preview and Editor view show the configured poster with an
-accessible play action. Local files open in the desktop's registered video
-player; supported remote videos open in the default browser. Only HTTPS
-YouTube and Vimeo hosts are launchable. Arbitrary schemes, unrelated hosts,
-absolute authored paths, and paths escaping the project media roots are
-rejected.
+The BusyMark preview and Editor view show the configured poster until Play is
+pressed, then replace it in place with an interactive player. Local files play
+through the packaged WebKit/GStreamer media stack. YouTube and Vimeo use their
+embedded players, so they require a network connection; BusyMark starts no
+remote video request before the explicit Play action. `mini-player="true"`
+hides controls other than play/pause.
 
-Markdown PDF export carries video as a first-class export node. It stages a
-local poster image and links HTTPS sources when available; a readable source
-fallback is emitted when no poster can be staged. Writerside module export
-continues to use JetBrains' official Writerside builder.
+Only validated HTTPS YouTube and Vimeo video identifiers reach the hosted
+player. Arbitrary schemes, unrelated hosts, absolute authored paths, and paths
+escaping the project media roots are rejected. The interactive player uses an
+ephemeral WebKit context with cookies, permissions, popups, context menus,
+local storage, WebRTC, and unrelated network hosts blocked. It does not relax
+the separate offline WebKit renderer used for MathJax and visualizations.
+
+Markdown PDF export carries video as a first-class export node. Since PDF is
+not an interactive video container, it stages a local poster image and links
+HTTPS sources when available; a readable source fallback is emitted when no
+poster can be staged. Writerside module export continues to use JetBrains'
+official Writerside builder.
 
 The syntax follows JetBrains' [Writerside video documentation](https://www.jetbrains.com/help/writerside/videos.html)
 and [semantic markup reference](https://www.jetbrains.com/help/writerside/semantic-markup-reference.html).

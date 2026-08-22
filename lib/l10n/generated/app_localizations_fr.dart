@@ -830,7 +830,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get video => 'Vidéo';
 
   @override
-  String get openVideo => 'Ouvrir la vidéo';
+  String get openVideo => 'Lire la vidéo';
+
+  @override
+  String get pauseVideo => 'Mettre la vidéo en pause';
 
   @override
   String get videoUnavailable => 'Vidéo indisponible';

@@ -219,6 +219,28 @@ After.
       )?.host,
       'vimeo.com',
     );
+    for (final entry in {
+      'https://www.youtube.com/watch?v=BeJu9bMPLGU': (
+        WritersideVideoPlaybackKind.youtube,
+        'BeJu9bMPLGU',
+      ),
+      'https://www.youtube.com/embed/BeJu9bMPLGU': (
+        WritersideVideoPlaybackKind.youtube,
+        'BeJu9bMPLGU',
+      ),
+      'https://youtube.com/shorts/BeJu9bMPLGU': (
+        WritersideVideoPlaybackKind.youtube,
+        'BeJu9bMPLGU',
+      ),
+      'https://player.vimeo.com/video/76979871': (
+        WritersideVideoPlaybackKind.vimeo,
+        '76979871',
+      ),
+    }.entries) {
+      final playback = resolveWritersideHostedVideoSource(entry.key);
+      expect(playback?.kind, entry.value.$1, reason: entry.key);
+      expect(playback?.value, entry.value.$2, reason: entry.key);
+    }
     expect(
       resolveWritersideVideoUri(
         source: 'sample.mp4',
@@ -232,6 +254,10 @@ After.
     for (final unsafe in [
       'http://youtu.be/BeJu9bMPLGU',
       'https://example.com/sample.mp4',
+      'https://youtube.com/watch',
+      'https://youtube.com.evil.example/watch?v=BeJu9bMPLGU',
+      'https://user@youtube.com/watch?v=BeJu9bMPLGU',
+      'https://vimeo.com/not-a-video',
       'javascript:alert(1)',
       '/tmp/sample.mp4',
       '../outside.mp4',

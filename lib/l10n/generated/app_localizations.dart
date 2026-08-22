@@ -1602,8 +1602,14 @@ abstract class AppLocalizations {
   /// No description provided for @openVideo.
   ///
   /// In en, this message translates to:
-  /// **'Open video'**
+  /// **'Play video'**
   String get openVideo;
+
+  /// No description provided for @pauseVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause video'**
+  String get pauseVideo;
 
   /// No description provided for @videoUnavailable.
   ///

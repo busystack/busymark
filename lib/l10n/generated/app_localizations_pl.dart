@@ -831,7 +831,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get video => 'Wideo';
 
   @override
-  String get openVideo => 'Otwórz wideo';
+  String get openVideo => 'Odtwórz wideo';
+
+  @override
+  String get pauseVideo => 'Wstrzymaj wideo';
 
   @override
   String get videoUnavailable => 'Wideo jest niedostępne';

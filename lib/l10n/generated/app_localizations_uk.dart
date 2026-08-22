@@ -831,7 +831,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get video => 'Відео';
 
   @override
-  String get openVideo => 'Відкрити відео';
+  String get openVideo => 'Відтворити відео';
+
+  @override
+  String get pauseVideo => 'Призупинити відео';
 
   @override
   String get videoUnavailable => 'Відео недоступне';

@@ -11,6 +11,7 @@
 
 #include "flutter/generated_plugin_registrant.h"
 #include "secure_credential_host.h"
+#include "video_player_host.h"
 #include "web_render_host.h"
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
@@ -85,9 +86,11 @@ struct _MyApplication {
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   BusyMarkWebRenderHost* visualization_host;
+  BusyMarkVideoPlayerHost* video_player_host;
   GtkCssProvider* header_bar_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
+  GtkWidget* flutter_overlay;
   GtkWidget* titlebar_handle;
   GtkWidget* titlebar_overlay;
   GtkWidget* modal_scrim;
@@ -2936,7 +2939,13 @@ static void my_application_activate(GApplication* application) {
   GtkWidget* window_content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_pack_start(GTK_BOX(window_content), self->titlebar_handle, FALSE,
                      FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(window_content), GTK_WIDGET(view), TRUE, TRUE, 0);
+  self->flutter_overlay = gtk_overlay_new();
+  gtk_widget_set_hexpand(self->flutter_overlay, TRUE);
+  gtk_widget_set_vexpand(self->flutter_overlay, TRUE);
+  gtk_container_add(GTK_CONTAINER(self->flutter_overlay), GTK_WIDGET(view));
+  gtk_widget_show(self->flutter_overlay);
+  gtk_box_pack_start(GTK_BOX(window_content), self->flutter_overlay, TRUE,
+                     TRUE, 0);
   gtk_widget_show(window_content);
   gtk_container_add(GTK_CONTAINER(window), window_content);
 
@@ -2953,6 +2962,9 @@ static void my_application_activate(GApplication* application) {
   self->visualization_host =
       busymark_web_render_host_new(GTK_APPLICATION(self), window);
   busymark_web_render_host_register_channel(self->visualization_host, view);
+  self->video_player_host =
+      busymark_video_player_host_new(self->flutter_overlay);
+  busymark_video_player_host_register_channel(self->video_player_host, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
   schedule_header_bar_focus_state_refresh(self);
@@ -3015,6 +3027,10 @@ static void my_application_dispose(GObject* object) {
     busymark_web_render_host_shutdown(self->visualization_host);
   }
   g_clear_object(&self->visualization_host);
+  if (self->video_player_host != nullptr) {
+    busymark_video_player_host_shutdown(self->video_player_host);
+  }
+  g_clear_object(&self->video_player_host);
   g_clear_object(&self->main_menu_model);
   g_clear_object(&self->view_mode_menu_model);
   g_clear_object(&self->view_mode_action);
@@ -3051,9 +3067,11 @@ static void my_application_init(MyApplication* self) {
   self->asset_input_channel = nullptr;
   self->secure_credential_channel = nullptr;
   self->visualization_host = nullptr;
+  self->video_player_host = nullptr;
   self->header_bar_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;
+  self->flutter_overlay = nullptr;
   self->titlebar_handle = nullptr;
   self->titlebar_box = nullptr;
   self->titlebar_overlay = nullptr;

@@ -819,7 +819,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get video => 'Video';
 
   @override
-  String get openVideo => 'Åpne video';
+  String get openVideo => 'Spill av video';
+
+  @override
+  String get pauseVideo => 'Sett video på pause';
 
   @override
   String get videoUnavailable => 'Videoen er utilgjengelig';

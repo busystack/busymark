@@ -813,7 +813,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get video => 'فيديو';
 
   @override
-  String get openVideo => 'فتح الفيديو';
+  String get openVideo => 'تشغيل الفيديو';
+
+  @override
+  String get pauseVideo => 'إيقاف الفيديو مؤقتًا';
 
   @override
   String get videoUnavailable => 'الفيديو غير متاح';
