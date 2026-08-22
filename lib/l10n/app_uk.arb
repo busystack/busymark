@@ -2703,6 +2703,8 @@
   "workspaceReplaceDiskContent": "Вміст, збережений на диску",
   "selectFileMatches": "Вибрати всі збіги: {count}",
   "workspaceReplaceApplied": "Замінено збігів: {matches} у файлах: {files}; пропущено: {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Кінцеве перенесення рядка",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Немає кінцевого перенесення рядка",
   "normalizeLineEndings": "Нормалізувати закінчення рядків",
   "workspaceReplaceMixedLineEndings": "У {fileName} використовуються змішані закінчення рядків. Виберіть формат перед заміною.",
   "mixedLineEndingsSavePrompt": "У документі використовуються змішані закінчення рядків. Виберіть формат.",

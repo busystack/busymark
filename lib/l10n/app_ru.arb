@@ -2703,6 +2703,8 @@
   "workspaceReplaceDiskContent": "Содержимое, сохранённое на диске",
   "selectFileMatches": "Выбрать все совпадения: {count}",
   "workspaceReplaceApplied": "Заменено совпадений: {matches} в файлах: {files}; пропущено: {skipped}.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Конечный перевод строки",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Нет конечного перевода строки",
   "normalizeLineEndings": "Нормализовать окончания строк",
   "workspaceReplaceMixedLineEndings": "В {fileName} используются смешанные окончания строк. Выберите формат перед заменой.",
   "mixedLineEndingsSavePrompt": "В документе используются смешанные окончания строк. Выберите формат.",

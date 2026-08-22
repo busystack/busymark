@@ -77,6 +77,7 @@ import '../workspace_model.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
+import 'document_format_indicator.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 
@@ -789,8 +790,6 @@ class WorkspaceScreen extends ConsumerWidget {
                       children: workspaceChildren,
                     ),
                   ),
-                  if (state.activeBuffer case final buffer?)
-                    _DocumentStatusBar(buffer: buffer),
                 ],
               ),
             ),
@@ -7887,6 +7886,12 @@ class _EditorTabStrip extends ConsumerWidget {
               diff: entry.kind == WorkspaceTabKind.gitDiff,
               active: entry.active,
               dirty: _tabDirty(workspace, entry),
+              format: entry.active && entry.bufferId != null
+                  ? state.documentBuffers
+                        .where((buffer) => buffer.id == entry.bufferId)
+                        .firstOrNull
+                        ?.format
+                  : null,
               onSelected: () => _selectTab(context, ref, workspace, entry),
               onClose: () => _closeTab(context, ref, workspace, entry),
             );
@@ -7990,6 +7995,7 @@ class _WorkspaceTabButton extends StatelessWidget {
     required this.diff,
     required this.active,
     required this.dirty,
+    required this.format,
     required this.onSelected,
     required this.onClose,
   });
@@ -7999,6 +8005,7 @@ class _WorkspaceTabButton extends StatelessWidget {
   final bool diff;
   final bool active;
   final bool dirty;
+  final TextFormatMetadata? format;
   final VoidCallback onSelected;
   final VoidCallback onClose;
 
@@ -8067,6 +8074,10 @@ class _WorkspaceTabButton extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: BusyMarkSpacing.xs),
+              if (format case final format?) ...[
+                BusyMarkDocumentFormatIndicator(format: format),
+                const SizedBox(width: BusyMarkSpacing.xs),
+              ],
               BusyMarkCompactIconButton(
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 icon: BusyMarkGlyphs.clear,
@@ -10467,44 +10478,6 @@ class _RecoveredDocumentBanner extends StatelessWidget {
               child: Text(context.l10n.discard),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DocumentStatusBar extends StatelessWidget {
-  const _DocumentStatusBar({required this.buffer});
-
-  final DocumentBuffer buffer;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final format = buffer.format;
-    final labels = <String>[
-      'UTF-8${format.hasUtf8Bom ? ' BOM' : ''}',
-      format.statusLabel,
-      format.hasFinalNewline ? 'Final newline' : 'No final newline',
-    ];
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.headerbarFlat,
-        border: Border(top: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: SizedBox(
-        height: BusyMarkSizes.paneHeaderHeight * 0.7,
-        child: Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md),
-            child: Text(
-              labels.join('  •  '),
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
-            ),
-          ),
         ),
       ),
     );

@@ -2577,6 +2577,18 @@ abstract class AppLocalizations {
   /// **'Replaced {matches} matches in {files} files; skipped {skipped}.'**
   String workspaceReplaceApplied(int matches, int files, int skipped);
 
+  /// Document format tooltip when the file ends with a newline.
+  ///
+  /// In en, this message translates to:
+  /// **'{encoding} · {lineEnding} · Final newline'**
+  String documentFormatWithFinalNewline(String encoding, String lineEnding);
+
+  /// Document format tooltip when the file does not end with a newline.
+  ///
+  /// In en, this message translates to:
+  /// **'{encoding} · {lineEnding} · No final newline'**
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding);
+
   /// Dialog title for selecting a line-ending style.
   ///
   /// In en, this message translates to:
