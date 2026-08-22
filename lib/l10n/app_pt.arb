@@ -1329,6 +1329,8 @@
   "sourceLargeFileFeaturesPaused": "Arquivo grande: o realce e o recolhimento estão pausados",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Nenhum conteúdo para ler",
+  "admonition": "Aviso",
+  "quote": "Citação",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

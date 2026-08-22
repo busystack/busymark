@@ -1501,6 +1501,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get nothingToRead => 'पढ़ने के लिए कोई सामग्री नहीं';
 
   @override
+  String get admonition => 'सूचना ब्लॉक';
+
+  @override
+  String get quote => 'उद्धरण';
+
+  @override
   String get note => 'नोट';
 
   @override

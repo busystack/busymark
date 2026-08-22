@@ -6,6 +6,7 @@ enum MarkdownExportBlockKind {
   code,
   list,
   listItem,
+  admonition,
   blockquote,
   thematicBreak,
   image,

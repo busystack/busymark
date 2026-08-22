@@ -1406,6 +1406,7 @@ class MarkdownParser {
       'note',
       'tip',
       'warning',
+      'quote',
       'video',
     }.contains(tag);
   }

@@ -2769,6 +2769,18 @@ abstract class AppLocalizations {
   /// **'Nothing to read'**
   String get nothingToRead;
 
+  /// Tooltip for the Writerside admonition editing menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Admonition'**
+  String get admonition;
+
+  /// Label for a neutral Writerside quote block.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get quote;
+
   /// Preview label for a note admonition.
   ///
   /// In en, this message translates to:

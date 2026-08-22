@@ -220,27 +220,7 @@ class BusyMarkPreviewBuilder {
         ],
         attributes: block.attributes,
       ),
-      BusyBlockKind.blockquote => PreviewBlock(
-        kind: PreviewBlockKind.quote,
-        text: block.children.isEmpty
-            ? _plainText(block.inlines)
-            : block.children.map((child) => child.plainText).join('\n'),
-        inlines:
-            block.children.length == 1 &&
-                block.children.single.kind == BusyBlockKind.paragraph
-            ? _inlines(
-                block.children.single.inlines,
-                'block-${block.children.single.id}.i',
-              )
-            : block.children.isEmpty
-            ? _inlines(block.inlines, 'block-${block.id}.i')
-            : const [],
-        children: [
-          for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
-        ],
-        attributes: block.attributes,
-      ),
+      BusyBlockKind.blockquote => _blockquote(block, path),
       BusyBlockKind.thematicBreak => const PreviewBlock(
         kind: PreviewBlockKind.thematicBreak,
         text: '---',
@@ -267,15 +247,7 @@ class BusyMarkPreviewBuilder {
         ],
         attributes: block.attributes,
       ),
-      BusyBlockKind.writersideAdmonition => PreviewBlock(
-        kind: PreviewBlockKind.admonition,
-        text: _plainText(block.inlines),
-        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
-        attributes: {
-          ...block.attributes,
-          'style': block.attributes['element'] ?? 'note',
-        },
-      ),
+      BusyBlockKind.writersideAdmonition => _writersideAdmonition(block, path),
       BusyBlockKind.writersideTabs => PreviewBlock(
         kind: PreviewBlockKind.tabs,
         text: _plainText(block.inlines),
@@ -310,6 +282,57 @@ class BusyMarkPreviewBuilder {
       ),
     };
     return _withSourceSpan(preview, block.sourceSpan);
+  }
+
+  PreviewBlock _blockquote(BusyBlock block, String path) {
+    final style = busyAdmonitionStyleFromName(block.attributes['style']);
+    final writersideAdmonition =
+        block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true';
+    return PreviewBlock(
+      kind: writersideAdmonition && style != BusyAdmonitionStyle.quote
+          ? PreviewBlockKind.admonition
+          : PreviewBlockKind.quote,
+      text: block.children.isEmpty
+          ? _plainText(block.inlines)
+          : block.children.map((child) => child.plainText).join('\n'),
+      inlines:
+          block.children.length == 1 &&
+              block.children.single.kind == BusyBlockKind.paragraph
+          ? _inlines(
+              block.children.single.inlines,
+              'block-${block.children.single.id}.i',
+            )
+          : block.children.isEmpty
+          ? _inlines(block.inlines, 'block-${block.id}.i')
+          : const [],
+      children: [
+        for (final (index, child) in block.children.indexed)
+          _block(child, '$path.b$index'),
+      ],
+      attributes: block.attributes,
+    );
+  }
+
+  PreviewBlock _writersideAdmonition(BusyBlock block, String path) {
+    final style =
+        busyAdmonitionStyleFromName(
+          block.attributes['style'] ?? block.attributes['element'],
+        ) ??
+        BusyAdmonitionStyle.note;
+    return PreviewBlock(
+      kind: style == BusyAdmonitionStyle.quote
+          ? PreviewBlockKind.quote
+          : PreviewBlockKind.admonition,
+      text: block.children.isEmpty
+          ? _plainText(block.inlines)
+          : block.children.map((child) => child.plainText).join('\n'),
+      inlines: _inlines(block.inlines, 'block-${block.id}.i'),
+      children: [
+        for (final (index, child) in block.children.indexed)
+          _block(child, '$path.b$index'),
+      ],
+      attributes: {...block.attributes, 'style': style.name},
+    );
   }
 
   PreviewBlock _withSourceSpan(PreviewBlock block, SourceSpan? span) {

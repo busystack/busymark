@@ -1545,6 +1545,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get nothingToRead => 'محتوایی برای مطالعه وجود ندارد';
 
   @override
+  String get admonition => 'کادر هشدار';
+
+  @override
+  String get quote => 'نقل‌قول';
+
+  @override
   String get note => 'یادداشت';
 
   @override

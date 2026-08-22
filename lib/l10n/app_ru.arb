@@ -1335,6 +1335,8 @@
   "sourceLargeFileFeaturesPaused": "Большой файл: подсветка и сворачивание приостановлены",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Нет содержимого для чтения",
+  "admonition": "Блок-уведомление",
+  "quote": "Цитата",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

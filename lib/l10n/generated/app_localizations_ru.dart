@@ -1524,6 +1524,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nothingToRead => 'Нет содержимого для чтения';
 
   @override
+  String get admonition => 'Блок-уведомление';
+
+  @override
+  String get quote => 'Цитата';
+
+  @override
   String get note => 'Примечание';
 
   @override

@@ -1529,6 +1529,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nothingToRead => 'Nichts zu lesen';
 
   @override
+  String get admonition => 'Hinweisblock';
+
+  @override
+  String get quote => 'Zitat';
+
+  @override
   String get note => 'Hinweis';
 
   @override

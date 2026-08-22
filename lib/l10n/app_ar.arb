@@ -1331,6 +1331,8 @@
   "sourceLargeFileFeaturesPaused": "ملف كبير: تم إيقاف التمييز والطي مؤقتًا",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "لا يوجد محتوى للقراءة",
+  "admonition": "تنبيه",
+  "quote": "اقتباس",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

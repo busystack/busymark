@@ -271,31 +271,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                 child: content,
               ),
             )
-          : block.kind == BusyBlockKind.blockquote
+          : block.kind == BusyBlockKind.blockquote ||
+                block.kind == BusyBlockKind.writersideAdmonition
           ? Directionality(
               textDirection: busyMarkWysiwygBlockTextDirection(
                 block,
                 fallback: Directionality.of(context),
               ),
-              child: BusyMarkDocumentCallout(
-                icon: BusyMarkGlyphs.blockquote,
-                margin: _padding,
-                onTap: tapHandler,
-                child: content,
-              ),
-            )
-          : block.kind == BusyBlockKind.writersideAdmonition
-          ? Directionality(
-              textDirection: busyMarkWysiwygBlockTextDirection(
-                block,
-                fallback: Directionality.of(context),
-              ),
-              child: BusyMarkDocumentAdmonition(
-                style: block.attributes['element'] ?? block.attributes['style'],
-                margin: _padding,
-                onTap: tapHandler,
-                child: content,
-              ),
+              child: _callout(content, tapHandler),
             )
           : Padding(
               padding: _padding,
@@ -322,6 +305,31 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                       ),
               ),
             ),
+    );
+  }
+
+  Widget _callout(Widget content, VoidCallback? onTap) {
+    final style = busyAdmonitionStyleFromName(
+      block.attributes['style'] ?? block.attributes['element'],
+    );
+    final admonition =
+        (block.kind == BusyBlockKind.writersideAdmonition ||
+            block.attributes[busyMarkWritersideAdmonitionAttribute] ==
+                'true') &&
+        style != BusyAdmonitionStyle.quote;
+    if (admonition) {
+      return BusyMarkDocumentAdmonition(
+        style: style?.name,
+        margin: _padding,
+        onTap: onTap,
+        child: content,
+      );
+    }
+    return BusyMarkDocumentCallout(
+      icon: BusyMarkGlyphs.blockquote,
+      margin: _padding,
+      onTap: onTap,
+      child: content,
     );
   }
 

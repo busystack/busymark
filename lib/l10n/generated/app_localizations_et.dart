@@ -1507,6 +1507,12 @@ class AppLocalizationsEt extends AppLocalizations {
   String get nothingToRead => 'Pole midagi lugeda';
 
   @override
+  String get admonition => 'Märkusplokk';
+
+  @override
+  String get quote => 'Tsitaat';
+
+  @override
   String get note => 'Märkus';
 
   @override

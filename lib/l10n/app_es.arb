@@ -1329,6 +1329,8 @@
   "sourceLargeFileFeaturesPaused": "Archivo grande: el resaltado y el plegado están en pausa",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "No hay contenido para leer",
+  "admonition": "Aviso",
+  "quote": "Cita",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

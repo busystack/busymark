@@ -3,7 +3,7 @@
 <var name="product" value="BusyMark"/>
 
 > Use %product% for docs.
-> {style="note"}
+{style="note"}
 
 <tabs>
 <tab title="Dart">

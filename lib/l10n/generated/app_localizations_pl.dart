@@ -1530,6 +1530,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nothingToRead => 'Brak treści do przeczytania';
 
   @override
+  String get admonition => 'Adnotacja';
+
+  @override
+  String get quote => 'Cytat';
+
+  @override
   String get note => 'Uwaga';
 
   @override

@@ -24,6 +24,7 @@ import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
+import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
@@ -509,6 +510,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                         widget.toolbarDirection,
                       ),
                       onBlockCommand: _applyBlockCommand,
+                      onAdmonitionCommand: _applyAdmonitionCommand,
+                      admonitionsEnabled:
+                          _documentController.document.mode ==
+                          MarkdownMode.writersideMarkdown,
                       onInlineCommand: _applyInlineCommand,
                       onLinkCommand: () => unawaited(_applyLinkCommand()),
                       onInlineMathCommand: _applyInlineMathCommand,
@@ -598,35 +603,49 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }) {
     final children = entry.children!;
     final firstEditableBlock = _firstEditableBlockIn(children);
+    final onTap = firstEditableBlock == null
+        ? null
+        : () {
+            _handleBlockFocused(firstEditableBlock.id);
+            _focusNodeFor(firstEditableBlock).requestFocus();
+          };
+    final child = Builder(
+      builder: (quoteContext) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, child) in children.indexed)
+            _buildRenderEntry(
+              quoteContext,
+              child,
+              documentLayout: documentLayout,
+              applyDocumentFrame: false,
+              first: index == 0,
+              selectedBlockIds: selectedBlockIds,
+              selectionRangesByBlockId: selectionRangesByBlockId,
+            ),
+        ],
+      ),
+    );
+    final style = busyAdmonitionStyleFromName(entry.block.attributes['style']);
+    final admonition =
+        entry.block.attributes[busyMarkWritersideAdmonitionAttribute] ==
+            'true' &&
+        style != BusyAdmonitionStyle.quote;
     return Directionality(
       textDirection: blockTextDirection,
-      child: BusyMarkDocumentCallout(
-        key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
-        icon: BusyMarkGlyphs.blockquote,
-        onTap: firstEditableBlock == null
-            ? null
-            : () {
-                _handleBlockFocused(firstEditableBlock.id);
-                _focusNodeFor(firstEditableBlock).requestFocus();
-              },
-        child: Builder(
-          builder: (quoteContext) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (index, child) in children.indexed)
-                _buildRenderEntry(
-                  quoteContext,
-                  child,
-                  documentLayout: documentLayout,
-                  applyDocumentFrame: false,
-                  first: index == 0,
-                  selectedBlockIds: selectedBlockIds,
-                  selectionRangesByBlockId: selectionRangesByBlockId,
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: admonition
+          ? BusyMarkDocumentAdmonition(
+              key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
+              style: style?.name,
+              onTap: onTap,
+              child: child,
+            )
+          : BusyMarkDocumentCallout(
+              key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
+              icon: BusyMarkGlyphs.blockquote,
+              onTap: onTap,
+              child: child,
+            ),
     );
   }
 
@@ -2340,6 +2359,35 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _recordUndoSnapshot();
     _documentController.applyBlockCommand(blockId, command);
+    _emitMarkdown();
+  }
+
+  void _applyAdmonitionCommand(BusyAdmonitionStyle style) {
+    if (_documentController.document.mode != MarkdownMode.writersideMarkdown) {
+      return;
+    }
+    final selectedBlocks = _selectedBlocks();
+    if (selectedBlocks.isNotEmpty) {
+      _recordUndoSnapshot();
+      _documentController.applyAdmonitionStyleToBlocks(
+        selectedBlocks
+            .map((block) => _documentController.admonitionTargetId(block.id))
+            .toSet(),
+        style,
+      );
+      _clearBlockSelection();
+      _emitMarkdown();
+      return;
+    }
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    _documentController.applyAdmonitionStyle(
+      _documentController.admonitionTargetId(blockId),
+      style,
+    );
     _emitMarkdown();
   }
 

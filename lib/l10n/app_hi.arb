@@ -1331,6 +1331,8 @@
   "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "पढ़ने के लिए कोई सामग्री नहीं",
+  "admonition": "सूचना ब्लॉक",
+  "quote": "उद्धरण",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

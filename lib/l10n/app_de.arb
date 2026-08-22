@@ -1329,6 +1329,8 @@
   "sourceLargeFileFeaturesPaused": "Große Datei: Hervorhebung und Faltung sind pausiert",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Nichts zu lesen",
+  "admonition": "Hinweisblock",
+  "quote": "Zitat",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

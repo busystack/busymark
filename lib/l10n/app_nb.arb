@@ -1329,6 +1329,8 @@
   "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Ingenting å lese",
+  "admonition": "Merknadsblokk",
+  "quote": "Sitat",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

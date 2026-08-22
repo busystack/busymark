@@ -305,18 +305,31 @@ class MarkdownAstAdapter {
     }
 
     if (tag == 'blockquote') {
-      final blocks = [
+      var blocks = [
         for (final child in children)
           ..._blocksFromNode(child, nextId: nextId, mode: mode),
       ];
+      final attributes = <String, String>{};
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final admonition = _writersideBlockquoteAdmonition(blocks);
+        blocks = admonition.blocks;
+        attributes.addAll({
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'blockquote',
+          'style': admonition.style.name,
+        });
+      }
       return [
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.blockquote,
-          inlines: blocks.isEmpty
+          inlines: mode == MarkdownMode.writersideMarkdown
+              ? const <BusyInline>[]
+              : blocks.isEmpty
               ? _inlinesFromNodes(children)
               : const <BusyInline>[],
           children: blocks,
+          attributes: attributes,
         ),
       ];
     }
@@ -353,7 +366,15 @@ class MarkdownAstAdapter {
           id: nextId(),
           kind: _writersideKind(tag),
           inlines: _inlinesFromNodes(children),
-          attributes: {...node.attributes, 'element': tag},
+          attributes: {
+            ...node.attributes,
+            'element': tag,
+            if (_writersideAdmonitionTag(tag)) ...{
+              busyMarkWritersideAdmonitionAttribute: 'true',
+              busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+              'style': tag,
+            },
+          },
           rawSource: node.textContent,
           preserveRaw: !_editableWritersideTag(tag),
         ),
@@ -707,7 +728,15 @@ class MarkdownAstAdapter {
       id: nextId(),
       kind: _writersideKind(tag),
       inlines: [BusyInline(kind: BusyInlineKind.text, text: text)],
-      attributes: {'element': tag, ..._parseAttributePairs(match.group(2)!)},
+      attributes: {
+        'element': tag,
+        ..._parseAttributePairs(match.group(2)!),
+        if (_writersideAdmonitionTag(tag)) ...{
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+          'style': tag,
+        },
+      },
       rawSource: value,
       preserveRaw: !_editableWritersideTag(tag),
     );
@@ -945,6 +974,7 @@ class MarkdownAstAdapter {
       'note',
       'tip',
       'warning',
+      'quote',
       'tabs',
       'tab',
       'procedure',
@@ -954,17 +984,105 @@ class MarkdownAstAdapter {
   }
 
   bool _editableWritersideTag(String tag) {
-    return {'note', 'tip', 'warning'}.contains(tag);
+    return _writersideAdmonitionTag(tag);
+  }
+
+  bool _writersideAdmonitionTag(String tag) {
+    return busyAdmonitionStyleFromName(tag) != null;
   }
 
   BusyBlockKind _writersideKind(String tag) {
     return switch (tag) {
-      'note' || 'tip' || 'warning' => BusyBlockKind.writersideAdmonition,
+      'note' ||
+      'tip' ||
+      'warning' ||
+      'quote' => BusyBlockKind.writersideAdmonition,
       'tabs' || 'tab' => BusyBlockKind.writersideTabs,
       'procedure' => BusyBlockKind.writersideProcedure,
       'video' => BusyBlockKind.video,
       _ => BusyBlockKind.writersideRawXml,
     };
+  }
+
+  ({BusyAdmonitionStyle style, List<BusyBlock> blocks})
+  _writersideBlockquoteAdmonition(List<BusyBlock> blocks) {
+    for (var index = blocks.length - 1; index >= 0; index -= 1) {
+      final block = blocks[index];
+      if (block.kind != BusyBlockKind.paragraph || block.inlines.isEmpty) {
+        continue;
+      }
+      final match = RegExp(r'\s*\{([^{}]*)\}\s*$').firstMatch(block.plainText);
+      if (match == null) {
+        break;
+      }
+      final style = busyAdmonitionStyleFromName(
+        _parseAttributePairs(match.group(1)!)['style'],
+      );
+      if (style == null) {
+        break;
+      }
+      final cleaned = _takeInlinePrefix(block.inlines, match.start);
+      final updated = [...blocks];
+      if (cleaned.isEmpty && block.children.isEmpty) {
+        updated.removeAt(index);
+      } else {
+        updated[index] = block.copyWith(inlines: cleaned);
+      }
+      return (style: style, blocks: updated);
+    }
+    return (style: BusyAdmonitionStyle.tip, blocks: blocks);
+  }
+
+  List<BusyInline> _takeInlinePrefix(List<BusyInline> inlines, int length) {
+    if (length <= 0) {
+      return const [];
+    }
+    final result = <BusyInline>[];
+    var remaining = length;
+    for (final inline in inlines) {
+      final inlineLength = inline.plainText.length;
+      if (inlineLength == 0) {
+        result.add(inline);
+        continue;
+      }
+      if (remaining >= inlineLength) {
+        result.add(inline);
+        remaining -= inlineLength;
+        continue;
+      }
+      if (remaining > 0) {
+        if (inline.children.isEmpty) {
+          result.add(
+            inline.copyWith(text: inline.text.substring(0, remaining)),
+          );
+        } else {
+          result.add(
+            inline.copyWith(
+              children: _takeInlinePrefix(inline.children, remaining),
+            ),
+          );
+        }
+      }
+      break;
+    }
+    while (result.isNotEmpty &&
+        (result.last.kind == BusyInlineKind.softBreak ||
+            result.last.kind == BusyInlineKind.hardBreak)) {
+      result.removeLast();
+    }
+    final last = result.lastOrNull;
+    if (last != null &&
+        last.children.isEmpty &&
+        last.kind == BusyInlineKind.text &&
+        last.text.trimRight() != last.text) {
+      final trimmed = last.text.trimRight();
+      if (trimmed.isEmpty) {
+        result.removeLast();
+      } else {
+        result[result.length - 1] = last.copyWith(text: trimmed);
+      }
+    }
+    return result;
   }
 
   _FrontMatter? _extractFrontMatter(String source) {

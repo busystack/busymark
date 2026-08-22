@@ -862,6 +862,8 @@
   "sourceLargeFileFeaturesPaused": "Suur fail: esiletõstmine ja voltimine on peatatud",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Pole midagi lugeda",
+  "admonition": "Märkusplokk",
+  "quote": "Tsitaat",
   "@nothingToRead": {"description": "Empty state shown when there is no content to read."},
   "note": "Märkus",
   "@note": {"description": "Preview label for a note admonition."},

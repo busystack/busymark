@@ -4,12 +4,14 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../markdown/busymark_document.dart';
 import 'wysiwyg_commands.dart';
 
 class BusyMarkWysiwygToolbar extends StatelessWidget {
   const BusyMarkWysiwygToolbar({
     super.key,
     required this.onBlockCommand,
+    this.onAdmonitionCommand,
     required this.onInlineCommand,
     required this.onLinkCommand,
     required this.onInlineMathCommand,
@@ -22,11 +24,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onOutdentCommand,
     required this.onToggleTaskCommand,
     required this.onHardBreakCommand,
+    this.admonitionsEnabled = false,
     this.alignEnd = false,
     this.axis = Axis.horizontal,
   });
 
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
+  final ValueChanged<BusyAdmonitionStyle>? onAdmonitionCommand;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
   final VoidCallback onInlineMathCommand;
@@ -39,6 +43,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
   final VoidCallback onHardBreakCommand;
+  final bool admonitionsEnabled;
   final bool alignEnd;
   final Axis axis;
 
@@ -125,6 +130,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             ),
           ],
           [
+            if (admonitionsEnabled && onAdmonitionCommand != null)
+              _admonitionMenu(context),
             _button(
               context,
               tooltip: context.l10n.blockquote,
@@ -304,6 +311,40 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         ),
       ],
       onSelected: onBlockCommand,
+    );
+  }
+
+  Widget _admonitionMenu(BuildContext context) {
+    return BusyMarkHeaderPopupMenuButton<BusyAdmonitionStyle>(
+      tooltip: context.l10n.admonition,
+      icon: BusyMarkGlyphs.info,
+      transparent: false,
+      elevated: true,
+      foregroundColor: BusyMarkLinuxPalette.white,
+      backgroundColor: _editorToolbarButtonBackground(context),
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: BusyAdmonitionStyle.tip,
+          label: context.l10n.tip,
+          icon: BusyMarkGlyphs.tip,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyAdmonitionStyle.note,
+          label: context.l10n.note,
+          icon: BusyMarkGlyphs.info,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyAdmonitionStyle.warning,
+          label: context.l10n.warning,
+          icon: BusyMarkGlyphs.warning,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyAdmonitionStyle.quote,
+          label: context.l10n.quote,
+          icon: BusyMarkGlyphs.blockquote,
+        ),
+      ],
+      onSelected: onAdmonitionCommand!,
     );
   }
 

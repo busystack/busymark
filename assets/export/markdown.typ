@@ -245,6 +245,26 @@
     render-math(block-data)
   } else if kind == "list" {
     render-list(block-data, render-block)
+  } else if kind == "admonition" {
+    let style = value-or(block-data, "style", "note")
+    let fill = if style == "warning" {
+      rgb("fff4d6")
+    } else if style == "tip" {
+      rgb("e8f7ed")
+    } else {
+      rgb("eaf2fb")
+    }
+    block(
+      width: 100%,
+      fill: fill,
+      inset: 9pt,
+      radius: 4pt,
+      if children.len() > 0 {
+        for child in children { render-block(child) }
+      } else {
+        render-inlines(inlines)
+      },
+    )
   } else if kind == "blockquote" {
     quote(
       block: true,

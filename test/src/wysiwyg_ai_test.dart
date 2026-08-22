@@ -62,7 +62,7 @@ void main() {
 
     final nestedFieldFinder = find.widgetWithText(
       TextField,
-      'Use %product% for docs. {style="note"}',
+      'Use %product% for docs.',
     );
     await tester.tap(nestedFieldFinder);
     final nestedField = tester.widget<TextField>(nestedFieldFinder);

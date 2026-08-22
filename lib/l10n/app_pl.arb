@@ -1335,6 +1335,8 @@
   "sourceLargeFileFeaturesPaused": "Duży plik: podświetlanie i zwijanie są wstrzymane",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Brak treści do przeczytania",
+  "admonition": "Adnotacja",
+  "quote": "Cytat",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

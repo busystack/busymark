@@ -162,11 +162,7 @@ class MarkdownExportMapper {
             'language': language,
         },
       ),
-      BusyBlockKind.blockquote => MarkdownExportBlock(
-        kind: MarkdownExportBlockKind.blockquote,
-        inlines: _mapInlines(block.inlines),
-        children: _mapBlocks(block.children, blockOverrides),
-      ),
+      BusyBlockKind.blockquote => _mapBlockquote(block, blockOverrides),
       BusyBlockKind.thematicBreak => const MarkdownExportBlock(
         kind: MarkdownExportBlockKind.thematicBreak,
       ),
@@ -186,7 +182,10 @@ class MarkdownExportMapper {
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
       BusyBlockKind.taskListItem => _mapListItem(block, blockOverrides),
-      BusyBlockKind.writersideAdmonition ||
+      BusyBlockKind.writersideAdmonition => _mapWritersideAdmonition(
+        block,
+        blockOverrides,
+      ),
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
@@ -199,6 +198,43 @@ class MarkdownExportMapper {
         text: block.rawSource ?? block.plainText,
       ),
     };
+  }
+
+  MarkdownExportBlock _mapBlockquote(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
+    final style = busyAdmonitionStyleFromName(block.attributes['style']);
+    final admonition =
+        block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true' &&
+        style != BusyAdmonitionStyle.quote;
+    return MarkdownExportBlock(
+      kind: admonition
+          ? MarkdownExportBlockKind.admonition
+          : MarkdownExportBlockKind.blockquote,
+      inlines: _mapInlines(block.inlines),
+      children: _mapBlocks(block.children, blockOverrides),
+      attributes: {if (admonition) 'style': style?.name ?? 'tip'},
+    );
+  }
+
+  MarkdownExportBlock _mapWritersideAdmonition(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
+    final style =
+        busyAdmonitionStyleFromName(
+          block.attributes['style'] ?? block.attributes['element'],
+        ) ??
+        BusyAdmonitionStyle.note;
+    return MarkdownExportBlock(
+      kind: style == BusyAdmonitionStyle.quote
+          ? MarkdownExportBlockKind.blockquote
+          : MarkdownExportBlockKind.admonition,
+      inlines: _mapInlines(block.inlines),
+      children: _mapBlocks(block.children, blockOverrides),
+      attributes: {if (style != BusyAdmonitionStyle.quote) 'style': style.name},
+    );
   }
 
   MarkdownExportBlock _mapHeading(BusyBlock block) {

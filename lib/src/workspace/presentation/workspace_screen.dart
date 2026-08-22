@@ -10724,11 +10724,13 @@ class _PreviewBlockView extends ConsumerWidget {
       ),
       PreviewBlockKind.admonition => BusyMarkDocumentAdmonition(
         style: displayBlock.attributes['style'],
-        child: _PreviewInlineText(
-          block: displayBlock,
-          style: _diffPreviewTextStyle(context, displayBlock, null),
-          editRevision: editRevision,
-        ),
+        child: displayBlock.children.isEmpty
+            ? _PreviewInlineText(
+                block: displayBlock,
+                style: _diffPreviewTextStyle(context, displayBlock, null),
+                editRevision: editRevision,
+              )
+            : _previewChildBlocks(displayBlock.children, first: true),
       ),
       PreviewBlockKind.tabs => BusyMarkDocumentCallout(
         icon: BusyMarkGlyphs.tab,

@@ -125,6 +125,55 @@ void main() => print("Hello");
         ? false
         : 'Set BUSYMARK_TYPST_PATH to run the real Typst integration test.',
   );
+
+  test(
+    'Writerside admonitions compile into a valid PDF',
+    () async {
+      final temporaryDirectory = await Directory.systemTemp.createTemp(
+        'busymark-admonition-export-test-',
+      );
+      addTearDown(() async {
+        if (await temporaryDirectory.exists()) {
+          await temporaryDirectory.delete(recursive: true);
+        }
+      });
+      final destination = p.join(temporaryDirectory.path, 'admonitions.pdf');
+      final service = MarkdownPdfExportService(
+        parser: const _WritersideMarkdownParser(),
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+      );
+
+      final result = await service.export(
+        MarkdownPdfExportRequest(
+          source: '''# Admonitions
+
+> Helpful tip.
+
+> Important note.
+{style="note"}
+
+> Dangerous operation.
+{style="warning"}
+
+<quote>Neutral quotation.</quote>
+''',
+          filePath: p.absolute('test/fixtures/markdown/admonitions.md'),
+          workspaceRoot: p.absolute('test/fixtures'),
+          destinationPath: destination,
+          options: const MarkdownPdfOptions(),
+          overwrite: false,
+        ),
+      );
+
+      final bytes = await File(destination).readAsBytes();
+      expect(bytes.take(5), [0x25, 0x50, 0x44, 0x46, 0x2d]);
+      expect(bytes.length, greaterThan(1000));
+      expect(result.warnings, isEmpty);
+    },
+    skip: canRunTypst
+        ? false
+        : 'Set BUSYMARK_TYPST_PATH to run the real Typst integration test.',
+  );
 }
 
 class _WritersideMarkdownParser extends MarkdownParser {

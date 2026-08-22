@@ -1532,6 +1532,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get nothingToRead => 'Немає вмісту для читання';
 
   @override
+  String get admonition => 'Блок-примітка';
+
+  @override
+  String get quote => 'Цитата';
+
+  @override
   String get note => 'Примітка';
 
   @override

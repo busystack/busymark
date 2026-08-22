@@ -271,10 +271,21 @@ class BusyMarkMarkdownSerializer {
     final text = block.children.isEmpty
         ? _inlineMarkdown(block.inlines)
         : block.children.map(serializeBlock).join('\n\n');
-    return text
+    final quote = text
         .split('\n')
         .map((line) => line.isEmpty ? '>' : '> $line')
         .join('\n');
+    if (block.attributes[busyMarkWritersideAdmonitionAttribute] != 'true') {
+      return quote;
+    }
+    final style =
+        busyAdmonitionStyleFromName(block.attributes['style']) ??
+        BusyAdmonitionStyle.tip;
+    if (style == BusyAdmonitionStyle.tip) {
+      return quote;
+    }
+    final attribute = '{style="${style.name}"}';
+    return quote.isEmpty ? attribute : '$quote\n$attribute';
   }
 
   String _image(BusyBlock block) {
@@ -340,8 +351,36 @@ class BusyMarkMarkdownSerializer {
     if (!_hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
     }
-    final element = block.attributes['element'] ?? 'note';
-    return '<$element>${_inlineMarkdown(block.inlines)}</$element>';
+    final style =
+        busyAdmonitionStyleFromName(
+          block.attributes['style'] ?? block.attributes['element'],
+        ) ??
+        BusyAdmonitionStyle.note;
+    final attributes = block.attributes.entries
+        .where(
+          (entry) =>
+              entry.key != 'element' &&
+              entry.key != 'style' &&
+              entry.key != busyMarkWritersideAdmonitionAttribute &&
+              entry.key != busyMarkWritersideAdmonitionSourceFormAttribute,
+        )
+        .map((entry) => '${entry.key}="${_escapeXmlAttribute(entry.value)}"')
+        .join(' ');
+    final opening = attributes.isEmpty
+        ? '<${style.name}>'
+        : '<${style.name} $attributes>';
+    final content = block.children.isEmpty
+        ? _inlineMarkdown(block.inlines)
+        : block.children.map(serializeBlock).join('\n\n');
+    return '$opening$content</${style.name}>';
+  }
+
+  String _escapeXmlAttribute(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
   }
 
   String _inlineMarkdown(List<BusyInline> inlines, {bool tableCell = false}) {

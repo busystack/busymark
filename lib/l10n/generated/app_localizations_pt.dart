@@ -1520,6 +1520,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get nothingToRead => 'Nenhum conteúdo para ler';
 
   @override
+  String get admonition => 'Aviso';
+
+  @override
+  String get quote => 'Citação';
+
+  @override
   String get note => 'Observação';
 
   @override

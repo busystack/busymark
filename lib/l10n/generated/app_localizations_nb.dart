@@ -1511,6 +1511,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get nothingToRead => 'Ingenting å lese';
 
   @override
+  String get admonition => 'Merknadsblokk';
+
+  @override
+  String get quote => 'Sitat';
+
+  @override
   String get note => 'Merknad';
 
   @override

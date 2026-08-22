@@ -1513,6 +1513,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nothingToRead => 'لا يوجد محتوى للقراءة';
 
   @override
+  String get admonition => 'تنبيه';
+
+  @override
+  String get quote => 'اقتباس';
+
+  @override
   String get note => 'ملاحظة';
 
   @override

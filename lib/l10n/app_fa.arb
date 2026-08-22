@@ -1331,6 +1331,8 @@
   "sourceLargeFileFeaturesPaused": "فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "محتوایی برای مطالعه وجود ندارد",
+  "admonition": "کادر هشدار",
+  "quote": "نقل‌قول",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },

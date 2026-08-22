@@ -5,6 +5,19 @@ import 'markdown_model.dart';
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 
+const busyMarkWritersideAdmonitionAttribute = 'writersideAdmonition';
+const busyMarkWritersideAdmonitionSourceFormAttribute =
+    'writersideAdmonitionSourceForm';
+
+enum BusyAdmonitionStyle { tip, note, warning, quote }
+
+BusyAdmonitionStyle? busyAdmonitionStyleFromName(String? value) {
+  final normalized = value?.trim().toLowerCase();
+  return BusyAdmonitionStyle.values
+      .where((style) => style.name == normalized)
+      .firstOrNull;
+}
+
 enum BusyTableAlignment { unspecified, left, center, right }
 
 BusyTableAlignment busyTableAlignmentFromAttribute(String? value) {

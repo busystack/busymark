@@ -11,6 +11,7 @@ import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/math_syntax.dart';
@@ -1661,6 +1662,7 @@ class WorkspaceService {
       'note',
       'tip',
       'warning',
+      'quote',
       'tabs',
       'tab',
       'code-block',
@@ -1676,6 +1678,7 @@ class WorkspaceService {
       'chapter' => PreviewBlockKind.heading,
       'procedure' => PreviewBlockKind.procedure,
       'note' || 'tip' || 'warning' => PreviewBlockKind.admonition,
+      'quote' => PreviewBlockKind.quote,
       'tabs' || 'tab' => PreviewBlockKind.tabs,
       'code-block' => PreviewBlockKind.code,
       'img' => PreviewBlockKind.image,
@@ -1693,6 +1696,7 @@ class WorkspaceService {
       'note' ||
       'tip' ||
       'warning' ||
+      'quote' ||
       'tabs' ||
       'tab' ||
       'code-block' ||
@@ -1711,6 +1715,9 @@ class WorkspaceService {
       for (final element in document.descendants.whereType<XmlElement>()) {
         final name = element.name.local;
         if (!_visibleSemanticElement(name)) {
+          continue;
+        }
+        if (_insideXmlAdmonition(element)) {
           continue;
         }
         final attributes = {
@@ -1736,6 +1743,27 @@ class WorkspaceService {
                 ),
               ],
               attributes: attributes,
+            ),
+          );
+          continue;
+        }
+        final admonitionStyle = busyAdmonitionStyleFromName(name);
+        if (admonitionStyle != null) {
+          final text = element.innerText.trim();
+          final inlines = _xmlPreviewInlines(
+            element.children,
+            nextMathId: () => 'topic-math-${mathIndex++}',
+          );
+          blocks.add(
+            PreviewBlock(
+              kind: admonitionStyle == BusyAdmonitionStyle.quote
+                  ? PreviewBlockKind.quote
+                  : PreviewBlockKind.admonition,
+              text: text,
+              inlines: inlines.isEmpty && text.isNotEmpty
+                  ? [PreviewInline(kind: PreviewInlineKind.text, text: text)]
+                  : inlines,
+              attributes: {...attributes, 'style': admonitionStyle.name},
             ),
           );
           continue;
@@ -1772,6 +1800,115 @@ class WorkspaceService {
             attributes: {'element': name},
           ),
     ];
+  }
+
+  bool _insideXmlAdmonition(XmlElement element) {
+    XmlNode? parent = element.parent;
+    while (parent != null) {
+      if (parent is XmlElement &&
+          busyAdmonitionStyleFromName(parent.name.local) != null) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  List<PreviewInline> _xmlPreviewInlines(
+    Iterable<XmlNode> nodes, {
+    required String Function() nextMathId,
+  }) {
+    final result = <PreviewInline>[];
+    for (final node in nodes) {
+      if (node is XmlText) {
+        final text = node.value.replaceAll(RegExp(r'\s+'), ' ');
+        if (text.trim().isNotEmpty) {
+          result.add(PreviewInline(kind: PreviewInlineKind.text, text: text));
+        }
+        continue;
+      }
+      if (node is! XmlElement) {
+        continue;
+      }
+      final name = node.name.local.toLowerCase();
+      if (name == 'math') {
+        final expression = node.innerText;
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.math,
+            text: expression,
+            attributes: {
+              busyMarkMathSourceFormAttribute:
+                  BusyMathSourceForm.writersideElement.name,
+              'expressionId': nextMathId(),
+            },
+          ),
+        );
+        continue;
+      }
+      if (name == 'img') {
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.image,
+            text: node.getAttribute('alt') ?? '',
+            destination: node.getAttribute('src'),
+          ),
+        );
+        continue;
+      }
+      final children = _xmlPreviewInlines(
+        node.children,
+        nextMathId: nextMathId,
+      );
+      final text = node.innerText;
+      switch (name) {
+        case 'b' || 'strong':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.strong,
+              text: text,
+              children: children,
+            ),
+          );
+          break;
+        case 'i' || 'emphasis':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.emphasis,
+              text: text,
+              children: children,
+            ),
+          );
+          break;
+        case 'code' || 'control' || 'path' || 'shortcut':
+          result.add(PreviewInline(kind: PreviewInlineKind.code, text: text));
+          break;
+        case 'a':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.link,
+              text: text,
+              destination:
+                  node.getAttribute('href') ?? node.getAttribute('anchor'),
+              children: children,
+            ),
+          );
+          break;
+        default:
+          result.addAll(children);
+          break;
+      }
+      if (name == 'p' && result.isNotEmpty) {
+        result.add(
+          const PreviewInline(kind: PreviewInlineKind.text, text: '\n'),
+        );
+      }
+    }
+    while (result.lastOrNull?.kind == PreviewInlineKind.text &&
+        result.lastOrNull?.text.trim().isEmpty == true) {
+      result.removeLast();
+    }
+    return result;
   }
 }
 

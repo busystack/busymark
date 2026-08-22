@@ -89,6 +89,9 @@ rules, an openable example, and the authoritative JetBrains references.
 Writerside `<video>` elements are recognized in Markdown and XML topics, with
 local preview images plus HTTPS YouTube and Vimeo sources. See
 [Writerside videos](docs/videos.md) for syntax and preview/export behavior.
+Writerside tip, note, warning, and quote blocks render as native document
+callouts and can be inserted from the WYSIWYG toolbar. See
+[Writerside admonitions](docs/admonitions.md) for supported syntax.
 
 Folder workspaces show all files and directories, including hidden project
 files such as `.gitignore`. Unsupported and binary files remain visible but are

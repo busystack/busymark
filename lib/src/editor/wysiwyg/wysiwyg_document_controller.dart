@@ -342,6 +342,30 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return null;
   }
 
+  String admonitionTargetId(String blockId) {
+    String? target;
+
+    void visit(List<BusyBlock> blocks, BusyBlock? enclosingAdmonition) {
+      for (final block in blocks) {
+        final isAdmonition =
+            block.kind == BusyBlockKind.writersideAdmonition ||
+            block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true';
+        final nextEnclosing = isAdmonition ? block : enclosingAdmonition;
+        if (block.id == blockId) {
+          target = nextEnclosing?.id ?? blockId;
+          return;
+        }
+        visit(block.children, nextEnclosing);
+        if (target != null) {
+          return;
+        }
+      }
+    }
+
+    visit(_document.blocks, null);
+    return target ?? blockId;
+  }
+
   void updateBlockText(
     String blockId,
     String text, {
@@ -532,6 +556,35 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: command == BusyWysiwygBlockCommand.orderedList
           ? _normalizeOrderedListMarkers(replaced)
           : replaced,
+    );
+    notifyListeners();
+  }
+
+  void applyAdmonitionStyle(String blockId, BusyAdmonitionStyle style) {
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(
+        _document.blocks,
+        blockId,
+        (block) => _blockWithAdmonitionStyle(block, style),
+      ),
+    );
+    notifyListeners();
+  }
+
+  void applyAdmonitionStyleToBlocks(
+    Iterable<String> blockIds,
+    BusyAdmonitionStyle style,
+  ) {
+    final ids = blockIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    _document = _document.copyWith(
+      blocks: _replaceBlocksByIds(
+        _document.blocks,
+        ids,
+        (block) => _blockWithAdmonitionStyle(block, style),
+      ),
     );
     notifyListeners();
   }
@@ -2256,7 +2309,13 @@ BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     ..remove('ordered')
     ..remove('marker')
     ..remove('task')
+    ..remove(busyMarkWritersideAdmonitionAttribute)
+    ..remove(busyMarkWritersideAdmonitionSourceFormAttribute)
+    ..remove('style')
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (block.kind == BusyBlockKind.writersideAdmonition) {
+    attributes.remove('element');
+  }
   if (command == BusyWysiwygBlockCommand.heading1) {
     attributes['level'] = '1';
   } else if (command == BusyWysiwygBlockCommand.heading2) {
@@ -2294,6 +2353,39 @@ BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     attributes['task'] = block.attributes['task'] ?? 'false';
   }
   return block.copyWith(kind: kind, attributes: attributes, dirty: true);
+}
+
+BusyBlock _blockWithAdmonitionStyle(
+  BusyBlock block,
+  BusyAdmonitionStyle style,
+) {
+  final semanticElement = block.kind == BusyBlockKind.writersideAdmonition;
+  final attributes = {...block.attributes}
+    ..remove('ordered')
+    ..remove('marker')
+    ..remove('task')
+    ..remove('level')
+    ..remove('id')
+    ..remove('generatedId')
+    ..remove(busyMarkPreserveEmptyParagraphAttribute)
+    ..[busyMarkWritersideAdmonitionAttribute] = 'true'
+    ..[busyMarkWritersideAdmonitionSourceFormAttribute] = semanticElement
+        ? 'element'
+        : 'blockquote'
+    ..['style'] = style.name;
+  if (semanticElement) {
+    attributes['element'] = style.name;
+  } else {
+    attributes.remove('element');
+  }
+  return block.copyWith(
+    kind: semanticElement
+        ? BusyBlockKind.writersideAdmonition
+        : BusyBlockKind.blockquote,
+    attributes: attributes,
+    preserveRaw: false,
+    dirty: true,
+  );
 }
 
 BusyBlock _numberIndentedListItem(

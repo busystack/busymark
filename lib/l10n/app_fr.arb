@@ -1329,6 +1329,8 @@
   "sourceLargeFileFeaturesPaused": "Fichier volumineux : la coloration et le repliage sont suspendus",
   "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "nothingToRead": "Aucun contenu à lire",
+  "admonition": "Encadré",
+  "quote": "Citation",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },
