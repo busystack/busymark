@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show BoxHeightStyle, BoxWidthStyle, FontFeature;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +13,7 @@ import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../search/search_replace_service.dart';
+import '../document_text_geometry.dart';
 import '../editor_text_context_menu.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
@@ -382,8 +382,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                           textAlignVertical: TextAlignVertical.top,
                           style: _sourceTextStyle,
                           strutStyle: sourceStrutStyle,
-                          selectionHeightStyle: BoxHeightStyle.strut,
-                          selectionWidthStyle: BoxWidthStyle.tight,
+                          selectionHeightStyle:
+                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                          selectionWidthStyle:
+                              BusyMarkDocumentTextGeometry.selectionWidthStyle,
                           cursorColor: colors.foreground.withValues(
                             alpha: BusyMarkAlpha.sourceCursor,
                           ),

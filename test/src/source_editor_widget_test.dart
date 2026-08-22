@@ -8,6 +8,7 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
     show sourceTextHeightBehavior;
@@ -600,7 +601,14 @@ void main() {
       );
       expect(renderEditable, isNotNull);
       expect(field.style?.height, BusyMarkTypography.sourceEditorLineHeight);
-      expect(field.selectionHeightStyle, BoxHeightStyle.strut);
+      expect(
+        field.selectionHeightStyle,
+        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      );
+      expect(
+        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        BoxHeightStyle.strut,
+      );
       expect(
         field.cursorHeight,
         fontSize * BusyMarkTypography.sourceCursorHeightScale,

@@ -868,9 +868,12 @@ void main() {
     );
     expect(
       sourceEditor,
-      contains('selectionHeightStyle: BoxHeightStyle.strut'),
+      contains('BusyMarkDocumentTextGeometry.selectionHeightStyle'),
     );
-    expect(sourceEditor, contains('selectionWidthStyle: BoxWidthStyle.tight'));
+    expect(
+      sourceEditor,
+      contains('BusyMarkDocumentTextGeometry.selectionWidthStyle'),
+    );
     expect(sourceEditor, contains('cursorColor: colors.foreground.withValues'));
     expect(sourceEditor, contains('BusyMarkAlpha.sourceCursor'));
     expect(

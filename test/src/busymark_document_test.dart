@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show CheckedState;
+import 'dart:ui' show BoxHeightStyle, CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -2890,6 +2890,7 @@ void main() {}
             text: firstParagraph,
             style: painter.style as TextStyle,
           ),
+          strutStyle: StrutStyle.fromTextStyle(painter.style as TextStyle),
           textDirection: painter.textDirection as TextDirection,
           textScaler: painter.textScaler as TextScaler,
           locale: painter.locale as Locale?,
@@ -2904,14 +2905,31 @@ void main() {}
       boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
       boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
+    final tightHighlightBoxes = painterText.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+      boxHeightStyle: BoxHeightStyle.tight,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    );
     painterText.dispose();
 
     expect(highlightBoxes, hasLength(exampleBoxes.length));
+    expect(tightHighlightBoxes, hasLength(highlightBoxes.length));
     for (var index = 0; index < exampleBoxes.length; index += 1) {
       expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
       expect(
         highlightBoxes[index].bottom,
         closeTo(exampleBoxes[index].bottom, 0.01),
+      );
+      expect(
+        highlightBoxes[index].top,
+        lessThan(tightHighlightBoxes[index].top),
+      );
+      expect(
+        highlightBoxes[index].bottom,
+        greaterThan(tightHighlightBoxes[index].bottom),
       );
     }
   });
@@ -5712,6 +5730,14 @@ void main() {}
     );
     expect(headerField.onChanged, isNotNull);
     expect(bodyField.onChanged, isNotNull);
+    expect(
+      headerField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
+    expect(
+      bodyField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
 
     headerField.onChanged!('Name');
     await tester.pump();

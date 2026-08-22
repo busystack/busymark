@@ -1858,6 +1858,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
         minLines: 1,
         maxLines: null,
         style: textStyle,
+        selectionHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
         decoration: InputDecoration(
           isCollapsed: true,
           border: InputBorder.none,
@@ -1916,6 +1918,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
     }
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
+      strutStyle: StrutStyle.fromTextStyle(style),
       textDirection: textDirection,
       textScaler: textScaler,
       locale: locale,
