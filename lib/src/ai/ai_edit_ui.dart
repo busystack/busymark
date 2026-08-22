@@ -25,16 +25,37 @@ Future<AiEditApplication?> showBusyMarkAiEdit(
   AiEditorSnapshot snapshot, {
   AiEditTargetKind? fixedTarget,
 }) async {
-  final defaultProvider = ref
-      .read(appSettingsControllerProvider)
-      .defaultAiProviderKind;
+  final settings = ref.read(appSettingsControllerProvider);
+  final List<AiProviderKind> availableProviders;
+  try {
+    availableProviders = await _availableAiProviders(ref, settings);
+  } on AiException catch (error) {
+    if (context.mounted) {
+      await _showAiMessage(context, error.message);
+    }
+    return null;
+  }
+  if (availableProviders.isEmpty) {
+    if (context.mounted) {
+      await _showAiMessage(context, context.l10n.aiConfigureFirst);
+    }
+    return null;
+  }
+  if (!context.mounted) {
+    return null;
+  }
+  final defaultProvider = settings.defaultAiProviderKind;
+  final initialProvider = availableProviders.contains(defaultProvider)
+      ? defaultProvider!
+      : availableProviders.first;
   final configuration =
       await showBusyMarkModalEditorDialog<_AiEditConfiguration>(
         context,
         builder: (dialogContext) => _AiEditConfigurationDialog(
           snapshot: snapshot,
           fixedTarget: fixedTarget,
-          initialProvider: defaultProvider ?? AiProviderKind.ollamaLocal,
+          availableProviders: availableProviders,
+          initialProvider: initialProvider,
         ),
       );
   if (configuration == null || !context.mounted) {
@@ -166,21 +187,77 @@ Future<AiProviderKind?> chooseBusyMarkAiProvider(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  final defaultProvider = ref
-      .read(appSettingsControllerProvider)
-      .defaultAiProviderKind;
-  if (defaultProvider == null) {
-    await _showAiMessage(context, context.l10n.aiConfigureFirst);
+  final settings = ref.read(appSettingsControllerProvider);
+  final List<AiProviderKind> availableProviders;
+  try {
+    availableProviders = await _availableAiProviders(ref, settings);
+  } on AiException catch (error) {
+    if (context.mounted) {
+      await _showAiMessage(context, error.message);
+    }
+    return null;
+  }
+  if (availableProviders.isEmpty) {
+    if (context.mounted) {
+      await _showAiMessage(context, context.l10n.aiConfigureFirst);
+    }
     return null;
   }
   if (!context.mounted) {
     return null;
   }
+  final defaultProvider = settings.defaultAiProviderKind;
+  final initialProvider = availableProviders.contains(defaultProvider)
+      ? defaultProvider!
+      : availableProviders.first;
   return showBusyMarkModalDialog<AiProviderKind>(
     context,
-    builder: (dialogContext) =>
-        _AiProviderChoiceDialog(initialProvider: defaultProvider),
+    builder: (dialogContext) => _AiProviderChoiceDialog(
+      availableProviders: availableProviders,
+      initialProvider: initialProvider,
+    ),
   );
+}
+
+Future<List<AiProviderKind>> _availableAiProviders(
+  WidgetRef ref,
+  AppSettings settings,
+) async {
+  final defaultProvider = settings.defaultAiProviderKind;
+  if (defaultProvider == null) {
+    return const [];
+  }
+
+  final available = <AiProviderKind>{};
+  if (defaultProvider == AiProviderKind.ollamaLocal ||
+      settings.aiOllamaModel.trim().isNotEmpty) {
+    available.add(AiProviderKind.ollamaLocal);
+  }
+
+  final secretStore = ref.read(aiSecretStoreProvider);
+  AiException? defaultCredentialError;
+  for (final provider in AiProviderKind.values.where(
+    (provider) => provider.isCloud,
+  )) {
+    try {
+      if (await secretStore.read(provider) != null) {
+        available.add(provider);
+      }
+    } on AiException catch (error) {
+      if (provider == defaultProvider) {
+        defaultCredentialError = error;
+      }
+    }
+  }
+  if (available.isEmpty && defaultCredentialError != null) {
+    throw defaultCredentialError;
+  }
+
+  return [
+    if (available.contains(defaultProvider)) defaultProvider,
+    for (final provider in AiProviderKind.values)
+      if (provider != defaultProvider && available.contains(provider)) provider,
+  ];
 }
 
 Future<void> _showAiMessage(BuildContext context, String message) {
@@ -216,11 +293,13 @@ class _AiEditConfiguration {
 class _AiEditConfigurationDialog extends StatefulWidget {
   const _AiEditConfigurationDialog({
     required this.snapshot,
+    required this.availableProviders,
     required this.initialProvider,
     this.fixedTarget,
   });
 
   final AiEditorSnapshot snapshot;
+  final List<AiProviderKind> availableProviders;
   final AiProviderKind initialProvider;
   final AiEditTargetKind? fixedTarget;
 
@@ -299,7 +378,7 @@ class _AiEditConfigurationDialogState
             BusyMarkComboRow<AiProviderKind>(
               key: const ValueKey('ai-edit-provider'),
               title: context.l10n.aiProvider,
-              values: AiProviderKind.values,
+              values: widget.availableProviders,
               selected: _provider,
               labelFor: (provider) => _providerLabel(context, provider),
               onSelected: (provider) => setState(() => _provider = provider),
@@ -436,8 +515,12 @@ class _AiEditConfigurationDialogState
 }
 
 class _AiProviderChoiceDialog extends StatefulWidget {
-  const _AiProviderChoiceDialog({required this.initialProvider});
+  const _AiProviderChoiceDialog({
+    required this.availableProviders,
+    required this.initialProvider,
+  });
 
+  final List<AiProviderKind> availableProviders;
   final AiProviderKind initialProvider;
 
   @override
@@ -476,7 +559,7 @@ class _AiProviderChoiceDialogState extends State<_AiProviderChoiceDialog> {
             BusyMarkComboRow<AiProviderKind>(
               key: const ValueKey('ai-provider-choice'),
               title: context.l10n.aiProvider,
-              values: AiProviderKind.values,
+              values: widget.availableProviders,
               selected: _provider,
               labelFor: (provider) => _providerLabel(context, provider),
               onSelected: (provider) => setState(() => _provider = provider),
