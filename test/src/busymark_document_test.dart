@@ -4357,6 +4357,68 @@ void main() {}
     expect(markdown, '[Linked](https://example.com) word\n');
   });
 
+  for (final (selectionDescription, selection) in const [
+    ('caret is inside it', TextSelection.collapsed(offset: 8)),
+    ('its text is selected', TextSelection(baseOffset: 6, extentOffset: 14)),
+  ]) {
+    testWidgets(
+      'WYSIWYG link dialog edits an existing link when $selectionDescription',
+      (tester) async {
+        const oldDestination = 'https://old.example';
+        const newDestination = 'https://new.example';
+        final parsed = parser.parse(
+          filePath: 'topic.md',
+          source: 'Visit [BusyMark]($oldDestination) today\n',
+        );
+        var markdown = parsed.source;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  onSourceChanged: (filePath, value) => markdown = value,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final editorField = tester.widget<TextField>(
+          find.byType(TextField).first,
+        );
+        editorField.focusNode!.requestFocus();
+        editorField.controller!.selection = selection;
+        await tester.tap(find.byIcon(BusyMarkGlyphs.link));
+        await tester.pumpAndSettle();
+
+        final destinationField = find.byKey(
+          const ValueKey('wysiwyg-link-destination-field'),
+        );
+        final destinationInput = find.descendant(
+          of: destinationField,
+          matching: find.byType(EditableText),
+        );
+        expect(
+          tester.widget<EditableText>(destinationInput).controller.text,
+          oldDestination,
+        );
+
+        await tester.enterText(destinationField, newDestination);
+        await tester.tap(find.text(AppLocalizationsEn().apply));
+        await tester.pumpAndSettle();
+
+        expect(markdown, 'Visit [BusyMark]($newDestination) today\n');
+      },
+    );
+  }
+
   test(
     'WYSIWYG inline command toggles selected mark without dropping links',
     () {

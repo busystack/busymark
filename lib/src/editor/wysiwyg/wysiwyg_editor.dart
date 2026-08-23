@@ -2788,15 +2788,30 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _applyLinkCommand() async {
     final selectedRanges = _selectedTextRanges();
     if (selectedRanges.isNotEmpty) {
+      final existingLink = selectedRanges.length == 1
+          ? _linkCoveringRange(selectedRanges.single)
+          : null;
+      final rangesToApply = existingLink == null
+          ? selectedRanges
+          : [
+              _SelectedTextRange(
+                block: selectedRanges.single.block,
+                start: existingLink.start,
+                end: existingLink.end,
+              ),
+            ];
       final target = _captureDialogTarget();
-      final destination = await _showLinkDialog(context);
+      final destination = await _showLinkDialog(
+        context,
+        initialDestination: existingLink?.destination ?? '',
+      );
       if (!_isDialogTargetCurrent(target) ||
           destination == null ||
           destination.trim().isEmpty) {
         return;
       }
       _recordUndoSnapshot();
-      for (final range in selectedRanges) {
+      for (final range in rangesToApply) {
         _documentController.applyInlineCommand(
           range.block.id,
           BusyWysiwygInlineCommand.link,
@@ -2815,11 +2830,42 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final controller = _textControllers[blockId];
     final selection = controller?.selection;
-    if (controller == null || selection == null || selection.isCollapsed) {
+    final block = _documentController.blockById(blockId);
+    if (controller == null ||
+        selection == null ||
+        !selection.isValid ||
+        block == null) {
       return;
     }
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, controller.text.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, controller.text.length)
+        .toInt();
+    final selectedRange = _SelectedTextRange(
+      block: block,
+      start: start,
+      end: end,
+    );
+    final existingLink = _linkCoveringRange(selectedRange);
+    if (selection.isCollapsed && existingLink == null) {
+      return;
+    }
+    final rangeToApply = existingLink == null
+        ? selectedRange
+        : _SelectedTextRange(
+            block: block,
+            start: existingLink.start,
+            end: existingLink.end,
+          );
     final target = _captureDialogTarget();
-    final destination = await _showLinkDialog(context);
+    final destination = await _showLinkDialog(
+      context,
+      initialDestination: existingLink?.destination ?? '',
+    );
     if (!_isDialogTargetCurrent(target) ||
         destination == null ||
         destination.trim().isEmpty) {
@@ -2829,11 +2875,54 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController.applyInlineCommand(
       blockId,
       BusyWysiwygInlineCommand.link,
-      selection.start,
-      selection.end,
+      rangeToApply.start,
+      rangeToApply.end,
       destination: destination.trim(),
     );
     _emitMarkdown();
+  }
+
+  BusyInlineStyleRange? _linkCoveringRange(_SelectedTextRange selection) {
+    final textLength = selection.block.plainText.length;
+    final start = selection.start.clamp(0, textLength).toInt();
+    final end = selection.end.clamp(start, textLength).toInt();
+    for (final link in _linkRanges(selection.block.inlines)) {
+      if (link.start <= start && link.end >= end) {
+        return link;
+      }
+    }
+    return null;
+  }
+
+  List<BusyInlineStyleRange> _linkRanges(List<BusyInline> inlines) {
+    final ranges = <BusyInlineStyleRange>[];
+    var offset = 0;
+
+    void visit(BusyInline inline) {
+      final start = offset;
+      if (inline.children.isEmpty) {
+        offset += inline.plainText.length;
+      } else {
+        for (final child in inline.children) {
+          visit(child);
+        }
+      }
+      if (inline.kind == BusyInlineKind.link && offset > start) {
+        ranges.add(
+          BusyInlineStyleRange(
+            start: start,
+            end: offset,
+            kind: BusyInlineKind.link,
+            destination: inline.destination,
+          ),
+        );
+      }
+    }
+
+    for (final inline in inlines) {
+      visit(inline);
+    }
+    return ranges;
   }
 
   void _applyInlineMathCommand() {
@@ -3375,8 +3464,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  Future<String?> _showLinkDialog(BuildContext context) {
-    var destination = '';
+  Future<String?> _showLinkDialog(
+    BuildContext context, {
+    String initialDestination = '',
+  }) {
+    var destination = initialDestination;
     return _showEditorDialog<String>(
       context,
       builder: (context) => BusyMarkModalEditorScaffold(
@@ -3392,6 +3484,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               BusyMarkGroupedTextEntry(
                 key: const ValueKey('wysiwyg-link-destination-field'),
                 label: context.l10n.source,
+                initialValue: initialDestination,
                 autofocus: true,
                 textDirection: TextDirection.ltr,
                 onChanged: (value) => destination = value,
