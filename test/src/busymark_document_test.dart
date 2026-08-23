@@ -4315,6 +4315,48 @@ void main() {}
     expect(controller.markdown, 'Hello **bold!** world\n');
   });
 
+  testWidgets('WYSIWYG link dialog submits with Enter', (tester) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Linked word\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final editorField = tester.widget<TextField>(find.byType(TextField).first);
+    editorField.focusNode!.requestFocus();
+    editorField.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 6,
+    );
+    await tester.tap(find.byIcon(BusyMarkGlyphs.link));
+    await tester.pumpAndSettle();
+
+    final destinationField = find.byKey(
+      const ValueKey('wysiwyg-link-destination-field'),
+    );
+    await tester.enterText(destinationField, 'https://example.com');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(destinationField, findsNothing);
+    expect(markdown, '[Linked](https://example.com) word\n');
+  });
+
   test(
     'WYSIWYG inline command toggles selected mark without dropping links',
     () {

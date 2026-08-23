@@ -1307,7 +1307,7 @@ void main() {
     expect(entries, contains('return YaruListTile.square('));
     expect(entries, contains('title: TextFormField('));
     expect(entries, contains('busyMarkGroupedTextFieldDecoration('));
-    expect(entries, contains('trailing: trailing'));
+    expect(entries, contains('trailing: widget.trailing'));
     expect(entries, isNot(contains('EditableText(')));
     expect(entries, isNot(contains('MouseRegion(')));
     expect(entries, isNot(contains('GestureDetector(')));
