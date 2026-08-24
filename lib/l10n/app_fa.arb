@@ -2266,7 +2266,7 @@
   "gitErrorMultipleRemotes": "چند مخزن راه دور پیکربندی شده است. یک بالادست را خارج از این نسخهٔ BusyMark انتخاب کنید.",
   "gitErrorDirtyWorkspace": "پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.",
   "gitErrorDiverged": "شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.",
-  "gitErrorAuthentication": "احراز هویت Git ناموفق بود. در بستهٔ snap، مخزن‌های راه دور SSH ممکن است به اتصال رابط ssh-keys نیاز داشته باشند.",
+  "gitErrorAuthentication": "احراز هویت Git ناموفق بود.",
   "gitErrorNetwork": "عملیات شبکهٔ Git ناموفق بود.",
   "gitErrorConflict": "Git تداخل‌های حل‌نشده گزارش کرد.",
   "gitErrorCommandFailed": "فرمان Git ناموفق بود.",

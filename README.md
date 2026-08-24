@@ -33,6 +33,8 @@ projects.
   diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
+- Review, stage, commit, branch, synchronize, and inspect history in Git-backed
+  documentation workspaces using the user's normal Git configuration and tools.
 - Run basic diagnostics.
 - Reopen recent workspaces.
 - Use native Linux desktop chrome with a GTK headerbar.
@@ -269,6 +271,17 @@ flutter test
 
 Linux `.desktop` and AppStream metadata are localized in the repository. Snap
 Store listing translations are managed outside `snap/snapcraft.yaml`.
+
+The Snap uses classic confinement so integrated Git can honor the user's
+standard configuration, SSH/GPG agents, credential helpers, hooks, and custom
+tooling. Install it with:
+
+```bash
+sudo snap install busymark --classic
+```
+
+The [classic-confinement rationale](docs/snap-classic-confinement.md) documents
+the scope and the text to use for Snap Store review.
 
 ## Build Linux Locally
 

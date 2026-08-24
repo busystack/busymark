@@ -1730,7 +1730,7 @@
   "@gitErrorResetDetachedHead": {"description": "Git reset error shown while HEAD is detached."},
   "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
   "@gitErrorDiverged": {"description": "Git error message."},
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
+  "gitErrorAuthentication": "Git authentication failed.",
   "@gitErrorAuthentication": {"description": "Git error message."},
   "gitErrorNetwork": "Git network operation failed.",
   "@gitErrorNetwork": {"description": "Git error message."},

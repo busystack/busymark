@@ -2588,8 +2588,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ветка разошлась с upstream-веткой. Выполните слияние или rebase вне этой версии BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Не удалось пройти аутентификацию Git. Для удалённых SSH-репозиториев в snap может потребоваться подключить интерфейс ssh-keys.';
+  String get gitErrorAuthentication => 'Не удалось пройти аутентификацию Git.';
 
   @override
   String get gitErrorNetwork => 'Сетевая операция Git не удалась.';

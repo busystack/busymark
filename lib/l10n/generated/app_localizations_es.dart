@@ -2585,8 +2585,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'La rama ha divergido. Resuelva el merge o el rebase fuera de esta versión de BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'La autenticación de Git ha fallado. En el snap, los remotos SSH pueden requerir que se conecte la interfaz ssh-keys.';
+  String get gitErrorAuthentication => 'La autenticación de Git ha fallado.';
 
   @override
   String get gitErrorNetwork => 'La operación de red de Git ha fallado.';

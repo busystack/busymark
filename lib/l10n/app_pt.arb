@@ -2245,7 +2245,7 @@
   "gitErrorMultipleRemotes": "Há vários remotos configurados. Escolha um upstream fora desta versão do BusyMark.",
   "gitErrorDirtyWorkspace": "Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.",
   "gitErrorDiverged": "A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.",
-  "gitErrorAuthentication": "A autenticação do Git falhou. No snap, os remotos SSH podem exigir a conexão da interface ssh-keys.",
+  "gitErrorAuthentication": "A autenticação do Git falhou.",
   "gitErrorNetwork": "A operação de rede do Git falhou.",
   "gitErrorConflict": "O Git relatou conflitos não resolvidos.",
   "gitErrorCommandFailed": "O comando Git falhou.",

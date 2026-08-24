@@ -2596,8 +2596,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Uwierzytelnianie Git nie powiodło się. W pakiecie snap repozytoria SSH mogą wymagać podłączenia interfejsu ssh-keys.';
+  String get gitErrorAuthentication => 'Uwierzytelnianie Git nie powiodło się.';
 
   @override
   String get gitErrorNetwork => 'Operacja sieciowa Git nie powiodła się.';

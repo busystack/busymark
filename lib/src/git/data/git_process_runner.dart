@@ -251,8 +251,8 @@ class GitProcessGroupLauncher {
           processGroup: true,
         );
       }
-      // Strict snap confinement cannot execute the host's /usr/bin/setsid.
-      // A malformed or older snap should retain Git support while sacrificing
+      // Prefer the packaged launcher whenever this binary runs from a Snap. A
+      // malformed package should retain Git support while sacrificing
       // process-group cleanup until its packaging is corrected.
       return GitProcessLaunch(
         executable: executable,

@@ -21,10 +21,9 @@ application bundle. A desktop process must still read the key to make a direct
 BYOK request, so OS credential storage protects the key at rest; it does not
 make a compromised desktop process trustworthy.
 
-Under strict Snap confinement, BusyMark uses libsecret's password API through
-the desktop interface. Libsecret selects the per-Snap Secret Portal backend;
-BusyMark does not request the broad `password-manager-service` interface or
-access other applications' keyring entries.
+BusyMark uses libsecret's password API through the desktop secret service. The
+classic Snap uses the same user keyring as a conventional Linux package and
+does not write API keys into Snap or application configuration files.
 
 Choose **Automatic model selection** to let BusyMark route the task among the
 approved models of the selected provider, or **Fixed model** to use only the

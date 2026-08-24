@@ -2247,7 +2247,7 @@
   "gitErrorMultipleRemotes": "تم إعداد عدة مستودعات بعيدة. اختر فرع منبع خارج هذا الإصدار من BusyMark.",
   "gitErrorDirtyWorkspace": "احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.",
   "gitErrorDiverged": "تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.",
-  "gitErrorAuthentication": "فشلت مصادقة Git. في حزمة snap، قد تتطلب مستودعات SSH البعيدة توصيل واجهة ssh-keys.",
+  "gitErrorAuthentication": "فشلت مصادقة Git.",
   "gitErrorNetwork": "فشلت عملية Git عبر الشبكة.",
   "gitErrorConflict": "أبلغ Git عن تعارضات لم تُحل.",
   "gitErrorCommandFailed": "فشل أمر Git.",

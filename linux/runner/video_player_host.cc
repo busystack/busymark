@@ -610,11 +610,7 @@ BusyMarkVideoPlayerHost* busymark_video_player_host_new(GtkWidget* overlay) {
   webkit_web_context_set_cache_model(self->context,
                                      WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
   webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
-  const gchar* snap_root = g_getenv("SNAP");
-  const gboolean strictly_confined_snap =
-      snap_root != nullptr && snap_root[0] != '\0';
-  webkit_web_context_set_sandbox_enabled(self->context,
-                                         !strictly_confined_snap);
+  webkit_web_context_set_sandbox_enabled(self->context, TRUE);
   WebKitCookieManager* cookie_manager =
       webkit_web_context_get_cookie_manager(self->context);
   webkit_cookie_manager_set_accept_policy(cookie_manager,

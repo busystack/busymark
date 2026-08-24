@@ -4295,7 +4295,7 @@ abstract class AppLocalizations {
   /// Git error message.
   ///
   /// In en, this message translates to:
-  /// **'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.'**
+  /// **'Git authentication failed.'**
   String get gitErrorAuthentication;
 
   /// Git error message.

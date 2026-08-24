@@ -967,14 +967,9 @@ BusyMarkWebRenderHost* busymark_web_render_host_new(
   webkit_web_context_set_cache_model(self->context,
                                      WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
   webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
-  // The auto-connected Snap browser-support interface uses allow-sandbox:
-  // false. Inside that package, snapd's strict AppArmor/seccomp confinement is
-  // the outer sandbox; everywhere else retain WebKit's subprocess sandbox.
-  const gchar* snap_root = g_getenv("SNAP");
-  const gboolean strictly_confined_snap =
-      snap_root != nullptr && snap_root[0] != '\0';
-  webkit_web_context_set_sandbox_enabled(self->context,
-                                         !strictly_confined_snap);
+  // BusyMark's classic Snap has no outer AppArmor/seccomp sandbox, so retain
+  // WebKit's subprocess sandbox just as conventional Linux packages do.
+  webkit_web_context_set_sandbox_enabled(self->context, TRUE);
   webkit_web_context_register_uri_scheme(self->context, kScheme,
                                          uri_scheme_request_cb, self,
                                          nullptr);

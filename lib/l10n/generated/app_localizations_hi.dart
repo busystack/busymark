@@ -2550,8 +2550,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git प्रमाणीकरण विफल रहा। snap में SSH रिमोट के लिए ssh-keys इंटरफ़ेस कनेक्ट करना पड़ सकता है।';
+  String get gitErrorAuthentication => 'Git प्रमाणीकरण विफल रहा।';
 
   @override
   String get gitErrorNetwork => 'Git नेटवर्क कार्रवाई विफल रही।';

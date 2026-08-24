@@ -2245,7 +2245,7 @@
   "gitErrorMultipleRemotes": "Mehrere Remotes sind konfiguriert. Wählen Sie außerhalb dieser BusyMark-Version einen Upstream aus.",
   "gitErrorDirtyWorkspace": "Speichern oder verwerfen Sie die Editoränderungen in BusyMark, bevor Sie den Branch wechseln.",
   "gitErrorDiverged": "Der Branch ist auseinandergelaufen. Führen Sie Merge oder Rebase außerhalb dieser BusyMark-Version aus.",
-  "gitErrorAuthentication": "Git-Authentifizierung fehlgeschlagen. Im Snap muss für SSH-Remotes möglicherweise die Schnittstelle ssh-keys verbunden werden.",
+  "gitErrorAuthentication": "Git-Authentifizierung fehlgeschlagen.",
   "gitErrorNetwork": "Git-Netzwerkvorgang fehlgeschlagen.",
   "gitErrorConflict": "Git hat ungelöste Konflikte gemeldet.",
   "gitErrorCommandFailed": "Git-Befehl fehlgeschlagen.",

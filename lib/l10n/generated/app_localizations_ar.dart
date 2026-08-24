@@ -2577,8 +2577,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'فشلت مصادقة Git. في حزمة snap، قد تتطلب مستودعات SSH البعيدة توصيل واجهة ssh-keys.';
+  String get gitErrorAuthentication => 'فشلت مصادقة Git.';
 
   @override
   String get gitErrorNetwork => 'فشلت عملية Git عبر الشبكة.';

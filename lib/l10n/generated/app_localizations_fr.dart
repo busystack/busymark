@@ -2580,8 +2580,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'La branche a divergé. Résolvez la fusion ou le rebasage en dehors de cette version de BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'L’authentification Git a échoué. Dans le snap, les dépôts SSH distants peuvent nécessiter la connexion de l’interface ssh-keys.';
+  String get gitErrorAuthentication => 'L’authentification Git a échoué.';
 
   @override
   String get gitErrorNetwork => 'L’opération réseau Git a échoué.';

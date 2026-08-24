@@ -12,7 +12,7 @@ description: |
 license: Apache-2.0
 base: core24
 grade: stable
-confinement: strict
+confinement: classic
 icon: assets/branding/busymark_logo.svg
 website: https://github.com/busystack/busymark
 issues: https://github.com/busystack/busymark/issues
@@ -24,40 +24,20 @@ platforms:
     build-on: [amd64]
     build-for: [amd64]
 
-plugs:
-  browser-support:
-    interface: browser-support
-    allow-sandbox: false
-
 apps:
   busymark:
     command: busymark
     desktop: share/applications/io.busystack.busymark.desktop
     common-id: io.busystack.busymark
-    extensions: [gnome]
-    plugs:
-      - desktop
-      - desktop-legacy
-      - browser-support
-      - audio-playback
-      - gsettings
-      - opengl
-      - wayland
-      - x11
-      - home
-      - network
-      - removable-media
-      - ssh-keys
     environment:
       GDK_BACKEND: wayland,x11
       TYPST_FONT_PATHS: $SNAP/usr/share/fonts
-      XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
-      XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
-      XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
 
 parts:
   busymark:
     plugin: flutter
+    build-attributes:
+      - enable-patchelf
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
@@ -73,6 +53,7 @@ parts:
       - libhandy-1-0
       - libsecret-1-0
       - libwebkit2gtk-4.1-0
+      - libgtk-3-0t64
       - gstreamer1.0-libav
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-base
@@ -97,9 +78,36 @@ parts:
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
-      craftctl default
+      if [ ! -x "$CRAFT_PART_BUILD/flutter-distro/bin/flutter" ]; then
+        git clone --depth 1 -b stable https://github.com/flutter/flutter.git \
+          "$CRAFT_PART_BUILD/flutter-distro"
+      fi
+      export CI=true
+      flutter --no-version-check precache --linux
+      flutter --no-version-check pub get
+      flutter --no-version-check build linux --release --verbose \
+        --target lib/main.dart
+      cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
+
+  desktop-integration:
+    after: [busymark]
+    plugin: nil
+    build-packages:
+      - patchelf
     override-prime: |
       craftctl default
+      # Drop a stale plugin that is not part of BusyMark's dependency graph.
+      rm -f "$CRAFT_PRIME/lib/libflutter_secure_storage_linux_plugin.so"
+      # Snapcraft finds the two sibling BLAS directories automatically, but the
+      # classic linter also requires the library's own directory in this path.
+      patchelf --set-rpath \
+        '$ORIGIN/lapack:$ORIGIN/blas:$ORIGIN:/snap/core24/current/lib/x86_64-linux-gnu' \
+        "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"
+      # libcaca's optional OpenGL backend is unused and pulls in GLUT/GLU.
+      rm -f \
+        "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so" \
+        "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0" \
+        "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0.0.0"
       mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
       cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"
       cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"

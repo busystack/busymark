@@ -71,8 +71,8 @@ revision cancellation, priority scheduling, memory/disk LRU caches, generated
 SVG normalization, D2 execution, and OpenAPI dependency resolution. Cache keys
 include the renderer and sanitizer versions, source, theme, preview/PDF profile,
 options, and hashes of local dependencies. The disk cache is stored below
-`$XDG_CACHE_HOME/busymark/visualizations`; the strict Snap maps that location to
-`$SNAP_USER_DATA/.cache`.
+`$XDG_CACHE_HOME/busymark/visualizations` for both conventional packages and
+the classic Snap.
 
 The Linux runner provides a first-party Flutter platform-channel host backed by
 WebKitGTK 4.1. It uses one reusable hidden render view in an ephemeral WebKit
@@ -94,10 +94,9 @@ The CSP permits WebAssembly evaluation for the official PlantUML/Viz.js build
 and JavaScript evaluation for Scalar's bundled schema validator. Those
 permissions are confined to the private, allow-listed, no-network harness.
 
-WebKit's subprocess sandbox remains enabled for ordinary Linux packages. The
-strict Snap uses the auto-connected `browser-support` interface with
-`allow-sandbox: false`, so WebKit's internal sandbox is disabled there and the
-processes remain inside snapd's AppArmor/seccomp confinement.
+WebKit's subprocess sandbox remains enabled for ordinary Linux packages and
+the classic Snap. The private rendering scheme, ephemeral context, disabled
+storage, and no-network content policy apply in both package forms.
 
 ## Renderer policy
 
@@ -215,9 +214,9 @@ actual Dart coordinator, native WebKit channel, D2 CSS and `foreignObject`
 raster paths, OpenAPI model, live WebKit process termination/recovery, and Typst
 PDF export through the release executable.
 
-The same workflow builds the final strict Snap in a clean core24 build
-environment, installs it without changing its strict confinement, and runs that
-release verification under both X11 and Wayland. Automated suites also cover
+The same workflow builds the final classic Snap in a clean core24 build
+environment, installs it with `--classic`, and runs that release verification
+under both X11 and Wayland. Automated suites also cover
 cancellation, stale-result rejection, timeout wiring, sanitization and external
 resources, traversal and symlink escapes, circular OpenAPI references, input
 limits, both themes, cache-version invalidation, D2 raster snapshots, and a
@@ -238,7 +237,7 @@ is not a substitute for these automated product-path checks.
 - [D2 icons and images](https://d2lang.com/tour/icons/)
 - [Scalar OpenAPI parser](https://github.com/scalar/scalar/blob/main/packages/openapi-parser/README.md)
 - [Scalar API Reference configuration](https://scalar.com/products/api-references/configuration)
-- [Snap browser-support interface](https://snapcraft.io/docs/reference/interfaces/browser-support-interface/)
+- [Snap classic confinement](https://snapcraft.io/docs/explanation/security/classic-confinement/)
 - [Snapcraft GNOME extension](https://forum.snapcraft.io/t/the-gnome-extension/31449)
 - [Snapcraft project-file `grade` semantics](https://documentation.ubuntu.com/snapcraft/latest/reference/project-file/snapcraft-yaml/)
 - [GitHub Ubuntu 24.04 runner image](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md)

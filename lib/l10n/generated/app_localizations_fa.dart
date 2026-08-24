@@ -2611,8 +2611,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.';
 
   @override
-  String get gitErrorAuthentication =>
-      'احراز هویت Git ناموفق بود. در بستهٔ snap، مخزن‌های راه دور SSH ممکن است به اتصال رابط ssh-keys نیاز داشته باشند.';
+  String get gitErrorAuthentication => 'احراز هویت Git ناموفق بود.';
 
   @override
   String get gitErrorNetwork => 'عملیات شبکهٔ Git ناموفق بود.';

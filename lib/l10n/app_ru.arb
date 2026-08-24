@@ -2263,7 +2263,7 @@
   "gitErrorMultipleRemotes": "Настроено несколько удалённых репозиториев. Эта версия BusyMark не позволяет выбрать upstream-ветку; настройте её вне приложения.",
   "gitErrorDirtyWorkspace": "Перед переключением ветки сохраните или отмените изменения в редакторе BusyMark.",
   "gitErrorDiverged": "Ветка разошлась с upstream-веткой. Выполните слияние или rebase вне этой версии BusyMark.",
-  "gitErrorAuthentication": "Не удалось пройти аутентификацию Git. Для удалённых SSH-репозиториев в snap может потребоваться подключить интерфейс ssh-keys.",
+  "gitErrorAuthentication": "Не удалось пройти аутентификацию Git.",
   "gitErrorNetwork": "Сетевая операция Git не удалась.",
   "gitErrorConflict": "Git сообщил о неразрешённых конфликтах.",
   "gitErrorCommandFailed": "Не удалось выполнить команду Git.",

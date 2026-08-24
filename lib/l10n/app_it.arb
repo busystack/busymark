@@ -2245,7 +2245,7 @@
   "gitErrorMultipleRemotes": "Sono configurati più repository remoti. Scegli un upstream al di fuori di questa versione di BusyMark.",
   "gitErrorDirtyWorkspace": "Salva o scarta le modifiche dell’editor di BusyMark prima di cambiare ramo.",
   "gitErrorDiverged": "Il ramo è divergente. Risolvi il merge o il rebase al di fuori di questa versione di BusyMark.",
-  "gitErrorAuthentication": "Autenticazione Git non riuscita. Nello snap, i repository SSH remoti potrebbero richiedere il collegamento dell’interfaccia ssh-keys.",
+  "gitErrorAuthentication": "Autenticazione Git non riuscita.",
   "gitErrorNetwork": "Operazione di rete Git non riuscita.",
   "gitErrorConflict": "Git ha segnalato conflitti non risolti.",
   "gitErrorCommandFailed": "Comando Git non riuscito.",

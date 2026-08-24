@@ -119,7 +119,7 @@ void main() {
       renderHost,
       contains('webkit_settings_set_enable_media(settings, FALSE)'),
     );
-    expect(snap, contains('- audio-playback'));
+    expect(snap, contains('confinement: classic'));
     expect(snap, contains('gstreamer1.0-plugins-good'));
     expect(snap, contains('gstreamer1.0-libav'));
   });

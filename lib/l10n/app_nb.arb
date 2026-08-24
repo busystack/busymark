@@ -2245,7 +2245,7 @@
   "gitErrorMultipleRemotes": "Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.",
   "gitErrorDirtyWorkspace": "Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.",
   "gitErrorDiverged": "Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.",
-  "gitErrorAuthentication": "Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.",
+  "gitErrorAuthentication": "Git-autentisering mislyktes.",
   "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
   "gitErrorConflict": "Git rapporterte uløste konflikter.",
   "gitErrorCommandFailed": "Git-kommandoen mislyktes.",

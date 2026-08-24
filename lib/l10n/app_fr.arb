@@ -2245,7 +2245,7 @@
   "gitErrorMultipleRemotes": "Plusieurs dépôts distants sont configurés. Choisissez une branche en amont en dehors de cette version de BusyMark.",
   "gitErrorDirtyWorkspace": "Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de changer de branche.",
   "gitErrorDiverged": "La branche a divergé. Résolvez la fusion ou le rebasage en dehors de cette version de BusyMark.",
-  "gitErrorAuthentication": "L’authentification Git a échoué. Dans le snap, les dépôts SSH distants peuvent nécessiter la connexion de l’interface ssh-keys.",
+  "gitErrorAuthentication": "L’authentification Git a échoué.",
   "gitErrorNetwork": "L’opération réseau Git a échoué.",
   "gitErrorConflict": "Git a signalé des conflits non résolus.",
   "gitErrorCommandFailed": "La commande Git a échoué.",

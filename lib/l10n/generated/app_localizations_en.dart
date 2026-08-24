@@ -2577,8 +2577,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+  String get gitErrorAuthentication => 'Git authentication failed.';
 
   @override
   String get gitErrorNetwork => 'Git network operation failed.';

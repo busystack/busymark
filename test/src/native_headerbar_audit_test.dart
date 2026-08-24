@@ -439,7 +439,9 @@ void main() {
     expect(snapcraft, contains('override-build:'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
-    expect(snapcraft, contains('craftctl default'));
+    expect(snapcraft, contains('export CI=true'));
+    expect(snapcraft, contains('flutter --no-version-check precache --linux'));
+    expect(snapcraft, contains('flutter --no-version-check pub get'));
     expect(
       snapcraft,
       contains(

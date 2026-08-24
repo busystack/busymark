@@ -2586,8 +2586,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Branch ist auseinandergelaufen. Führen Sie Merge oder Rebase außerhalb dieser BusyMark-Version aus.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git-Authentifizierung fehlgeschlagen. Im Snap muss für SSH-Remotes möglicherweise die Schnittstelle ssh-keys verbunden werden.';
+  String get gitErrorAuthentication => 'Git-Authentifizierung fehlgeschlagen.';
 
   @override
   String get gitErrorNetwork => 'Git-Netzwerkvorgang fehlgeschlagen.';

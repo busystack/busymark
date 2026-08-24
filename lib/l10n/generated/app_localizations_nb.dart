@@ -2557,8 +2557,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.';
+  String get gitErrorAuthentication => 'Git-autentisering mislyktes.';
 
   @override
   String get gitErrorNetwork => 'Git-nettverksoperasjonen mislyktes.';

@@ -2554,8 +2554,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Giti autentimine nurjus. Snap-paketis võib SSH-kaughoidlate kasutamiseks olla vaja ühendada liides ssh-keys.';
+  String get gitErrorAuthentication => 'Giti autentimine nurjus.';
 
   @override
   String get gitErrorNetwork => 'Giti võrgutoiming nurjus.';

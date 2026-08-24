@@ -1542,7 +1542,7 @@
   "@gitErrorDirtyWorkspace": {"description": "Git error message."},
   "gitErrorDiverged": "Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.",
   "@gitErrorDiverged": {"description": "Git error message."},
-  "gitErrorAuthentication": "Giti autentimine nurjus. Snap-paketis võib SSH-kaughoidlate kasutamiseks olla vaja ühendada liides ssh-keys.",
+  "gitErrorAuthentication": "Giti autentimine nurjus.",
   "@gitErrorAuthentication": {"description": "Git error message."},
   "gitErrorNetwork": "Giti võrgutoiming nurjus.",
   "@gitErrorNetwork": {"description": "Git error message."},
