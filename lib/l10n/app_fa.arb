@@ -1374,7 +1374,7 @@
   },
   "couldNotOpenTarget": "باز کردن \u2068{target}\u2069 ممکن نشد",
   "@couldNotOpenTarget": {
-    "description": "Snackbar shown when a link target cannot be opened.",
+    "description": "Toast shown when a link target cannot be opened.",
     "placeholders": {
       "target": {
         "type": "String"
@@ -1383,7 +1383,7 @@
   },
   "linkTargetNotFound": "مقصد پیوند یافت نشد: \u2068{targetPath}\u2069",
   "@linkTargetNotFound": {
-    "description": "Snackbar shown when a link target path is missing.",
+    "description": "Toast shown when a link target path is missing.",
     "placeholders": {
       "targetPath": {
         "type": "String"
@@ -1392,11 +1392,11 @@
   },
   "cannotOpenFileTypeInEditor": "این نوع فایل را نمی‌توان در ویرایشگر باز کرد",
   "@cannotOpenFileTypeInEditor": {
-    "description": "Snackbar shown when a file type cannot be opened in the editor."
+    "description": "Toast shown when a file type cannot be opened in the editor."
   },
   "anchorNotFound": "لنگر یافت نشد: \u2068{anchor}\u2069",
   "@anchorNotFound": {
-    "description": "Snackbar shown when a link anchor is missing.",
+    "description": "Toast shown when a link anchor is missing.",
     "placeholders": {
       "anchor": {
         "type": "String"

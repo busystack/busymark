@@ -27,6 +27,7 @@ import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
+import 'busymark_toast.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
@@ -375,7 +376,7 @@ class BusyMarkApp extends ConsumerWidget {
         );
         return BusyMarkCommandRegistryScope(
           registry: commandRegistry,
-          child: appContent,
+          child: BusyMarkToastOverlay(child: appContent),
         );
       },
       routerConfig: router,

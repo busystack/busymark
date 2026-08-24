@@ -2,6 +2,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/system_accent.dart';
+import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
@@ -86,49 +87,42 @@ void main() {
     }
   });
 
-  testWidgets('Git failures use their semantic status roles', (tester) async {
-    const cases = {
-      GitFailureCode.commandFailed: BusyMarkStatusKind.error,
-      GitFailureCode.dirtyWorkspace: BusyMarkStatusKind.warning,
-      GitFailureCode.stagedChanges: BusyMarkStatusKind.warning,
-      GitFailureCode.detachedHead: BusyMarkStatusKind.warning,
-      GitFailureCode.noUpstream: BusyMarkStatusKind.information,
-    };
+  testWidgets('Git failures use window-level toasts', (tester) async {
+    await tester.pumpWidget(_testApp(_gitSidebar()));
+    final controller = _gitController(tester);
 
-    for (final entry in cases.entries) {
-      await tester.pumpWidget(
-        _testApp(
-          _gitSidebar(
-            GitFailure(
-              code: entry.key,
-              userMessageKey: 'unused',
-              rawMessage: '',
-              commandName: 'test',
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
+    controller.reportFailure(
+      const GitFailure(
+        code: GitFailureCode.commandFailed,
+        userMessageKey: 'unused',
+        rawMessage: 'Author identity unknown',
+        commandName: 'commit',
+      ),
+    );
+    await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
-      final status = tester.widget<BusyMarkStatusBox>(
-        find.byType(BusyMarkStatusBox),
-      );
-      expect(status.kind, entry.value, reason: '${entry.key}');
-    }
+    expect(find.textContaining('Git command failed.'), findsOneWidget);
+    expect(find.textContaining('Author identity unknown'), findsOneWidget);
+    expect(
+      find.text(AppLocalizations.of(_gitContext(tester)).copy),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkStatusBox), findsNothing);
   });
 
-  testWidgets('successful Git operations use the success role', (tester) async {
-    await tester.pumpWidget(_testApp(_gitSidebar(null, message: 'Done')));
-    await tester.pump();
+  testWidgets('successful Git operations use window-level toasts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(_gitSidebar()));
+    _gitController(tester).reportSuccess('Done');
+    await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
-    final status = tester.widget<BusyMarkStatusBox>(
-      find.byType(BusyMarkStatusBox),
-    );
-    expect(status.kind, BusyMarkStatusKind.success);
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.byType(BusyMarkStatusBox), findsNothing);
   });
 }
 
-Widget _gitSidebar(GitFailure? failure, {String? message}) {
+Widget _gitSidebar() {
   const repository = GitRepositoryInfo(
     rootPath: '/repo',
     gitDirPath: '/repo/.git',
@@ -144,11 +138,8 @@ Widget _gitSidebar(GitFailure? failure, {String? message}) {
       repositoryInfo: repository,
       files: [],
     ),
-    lastError: failure,
-    lastOperationMessage: message,
   );
   return ProviderScope(
-    key: ValueKey((failure?.code, message)),
     overrides: [
       gitControllerProvider.overrideWith(() => _PresetGitController(state)),
     ],
@@ -178,8 +169,18 @@ Widget _testApp(Widget child) {
       brightness: Brightness.light,
       accentColor: busyMarkDefaultAccentColor,
     ),
-    home: Scaffold(body: child),
+    home: BusyMarkToastOverlay(child: Scaffold(body: child)),
   );
+}
+
+BuildContext _gitContext(WidgetTester tester) =>
+    tester.element(find.byType(GitSidebarTab));
+
+_PresetGitController _gitController(WidgetTester tester) {
+  return ProviderScope.containerOf(
+        _gitContext(tester),
+      ).read(gitControllerProvider.notifier)
+      as _PresetGitController;
 }
 
 class _PresetGitController extends GitController {
@@ -189,4 +190,12 @@ class _PresetGitController extends GitController {
 
   @override
   GitState build() => initialState;
+
+  void reportFailure(GitFailure failure) {
+    state = state.copyWith(lastError: failure, lastOperationMessage: null);
+  }
+
+  void reportSuccess(String message) {
+    state = state.copyWith(lastError: null, lastOperationMessage: message);
+  }
 }

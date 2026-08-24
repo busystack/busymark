@@ -1374,7 +1374,7 @@
   },
   "couldNotOpenTarget": "{target} नहीं खोला जा सका",
   "@couldNotOpenTarget": {
-    "description": "Snackbar shown when a link target cannot be opened.",
+    "description": "Toast shown when a link target cannot be opened.",
     "placeholders": {
       "target": {
         "type": "String"
@@ -1383,7 +1383,7 @@
   },
   "linkTargetNotFound": "लिंक लक्ष्य नहीं मिला: {targetPath}",
   "@linkTargetNotFound": {
-    "description": "Snackbar shown when a link target path is missing.",
+    "description": "Toast shown when a link target path is missing.",
     "placeholders": {
       "targetPath": {
         "type": "String"
@@ -1392,11 +1392,11 @@
   },
   "cannotOpenFileTypeInEditor": "इस फ़ाइल प्रकार को संपादक में नहीं खोला जा सकता",
   "@cannotOpenFileTypeInEditor": {
-    "description": "Snackbar shown when a file type cannot be opened in the editor."
+    "description": "Toast shown when a file type cannot be opened in the editor."
   },
   "anchorNotFound": "एंकर नहीं मिला: {anchor}",
   "@anchorNotFound": {
-    "description": "Snackbar shown when a link anchor is missing.",
+    "description": "Toast shown when a link anchor is missing.",
     "placeholders": {
       "anchor": {
         "type": "String"

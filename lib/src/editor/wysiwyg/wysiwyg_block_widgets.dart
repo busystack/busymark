@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../document_callout.dart';
@@ -377,8 +378,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
         onRemoteImageBlocked: onRemoteImageBlocked,
-        onOpenFailed: () => ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(context.l10n.couldNotOpenTarget(source))),
+        onOpenFailed: () => BusyMarkToastOverlay.maybeShow(
+          context,
+          message: context.l10n.couldNotOpenTarget(source),
+          priority: BusyMarkToastPriority.high,
         ),
         width: busyMarkVideoDimension(block.attributes['width']),
         height: busyMarkVideoDimension(block.attributes['height']),

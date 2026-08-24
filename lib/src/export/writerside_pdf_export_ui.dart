@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_settings.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
+import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../math/math_providers.dart';
 import '../platform/linux_header_bar_service.dart';
@@ -155,17 +156,14 @@ Future<void> exportWritersideModuleToPdf(
   }
   final result = outcome.result!;
   final fileName = p.basename(result.destinationPath);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(context.l10n.pdfExported(fileName)),
-      action: SnackBarAction(
-        label: context.l10n.open,
-        onPressed: () => unawaited(
-          launchUrl(
-            Uri.file(result.destinationPath),
-            mode: LaunchMode.externalApplication,
-          ),
-        ),
+  BusyMarkToastOverlay.show(
+    context,
+    message: context.l10n.pdfExported(fileName),
+    actionLabel: context.l10n.open,
+    onAction: () => unawaited(
+      launchUrl(
+        Uri.file(result.destinationPath),
+        mode: LaunchMode.externalApplication,
       ),
     ),
   );

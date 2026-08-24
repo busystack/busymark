@@ -22,6 +22,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_search_field.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
@@ -996,10 +997,9 @@ class WorkspaceScreen extends ConsumerWidget {
       ref
           .read(workspaceControllerProvider.notifier)
           .updateActiveText(result.source, sourceFilePath: filePath);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.markdownTocUpdated(result.entryCount)),
-        ),
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.markdownTocUpdated(result.entryCount),
       );
     } on MarkdownTocException catch (error) {
       final message = switch (error.failure) {
@@ -1007,9 +1007,11 @@ class WorkspaceScreen extends ConsumerWidget {
           context.l10n.markdownTocMalformedMarkers,
         MarkdownTocFailure.noHeadings => context.l10n.markdownTocNoHeadings,
       };
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+        message: message,
+        priority: BusyMarkToastPriority.high,
+      );
     }
   }
 
@@ -1170,8 +1172,10 @@ Future<void> _openGitDiffFile(
   }
   final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
   if (!File(absolutePath).existsSync()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.errorPathDoesNotExist(absolutePath))),
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.errorPathDoesNotExist(absolutePath),
+      priority: BusyMarkToastPriority.high,
     );
     await ref.read(gitControllerProvider.notifier).refresh();
     return;
@@ -1184,8 +1188,10 @@ Future<void> _openGitDiffFile(
       ? _isOpenableExternalTextPath(absolutePath)
       : _isOpenableTextDocument(workspaceFile);
   if (!openable) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.cannotOpenFileTypeInEditor)),
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.cannotOpenFileTypeInEditor,
+      priority: BusyMarkToastPriority.high,
     );
     return;
   }
@@ -2193,8 +2199,19 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     }
     final message = ref.read(workspaceControllerProvider).message;
     if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeWorkspaceMessage(context, message))),
+      final status = busyMarkWorkspaceMessageStatusKind(message.code);
+      final highPriority =
+          status == BusyMarkStatusKind.warning ||
+          status == BusyMarkStatusKind.error;
+      BusyMarkToastOverlay.show(
+        context,
+        message: localizeWorkspaceMessage(context, message),
+        duration: highPriority
+            ? const Duration(seconds: 8)
+            : const Duration(seconds: 5),
+        priority: highPriority
+            ? BusyMarkToastPriority.high
+            : BusyMarkToastPriority.normal,
       );
     }
   }
@@ -2242,9 +2259,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return;
     }
     if (preview.files.isEmpty && preview.issues.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.noResults)));
+      BusyMarkToastOverlay.show(context, message: context.l10n.noResults);
       return;
     }
     final selected = await showBusyMarkModalEditorDialog<Set<String>>(
@@ -2331,9 +2346,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       );
       return;
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(summary)));
+    BusyMarkToastOverlay.show(context, message: summary);
   }
 
   Future<LineEndingNormalization?> _chooseReplacementLineEnding(
@@ -12304,7 +12317,11 @@ void _navigatePreviewAnchor(
 }
 
 void _showPreviewLinkMessage(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  BusyMarkToastOverlay.show(
+    context,
+    message: message,
+    priority: BusyMarkToastPriority.high,
+  );
 }
 
 enum _RemoteImagesPromptAction { cancel, allowWorkspace, allowAlways }

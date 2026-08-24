@@ -33,8 +33,9 @@ void main() {
       _LiteralPattern('labelText literal', r"\blabelText:\s*'([^']+)'"),
       _LiteralPattern('semanticLabel literal', r"\bsemanticLabel:\s*'([^']+)'"),
       _LiteralPattern(
-        'SnackBar Text literal',
-        r"\bSnackBar\([^)]*content:\s*Text\(\s*'([^']*[A-Z][^']*)'",
+        'toast message literal',
+        r'\bBusyMarkToastOverlay\.(?:show|maybeShow)\([^)]*'
+            r"message:\s*'([^']*[A-Z][^']*)'",
         dotAll: true,
       ),
       _LiteralPattern(

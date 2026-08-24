@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
+import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../writerside/writerside_diagram_source_loader.dart';
 import 'visualization_coordinator.dart';
@@ -542,9 +543,11 @@ class _BusyMarkVisualizationCardState
           );
     } on Object catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        BusyMarkToastOverlay.show(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+          message: error.toString(),
+          priority: BusyMarkToastPriority.high,
+        );
       }
     }
   }
@@ -581,10 +584,9 @@ class _BusyMarkVisualizationCardState
         : (result as RasterVisualizationResult).pngBytes;
     await File(path).writeAsBytes(bytes, flush: true);
     if (mounted) {
-      ScaffoldMessenger.of(this.context).showSnackBar(
-        SnackBar(
-          content: Text(this.context.l10n.visualizationSaved(p.basename(path))),
-        ),
+      BusyMarkToastOverlay.show(
+        this.context,
+        message: this.context.l10n.visualizationSaved(p.basename(path)),
       );
     }
   }
@@ -620,15 +622,18 @@ class _BusyMarkVisualizationCardState
       }
       await host.copyPngToClipboard(pngBytes);
       if (mounted) {
-        ScaffoldMessenger.of(this.context).showSnackBar(
-          SnackBar(content: Text(this.context.l10n.visualizationImageCopied)),
+        BusyMarkToastOverlay.show(
+          this.context,
+          message: this.context.l10n.visualizationImageCopied,
         );
       }
     } on Object catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        BusyMarkToastOverlay.show(
           this.context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+          message: error.toString(),
+          priority: BusyMarkToastPriority.high,
+        );
       }
     }
   }

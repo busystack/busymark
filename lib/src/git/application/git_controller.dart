@@ -846,7 +846,11 @@ class GitController extends Notifier<GitState> {
         currentPath == null) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await _gateway.restoreFileFromCommit(
         operation.repository,
@@ -1558,7 +1562,11 @@ class GitController extends Notifier<GitState> {
         !_isCurrentRepositoryOperation(currentContext)) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await operation(currentContext.repository);
       if (!_isCurrentRepositoryOperation(currentContext)) {
@@ -1598,7 +1606,11 @@ class GitController extends Notifier<GitState> {
     if (!_isCurrentWorkspaceOperation(context)) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await operation(rootPath);
       if (!_isCurrentWorkspaceOperation(context)) {

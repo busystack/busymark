@@ -9,6 +9,7 @@ import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
@@ -514,9 +515,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       return;
     }
     if (_controller.fullText != originalText) {
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+        message: context.l10n.aiStaleProposal,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final replacement = result.replacement;

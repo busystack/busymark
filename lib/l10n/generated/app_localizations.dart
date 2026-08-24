@@ -2847,25 +2847,25 @@ abstract class AppLocalizations {
   /// **'Chapter'**
   String get chapter;
 
-  /// Snackbar shown when a link target cannot be opened.
+  /// Toast shown when a link target cannot be opened.
   ///
   /// In en, this message translates to:
   /// **'Could not open {target}'**
   String couldNotOpenTarget(String target);
 
-  /// Snackbar shown when a link target path is missing.
+  /// Toast shown when a link target path is missing.
   ///
   /// In en, this message translates to:
   /// **'Link target not found: {targetPath}'**
   String linkTargetNotFound(String targetPath);
 
-  /// Snackbar shown when a file type cannot be opened in the editor.
+  /// Toast shown when a file type cannot be opened in the editor.
   ///
   /// In en, this message translates to:
   /// **'Cannot open this file type in editor'**
   String get cannotOpenFileTypeInEditor;
 
-  /// Snackbar shown when a link anchor is missing.
+  /// Toast shown when a link anchor is missing.
   ///
   /// In en, this message translates to:
   /// **'Anchor not found: {anchor}'**

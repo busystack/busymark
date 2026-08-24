@@ -1372,7 +1372,7 @@
   },
   "couldNotOpenTarget": "No se pudo abrir {target}",
   "@couldNotOpenTarget": {
-    "description": "Snackbar shown when a link target cannot be opened.",
+    "description": "Toast shown when a link target cannot be opened.",
     "placeholders": {
       "target": {
         "type": "String"
@@ -1381,7 +1381,7 @@
   },
   "linkTargetNotFound": "No se encontró el destino del enlace: {targetPath}",
   "@linkTargetNotFound": {
-    "description": "Snackbar shown when a link target path is missing.",
+    "description": "Toast shown when a link target path is missing.",
     "placeholders": {
       "targetPath": {
         "type": "String"
@@ -1390,11 +1390,11 @@
   },
   "cannotOpenFileTypeInEditor": "No se puede abrir este tipo de archivo en el editor",
   "@cannotOpenFileTypeInEditor": {
-    "description": "Snackbar shown when a file type cannot be opened in the editor."
+    "description": "Toast shown when a file type cannot be opened in the editor."
   },
   "anchorNotFound": "No se encontró el ancla: {anchor}",
   "@anchorNotFound": {
-    "description": "Snackbar shown when a link anchor is missing.",
+    "description": "Toast shown when a link anchor is missing.",
     "placeholders": {
       "anchor": {
         "type": "String"

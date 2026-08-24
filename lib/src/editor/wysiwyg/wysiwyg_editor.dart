@@ -19,6 +19,7 @@ import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/source_span.dart';
@@ -3593,9 +3594,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return true;
     } on AssetIngestionException catch (error) {
       if (reportInvalidImage && mounted) {
-        ScaffoldMessenger.of(
+        BusyMarkToastOverlay.show(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+          message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
       }
       return false;
     } on FileSystemException {
@@ -3622,9 +3625,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return true;
     } on AssetIngestionException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        BusyMarkToastOverlay.show(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+          message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
       }
       return false;
     }
@@ -3804,9 +3809,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     if (_documentController.markdown != originalSource) {
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+        message: context.l10n.aiStaleProposal,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final invocation = result.invocation;
@@ -3818,9 +3825,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         start < 0 ||
         end < start ||
         end > originalSource.length) {
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+        message: context.l10n.aiStaleProposal,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final candidate = originalSource.replaceRange(
