@@ -1443,6 +1443,18 @@ abstract class AppLocalizations {
   /// **'Window'**
   String get settingsWindowSectionTitle;
 
+  /// Settings switch title for reopening the previous workspace on a normal startup.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen previous workspace on startup'**
+  String get settingsReopenWorkspaceOnStartupTitle;
+
+  /// Settings switch description for reopening the previous workspace on a normal startup.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the workspace and tabs from the previous session when BusyMark starts.'**
+  String get settingsReopenWorkspaceOnStartupDescription;
+
   /// Settings switch title for close confirmation when documents have unsaved changes.
   ///
   /// In en, this message translates to:
@@ -4291,6 +4303,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Branch has diverged. Resolve merge or rebase outside this BusyMark version.'**
   String get gitErrorDiverged;
+
+  /// Git error shown when no commit author identity is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Git needs an author name and email address before it can commit.'**
+  String get gitErrorAuthorIdentity;
+
+  /// Title of the Git author identity recovery dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Git Author Identity'**
+  String get gitAuthorIdentityTitle;
+
+  /// Explanation in the Git author identity recovery dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the identity Git should record on commits. BusyMark will save it and retry this commit.'**
+  String get gitAuthorIdentityMessage;
+
+  /// Git commit author name field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get gitAuthorName;
+
+  /// Git commit author email field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get gitAuthorEmail;
+
+  /// Switch label for saving Git identity globally.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for all repositories'**
+  String get gitAuthorIdentityGlobal;
+
+  /// Description of global Git identity scope in the Snap.
+  ///
+  /// In en, this message translates to:
+  /// **'When installed as a Snap, this applies to repositories opened in BusyMark.'**
+  String get gitAuthorIdentityGlobalDescription;
+
+  /// Action that saves Git author identity and retries a commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and Commit'**
+  String get gitSaveIdentityAndCommit;
 
   /// Git error message.
   ///

@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Otwieraj poprzedni obszar roboczy przy uruchamianiu",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Otwórz obszar roboczy i karty z poprzedniej sesji podczas uruchamiania BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Potwierdzaj zamknięcie przy niezapisanych zmianach",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2263,6 +2267,14 @@
   "gitErrorMultipleRemotes": "Skonfigurowano wiele repozytoriów zdalnych. Wybierz gałąź upstream poza tą wersją BusyMark.",
   "gitErrorDirtyWorkspace": "Przed przełączeniem gałęzi zapisz lub odrzuć zmiany w edytorze BusyMark.",
   "gitErrorDiverged": "Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.",
+  "gitErrorAuthorIdentity": "Git wymaga nazwy autora i adresu e-mail przed utworzeniem commita.",
+  "gitAuthorIdentityTitle": "Tożsamość autora Git",
+  "gitAuthorIdentityMessage": "Wprowadź tożsamość, którą Git ma zapisywać w commitach. BusyMark ją zapisze i ponowi ten commit.",
+  "gitAuthorName": "Nazwa",
+  "gitAuthorEmail": "E-mail",
+  "gitAuthorIdentityGlobal": "Używaj we wszystkich repozytoriach",
+  "gitAuthorIdentityGlobalDescription": "W instalacji Snap dotyczy to repozytoriów otwieranych w BusyMark.",
+  "gitSaveIdentityAndCommit": "Zapisz i utwórz commit",
   "gitErrorAuthentication": "Uwierzytelnianie Git nie powiodło się.",
   "gitErrorNetwork": "Operacja sieciowa Git nie powiodła się.",
   "gitErrorConflict": "Git zgłosił nierozwiązane konflikty.",

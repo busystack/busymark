@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Reabrir o espaço de trabalho anterior ao iniciar",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Abra o espaço de trabalho e as abas da sessão anterior quando o BusyMark iniciar.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Confirmar antes de fechar com alterações não salvas",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Há vários remotos configurados. Escolha um upstream fora desta versão do BusyMark.",
   "gitErrorDirtyWorkspace": "Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.",
   "gitErrorDiverged": "A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.",
+  "gitErrorAuthorIdentity": "O Git precisa do nome e do e-mail do autor antes de criar um commit.",
+  "gitAuthorIdentityTitle": "Identidade do autor do Git",
+  "gitAuthorIdentityMessage": "Informe a identidade que o Git deve registrar nos commits. O BusyMark irá salvá-la e tentar este commit novamente.",
+  "gitAuthorName": "Nome",
+  "gitAuthorEmail": "E-mail",
+  "gitAuthorIdentityGlobal": "Usar em todos os repositórios",
+  "gitAuthorIdentityGlobalDescription": "Quando instalado como Snap, isto se aplica aos repositórios abertos no BusyMark.",
+  "gitSaveIdentityAndCommit": "Salvar e criar commit",
   "gitErrorAuthentication": "A autenticação do Git falhou.",
   "gitErrorNetwork": "A operação de rede do Git falhou.",
   "gitErrorConflict": "O Git relatou conflitos não resolvidos.",

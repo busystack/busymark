@@ -502,9 +502,20 @@ void main() {
     );
     expect(script, contains(r'stage_ldd_dependencies "$setsid_bin"'));
     expect(script, contains(r'test -x "$SNAP_ROOT/usr/bin/setsid"'));
-    expect(script, contains('squashfs-root/usr/bin/git'));
-    expect(script, contains('squashfs-root/usr/bin/setsid'));
+    expect(script, contains(r'unsquashfs -ll "$OUT" usr/bin/git'));
+    expect(script, contains(r'unsquashfs -ll "$OUT" usr/bin/setsid'));
     expect(script, contains('--skip-bundled-git'));
+    expect(script, contains('scaffold_has_bundled_git_tools'));
+    expect(
+      script,
+      contains(
+        'Retaining core24-compatible Git and OpenSSH tools from the snap scaffold',
+      ),
+    );
+    expect(script, contains('--no-install'));
+    expect(script, contains('item_indent = match.group(1)'));
+    expect(script, contains('f"{item_indent}- {item}\\n"'));
+    expect(script, contains('the currently installed snap was not changed'));
   });
 
   test('native headerbar uses the shared tooltip visuals', () {
@@ -1482,8 +1493,11 @@ void main() {
     expect(nativeMenu, contains('GTK_IS_MENU(session->menu)'));
     expect(nativeMenu, contains('gtk_menu_attach_to_widget('));
     expect(nativeMenu, contains('gtk_widget_translate_coordinates('));
+    expect(nativeMenu, contains('native_menu_capture_trigger_event'));
+    expect(nativeMenu, contains('gdk_event_copy(event)'));
     expect(nativeMenu, contains('gtk_menu_popup_at_rect('));
     expect(nativeMenu, contains('rect_window, &window_anchor'));
+    expect(nativeMenu, contains('data->trigger_event)'));
     expect(nativeMenu, contains('GDK_GRAVITY_SOUTH_WEST'));
     expect(nativeMenu, contains('GDK_GRAVITY_NORTH_WEST'));
     expect(nativeMenu, contains('GDK_ANCHOR_FLIP_Y'));

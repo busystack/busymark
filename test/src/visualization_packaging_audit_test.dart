@@ -19,12 +19,16 @@ void main() {
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^confinement: classic$', multiLine: true)),
+      contains(RegExp(r'^confinement: strict$', multiLine: true)),
     );
-    expect(snapcraft, isNot(contains('extensions: [gnome]')));
-    expect(snapcraft, isNot(contains('XDG_CONFIG_HOME:')));
-    expect(snapcraft, isNot(contains('XDG_CACHE_HOME:')));
-    expect(snapcraft, isNot(contains('XDG_DATA_HOME:')));
+    expect(snapcraft, contains('extensions: [gnome]'));
+    expect(snapcraft, contains('XDG_CONFIG_HOME:'));
+    expect(snapcraft, contains('XDG_CACHE_HOME:'));
+    expect(snapcraft, contains('XDG_DATA_HOME:'));
+    expect(snapcraft, contains('- home'));
+    expect(snapcraft, contains('- network'));
+    expect(snapcraft, contains('- removable-media'));
+    expect(snapcraft, contains('- ssh-keys'));
     expect(snapcraft, contains('- enable-patchelf'));
     expect(
       snapcraft,
@@ -148,7 +152,8 @@ void main() {
     expect(workflow, contains('tools/visualization_smoke.py'));
     expect(workflow, contains('GDK_BACKEND=wayland'));
     expect(workflow, contains('snapcore/action-build@v1'));
-    expect(workflow, contains('sudo snap install --dangerous --classic'));
+    expect(workflow, contains('sudo snap install --dangerous'));
+    expect(workflow, isNot(contains('--dangerous --classic')));
     expect(workflow, contains('snap run busymark'));
     expect(workflow, contains('--visualization-release-smoke='));
     expect(workflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
@@ -247,8 +252,8 @@ void main() {
       expect(scalar, contains('Network access is disabled'));
       expect(snapcraft, contains('libwebkit2gtk-4.1-dev'));
       expect(snapcraft, contains('libwebkit2gtk-4.1-0'));
-      expect(snapcraft, isNot(contains('interface: browser-support')));
-      expect(snapcraft, isNot(contains('allow-sandbox: false')));
+      expect(snapcraft, contains('interface: browser-support'));
+      expect(snapcraft, contains('allow-sandbox: false'));
       expect(snapcraft, contains('node/24/stable'));
     },
   );

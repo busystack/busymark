@@ -1070,6 +1070,21 @@ class GitController extends Notifier<GitState> {
     return completed;
   }
 
+  Future<bool> configureAuthorIdentity({
+    required String name,
+    required String email,
+    required bool globally,
+  }) {
+    return _runOperation(
+      (repository) => _gateway.configureAuthorIdentity(
+        repository,
+        name: name,
+        email: email,
+        globally: globally,
+      ),
+    );
+  }
+
   Future<GitStagedDiffSnapshot?> stagedDiffForAi() async {
     final operation = _captureRepositoryOperation();
     if (operation == null ||
@@ -2065,6 +2080,14 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String message,
   ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> configureAuthorIdentity(
+    GitRepositoryInfo repository, {
+    required String name,
+    required String email,
+    required bool globally,
+  }) => _unavailable();
 
   @override
   Future<GitOperationResult> fetch(GitRepositoryInfo repository) =>

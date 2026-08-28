@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "باز کردن دوبارهٔ فضای کاری قبلی هنگام راه‌اندازی",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "هنگام راه‌اندازی BusyMark، فضای کاری و زبانه‌های نشست قبلی باز شوند.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "تأیید پیش از بستن با تغییرات ذخیره‌نشده",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2266,6 +2270,14 @@
   "gitErrorMultipleRemotes": "چند مخزن راه دور پیکربندی شده است. یک بالادست را خارج از این نسخهٔ BusyMark انتخاب کنید.",
   "gitErrorDirtyWorkspace": "پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.",
   "gitErrorDiverged": "شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.",
+  "gitErrorAuthorIdentity": "Git پیش از ثبت تغییر به نام و نشانی ایمیل نویسنده نیاز دارد.",
+  "gitAuthorIdentityTitle": "هویت نویسندهٔ Git",
+  "gitAuthorIdentityMessage": "هویتی را وارد کنید که Git باید در ثبت‌ها ذخیره کند. BusyMark آن را ذخیره می‌کند و این ثبت را دوباره انجام می‌دهد.",
+  "gitAuthorName": "نام",
+  "gitAuthorEmail": "ایمیل",
+  "gitAuthorIdentityGlobal": "استفاده برای همهٔ مخزن‌ها",
+  "gitAuthorIdentityGlobalDescription": "در نصب Snap، این تنظیم برای مخزن‌های بازشده در BusyMark اعمال می‌شود.",
+  "gitSaveIdentityAndCommit": "ذخیره و ثبت تغییر",
   "gitErrorAuthentication": "احراز هویت Git ناموفق بود.",
   "gitErrorNetwork": "عملیات شبکهٔ Git ناموفق بود.",
   "gitErrorConflict": "Git تداخل‌های حل‌نشده گزارش کرد.",

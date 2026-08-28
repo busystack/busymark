@@ -576,6 +576,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
+      find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.settingsReopenWorkspaceOnStartupDescription),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(l10n.settingsReopenWorkspaceOnStartupTitle));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['reopenPreviousWorkspaceOnStartup'], isTrue);
+
+    expect(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
       findsOneWidget,
     );

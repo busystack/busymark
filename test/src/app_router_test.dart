@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
@@ -90,6 +91,9 @@ void main() {
         ProviderScope(
           overrides: [
             linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
             workspaceControllerProvider.overrideWith(
               () => _StaleWorkspaceController(),
             ),
@@ -132,6 +136,13 @@ void main() {
         overrides: [
           linuxHeaderBarServiceProvider.overrideWithValue(
             _FallbackHeaderBarService(),
+          ),
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore(
+              AppSettings.defaults()
+                  .copyWith(reopenPreviousWorkspaceOnStartup: true)
+                  .toJson(),
+            ),
           ),
           workspaceControllerProvider.overrideWith(
             _RestoringWorkspaceController.new,
@@ -196,11 +207,20 @@ class _StaleWorkspaceController extends WorkspaceController {
       ),
     );
   }
+
+  @override
+  Future<bool> restoreStartupSession({
+    required bool reopenCleanSession,
+  }) async => false;
 }
 
 class _RestoringWorkspaceController extends WorkspaceController {
   @override
   WorkspaceState build() => const WorkspaceState();
+
+  @override
+  Future<bool> restoreStartupSession({required bool reopenCleanSession}) =>
+      restorePreviousSession();
 
   @override
   Future<bool> restorePreviousSession() async {
@@ -224,5 +244,20 @@ class _RestoringWorkspaceController extends WorkspaceController {
       ),
     );
     return true;
+  }
+}
+
+class _MemorySettingsStore implements LocalSettingsStore {
+  _MemorySettingsStore([Map<String, Object?>? value])
+    : value = value ?? <String, Object?>{};
+
+  Map<String, Object?> value;
+
+  @override
+  Future<Map<String, Object?>> load() async => value;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    value = json;
   }
 }

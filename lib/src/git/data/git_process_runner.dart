@@ -69,11 +69,15 @@ class DartGitCommandRunner implements GitCommandRunner {
     }
     final stopwatch = Stopwatch()..start();
     final launch = processGroupLauncher.resolve(executable, arguments);
+    final snapGitEnvironment = gitEnvironmentForSnap(
+      processGroupLauncher.snapRootOverride,
+    );
     final process = await Process.start(
       launch.executable,
       launch.arguments,
       workingDirectory: workingDirectory,
       environment: {
+        ...snapGitEnvironment,
         ...environment,
         'GIT_TERMINAL_PROMPT': '0',
         'GIT_PAGER': 'cat',
@@ -193,6 +197,18 @@ class DartGitCommandRunner implements GitCommandRunner {
       commandName: commandName,
     );
   }
+}
+
+Map<String, String> gitEnvironmentForSnap([String? snapRootOverride]) {
+  final snapRoot = snapRootOverride ?? Platform.environment['SNAP'];
+  if (snapRoot == null || snapRoot.isEmpty) {
+    return const {};
+  }
+  return {
+    'GIT_EXEC_PATH': '$snapRoot/usr/lib/git-core',
+    'GIT_TEMPLATE_DIR': '$snapRoot/usr/share/git-core/templates',
+    'GIT_SSH': '$snapRoot/usr/bin/ssh',
+  };
 }
 
 class _BoundedOutputCapture {

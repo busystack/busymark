@@ -730,6 +730,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Janela';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Reabrir o espaço de trabalho anterior ao iniciar';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Abra o espaço de trabalho e as abas da sessão anterior quando o BusyMark iniciar.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Confirmar antes de fechar com alterações não salvas';
 
@@ -2571,6 +2579,33 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'O Git precisa do nome e do e-mail do autor antes de criar um commit.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Identidade do autor do Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Informe a identidade que o Git deve registrar nos commits. O BusyMark irá salvá-la e tentar este commit novamente.';
+
+  @override
+  String get gitAuthorName => 'Nome';
+
+  @override
+  String get gitAuthorEmail => 'E-mail';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Usar em todos os repositórios';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Quando instalado como Snap, isto se aplica aos repositórios abertos no BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Salvar e criar commit';
 
   @override
   String get gitErrorAuthentication => 'A autenticação do Git falhou.';

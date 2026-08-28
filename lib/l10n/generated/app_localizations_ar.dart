@@ -710,6 +710,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsWindowSectionTitle => 'النافذة';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'إعادة فتح مساحة العمل السابقة عند بدء التشغيل';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'افتح مساحة العمل وعلامات التبويب من الجلسة السابقة عند بدء BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'التأكيد قبل الإغلاق عند وجود تغييرات غير محفوظة';
 
@@ -2575,6 +2583,33 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'يحتاج Git إلى اسم المؤلف وعنوان بريده الإلكتروني قبل إنشاء الالتزام.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'هوية مؤلف Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'أدخل الهوية التي يجب أن يسجلها Git في الالتزامات. سيحفظها BusyMark ويعيد محاولة هذا الالتزام.';
+
+  @override
+  String get gitAuthorName => 'الاسم';
+
+  @override
+  String get gitAuthorEmail => 'البريد الإلكتروني';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'استخدامها لجميع المستودعات';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'عند التثبيت كحزمة Snap، ينطبق هذا على المستودعات المفتوحة في BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'حفظ وإنشاء الالتزام';
 
   @override
   String get gitErrorAuthentication => 'فشلت مصادقة Git.';

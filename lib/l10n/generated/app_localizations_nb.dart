@@ -722,6 +722,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Vindu';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Åpne forrige arbeidsområde ved oppstart';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Bekreft lukking ved ulagrede endringer';
 
@@ -2555,6 +2563,33 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git trenger forfatternavn og e-postadresse før endringer kan lagres.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Git-forfatteridentitet';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Skriv inn identiteten Git skal registrere på endringer. BusyMark lagrer den og prøver denne endringen på nytt.';
+
+  @override
+  String get gitAuthorName => 'Navn';
+
+  @override
+  String get gitAuthorEmail => 'E-post';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Bruk for alle kodelagre';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Når appen er installert som en Snap, gjelder dette kodelagre som åpnes i BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Lagre og utfør commit';
 
   @override
   String get gitErrorAuthentication => 'Git-autentisering mislyktes.';

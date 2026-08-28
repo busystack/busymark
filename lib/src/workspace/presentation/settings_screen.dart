@@ -127,6 +127,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         filled: true,
         children: [
           BusyMarkSwitchRow(
+            title: l10n.settingsReopenWorkspaceOnStartupTitle,
+            subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
+            value: settings.reopenPreviousWorkspaceOnStartup,
+            onChanged: controller.setReopenPreviousWorkspaceOnStartup,
+            leading: const Icon(BusyMarkGlyphs.history),
+          ),
+          BusyMarkSwitchRow(
             title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
             subtitle: l10n.settingsConfirmCloseWithUnsavedChangesDescription,
             value: settings.confirmCloseWithUnsavedChanges,

@@ -12,7 +12,7 @@ description: |
 license: Apache-2.0
 base: core24
 grade: stable
-confinement: classic
+confinement: strict
 icon: assets/branding/busymark_logo.svg
 website: https://github.com/busystack/busymark
 issues: https://github.com/busystack/busymark/issues
@@ -24,14 +24,36 @@ platforms:
     build-on: [amd64]
     build-for: [amd64]
 
+plugs:
+  browser-support:
+    interface: browser-support
+    allow-sandbox: false
+
 apps:
   busymark:
     command: busymark
     desktop: share/applications/io.busystack.busymark.desktop
     common-id: io.busystack.busymark
+    extensions: [gnome]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - browser-support
+      - audio-playback
+      - gsettings
+      - opengl
+      - wayland
+      - x11
+      - home
+      - network
+      - removable-media
+      - ssh-keys
     environment:
       GDK_BACKEND: wayland,x11
       TYPST_FONT_PATHS: $SNAP/usr/share/fonts
+      XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
+      XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
+      XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
 
 parts:
   busymark:
@@ -98,8 +120,7 @@ parts:
       craftctl default
       # Drop a stale plugin that is not part of BusyMark's dependency graph.
       rm -f "$CRAFT_PRIME/lib/libflutter_secure_storage_linux_plugin.so"
-      # Snapcraft finds the two sibling BLAS directories automatically, but the
-      # classic linter also requires the library's own directory in this path.
+      # Keep the library's own directory alongside its two BLAS siblings.
       patchelf --set-rpath \
         '$ORIGIN/lapack:$ORIGIN/blas:$ORIGIN:/snap/core24/current/lib/x86_64-linux-gnu' \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"

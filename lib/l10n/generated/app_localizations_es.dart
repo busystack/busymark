@@ -734,6 +734,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Ventana';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Volver a abrir el espacio de trabajo anterior al iniciar';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Abre el espacio de trabajo y las pestañas de la sesión anterior cuando se inicia BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Confirmar antes de cerrar con cambios sin guardar';
 
@@ -2583,6 +2591,33 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'La rama ha divergido. Resuelva el merge o el rebase fuera de esta versión de BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git necesita un nombre y un correo electrónico de autor antes de confirmar cambios.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Identidad del autor de Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Introduce la identidad que Git debe registrar en las confirmaciones. BusyMark la guardará y volverá a intentar esta confirmación.';
+
+  @override
+  String get gitAuthorName => 'Nombre';
+
+  @override
+  String get gitAuthorEmail => 'Correo electrónico';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Usar en todos los repositorios';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Cuando se instala como Snap, se aplica a los repositorios abiertos en BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Guardar y confirmar';
 
   @override
   String get gitErrorAuthentication => 'La autenticación de Git ha fallado.';

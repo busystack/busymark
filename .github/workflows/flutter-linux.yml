@@ -156,7 +156,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Build classic Snap from a clean core24 environment
+      - name: Build strict Snap from a clean core24 environment
         id: snapcraft
         uses: snapcore/action-build@v1
 
@@ -171,12 +171,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y weston xvfb
 
-      - name: Install classic Snap
+      - name: Install strict Snap
         run: >-
-          sudo snap install --dangerous --classic
+          sudo snap install --dangerous
           "${{ steps.snapcraft.outputs.snap }}"
 
-      - name: Exercise classic Snap visualization and PDF paths under X11
+      - name: Exercise strict Snap visualization and PDF paths under X11
         run: |
           report="$HOME/snap/busymark/common/visualization-release-x11.json"
           mkdir -p "$(dirname "$report")"
@@ -188,7 +188,7 @@ jobs:
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
 
-      - name: Exercise classic Snap visualization and PDF paths under Wayland
+      - name: Exercise strict Snap visualization and PDF paths under Wayland
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"

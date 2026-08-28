@@ -22,7 +22,7 @@ void main() {
     expect(workflow, contains('libsecret-1-dev'));
     expect(snapcraft, contains('- libsecret-1-dev'));
     expect(snapcraft, contains('- libsecret-1-0'));
-    expect(snapcraft, contains('confinement: classic'));
+    expect(snapcraft, contains('confinement: strict'));
   });
 
   test('real local AI qualification covers every shipped action', () {

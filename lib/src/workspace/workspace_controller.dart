@@ -388,6 +388,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Restores startup state when the previous run needs recovery, or when the
+  /// user has explicitly enabled clean-session reopening.
+  Future<bool> restoreStartupSession({required bool reopenCleanSession}) async {
+    final recovery = await _recoveryStart;
+    final needsRecovery =
+        !recovery.cleanShutdown || recovery.entries.isNotEmpty;
+    if (!reopenCleanSession && !needsRecovery) {
+      return false;
+    }
+    return restorePreviousSession();
+  }
+
   Future<DocumentBuffer?> _restoreSessionBuffer(
     DocumentSessionEntry session,
     DocumentRecoveryEntry? recovery,

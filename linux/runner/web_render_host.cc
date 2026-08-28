@@ -967,8 +967,8 @@ BusyMarkWebRenderHost* busymark_web_render_host_new(
   webkit_web_context_set_cache_model(self->context,
                                      WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
   webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
-  // BusyMark's classic Snap has no outer AppArmor/seccomp sandbox, so retain
-  // WebKit's subprocess sandbox just as conventional Linux packages do.
+  // Retain WebKit's subprocess sandbox as an independent defense-in-depth
+  // boundary inside both strict Snap and conventional Linux packages.
   webkit_web_context_set_sandbox_enabled(self->context, TRUE);
   webkit_web_context_register_uri_scheme(self->context, kScheme,
                                          uri_scheme_request_cb, self,

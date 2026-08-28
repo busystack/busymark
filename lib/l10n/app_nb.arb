@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Åpne forrige arbeidsområde ved oppstart",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Bekreft lukking ved ulagrede endringer",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.",
   "gitErrorDirtyWorkspace": "Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.",
   "gitErrorDiverged": "Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.",
+  "gitErrorAuthorIdentity": "Git trenger forfatternavn og e-postadresse før endringer kan lagres.",
+  "gitAuthorIdentityTitle": "Git-forfatteridentitet",
+  "gitAuthorIdentityMessage": "Skriv inn identiteten Git skal registrere på endringer. BusyMark lagrer den og prøver denne endringen på nytt.",
+  "gitAuthorName": "Navn",
+  "gitAuthorEmail": "E-post",
+  "gitAuthorIdentityGlobal": "Bruk for alle kodelagre",
+  "gitAuthorIdentityGlobalDescription": "Når appen er installert som en Snap, gjelder dette kodelagre som åpnes i BusyMark.",
+  "gitSaveIdentityAndCommit": "Lagre og utfør commit",
   "gitErrorAuthentication": "Git-autentisering mislyktes.",
   "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
   "gitErrorConflict": "Git rapporterte uløste konflikter.",

@@ -9,6 +9,7 @@ Build the Flutter Linux release, replace the payload in an installed snap
 scaffold, pack it, install it locally, and optionally run it.
 
 Options:
+  --no-install         Pack and verify the snap without replacing the installed snap.
   --no-run             Install the snap but do not run it.
   --skip-tests         Skip flutter analyze/test.
   --output FILE        Write the packed snap to FILE.
@@ -25,7 +26,8 @@ Options:
 
 Environment overrides are also supported:
   VERSION, OUT, SNAP_ROOT, SNAP_SCAFFOLD, SNAP_NAME, BINARY_NAME, APP_ID,
-  RUN_AFTER_INSTALL=0, SKIP_TESTS=1, BUNDLE_GIT=0, DART_DEFINE_FROM_FILE
+  INSTALL_AFTER_BUILD=0, RUN_AFTER_INSTALL=0, SKIP_TESTS=1, BUNDLE_GIT=0,
+  DART_DEFINE_FROM_FILE
 EOF
 }
 
@@ -147,11 +149,19 @@ stage_bundled_git_tools() {
     fail "failed to stage $SNAP_ROOT/usr/bin/setsid"
 }
 
+scaffold_has_bundled_git_tools() {
+  local tool
+  for tool in git setsid ssh scp sftp ssh-keyscan; do
+    [[ -x "$SNAP_ROOT/usr/bin/$tool" ]] || return 1
+  done
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 VERSION_ARG=""
+INSTALL_AFTER_BUILD="${INSTALL_AFTER_BUILD:-1}"
 RUN_AFTER_INSTALL="${RUN_AFTER_INSTALL:-1}"
 SKIP_TESTS="${SKIP_TESTS:-0}"
 BUNDLE_GIT="${BUNDLE_GIT:-1}"
@@ -164,6 +174,10 @@ fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --no-install)
+      INSTALL_AFTER_BUILD=0
+      RUN_AFTER_INSTALL=0
+      ;;
     --no-run)
       RUN_AFTER_INSTALL=0
       ;;
@@ -330,7 +344,12 @@ if [[ -f "$METAINFO_SOURCE" ]]; then
 fi
 
 if [[ "$BUNDLE_GIT" == "1" ]]; then
-  stage_bundled_git_tools
+  if scaffold_has_bundled_git_tools; then
+    echo "== Stage bundled Git tools =="
+    echo "Retaining core24-compatible Git and OpenSSH tools from the snap scaffold"
+  else
+    stage_bundled_git_tools
+  fi
 else
   echo "== Stage bundled Git tools =="
   echo "Skipping bundled Git tools because BUNDLE_GIT=0"
@@ -491,17 +510,19 @@ def ensure_app_list_items(target: str, app: str, key: str, items: list[str]) -> 
 
     key_end = app_end
     existing: set[str] = set()
+    item_indent = "      "
     for i in range(key_start + 1, app_end):
         if re.match(r"^    [A-Za-z0-9_-][^:]*:", lines[i]):
             key_end = i
             break
-        match = re.match(r"^\s*-\s+(.+?)\s*$", lines[i])
+        match = re.match(r"^(\s*)-\s+(.+?)\s*$", lines[i])
         if match:
-            existing.add(match.group(1))
+            item_indent = match.group(1)
+            existing.add(match.group(2))
 
     missing = [item for item in items if item not in existing]
     if missing:
-        lines[key_end:key_end] = [f"      - {item}\n" for item in missing]
+        lines[key_end:key_end] = [f"{item_indent}- {item}\n" for item in missing]
     return "".join(lines)
 
 
@@ -548,7 +569,7 @@ snap pack "$SNAP_ROOT" --filename="$OUT"
 
 echo "== Verify packed snap =="
 unsquashfs -cat "$OUT" meta/snap.yaml | grep '^version:'
-unsquashfs -ll "$OUT" | grep -F "$BINARY_NAME"
+unsquashfs -ll "$OUT" "$BINARY_NAME"
 PACKED_DESKTOP_MANIFEST="$(
   unsquashfs -ll "$OUT" |
     sed -nE 's#^.*squashfs-root/meta/gui/([^/]+\.desktop)$#\1#p' |
@@ -557,8 +578,8 @@ PACKED_DESKTOP_MANIFEST="$(
 [[ "$PACKED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]] ||
   fail "expected exactly one packed launcher: ${SNAP_NAME}.desktop"
 if [[ "$BUNDLE_GIT" == "1" ]]; then
-  unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/git"
-  unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/setsid"
+  unsquashfs -ll "$OUT" usr/bin/git
+  unsquashfs -ll "$OUT" usr/bin/setsid
 fi
 if [[ -d "$BUNDLE_DIR/lib" ]]; then
   while IFS= read -r plugin; do
@@ -569,18 +590,22 @@ fi
 ! unsquashfs -cat "$OUT" meta/snap.yaml | grep -q '^icon:'
 ! unsquashfs -cat "$OUT" meta/snap.yaml | grep -q '^[[:space:]]*desktop:'
 
-echo "== Install snap =="
-sudo snap remove --purge "$SNAP_NAME" 2>/dev/null || true
-sudo snap install --dangerous "./$OUT"
-
-echo "== Verify installed snap =="
-snap connections "$SNAP_NAME" || true
-snap info "$SNAP_NAME" | sed -n '/installed:/p;/tracking:/p'
-
 echo "Built snap: $OUT"
-if [[ "$RUN_AFTER_INSTALL" == "1" ]]; then
-  echo "== Running ${SNAP_NAME} =="
-  snap run "$SNAP_NAME"
+if [[ "$INSTALL_AFTER_BUILD" == "1" ]]; then
+  echo "== Install snap =="
+  sudo snap remove --purge "$SNAP_NAME" 2>/dev/null || true
+  sudo snap install --dangerous "./$OUT"
+
+  echo "== Verify installed snap =="
+  snap connections "$SNAP_NAME" || true
+  snap info "$SNAP_NAME" | sed -n '/installed:/p;/tracking:/p'
+
+  if [[ "$RUN_AFTER_INSTALL" == "1" ]]; then
+    echo "== Running ${SNAP_NAME} =="
+    snap run "$SNAP_NAME"
+  else
+    echo "Run skipped. Start it with: snap run $SNAP_NAME"
+  fi
 else
-  echo "Run skipped. Start it with: snap run $SNAP_NAME"
+  echo "Install skipped; the currently installed snap was not changed."
 fi

@@ -13,6 +13,23 @@ void main() {
     final settings = AppSettings.defaults();
 
     expect(settings.confirmCloseWithUnsavedChanges, isTrue);
+    expect(settings.reopenPreviousWorkspaceOnStartup, isFalse);
+    expect(settings.toJson()['reopenPreviousWorkspaceOnStartup'], isFalse);
+  });
+
+  test('reopen workspace setting is migration-safe', () {
+    expect(
+      AppSettings.fromJson(
+        const <String, Object?>{},
+      ).reopenPreviousWorkspaceOnStartup,
+      isFalse,
+    );
+    expect(
+      AppSettings.fromJson(const <String, Object?>{
+        'reopenPreviousWorkspaceOnStartup': true,
+      }).reopenPreviousWorkspaceOnStartup,
+      isTrue,
+    );
   });
 
   test('document view mode defaults to editor', () {
@@ -295,13 +312,21 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     await controller.setConfirmCloseWithUnsavedChanges(false);
+    await controller.setReopenPreviousWorkspaceOnStartup(true);
 
     expect(store.value['confirmCloseWithUnsavedChanges'], isFalse);
+    expect(store.value['reopenPreviousWorkspaceOnStartup'], isTrue);
     expect(
       container
           .read(appSettingsControllerProvider)
           .confirmCloseWithUnsavedChanges,
       isFalse,
+    );
+    expect(
+      container
+          .read(appSettingsControllerProvider)
+          .reopenPreviousWorkspaceOnStartup,
+      isTrue,
     );
   });
 

@@ -1593,6 +1593,80 @@ void main() {
     },
   );
 
+  test(
+    'startup leaves a clean session closed unless reopening is enabled',
+    () async {
+      final missingPath = p.join(
+        Directory.systemTemp.path,
+        'busymark-clean-startup-session-missing.md',
+      );
+      final sessionStore = MemoryDocumentSessionStore()
+        ..value = WorkspaceSessionSnapshot(
+          workspacePath: missingPath,
+          activeBufferId: 'clean-session',
+          tabs: [
+            DocumentSessionEntry(
+              id: 'clean-session',
+              filePath: missingPath,
+              untitledName: null,
+              editorState: const DocumentEditorState(),
+            ),
+          ],
+        );
+      final harness = await _createControllerHarness(
+        sessionStore: sessionStore,
+      );
+
+      expect(
+        await harness.controller.restoreStartupSession(
+          reopenCleanSession: false,
+        ),
+        isFalse,
+      );
+      expect(harness.controller.state.workspace, isNull);
+
+      expect(
+        await harness.controller.restoreStartupSession(
+          reopenCleanSession: true,
+        ),
+        isTrue,
+      );
+      expect(harness.controller.state.activeBuffer?.filePath, missingPath);
+    },
+  );
+
+  test('startup restores an interrupted session without an opt-in', () async {
+    final missingPath = p.join(
+      Directory.systemTemp.path,
+      'busymark-interrupted-startup-session-missing.md',
+    );
+    final sessionStore = MemoryDocumentSessionStore()
+      ..value = WorkspaceSessionSnapshot(
+        workspacePath: missingPath,
+        activeBufferId: 'interrupted-session',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'interrupted-session',
+            filePath: missingPath,
+            untitledName: null,
+            editorState: const DocumentEditorState(),
+          ),
+        ],
+      );
+    final recoveryStore = MemoryDocumentRecoveryStore()
+      ..value = const RecoverySnapshot(cleanShutdown: false, entries: []);
+    final harness = await _createControllerHarness(
+      sessionStore: sessionStore,
+      recoveryStore: recoveryStore,
+    );
+
+    expect(
+      await harness.controller.restoreStartupSession(reopenCleanSession: false),
+      isTrue,
+    );
+    expect(harness.controller.state.activeBuffer?.filePath, missingPath);
+  });
+
   test('restored sessions retain tabs whose files are missing', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-missing-session-file-',
@@ -1721,7 +1795,10 @@ void main() {
       recoveryStore: recoveryStore,
     );
 
-    expect(await harness.controller.restorePreviousSession(), isTrue);
+    expect(
+      await harness.controller.restoreStartupSession(reopenCleanSession: false),
+      isTrue,
+    );
     expect(harness.controller.state.activeBuffer?.recovered, isTrue);
     expect(
       harness.controller.state.message?.code,
@@ -1985,6 +2062,9 @@ class _WorkspaceControllerDriver {
   Future<void> validateActive() => _notifier.validateActive();
 
   Future<bool> restorePreviousSession() => _notifier.restorePreviousSession();
+
+  Future<bool> restoreStartupSession({required bool reopenCleanSession}) =>
+      _notifier.restoreStartupSession(reopenCleanSession: reopenCleanSession);
 
   Future<void> markCleanShutdown() => _notifier.markCleanShutdown();
 

@@ -272,16 +272,17 @@ flutter test
 Linux `.desktop` and AppStream metadata are localized in the repository. Snap
 Store listing translations are managed outside `snap/snapcraft.yaml`.
 
-The Snap uses classic confinement so integrated Git can honor the user's
-standard configuration, SSH/GPG agents, credential helpers, hooks, and custom
-tooling. Install it with:
+The Snap uses strict confinement and bundles Git and OpenSSH. If Git cannot
+find an author identity while committing, BusyMark opens a native form, saves
+the chosen repository or BusyMark-wide identity, and retries the commit. Install
+it with:
 
 ```bash
-sudo snap install busymark --classic
+sudo snap install busymark
 ```
 
-The [classic-confinement rationale](docs/snap-classic-confinement.md) documents
-the scope and the text to use for Snap Store review.
+The [Snap confinement notes](docs/snap-confinement.md) document supported
+interfaces and the limits of host Git integration.
 
 ## Build Linux Locally
 

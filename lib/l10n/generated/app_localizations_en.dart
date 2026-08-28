@@ -719,6 +719,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Window';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Reopen previous workspace on startup';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Open the workspace and tabs from the previous session when BusyMark starts.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Confirm before closing with unsaved changes';
 
@@ -2575,6 +2583,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git needs an author name and email address before it can commit.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Git Author Identity';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Enter the identity Git should record on commits. BusyMark will save it and retry this commit.';
+
+  @override
+  String get gitAuthorName => 'Name';
+
+  @override
+  String get gitAuthorEmail => 'Email';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Use for all repositories';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'When installed as a Snap, this applies to repositories opened in BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Save and Commit';
 
   @override
   String get gitErrorAuthentication => 'Git authentication failed.';

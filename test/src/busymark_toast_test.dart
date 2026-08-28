@@ -5,6 +5,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('toast works when hosted above the Navigator', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: busyMarkDefaultAccentColor,
+        ),
+        builder: (context, child) => BusyMarkToastOverlay(child: child!),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => BusyMarkToastOverlay.show(
+                  context,
+                  message: 'Commit succeeded',
+                  duration: Duration.zero,
+                ),
+                child: const Text('Commit'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Commit'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Commit succeeded'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('toast appears at the bottom center and dismisses itself', (
     tester,
   ) async {

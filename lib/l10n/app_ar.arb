@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "إعادة فتح مساحة العمل السابقة عند بدء التشغيل",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "افتح مساحة العمل وعلامات التبويب من الجلسة السابقة عند بدء BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "التأكيد قبل الإغلاق عند وجود تغييرات غير محفوظة",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2247,6 +2251,14 @@
   "gitErrorMultipleRemotes": "تم إعداد عدة مستودعات بعيدة. اختر فرع منبع خارج هذا الإصدار من BusyMark.",
   "gitErrorDirtyWorkspace": "احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.",
   "gitErrorDiverged": "تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.",
+  "gitErrorAuthorIdentity": "يحتاج Git إلى اسم المؤلف وعنوان بريده الإلكتروني قبل إنشاء الالتزام.",
+  "gitAuthorIdentityTitle": "هوية مؤلف Git",
+  "gitAuthorIdentityMessage": "أدخل الهوية التي يجب أن يسجلها Git في الالتزامات. سيحفظها BusyMark ويعيد محاولة هذا الالتزام.",
+  "gitAuthorName": "الاسم",
+  "gitAuthorEmail": "البريد الإلكتروني",
+  "gitAuthorIdentityGlobal": "استخدامها لجميع المستودعات",
+  "gitAuthorIdentityGlobalDescription": "عند التثبيت كحزمة Snap، ينطبق هذا على المستودعات المفتوحة في BusyMark.",
+  "gitSaveIdentityAndCommit": "حفظ وإنشاء الالتزام",
   "gitErrorAuthentication": "فشلت مصادقة Git.",
   "gitErrorNetwork": "فشلت عملية Git عبر الشبكة.",
   "gitErrorConflict": "أبلغ Git عن تعارضات لم تُحل.",

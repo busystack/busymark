@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Riapri l’area di lavoro precedente all’avvio",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Apri l’area di lavoro e le schede della sessione precedente all’avvio di BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Conferma prima di chiudere con modifiche non salvate",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Sono configurati più repository remoti. Scegli un upstream al di fuori di questa versione di BusyMark.",
   "gitErrorDirtyWorkspace": "Salva o scarta le modifiche dell’editor di BusyMark prima di cambiare ramo.",
   "gitErrorDiverged": "Il ramo è divergente. Risolvi il merge o il rebase al di fuori di questa versione di BusyMark.",
+  "gitErrorAuthorIdentity": "Git richiede il nome e l’indirizzo e-mail dell’autore prima di eseguire il commit.",
+  "gitAuthorIdentityTitle": "Identità autore Git",
+  "gitAuthorIdentityMessage": "Inserisci l’identità che Git deve registrare nei commit. BusyMark la salverà e riproverà questo commit.",
+  "gitAuthorName": "Nome",
+  "gitAuthorEmail": "E-mail",
+  "gitAuthorIdentityGlobal": "Usa per tutti i repository",
+  "gitAuthorIdentityGlobalDescription": "Con l’installazione Snap, si applica ai repository aperti in BusyMark.",
+  "gitSaveIdentityAndCommit": "Salva ed esegui commit",
   "gitErrorAuthentication": "Autenticazione Git non riuscita.",
   "gitErrorNetwork": "Operazione di rete Git non riuscita.",
   "gitErrorConflict": "Git ha segnalato conflitti non risolti.",

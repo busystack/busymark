@@ -2236,7 +2236,23 @@ struct NativeMenuSession {
 struct NativeMenuHandlerData {
   GtkWidget* view;
   NativeMenuSession* active;
+  GdkEvent* trigger_event;
+  gulong event_signal_id;
 };
+
+static gboolean native_menu_capture_trigger_event(GtkWidget*,
+                                                  GdkEvent* event,
+                                                  gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  if (event == nullptr ||
+      (event->type != GDK_BUTTON_PRESS && event->type != GDK_KEY_PRESS &&
+       event->type != GDK_TOUCH_BEGIN)) {
+    return GDK_EVENT_PROPAGATE;
+  }
+  g_clear_pointer(&data->trigger_event, gdk_event_free);
+  data->trigger_event = gdk_event_copy(event);
+  return GDK_EVENT_PROPAGATE;
+}
 
 static void native_menu_session_respond(NativeMenuSession* session,
                                         gint selected_index) {
@@ -2737,7 +2753,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
   gtk_menu_popup_at_rect(
       GTK_MENU(session->menu), rect_window, &window_anchor,
       open_above ? GDK_GRAVITY_NORTH_WEST : GDK_GRAVITY_SOUTH_WEST,
-      open_above ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_NORTH_WEST, nullptr);
+      open_above ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_NORTH_WEST,
+      data->trigger_event);
   if (focus_first) {
     gtk_menu_shell_select_first(GTK_MENU_SHELL(session->menu), TRUE);
   } else {
@@ -2751,10 +2768,14 @@ static void native_menu_handler_data_free(gpointer user_data) {
     native_menu_session_dispose(data->active);
   }
   if (data->view != nullptr) {
+    if (data->event_signal_id != 0) {
+      g_signal_handler_disconnect(data->view, data->event_signal_id);
+    }
     g_object_remove_weak_pointer(
         G_OBJECT(data->view),
         reinterpret_cast<gpointer*>(&data->view));
   }
+  g_clear_pointer(&data->trigger_event, gdk_event_free);
   g_free(data);
 }
 
@@ -2789,6 +2810,9 @@ static void register_native_menu_channel(MyApplication* self, FlView* view) {
   data->view = GTK_WIDGET(view);
   g_object_add_weak_pointer(G_OBJECT(data->view),
                             reinterpret_cast<gpointer*>(&data->view));
+  data->event_signal_id =
+      g_signal_connect(data->view, "event",
+                       G_CALLBACK(native_menu_capture_trigger_event), data);
   fl_method_channel_set_method_call_handler(
       self->native_menu_channel, native_menu_method_call_cb, data,
       native_menu_handler_data_free);

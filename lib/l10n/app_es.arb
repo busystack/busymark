@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Volver a abrir el espacio de trabajo anterior al iniciar",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Abre el espacio de trabajo y las pestañas de la sesión anterior cuando se inicia BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Confirmar antes de cerrar con cambios sin guardar",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Hay varios remotos configurados. Elija un upstream fuera de esta versión de BusyMark.",
   "gitErrorDirtyWorkspace": "Guarde o descarte los cambios del editor de BusyMark antes de cambiar de rama.",
   "gitErrorDiverged": "La rama ha divergido. Resuelva el merge o el rebase fuera de esta versión de BusyMark.",
+  "gitErrorAuthorIdentity": "Git necesita un nombre y un correo electrónico de autor antes de confirmar cambios.",
+  "gitAuthorIdentityTitle": "Identidad del autor de Git",
+  "gitAuthorIdentityMessage": "Introduce la identidad que Git debe registrar en las confirmaciones. BusyMark la guardará y volverá a intentar esta confirmación.",
+  "gitAuthorName": "Nombre",
+  "gitAuthorEmail": "Correo electrónico",
+  "gitAuthorIdentityGlobal": "Usar en todos los repositorios",
+  "gitAuthorIdentityGlobalDescription": "Cuando se instala como Snap, se aplica a los repositorios abiertos en BusyMark.",
+  "gitSaveIdentityAndCommit": "Guardar y confirmar",
   "gitErrorAuthentication": "La autenticación de Git ha fallado.",
   "gitErrorNetwork": "La operación de red de Git ha fallado.",
   "gitErrorConflict": "Git ha informado de conflictos sin resolver.",

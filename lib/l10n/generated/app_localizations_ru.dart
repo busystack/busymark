@@ -725,6 +725,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Окно';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Открывать предыдущее рабочее пространство при запуске';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Открывать рабочее пространство и вкладки предыдущего сеанса при запуске BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Подтверждать закрытие при несохранённых изменениях';
 
@@ -2586,6 +2594,33 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'Ветка разошлась с upstream-веткой. Выполните слияние или rebase вне этой версии BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Перед созданием коммита Git требуется имя и адрес электронной почты автора.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Данные автора Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Введите данные, которые Git должен записывать в коммитах. BusyMark сохранит их и повторит этот коммит.';
+
+  @override
+  String get gitAuthorName => 'Имя';
+
+  @override
+  String get gitAuthorEmail => 'Электронная почта';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Использовать для всех репозиториев';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'При установке через Snap это относится к репозиториям, открытым в BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Сохранить и создать коммит';
 
   @override
   String get gitErrorAuthentication => 'Не удалось пройти аутентификацию Git.';

@@ -723,6 +723,14 @@ class AppLocalizationsEt extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Aken';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Eelmise tööruumi taasavamine käivitamisel';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Ava BusyMarki käivitamisel eelmise seansi tööruum ja vahekaardid.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Küsi salvestamata muudatuste korral enne sulgemist kinnitust';
 
@@ -2552,6 +2560,33 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git vajab enne sissekande loomist autori nime ja e-posti aadressi.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Giti autori identiteet';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Sisesta identiteet, mille Git peaks sissekannetele lisama. BusyMark salvestab selle ja proovib sissekannet uuesti.';
+
+  @override
+  String get gitAuthorName => 'Nimi';
+
+  @override
+  String get gitAuthorEmail => 'E-post';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Kasuta kõigis hoidlates';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Snapi paigalduses kehtib see BusyMarkis avatud hoidlatele.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Salvesta ja loo sissekanne';
 
   @override
   String get gitErrorAuthentication => 'Giti autentimine nurjus.';

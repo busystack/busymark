@@ -797,6 +797,47 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
+  Future<GitOperationResult> configureAuthorIdentity(
+    GitRepositoryInfo repository, {
+    required String name,
+    required String email,
+    required bool globally,
+  }) async {
+    final normalizedName = name.trim();
+    final normalizedEmail = email.trim();
+    if (normalizedName.isEmpty ||
+        normalizedEmail.isEmpty ||
+        normalizedName.contains(RegExp(r'[\r\n]')) ||
+        normalizedEmail.contains(RegExp(r'[\r\n]'))) {
+      throw const GitFailure(
+        code: GitFailureCode.authorIdentity,
+        userMessageKey: 'gitErrorAuthorIdentity',
+        rawMessage: 'Enter a valid Git author name and email address.',
+        commandName: 'config',
+      );
+    }
+    final scope = globally ? '--global' : '--local';
+    await _operation(repository, [
+      'config',
+      scope,
+      'user.name',
+      normalizedName,
+    ], 'config');
+    await _operation(repository, [
+      'config',
+      scope,
+      'user.email',
+      normalizedEmail,
+    ], 'config');
+    return const GitOperationResult(
+      success: true,
+      message: '',
+      stdout: '',
+      stderr: '',
+    );
+  }
+
+  @override
   Future<GitOperationResult> restoreFileFromCommit(
     GitRepositoryInfo repository,
     String hash, {
@@ -1350,6 +1391,11 @@ class GitCliGateway implements GitRepositoryGateway {
     if (lower.contains('not a git repository')) {
       code = GitFailureCode.notRepository;
       key = 'gitErrorNotRepository';
+    } else if (lower.contains('author identity unknown') ||
+        lower.contains('please tell me who you are') ||
+        lower.contains('unable to auto-detect email address')) {
+      code = GitFailureCode.authorIdentity;
+      key = 'gitErrorAuthorIdentity';
     } else if (lower.contains('could not read from remote repository') ||
         lower.contains('permission denied') ||
         lower.contains('authentication failed') ||

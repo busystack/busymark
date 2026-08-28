@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Rouvrir l’espace de travail précédent au démarrage",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Ouvrir l’espace de travail et les onglets de la session précédente au démarrage de BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Confirmer avant de fermer avec des modifications non enregistrées",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Plusieurs dépôts distants sont configurés. Choisissez une branche en amont en dehors de cette version de BusyMark.",
   "gitErrorDirtyWorkspace": "Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de changer de branche.",
   "gitErrorDiverged": "La branche a divergé. Résolvez la fusion ou le rebasage en dehors de cette version de BusyMark.",
+  "gitErrorAuthorIdentity": "Git a besoin d’un nom et d’une adresse e-mail d’auteur avant de pouvoir valider.",
+  "gitAuthorIdentityTitle": "Identité de l’auteur Git",
+  "gitAuthorIdentityMessage": "Saisissez l’identité que Git doit enregistrer dans les validations. BusyMark l’enregistrera et réessaiera cette validation.",
+  "gitAuthorName": "Nom",
+  "gitAuthorEmail": "E-mail",
+  "gitAuthorIdentityGlobal": "Utiliser pour tous les dépôts",
+  "gitAuthorIdentityGlobalDescription": "Avec l’installation Snap, ce réglage s’applique aux dépôts ouverts dans BusyMark.",
+  "gitSaveIdentityAndCommit": "Enregistrer et valider",
   "gitErrorAuthentication": "L’authentification Git a échoué.",
   "gitErrorNetwork": "L’opération réseau Git a échoué.",
   "gitErrorConflict": "Git a signalé des conflits non résolus.",

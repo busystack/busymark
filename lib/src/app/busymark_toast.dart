@@ -157,49 +157,51 @@ class _BusyMarkToastOverlayState extends State<BusyMarkToastOverlay> {
   @override
   Widget build(BuildContext context) {
     final active = _active;
-    return _BusyMarkToastScope(
-      state: this,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          widget.child,
-          Positioned(
-            left: BusyMarkSpacing.lg,
-            right: BusyMarkSpacing.lg,
-            bottom: BusyMarkSpacing.lg,
-            child: SafeArea(
-              top: false,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                heightFactor: 1,
-                child: AnimatedSwitcher(
-                  duration: _transitionDuration,
-                  reverseDuration: _transitionDuration,
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.15),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
+    return Overlay.wrap(
+      child: _BusyMarkToastScope(
+        state: this,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.child,
+            Positioned(
+              left: BusyMarkSpacing.lg,
+              right: BusyMarkSpacing.lg,
+              bottom: BusyMarkSpacing.lg,
+              child: SafeArea(
+                top: false,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  heightFactor: 1,
+                  child: AnimatedSwitcher(
+                    duration: _transitionDuration,
+                    reverseDuration: _transitionDuration,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.15),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
                     ),
+                    child: active == null
+                        ? const SizedBox.shrink()
+                        : _BusyMarkToastSurface(
+                            key: ValueKey(active.id),
+                            toast: active,
+                            onAction: () => _invokeAction(active),
+                            onDismiss: () => _dismiss(active.id),
+                          ),
                   ),
-                  child: active == null
-                      ? const SizedBox.shrink()
-                      : _BusyMarkToastSurface(
-                          key: ValueKey(active.id),
-                          toast: active,
-                          onAction: () => _invokeAction(active),
-                          onDismiss: () => _dismiss(active.id),
-                        ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

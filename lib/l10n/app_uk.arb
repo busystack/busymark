@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Відкривати попередній робочий простір під час запуску",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Відкривати робочий простір і вкладки попереднього сеансу під час запуску BusyMark.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Підтверджувати закриття за наявності незбережених змін",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2263,6 +2267,14 @@
   "gitErrorMultipleRemotes": "Налаштовано кілька віддалених репозиторіїв. Ця версія BusyMark не дає змоги вибрати upstream-гілку; налаштуйте її поза програмою.",
   "gitErrorDirtyWorkspace": "Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.",
   "gitErrorDiverged": "Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.",
+  "gitErrorAuthorIdentity": "Перед створенням коміту Git потребує ім’я та адресу електронної пошти автора.",
+  "gitAuthorIdentityTitle": "Дані автора Git",
+  "gitAuthorIdentityMessage": "Введіть дані, які Git має записувати в комітах. BusyMark збереже їх і повторить цей коміт.",
+  "gitAuthorName": "Ім’я",
+  "gitAuthorEmail": "Електронна пошта",
+  "gitAuthorIdentityGlobal": "Використовувати для всіх репозиторіїв",
+  "gitAuthorIdentityGlobalDescription": "Під час установлення через Snap це стосується репозиторіїв, відкритих у BusyMark.",
+  "gitSaveIdentityAndCommit": "Зберегти й створити коміт",
   "gitErrorAuthentication": "Не вдалося автентифікуватися в Git.",
   "gitErrorNetwork": "Не вдалося виконати мережеву операцію Git.",
   "gitErrorConflict": "Git повідомив про нерозв’язані конфлікти.",

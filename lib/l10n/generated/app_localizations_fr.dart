@@ -733,6 +733,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Fenêtre';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Rouvrir l’espace de travail précédent au démarrage';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Ouvrir l’espace de travail et les onglets de la session précédente au démarrage de BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Confirmer avant de fermer avec des modifications non enregistrées';
 
@@ -2578,6 +2586,33 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'La branche a divergé. Résolvez la fusion ou le rebasage en dehors de cette version de BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git a besoin d’un nom et d’une adresse e-mail d’auteur avant de pouvoir valider.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Identité de l’auteur Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Saisissez l’identité que Git doit enregistrer dans les validations. BusyMark l’enregistrera et réessaiera cette validation.';
+
+  @override
+  String get gitAuthorName => 'Nom';
+
+  @override
+  String get gitAuthorEmail => 'E-mail';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Utiliser pour tous les dépôts';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Avec l’installation Snap, ce réglage s’applique aux dépôts ouverts dans BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Enregistrer et valider';
 
   @override
   String get gitErrorAuthentication => 'L’authentification Git a échoué.';

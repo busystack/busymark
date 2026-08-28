@@ -740,6 +740,10 @@
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
+  "settingsReopenWorkspaceOnStartupTitle": "Vorherigen Arbeitsbereich beim Start erneut öffnen",
+  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "settingsReopenWorkspaceOnStartupDescription": "Arbeitsbereich und Tabs der vorherigen Sitzung beim Start von BusyMark öffnen.",
+  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
   "settingsConfirmCloseWithUnsavedChangesTitle": "Vor dem Schließen bei ungespeicherten Änderungen bestätigen",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -2245,6 +2249,14 @@
   "gitErrorMultipleRemotes": "Mehrere Remotes sind konfiguriert. Wählen Sie außerhalb dieser BusyMark-Version einen Upstream aus.",
   "gitErrorDirtyWorkspace": "Speichern oder verwerfen Sie die Editoränderungen in BusyMark, bevor Sie den Branch wechseln.",
   "gitErrorDiverged": "Der Branch ist auseinandergelaufen. Führen Sie Merge oder Rebase außerhalb dieser BusyMark-Version aus.",
+  "gitErrorAuthorIdentity": "Git benötigt vor dem Commit einen Autorennamen und eine E-Mail-Adresse.",
+  "gitAuthorIdentityTitle": "Git-Autorenidentität",
+  "gitAuthorIdentityMessage": "Geben Sie die Identität ein, die Git in Commits eintragen soll. BusyMark speichert sie und wiederholt diesen Commit.",
+  "gitAuthorName": "Autorenname",
+  "gitAuthorEmail": "E-Mail",
+  "gitAuthorIdentityGlobal": "Für alle Repositorys verwenden",
+  "gitAuthorIdentityGlobalDescription": "Bei einer Snap-Installation gilt dies für Repositorys, die in BusyMark geöffnet werden.",
+  "gitSaveIdentityAndCommit": "Speichern und committen",
   "gitErrorAuthentication": "Git-Authentifizierung fehlgeschlagen.",
   "gitErrorNetwork": "Git-Netzwerkvorgang fehlgeschlagen.",
   "gitErrorConflict": "Git hat ungelöste Konflikte gemeldet.",

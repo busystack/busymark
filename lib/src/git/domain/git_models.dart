@@ -52,6 +52,7 @@ enum GitFailureCode {
   stagedChanges,
   detachedHead,
   diverged,
+  authorIdentity,
   authentication,
   network,
   conflict,

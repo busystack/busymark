@@ -715,6 +715,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsWindowSectionTitle => 'विंडो';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'स्टार्टअप पर पिछला कार्यक्षेत्र फिर से खोलें';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'BusyMark शुरू होने पर पिछले सत्र का कार्यक्षेत्र और टैब खोलें।';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'न सहेजे गए बदलाव हों तो बंद करने से पहले पुष्टि करें';
 
@@ -2548,6 +2556,33 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'कमिट करने से पहले Git को लेखक का नाम और ईमेल पता चाहिए।';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Git लेखक पहचान';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'वह पहचान दर्ज करें जिसे Git कमिट में रिकॉर्ड करे। BusyMark इसे सहेजकर इस कमिट को फिर से आज़माएगा।';
+
+  @override
+  String get gitAuthorName => 'नाम';
+
+  @override
+  String get gitAuthorEmail => 'ईमेल';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'सभी रिपॉज़िटरी के लिए उपयोग करें';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Snap के रूप में इंस्टॉल होने पर यह BusyMark में खोली गई रिपॉज़िटरी पर लागू होता है।';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'सहेजें और कमिट करें';
 
   @override
   String get gitErrorAuthentication => 'Git प्रमाणीकरण विफल रहा।';

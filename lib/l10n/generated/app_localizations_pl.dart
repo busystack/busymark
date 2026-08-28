@@ -730,6 +730,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Okno';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Otwieraj poprzedni obszar roboczy przy uruchamianiu';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Otwórz obszar roboczy i karty z poprzedniej sesji podczas uruchamiania BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Potwierdzaj zamknięcie przy niezapisanych zmianach';
 
@@ -2594,6 +2602,33 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git wymaga nazwy autora i adresu e-mail przed utworzeniem commita.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Tożsamość autora Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Wprowadź tożsamość, którą Git ma zapisywać w commitach. BusyMark ją zapisze i ponowi ten commit.';
+
+  @override
+  String get gitAuthorName => 'Nazwa';
+
+  @override
+  String get gitAuthorEmail => 'E-mail';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Używaj we wszystkich repozytoriach';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'W instalacji Snap dotyczy to repozytoriów otwieranych w BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Zapisz i utwórz commit';
 
   @override
   String get gitErrorAuthentication => 'Uwierzytelnianie Git nie powiodło się.';

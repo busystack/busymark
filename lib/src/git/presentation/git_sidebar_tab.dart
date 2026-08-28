@@ -14,6 +14,7 @@ import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_safety.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
+import 'git_author_identity_dialog.dart';
 import 'git_changes_view.dart';
 import 'git_history_view.dart';
 
@@ -41,6 +42,9 @@ class GitSidebarTab extends ConsumerWidget {
     ref.listen<GitState>(gitControllerProvider, (previous, next) {
       final failure = next.lastError;
       if (failure != null && !identical(failure, previous?.lastError)) {
+        if (failure.code == GitFailureCode.authorIdentity) {
+          return;
+        }
         _showGitFailureToast(context, failure);
         return;
       }
@@ -97,7 +101,8 @@ class GitSidebarTab extends ConsumerWidget {
       });
     }
     return GitCommitActions(
-      commit: controller.commit,
+      commit: (message) =>
+          _commitWithIdentityRecovery(context, ref, controller, message),
       child: GitFileActions(
         select: (paths) => controller.stageFiles(paths),
         unselect: (paths) => controller.unstageFiles(paths),
@@ -401,11 +406,40 @@ String _gitFailureMessage(BuildContext context, GitFailure failure) {
     GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
     GitFailureCode.detachedHead => context.l10n.gitErrorResetDetachedHead,
     GitFailureCode.diverged => context.l10n.gitErrorDiverged,
+    GitFailureCode.authorIdentity => context.l10n.gitErrorAuthorIdentity,
     GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
     GitFailureCode.network => context.l10n.gitErrorNetwork,
     GitFailureCode.conflict => context.l10n.gitErrorConflict,
     GitFailureCode.commandFailed => context.l10n.gitErrorCommandFailed,
   };
+}
+
+Future<bool> _commitWithIdentityRecovery(
+  BuildContext context,
+  WidgetRef ref,
+  GitController controller,
+  String message,
+) async {
+  if (await controller.commit(message)) {
+    return true;
+  }
+  final failure = ref.read(gitControllerProvider).lastError;
+  if (failure?.code != GitFailureCode.authorIdentity || !context.mounted) {
+    return false;
+  }
+  final identity = await showGitAuthorIdentityDialog(context);
+  if (identity == null || !context.mounted) {
+    return false;
+  }
+  final configured = await controller.configureAuthorIdentity(
+    name: identity.name,
+    email: identity.email,
+    globally: identity.globally,
+  );
+  if (!configured || !context.mounted) {
+    return false;
+  }
+  return controller.commit(message);
 }
 
 void _showGitFailureToast(BuildContext context, GitFailure failure) {

@@ -715,6 +715,14 @@ class AppLocalizationsFa extends AppLocalizations {
   String get settingsWindowSectionTitle => 'پنجره';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'باز کردن دوبارهٔ فضای کاری قبلی هنگام راه‌اندازی';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'هنگام راه‌اندازی BusyMark، فضای کاری و زبانه‌های نشست قبلی باز شوند.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'تأیید پیش از بستن با تغییرات ذخیره‌نشده';
 
@@ -2609,6 +2617,33 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitErrorDiverged =>
       'شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.';
+
+  @override
+  String get gitErrorAuthorIdentity =>
+      'Git پیش از ثبت تغییر به نام و نشانی ایمیل نویسنده نیاز دارد.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'هویت نویسندهٔ Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'هویتی را وارد کنید که Git باید در ثبت‌ها ذخیره کند. BusyMark آن را ذخیره می‌کند و این ثبت را دوباره انجام می‌دهد.';
+
+  @override
+  String get gitAuthorName => 'نام';
+
+  @override
+  String get gitAuthorEmail => 'ایمیل';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'استفاده برای همهٔ مخزن‌ها';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'در نصب Snap، این تنظیم برای مخزن‌های بازشده در BusyMark اعمال می‌شود.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'ذخیره و ثبت تغییر';
 
   @override
   String get gitErrorAuthentication => 'احراز هویت Git ناموفق بود.';

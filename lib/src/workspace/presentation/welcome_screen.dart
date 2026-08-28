@@ -68,9 +68,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         if (!mounted) {
           return;
         }
+        final settingsController = ref.read(
+          appSettingsControllerProvider.notifier,
+        );
+        await settingsController.waitUntilLoaded();
+        if (!mounted) {
+          return;
+        }
+        final reopenCleanSession = ref
+            .read(appSettingsControllerProvider)
+            .reopenPreviousWorkspaceOnStartup;
         final restored = await ref
             .read(workspaceControllerProvider.notifier)
-            .restorePreviousSession();
+            .restoreStartupSession(reopenCleanSession: reopenCleanSession);
         if (restored && mounted) {
           this.context.go('/workspace');
         }

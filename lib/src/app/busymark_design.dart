@@ -1974,6 +1974,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.hintText,
     this.enabled = true,
     this.autofocus = false,
+    this.focusNode,
     this.keyboardType,
     this.minLines = 1,
     this.maxLines = 1,
@@ -1998,6 +1999,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
   final String? hintText;
   final bool enabled;
   final bool autofocus;
+  final FocusNode? focusNode;
   final TextInputType? keyboardType;
   final int minLines;
   final int maxLines;
@@ -2046,6 +2048,7 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
         initialValue: widget.initialValue,
         enabled: widget.enabled,
         autofocus: widget.autofocus,
+        focusNode: widget.focusNode,
         keyboardType: widget.keyboardType,
         minLines: widget.minLines,
         maxLines: widget.maxLines,
