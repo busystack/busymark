@@ -349,10 +349,11 @@ class _AuthorIdentityGitRunner implements GitCommandRunner {
       arguments: arguments,
       exitCode: 128,
       stdoutBytes: const [],
-      stderrBytes: ('Author identity unknown\n\n'
-              'Please tell me who you are.\n'
-              'fatal: unable to auto-detect email address')
-          .codeUnits,
+      stderrBytes:
+          ('Author identity unknown\n\n'
+                  'Please tell me who you are.\n'
+                  'fatal: unable to auto-detect email address')
+              .codeUnits,
     );
   }
 }

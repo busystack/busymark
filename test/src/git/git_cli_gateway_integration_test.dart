@@ -10,39 +10,42 @@ void main() {
     expect(const GitCliGateway().requiresWorkspaceTrust, isTrue);
   });
 
-  test('configures a repository author identity without terminal setup', () async {
-    if (!await _gitAvailable()) {
-      markTestSkipped('Git executable is unavailable.');
-      return;
-    }
-    final root = await Directory.systemTemp.createTemp(
-      'busymark-git-identity-',
-    );
-    addTearDown(() async {
-      if (await root.exists()) {
-        await root.delete(recursive: true);
+  test(
+    'configures a repository author identity without terminal setup',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
       }
-    });
-    await _git(root.path, ['init']);
-    const gateway = GitCliGateway();
-    final info = await gateway.detectRepository(root.path);
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-git-identity-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      await _git(root.path, ['init']);
+      const gateway = GitCliGateway();
+      final info = await gateway.detectRepository(root.path);
 
-    await gateway.configureAuthorIdentity(
-      info!,
-      name: 'BusyMark User',
-      email: 'busymark@example.com',
-      globally: false,
-    );
+      await gateway.configureAuthorIdentity(
+        info!,
+        name: 'BusyMark User',
+        email: 'busymark@example.com',
+        globally: false,
+      );
 
-    expect(
-      await _gitOutput(root.path, ['config', '--local', 'user.name']),
-      'BusyMark User',
-    );
-    expect(
-      await _gitOutput(root.path, ['config', '--local', 'user.email']),
-      'busymark@example.com',
-    );
-  });
+      expect(
+        await _gitOutput(root.path, ['config', '--local', 'user.name']),
+        'BusyMark User',
+      );
+      expect(
+        await _gitOutput(root.path, ['config', '--local', 'user.email']),
+        'busymark@example.com',
+      );
+    },
+  );
 
   test('runs core workflow in a temporary Git repository', () async {
     if (!await _gitAvailable()) {

@@ -59,91 +59,89 @@ void main() {
     );
   });
 
-  testWidgets(
-    'WYSIWYG diagnostic selects its actual source line',
-    (tester) async {
-      final coordinator = VisualizationCoordinator(
-        renderers: const [_DiagnosticRenderer()],
-        cache: _MemoryVisualizationCache(cacheDirectory),
-      );
-      addTearDown(coordinator.dispose);
-      final controller = BusyMarkWysiwygTextController(
-        text: 'first\nsecond\nthird',
-        ranges: const [],
-      );
-      final undoController = UndoHistoryController();
-      final focusNode = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(undoController.dispose);
-      addTearDown(focusNode.dispose);
-      var focusCalls = 0;
+  testWidgets('WYSIWYG diagnostic selects its actual source line', (
+    tester,
+  ) async {
+    final coordinator = VisualizationCoordinator(
+      renderers: const [_DiagnosticRenderer()],
+      cache: _MemoryVisualizationCache(cacheDirectory),
+    );
+    addTearDown(coordinator.dispose);
+    final controller = BusyMarkWysiwygTextController(
+      text: 'first\nsecond\nthird',
+      ranges: const [],
+    );
+    final undoController = UndoHistoryController();
+    final focusNode = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(undoController.dispose);
+    addTearDown(focusNode.dispose);
+    var focusCalls = 0;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            visualizationCoordinatorProvider.overrideWithValue(coordinator),
-          ],
-          child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: BusyMarkWysiwygBlockField(
-                  block: const BusyBlock(
-                    id: 'diagram',
-                    kind: BusyBlockKind.codeBlock,
-                    attributes: {'language': 'mermaid'},
-                    inlines: [
-                      BusyInline(
-                        kind: BusyInlineKind.text,
-                        text: 'first\nsecond\nthird',
-                      ),
-                    ],
-                    sourceSpan: SourceSpan(
-                      filePath: '/workspace/demo.md',
-                      startOffset: 20,
-                      endOffset: 55,
-                      startLine: 5,
-                      startColumn: 1,
-                      endLine: 9,
-                      endColumn: 4,
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          visualizationCoordinatorProvider.overrideWithValue(coordinator),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BusyMarkWysiwygBlockField(
+                block: const BusyBlock(
+                  id: 'diagram',
+                  kind: BusyBlockKind.codeBlock,
+                  attributes: {'language': 'mermaid'},
+                  inlines: [
+                    BusyInline(
+                      kind: BusyInlineKind.text,
+                      text: 'first\nsecond\nthird',
                     ),
+                  ],
+                  sourceSpan: SourceSpan(
+                    filePath: '/workspace/demo.md',
+                    startOffset: 20,
+                    endOffset: 55,
+                    startLine: 5,
+                    startColumn: 1,
+                    endLine: 9,
+                    endColumn: 4,
                   ),
-                  documentFilePath: '/workspace/demo.md',
-                  workspaceRoot: '/workspace',
-                  allowRemoteImages: false,
-                  controller: controller,
-                  undoController: undoController,
-                  focusNode: focusNode,
-                  onChanged: (_) {},
-                  onTableCellChanged: (_, _) {},
-                  onTableRowInserted: (_, {required after}) {},
-                  onTableRowDeleted: (_) {},
-                  onTableColumnInserted: (_, {required after}) {},
-                  onTableColumnDeleted: (_) {},
-                  onTableColumnAlignmentChanged: (_, _) {},
-                  onTableDeleted: () {},
-                  onImageEditRequested: () {},
-                  onHtmlEditRequested: () {},
-                  onTaskChanged: (_) {},
-                  onFocused: () => focusCalls++,
                 ),
+                documentFilePath: '/workspace/demo.md',
+                workspaceRoot: '/workspace',
+                allowRemoteImages: false,
+                controller: controller,
+                undoController: undoController,
+                focusNode: focusNode,
+                onChanged: (_) {},
+                onTableCellChanged: (_, _) {},
+                onTableRowInserted: (_, {required after}) {},
+                onTableRowDeleted: (_) {},
+                onTableColumnInserted: (_, {required after}) {},
+                onTableColumnDeleted: (_) {},
+                onTableColumnAlignmentChanged: (_, _) {},
+                onTableDeleted: () {},
+                onImageEditRequested: () {},
+                onHtmlEditRequested: () {},
+                onTaskChanged: (_) {},
+                onFocused: () => focusCalls++,
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
 
-      await _pumpUntilFound(tester, find.text('Broken third line'));
-      await tester.tap(find.text('Broken third line'));
-      await tester.pump();
+    await _pumpUntilFound(tester, find.text('Broken third line'));
+    await tester.tap(find.text('Broken third line'));
+    await tester.pump();
 
-      expect(focusCalls, 1);
-      expect(focusNode.hasFocus, isTrue);
-      expect(controller.selection, const TextSelection.collapsed(offset: 13));
-    },
-    timeout: const Timeout(Duration(seconds: 10)),
-  );
+    expect(focusCalls, 1);
+    expect(focusNode.hasFocus, isTrue);
+    expect(controller.selection, const TextSelection.collapsed(offset: 13));
+  }, timeout: const Timeout(Duration(seconds: 10)));
 }
 
 Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
