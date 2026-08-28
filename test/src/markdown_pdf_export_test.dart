@@ -80,7 +80,7 @@ void main() {
       canExportActiveMarkdown(WorkspaceState(workspace: workspace)),
       isFalse,
     );
-    expect(defaultWritersideBuilderModuleName(module), 'BusyMark Test');
+    expect(defaultWritersideModuleName(module), 'BusyMark Test');
   });
 
   test('atomic PDF publication never replaces without confirmation', () async {

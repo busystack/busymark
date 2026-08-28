@@ -221,6 +221,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get keyboardShortcuts => 'Сочетания клавиш';
 
   @override
+  String get commandPalette => 'Палитра команд';
+
+  @override
+  String get commandPaletteHint => 'Введите команду';
+
+  @override
+  String get commandPaletteEmpty => 'Нет подходящих команд';
+
+  @override
+  String get commandUnavailableInContext =>
+      'Эта команда недоступна в текущем контексте.';
+
+  @override
   String get lightTheme => 'Светлая';
 
   @override
@@ -712,6 +725,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Окно';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Открывать предыдущее рабочее пространство при запуске';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Открывать рабочее пространство и вкладки предыдущего сеанса при запуске BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Подтверждать закрытие при несохранённых изменениях';
 
@@ -765,6 +786,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'В документах ($count) есть несохранённые изменения. Сохранить их перед продолжением?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'Файл изменён на диске';
 
   @override
@@ -803,6 +829,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get image => 'Изображение';
+
+  @override
+  String get video => 'Видео';
+
+  @override
+  String get openVideo => 'Воспроизвести видео';
+
+  @override
+  String get pauseVideo => 'Приостановить видео';
+
+  @override
+  String get videoUnavailable => 'Видео недоступно';
+
+  @override
+  String get videoPreview => 'Предпросмотр видео';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'У видео отсутствует атрибут src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Неподдерживаемый источник видео: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Видеофайл не существует: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Изображение предпросмотра видео не существует: $preview';
+  }
 
   @override
   String get inlineImage => 'Встроенное изображение';
@@ -897,6 +957,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteColumn => 'Удалить столбец';
+
+  @override
+  String get tableAlignmentUnspecified => 'Выравнивание: не задано';
+
+  @override
+  String get tableAlignmentLeft => 'Выравнивание: по левому краю';
+
+  @override
+  String get tableAlignmentCenter => 'Выравнивание: по центру';
+
+  @override
+  String get tableAlignmentRight => 'Выравнивание: по правому краю';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1334,6 +1406,132 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sourceSearchRegex => 'Регулярное выражение';
 
   @override
+  String get sourceSearchReplacement => 'Заменить на';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Заменить текущее';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Заменить и найти следующее';
+
+  @override
+  String get sourceSearchReplaceAll => 'Заменить всё';
+
+  @override
+  String get workspaceReplace => 'Заменить в рабочей области';
+
+  @override
+  String get reviewReplacements => 'Проверить замены';
+
+  @override
+  String get applyReplacements => 'Применить замены';
+
+  @override
+  String get skippedFiles => 'Пропущенные файлы';
+
+  @override
+  String get workspaceReplaceDirtyBuffer =>
+      'Несохранённое содержимое редактора';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Содержимое, сохранённое на диске';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Выбрать все совпадения: $count';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Заменено совпадений: $matches в файлах: $files; пропущено: $skipped.';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Конечный перевод строки';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Нет конечного перевода строки';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Нормализовать окончания строк';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'В документе используются смешанные окончания строк. Выберите формат.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'В $fileName используются смешанные окончания строк. Выберите формат перед заменой.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Слишком большой файл пропущен.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable => 'Нечитаемый файл пропущен.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Файл с недопустимой кодировкой UTF-8 пропущен.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Предпросмотр замен был сокращён.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Файл, изменённый после предпросмотра, пропущен.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Буфер редактора, изменённый после предпросмотра, пропущен.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Перед заменой выберите нормализацию LF или CRLF.';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Откат остановлен, поскольку файл был одновременно изменён. Некоторые замены могли сохраниться; вытесненное содержимое сохранено по указанному ниже пути.';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Замены не применены, поскольку проверенный набор не удалось безопасно сохранить.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Внешние изменения — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Этот файл был удалён с диска.';
+
+  @override
+  String get externalFileChanged =>
+      'Этот файл изменился на диске, пока у вас были несохранённые изменения.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Восстановлено несохранённое содержимое файла $fileName. Проверьте его, затем сохраните, сохраните как новый файл или отбросьте.';
+  }
+
+  @override
+  String get compare => 'Сравнить';
+
+  @override
+  String get reloadFromDisk => 'Перезагрузить с диска';
+
+  @override
+  String get keepMine => 'Оставить мою версию';
+
+  @override
+  String get saveAs => 'Сохранить как';
+
+  @override
   String get sourceSearchInvalidRegex => 'Некорректное регулярное выражение';
 
   @override
@@ -1342,6 +1540,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get nothingToRead => 'Нет содержимого для чтения';
+
+  @override
+  String get admonition => 'Блок-уведомление';
+
+  @override
+  String get quote => 'Цитата';
 
   @override
   String get note => 'Примечание';
@@ -1468,6 +1672,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Проверка не удалась: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Восстановлено несохранённых документов: $count. Проверьте каждый восстановленный документ перед продолжением.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Не удалось восстановить повреждённые записи ($count). Корректные восстановленные документы остаются доступными.';
   }
 
   @override
@@ -2305,6 +2519,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fileActions => 'Действия с файлом';
 
   @override
+  String get actions => 'Действия';
+
+  @override
   String get gitStatusAdded => 'Добавлен';
 
   @override
@@ -2379,8 +2596,34 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ветка разошлась с upstream-веткой. Выполните слияние или rebase вне этой версии BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Не удалось пройти аутентификацию Git. Для удалённых SSH-репозиториев в snap может потребоваться подключить интерфейс ssh-keys.';
+  String get gitErrorAuthorIdentity =>
+      'Перед созданием коммита Git требуется имя и адрес электронной почты автора.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Данные автора Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Введите данные, которые Git должен записывать в коммитах. BusyMark сохранит их и повторит этот коммит.';
+
+  @override
+  String get gitAuthorName => 'Имя';
+
+  @override
+  String get gitAuthorEmail => 'Электронная почта';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Использовать для всех репозиториев';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'При установке через Snap это относится к репозиториям, открытым в BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Сохранить и создать коммит';
+
+  @override
+  String get gitErrorAuthentication => 'Не удалось пройти аутентификацию Git.';
 
   @override
   String get gitErrorNetwork => 'Сетевая операция Git не удалась.';
@@ -2962,135 +3205,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exportWritersideAsPdf => 'Экспорт Writerside в PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Выберите экземпляр и параметры PDF. BusyMark использует официальный сборщик Writerside от JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Содержимое экспорта';
-
-  @override
-  String get writersidePdfSettings => 'Настройки PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Настроить для этого экспорта';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Использовать конфигурацию проекта';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Файл конфигурации PDF';
 
   @override
   String get writersidePdfPage => 'Страница';
 
   @override
-  String get writersidePdfKeymap => 'Раскладка клавиш';
-
-  @override
-  String get writersidePdfNoKeymap => 'Без раскладки клавиш';
-
-  @override
-  String get writersidePdfTocTitle => 'Заголовок оглавления';
-
-  @override
-  String get writersidePdfCover => 'Титульная страница';
-
-  @override
-  String get writersidePdfIncludeCover => 'Добавить титульную страницу';
-
-  @override
-  String get writersidePdfCoverTitle => 'Заголовок обложки';
-
-  @override
-  String get writersidePdfCoverDescription => 'Описание на обложке';
-
-  @override
-  String get writersidePdfCopyright => 'Авторские права';
-
-  @override
-  String get writersidePdfCoverLogo => 'Логотип на обложке';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Выбрать логотип для обложки';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Верхний и нижний колонтитулы';
-
-  @override
-  String get writersidePdfHeader => 'Верхний колонтитул';
-
-  @override
-  String get writersidePdfFooter => 'Нижний колонтитул';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Эти значения сопоставляют открытый модуль со структурой исходных файлов сборщика.';
-
-  @override
-  String get writersidePdfModuleName => 'Имя модуля';
-
-  @override
-  String get writersidePdfSourceRoot => 'Корневая папка исходных файлов';
-
-  @override
-  String get writersidePdfChooseSourceRoot =>
-      'Выбрать корневую папку исходных файлов';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Версия сборщика';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Разрешить сеть во время сборки';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'По умолчанию отключено. Включайте, только если проекту намеренно нужны удалённые ресурсы сборки.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Введите имя модуля.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Выберите корневую папку исходных файлов.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Введите допустимую версию сборщика.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Требуется сборщик Writerside';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark использует официальный образ контейнера $image. Скачать его сейчас? Образ имеет большой размер и будет храниться в Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder => 'Загрузка сборщика Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Экспорт PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Для экспорта Writerside в PDF требуется Docker. Установите и запустите Docker, затем повторите попытку.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Запрошенный образ сборщика Writerside недоступен.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Недопустимая конфигурация PDF Writerside.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Сборщику Writerside не удалось создать PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Сборщик Writerside не создал допустимый PDF.';
 
   @override
   String get ai => 'ИИ';
@@ -3107,6 +3228,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiProvider => 'Поставщик ИИ';
+
+  @override
+  String get aiDefaultProvider => 'Поставщик по умолчанию';
+
+  @override
+  String get aiConfigureProvider => 'Настроить поставщика';
+
+  @override
+  String get aiChooseProvider => 'Выберите поставщика ИИ';
 
   @override
   String get aiOllamaEndpoint => 'Конечная точка Ollama';
@@ -3126,8 +3256,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama запущен, но установленные модели не найдены.';
+  String get aiNoModels => 'Модель не выбрана.';
 
   @override
   String get aiConnectionFailed =>
@@ -3231,19 +3360,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiContentSentToAi => 'Содержимое, отправляемое ИИ';
 
   @override
-  String get aiPrivacyDisabled =>
-      'ИИ отключён. BusyMark никогда не отправляет содержимое документа без явного действия с ИИ.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark отправляет только контекст, показанный в диалоге проверки, настроенной локальной службе Ollama. Предложения никогда не применяются без проверки.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark отправляет только контекст, показанный в диалоге проверки, поставщику $provider. Запросы не сохраняют состояние, а предложения никогда не применяются без проверки.';
-  }
-
-  @override
   String get aiApiKey => 'Ключ API';
 
   @override
@@ -3280,6 +3396,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'Предпочитаемая модель';
+
+  @override
+  String get aiModel => 'Модель';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3366,4 +3485,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Заголовки таблицы должны обозначать столбцы; заполните каждый пустой заголовок.';
+
+  @override
+  String get mathRenderFailed =>
+      'Не удалось отобразить математическое выражение.';
+
+  @override
+  String get inlineMath => 'Формула в строке';
+
+  @override
+  String get displayMath => 'Формула отдельным блоком';
 }

@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../ai/ai_edit_ui.dart';
 import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_model.dart';
 import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_safety.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
+import 'git_author_identity_dialog.dart';
 import 'git_changes_view.dart';
 import 'git_history_view.dart';
 
@@ -36,6 +39,22 @@ class GitSidebarTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gitControllerProvider);
+    ref.listen<GitState>(gitControllerProvider, (previous, next) {
+      final failure = next.lastError;
+      if (failure != null && !identical(failure, previous?.lastError)) {
+        if (failure.code == GitFailureCode.authorIdentity) {
+          return;
+        }
+        _showGitFailureToast(context, failure);
+        return;
+      }
+      final message = next.lastOperationMessage?.trim();
+      if (message != null &&
+          message.isNotEmpty &&
+          message != previous?.lastOperationMessage?.trim()) {
+        BusyMarkToastOverlay.show(context, message: message);
+      }
+    });
     final hasUnsavedEditorChanges = ref.watch(
       workspaceControllerProvider.select((value) => value.isDirty),
     );
@@ -82,7 +101,8 @@ class GitSidebarTab extends ConsumerWidget {
       });
     }
     return GitCommitActions(
-      commit: controller.commit,
+      commit: (message) =>
+          _commitWithIdentityRecovery(context, ref, controller, message),
       child: GitFileActions(
         select: (paths) => controller.stageFiles(paths),
         unselect: (paths) => controller.unstageFiles(paths),
@@ -97,10 +117,6 @@ class GitSidebarTab extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (state.lastError != null)
-              _GitMessage(failure: state.lastError!)
-            else if (state.lastOperationMessage?.isNotEmpty ?? false)
-              _GitOperationMessage(message: state.lastOperationMessage!),
             Expanded(
               child: switch (state.selectedView) {
                 GitView.changes => GitChangesView(
@@ -164,6 +180,10 @@ class GitSidebarTab extends ConsumerWidget {
     if (stagedDiff == null || !context.mounted) {
       return null;
     }
+    final provider = await chooseBusyMarkAiProvider(context, ref);
+    if (provider == null || !context.mounted) {
+      return null;
+    }
     final repository = ref.read(gitControllerProvider).repositoryInfo;
     return showBusyMarkAiProposal(
       context,
@@ -179,6 +199,7 @@ class GitSidebarTab extends ConsumerWidget {
         contentFormat: AiContentFormat.plainText,
         enforceDocumentRevision: false,
       ),
+      providerKind: provider,
       validateBeforeApply: () =>
           controller.stagedDiffMatches(stagedDiff.fingerprint),
       staleMessage: context.l10n.gitAiStagedChangesChanged,
@@ -365,87 +386,79 @@ class _GitResetDialogState extends State<_GitResetDialog> {
   }
 }
 
-class _GitMessage extends StatelessWidget {
-  const _GitMessage({required this.failure});
-
-  final GitFailure failure;
-
-  @override
-  Widget build(BuildContext context) {
-    final message = _failureMessage(context, failure);
-    final rawMessage = failure.rawMessage.trim();
-    return SelectionArea(
-      child: BusyMarkStatusBox(
-        message: rawMessage.isEmpty ? message : '$message\n$rawMessage',
-        kind: _gitFailureStatusKind(failure.code),
-      ),
-    );
-  }
-
-  String _failureMessage(BuildContext context, GitFailure failure) {
-    return switch (failure.code) {
-      GitFailureCode.unavailable ||
-      GitFailureCode.unsupportedVersion => context.l10n.gitErrorUnavailable,
-      GitFailureCode.notRepository => context.l10n.gitErrorNotRepository,
-      GitFailureCode.invalidPath => context.l10n.gitErrorUnsafePath,
-      GitFailureCode.invalidBranchName =>
-        context.l10n.gitErrorInvalidBranchName,
-      GitFailureCode.invalidCommitMessage =>
-        context.l10n.gitCommitMessageRequired,
-      GitFailureCode.noStagedFiles => context.l10n.gitCommitNoSelectedFiles,
-      GitFailureCode.noRemote => context.l10n.gitErrorNoRemote,
-      GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
-      GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,
-      GitFailureCode.dirtyWorkspace =>
-        failure.commandName == 'reset'
-            ? context.l10n.gitErrorResetDirtyWorkspace
-            : context.l10n.gitErrorDirtyWorkspace,
-      GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
-      GitFailureCode.detachedHead => context.l10n.gitErrorResetDetachedHead,
-      GitFailureCode.diverged => context.l10n.gitErrorDiverged,
-      GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
-      GitFailureCode.network => context.l10n.gitErrorNetwork,
-      GitFailureCode.conflict => context.l10n.gitErrorConflict,
-      GitFailureCode.commandFailed => context.l10n.gitErrorCommandFailed,
-    };
-  }
-}
-
-class _GitOperationMessage extends StatelessWidget {
-  const _GitOperationMessage({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkStatusBox(
-      message: message,
-      kind: BusyMarkStatusKind.success,
-    );
-  }
-}
-
-BusyMarkStatusKind _gitFailureStatusKind(GitFailureCode code) {
-  return switch (code) {
-    GitFailureCode.noStagedFiles ||
-    GitFailureCode.noRemote ||
-    GitFailureCode.noUpstream ||
-    GitFailureCode.multipleRemotes => BusyMarkStatusKind.information,
-    GitFailureCode.dirtyWorkspace ||
-    GitFailureCode.stagedChanges ||
-    GitFailureCode.detachedHead ||
-    GitFailureCode.diverged ||
-    GitFailureCode.conflict => BusyMarkStatusKind.warning,
+String _gitFailureMessage(BuildContext context, GitFailure failure) {
+  return switch (failure.code) {
     GitFailureCode.unavailable ||
-    GitFailureCode.unsupportedVersion ||
-    GitFailureCode.notRepository ||
-    GitFailureCode.invalidPath ||
-    GitFailureCode.invalidBranchName ||
-    GitFailureCode.invalidCommitMessage ||
-    GitFailureCode.authentication ||
-    GitFailureCode.network ||
-    GitFailureCode.commandFailed => BusyMarkStatusKind.error,
+    GitFailureCode.unsupportedVersion => context.l10n.gitErrorUnavailable,
+    GitFailureCode.notRepository => context.l10n.gitErrorNotRepository,
+    GitFailureCode.invalidPath => context.l10n.gitErrorUnsafePath,
+    GitFailureCode.invalidBranchName => context.l10n.gitErrorInvalidBranchName,
+    GitFailureCode.invalidCommitMessage =>
+      context.l10n.gitCommitMessageRequired,
+    GitFailureCode.noStagedFiles => context.l10n.gitCommitNoSelectedFiles,
+    GitFailureCode.noRemote => context.l10n.gitErrorNoRemote,
+    GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
+    GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,
+    GitFailureCode.dirtyWorkspace =>
+      failure.commandName == 'reset'
+          ? context.l10n.gitErrorResetDirtyWorkspace
+          : context.l10n.gitErrorDirtyWorkspace,
+    GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
+    GitFailureCode.detachedHead => context.l10n.gitErrorResetDetachedHead,
+    GitFailureCode.diverged => context.l10n.gitErrorDiverged,
+    GitFailureCode.authorIdentity => context.l10n.gitErrorAuthorIdentity,
+    GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
+    GitFailureCode.network => context.l10n.gitErrorNetwork,
+    GitFailureCode.conflict => context.l10n.gitErrorConflict,
+    GitFailureCode.commandFailed => context.l10n.gitErrorCommandFailed,
   };
+}
+
+Future<bool> _commitWithIdentityRecovery(
+  BuildContext context,
+  WidgetRef ref,
+  GitController controller,
+  String message,
+) async {
+  if (await controller.commit(message)) {
+    return true;
+  }
+  final failure = ref.read(gitControllerProvider).lastError;
+  if (failure?.code != GitFailureCode.authorIdentity || !context.mounted) {
+    return false;
+  }
+  final identity = await showGitAuthorIdentityDialog(context);
+  if (identity == null || !context.mounted) {
+    return false;
+  }
+  final configured = await controller.configureAuthorIdentity(
+    name: identity.name,
+    email: identity.email,
+    globally: identity.globally,
+  );
+  if (!configured || !context.mounted) {
+    return false;
+  }
+  return controller.commit(message);
+}
+
+void _showGitFailureToast(BuildContext context, GitFailure failure) {
+  final summary = _gitFailureMessage(context, failure);
+  final rawMessage = failure.rawMessage.trim();
+  final firstDetail = rawMessage
+      .split('\n')
+      .map((line) => line.trim())
+      .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+  BusyMarkToastOverlay.show(
+    context,
+    message: firstDetail.isEmpty ? summary : '$summary\n$firstDetail',
+    actionLabel: rawMessage.isEmpty ? null : context.l10n.copy,
+    onAction: rawMessage.isEmpty
+        ? null
+        : () => Clipboard.setData(ClipboardData(text: rawMessage)),
+    duration: const Duration(seconds: 8),
+    priority: BusyMarkToastPriority.high,
+  );
 }
 
 class _GitEmptyState extends StatelessWidget {

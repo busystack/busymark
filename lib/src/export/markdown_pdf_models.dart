@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../markdown/markdown_model.dart';
+
 enum MarkdownPdfPageSize { a4, letter }
 
 enum MarkdownPdfOrientation { portrait, landscape }
@@ -59,6 +61,8 @@ enum MarkdownPdfWarningCode {
   imageReadFailed,
   visualizationRenderFailed,
   visualizationLimitReached,
+  mathRenderFailed,
+  mathLimitReached,
 }
 
 @immutable
@@ -78,6 +82,7 @@ class MarkdownPdfExportRequest {
     required this.destinationPath,
     required this.options,
     required this.overwrite,
+    this.mode = MarkdownMode.commonMark,
   });
 
   final String source;
@@ -86,6 +91,7 @@ class MarkdownPdfExportRequest {
   final String destinationPath;
   final MarkdownPdfOptions options;
   final bool overwrite;
+  final MarkdownMode mode;
 }
 
 @immutable

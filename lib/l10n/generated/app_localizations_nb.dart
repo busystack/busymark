@@ -221,6 +221,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get keyboardShortcuts => 'Tastatursnarveier';
 
   @override
+  String get commandPalette => 'Kommandopalett';
+
+  @override
+  String get commandPaletteHint => 'Skriv inn en kommando';
+
+  @override
+  String get commandPaletteEmpty => 'Ingen samsvarende kommandoer';
+
+  @override
+  String get commandUnavailableInContext =>
+      'Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.';
+
+  @override
   String get lightTheme => 'Lys';
 
   @override
@@ -709,6 +722,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Vindu';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Åpne forrige arbeidsområde ved oppstart';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Bekreft lukking ved ulagrede endringer';
 
@@ -758,6 +779,11 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'Fil endret på disken';
 
   @override
@@ -796,6 +822,40 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get image => 'Bilde';
+
+  @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Spill av video';
+
+  @override
+  String get pauseVideo => 'Sett video på pause';
+
+  @override
+  String get videoUnavailable => 'Videoen er utilgjengelig';
+
+  @override
+  String get videoPreview => 'Videoforhåndsvisning';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videoen mangler src-attributtet.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Videokilden støttes ikke: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Videofilen finnes ikke: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Forhåndsvisningsbildet finnes ikke: $preview';
+  }
 
   @override
   String get inlineImage => 'Innebygd bilde';
@@ -891,6 +951,18 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get deleteColumn => 'Slett kolonne';
+
+  @override
+  String get tableAlignmentUnspecified => 'Justering: ikke angitt';
+
+  @override
+  String get tableAlignmentLeft => 'Justering: venstre';
+
+  @override
+  String get tableAlignmentCenter => 'Justering: midtstilt';
+
+  @override
+  String get tableAlignmentRight => 'Justering: høyre';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1320,6 +1392,133 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sourceSearchRegex => 'Regulært uttrykk';
 
   @override
+  String get sourceSearchReplacement => 'Erstatt med';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Erstatt gjeldende treff';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Erstatt og finn neste';
+
+  @override
+  String get sourceSearchReplaceAll => 'Erstatt alle';
+
+  @override
+  String get workspaceReplace => 'Erstatt i arbeidsområdet';
+
+  @override
+  String get reviewReplacements => 'Se gjennom erstatninger';
+
+  @override
+  String get applyReplacements => 'Bruk erstatninger';
+
+  @override
+  String get skippedFiles => 'Filer som ble hoppet over';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Ulagret redigeringsinnhold';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Innhold lagret på disk';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Velg alle $count treff';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Erstattet $matches treff i $files filer; hoppet over $skipped.';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Avsluttende linjeskift';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Ingen avsluttende linjeskift';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normaliser linjeslutt';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'Dette dokumentet inneholder blandede linjeslutt. Velg et format.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName bruker blandede linjeslutt. Velg format før du erstatter.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized =>
+      'En for stor fil ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'En fil som ikke kunne leses, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'En fil som ikke er gyldig UTF-8, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Erstatningsforhåndsvisningen ble avkortet.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'En fil som ble endret etter forhåndsvisningen, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'En redigeringsbuffer som ble endret etter forhåndsvisningen, ble hoppet over.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Velg LF- eller CRLF-normalisering før du erstatter.';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Eksterne endringer — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Denne filen ble slettet fra disken.';
+
+  @override
+  String get externalFileChanged =>
+      'Denne filen ble endret på disken mens du har ulagrede endringer.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Ulagret innhold for $fileName ble gjenopprettet. Se gjennom det, og lagre, lagre som eller forkast det.';
+  }
+
+  @override
+  String get compare => 'Sammenlign';
+
+  @override
+  String get reloadFromDisk => 'Last inn fra disk på nytt';
+
+  @override
+  String get keepMine => 'Behold min versjon';
+
+  @override
+  String get saveAs => 'Lagre som';
+
+  @override
   String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
 
   @override
@@ -1328,6 +1527,12 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get nothingToRead => 'Ingenting å lese';
+
+  @override
+  String get admonition => 'Merknadsblokk';
+
+  @override
+  String get quote => 'Sitat';
 
   @override
   String get note => 'Merknad';
@@ -1454,6 +1659,16 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validering mislyktes: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.';
   }
 
   @override
@@ -2274,6 +2489,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get fileActions => 'Filhandlinger';
 
   @override
+  String get actions => 'Handlinger';
+
+  @override
   String get gitStatusAdded => 'Lagt til';
 
   @override
@@ -2347,8 +2565,34 @@ class AppLocalizationsNb extends AppLocalizations {
       'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.';
+  String get gitErrorAuthorIdentity =>
+      'Git trenger forfatternavn og e-postadresse før endringer kan lagres.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Git-forfatteridentitet';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Skriv inn identiteten Git skal registrere på endringer. BusyMark lagrer den og prøver denne endringen på nytt.';
+
+  @override
+  String get gitAuthorName => 'Navn';
+
+  @override
+  String get gitAuthorEmail => 'E-post';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Bruk for alle kodelagre';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Når appen er installert som en Snap, gjelder dette kodelagre som åpnes i BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Lagre og utfør commit';
+
+  @override
+  String get gitErrorAuthentication => 'Git-autentisering mislyktes.';
 
   @override
   String get gitErrorNetwork => 'Git-nettverksoperasjonen mislyktes.';
@@ -2927,133 +3171,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get exportWritersideAsPdf => 'Eksporter Writerside som PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Velg en instans og PDF-innstillinger. BusyMark bruker JetBrains’ offisielle Writerside-byggeverktøy.';
-
-  @override
   String get writersidePdfContent => 'Eksportinnhold';
-
-  @override
-  String get writersidePdfSettings => 'PDF-innstillinger';
-
-  @override
-  String get writersidePdfConfigureHere => 'Konfigurer for denne eksporten';
-
-  @override
-  String get writersidePdfProjectConfiguration => 'Bruk prosjektkonfigurasjon';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF-konfigurasjonsfil';
 
   @override
   String get writersidePdfPage => 'Side';
 
   @override
-  String get writersidePdfKeymap => 'Tastaturoppsett';
-
-  @override
-  String get writersidePdfNoKeymap => 'Uten tastaturoppsett';
-
-  @override
-  String get writersidePdfTocTitle => 'Tittel på innholdsfortegnelsen';
-
-  @override
-  String get writersidePdfCover => 'Forside';
-
-  @override
-  String get writersidePdfIncludeCover => 'Ta med forside';
-
-  @override
-  String get writersidePdfCoverTitle => 'Forsidetittel';
-
-  @override
-  String get writersidePdfCoverDescription => 'Forsidebeskrivelse';
-
-  @override
-  String get writersidePdfCopyright => 'Opphavsrett';
-
-  @override
-  String get writersidePdfCoverLogo => 'Forsidelogo';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Velg forsidelogo';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Topptekst og bunntekst';
-
-  @override
-  String get writersidePdfHeader => 'Topptekst';
-
-  @override
-  String get writersidePdfFooter => 'Bunntekst';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Disse verdiene kobler den åpne modulen til byggeverktøyets kildestruktur.';
-
-  @override
-  String get writersidePdfModuleName => 'Modulnavn';
-
-  @override
-  String get writersidePdfSourceRoot => 'Kilderot';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Velg kilderot';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Byggeverktøyversjon';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Tillat nettverk under bygging';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Deaktivert som standard. Aktiver bare når prosjektet bevisst trenger eksterne byggeressurser.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Skriv inn modulnavnet.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'Velg kilderoten.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Skriv inn en gyldig byggeverktøyversjon.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside-byggeverktøy kreves';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark bruker det offisielle containerbildet $image. Vil du laste det ned nå? Bildet er stort og lagres av Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Laster ned Writerside-byggeverktøy…';
-
-  @override
   String get exportingWritersidePdf => 'Eksporterer Writerside-PDF…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Docker kreves for Writerside PDF-eksport. Installer og start Docker, og prøv igjen.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Det forespurte Writerside-byggebildet er ikke tilgjengelig.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside PDF-konfigurasjonen er ugyldig.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Writerside-byggeverktøyet kunne ikke opprette PDF-filen.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside-byggeverktøyet produserte ikke en gyldig PDF-fil.';
 
   @override
   String get ai => 'KI';
@@ -3070,6 +3194,15 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiProvider => 'KI-leverandør';
+
+  @override
+  String get aiDefaultProvider => 'Standardleverandør';
+
+  @override
+  String get aiConfigureProvider => 'Konfigurer leverandør';
+
+  @override
+  String get aiChooseProvider => 'Velg KI-leverandør';
 
   @override
   String get aiOllamaEndpoint => 'Ollama-endepunkt';
@@ -3089,8 +3222,7 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama kjører, men ingen installerte modeller ble funnet.';
+  String get aiNoModels => 'Ingen modell er valgt.';
 
   @override
   String get aiConnectionFailed =>
@@ -3194,19 +3326,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiContentSentToAi => 'Innhold sendt til KI';
 
   @override
-  String get aiPrivacyDisabled =>
-      'KI er deaktivert. BusyMark sender aldri dokumentinnhold uten en eksplisitt KI-handling.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til den konfigurerte lokale Ollama-tjenesten. Forslag brukes aldri uten gjennomgang.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til $provider. Forespørsler er tilstandsløse, og forslag brukes aldri uten gjennomgang.';
-  }
-
-  @override
   String get aiApiKey => 'API-nøkkel';
 
   @override
@@ -3243,6 +3362,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'Foretrukket modell';
+
+  @override
+  String get aiModel => 'Modell';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3330,4 +3452,14 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
+
+  @override
+  String get mathRenderFailed =>
+      'Det matematiske uttrykket kunne ikke gjengis.';
+
+  @override
+  String get inlineMath => 'Integrert matematikk';
+
+  @override
+  String get displayMath => 'Matematikkblokk';
 }

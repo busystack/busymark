@@ -416,6 +416,25 @@ void main() {
     expect(gateway.commitCalls, 0);
   });
 
+  test('configures author identity through the active repository', () async {
+    final gateway = _FakeGitGateway(staged: true);
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    final configured = await controller.configureAuthorIdentity(
+      name: 'Albert Gee',
+      email: 'albert@example.com',
+      globally: true,
+    );
+
+    expect(configured, isTrue);
+    expect(gateway.authorName, 'Albert Gee');
+    expect(gateway.authorEmail, 'albert@example.com');
+    expect(gateway.authorIdentityGlobal, isTrue);
+  });
+
   test('AI staged-diff fingerprint rejects obsolete commit context', () async {
     final gateway = _FakeGitGateway(staged: true)
       ..stagedRawPatch = 'diff --git a/a.md b/a.md\n+first\n';
@@ -1068,6 +1087,9 @@ class _FakeGitGateway implements GitRepositoryGateway {
   var detectCalls = 0;
   var statusCalls = 0;
   var commitCalls = 0;
+  String? authorName;
+  String? authorEmail;
+  bool? authorIdentityGlobal;
   var switchCalls = 0;
   var fetchCalls = 0;
   var restoreCalls = 0;
@@ -1173,6 +1195,19 @@ class _FakeGitGateway implements GitRepositoryGateway {
   ) async {
     commitCalls++;
     _staged = false;
+    return _result();
+  }
+
+  @override
+  Future<GitOperationResult> configureAuthorIdentity(
+    GitRepositoryInfo repository, {
+    required String name,
+    required String email,
+    required bool globally,
+  }) async {
+    authorName = name;
+    authorEmail = email;
+    authorIdentityGlobal = globally;
     return _result();
   }
 

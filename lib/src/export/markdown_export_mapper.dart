@@ -2,7 +2,19 @@ import 'package:path/path.dart' as p;
 
 import '../core/uri_utils.dart';
 import '../markdown/busymark_document.dart';
+import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
+
+const double busyMarkPdfBodyTextSize = 10.5;
+
+double busyMarkPdfHeadingTextSize(int level) => switch (level.clamp(1, 6)) {
+  1 => 22,
+  2 => 17,
+  3 => 13.5,
+  4 => 11.5,
+  5 || 6 => busyMarkPdfBodyTextSize,
+  _ => busyMarkPdfBodyTextSize,
+};
 
 class MarkdownExportMapper {
   const MarkdownExportMapper();
@@ -126,18 +138,20 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
     return switch (block.kind) {
-      BusyBlockKind.heading => MarkdownExportBlock(
-        kind: MarkdownExportBlockKind.heading,
-        inlines: _mapInlines(block.inlines),
-        attributes: {
-          'level':
-              int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1,
-          if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
-        },
-      ),
+      BusyBlockKind.heading => _mapHeading(block),
       BusyBlockKind.paragraph => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.paragraph,
         inlines: _mapInlines(block.inlines),
+      ),
+      BusyBlockKind.math => MarkdownExportBlock(
+        kind: MarkdownExportBlockKind.math,
+        text: block.plainText,
+        attributes: {
+          'mathId': block.id,
+          'display': true,
+          if (block.attributes['mathSourceForm'] case final sourceForm?)
+            'sourceForm': sourceForm,
+        },
       ),
       BusyBlockKind.codeBlock => MarkdownExportBlock(
         kind: MarkdownExportBlockKind.code,
@@ -148,15 +162,12 @@ class MarkdownExportMapper {
             'language': language,
         },
       ),
-      BusyBlockKind.blockquote => MarkdownExportBlock(
-        kind: MarkdownExportBlockKind.blockquote,
-        inlines: _mapInlines(block.inlines),
-        children: _mapBlocks(block.children, blockOverrides),
-      ),
+      BusyBlockKind.blockquote => _mapBlockquote(block, blockOverrides),
       BusyBlockKind.thematicBreak => const MarkdownExportBlock(
         kind: MarkdownExportBlockKind.thematicBreak,
       ),
       BusyBlockKind.image => _mapImageBlock(block),
+      BusyBlockKind.video => _mapVideoBlock(block),
       BusyBlockKind.table => _mapTable(block, blockOverrides),
       BusyBlockKind.htmlBlock when block.children.isNotEmpty =>
         MarkdownExportBlock(
@@ -171,7 +182,10 @@ class MarkdownExportMapper {
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
       BusyBlockKind.taskListItem => _mapListItem(block, blockOverrides),
-      BusyBlockKind.writersideAdmonition ||
+      BusyBlockKind.writersideAdmonition => _mapWritersideAdmonition(
+        block,
+        blockOverrides,
+      ),
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
@@ -184,6 +198,59 @@ class MarkdownExportMapper {
         text: block.rawSource ?? block.plainText,
       ),
     };
+  }
+
+  MarkdownExportBlock _mapBlockquote(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
+    final style = busyAdmonitionStyleFromName(block.attributes['style']);
+    final admonition =
+        block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true' &&
+        style != BusyAdmonitionStyle.quote;
+    return MarkdownExportBlock(
+      kind: admonition
+          ? MarkdownExportBlockKind.admonition
+          : MarkdownExportBlockKind.blockquote,
+      inlines: _mapInlines(block.inlines),
+      children: _mapBlocks(block.children, blockOverrides),
+      attributes: {if (admonition) 'style': style?.name ?? 'tip'},
+    );
+  }
+
+  MarkdownExportBlock _mapWritersideAdmonition(
+    BusyBlock block,
+    Map<String, MarkdownExportBlock> blockOverrides,
+  ) {
+    final style =
+        busyAdmonitionStyleFromName(
+          block.attributes['style'] ?? block.attributes['element'],
+        ) ??
+        BusyAdmonitionStyle.note;
+    return MarkdownExportBlock(
+      kind: style == BusyAdmonitionStyle.quote
+          ? MarkdownExportBlockKind.blockquote
+          : MarkdownExportBlockKind.admonition,
+      inlines: _mapInlines(block.inlines),
+      children: _mapBlocks(block.children, blockOverrides),
+      attributes: {if (style != BusyAdmonitionStyle.quote) 'style': style.name},
+    );
+  }
+
+  MarkdownExportBlock _mapHeading(BusyBlock block) {
+    final level =
+        int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1;
+    return MarkdownExportBlock(
+      kind: MarkdownExportBlockKind.heading,
+      inlines: _mapInlines(
+        block.inlines,
+        mathEm: busyMarkPdfHeadingTextSize(level),
+      ),
+      attributes: {
+        'level': level,
+        if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
+      },
+    );
   }
 
   MarkdownExportBlock _mapTable(
@@ -236,12 +303,37 @@ class MarkdownExportMapper {
     );
   }
 
-  List<MarkdownExportInline> _mapInlines(List<BusyInline> inlines) {
-    return List.unmodifiable(inlines.map(_mapInline));
+  MarkdownExportBlock _mapVideoBlock(BusyBlock block) {
+    final source = block.attributes['src']?.trim() ?? '';
+    final preview = writersideVideoPreviewSource(
+      source,
+      block.attributes['preview-src'],
+    );
+    return MarkdownExportBlock(
+      kind: MarkdownExportBlockKind.video,
+      attributes: {
+        'source': source,
+        if (preview.isNotEmpty) 'preview': preview,
+        if (block.attributes['width'] case final width?) 'width': width,
+        if (block.attributes['height'] case final height?) 'height': height,
+      },
+    );
   }
 
-  MarkdownExportInline _mapInline(BusyInline inline) {
-    final children = _mapInlines(inline.children);
+  List<MarkdownExportInline> _mapInlines(
+    List<BusyInline> inlines, {
+    double mathEm = busyMarkPdfBodyTextSize,
+  }) {
+    return List.unmodifiable(
+      inlines.map((inline) => _mapInline(inline, mathEm: mathEm)),
+    );
+  }
+
+  MarkdownExportInline _mapInline(
+    BusyInline inline, {
+    double mathEm = busyMarkPdfBodyTextSize,
+  }) {
+    final children = _mapInlines(inline.children, mathEm: mathEm);
     return switch (inline.kind) {
       BusyInlineKind.text => MarkdownExportInline(
         kind: MarkdownExportInlineKind.text,
@@ -270,6 +362,18 @@ class MarkdownExportMapper {
       BusyInlineKind.code => MarkdownExportInline(
         kind: MarkdownExportInlineKind.code,
         text: inline.text,
+      ),
+      BusyInlineKind.math => MarkdownExportInline(
+        kind: MarkdownExportInlineKind.math,
+        text: inline.text,
+        attributes: {
+          'mathId': inline.attributes['expressionId'] ?? inline.text,
+          'display': 'false',
+          'renderEm': '$mathEm',
+          'renderEx': '${mathEm / 2}',
+          if (inline.attributes['mathSourceForm'] case final sourceForm?)
+            'sourceForm': sourceForm,
+        },
       ),
       BusyInlineKind.link => MarkdownExportInline(
         kind: MarkdownExportInlineKind.link,

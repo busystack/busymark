@@ -220,6 +220,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
+  String get commandPalette => 'Палітра команд';
+
+  @override
+  String get commandPaletteHint => 'Введіть команду';
+
+  @override
+  String get commandPaletteEmpty => 'Немає відповідних команд';
+
+  @override
+  String get commandUnavailableInContext =>
+      'Ця команда недоступна в поточному контексті.';
+
+  @override
   String get lightTheme => 'Світла';
 
   @override
@@ -717,6 +730,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Вікно';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Відкривати попередній робочий простір під час запуску';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Відкривати робочий простір і вкладки попереднього сеансу під час запуску BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Підтверджувати закриття за наявності незбережених змін';
 
@@ -770,6 +791,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return 'У документах ($count) є незбережені зміни. Зберегти їх перед продовженням?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'Файл змінено на диску';
 
   @override
@@ -808,6 +834,40 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get image => 'Зображення';
+
+  @override
+  String get video => 'Відео';
+
+  @override
+  String get openVideo => 'Відтворити відео';
+
+  @override
+  String get pauseVideo => 'Призупинити відео';
+
+  @override
+  String get videoUnavailable => 'Відео недоступне';
+
+  @override
+  String get videoPreview => 'Попередній перегляд відео';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'У відео відсутній атрибут src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Непідтримуване джерело відео: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Відеофайл не існує: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Зображення попереднього перегляду відео не існує: $preview';
+  }
 
   @override
   String get inlineImage => 'Вбудоване зображення';
@@ -903,6 +963,18 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get deleteColumn => 'Видалити стовпець';
+
+  @override
+  String get tableAlignmentUnspecified => 'Вирівнювання: не вказано';
+
+  @override
+  String get tableAlignmentLeft => 'Вирівнювання: ліворуч';
+
+  @override
+  String get tableAlignmentCenter => 'Вирівнювання: по центру';
+
+  @override
+  String get tableAlignmentRight => 'Вирівнювання: праворуч';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1342,6 +1414,132 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchRegex => 'Регулярний вираз';
 
   @override
+  String get sourceSearchReplacement => 'Замінити на';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Замінити поточне';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Замінити й знайти наступне';
+
+  @override
+  String get sourceSearchReplaceAll => 'Замінити все';
+
+  @override
+  String get workspaceReplace => 'Замінити в робочій області';
+
+  @override
+  String get reviewReplacements => 'Переглянути заміни';
+
+  @override
+  String get applyReplacements => 'Застосувати заміни';
+
+  @override
+  String get skippedFiles => 'Пропущені файли';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Незбережений вміст редактора';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Вміст, збережений на диску';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Вибрати всі збіги: $count';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Замінено збігів: $matches у файлах: $files; пропущено: $skipped.';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Кінцеве перенесення рядка';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Немає кінцевого перенесення рядка';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Нормалізувати закінчення рядків';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'У документі використовуються змішані закінчення рядків. Виберіть формат.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'У $fileName використовуються змішані закінчення рядків. Виберіть формат перед заміною.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Завеликий файл пропущено.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Файл, який не вдалося прочитати, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Файл із неприпустимим UTF-8 пропущено.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Попередній перегляд замін було скорочено.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Файл, змінений після попереднього перегляду, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Буфер редактора, змінений після попереднього перегляду, пропущено.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Перед заміною виберіть нормалізацію LF або CRLF.';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Зовнішні зміни — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Цей файл було видалено з диска.';
+
+  @override
+  String get externalFileChanged =>
+      'Цей файл змінився на диску, поки у вас були незбережені зміни.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Відновлено незбережений вміст файлу $fileName. Перегляньте його, потім збережіть, збережіть як новий файл або відкиньте.';
+  }
+
+  @override
+  String get compare => 'Порівняти';
+
+  @override
+  String get reloadFromDisk => 'Перезавантажити з диска';
+
+  @override
+  String get keepMine => 'Залишити мою версію';
+
+  @override
+  String get saveAs => 'Зберегти як';
+
+  @override
   String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
 
   @override
@@ -1350,6 +1548,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get nothingToRead => 'Немає вмісту для читання';
+
+  @override
+  String get admonition => 'Блок-примітка';
+
+  @override
+  String get quote => 'Цитата';
 
   @override
   String get note => 'Примітка';
@@ -1476,6 +1680,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Помилка перевірки: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Відновлено незбережених документів: $count. Перегляньте кожен відновлений документ перед продовженням.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Не вдалося відновити пошкоджені записи ($count). Коректні відновлені документи залишаються доступними.';
   }
 
   @override
@@ -2314,6 +2528,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileActions => 'Дії з файлом';
 
   @override
+  String get actions => 'Дії';
+
+  @override
   String get gitStatusAdded => 'Додано';
 
   @override
@@ -2387,8 +2604,34 @@ class AppLocalizationsUk extends AppLocalizations {
       'Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Не вдалося автентифікуватися в Git. Для віддалених SSH-репозиторіїв у snap може знадобитися підключити інтерфейс ssh-keys.';
+  String get gitErrorAuthorIdentity =>
+      'Перед створенням коміту Git потребує ім’я та адресу електронної пошти автора.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Дані автора Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Введіть дані, які Git має записувати в комітах. BusyMark збереже їх і повторить цей коміт.';
+
+  @override
+  String get gitAuthorName => 'Ім’я';
+
+  @override
+  String get gitAuthorEmail => 'Електронна пошта';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Використовувати для всіх репозиторіїв';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Під час установлення через Snap це стосується репозиторіїв, відкритих у BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Зберегти й створити коміт';
+
+  @override
+  String get gitErrorAuthentication => 'Не вдалося автентифікуватися в Git.';
 
   @override
   String get gitErrorNetwork => 'Не вдалося виконати мережеву операцію Git.';
@@ -2970,136 +3213,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get exportWritersideAsPdf => 'Експорт Writerside у PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Виберіть екземпляр і параметри PDF. BusyMark використовує офіційний збирач Writerside від JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Вміст експорту';
-
-  @override
-  String get writersidePdfSettings => 'Налаштування PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Налаштувати для цього експорту';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Використати конфігурацію проєкту';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Файл конфігурації PDF';
 
   @override
   String get writersidePdfPage => 'Сторінка';
 
   @override
-  String get writersidePdfKeymap => 'Розкладка клавіш';
-
-  @override
-  String get writersidePdfNoKeymap => 'Без розкладки клавіш';
-
-  @override
-  String get writersidePdfTocTitle => 'Заголовок змісту';
-
-  @override
-  String get writersidePdfCover => 'Титульна сторінка';
-
-  @override
-  String get writersidePdfIncludeCover => 'Додати титульну сторінку';
-
-  @override
-  String get writersidePdfCoverTitle => 'Заголовок обкладинки';
-
-  @override
-  String get writersidePdfCoverDescription => 'Опис на обкладинці';
-
-  @override
-  String get writersidePdfCopyright => 'Авторські права';
-
-  @override
-  String get writersidePdfCoverLogo => 'Логотип на обкладинці';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Вибрати логотип для обкладинки';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Верхній і нижній колонтитули';
-
-  @override
-  String get writersidePdfHeader => 'Верхній колонтитул';
-
-  @override
-  String get writersidePdfFooter => 'Нижній колонтитул';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Ці значення зіставляють відкритий модуль зі структурою вихідних файлів збирача.';
-
-  @override
-  String get writersidePdfModuleName => 'Назва модуля';
-
-  @override
-  String get writersidePdfSourceRoot => 'Коренева папка вихідних файлів';
-
-  @override
-  String get writersidePdfChooseSourceRoot =>
-      'Вибрати кореневу папку вихідних файлів';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Версія збирача';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Дозволити мережу під час збирання';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Початково вимкнено. Увімкніть лише тоді, коли проєкт навмисно потребує віддалених ресурсів збирання.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Введіть назву модуля.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Виберіть кореневу папку вихідних файлів.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Введіть припустиму версію збирача.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Потрібен збирач Writerside';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark використовує офіційний образ контейнера $image. Завантажити його зараз? Образ має великий розмір і зберігатиметься в Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Завантаження збирача Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Експорт PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Для експорту Writerside у PDF потрібен Docker. Установіть і запустіть Docker, а потім повторіть спробу.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Запитаний образ збирача Writerside недоступний.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Конфігурація PDF Writerside є неприпустимою.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Збирачу Writerside не вдалося створити PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Збирач Writerside не створив припустимий PDF.';
 
   @override
   String get ai => 'ШІ';
@@ -3116,6 +3236,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get aiProvider => 'Постачальник ШІ';
+
+  @override
+  String get aiDefaultProvider => 'Постачальник за замовчуванням';
+
+  @override
+  String get aiConfigureProvider => 'Налаштувати постачальника';
+
+  @override
+  String get aiChooseProvider => 'Виберіть постачальника ШІ';
 
   @override
   String get aiOllamaEndpoint => 'Кінцева точка Ollama';
@@ -3135,8 +3264,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama запущено, але встановлених моделей не знайдено.';
+  String get aiNoModels => 'Модель не вибрана.';
 
   @override
   String get aiConnectionFailed =>
@@ -3240,19 +3368,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiContentSentToAi => 'Вміст, що надсилається ШІ';
 
   @override
-  String get aiPrivacyDisabled =>
-      'ШІ вимкнено. BusyMark ніколи не надсилає вміст документа без явної дії з ШІ.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark надсилає лише контекст, показаний у діалозі перевірки, налаштованій локальній службі Ollama. Пропозиції ніколи не застосовуються без перевірки.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark надсилає лише контекст, показаний у діалозі перевірки, постачальнику $provider. Запити не зберігають стан, а пропозиції ніколи не застосовуються без перевірки.';
-  }
-
-  @override
   String get aiApiKey => 'Ключ API';
 
   @override
@@ -3289,6 +3404,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'Бажана модель';
+
+  @override
+  String get aiModel => 'Модель';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3375,4 +3493,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Заголовки таблиці мають позначати стовпці; заповніть кожен порожній заголовок.';
+
+  @override
+  String get mathRenderFailed => 'Не вдалося відобразити математичний вираз.';
+
+  @override
+  String get inlineMath => 'Формула в рядку';
+
+  @override
+  String get displayMath => 'Формула окремим блоком';
 }

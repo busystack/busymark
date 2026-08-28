@@ -6,14 +6,17 @@ enum MarkdownExportBlockKind {
   code,
   list,
   listItem,
+  admonition,
   blockquote,
   thematicBreak,
   image,
+  video,
   table,
   tableRow,
   tableCell,
   rawText,
   group,
+  math,
   visualization,
   openApiReference,
 }
@@ -29,6 +32,7 @@ enum MarkdownExportInlineKind {
   image,
   softBreak,
   hardBreak,
+  math,
 }
 
 @immutable
@@ -63,6 +67,13 @@ class MarkdownExportDocument {
   final MarkdownExportMetadata metadata;
   final List<MarkdownExportBlock> blocks;
 
+  MarkdownExportDocument copyWith({List<MarkdownExportBlock>? blocks}) {
+    return MarkdownExportDocument(
+      metadata: metadata,
+      blocks: blocks ?? this.blocks,
+    );
+  }
+
   Iterable<String> get imageDestinations sync* {
     for (final block in blocks) {
       yield* block.imageDestinations;
@@ -86,7 +97,27 @@ class MarkdownExportBlock {
   final Map<String, Object> attributes;
   final String text;
 
+  MarkdownExportBlock copyWith({
+    List<MarkdownExportInline>? inlines,
+    List<MarkdownExportBlock>? children,
+    Map<String, Object>? attributes,
+  }) {
+    return MarkdownExportBlock(
+      kind: kind,
+      inlines: inlines ?? this.inlines,
+      children: children ?? this.children,
+      attributes: attributes ?? this.attributes,
+      text: text,
+    );
+  }
+
   Iterable<String> get imageDestinations sync* {
+    final preview = attributes['preview'];
+    if (kind == MarkdownExportBlockKind.video &&
+        preview is String &&
+        preview.trim().isNotEmpty) {
+      yield preview;
+    }
     for (final inline in inlines) {
       yield* inline.imageDestinations;
     }
@@ -111,6 +142,19 @@ class MarkdownExportInline {
   final String? destination;
   final List<MarkdownExportInline> children;
   final Map<String, String> attributes;
+
+  MarkdownExportInline copyWith({
+    List<MarkdownExportInline>? children,
+    Map<String, String>? attributes,
+  }) {
+    return MarkdownExportInline(
+      kind: kind,
+      text: text,
+      destination: destination,
+      children: children ?? this.children,
+      attributes: attributes ?? this.attributes,
+    );
+  }
 
   Iterable<String> get imageDestinations sync* {
     if (kind == MarkdownExportInlineKind.image &&

@@ -11,11 +11,13 @@
 
 #include "flutter/generated_plugin_registrant.h"
 #include "secure_credential_host.h"
+#include "video_player_host.h"
 #include "web_render_host.h"
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
 constexpr char kNativeMenuChannel[] = "busymark/native_menus";
+constexpr char kAssetInputChannel[] = "com.busymark.app/asset_input";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
@@ -81,11 +83,14 @@ struct _MyApplication {
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
   FlMethodChannel* native_menu_channel;
+  FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   BusyMarkWebRenderHost* visualization_host;
+  BusyMarkVideoPlayerHost* video_player_host;
   GtkCssProvider* header_bar_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
+  GtkWidget* flutter_overlay;
   GtkWidget* titlebar_handle;
   GtkWidget* titlebar_overlay;
   GtkWidget* modal_scrim;
@@ -2231,7 +2236,23 @@ struct NativeMenuSession {
 struct NativeMenuHandlerData {
   GtkWidget* view;
   NativeMenuSession* active;
+  GdkEvent* trigger_event;
+  gulong event_signal_id;
 };
+
+static gboolean native_menu_capture_trigger_event(GtkWidget*,
+                                                  GdkEvent* event,
+                                                  gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  if (event == nullptr ||
+      (event->type != GDK_BUTTON_PRESS && event->type != GDK_KEY_PRESS &&
+       event->type != GDK_TOUCH_BEGIN)) {
+    return GDK_EVENT_PROPAGATE;
+  }
+  g_clear_pointer(&data->trigger_event, gdk_event_free);
+  data->trigger_event = gdk_event_copy(event);
+  return GDK_EVENT_PROPAGATE;
+}
 
 static void native_menu_session_respond(NativeMenuSession* session,
                                         gint selected_index) {
@@ -2732,7 +2753,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
   gtk_menu_popup_at_rect(
       GTK_MENU(session->menu), rect_window, &window_anchor,
       open_above ? GDK_GRAVITY_NORTH_WEST : GDK_GRAVITY_SOUTH_WEST,
-      open_above ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_NORTH_WEST, nullptr);
+      open_above ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_NORTH_WEST,
+      data->trigger_event);
   if (focus_first) {
     gtk_menu_shell_select_first(GTK_MENU_SHELL(session->menu), TRUE);
   } else {
@@ -2746,10 +2768,14 @@ static void native_menu_handler_data_free(gpointer user_data) {
     native_menu_session_dispose(data->active);
   }
   if (data->view != nullptr) {
+    if (data->event_signal_id != 0) {
+      g_signal_handler_disconnect(data->view, data->event_signal_id);
+    }
     g_object_remove_weak_pointer(
         G_OBJECT(data->view),
         reinterpret_cast<gpointer*>(&data->view));
   }
+  g_clear_pointer(&data->trigger_event, gdk_event_free);
   g_free(data);
 }
 
@@ -2784,9 +2810,101 @@ static void register_native_menu_channel(MyApplication* self, FlView* view) {
   data->view = GTK_WIDGET(view);
   g_object_add_weak_pointer(G_OBJECT(data->view),
                             reinterpret_cast<gpointer*>(&data->view));
+  data->event_signal_id =
+      g_signal_connect(data->view, "event",
+                       G_CALLBACK(native_menu_capture_trigger_event), data);
   fl_method_channel_set_method_call_handler(
       self->native_menu_channel, native_menu_method_call_cb, data,
       native_menu_handler_data_free);
+}
+
+static FlValue* local_paths_from_uris(gchar** uris) {
+  FlValue* paths = fl_value_new_list();
+  if (uris == nullptr) {
+    return paths;
+  }
+  for (gchar** current = uris; *current != nullptr; current++) {
+    g_autoptr(GError) error = nullptr;
+    g_autofree gchar* path = g_filename_from_uri(*current, nullptr, &error);
+    if (path != nullptr) {
+      fl_value_append_take(paths, fl_value_new_string(path));
+    }
+  }
+  return paths;
+}
+
+static void asset_input_method_call_cb(FlMethodChannel*,
+                                       FlMethodCall* method_call,
+                                       gpointer) {
+  const gchar* method = fl_method_call_get_name(method_call);
+  GtkClipboard* clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  if (strcmp(method, "readClipboardImageFiles") == 0) {
+    g_auto(GStrv) uris = gtk_clipboard_wait_for_uris(clipboard);
+    g_autoptr(FlValue) paths = local_paths_from_uris(uris);
+    fl_method_call_respond_success(method_call, paths, nullptr);
+    return;
+  }
+  if (strcmp(method, "readClipboardImagePng") == 0) {
+    g_autoptr(GdkPixbuf) pixbuf = gtk_clipboard_wait_for_image(clipboard);
+    if (pixbuf == nullptr) {
+      g_autoptr(FlValue) result = fl_value_new_null();
+      fl_method_call_respond_success(method_call, result, nullptr);
+      return;
+    }
+    gchar* buffer = nullptr;
+    gsize length = 0;
+    g_autoptr(GError) error = nullptr;
+    if (!gdk_pixbuf_save_to_buffer(pixbuf, &buffer, &length, "png", &error,
+                                   nullptr)) {
+      g_autoptr(FlValue) details = fl_value_new_null();
+      fl_method_call_respond_error(
+          method_call, "asset.clipboard-encode-failed",
+          error != nullptr ? error->message : "Could not encode clipboard image.",
+          details, nullptr);
+      return;
+    }
+    g_autoptr(GBytes) bytes = g_bytes_new_take(buffer, length);
+    g_autoptr(FlValue) result = fl_value_new_uint8_list_from_bytes(bytes);
+    fl_method_call_respond_success(method_call, result, nullptr);
+    return;
+  }
+  fl_method_call_respond_not_implemented(method_call, nullptr);
+}
+
+static void asset_drag_data_received_cb(GtkWidget*,
+                                        GdkDragContext* context,
+                                        gint,
+                                        gint,
+                                        GtkSelectionData* selection,
+                                        guint,
+                                        guint time,
+                                        gpointer user_data) {
+  auto* self = MY_APPLICATION(user_data);
+  g_auto(GStrv) uris = gtk_selection_data_get_uris(selection);
+  g_autoptr(FlValue) paths = local_paths_from_uris(uris);
+  const gboolean accepted = fl_value_get_length(paths) > 0;
+  if (accepted && self->asset_input_channel != nullptr) {
+    fl_method_channel_invoke_method(self->asset_input_channel,
+                                    "assetFilesDropped", paths, nullptr,
+                                    nullptr, nullptr);
+  }
+  gtk_drag_finish(context, accepted, FALSE, time);
+}
+
+static void register_asset_input_channel(MyApplication* self, FlView* view) {
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  self->asset_input_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      kAssetInputChannel, FL_METHOD_CODEC(codec));
+  fl_method_channel_set_method_call_handler(
+      self->asset_input_channel, asset_input_method_call_cb, self, nullptr);
+  GtkTargetEntry targets[] = {
+      {const_cast<gchar*>("text/uri-list"), 0, 0},
+  };
+  gtk_drag_dest_set(GTK_WIDGET(view), GTK_DEST_DEFAULT_ALL, targets, 1,
+                    GDK_ACTION_COPY);
+  g_signal_connect(view, "drag-data-received",
+                   G_CALLBACK(asset_drag_data_received_cb), self);
 }
 
 // Called when first Flutter frame received.
@@ -2845,7 +2963,13 @@ static void my_application_activate(GApplication* application) {
   GtkWidget* window_content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_pack_start(GTK_BOX(window_content), self->titlebar_handle, FALSE,
                      FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(window_content), GTK_WIDGET(view), TRUE, TRUE, 0);
+  self->flutter_overlay = gtk_overlay_new();
+  gtk_widget_set_hexpand(self->flutter_overlay, TRUE);
+  gtk_widget_set_vexpand(self->flutter_overlay, TRUE);
+  gtk_container_add(GTK_CONTAINER(self->flutter_overlay), GTK_WIDGET(view));
+  gtk_widget_show(self->flutter_overlay);
+  gtk_box_pack_start(GTK_BOX(window_content), self->flutter_overlay, TRUE,
+                     TRUE, 0);
   gtk_widget_show(window_content);
   gtk_container_add(GTK_CONTAINER(window), window_content);
 
@@ -2856,11 +2980,15 @@ static void my_application_activate(GApplication* application) {
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
+  register_asset_input_channel(self, view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
   self->visualization_host =
       busymark_web_render_host_new(GTK_APPLICATION(self), window);
   busymark_web_render_host_register_channel(self->visualization_host, view);
+  self->video_player_host =
+      busymark_video_player_host_new(self->flutter_overlay);
+  busymark_video_player_host_register_channel(self->video_player_host, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
   schedule_header_bar_focus_state_refresh(self);
@@ -2917,11 +3045,16 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_css_provider);
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
+  g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->secure_credential_channel);
   if (self->visualization_host != nullptr) {
     busymark_web_render_host_shutdown(self->visualization_host);
   }
   g_clear_object(&self->visualization_host);
+  if (self->video_player_host != nullptr) {
+    busymark_video_player_host_shutdown(self->video_player_host);
+  }
+  g_clear_object(&self->video_player_host);
   g_clear_object(&self->main_menu_model);
   g_clear_object(&self->view_mode_menu_model);
   g_clear_object(&self->view_mode_action);
@@ -2955,11 +3088,14 @@ static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
   self->native_menu_channel = nullptr;
+  self->asset_input_channel = nullptr;
   self->secure_credential_channel = nullptr;
   self->visualization_host = nullptr;
+  self->video_player_host = nullptr;
   self->header_bar_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;
+  self->flutter_overlay = nullptr;
   self->titlebar_handle = nullptr;
   self->titlebar_box = nullptr;
   self->titlebar_overlay = nullptr;

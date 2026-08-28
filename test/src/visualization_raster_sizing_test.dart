@@ -155,6 +155,12 @@ class _LimitEnforcingRasterHost implements WebRenderHost {
   int? pixelHeight;
 
   @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) => throw UnimplementedError();
+
+  @override
   Future<Uint8List> rasterizeSvg({
     required String svg,
     required double width,

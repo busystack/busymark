@@ -172,7 +172,9 @@ jobs:
           sudo apt-get install -y weston xvfb
 
       - name: Install strict Snap
-        run: sudo snap install --dangerous "${{ steps.snapcraft.outputs.snap }}"
+        run: >-
+          sudo snap install --dangerous
+          "${{ steps.snapcraft.outputs.snap }}"
 
       - name: Exercise strict Snap visualization and PDF paths under X11
         run: |

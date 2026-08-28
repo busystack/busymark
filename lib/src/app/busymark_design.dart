@@ -1964,7 +1964,7 @@ InputDecoration busyMarkGroupedTextFieldDecoration(
 ///
 /// The row owns the background, outline, padding, and separators while
 /// [TextFormField] continues to own editing, validation, and focus behavior.
-class BusyMarkGroupedTextEntry extends StatelessWidget {
+class BusyMarkGroupedTextEntry extends StatefulWidget {
   const BusyMarkGroupedTextEntry({
     super.key,
     required this.label,
@@ -1974,6 +1974,7 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
     this.hintText,
     this.enabled = true,
     this.autofocus = false,
+    this.focusNode,
     this.keyboardType,
     this.minLines = 1,
     this.maxLines = 1,
@@ -1998,6 +1999,7 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
   final String? hintText;
   final bool enabled;
   final bool autofocus;
+  final FocusNode? focusNode;
   final TextInputType? keyboardType;
   final int minLines;
   final int maxLines;
@@ -2013,34 +2015,70 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
 
   @override
+  State<BusyMarkGroupedTextEntry> createState() =>
+      _BusyMarkGroupedTextEntryState();
+}
+
+class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
+  final _fieldKey = GlobalKey<FormFieldState<String>>();
+
+  @override
   Widget build(BuildContext context) {
+    final row = _buildRow(context);
+    if (!widget.enabled || widget.onSubmitted == null) {
+      return row;
+    }
+    // Linux physical key events are not always translated into the text-input
+    // action that drives TextFormField.onFieldSubmitted. Keep that callback for
+    // IME actions and bind the desktop Enter keys explicitly as well.
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.enter): _submit,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter): _submit,
+      },
+      child: row,
+    );
+  }
+
+  Widget _buildRow(BuildContext context) {
     return YaruListTile.square(
       title: TextFormField(
-        controller: controller,
-        initialValue: initialValue,
-        enabled: enabled,
-        autofocus: autofocus,
-        keyboardType: keyboardType,
-        minLines: minLines,
-        maxLines: maxLines,
-        textInputAction: textInputAction,
-        textDirection: textDirection,
-        obscureText: obscureText,
-        enableSuggestions: enableSuggestions,
-        autocorrect: autocorrect,
-        style: textStyle,
-        onChanged: enabled ? onChanged : null,
-        onFieldSubmitted: enabled ? onSubmitted : null,
+        key: _fieldKey,
+        controller: widget.controller,
+        initialValue: widget.initialValue,
+        enabled: widget.enabled,
+        autofocus: widget.autofocus,
+        focusNode: widget.focusNode,
+        keyboardType: widget.keyboardType,
+        minLines: widget.minLines,
+        maxLines: widget.maxLines,
+        textInputAction: widget.textInputAction,
+        textDirection: widget.textDirection,
+        obscureText: widget.obscureText,
+        enableSuggestions: widget.enableSuggestions,
+        autocorrect: widget.autocorrect,
+        style: widget.textStyle,
+        onChanged: widget.enabled ? widget.onChanged : null,
+        onFieldSubmitted: widget.enabled ? widget.onSubmitted : null,
         decoration: busyMarkGroupedTextFieldDecoration(
           context,
-          labelText: label,
-          hintText: hintText,
-          errorText: errorText,
-          alignLabelWithHint: alignLabelWithHint,
+          labelText: widget.label,
+          hintText: widget.hintText,
+          errorText: widget.errorText,
+          alignLabelWithHint: widget.alignLabelWithHint,
         ),
       ),
-      trailing: trailing,
+      trailing: widget.trailing,
     );
+  }
+
+  void _submit() {
+    final value =
+        widget.controller?.text ??
+        _fieldKey.currentState?.value ??
+        widget.initialValue ??
+        '';
+    widget.onSubmitted?.call(value);
   }
 }
 

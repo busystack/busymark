@@ -72,10 +72,50 @@ void main() {
     expect(runner.timeouts, everyElement(greaterThan(Duration.zero)));
   });
 
+  test('gateway classifies a missing commit author identity', () async {
+    final gateway = GitCliGateway(
+      runner: const _AuthorIdentityGitRunner(),
+      locator: const _AvailableGitLocator(),
+    );
+
+    await expectLater(
+      gateway.commit(
+        const GitRepositoryInfo(
+          rootPath: '/repo',
+          gitDirPath: '/repo/.git',
+          currentBranch: 'main',
+        ),
+        'Document the release',
+      ),
+      throwsA(
+        isA<GitFailure>()
+            .having(
+              (failure) => failure.code,
+              'code',
+              GitFailureCode.authorIdentity,
+            )
+            .having(
+              (failure) => failure.userMessageKey,
+              'userMessageKey',
+              'gitErrorAuthorIdentity',
+            ),
+      ),
+    );
+  });
+
   test('snap packages the Linux process-group launcher', () {
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
     expect(snapcraft, contains(RegExp(r'^\s*- util-linux$', multiLine: true)));
+  });
+
+  test('snap Git uses bundled helpers, templates, and SSH', () {
+    expect(gitEnvironmentForSnap('/snap/busymark/x1'), {
+      'GIT_EXEC_PATH': '/snap/busymark/x1/usr/lib/git-core',
+      'GIT_TEMPLATE_DIR': '/snap/busymark/x1/usr/share/git-core/templates',
+      'GIT_SSH': '/snap/busymark/x1/usr/bin/ssh',
+    });
+    expect(gitEnvironmentForSnap(''), isEmpty);
   });
 
   test('snap launcher never falls back to the confined host setsid', () async {
@@ -289,6 +329,32 @@ class _PermissionDeniedGitRunner implements GitCommandRunner {
     Map<String, String> environment = const {},
   }) async {
     throw ProcessException('setsid', const [], 'Permission denied', 13);
+  }
+}
+
+class _AuthorIdentityGitRunner implements GitCommandRunner {
+  const _AuthorIdentityGitRunner();
+
+  @override
+  Future<GitProcessResult> run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    required Duration timeout,
+    required String commandName,
+    Map<String, String> environment = const {},
+  }) async {
+    return GitProcessResult(
+      executable: executable,
+      arguments: arguments,
+      exitCode: 128,
+      stdoutBytes: const [],
+      stderrBytes:
+          ('Author identity unknown\n\n'
+                  'Please tell me who you are.\n'
+                  'fatal: unable to auto-detect email address')
+              .codeUnits,
+    );
   }
 }
 

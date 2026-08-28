@@ -42,8 +42,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     extensions: <String>['md', 'markdown'],
     mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
-  var _startupPathConsumed = false;
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
@@ -58,13 +56,33 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       });
     });
     final startupPath = ref.watch(startupPathProvider);
-    if (!_startupPathConsumed &&
-        startupPath != null &&
-        startupPath.isNotEmpty) {
-      _startupPathConsumed = true;
+    final startupNavigation = ref.read(startupNavigationGuardProvider);
+    if (startupNavigation.claimStartupPath(startupPath)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          unawaited(_openPath(startupPath));
+          unawaited(_openPath(startupPath!));
+        }
+      });
+    } else if (startupNavigation.claimSessionRestore(startupPath)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) {
+          return;
+        }
+        final settingsController = ref.read(
+          appSettingsControllerProvider.notifier,
+        );
+        await settingsController.waitUntilLoaded();
+        if (!mounted) {
+          return;
+        }
+        final reopenCleanSession = ref
+            .read(appSettingsControllerProvider)
+            .reopenPreviousWorkspaceOnStartup;
+        final restored = await ref
+            .read(workspaceControllerProvider.notifier)
+            .restoreStartupSession(reopenCleanSession: reopenCleanSession);
+        if (restored && mounted) {
+          this.context.go('/workspace');
         }
       });
     }
@@ -272,6 +290,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.commandPalette:
+        return;
       case BusyMarkMainMenuAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
@@ -865,8 +885,9 @@ BusyMarkStatusKind busyMarkWorkspaceMessageStatusKind(
   return switch (code) {
     WorkspaceMessageCode.chooseWhereToSaveMarkdown =>
       BusyMarkStatusKind.information,
-    WorkspaceMessageCode.saveBlockedFileChangedOnDisk =>
-      BusyMarkStatusKind.warning,
+    WorkspaceMessageCode.recoveryRestored => BusyMarkStatusKind.information,
+    WorkspaceMessageCode.saveBlockedFileChangedOnDisk ||
+    WorkspaceMessageCode.recoveryDamaged => BusyMarkStatusKind.warning,
     WorkspaceMessageCode.openFailed ||
     WorkspaceMessageCode.createWritersideProjectFailed ||
     WorkspaceMessageCode.createWritersideTopicFailed ||

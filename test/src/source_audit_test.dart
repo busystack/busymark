@@ -150,6 +150,8 @@ void main() {
       orderedEquals(<String>[
         'Icons'
             '.fork_right',
+        'Icons'
+            '.functions',
       ]),
     );
   });
@@ -866,9 +868,12 @@ void main() {
     );
     expect(
       sourceEditor,
-      contains('selectionHeightStyle: BoxHeightStyle.strut'),
+      contains('BusyMarkDocumentTextGeometry.selectionHeightStyle'),
     );
-    expect(sourceEditor, contains('selectionWidthStyle: BoxWidthStyle.tight'));
+    expect(
+      sourceEditor,
+      contains('BusyMarkDocumentTextGeometry.selectionWidthStyle'),
+    );
     expect(sourceEditor, contains('cursorColor: colors.foreground.withValues'));
     expect(sourceEditor, contains('BusyMarkAlpha.sourceCursor'));
     expect(
@@ -900,7 +905,7 @@ void main() {
         ),
       ),
     );
-    expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
+    expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
     expect(
       workspace,
       isNot(contains('BusyMarkSidebarShortcutActivators.history')),
@@ -1098,7 +1103,7 @@ void main() {
       contains("ValueKey('workspace-sidebar-outline-file-menu')"),
     );
     expect(workspace, contains('copyNameLabel: menuContext.l10n.copyFileName'));
-    expect(workspace, contains('tooltip: context.l10n.fileActions'));
+    expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
     expect(workspace, isNot(contains('boldLeadingIcon')));
@@ -1302,7 +1307,7 @@ void main() {
     expect(entries, contains('return YaruListTile.square('));
     expect(entries, contains('title: TextFormField('));
     expect(entries, contains('busyMarkGroupedTextFieldDecoration('));
-    expect(entries, contains('trailing: trailing'));
+    expect(entries, contains('trailing: widget.trailing'));
     expect(entries, isNot(contains('EditableText(')));
     expect(entries, isNot(contains('MouseRegion(')));
     expect(entries, isNot(contains('GestureDetector(')));
@@ -1364,15 +1369,15 @@ void main() {
     expect(workspace, contains('onSecondaryTapUp'));
     expect(
       RegExp(
-        r'BusyMarkTreeShortcutActivators\.deleteSelection',
+        r'BusyMarkCommandIds\s*\.treeDeleteSelection',
       ).allMatches(workspace).length,
-      greaterThanOrEqualTo(2),
+      greaterThanOrEqualTo(4),
     );
     expect(
       RegExp(
-        r'shortcut: BusyMarkTreeShortcutLabels\.deleteSelection',
+        r'BusyMarkCommandRegistryScope\.(?:read|maybeOf)\(context\)',
       ).allMatches(workspace).length,
-      greaterThanOrEqualTo(2),
+      greaterThanOrEqualTo(4),
     );
     expect(
       RegExp(
@@ -1691,7 +1696,7 @@ void main() {
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
-    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(2));
+    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(3));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
     expect(toolbar, contains('_editorToolbarButtonBackground(context)'));
     expect(toolbar, contains('return theme.colorScheme.primary'));
@@ -1699,11 +1704,11 @@ void main() {
       RegExp(
         r'foregroundColor: BusyMarkLinuxPalette\.white',
       ).allMatches(toolbar),
-      hasLength(2),
+      hasLength(3),
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(2));
+    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.none'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));

@@ -1,7 +1,7 @@
 name: busymark
 description: Local-first Markdown and Writerside-compatible documentation editor.
 publish_to: 'none'
-version: 0.3.0
+version: 0.3.1
 
 environment:
   sdk: ^3.12.1

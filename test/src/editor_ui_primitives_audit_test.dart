@@ -54,7 +54,11 @@ void main() {
     expect(htmlBlock, isNot(matches(RegExp(r'(?<![A-Za-z])IconButton\('))));
     expect(tableEditor, contains('BusyMarkHeaderIconButton('));
     expect(tableMenu, contains('BusyMarkHeaderPopupMenuButton'));
-    expect(RegExp(r'BusyMarkPopupMenuItem\(').allMatches(tableMenu).length, 3);
+    expect(RegExp(r'BusyMarkPopupMenuItem\(').allMatches(tableMenu).length, 7);
+    expect(tableMenu, contains('_TableControlAction.alignUnspecified'));
+    expect(tableMenu, contains('_TableControlAction.alignLeft'));
+    expect(tableMenu, contains('_TableControlAction.alignCenter'));
+    expect(tableMenu, contains('_TableControlAction.alignRight'));
     expect(tableMenu, isNot(matches(RegExp(r'(?<![A-Za-z])PopupMenuItem\('))));
   });
 

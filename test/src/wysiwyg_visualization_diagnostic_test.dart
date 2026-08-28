@@ -121,6 +121,7 @@ void main() {
                 onTableRowDeleted: (_) {},
                 onTableColumnInserted: (_, {required after}) {},
                 onTableColumnDeleted: (_) {},
+                onTableColumnAlignmentChanged: (_, _) {},
                 onTableDeleted: () {},
                 onImageEditRequested: () {},
                 onHtmlEditRequested: () {},

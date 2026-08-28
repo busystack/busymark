@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show CheckedState;
+import 'dart:ui' show BoxHeightStyle, CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -2890,6 +2890,7 @@ void main() {}
             text: firstParagraph,
             style: painter.style as TextStyle,
           ),
+          strutStyle: StrutStyle.fromTextStyle(painter.style as TextStyle),
           textDirection: painter.textDirection as TextDirection,
           textScaler: painter.textScaler as TextScaler,
           locale: painter.locale as Locale?,
@@ -2904,14 +2905,31 @@ void main() {}
       boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
       boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
+    final tightHighlightBoxes = painterText.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+      boxHeightStyle: BoxHeightStyle.tight,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    );
     painterText.dispose();
 
     expect(highlightBoxes, hasLength(exampleBoxes.length));
+    expect(tightHighlightBoxes, hasLength(highlightBoxes.length));
     for (var index = 0; index < exampleBoxes.length; index += 1) {
       expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
       expect(
         highlightBoxes[index].bottom,
         closeTo(exampleBoxes[index].bottom, 0.01),
+      );
+      expect(
+        highlightBoxes[index].top,
+        lessThan(tightHighlightBoxes[index].top),
+      );
+      expect(
+        highlightBoxes[index].bottom,
+        greaterThan(tightHighlightBoxes[index].bottom),
       );
     }
   });
@@ -4297,6 +4315,110 @@ void main() {}
     expect(controller.markdown, 'Hello **bold!** world\n');
   });
 
+  testWidgets('WYSIWYG link dialog submits with Enter', (tester) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Linked word\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final editorField = tester.widget<TextField>(find.byType(TextField).first);
+    editorField.focusNode!.requestFocus();
+    editorField.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 6,
+    );
+    await tester.tap(find.byIcon(BusyMarkGlyphs.link));
+    await tester.pumpAndSettle();
+
+    final destinationField = find.byKey(
+      const ValueKey('wysiwyg-link-destination-field'),
+    );
+    await tester.enterText(destinationField, 'https://example.com');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(destinationField, findsNothing);
+    expect(markdown, '[Linked](https://example.com) word\n');
+  });
+
+  for (final (selectionDescription, selection) in const [
+    ('caret is inside it', TextSelection.collapsed(offset: 8)),
+    ('its text is selected', TextSelection(baseOffset: 6, extentOffset: 14)),
+  ]) {
+    testWidgets(
+      'WYSIWYG link dialog edits an existing link when $selectionDescription',
+      (tester) async {
+        const oldDestination = 'https://old.example';
+        const newDestination = 'https://new.example';
+        final parsed = parser.parse(
+          filePath: 'topic.md',
+          source: 'Visit [BusyMark]($oldDestination) today\n',
+        );
+        var markdown = parsed.source;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  onSourceChanged: (filePath, value) => markdown = value,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final editorField = tester.widget<TextField>(
+          find.byType(TextField).first,
+        );
+        editorField.focusNode!.requestFocus();
+        editorField.controller!.selection = selection;
+        await tester.tap(find.byIcon(BusyMarkGlyphs.link));
+        await tester.pumpAndSettle();
+
+        final destinationField = find.byKey(
+          const ValueKey('wysiwyg-link-destination-field'),
+        );
+        final destinationInput = find.descendant(
+          of: destinationField,
+          matching: find.byType(EditableText),
+        );
+        expect(
+          tester.widget<EditableText>(destinationInput).controller.text,
+          oldDestination,
+        );
+
+        await tester.enterText(destinationField, newDestination);
+        await tester.tap(find.text(AppLocalizationsEn().apply));
+        await tester.pumpAndSettle();
+
+        expect(markdown, 'Visit [BusyMark]($newDestination) today\n');
+      },
+    );
+  }
+
   test(
     'WYSIWYG inline command toggles selected mark without dropping links',
     () {
@@ -5564,6 +5686,85 @@ void main() {}
     expect(controller.markdown, '');
   });
 
+  test('table alignment survives parsing, edits, and structural changes', () {
+    const source =
+        '| Left | Center | Right | Default |\n'
+        '| :--- | :---: | ---: | --- |\n'
+        '| a | b | c | d |\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final table = parsed.busyDocument.blocks.single;
+    final header = table.children.first.children;
+
+    expect(header.map((cell) => cell.attributes['align']), [
+      'left',
+      'center',
+      'right',
+      isNull,
+    ]);
+
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    String tableId() => controller.document.blocks.single.id;
+    final firstBodyCell = table.children[1].children.first.id;
+    controller.updateTableCellText(tableId(), firstBodyCell, 'edited');
+    controller.insertTableRow(tableId(), 0, after: false);
+    controller.insertTableColumn(tableId(), 1, after: true);
+
+    expect(
+      controller.markdown,
+      '|  |  |  |  |  |\n'
+      '| :--- | :---: | --- | ---: | --- |\n'
+      '| Left | Center |  | Right | Default |\n'
+      '| edited | b |  | c | d |\n',
+    );
+
+    controller.deleteTableColumn(tableId(), 2);
+    expect(
+      controller.markdown,
+      '|  |  |  |  |\n'
+      '| :--- | :---: | ---: | --- |\n'
+      '| Left | Center | Right | Default |\n'
+      '| edited | b | c | d |\n',
+    );
+
+    final roundTrip = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(
+      const BusyMarkMarkdownSerializer().serialize(roundTrip.busyDocument),
+      controller.markdown,
+    );
+  });
+
+  test('table column alignment command supports all Markdown alignments', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final tableId = controller.document.blocks.single.id;
+
+    controller.setTableColumnAlignment(tableId, 0, BusyTableAlignment.left);
+    controller.setTableColumnAlignment(tableId, 1, BusyTableAlignment.center);
+    expect(controller.markdown, contains('| :--- | :---: |'));
+
+    controller.setTableColumnAlignment(tableId, 0, BusyTableAlignment.right);
+    controller.setTableColumnAlignment(
+      tableId,
+      1,
+      BusyTableAlignment.unspecified,
+    );
+    expect(controller.markdown, contains('| ---: | --- |'));
+    expect(
+      controller.tableColumnAlignment(tableId, 0),
+      BusyTableAlignment.right,
+    );
+  });
+
   testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -5633,6 +5834,14 @@ void main() {}
     );
     expect(headerField.onChanged, isNotNull);
     expect(bodyField.onChanged, isNotNull);
+    expect(
+      headerField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
+    expect(
+      bodyField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
 
     headerField.onChanged!('Name');
     await tester.pump();
@@ -5646,6 +5855,16 @@ void main() {}
       '| --- | --- |\n'
       '| Alice | Cell |\n',
     );
+
+    await tester.tap(find.byTooltip('Column 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alignment: Unspecified'), findsOneWidget);
+    expect(find.text('Alignment: Left'), findsOneWidget);
+    expect(find.text('Alignment: Center'), findsOneWidget);
+    expect(find.text('Alignment: Right'), findsOneWidget);
+    await tester.tap(find.text('Alignment: Left'));
+    await tester.pumpAndSettle();
+    expect(markdown, contains('| :--- | --- |'));
 
     await tester.tap(deleteTableFinder);
     await tester.pump();

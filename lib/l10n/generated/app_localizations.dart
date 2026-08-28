@@ -513,6 +513,30 @@ abstract class AppLocalizations {
   /// **'Keyboard Shortcuts'**
   String get keyboardShortcuts;
 
+  /// Title and command label for the searchable command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command Palette'**
+  String get commandPalette;
+
+  /// Search hint in the command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command'**
+  String get commandPaletteHint;
+
+  /// Empty state in the command palette.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching commands'**
+  String get commandPaletteEmpty;
+
+  /// Reason shown for a disabled contextual command.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable in the current editor context'**
+  String get commandUnavailableInContext;
+
   /// Light theme option.
   ///
   /// In en, this message translates to:
@@ -1419,6 +1443,18 @@ abstract class AppLocalizations {
   /// **'Window'**
   String get settingsWindowSectionTitle;
 
+  /// Settings switch title for reopening the previous workspace on a normal startup.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen previous workspace on startup'**
+  String get settingsReopenWorkspaceOnStartupTitle;
+
+  /// Settings switch description for reopening the previous workspace on a normal startup.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the workspace and tabs from the previous session when BusyMark starts.'**
+  String get settingsReopenWorkspaceOnStartupDescription;
+
   /// Settings switch title for close confirmation when documents have unsaved changes.
   ///
   /// In en, this message translates to:
@@ -1484,6 +1520,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have unsaved changes in {fileName}. Save them before continuing?'**
   String unsavedChangesMessage(String fileName);
+
+  /// Confirmation message before replacing workspace state when several documents are dirty.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 document has unsaved changes. Save it before continuing?} other{{count} documents have unsaved changes. Save them before continuing?}}'**
+  String unsavedChangesMultipleMessage(int count);
 
   /// File changed confirmation dialog title.
   ///
@@ -1562,6 +1604,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image'**
   String get image;
+
+  /// No description provided for @video.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get video;
+
+  /// No description provided for @openVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Play video'**
+  String get openVideo;
+
+  /// No description provided for @pauseVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause video'**
+  String get pauseVideo;
+
+  /// No description provided for @videoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video unavailable'**
+  String get videoUnavailable;
+
+  /// No description provided for @videoPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Video preview'**
+  String get videoPreview;
+
+  /// No description provided for @diagnosticWritersideVideoMissingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Video is missing its src attribute.'**
+  String get diagnosticWritersideVideoMissingSource;
+
+  /// No description provided for @diagnosticWritersideVideoUnsupportedSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported video source: {source}'**
+  String diagnosticWritersideVideoUnsupportedSource(String source);
+
+  /// No description provided for @diagnosticWritersideVideoMissingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Video file does not exist: {source}'**
+  String diagnosticWritersideVideoMissingFile(String source);
+
+  /// No description provided for @diagnosticWritersideVideoMissingPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Video preview image does not exist: {preview}'**
+  String diagnosticWritersideVideoMissingPreview(String preview);
 
   /// Inline image command label.
   ///
@@ -1742,6 +1838,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete column'**
   String get deleteColumn;
+
+  /// Menu item for using unspecified Markdown table-column alignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Unspecified'**
+  String get tableAlignmentUnspecified;
+
+  /// Menu item for left-aligning a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Left'**
+  String get tableAlignmentLeft;
+
+  /// Menu item for centering a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Center'**
+  String get tableAlignmentCenter;
+
+  /// Menu item for right-aligning a Markdown table column.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment: Right'**
+  String get tableAlignmentRight;
 
   /// Tooltip for a table row control.
   ///
@@ -2451,6 +2571,210 @@ abstract class AppLocalizations {
   /// **'Regex'**
   String get sourceSearchRegex;
 
+  /// Placeholder for the active-document replacement field.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with'**
+  String get sourceSearchReplacement;
+
+  /// Tooltip for replacing the current search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace current'**
+  String get sourceSearchReplaceCurrent;
+
+  /// Tooltip for replacing the current match and moving to the next.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace and find next'**
+  String get sourceSearchReplaceAndFindNext;
+
+  /// Tooltip for replacing every active-document search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get sourceSearchReplaceAll;
+
+  /// Action that previews replacements across the workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace in Workspace'**
+  String get workspaceReplace;
+
+  /// Action and dialog title for reviewing workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Review replacements'**
+  String get reviewReplacements;
+
+  /// Action that applies selected workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply replacements'**
+  String get applyReplacements;
+
+  /// Heading for files excluded from a workspace replacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped files'**
+  String get skippedFiles;
+
+  /// Source label for a workspace replacement preview using a dirty document buffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved editor content'**
+  String get workspaceReplaceDirtyBuffer;
+
+  /// Source label for a workspace replacement preview using disk content.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved disk content'**
+  String get workspaceReplaceDiskContent;
+
+  /// Checkbox label for selecting every replacement match in a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all {count} matches'**
+  String selectFileMatches(int count);
+
+  /// Summary shown after applying workspace replacements.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced {matches} matches in {files} files; skipped {skipped}.'**
+  String workspaceReplaceApplied(int matches, int files, int skipped);
+
+  /// Document format tooltip when the file ends with a newline.
+  ///
+  /// In en, this message translates to:
+  /// **'{encoding} · {lineEnding} · Final newline'**
+  String documentFormatWithFinalNewline(String encoding, String lineEnding);
+
+  /// Document format tooltip when the file does not end with a newline.
+  ///
+  /// In en, this message translates to:
+  /// **'{encoding} · {lineEnding} · No final newline'**
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding);
+
+  /// Dialog title for selecting a line-ending style.
+  ///
+  /// In en, this message translates to:
+  /// **'Normalize line endings'**
+  String get normalizeLineEndings;
+
+  /// Prompt shown before saving a document with mixed line endings.
+  ///
+  /// In en, this message translates to:
+  /// **'This document contains mixed line endings. Choose a format.'**
+  String get mixedLineEndingsSavePrompt;
+
+  /// Prompt shown before replacing content in a mixed-line-ending file.
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} uses mixed line endings. Choose the format to use before replacing.'**
+  String workspaceReplaceMixedLineEndings(String fileName);
+
+  /// Workspace replacement issue for a file above the size limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped an oversized file.'**
+  String get workspaceReplaceIssueOversized;
+
+  /// Workspace replacement issue for an unreadable file.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that could not be read.'**
+  String get workspaceReplaceIssueUnreadable;
+
+  /// Workspace replacement issue for invalid UTF-8 content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that is not valid UTF-8.'**
+  String get workspaceReplaceIssueInvalidUtf8;
+
+  /// Workspace replacement issue when the match limit is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'The replacement preview was truncated.'**
+  String get workspaceReplaceIssueTruncated;
+
+  /// Workspace replacement issue for stale disk content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped a file that changed after the preview.'**
+  String get workspaceReplaceIssueFileChanged;
+
+  /// Workspace replacement issue for stale in-memory content.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped an editor buffer that changed after the preview.'**
+  String get workspaceReplaceIssueBufferChanged;
+
+  /// Workspace replacement issue for mixed line endings without a selected format.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose LF or CRLF normalization before replacing.'**
+  String get workspaceReplaceIssueNormalizationRequired;
+
+  /// Workspace replacement issue when a concurrent edit prevents safe transactional rollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback stopped because the file changed concurrently. Some replacements may remain; displaced content was preserved at the path below.'**
+  String get workspaceReplaceIssuePartialConflict;
+
+  /// Workspace replacement issue when the transactional file commit fails.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed replacement could not be committed; no files were changed.'**
+  String get workspaceReplaceIssueApplyFailed;
+
+  /// Title of the external-file comparison dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'External changes — {fileName}'**
+  String externalChangesTitle(String fileName);
+
+  /// Persistent banner shown when an open file is deleted externally.
+  ///
+  /// In en, this message translates to:
+  /// **'This file was deleted on disk.'**
+  String get externalFileDeleted;
+
+  /// Persistent banner shown when a dirty file changes externally.
+  ///
+  /// In en, this message translates to:
+  /// **'This file changed on disk while you have unsaved edits.'**
+  String get externalFileChanged;
+
+  /// Persistent recovery review banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered unsaved content for {fileName}. Inspect it, then save, save as, or discard it.'**
+  String recoveredDocumentReview(String fileName);
+
+  /// Action that compares the editor buffer with the disk version.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get compare;
+
+  /// Action that replaces the editor buffer with the disk version.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload from Disk'**
+  String get reloadFromDisk;
+
+  /// Action that keeps the editor buffer after an external change.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Mine'**
+  String get keepMine;
+
+  /// Action that saves the current document to another path.
+  ///
+  /// In en, this message translates to:
+  /// **'Save As'**
+  String get saveAs;
+
   /// Source search status shown when the regular expression is invalid.
   ///
   /// In en, this message translates to:
@@ -2468,6 +2792,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing to read'**
   String get nothingToRead;
+
+  /// Tooltip for the Writerside admonition editing menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Admonition'**
+  String get admonition;
+
+  /// Label for a neutral Writerside quote block.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get quote;
 
   /// Preview label for a note admonition.
   ///
@@ -2523,25 +2859,25 @@ abstract class AppLocalizations {
   /// **'Chapter'**
   String get chapter;
 
-  /// Snackbar shown when a link target cannot be opened.
+  /// Toast shown when a link target cannot be opened.
   ///
   /// In en, this message translates to:
   /// **'Could not open {target}'**
   String couldNotOpenTarget(String target);
 
-  /// Snackbar shown when a link target path is missing.
+  /// Toast shown when a link target path is missing.
   ///
   /// In en, this message translates to:
   /// **'Link target not found: {targetPath}'**
   String linkTargetNotFound(String targetPath);
 
-  /// Snackbar shown when a file type cannot be opened in the editor.
+  /// Toast shown when a file type cannot be opened in the editor.
   ///
   /// In en, this message translates to:
   /// **'Cannot open this file type in editor'**
   String get cannotOpenFileTypeInEditor;
 
-  /// Snackbar shown when a link anchor is missing.
+  /// Toast shown when a link anchor is missing.
   ///
   /// In en, this message translates to:
   /// **'Anchor not found: {anchor}'**
@@ -2672,6 +3008,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Validation failed: {error}'**
   String workspaceErrorValidationFailed(String error);
+
+  /// Notice shown after crash recovery restores documents.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Recovered 1 unsaved document. Review it before saving or discarding it.} other{Recovered {count} unsaved documents. Review each one before saving or discarding it.}}'**
+  String workspaceRecoveryRestored(int count);
+
+  /// Notice shown when recovery data is partly or wholly malformed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One damaged recovery record could not be restored. The original recovery file was preserved for inspection.} other{{count} damaged recovery records could not be restored. Valid recovery records remain available.}}'**
+  String workspaceRecoveryDamaged(int count);
 
   /// Detail for a missing path error.
   ///
@@ -3818,6 +4166,12 @@ abstract class AppLocalizations {
   /// **'File actions'**
   String get fileActions;
 
+  /// Tooltip for a general action menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get actions;
+
   /// Git file status label.
   ///
   /// In en, this message translates to:
@@ -3950,10 +4304,58 @@ abstract class AppLocalizations {
   /// **'Branch has diverged. Resolve merge or rebase outside this BusyMark version.'**
   String get gitErrorDiverged;
 
+  /// Git error shown when no commit author identity is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Git needs an author name and email address before it can commit.'**
+  String get gitErrorAuthorIdentity;
+
+  /// Title of the Git author identity recovery dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Git Author Identity'**
+  String get gitAuthorIdentityTitle;
+
+  /// Explanation in the Git author identity recovery dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the identity Git should record on commits. BusyMark will save it and retry this commit.'**
+  String get gitAuthorIdentityMessage;
+
+  /// Git commit author name field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get gitAuthorName;
+
+  /// Git commit author email field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get gitAuthorEmail;
+
+  /// Switch label for saving Git identity globally.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for all repositories'**
+  String get gitAuthorIdentityGlobal;
+
+  /// Description of global Git identity scope in the Snap.
+  ///
+  /// In en, this message translates to:
+  /// **'When installed as a Snap, this applies to repositories opened in BusyMark.'**
+  String get gitAuthorIdentityGlobalDescription;
+
+  /// Action that saves Git author identity and retries a commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and Commit'**
+  String get gitSaveIdentityAndCommit;
+
   /// Git error message.
   ///
   /// In en, this message translates to:
-  /// **'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.'**
+  /// **'Git authentication failed.'**
   String get gitErrorAuthentication;
 
   /// Git error message.
@@ -4929,41 +5331,11 @@ abstract class AppLocalizations {
   /// **'Export Writerside as PDF'**
   String get exportWritersideAsPdf;
 
-  /// Introduction to Writerside PDF export.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose an instance and PDF settings. BusyMark uses JetBrains’ official Writerside builder.'**
-  String get writersidePdfExportDescription;
-
   /// Group title for selecting Writerside PDF content.
   ///
   /// In en, this message translates to:
   /// **'Export content'**
   String get writersidePdfContent;
-
-  /// Label for the source of Writerside PDF settings.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF settings'**
-  String get writersidePdfSettings;
-
-  /// Option to configure Writerside PDF settings in the export dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure for this export'**
-  String get writersidePdfConfigureHere;
-
-  /// Option to use an existing Writerside PDF configuration file.
-  ///
-  /// In en, this message translates to:
-  /// **'Use project configuration'**
-  String get writersidePdfProjectConfiguration;
-
-  /// Writerside PDF configuration file selector label.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF configuration file'**
-  String get writersidePdfConfigurationFile;
 
   /// Writerside PDF page settings group title.
   ///
@@ -4971,197 +5343,11 @@ abstract class AppLocalizations {
   /// **'Page'**
   String get writersidePdfPage;
 
-  /// Writerside PDF keymap selector label.
-  ///
-  /// In en, this message translates to:
-  /// **'Keymap'**
-  String get writersidePdfKeymap;
-
-  /// Writerside PDF option that omits a keymap layout.
-  ///
-  /// In en, this message translates to:
-  /// **'No keymap'**
-  String get writersidePdfNoKeymap;
-
-  /// Writerside PDF table-of-contents title field.
-  ///
-  /// In en, this message translates to:
-  /// **'Table of contents title'**
-  String get writersidePdfTocTitle;
-
-  /// Writerside PDF cover-page settings group title.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover page'**
-  String get writersidePdfCover;
-
-  /// Toggle that includes a cover page in a Writerside PDF.
-  ///
-  /// In en, this message translates to:
-  /// **'Include cover page'**
-  String get writersidePdfIncludeCover;
-
-  /// Writerside PDF cover title field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover title'**
-  String get writersidePdfCoverTitle;
-
-  /// Writerside PDF cover description field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover description'**
-  String get writersidePdfCoverDescription;
-
-  /// Writerside PDF cover copyright field.
-  ///
-  /// In en, this message translates to:
-  /// **'Copyright'**
-  String get writersidePdfCopyright;
-
-  /// Writerside PDF cover logo path field.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover logo'**
-  String get writersidePdfCoverLogo;
-
-  /// Action that selects a Writerside PDF cover logo.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose cover logo'**
-  String get writersidePdfChooseCoverLogo;
-
-  /// Writerside PDF header and footer settings group title.
-  ///
-  /// In en, this message translates to:
-  /// **'Header and footer'**
-  String get writersidePdfHeaderAndFooter;
-
-  /// Writerside PDF page header field.
-  ///
-  /// In en, this message translates to:
-  /// **'Header'**
-  String get writersidePdfHeader;
-
-  /// Writerside PDF page footer field.
-  ///
-  /// In en, this message translates to:
-  /// **'Footer'**
-  String get writersidePdfFooter;
-
-  /// Description of advanced Writerside PDF settings.
-  ///
-  /// In en, this message translates to:
-  /// **'These values map the opened module to the builder’s source layout.'**
-  String get writersidePdfAdvancedDescription;
-
-  /// Writerside builder module-name field.
-  ///
-  /// In en, this message translates to:
-  /// **'Module name'**
-  String get writersidePdfModuleName;
-
-  /// Writerside builder source-root field.
-  ///
-  /// In en, this message translates to:
-  /// **'Source root'**
-  String get writersidePdfSourceRoot;
-
-  /// Action that selects the Writerside builder source root.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose source root'**
-  String get writersidePdfChooseSourceRoot;
-
-  /// JetBrains Writerside builder image version field.
-  ///
-  /// In en, this message translates to:
-  /// **'Builder version'**
-  String get writersidePdfBuilderVersion;
-
-  /// Toggle that allows network access in the Writerside builder container.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow network during build'**
-  String get writersidePdfAllowNetwork;
-
-  /// Security guidance for Writerside builder network access.
-  ///
-  /// In en, this message translates to:
-  /// **'Disabled by default. Enable only when the project intentionally needs remote build resources.'**
-  String get writersidePdfAllowNetworkDescription;
-
-  /// Validation error for a missing Writerside module name.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter the module name.'**
-  String get writersidePdfModuleNameRequired;
-
-  /// Validation error for a missing Writerside source root.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the source root.'**
-  String get writersidePdfSourceRootRequired;
-
-  /// Validation error for an invalid Writerside builder version.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid builder version.'**
-  String get writersidePdfBuilderVersionInvalid;
-
-  /// Dialog title when the Writerside builder image is not installed.
-  ///
-  /// In en, this message translates to:
-  /// **'Writerside builder required'**
-  String get writersidePdfBuilderRequired;
-
-  /// Consent prompt before downloading the Writerside builder image.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark uses the official {image} container image. Download it now? The image is large and is stored by Docker.'**
-  String writersidePdfBuilderDownloadDescription(String image);
-
-  /// Progress title while downloading the Writerside builder image.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading Writerside builder…'**
-  String get writersidePdfDownloadingBuilder;
-
   /// Progress title while building a Writerside PDF.
   ///
   /// In en, this message translates to:
   /// **'Exporting Writerside PDF…'**
   String get exportingWritersidePdf;
-
-  /// Error shown when Docker is unavailable for Writerside PDF export.
-  ///
-  /// In en, this message translates to:
-  /// **'Docker is required for Writerside PDF export. Install and start Docker, then try again.'**
-  String get writersidePdfDockerUnavailable;
-
-  /// Error shown when the Writerside builder image cannot be used.
-  ///
-  /// In en, this message translates to:
-  /// **'The requested Writerside builder image is not available.'**
-  String get writersidePdfBuilderUnavailable;
-
-  /// Error shown for an invalid Writerside PDF configuration.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside PDF configuration is invalid.'**
-  String get writersidePdfConfigurationInvalid;
-
-  /// Error shown when the Writerside PDF build fails.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside builder could not create the PDF.'**
-  String get writersidePdfBuildFailed;
-
-  /// Error shown when the Writerside builder output is missing or invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'The Writerside builder did not produce a valid PDF.'**
-  String get writersidePdfInvalidOutput;
 
   /// Settings section and editing menu label for artificial-intelligence features.
   ///
@@ -5187,11 +5373,29 @@ abstract class AppLocalizations {
   /// **'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.'**
   String get aiLocalOnlyDescription;
 
-  /// Settings label for the active AI provider.
+  /// Label for an AI provider selection.
   ///
   /// In en, this message translates to:
   /// **'AI provider'**
   String get aiProvider;
+
+  /// Settings label for the provider selected by default for AI actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Default provider'**
+  String get aiDefaultProvider;
+
+  /// Settings label for choosing which AI provider configuration to edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure provider'**
+  String get aiConfigureProvider;
+
+  /// Dialog title shown before selecting the AI provider for an action.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose AI provider'**
+  String get aiChooseProvider;
 
   /// Settings label for the local Ollama origin.
   ///
@@ -5223,10 +5427,10 @@ abstract class AppLocalizations {
   /// **'Connected. {count} installed model(s) found.'**
   String aiConnectionReady(int count);
 
-  /// Ollama connection status when no model is installed.
+  /// AI model setting shown before a model has been selected or discovered.
   ///
   /// In en, this message translates to:
-  /// **'Ollama is running, but no installed models were found.'**
+  /// **'No model selected.'**
   String get aiNoModels;
 
   /// Generic failure shown while testing AI generation.
@@ -5415,24 +5619,6 @@ abstract class AppLocalizations {
   /// **'Content sent to AI'**
   String get aiContentSentToAi;
 
-  /// Privacy notice when AI is disabled.
-  ///
-  /// In en, this message translates to:
-  /// **'AI is disabled. BusyMark never sends document content without an explicit AI action.'**
-  String get aiPrivacyDisabled;
-
-  /// Privacy notice for local Ollama.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark sends only the context shown in the review dialog to the configured loopback Ollama service. Proposals are never applied without review.'**
-  String get aiPrivacyLocal;
-
-  /// Privacy notice for a selected cloud provider.
-  ///
-  /// In en, this message translates to:
-  /// **'BusyMark sends only the context shown in the review dialog to {provider}. Requests are stateless and proposals are never applied without review.'**
-  String aiPrivacyCloud(String provider);
-
   /// Label for a cloud AI provider API key.
   ///
   /// In en, this message translates to:
@@ -5504,6 +5690,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preferred model'**
   String get aiPreferredModel;
+
+  /// Label for selecting a model for one AI request.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get aiModel;
 
   /// Local monthly AI usage summary.
   ///
@@ -5630,6 +5822,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Table header cells must identify their columns; complete each empty header.'**
   String get diagnosticMarkdownTableEmptyHeader;
+
+  /// Tooltip and diagnostic text shown when a mathematical expression cannot be rendered.
+  ///
+  /// In en, this message translates to:
+  /// **'The mathematical expression could not be rendered.'**
+  String get mathRenderFailed;
+
+  /// Editor action that inserts an inline mathematical expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline math'**
+  String get inlineMath;
+
+  /// Editor action that inserts a display mathematical expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Display math'**
+  String get displayMath;
 }
 
 class _AppLocalizationsDelegate

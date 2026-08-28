@@ -31,13 +31,11 @@ import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
-import 'package:busymark/src/export/writerside_pdf_export_service.dart';
-import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
-import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -576,6 +574,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.settingsWindowSectionTitle));
     await tester.pumpAndSettle();
+
+    expect(
+      find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.settingsReopenWorkspaceOnStartupDescription),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(l10n.settingsReopenWorkspaceOnStartupTitle));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['reopenPreviousWorkspaceOnStartup'], isTrue);
 
     expect(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
@@ -1228,7 +1239,7 @@ void main() {
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
   });
 
-  testWidgets('Ctrl+N with unsaved changes opens confirmation dialog', (
+  testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
     tester,
   ) async {
     final service = _StartupWorkspaceService();
@@ -1294,14 +1305,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.unsavedChanges), findsOneWidget);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-
     expect(find.text(l10n.unsavedChanges), findsNothing);
-    expect(service.untitledCount, 0);
-    expect(container.read(workspaceControllerProvider).isDirty, isTrue);
+    expect(service.untitledCount, 1);
+    expect(
+      container.read(workspaceControllerProvider).documentBuffers,
+      hasLength(2),
+    );
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .where((buffer) => buffer.isDirty),
+      hasLength(2),
+    );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
@@ -1317,20 +1333,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.unsavedChanges), findsOneWidget);
-
-    await tester.tap(find.text(l10n.discard));
-    await tester.pumpAndSettle();
-    for (
-      var attempt = 0;
-      attempt < 10 && service.untitledCount == 0;
-      attempt++
-    ) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    expect(service.untitledCount, 1);
-    expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.untitledCount, 2);
+    expect(
+      container.read(workspaceControllerProvider).documentBuffers,
+      hasLength(3),
+    );
+    await tester.pump(const Duration(milliseconds: 800));
   });
 
   testWidgets('Topics defaults creation to root and exposes file-style menu', (
@@ -1412,9 +1421,6 @@ void main() {
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-        writersidePdfExportServiceProvider.overrideWithValue(
-          const _OptionsOnlyWritersidePdfExportService(),
-        ),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
@@ -1438,6 +1444,11 @@ void main() {
       await tester.tap(anchor, buttons: buttons);
       await tester.pumpAndSettle();
     }
+
+    Finder popupMenuItem(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+    );
 
     await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.files));
@@ -1616,6 +1627,8 @@ void main() {
     await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     for (final label in [
+      l10n.copy,
+      l10n.aiRefineWithAi,
       l10n.newSiblingTopic,
       l10n.newChildTopic,
       l10n.renameTopicFile,
@@ -1624,13 +1637,14 @@ void main() {
       l10n.pasteAsChildTopic,
       l10n.removeTocElement,
       l10n.safeDeleteTopicFile,
+      l10n.delete,
       l10n.copyName,
       l10n.copyPath,
       l10n.openInFiles,
       l10n.addToGit,
       l10n.fileHistory,
     ]) {
-      expect(find.text(label), findsOneWidget);
+      expect(popupMenuItem(label), findsOneWidget);
     }
 
     await tester.tap(find.text(l10n.newChildTopic));
@@ -1667,6 +1681,39 @@ void main() {
       WritersideTopicCreatePlacement.sibling,
     );
     expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-2')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
+    for (final label in [
+      l10n.copy,
+      l10n.cut,
+      l10n.aiRefineWithAi,
+      l10n.delete,
+    ]) {
+      expect(popupMenuItem(label), findsOneWidget);
+    }
+    expect(find.text(l10n.newSiblingTopic), findsNothing);
+    expect(find.text(l10n.copyName), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-1')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-row-2')));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
+    expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
+    expect(find.text(l10n.newSiblingTopic), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
 
     await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
@@ -1768,7 +1815,8 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-    expect(find.text(l10n.writersidePdfExportDescription), findsOneWidget);
+    expect(find.text(l10n.pdfPageSize), findsOneWidget);
+    expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });
@@ -1849,6 +1897,14 @@ void main() {
     await controller.openActiveFile(third.path);
     await tester.pump(const Duration(milliseconds: 100));
 
+    expect(find.text('LF'), findsOneWidget);
+    expect(find.text('CRLF'), findsNothing);
+    expect(
+      find.ancestor(of: find.text('LF'), matching: find.byType(InkWell)),
+      findsNothing,
+    );
+    expect(find.textContaining('UTF-8'), findsNothing);
+    expect(find.textContaining('Final newline'), findsNothing);
     expect(
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path, third.path],
@@ -1864,9 +1920,7 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.tab);
 
     expect(find.text(l10n.unsavedChanges), findsNothing);
-    expect(service.saveCount, 1);
-    expect(service.savedPath, third.path);
-    expect(service.savedText, '# Edited third\n');
+    expect(service.saveCount, 0);
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       first.path,
@@ -1881,6 +1935,10 @@ void main() {
 
     await pressControlShortcut(LogicalKeyboardKey.keyW);
 
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await tester.pumpAndSettle();
+
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       second.path,
@@ -1889,7 +1947,6 @@ void main() {
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path],
     );
-
     await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
 
     expect(
@@ -1901,6 +1958,7 @@ void main() {
       isEmpty,
     );
     expect(find.text(l10n.noOpenFile), findsWidgets);
+    await tester.pump(const Duration(milliseconds: 800));
   });
 
   testWidgets('Git diff files are shown as separate editor tabs', (
@@ -2047,6 +2105,9 @@ void main() {
     expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
     expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -2095,6 +2156,9 @@ void main() {
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -2132,6 +2196,9 @@ void main() {
     );
     expect(find.byType(TextField), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.split);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.split);
@@ -2177,6 +2244,9 @@ void main() {
     expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -2702,19 +2772,20 @@ void main() {
     );
     expect(outlineFileMenu, findsOneWidget);
     expect(find.byTooltip(first.path), findsOneWidget);
-    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+    expect(find.byTooltip(l10n.actions), findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.tap(find.byTooltip(l10n.actions));
     await tester.pumpAndSettle();
     expect(find.text(l10n.copyFileName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
 
     await tester.tap(find.text(l10n.copyFileName));
     await tester.pumpAndSettle();
     expect(clipboardText, 'Intro.md');
 
-    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.tap(find.byTooltip(l10n.actions));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.copyPath));
     await tester.pumpAndSettle();
@@ -3435,7 +3506,14 @@ void main() {
       }
     }
 
-    final sourceField = find.byType(TextField).last;
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# Introduction.md\n',
+    );
     await tester.tap(sourceField);
     await tester.enterText(sourceField, '# Edited Introduction\n');
     await tester.pump();
@@ -3911,6 +3989,9 @@ void main() {
     expect(editorContent, findsOneWidget);
     expect(editorScroll, findsOneWidget);
     final editorRect = tester.getRect(editorContent);
+    final editorScrollRect = tester.getRect(editorScroll);
+    expect(editorScrollRect.width, greaterThan(editorRect.width));
+    expect(editorScrollRect.right, greaterThan(editorRect.right));
     final editorHeadingRect = tester.getRect(
       find.descendant(of: editorContent, matching: find.byType(TextField)),
     );
@@ -3934,6 +4015,9 @@ void main() {
         );
     expect(editorPadding, expectedStandalone.scrollPadding);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -3946,6 +4030,11 @@ void main() {
     expect(previewContent, findsOneWidget);
     expect(previewScroll, findsOneWidget);
     final previewRect = tester.getRect(previewContent);
+    final previewScrollRect = tester.getRect(previewScroll);
+    expect(previewScrollRect.width, closeTo(editorScrollRect.width, 0.1));
+    expect(previewScrollRect.right, closeTo(editorScrollRect.right, 0.1));
+    expect(previewScrollRect.width, greaterThan(previewRect.width));
+    expect(previewScrollRect.right, greaterThan(previewRect.right));
     final previewHeading = find.descendant(
       of: previewContent,
       matching: find.byWidgetPredicate(
@@ -3957,7 +4046,7 @@ void main() {
     expect(previewHeading, findsOneWidget);
     final previewHeadingRect = tester.getRect(previewHeading);
     final previewParagraph = find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is Text &&
@@ -3987,17 +4076,52 @@ void main() {
       tester.widget<ScrollablePositionedList>(previewScroll).padding,
       editorPadding,
     );
+    final previewControllerBeforeSplit = tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemScrollController;
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.split);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.split);
     await tester.pump(const Duration(milliseconds: 100));
 
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widget<ScrollablePositionedList>(previewScroll)
+          .itemScrollController,
+      same(previewControllerBeforeSplit),
+    );
+
     final splitPaneRect = tester.getRect(previewScroll);
     final splitContentRect = tester.getRect(previewContent);
-    expect(splitContentRect.left, splitPaneRect.left);
-    expect(splitContentRect.right, splitPaneRect.right);
-    expect(splitContentRect.top, splitPaneRect.top);
+    expect(
+      splitContentRect.left,
+      closeTo(
+        splitPaneRect.left +
+            BusyMarkDocumentLayoutSpec.splitPreview.minimumInsets.left,
+        0.1,
+      ),
+    );
+    expect(
+      splitContentRect.right,
+      closeTo(
+        splitPaneRect.right -
+            BusyMarkDocumentLayoutSpec.splitPreview.minimumInsets.right,
+        0.1,
+      ),
+    );
+    expect(
+      splitContentRect.top,
+      closeTo(
+        splitPaneRect.top +
+            BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding.top,
+        0.1,
+      ),
+    );
     expect(
       tester.widget<ScrollablePositionedList>(previewScroll).padding,
       BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
@@ -4082,6 +4206,9 @@ void main() {
     expect(editorCheckedMarker.color, editorPrimary);
     expect(editorUncheckedMarker.color, editorMarkerColors.foreground);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4174,6 +4301,9 @@ void main() {
     final editorTextRect = tester.getRect(editorText);
     final editorIconRect = tester.getRect(editorIcon);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4280,6 +4410,9 @@ void main() {
     final editorTextRect = tester.getRect(editorField);
     final editorStyle = editorTextField.style;
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4305,7 +4438,7 @@ void main() {
     expect(previewTextWidget.textSpan?.toPlainText(), code);
     expect(Directionality.of(tester.element(previewText)), TextDirection.ltr);
     final previewArabic = find.descendant(
-      of: find.byKey(const ValueKey('preview-document-content')),
+      of: find.byKey(const ValueKey('preview-document-scroll')),
       matching: find.byWidgetPredicate(
         (widget) => widget is RichText && widget.text.toPlainText() == 'مرحبا',
       ),
@@ -4477,16 +4610,17 @@ After break.
       ),
     );
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
     await tester.pump(const Duration(milliseconds: 100));
 
-    final previewContent = find.byKey(
-      const ValueKey('preview-document-content'),
-    );
+    final previewScroll = find.byKey(const ValueKey('preview-document-scroll'));
     Finder previewHeading(String text) => find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) => widget is Text && widget.textSpan?.toPlainText() == text,
       ),
@@ -4508,7 +4642,7 @@ After break.
       expect(previewStyle?.height, editorStyle?.height);
     }
     final previewBody = find.descendant(
-      of: previewContent,
+      of: previewScroll,
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is Text &&
@@ -4556,7 +4690,7 @@ After break.
 <warning>Shared warning.</warning>
 
 ![Shared image](missing.png){ width="320" }
-''');
+''', writerside: true);
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -4598,6 +4732,9 @@ After break.
     expect(editorImageWidget.width, 320);
     expect(editorImageWidget.maxWidth, 320);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -4770,6 +4907,9 @@ After break.
       }
     }
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -5007,7 +5147,7 @@ After break.
       find.byKey(const ValueKey('workspace-sidebar-outline-file-menu')),
       findsOneWidget,
     );
-    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+    expect(find.byTooltip(l10n.actions), findsOneWidget);
     final primarySidebarLabel = find.descendant(
       of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
       matching: find.byType(Text),
@@ -5177,6 +5317,10 @@ Child body.
 Beta body.
 
 ''';
+    const gammaSection = '''### Gamma
+
+Gamma body.
+''';
     String? clipboardText;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -5276,6 +5420,7 @@ Beta body.
     for (final label in [
       l10n.copy,
       l10n.cut,
+      l10n.aiRefineWithAi,
       l10n.promoteSection,
       l10n.demoteSection,
       l10n.moveSectionUp,
@@ -5334,6 +5479,44 @@ Beta body.
     expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
     await expectSource(source.replaceFirst(betaSection, ''));
+
+    await resetSource();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.tap(headingRow('Alpha'));
+    await tester.tap(headingRow('Gamma'));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await openMenu('Gamma');
+    expect(menuItem(l10n.copy), findsOneWidget);
+    expect(menuItem(l10n.cut), findsOneWidget);
+    expect(menuItem(l10n.aiRefineWithAi), findsOneWidget);
+    expect(menuItem(l10n.delete), findsOneWidget);
+    expect(menuItem(l10n.promoteSection), findsNothing);
+    await tester.tap(find.text(l10n.copy));
+    await tester.pumpAndSettle();
+    expect(clipboardText, '$alphaSection$gammaSection');
+
+    await openMenu('Gamma');
+    await tester.tap(find.text(l10n.cut));
+    await expectSource(
+      source.replaceFirst(alphaSection, '').replaceFirst(gammaSection, ''),
+    );
+    expect(clipboardText, '$alphaSection$gammaSection');
+
+    await resetSource();
+    await tester.tap(headingRow('Beta'));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tap(headingRow('Gamma'));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    await openMenu('Gamma');
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await expectSource(
+      source.replaceFirst(betaSection, '').replaceFirst(gammaSection, ''),
+    );
   });
 
   testWidgets('outline highlights the heading at the document viewport', (
@@ -5498,6 +5681,9 @@ Beta body.
     );
     expectSelectedOutlineRow(2);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.editor);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.editor);
@@ -5544,6 +5730,9 @@ Beta body.
     );
     expectSelectedOutlineRow(1);
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
@@ -6891,6 +7080,9 @@ Draft paragraph.
     expect(editorMarkerText.style?.fontWeight, FontWeight.w600);
     expect(editorAfterListGap, greaterThan(editorItemGap + BusyMarkSpacing.xs));
 
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
     await container
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.preview);
@@ -7419,24 +7611,6 @@ class _FallbackHeaderBarService extends LinuxHeaderBarService {
   Stream<HeaderBarAction> get actions => const Stream.empty();
 }
 
-class _OptionsOnlyWritersidePdfExportService
-    extends WritersidePdfExportService {
-  const _OptionsOnlyWritersidePdfExportService();
-
-  @override
-  Future<List<String>> discoverProjectConfigurations({
-    required String moduleRoot,
-    required String buildConfigDirectory,
-  }) async => const [];
-
-  @override
-  Future<List<WritersidePdfKeymapLayout>> discoverLayouts({
-    required String moduleRoot,
-    required String buildConfigDirectory,
-    required String instanceId,
-  }) async => const [];
-}
-
 class _MutableWorkspaceController extends WorkspaceController {
   _MutableWorkspaceController(this.initialState);
 
@@ -7789,13 +7963,20 @@ GitFileStatus _gitStatusFile(
 }
 
 class _SearchWorkspaceService extends WorkspaceService {
-  const _SearchWorkspaceService(this.source);
+  const _SearchWorkspaceService(this.source, {this.writerside = false});
 
   final String source;
+  final bool writerside;
 
   @override
   Future<Workspace> openPath(String path) async {
-    final markdown = markdownParser.parse(filePath: path, source: source);
+    final markdown = markdownParser.parse(
+      filePath: path,
+      source: source,
+      mode: writerside
+          ? MarkdownMode.writersideMarkdown
+          : MarkdownMode.commonMark,
+    );
     return Workspace(
       id: path,
       rootPath: path,
@@ -7807,7 +7988,9 @@ class _SearchWorkspaceService extends WorkspaceService {
         DocumentFile(
           absolutePath: path,
           relativePath: 'search-scroll.md',
-          kind: DocumentKind.markdown,
+          kind: writerside
+              ? DocumentKind.writersideMarkdownTopic
+              : DocumentKind.markdown,
           size: source.length,
           lastModified: DateTime(2026),
         ),

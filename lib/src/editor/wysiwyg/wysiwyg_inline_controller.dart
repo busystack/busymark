@@ -2,6 +2,42 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/busymark_markdown_serializer.dart';
+
+bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
+  bool contains(List<BusyInline> inlines) => inlines.any(
+    (inline) => inline.kind == BusyInlineKind.math || contains(inline.children),
+  );
+  return block.kind == BusyBlockKind.math || contains(block.inlines);
+}
+
+bool busyMarkWysiwygBlockDescendantsContainMath(BusyBlock block) {
+  return block.children.any(
+    (child) =>
+        busyMarkWysiwygBlockContainsMath(child) ||
+        busyMarkWysiwygBlockDescendantsContainMath(child),
+  );
+}
+
+String busyMarkWysiwygEditableText(BusyBlock block) {
+  if (!busyMarkWysiwygBlockContainsMath(block)) {
+    return block.plainText;
+  }
+  if (block.kind != BusyBlockKind.math && block.inlines.isNotEmpty) {
+    return const BusyMarkMarkdownSerializer().serializeBlock(
+      BusyBlock(
+        id: 'wysiwyg-inline-source',
+        kind: BusyBlockKind.paragraph,
+        inlines: block.inlines,
+        dirty: true,
+      ),
+    );
+  }
+  final source =
+      block.rawSource ??
+      const BusyMarkMarkdownSerializer().serializeBlock(block);
+  return source.replaceFirst(RegExp(r'(?:\r\n|\r|\n)$'), '');
+}
 
 class BusyInlineStyleRange {
   const BusyInlineStyleRange({
@@ -27,8 +63,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
   List<BusyInlineStyleRange> _ranges;
 
   void updateFromBlock(BusyBlock block) {
-    final nextText = block.plainText;
-    final nextRanges = busyInlineStyleRanges(block.inlines);
+    final sourceEditing = busyMarkWysiwygBlockContainsMath(block);
+    final nextText = busyMarkWysiwygEditableText(block);
+    final nextRanges = sourceEditing
+        ? const <BusyInlineStyleRange>[]
+        : busyInlineStyleRanges(block.inlines);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
     if (text != nextText) {
       final previousSelection = selection;

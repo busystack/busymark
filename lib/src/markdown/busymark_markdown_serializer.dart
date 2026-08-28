@@ -1,5 +1,6 @@
 import '../core/source_span.dart';
 import 'busymark_document.dart';
+import 'math_syntax.dart';
 
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
@@ -38,6 +39,7 @@ class BusyMarkMarkdownSerializer {
     return switch (block.kind) {
       BusyBlockKind.heading => _heading(block),
       BusyBlockKind.paragraph => _inlineMarkdown(block.inlines),
+      BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
       BusyBlockKind.unorderedListItem => _listItem(block, '-'),
       BusyBlockKind.orderedListItem => _listItem(
@@ -54,6 +56,7 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.blockquote => _blockquote(block),
       BusyBlockKind.thematicBreak => '---',
       BusyBlockKind.image => _image(block),
+      BusyBlockKind.video => block.rawSource ?? _inlineMarkdown(block.inlines),
       BusyBlockKind.table => _table(block),
       BusyBlockKind.writersideAdmonition => _writersideAdmonition(block),
       BusyBlockKind.writersideTabs ||
@@ -160,17 +163,91 @@ class BusyMarkMarkdownSerializer {
     final text = _inlineMarkdown(block.inlines);
     final id = block.attributes['id'];
     final generated = block.attributes['generatedId'] != 'false';
-    final suffix = id == null || id.isEmpty || generated ? '' : ' {id="$id"}';
+    final attributes = <String>[
+      if (id != null && id.isNotEmpty && !generated) 'id="${_attribute(id)}"',
+      if (busyMarkWritersideIsCollapsible(block.attributes))
+        'collapsible="true"',
+      if (block.attributes[busyMarkWritersideDefaultStateAttribute]
+          case final state? when state.trim().isNotEmpty)
+        'default-state="${_attribute(state)}"',
+    ];
+    final suffix = attributes.isEmpty ? '' : ' {${attributes.join(' ')}}';
     return '${'#' * level} $text$suffix';
   }
 
   String _codeBlock(BusyBlock block) {
     final language = block.attributes['language'] ?? '';
     final text = block.plainText;
+    if (block.attributes[busyMarkWritersideCodeBlockSourceFormAttribute] ==
+        busyMarkWritersideCodeBlockElementSourceForm) {
+      final attributes = <String>[
+        if (language.trim().isNotEmpty)
+          'lang="${_xmlAttribute(language.trim())}"',
+        for (final entry in block.attributes.entries)
+          if (_writersideCodeBlockXmlAttribute(entry.key) &&
+              entry.value.trim().isNotEmpty)
+            '${entry.key}="${_xmlAttribute(entry.value)}"',
+      ];
+      final opening =
+          '<code-block${attributes.isEmpty ? '' : ' ${attributes.join(' ')}'}';
+      if (text.isEmpty && (block.attributes['src']?.isNotEmpty ?? false)) {
+        return '$opening/>';
+      }
+      return '$opening>\n${busyMarkEncodeXmlMathText(text)}\n</code-block>';
+    }
     final delimiter = language.contains('`') ? '~' : '`';
     final fence = delimiter * _delimiterLength(text, delimiter, minimum: 3);
     final infoSeparator = language.startsWith(delimiter) ? ' ' : '';
-    return '$fence$infoSeparator$language\n$text\n$fence';
+    final source = '$fence$infoSeparator$language\n$text\n$fence';
+    final hasSource = block.attributes['src']?.trim().isNotEmpty ?? false;
+    if (!busyMarkWritersideIsCollapsible(block.attributes) && !hasSource) {
+      return source;
+    }
+    final attributes = <String>[
+      'collapsible="true"',
+      if (block.attributes[busyMarkWritersideCollapsedTitleAttribute]
+          case final title? when title.trim().isNotEmpty)
+        'collapsed-title="${_attribute(title)}"',
+      if (block.attributes[busyMarkWritersideDefaultStateAttribute]
+          case final state? when state.trim().isNotEmpty)
+        'default-state="${_attribute(state)}"',
+      if (block.attributes['src'] case final source?
+          when source.trim().isNotEmpty)
+        'src="${_attribute(source)}"',
+    ];
+    return '$source\n{${attributes.join(' ')}}';
+  }
+
+  bool _writersideCodeBlockXmlAttribute(String key) => !{
+    'element',
+    'lang',
+    'language',
+    'editorBlockId',
+    busyMarkWritersideCodeBlockSourceFormAttribute,
+  }.contains(key);
+
+  String _xmlAttribute(String value) => busyMarkEncodeXmlMathText(
+    value,
+  ).replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+
+  String _attribute(String value) => value.replaceAll('"', '&quot;');
+
+  String _mathBlock(BusyBlock block) {
+    final expression =
+        block.attributes[busyMarkMathExpressionAttribute] ?? block.plainText;
+    final form = busyMathSourceFormFromName(
+      block.attributes[busyMarkMathSourceFormAttribute],
+    );
+    return switch (form) {
+      BusyMathSourceForm.mathFence => '```math\n$expression\n```',
+      BusyMathSourceForm.writersideTexFence => '```tex\n$expression\n```',
+      BusyMathSourceForm.writersideTexElement =>
+        '<code-block lang="tex">\n${busyMarkEncodeXmlMathText(expression)}\n</code-block>',
+      BusyMathSourceForm.writersideElement => '<math>$expression</math>',
+      BusyMathSourceForm.doubleDollarDisplay ||
+      BusyMathSourceForm.dollarInline ||
+      BusyMathSourceForm.githubDollarBacktick => '\$\$\n$expression\n\$\$',
+    };
   }
 
   String _listItem(BusyBlock block, String marker, {String? contentPrefix}) {
@@ -252,10 +329,21 @@ class BusyMarkMarkdownSerializer {
     final text = block.children.isEmpty
         ? _inlineMarkdown(block.inlines)
         : block.children.map(serializeBlock).join('\n\n');
-    return text
+    final quote = text
         .split('\n')
         .map((line) => line.isEmpty ? '>' : '> $line')
         .join('\n');
+    if (block.attributes[busyMarkWritersideAdmonitionAttribute] != 'true') {
+      return quote;
+    }
+    final style =
+        busyAdmonitionStyleFromName(block.attributes['style']) ??
+        BusyAdmonitionStyle.tip;
+    if (style == BusyAdmonitionStyle.tip) {
+      return quote;
+    }
+    final attribute = '{style="${style.name}"}';
+    return quote.isEmpty ? attribute : '$quote\n$attribute';
   }
 
   String _image(BusyBlock block) {
@@ -281,11 +369,33 @@ class BusyMarkMarkdownSerializer {
     final body = rows.skip(1);
     final buffer = StringBuffer()
       ..writeln('| ${header.join(' | ')} |')
-      ..writeln('| ${header.map((_) => '---').join(' | ')} |');
+      ..writeln(
+        '| ${[for (var column = 0; column < header.length; column++) _tableColumnDelimiter(block, column)].join(' | ')} |',
+      );
     for (final row in body) {
       buffer.writeln('| ${row.children.map(_tableCellMarkdown).join(' | ')} |');
     }
     return buffer.toString().trimRight();
+  }
+
+  String _tableColumnDelimiter(BusyBlock table, int column) {
+    final alignment = table.children
+        .where((row) => column < row.children.length)
+        .map(
+          (row) => busyTableAlignmentFromAttribute(
+            row.children[column].attributes['align'],
+          ),
+        )
+        .firstWhere(
+          (value) => value != BusyTableAlignment.unspecified,
+          orElse: () => BusyTableAlignment.unspecified,
+        );
+    return switch (alignment) {
+      BusyTableAlignment.unspecified => '---',
+      BusyTableAlignment.left => ':---',
+      BusyTableAlignment.center => ':---:',
+      BusyTableAlignment.right => '---:',
+    };
   }
 
   String _tableCellMarkdown(BusyBlock cell) {
@@ -299,8 +409,36 @@ class BusyMarkMarkdownSerializer {
     if (!_hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
     }
-    final element = block.attributes['element'] ?? 'note';
-    return '<$element>${_inlineMarkdown(block.inlines)}</$element>';
+    final style =
+        busyAdmonitionStyleFromName(
+          block.attributes['style'] ?? block.attributes['element'],
+        ) ??
+        BusyAdmonitionStyle.note;
+    final attributes = block.attributes.entries
+        .where(
+          (entry) =>
+              entry.key != 'element' &&
+              entry.key != 'style' &&
+              entry.key != busyMarkWritersideAdmonitionAttribute &&
+              entry.key != busyMarkWritersideAdmonitionSourceFormAttribute,
+        )
+        .map((entry) => '${entry.key}="${_escapeXmlAttribute(entry.value)}"')
+        .join(' ');
+    final opening = attributes.isEmpty
+        ? '<${style.name}>'
+        : '<${style.name} $attributes>';
+    final content = block.children.isEmpty
+        ? _inlineMarkdown(block.inlines)
+        : block.children.map(serializeBlock).join('\n\n');
+    return '$opening$content</${style.name}>';
+  }
+
+  String _escapeXmlAttribute(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
   }
 
   String _inlineMarkdown(List<BusyInline> inlines, {bool tableCell = false}) {
@@ -315,6 +453,7 @@ class BusyMarkMarkdownSerializer {
         : _inlineMarkdown(inline.children, tableCell: tableCell);
     return switch (inline.kind) {
       BusyInlineKind.text => _escapeInlineText(inline.text),
+      BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
       BusyInlineKind.underline => '<u>$children</u>',
@@ -332,6 +471,30 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
+  }
+
+  String _mathInline(BusyInline inline) {
+    final form = busyMathSourceFormFromName(
+      inline.attributes[busyMarkMathSourceFormAttribute],
+    );
+    return switch (form) {
+      BusyMathSourceForm.githubDollarBacktick => '\$`${inline.text}`\$',
+      BusyMathSourceForm.writersideElement =>
+        '<math>${_writersideMathExpression(inline)}</math>',
+      BusyMathSourceForm.dollarInline ||
+      BusyMathSourceForm.doubleDollarDisplay ||
+      BusyMathSourceForm.mathFence ||
+      BusyMathSourceForm.writersideTexFence ||
+      BusyMathSourceForm.writersideTexElement => '\$${inline.text}\$',
+    };
+  }
+
+  String _writersideMathExpression(BusyInline inline) {
+    final raw = inline.attributes[busyMarkMathRawExpressionAttribute];
+    if (raw != null && busyMarkDecodeXmlMathText(raw) == inline.text) {
+      return raw;
+    }
+    return busyMarkEncodeXmlMathText(inline.text);
   }
 
   String _codeSpan(String text) {
@@ -385,6 +548,7 @@ class BusyMarkMarkdownSerializer {
   String _escapeInlineText(String value) {
     return value
         .replaceAll('\\', r'\\')
+        .replaceAll(r'$', r'\$')
         .replaceAll('[', r'\[')
         .replaceAll(']', r'\]');
   }

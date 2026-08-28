@@ -11,12 +11,25 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.3\.0$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.3\.1$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.3\.0"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.3\.1"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
+    expect(
+      snapcraft,
+      contains(RegExp(r'^confinement: strict$', multiLine: true)),
+    );
+    expect(snapcraft, contains('extensions: [gnome]'));
+    expect(snapcraft, contains('XDG_CONFIG_HOME:'));
+    expect(snapcraft, contains('XDG_CACHE_HOME:'));
+    expect(snapcraft, contains('XDG_DATA_HOME:'));
+    expect(snapcraft, contains('- home'));
+    expect(snapcraft, contains('- network'));
+    expect(snapcraft, contains('- removable-media'));
+    expect(snapcraft, contains('- ssh-keys'));
+    expect(snapcraft, contains('- enable-patchelf'));
     expect(
       snapcraft,
       contains(
@@ -26,9 +39,9 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.3.0"'));
-    expect(pubspec, isNot(contains('0.3.04')));
-    expect(snapcraft, isNot(contains('0.3.04')));
+    expect(metainfo, contains('<release version="0.3.1"'));
+    expect(pubspec, isNot(contains('0.3.14')));
+    expect(snapcraft, isNot(contains('0.3.14')));
   });
 
   test(
@@ -41,22 +54,35 @@ void main() {
               )
               as Map<String, Object?>;
       final dependencies = package['dependencies'] as Map<String, Object?>;
+      final lock = File(
+        'tools/visualization/package-lock.json',
+      ).readAsStringSync();
+      final webBuild = File(
+        'tools/visualization/build_render_engines.js',
+      ).readAsStringSync();
       final cmake = File('linux/CMakeLists.txt').readAsStringSync();
 
-      expect(dependencies['mermaid'], '11.16.1');
+      expect(dependencies, isNot(contains('mermaid')));
+      expect(dependencies['@mermaid-js/parser'], '1.2.0');
       expect(dependencies['@plantuml/core'], '1.2026.6');
       expect(dependencies['@scalar/openapi-parser'], '0.28.14');
       expect(dependencies['@scalar/api-reference'], '1.65.1');
       expect(dependencies['@scalar/json-magic'], '0.13.0');
       expect(dependencies['yaml'], '2.9.0');
+      expect(dependencies['@mathjax/src'], '4.1.3');
+      expect(dependencies['@mathjax/mathjax-newcm-font'], '4.1.3');
+      expect(dependencies, isNot(contains('katex')));
+      expect(lock, isNot(contains('node_modules/katex')));
       expect((package['engines'] as Map<String, Object?>)['node'], '>=22');
       for (final checksum in [
-        'ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4',
+        '0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11',
         '798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413',
         '993bb7ebb3480cc574665b0eac52d9cd4a817fdf5b4444894bb70e174880513d',
         '68b6f22ca530ac50e3cd034c5189d89cc5457c3c2d325b44e90db05c9f08c573',
         'f1adefc461f3594afd4ad16974820a5a88b271f7e8051045c2ac7a34eb974d33',
         '008fa204cb1ba700e0272ba045abbf09a6ffe63456e8146ba97cac6c2ad1ef91',
+        '4611bed26b338dfc4b5757b8ed2d7ba82a85bcbd05d2729fb3465fba17b8896c',
+        '87d7b869c6a2a6169d9a53acc4eab6c846a9cbe11752738226461bb5070c8b88',
       ]) {
         expect(fetch, contains(checksum));
       }
@@ -65,6 +91,14 @@ void main() {
       expect(fetch, contains('--ignore-scripts'));
       expect(fetch, contains('NODE_MAJOR < 22'));
       expect(fetch, contains('THIRD_PARTY_NOTICES.md'));
+      expect(fetch, contains(r'mermaid@${MERMAID_VERSION}.tar.gz'));
+      expect(fetch, contains('packages/mermaid'));
+      expect(fetch, contains('build_render_engines.js'));
+      expect(webBuild, contains('katex: disabledMathModule'));
+      expect(
+        webBuild,
+        contains("path.join(mermaidSource, 'src', 'mermaid.ts')"),
+      );
       expect(cmake, contains('share/busymark/visualization'));
       expect(cmake, contains('bootstrap.js'));
     },
@@ -119,6 +153,7 @@ void main() {
     expect(workflow, contains('GDK_BACKEND=wayland'));
     expect(workflow, contains('snapcore/action-build@v1'));
     expect(workflow, contains('sudo snap install --dangerous'));
+    expect(workflow, isNot(contains('--dangerous --classic')));
     expect(workflow, contains('snap run busymark'));
     expect(workflow, contains('--visualization-release-smoke='));
     expect(workflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
@@ -144,11 +179,20 @@ void main() {
       final bootstrap = File(
         'tools/visualization/bootstrap.js',
       ).readAsStringSync();
+      final math = File(
+        'tools/visualization/mathjax_renderer.js',
+      ).readAsStringSync();
+      final renderEngines = File(
+        'tools/visualization/render_engines.js',
+      ).readAsStringSync();
       final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
       expect(native, contains('webkit_web_context_new_ephemeral'));
       expect(native, contains('webkit_web_context_set_sandbox_enabled'));
-      expect(native, contains('strictly_confined_snap'));
+      expect(
+        native,
+        contains('webkit_web_context_set_sandbox_enabled(self->context, TRUE)'),
+      );
       expect(native, contains('WEBKIT_COOKIE_POLICY_ACCEPT_NEVER'));
       expect(
         native,
@@ -163,6 +207,7 @@ void main() {
       expect(native, contains('render_process_terminated_cb'));
       expect(native, contains('recreate_render_view'));
       expect(native, contains('terminateWebProcessForReleaseSmoke'));
+      expect(native, contains('"renderMathBatch"'));
       expect(native, contains('BUSYMARK_RELEASE_SMOKE'));
       expect(native, contains('gtk_widget_get_allocated_width'));
       expect(native, contains('snapshot_allocation_attempts'));
@@ -175,6 +220,30 @@ void main() {
         expect(html, isNot(contains('cdn.')));
       }
       expect(bootstrap, contains('createMemoryStorage'));
+      expect(renderEngines, contains("case 'renderMathBatch':"));
+      expect(math, contains("export const mathJaxVersion = '4.1.3'"));
+      expect(math, contains("export const mathJaxFontVersion = '4.1.3'"));
+      expect(math, contains('mathjax.asyncLoad = () => Promise.resolve()'));
+      expect(math, contains("URLs: 'none'"));
+      expect(math, contains("classes: 'none'"));
+      expect(math, contains("cssIDs: 'none'"));
+      expect(math, contains("styles: 'none'"));
+      expect(math, contains('maxBuffer: 20 * 1024'));
+      expect(math, contains('maxMacros: 500'));
+      expect(math, contains('maxTemplateSubtitutions: 2000'));
+      expect(math, contains("fontCache: 'local'"));
+      expect(math, contains('useXlink: false'));
+      expect(math, contains('clearExpressionDefinitions'));
+      expect(math, contains('tex.reset(0)'));
+      for (final disabledPackage in [
+        'AutoloadConfiguration',
+        'RequireConfiguration',
+        'SetOptionsConfiguration',
+        'TexHtmlConfiguration',
+        'PhysicsConfiguration',
+      ]) {
+        expect(math, isNot(contains(disabledPackage)));
+      }
       expect(scalar, contains('telemetry: false'));
       expect(scalar, contains('persistAuth: false'));
       expect(scalar, contains('hideTestRequestButton: true'));

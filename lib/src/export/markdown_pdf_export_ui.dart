@@ -10,12 +10,15 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
+import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
+import '../math/math_providers.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
 import '../visualization/visualization_providers.dart';
 import 'markdown_visualization_export.dart';
+import 'markdown_math_export.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
 import 'writerside_pdf_export_ui.dart';
@@ -24,6 +27,9 @@ final markdownPdfExportServiceProvider = Provider<MarkdownPdfExportService>(
   (ref) => MarkdownPdfExportService(
     visualizationRenderer: MarkdownVisualizationExportRenderer(
       coordinator: ref.watch(visualizationCoordinatorProvider),
+    ),
+    mathRenderer: MarkdownMathExportRenderer(
+      coordinator: ref.watch(mathCoordinatorProvider),
     ),
   ),
 );
@@ -158,17 +164,14 @@ Future<void> exportActiveMarkdownToPdf(
   final message = result.warnings.isEmpty
       ? context.l10n.pdfExported(fileName)
       : context.l10n.pdfExportedWithWarnings(fileName, result.warnings.length);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      action: SnackBarAction(
-        label: context.l10n.open,
-        onPressed: () => unawaited(
-          launchUrl(
-            Uri.file(result.destinationPath),
-            mode: LaunchMode.externalApplication,
-          ),
-        ),
+  BusyMarkToastOverlay.show(
+    context,
+    message: message,
+    actionLabel: context.l10n.open,
+    onAction: () => unawaited(
+      launchUrl(
+        Uri.file(result.destinationPath),
+        mode: LaunchMode.externalApplication,
       ),
     ),
   );

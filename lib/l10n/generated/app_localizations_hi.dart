@@ -220,6 +220,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get keyboardShortcuts => 'कीबोर्ड शॉर्टकट';
 
   @override
+  String get commandPalette => 'कमांड पैलेट';
+
+  @override
+  String get commandPaletteHint => 'कमांड लिखें';
+
+  @override
+  String get commandPaletteEmpty => 'कोई मेल खाता कमांड नहीं';
+
+  @override
+  String get commandUnavailableInContext =>
+      'यह आदेश वर्तमान संदर्भ में उपलब्ध नहीं है।';
+
+  @override
   String get lightTheme => 'लाइट';
 
   @override
@@ -702,6 +715,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsWindowSectionTitle => 'विंडो';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'स्टार्टअप पर पिछला कार्यक्षेत्र फिर से खोलें';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'BusyMark शुरू होने पर पिछले सत्र का कार्यक्षेत्र और टैब खोलें।';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'न सहेजे गए बदलाव हों तो बंद करने से पहले पुष्टि करें';
 
@@ -751,6 +772,11 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count दस्तावेज़ों में सहेजे नहीं गए बदलाव हैं। जारी रखने से पहले इन्हें सहेजें?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'डिस्क पर फ़ाइल बदल गई';
 
   @override
@@ -789,6 +815,40 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get image => 'छवि';
+
+  @override
+  String get video => 'वीडियो';
+
+  @override
+  String get openVideo => 'वीडियो चलाएँ';
+
+  @override
+  String get pauseVideo => 'वीडियो रोकें';
+
+  @override
+  String get videoUnavailable => 'वीडियो उपलब्ध नहीं है';
+
+  @override
+  String get videoPreview => 'वीडियो पूर्वावलोकन';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'वीडियो में src विशेषता मौजूद नहीं है।';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'असमर्थित वीडियो स्रोत: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'वीडियो फ़ाइल मौजूद नहीं है: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'वीडियो पूर्वावलोकन छवि मौजूद नहीं है: $preview';
+  }
 
   @override
   String get inlineImage => 'इनलाइन छवि';
@@ -883,6 +943,18 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get deleteColumn => 'कॉलम हटाएँ';
+
+  @override
+  String get tableAlignmentUnspecified => 'संरेखण: अनिर्दिष्ट';
+
+  @override
+  String get tableAlignmentLeft => 'संरेखण: बायाँ';
+
+  @override
+  String get tableAlignmentCenter => 'संरेखण: मध्य';
+
+  @override
+  String get tableAlignmentRight => 'संरेखण: दायाँ';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1311,6 +1383,132 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sourceSearchRegex => 'रेगुलर एक्सप्रेशन';
 
   @override
+  String get sourceSearchReplacement => 'इससे बदलें';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'वर्तमान मिलान बदलें';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'बदलें और अगला खोजें';
+
+  @override
+  String get sourceSearchReplaceAll => 'सभी बदलें';
+
+  @override
+  String get workspaceReplace => 'वर्कस्पेस में बदलें';
+
+  @override
+  String get reviewReplacements => 'बदलावों की समीक्षा करें';
+
+  @override
+  String get applyReplacements => 'बदलाव लागू करें';
+
+  @override
+  String get skippedFiles => 'छोड़ी गई फ़ाइलें';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'सहेजी न गई संपादक सामग्री';
+
+  @override
+  String get workspaceReplaceDiskContent => 'डिस्क पर सहेजी सामग्री';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'सभी $count मिलान चुनें';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return '$files फ़ाइलों में $matches मिलान बदले गए; $skipped छोड़े गए।';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · अंतिम नई पंक्ति';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · अंतिम नई पंक्ति नहीं';
+  }
+
+  @override
+  String get normalizeLineEndings => 'पंक्ति अंत सामान्य करें';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'इस दस्तावेज़ में मिले-जुले पंक्ति अंत हैं। कोई प्रारूप चुनें।';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName में मिले-जुले पंक्ति अंत हैं। बदलने से पहले प्रारूप चुनें।';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'बहुत बड़ी फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'पढ़ी न जा सकने वाली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'अमान्य UTF-8 वाली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'बदलाव पूर्वावलोकन छोटा कर दिया गया।';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'पूर्वावलोकन के बाद बदली फ़ाइल छोड़ दी गई।';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'पूर्वावलोकन के बाद बदला संपादक बफ़र छोड़ दिया गया।';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'बदलने से पहले LF या CRLF सामान्यीकरण चुनें।';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'रोलबैक रोक दिया गया क्योंकि फ़ाइल उसी समय बदल गई थी। कुछ प्रतिस्थापन बने रह सकते हैं; हटाई गई सामग्री नीचे दिए गए पथ पर सुरक्षित रखी गई है।';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'कोई प्रतिस्थापन लागू नहीं किया गया क्योंकि समीक्षा किए गए समूह को सुरक्षित रूप से सहेजा नहीं जा सका।';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'बाहरी बदलाव — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'यह फ़ाइल डिस्क से हटा दी गई।';
+
+  @override
+  String get externalFileChanged =>
+      'आपके सहेजे न गए बदलावों के दौरान यह फ़ाइल डिस्क पर बदल गई।';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return '$fileName की सहेजी नहीं गई सामग्री पुनर्प्राप्त हुई। इसकी समीक्षा करें, फिर सहेजें, इस रूप में सहेजें या छोड़ दें।';
+  }
+
+  @override
+  String get compare => 'तुलना करें';
+
+  @override
+  String get reloadFromDisk => 'डिस्क से फिर लोड करें';
+
+  @override
+  String get keepMine => 'मेरा संस्करण रखें';
+
+  @override
+  String get saveAs => 'इस रूप में सहेजें';
+
+  @override
   String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';
 
   @override
@@ -1319,6 +1517,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get nothingToRead => 'पढ़ने के लिए कोई सामग्री नहीं';
+
+  @override
+  String get admonition => 'सूचना ब्लॉक';
+
+  @override
+  String get quote => 'उद्धरण';
 
   @override
   String get note => 'नोट';
@@ -1445,6 +1649,16 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'सत्यापन विफल रहा: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return '$count सहेजे नहीं गए दस्तावेज़ पुनर्प्राप्त किए गए। जारी रखने से पहले प्रत्येक पुनर्प्राप्त दस्तावेज़ की समीक्षा करें।';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड बहाल नहीं किए जा सके। मान्य पुनर्प्राप्त दस्तावेज़ उपलब्ध हैं।';
   }
 
   @override
@@ -2268,6 +2482,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get fileActions => 'फ़ाइल कार्रवाइयाँ';
 
   @override
+  String get actions => 'कार्रवाइयाँ';
+
+  @override
   String get gitStatusAdded => 'जोड़ा गया';
 
   @override
@@ -2341,8 +2558,34 @@ class AppLocalizationsHi extends AppLocalizations {
       'शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।';
 
   @override
-  String get gitErrorAuthentication =>
-      'Git प्रमाणीकरण विफल रहा। snap में SSH रिमोट के लिए ssh-keys इंटरफ़ेस कनेक्ट करना पड़ सकता है।';
+  String get gitErrorAuthorIdentity =>
+      'कमिट करने से पहले Git को लेखक का नाम और ईमेल पता चाहिए।';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Git लेखक पहचान';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'वह पहचान दर्ज करें जिसे Git कमिट में रिकॉर्ड करे। BusyMark इसे सहेजकर इस कमिट को फिर से आज़माएगा।';
+
+  @override
+  String get gitAuthorName => 'नाम';
+
+  @override
+  String get gitAuthorEmail => 'ईमेल';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'सभी रिपॉज़िटरी के लिए उपयोग करें';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Snap के रूप में इंस्टॉल होने पर यह BusyMark में खोली गई रिपॉज़िटरी पर लागू होता है।';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'सहेजें और कमिट करें';
+
+  @override
+  String get gitErrorAuthentication => 'Git प्रमाणीकरण विफल रहा।';
 
   @override
   String get gitErrorNetwork => 'Git नेटवर्क कार्रवाई विफल रही।';
@@ -2923,134 +3166,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'Writerside को PDF के रूप में निर्यात करें';
 
   @override
-  String get writersidePdfExportDescription =>
-      'एक इंस्टेंस और PDF सेटिंग चुनें। BusyMark, JetBrains के आधिकारिक Writerside बिल्डर का उपयोग करता है।';
-
-  @override
   String get writersidePdfContent => 'निर्यात सामग्री';
-
-  @override
-  String get writersidePdfSettings => 'PDF सेटिंग';
-
-  @override
-  String get writersidePdfConfigureHere => 'इस निर्यात के लिए कॉन्फ़िगर करें';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'प्रोजेक्ट कॉन्फ़िगरेशन का उपयोग करें';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF कॉन्फ़िगरेशन फ़ाइल';
 
   @override
   String get writersidePdfPage => 'पृष्ठ';
 
   @override
-  String get writersidePdfKeymap => 'कीमैप';
-
-  @override
-  String get writersidePdfNoKeymap => 'कोई कीमैप नहीं';
-
-  @override
-  String get writersidePdfTocTitle => 'विषय-सूची का शीर्षक';
-
-  @override
-  String get writersidePdfCover => 'आवरण पृष्ठ';
-
-  @override
-  String get writersidePdfIncludeCover => 'आवरण पृष्ठ शामिल करें';
-
-  @override
-  String get writersidePdfCoverTitle => 'आवरण शीर्षक';
-
-  @override
-  String get writersidePdfCoverDescription => 'आवरण विवरण';
-
-  @override
-  String get writersidePdfCopyright => 'कॉपीराइट';
-
-  @override
-  String get writersidePdfCoverLogo => 'आवरण लोगो';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'आवरण लोगो चुनें';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'शीर्षलेख और पादलेख';
-
-  @override
-  String get writersidePdfHeader => 'शीर्षलेख';
-
-  @override
-  String get writersidePdfFooter => 'पादलेख';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'ये मान खुले मॉड्यूल को बिल्डर की स्रोत संरचना से जोड़ते हैं।';
-
-  @override
-  String get writersidePdfModuleName => 'मॉड्यूल का नाम';
-
-  @override
-  String get writersidePdfSourceRoot => 'स्रोत रूट';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'स्रोत रूट चुनें';
-
-  @override
-  String get writersidePdfBuilderVersion => 'बिल्डर संस्करण';
-
-  @override
-  String get writersidePdfAllowNetwork =>
-      'बिल्ड के दौरान नेटवर्क की अनुमति दें';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'डिफ़ॉल्ट रूप से बंद। केवल तभी चालू करें जब प्रोजेक्ट को जानबूझकर दूरस्थ बिल्ड संसाधनों की आवश्यकता हो।';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'मॉड्यूल का नाम दर्ज करें।';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'स्रोत रूट चुनें।';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'मान्य बिल्डर संस्करण दर्ज करें।';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside बिल्डर आवश्यक है';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark आधिकारिक $image कंटेनर इमेज का उपयोग करता है। इसे अभी डाउनलोड करें? इमेज बड़ी है और Docker इसे संग्रहित करेगा।';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Writerside बिल्डर डाउनलोड हो रहा है…';
-
-  @override
   String get exportingWritersidePdf => 'Writerside PDF निर्यात हो रहा है…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Writerside PDF निर्यात के लिए Docker आवश्यक है। Docker इंस्टॉल करके चालू करें, फिर दोबारा प्रयास करें।';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'अनुरोधित Writerside बिल्डर इमेज उपलब्ध नहीं है।';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside PDF कॉन्फ़िगरेशन अमान्य है।';
-
-  @override
-  String get writersidePdfBuildFailed => 'Writerside बिल्डर PDF नहीं बना सका।';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside बिल्डर ने मान्य PDF नहीं बनाया।';
 
   @override
   String get ai => 'एआई';
@@ -3067,6 +3189,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiProvider => 'एआई प्रदाता';
+
+  @override
+  String get aiDefaultProvider => 'डिफ़ॉल्ट प्रदाता';
+
+  @override
+  String get aiConfigureProvider => 'प्रदाता कॉन्फ़िगर करें';
+
+  @override
+  String get aiChooseProvider => 'एआई प्रदाता चुनें';
 
   @override
   String get aiOllamaEndpoint => 'Ollama एंडपॉइंट';
@@ -3086,8 +3217,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama चल रहा है, लेकिन कोई इंस्टॉल किया गया मॉडल नहीं मिला।';
+  String get aiNoModels => 'कोई मॉडल नहीं चुना गया।';
 
   @override
   String get aiConnectionFailed =>
@@ -3191,19 +3321,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiContentSentToAi => 'AI को भेजी गई सामग्री';
 
   @override
-  String get aiPrivacyDisabled =>
-      'AI अक्षम है। BusyMark किसी स्पष्ट AI कार्रवाई के बिना दस्तावेज़ की सामग्री कभी नहीं भेजता।';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल कॉन्फ़िगर की गई स्थानीय Ollama सेवा को भेजता है। प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल $provider को भेजता है। अनुरोध स्टेटलेस होते हैं और प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।';
-  }
-
-  @override
   String get aiApiKey => 'API कुंजी';
 
   @override
@@ -3240,6 +3357,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'पसंदीदा मॉडल';
+
+  @override
+  String get aiModel => 'मॉडल';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3325,4 +3445,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'तालिका शीर्षकों को अपने कॉलम पहचानने चाहिए; हर खाली शीर्षक पूरा करें।';
+
+  @override
+  String get mathRenderFailed => 'गणितीय व्यंजक रेंडर नहीं किया जा सका।';
+
+  @override
+  String get inlineMath => 'इनलाइन गणित';
+
+  @override
+  String get displayMath => 'डिस्प्ले गणित';
 }

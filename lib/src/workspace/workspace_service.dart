@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
@@ -10,9 +11,12 @@ import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
+import '../markdown/math_syntax.dart';
 import '../markdown/preview_model.dart';
+import '../visualization/visualization_models.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_model.dart';
@@ -22,6 +26,49 @@ import '../writerside/writerside_topic_creator.dart';
 import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
+import 'text_format_metadata.dart';
+
+class WorkspaceBatchTextWrite {
+  const WorkspaceBatchTextWrite({
+    required this.path,
+    required this.text,
+    required this.expectedSnapshot,
+    required this.format,
+    this.mixedNormalization,
+  });
+
+  final String path;
+  final String text;
+  final WorkspaceFileSnapshot expectedSnapshot;
+  final TextFormatMetadata format;
+  final LineEndingNormalization? mixedNormalization;
+}
+
+class WorkspaceBatchWriteConflict implements Exception {
+  const WorkspaceBatchWriteConflict(this.path);
+
+  final String path;
+}
+
+class WorkspaceBatchPartialApplicationFile {
+  const WorkspaceBatchPartialApplicationFile({
+    required this.targetPath,
+    required this.preservedPath,
+  });
+
+  final String targetPath;
+  final String preservedPath;
+}
+
+class WorkspaceBatchPartialApplicationConflict implements Exception {
+  const WorkspaceBatchPartialApplicationConflict({
+    required this.files,
+    required this.cause,
+  });
+
+  final List<WorkspaceBatchPartialApplicationFile> files;
+  final Object cause;
+}
 
 class WorkspaceService {
   const WorkspaceService({
@@ -36,9 +83,12 @@ class WorkspaceService {
     this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
+    Future<void> Function(String targetPath, int committedCount)?
+    afterBatchFileCommit,
   }) : writersideService = writersideService ?? const WritersideModuleService(),
        _useWorkspaceScanOptionsForWriterside = writersideService == null,
-       _beforeNewFilePublish = beforeNewFilePublish;
+       _beforeNewFilePublish = beforeNewFilePublish,
+       _afterBatchFileCommit = afterBatchFileCommit;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -52,6 +102,8 @@ class WorkspaceService {
   final WorkspaceScanOptions scanOptions;
   final bool _useWorkspaceScanOptionsForWriterside;
   final Future<void> Function(String targetPath)? _beforeNewFilePublish;
+  final Future<void> Function(String targetPath, int committedCount)?
+  _afterBatchFileCommit;
 
   Workspace createUntitledMarkdown({String source = ''}) {
     const fileName = '';
@@ -190,6 +242,30 @@ class WorkspaceService {
     );
   }
 
+  Future<void> moveWritersideTocEntries(
+    Workspace workspace, {
+    required String treePath,
+    required List<WritersideTocMoveEntry> sources,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.moveSubtrees(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      WritersideTocBatchMoveRequest(
+        sources: sources,
+        placement: placement,
+        referencePath: referencePath,
+        referenceIdentity: referenceIdentity,
+      ),
+    );
+  }
+
   Future<void> removeWritersideTocEntry(
     Workspace workspace, {
     required String treePath,
@@ -205,6 +281,22 @@ class WorkspaceService {
       ),
       nodePath,
       expectedIdentity: expectedIdentity,
+    );
+  }
+
+  Future<void> removeWritersideTocEntries(
+    Workspace workspace, {
+    required String treePath,
+    required List<WritersideTocRemovalRequest> requests,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.removeEntries(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      requests,
     );
   }
 
@@ -367,9 +459,11 @@ class WorkspaceService {
     final file = File(path);
     final bytes = await file.readAsBytes();
     final stat = await file.stat();
+    final decoded = decodeUtf8Document(bytes);
     return WorkspaceFileLoad(
-      text: utf8.decode(bytes),
+      text: decoded.text,
       snapshot: _snapshotFromBytes(stat, bytes),
+      format: decoded.format,
     );
   }
 
@@ -411,8 +505,21 @@ class WorkspaceService {
   /// published with Linux's atomic no-replace rename operation (or an atomic
   /// hard-link fallback). It fails if any filesystem entity already has the
   /// final name.
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
-    final bytes = utf8.encode(text);
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) {
+    return saveNewFormattedText(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final staged = await _stageNewSave(path, bytes);
     try {
       final stat = await staged.file.stat();
@@ -430,8 +537,21 @@ class WorkspaceService {
   Future<WorkspaceFileSnapshot> saveTextReplacingPath(
     String path,
     String text,
-  ) async {
-    final bytes = utf8.encode(text);
+  ) {
+    return saveFormattedTextReplacingPath(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveFormattedTextReplacingPath(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final staged = await _stageNewSave(path, bytes);
     try {
       final targetType = await FileSystemEntity.type(path, followLinks: false);
@@ -446,11 +566,24 @@ class WorkspaceService {
     }
   }
 
-  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) {
+    return saveFormattedText(path, text);
+  }
+
+  Future<WorkspaceFileSnapshot> saveFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
     final savePath = await _saveTargetPath(path);
     final target = File(savePath);
     final existingStat = await target.stat();
-    final bytes = utf8.encode(text);
+    final bytes = _encodeDocumentText(
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
     final temp = _temporarySaveFile(savePath);
     var renamed = false;
     try {
@@ -467,6 +600,194 @@ class WorkspaceService {
         await _deleteSaveArtifactBestEffort(temp);
       }
       rethrow;
+    }
+  }
+
+  /// Replaces a group of existing files as one recoverable transaction.
+  ///
+  /// Every source snapshot is checked before any target is changed. Staged
+  /// files are atomically exchanged with their targets; if a later exchange
+  /// fails, already-exchanged files are rolled back.
+  Future<Map<String, WorkspaceFileSnapshot>> saveFormattedTextBatch(
+    List<WorkspaceBatchTextWrite> writes,
+  ) async {
+    if (writes.isEmpty) {
+      return const {};
+    }
+    if (!Platform.isLinux || !LinuxAtomicFileApi.instance.isAvailable) {
+      throw UnsupportedError(
+        'Transactional workspace replacement requires Linux renameat2.',
+      );
+    }
+    final paths = <String>{};
+    final staged = <_StagedBatchTextWrite>[];
+    final committed = <_StagedBatchTextWrite>[];
+    final preservedArtifacts = <String>{};
+    try {
+      for (final write in writes) {
+        final savePath = await _saveTargetPath(write.path);
+        if (!paths.add(p.normalize(p.absolute(savePath)))) {
+          throw ArgumentError('Duplicate batch write path: ${write.path}');
+        }
+        final target = File(savePath);
+        final originalBytes = await target.readAsBytes();
+        final originalStat = await target.stat();
+        final originalSnapshot = _snapshotFromBytes(
+          originalStat,
+          originalBytes,
+        );
+        if (originalSnapshot.differsFrom(write.expectedSnapshot)) {
+          throw WorkspaceBatchWriteConflict(write.path);
+        }
+        final bytes = _encodeDocumentText(
+          write.text,
+          format: write.format,
+          mixedNormalization: write.mixedNormalization,
+        );
+        final directory = await target.parent.createTemp(
+          '.busymark-save-batch-',
+        );
+        final stagedFile = File(p.join(directory.path, 'contents'));
+        await stagedFile.writeAsBytes(bytes, flush: true);
+        await _copyFileMode(originalStat, stagedFile);
+        staged.add(
+          _StagedBatchTextWrite(
+            requestPath: write.path,
+            target: target,
+            directory: directory,
+            stagedFile: stagedFile,
+            expectedSnapshot: write.expectedSnapshot,
+            bytes: bytes,
+          ),
+        );
+      }
+      // Close the validation/staging race before the first exchange.
+      for (final write in staged) {
+        final current = await fileSnapshot(write.target.path);
+        if (current.differsFrom(write.expectedSnapshot)) {
+          throw WorkspaceBatchWriteConflict(write.requestPath);
+        }
+      }
+      for (final write in staged) {
+        final error = LinuxAtomicFileApi.instance.exchange(
+          write.stagedFile.absolute.path,
+          write.target.absolute.path,
+        );
+        if (error != null) {
+          throw FileSystemException(
+            'Could not commit workspace replacement batch',
+            write.requestPath,
+            OSError('atomic exchange failed', error),
+          );
+        }
+        final displacedBytes = await write.stagedFile.readAsBytes();
+        final displacedSnapshot = _snapshotFromBytes(
+          await write.stagedFile.stat(),
+          displacedBytes,
+        );
+        if (displacedSnapshot.differsFrom(write.expectedSnapshot)) {
+          final conflict = await _rollbackBatchWrite(write);
+          if (conflict != null) {
+            preservedArtifacts.add(conflict.preservedPath);
+            throw WorkspaceBatchPartialApplicationConflict(
+              files: [conflict],
+              cause: WorkspaceBatchWriteConflict(write.requestPath),
+            );
+          }
+          throw WorkspaceBatchWriteConflict(write.requestPath);
+        }
+        committed.add(write);
+        await _afterBatchFileCommit?.call(write.target.path, committed.length);
+      }
+      return {
+        for (final write in staged)
+          write.requestPath: _snapshotFromBytes(
+            await write.target.stat(),
+            write.bytes,
+          ),
+      };
+    } on Object catch (error, stackTrace) {
+      final conflicts = <WorkspaceBatchPartialApplicationFile>[
+        if (error case WorkspaceBatchPartialApplicationConflict partial)
+          ...partial.files,
+      ];
+      preservedArtifacts.addAll(
+        conflicts.map((conflict) => conflict.preservedPath),
+      );
+      for (final write in committed.reversed) {
+        final conflict = await _rollbackBatchWrite(write);
+        if (conflict != null) {
+          conflicts.add(conflict);
+          preservedArtifacts.add(conflict.preservedPath);
+        }
+      }
+      if (conflicts.isNotEmpty) {
+        throw WorkspaceBatchPartialApplicationConflict(
+          files: List.unmodifiable(conflicts),
+          cause: error is WorkspaceBatchPartialApplicationConflict
+              ? error.cause
+              : error,
+        );
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      for (final write in staged) {
+        if (preservedArtifacts.contains(write.stagedFile.path)) {
+          continue;
+        }
+        await _deleteSaveArtifactBestEffort(write.stagedFile);
+        try {
+          if (await write.directory.exists()) {
+            await write.directory.delete();
+          }
+        } on Object {
+          // Cleanup must not hide a commit or rollback result.
+        }
+      }
+    }
+  }
+
+  Future<WorkspaceBatchPartialApplicationFile?> _rollbackBatchWrite(
+    _StagedBatchTextWrite write,
+  ) async {
+    final conflict = WorkspaceBatchPartialApplicationFile(
+      targetPath: write.requestPath,
+      preservedPath: write.stagedFile.path,
+    );
+    if (!await _fileMatchesBytes(write.target, write.bytes)) {
+      return conflict;
+    }
+    final rollbackError = LinuxAtomicFileApi.instance.exchange(
+      write.stagedFile.absolute.path,
+      write.target.absolute.path,
+    );
+    if (rollbackError != null) {
+      return conflict;
+    }
+    if (await _fileMatchesBytes(write.stagedFile, write.bytes)) {
+      return null;
+    }
+
+    // The target changed after validation but before the exchange. Put that
+    // concurrent version back when possible, and preserve the displaced data.
+    LinuxAtomicFileApi.instance.exchange(
+      write.stagedFile.absolute.path,
+      write.target.absolute.path,
+    );
+    return conflict;
+  }
+
+  Future<bool> _fileMatchesBytes(File file, List<int> expected) async {
+    try {
+      final type = await FileSystemEntity.type(file.path, followLinks: false);
+      if (type != FileSystemEntityType.file) {
+        return false;
+      }
+      final actual = await file.readAsBytes();
+      return actual.length == expected.length &&
+          crypto.sha256.convert(actual) == crypto.sha256.convert(expected);
+    } on Object {
+      return false;
     }
   }
 
@@ -1342,11 +1663,16 @@ class WorkspaceService {
       'note',
       'tip',
       'warning',
+      'quote',
       'tabs',
       'tab',
       'code-block',
+      'deflist',
+      'def',
       'img',
+      'video',
       'a',
+      'math',
     }.contains(name);
   }
 
@@ -1355,9 +1681,13 @@ class WorkspaceService {
       'chapter' => PreviewBlockKind.heading,
       'procedure' => PreviewBlockKind.procedure,
       'note' || 'tip' || 'warning' => PreviewBlockKind.admonition,
+      'quote' => PreviewBlockKind.quote,
       'tabs' || 'tab' => PreviewBlockKind.tabs,
       'code-block' => PreviewBlockKind.code,
+      'deflist' => PreviewBlockKind.definitionList,
+      'def' => PreviewBlockKind.definition,
       'img' => PreviewBlockKind.image,
+      'video' => PreviewBlockKind.video,
       _ => PreviewBlockKind.paragraph,
     };
   }
@@ -1371,16 +1701,131 @@ class WorkspaceService {
       'note' ||
       'tip' ||
       'warning' ||
+      'quote' ||
       'tabs' ||
       'tab' ||
       'code-block' ||
+      'deflist' ||
+      'def' ||
       'img' ||
+      'video' ||
       'a' => '',
       _ => name,
     };
   }
 
   List<PreviewBlock> _xmlPreviewBlocks(String source, String? title) {
+    try {
+      final document = XmlDocument.parse(source);
+      final blocks = <PreviewBlock>[];
+      var mathIndex = 0;
+      for (final element in document.descendants.whereType<XmlElement>()) {
+        final name = element.name.local;
+        if (!_visibleSemanticElement(name)) {
+          continue;
+        }
+        if (_insideXmlAdmonition(element)) {
+          continue;
+        }
+        if (_insideOwnedXmlCollapsible(element)) {
+          continue;
+        }
+        final attributes = {
+          'element': name,
+          for (final attribute in element.attributes)
+            attribute.name.local: attribute.value,
+        };
+        if (name == 'math') {
+          final expression = element.innerText;
+          blocks.add(
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: expression,
+              inlines: [
+                PreviewInline(
+                  kind: PreviewInlineKind.math,
+                  text: expression,
+                  attributes: {
+                    busyMarkMathSourceFormAttribute:
+                        BusyMathSourceForm.writersideElement.name,
+                    'expressionId': 'topic-math-${mathIndex++}',
+                  },
+                ),
+              ],
+              attributes: attributes,
+            ),
+          );
+          continue;
+        }
+        if (name == 'code-block') {
+          blocks.add(
+            _xmlCodeBlockPreview(
+              element,
+              attributes,
+              nextMathId: () => 'topic-math-${mathIndex++}',
+            ),
+          );
+          continue;
+        }
+        if ((name == 'chapter' || name == 'procedure' || name == 'deflist') &&
+            busyMarkWritersideIsCollapsible(attributes)) {
+          blocks.add(
+            _xmlSemanticPreviewBlock(
+              element,
+              nextMathId: () => 'topic-math-${mathIndex++}',
+            ),
+          );
+          continue;
+        }
+        final admonitionStyle = busyAdmonitionStyleFromName(name);
+        if (admonitionStyle != null) {
+          final text = element.innerText.trim();
+          final inlines = _xmlPreviewInlines(
+            element.children,
+            nextMathId: () => 'topic-math-${mathIndex++}',
+          );
+          blocks.add(
+            PreviewBlock(
+              kind: admonitionStyle == BusyAdmonitionStyle.quote
+                  ? PreviewBlockKind.quote
+                  : PreviewBlockKind.admonition,
+              text: text,
+              inlines: inlines.isEmpty && text.isNotEmpty
+                  ? [PreviewInline(kind: PreviewInlineKind.text, text: text)]
+                  : inlines,
+              attributes: {...attributes, 'style': admonitionStyle.name},
+            ),
+          );
+          continue;
+        }
+        blocks.add(
+          PreviewBlock(
+            kind: _semanticKind(name),
+            text: switch (name) {
+              'video' => element.getAttribute('src') ?? '',
+              'chapter' ||
+              'procedure' ||
+              'def' => element.getAttribute('title') ?? '',
+              'code-block' =>
+                element.innerText
+                    .replaceFirst(RegExp(r'^\n'), '')
+                    .replaceFirst(RegExp(r'\n\s*$'), ''),
+              _ => _semanticText(name, title),
+            },
+            language: name == 'code-block'
+                ? element.getAttribute('lang')
+                : null,
+            attributes: attributes,
+          ),
+        );
+      }
+      if (blocks.isNotEmpty) {
+        return blocks;
+      }
+    } on Object {
+      // The ordinary semantic-element fallback below still provides a useful
+      // preview while the user repairs malformed topic XML.
+    }
     final names = RegExp(
       r'<\s*([A-Za-z][A-Za-z0-9_-]*)\b',
     ).allMatches(source).map((match) => match.group(1)!).toList();
@@ -1397,6 +1842,276 @@ class WorkspaceService {
           ),
     ];
   }
+
+  bool _insideXmlAdmonition(XmlElement element) {
+    XmlNode? parent = element.parent;
+    while (parent != null) {
+      if (parent is XmlElement &&
+          busyAdmonitionStyleFromName(parent.name.local) != null) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  bool _insideOwnedXmlCollapsible(XmlElement element) {
+    XmlNode? parent = element.parent;
+    while (parent != null) {
+      if (parent is XmlElement) {
+        final name = parent.name.local.toLowerCase();
+        if ({'chapter', 'procedure', 'deflist'}.contains(name) &&
+            busyMarkWritersideIsCollapsible({
+              for (final attribute in parent.attributes)
+                attribute.name.local: attribute.value,
+            })) {
+          return true;
+        }
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  PreviewBlock _xmlSemanticPreviewBlock(
+    XmlElement element, {
+    required String Function() nextMathId,
+    Map<String, String> inheritedAttributes = const {},
+  }) {
+    final name = element.name.local.toLowerCase();
+    final attributes = <String, String>{
+      ...inheritedAttributes,
+      'element': name,
+      for (final attribute in element.attributes)
+        attribute.name.local: attribute.value,
+    };
+    final title = element.getAttribute('title')?.trim() ?? '';
+    final children = <PreviewBlock>[];
+    for (final child in element.children.whereType<XmlElement>()) {
+      final childName = child.name.local.toLowerCase();
+      if (!_visibleSemanticElement(childName) || childName == 'math') {
+        continue;
+      }
+      if (name == 'step' && childName == 'p') {
+        continue;
+      }
+      children.add(
+        _xmlSemanticPreviewBlock(
+          child,
+          nextMathId: nextMathId,
+          inheritedAttributes: name == 'deflist' && childName == 'def'
+              ? {
+                  if (busyMarkWritersideIsCollapsible(attributes))
+                    busyMarkWritersideCollapsibleAttribute: 'true',
+                }
+              : const {},
+        ),
+      );
+    }
+    final inlines = _xmlPreviewInlines(
+      element.children,
+      nextMathId: nextMathId,
+    );
+    final text = inlines.map((inline) => inline.text).join().trim();
+    return switch (name) {
+      'chapter' => PreviewBlock(
+        kind: PreviewBlockKind.heading,
+        text: title,
+        level: 2,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'procedure' => PreviewBlock(
+        kind: PreviewBlockKind.procedure,
+        text: title,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'step' => PreviewBlock(
+        kind: PreviewBlockKind.list,
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: {...attributes, 'ordered': 'true'},
+      ),
+      'code-block' => _xmlCodeBlockPreview(
+        element,
+        attributes,
+        nextMathId: nextMathId,
+      ),
+      'deflist' => PreviewBlock(
+        kind: PreviewBlockKind.definitionList,
+        text: '',
+        children: children,
+        attributes: attributes,
+      ),
+      'def' => PreviewBlock(
+        kind: PreviewBlockKind.definition,
+        text: title,
+        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        children: children,
+        attributes: attributes,
+      ),
+      'note' || 'tip' || 'warning' || 'quote' => PreviewBlock(
+        kind: name == 'quote'
+            ? PreviewBlockKind.quote
+            : PreviewBlockKind.admonition,
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: {...attributes, 'style': name},
+      ),
+      _ => PreviewBlock(
+        kind: _semanticKind(name),
+        text: text,
+        inlines: inlines,
+        children: children,
+        attributes: attributes,
+      ),
+    };
+  }
+
+  PreviewBlock _xmlCodeBlockPreview(
+    XmlElement element,
+    Map<String, String> attributes, {
+    required String Function() nextMathId,
+  }) {
+    final language = element.getAttribute('lang');
+    final text = element.innerText
+        .replaceFirst(RegExp(r'^\n'), '')
+        .replaceFirst(RegExp(r'\n\s*$'), '');
+    if (language?.trim().toLowerCase() == 'tex') {
+      return PreviewBlock(
+        kind: PreviewBlockKind.math,
+        text: text,
+        attributes: {
+          ...attributes,
+          if (language != null) 'language': language,
+          busyMarkMathExpressionAttribute: text,
+          busyMarkMathDisplayAttribute: 'true',
+          busyMarkMathSourceFormAttribute:
+              BusyMathSourceForm.writersideTexElement.name,
+          'expressionId': nextMathId(),
+        },
+      );
+    }
+    return PreviewBlock(
+      kind: PreviewBlockKind.code,
+      text: text,
+      language: language,
+      visualization: VisualizationDescriptor.maybeForFenceLanguage(language),
+      attributes: attributes,
+    );
+  }
+
+  List<PreviewInline> _xmlPreviewInlines(
+    Iterable<XmlNode> nodes, {
+    required String Function() nextMathId,
+  }) {
+    final result = <PreviewInline>[];
+    for (final node in nodes) {
+      if (node is XmlText) {
+        final text = node.value.replaceAll(RegExp(r'\s+'), ' ');
+        if (text.trim().isNotEmpty) {
+          result.add(PreviewInline(kind: PreviewInlineKind.text, text: text));
+        }
+        continue;
+      }
+      if (node is! XmlElement) {
+        continue;
+      }
+      final name = node.name.local.toLowerCase();
+      if (name == 'math') {
+        final expression = node.innerText;
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.math,
+            text: expression,
+            attributes: {
+              busyMarkMathSourceFormAttribute:
+                  BusyMathSourceForm.writersideElement.name,
+              'expressionId': nextMathId(),
+            },
+          ),
+        );
+        continue;
+      }
+      if (name == 'img') {
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.image,
+            text: node.getAttribute('alt') ?? '',
+            destination: node.getAttribute('src'),
+          ),
+        );
+        continue;
+      }
+      final children = _xmlPreviewInlines(
+        node.children,
+        nextMathId: nextMathId,
+      );
+      final text = node.innerText;
+      switch (name) {
+        case 'b' || 'strong':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.strong,
+              text: text,
+              children: children,
+            ),
+          );
+          break;
+        case 'i' || 'emphasis':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.emphasis,
+              text: text,
+              children: children,
+            ),
+          );
+          break;
+        case 'code' || 'control' || 'path' || 'shortcut':
+          result.add(PreviewInline(kind: PreviewInlineKind.code, text: text));
+          break;
+        case 'a':
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.link,
+              text: text,
+              destination:
+                  node.getAttribute('href') ?? node.getAttribute('anchor'),
+              children: children,
+            ),
+          );
+          break;
+        default:
+          result.addAll(children);
+          break;
+      }
+      if (name == 'p' && result.isNotEmpty) {
+        result.add(
+          const PreviewInline(kind: PreviewInlineKind.text, text: '\n'),
+        );
+      }
+    }
+    while (result.lastOrNull?.kind == PreviewInlineKind.text &&
+        result.lastOrNull?.text.trim().isEmpty == true) {
+      result.removeLast();
+    }
+    return result;
+  }
+}
+
+List<int> _encodeDocumentText(
+  String text, {
+  TextFormatMetadata? format,
+  LineEndingNormalization? mixedNormalization,
+}) {
+  return format == null
+      ? utf8.encode(text)
+      : format.encode(text, mixedNormalization: mixedNormalization);
 }
 
 class _StagedSave {
@@ -1404,6 +2119,24 @@ class _StagedSave {
 
   final Directory directory;
   final File file;
+}
+
+class _StagedBatchTextWrite {
+  const _StagedBatchTextWrite({
+    required this.requestPath,
+    required this.target,
+    required this.directory,
+    required this.stagedFile,
+    required this.expectedSnapshot,
+    required this.bytes,
+  });
+
+  final String requestPath;
+  final File target;
+  final Directory directory;
+  final File stagedFile;
+  final WorkspaceFileSnapshot expectedSnapshot;
+  final List<int> bytes;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

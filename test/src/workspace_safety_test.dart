@@ -392,77 +392,84 @@ void main() {
     expect(widgetRef.read(workspaceControllerProvider).isDirty, isFalse);
   });
 
-  testWidgets('save cancels when the active document changes during disk I/O', (
-    tester,
-  ) async {
-    final service = _IdentityWorkspaceService()
-      ..pendingFileChangedResult = Completer<bool>();
-    bool? saved;
-    late WidgetRef widgetRef;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          localSettingsStoreProvider.overrideWithValue(
-            _MemorySettingsStore()
-              ..value = AppSettings.defaults()
-                  .copyWith(autoSave: false)
-                  .toJson(),
-          ),
-          workspaceServiceProvider.overrideWithValue(service),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: buildBusyMarkTheme(
-            brightness: Brightness.light,
-            accentColor: Colors.green,
-          ),
-          home: Scaffold(
-            body: Consumer(
-              builder: (context, ref, child) {
-                widgetRef = ref;
-                return TextButton(
-                  onPressed: () async {
-                    saved = await saveActiveWithOverwriteConfirmation(
-                      context,
-                      ref,
-                    );
-                  },
-                  child: const Text('Save document'),
-                );
-              },
+  testWidgets(
+    'save completes for its buffer when the active document changes',
+    (tester) async {
+      final service = _IdentityWorkspaceService()
+        ..pendingFileChangedResult = Completer<bool>();
+      bool? saved;
+      late WidgetRef widgetRef;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore()
+                ..value = AppSettings.defaults()
+                    .copyWith(autoSave: false)
+                    .toJson(),
+            ),
+            workspaceServiceProvider.overrideWithValue(service),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.green,
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, child) {
+                  widgetRef = ref;
+                  return TextButton(
+                    onPressed: () async {
+                      saved = await saveActiveWithOverwriteConfirmation(
+                        context,
+                        ref,
+                      );
+                    },
+                    child: const Text('Save document'),
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final controller = widgetRef.read(workspaceControllerProvider.notifier);
-    await controller.openPath(service.rootPath);
-    controller.updateActiveText('# Edited A\n');
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Edited A\n');
 
-    await tester.tap(find.text('Save document'));
-    await service.fileChangeCheckStarted.future;
+      await tester.tap(find.text('Save document'));
+      await service.fileChangeCheckStarted.future;
 
-    expect(await controller.openActiveFile(service.secondPath), isTrue);
-    controller.updateActiveText('# Edited B\n');
-    service.pendingFileChangedResult!.complete(false);
-    await tester.pumpAndSettle();
+      expect(await controller.openActiveFile(service.secondPath), isTrue);
+      controller.updateActiveText('# Edited B\n');
+      service.pendingFileChangedResult!.complete(false);
+      await tester.pumpAndSettle();
 
-    expect(saved, isFalse);
-    expect(service.saves, isEmpty);
-    expect(service.documents[service.firstPath], '# External A\n');
-    expect(service.documents[service.secondPath], '# Original B\n');
-    expect(
-      widgetRef.read(workspaceControllerProvider).workspace?.activeFilePath,
-      service.secondPath,
-    );
-    expect(
-      widgetRef.read(workspaceControllerProvider).activeText,
-      '# Edited B\n',
-    );
-    expect(widgetRef.read(workspaceControllerProvider).isDirty, isTrue);
-  });
+      expect(saved, isTrue);
+      expect(service.saves, [(path: service.firstPath, text: '# Edited A\n')]);
+      expect(service.documents[service.firstPath], '# Edited A\n');
+      expect(service.documents[service.secondPath], '# Original B\n');
+      expect(
+        widgetRef.read(workspaceControllerProvider).workspace?.activeFilePath,
+        service.secondPath,
+      );
+      expect(
+        widgetRef.read(workspaceControllerProvider).activeText,
+        '# Edited B\n',
+      );
+      expect(widgetRef.read(workspaceControllerProvider).isDirty, isTrue);
+      final firstBuffer = widgetRef
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .singleWhere((buffer) => buffer.filePath == service.firstPath);
+      expect(firstBuffer.isDirty, isFalse);
+      expect(firstBuffer.lastSavedText, '# Edited A\n');
+    },
+  );
 
   testWidgets('Save As stays pinned while the file picker is open', (
     tester,
@@ -873,6 +880,143 @@ void main() {
     );
     expect(widgetRef.read(workspaceControllerProvider).isDirty, isTrue);
   });
+
+  testWidgets('workspace continuation resolves inactive dirty documents too', (
+    tester,
+  ) async {
+    final service = _IdentityWorkspaceService();
+    bool? safeToContinue;
+    late WidgetRef widgetRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore()
+              ..value = AppSettings.defaults()
+                  .copyWith(autoSave: false)
+                  .toJson(),
+          ),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: Colors.green,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) {
+                widgetRef = ref;
+                return TextButton(
+                  onPressed: () async {
+                    safeToContinue = await confirmSafeToContinue(context, ref);
+                  },
+                  child: const Text('Navigate'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final controller = widgetRef.read(workspaceControllerProvider.notifier);
+    await controller.openPath(service.rootPath);
+    controller.updateActiveText('# Edited A\n');
+    await controller.openActiveFile(service.secondPath);
+    controller.updateActiveText('# Edited B\n');
+    expect(
+      widgetRef.read(workspaceControllerProvider).dirtyBuffers,
+      hasLength(2),
+    );
+
+    await tester.tap(find.text('Navigate'));
+    await tester.pumpAndSettle();
+    expect(find.text('a.md'), findsOneWidget);
+    expect(find.text('b.md'), findsOneWidget);
+    await tester.tap(find.text(l10n.discard));
+    await tester.pumpAndSettle();
+
+    expect(safeToContinue, isTrue);
+    expect(widgetRef.read(workspaceControllerProvider).dirtyBuffers, isEmpty);
+    expect(service.documents[service.firstPath], '# External A\n');
+    expect(service.documents[service.secondPath], '# Original B\n');
+  });
+
+  for (final action in [
+    (label: 'save', discard: false),
+    (label: 'discard', discard: true),
+  ]) {
+    testWidgets(
+      'closing one dirty tab can ${action.label} it while another stays dirty',
+      (tester) async {
+        final service = _IdentityWorkspaceService();
+        bool? safeToClose;
+        late WidgetRef widgetRef;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              localSettingsStoreProvider.overrideWithValue(
+                _MemorySettingsStore()
+                  ..value = AppSettings.defaults()
+                      .copyWith(autoSave: false)
+                      .toJson(),
+              ),
+              workspaceServiceProvider.overrideWithValue(service),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              theme: buildBusyMarkTheme(
+                brightness: Brightness.light,
+                accentColor: Colors.green,
+              ),
+              home: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, child) {
+                    widgetRef = ref;
+                    return TextButton(
+                      onPressed: () async {
+                        safeToClose = await confirmSafeToCloseActiveDocument(
+                          context,
+                          ref,
+                        );
+                      },
+                      child: const Text('Close active'),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final controller = widgetRef.read(workspaceControllerProvider.notifier);
+        await controller.openPath(service.rootPath);
+        controller.updateActiveText('# Edited A\n');
+        await controller.openActiveFile(service.secondPath);
+        controller.updateActiveText('# Edited B\n');
+        expect(
+          widgetRef.read(workspaceControllerProvider).dirtyBuffers,
+          hasLength(2),
+        );
+
+        await tester.tap(find.text('Close active'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(action.discard ? l10n.discard : l10n.save));
+        await tester.pumpAndSettle();
+
+        expect(safeToClose, isTrue);
+        final state = widgetRef.read(workspaceControllerProvider);
+        expect(state.dirtyBuffers, hasLength(1));
+        expect(state.dirtyBuffers.single.filePath, service.firstPath);
+        expect(state.activeBuffer?.filePath, service.secondPath);
+        expect(state.activeBuffer?.isDirty, isFalse);
+      },
+    );
+  }
 }
 
 double _contrastRatio(Color foreground, Color background) {

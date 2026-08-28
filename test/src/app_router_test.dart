@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
@@ -90,6 +91,9 @@ void main() {
         ProviderScope(
           overrides: [
             linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
             workspaceControllerProvider.overrideWith(
               () => _StaleWorkspaceController(),
             ),
@@ -123,6 +127,56 @@ void main() {
       expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     },
   );
+
+  testWidgets('returning to Welcome does not restore the session again', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(
+            _FallbackHeaderBarService(),
+          ),
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore(
+              AppSettings.defaults()
+                  .copyWith(reopenPreviousWorkspaceOnStartup: true)
+                  .toJson(),
+            ),
+          ),
+          workspaceControllerProvider.overrideWith(
+            _RestoringWorkspaceController.new,
+          ),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})')
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+    expect(
+      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      findsNothing,
+    );
+  });
 }
 
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
@@ -152,5 +206,58 @@ class _StaleWorkspaceController extends WorkspaceController {
         diagnostics: const [],
       ),
     );
+  }
+
+  @override
+  Future<bool> restoreStartupSession({
+    required bool reopenCleanSession,
+  }) async => false;
+}
+
+class _RestoringWorkspaceController extends WorkspaceController {
+  @override
+  WorkspaceState build() => const WorkspaceState();
+
+  @override
+  Future<bool> restoreStartupSession({required bool reopenCleanSession}) =>
+      restorePreviousSession();
+
+  @override
+  Future<bool> restorePreviousSession() async {
+    state = WorkspaceState(
+      workspace: Workspace(
+        id: 'restored-workspace',
+        rootPath: '/tmp/restored.md',
+        kind: WorkspaceKind.singleMarkdown,
+        openedAt: DateTime(2026),
+        activeFilePath: '/tmp/restored.md',
+        files: [
+          DocumentFile(
+            absolutePath: '/tmp/restored.md',
+            relativePath: 'restored.md',
+            kind: DocumentKind.markdown,
+            size: 20,
+            lastModified: DateTime(2026),
+          ),
+        ],
+        diagnostics: const [],
+      ),
+    );
+    return true;
+  }
+}
+
+class _MemorySettingsStore implements LocalSettingsStore {
+  _MemorySettingsStore([Map<String, Object?>? value])
+    : value = value ?? <String, Object?>{};
+
+  Map<String, Object?> value;
+
+  @override
+  Future<Map<String, Object?>> load() async => value;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    value = json;
   }
 }

@@ -13,6 +13,23 @@ void main() {
     final settings = AppSettings.defaults();
 
     expect(settings.confirmCloseWithUnsavedChanges, isTrue);
+    expect(settings.reopenPreviousWorkspaceOnStartup, isFalse);
+    expect(settings.toJson()['reopenPreviousWorkspaceOnStartup'], isFalse);
+  });
+
+  test('reopen workspace setting is migration-safe', () {
+    expect(
+      AppSettings.fromJson(
+        const <String, Object?>{},
+      ).reopenPreviousWorkspaceOnStartup,
+      isFalse,
+    );
+    expect(
+      AppSettings.fromJson(const <String, Object?>{
+        'reopenPreviousWorkspaceOnStartup': true,
+      }).reopenPreviousWorkspaceOnStartup,
+      isTrue,
+    );
   });
 
   test('document view mode defaults to editor', () {
@@ -46,8 +63,10 @@ void main() {
       defaults
           .copyWith(
             aiProviderPreference: AiProviderPreference.openAi,
+            aiOllamaEndpoint: 'http://localhost:11434',
             aiOllamaModel: 'local-model',
             aiOpenAiModel: 'gpt-5.6-sol',
+            aiGeminiModel: 'gemini-custom',
             aiModelRoutingPreference: AiModelRoutingPreference.fixed,
             aiCloudProviderConsentIds: const ['openai'],
           )
@@ -55,8 +74,10 @@ void main() {
     );
 
     expect(reloaded.aiProviderPreference, AiProviderPreference.openAi);
+    expect(reloaded.aiOllamaEndpoint, 'http://localhost:11434');
     expect(reloaded.aiOllamaModel, 'local-model');
     expect(reloaded.aiOpenAiModel, 'gpt-5.6-sol');
+    expect(reloaded.aiGeminiModel, 'gemini-custom');
     expect(reloaded.aiModelRoutingPreference, AiModelRoutingPreference.fixed);
     expect(reloaded.aiCloudProviderConsentIds, ['openai']);
     final serialized = jsonEncode(reloaded.toJson()).toLowerCase();
@@ -291,13 +312,21 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     await controller.setConfirmCloseWithUnsavedChanges(false);
+    await controller.setReopenPreviousWorkspaceOnStartup(true);
 
     expect(store.value['confirmCloseWithUnsavedChanges'], isFalse);
+    expect(store.value['reopenPreviousWorkspaceOnStartup'], isTrue);
     expect(
       container
           .read(appSettingsControllerProvider)
           .confirmCloseWithUnsavedChanges,
       isFalse,
+    );
+    expect(
+      container
+          .read(appSettingsControllerProvider)
+          .reopenPreviousWorkspaceOnStartup,
+      isTrue,
     );
   });
 

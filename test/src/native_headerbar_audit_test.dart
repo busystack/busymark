@@ -215,11 +215,19 @@ void main() {
     expect(service, contains('reportIssue'));
     expect(service, contains('fullScreen'));
     expect(app, contains('menu: l10n.mainMenu'));
-    expect(app, contains('settings: l10n.settings'));
-    expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
-    expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
+    expect(app, contains('settings: label(BusyMarkCommandIds.settings)'));
+    expect(
+      app,
+      contains(
+        'keyboardShortcuts: label(BusyMarkCommandIds.keyboardShortcuts)',
+      ),
+    );
+    expect(
+      app,
+      contains('markdownAndHtml: label(BusyMarkCommandIds.markdownAndHtml)'),
+    );
     expect(app, contains('reportIssue: l10n.reportIssue'));
-    expect(app, contains('fullScreen: l10n.fullScreen'));
+    expect(app, contains('fullScreen: label(BusyMarkCommandIds.fullScreen)'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -246,8 +254,14 @@ void main() {
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
     expect(mainMenu, contains('label: l10n.reportIssue'));
-    expect(mainMenu, contains('label: l10n.exportAsPdf'));
-    expect(mainMenu, contains('label: l10n.fullScreen'));
+    expect(
+      mainMenu,
+      contains('label: command(BusyMarkCommandIds.exportPdf).label(context)'),
+    );
+    expect(
+      mainMenu,
+      contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
+    );
     expect(mainMenu, contains('enabled: canExportPdf'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
@@ -425,7 +439,9 @@ void main() {
     expect(snapcraft, contains('override-build:'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
-    expect(snapcraft, contains('craftctl default'));
+    expect(snapcraft, contains('export CI=true'));
+    expect(snapcraft, contains('flutter --no-version-check precache --linux'));
+    expect(snapcraft, contains('flutter --no-version-check pub get'));
     expect(
       snapcraft,
       contains(
@@ -486,9 +502,20 @@ void main() {
     );
     expect(script, contains(r'stage_ldd_dependencies "$setsid_bin"'));
     expect(script, contains(r'test -x "$SNAP_ROOT/usr/bin/setsid"'));
-    expect(script, contains('squashfs-root/usr/bin/git'));
-    expect(script, contains('squashfs-root/usr/bin/setsid'));
+    expect(script, contains(r'unsquashfs -ll "$OUT" usr/bin/git'));
+    expect(script, contains(r'unsquashfs -ll "$OUT" usr/bin/setsid'));
     expect(script, contains('--skip-bundled-git'));
+    expect(script, contains('scaffold_has_bundled_git_tools'));
+    expect(
+      script,
+      contains(
+        'Retaining core24-compatible Git and OpenSSH tools from the snap scaffold',
+      ),
+    );
+    expect(script, contains('--no-install'));
+    expect(script, contains('item_indent = match.group(1)'));
+    expect(script, contains('f"{item_indent}- {item}\\n"'));
+    expect(script, contains('the currently installed snap was not changed'));
   });
 
   test('native headerbar uses the shared tooltip visuals', () {
@@ -1255,33 +1282,36 @@ void main() {
     expect(service, contains('viewModeSource'));
     expect(service, contains('viewModePreview'));
     expect(service, contains('viewModeSplit'));
-    expect(app, contains('editor: l10n.editor'));
-    expect(app, contains('source: l10n.source'));
-    expect(app, contains('preview: l10n.reading'));
-    expect(app, contains('split: l10n.split'));
+    expect(app, contains('editor: label(BusyMarkCommandIds.viewEditor)'));
+    expect(app, contains('source: label(BusyMarkCommandIds.viewSource)'));
+    expect(app, contains('preview: label(BusyMarkCommandIds.viewReading)'));
+    expect(app, contains('split: label(BusyMarkCommandIds.viewSplit)'));
     expect(
       app,
-      contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
+      contains('editorShortcut: shortcut(BusyMarkCommandIds.viewEditor)'),
     );
     expect(app, contains('editorGtkAccelerator:'));
-    expect(app, contains('BusyMarkDocumentViewShortcutGtkAccelerators.editor'));
+    expect(app, contains('accelerator(BusyMarkCommandIds.viewEditor)'));
     expect(
       app,
-      contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
+      contains('sourceShortcut: shortcut(BusyMarkCommandIds.viewSource)'),
     );
     expect(
       app,
-      contains('previewShortcut: BusyMarkDocumentViewShortcutLabels.reading'),
+      contains('previewShortcut: shortcut(BusyMarkCommandIds.viewReading)'),
     );
     expect(
       app,
-      contains('splitShortcut: BusyMarkDocumentViewShortcutLabels.split'),
+      contains('splitShortcut: shortcut(BusyMarkCommandIds.viewSplit)'),
     );
     expect(
       app,
-      contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),
+      contains('sidebarShortcut: shortcut(BusyMarkCommandIds.toggleSidebar)'),
     );
-    expect(app, contains('searchShortcut: BusyMarkAppShortcutLabels.search'));
+    expect(
+      app,
+      contains('searchShortcut: shortcut(BusyMarkCommandIds.search)'),
+    );
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
@@ -1463,8 +1493,11 @@ void main() {
     expect(nativeMenu, contains('GTK_IS_MENU(session->menu)'));
     expect(nativeMenu, contains('gtk_menu_attach_to_widget('));
     expect(nativeMenu, contains('gtk_widget_translate_coordinates('));
+    expect(nativeMenu, contains('native_menu_capture_trigger_event'));
+    expect(nativeMenu, contains('gdk_event_copy(event)'));
     expect(nativeMenu, contains('gtk_menu_popup_at_rect('));
     expect(nativeMenu, contains('rect_window, &window_anchor'));
+    expect(nativeMenu, contains('data->trigger_event)'));
     expect(nativeMenu, contains('GDK_GRAVITY_SOUTH_WEST'));
     expect(nativeMenu, contains('GDK_GRAVITY_NORTH_WEST'));
     expect(nativeMenu, contains('GDK_ANCHOR_FLIP_Y'));

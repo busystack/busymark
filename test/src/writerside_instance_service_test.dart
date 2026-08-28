@@ -102,13 +102,25 @@ void main() {
       p.join(source.path, 'guide', 'images'),
     ).createSync(recursive: true);
     final first = File(p.join(source.path, 'guide', 'intro.md'))
-      ..writeAsStringSync('# Imported intro\n\n![Logo](images/logo.png)\n');
+      ..writeAsStringSync('''# Imported intro
+
+![Logo](images/logo.png)
+
+<video src="images/demo.mp4"
+       preview-src="images/demo.png"/>
+''');
     File(
       p.join(source.path, 'guide', 'other.md'),
     ).writeAsStringSync('# Other\n');
     File(
       p.join(source.path, 'guide', 'images', 'logo.png'),
     ).writeAsBytesSync([1, 2, 3]);
+    File(
+      p.join(source.path, 'guide', 'images', 'demo.mp4'),
+    ).writeAsBytesSync([4, 5, 6]);
+    File(
+      p.join(source.path, 'guide', 'images', 'demo.png'),
+    ).writeAsBytesSync([7, 8, 9]);
 
     final candidates = await instanceService.discoverMarkdownFiles(source.path);
     expect(candidates.map((candidate) => candidate.relativePath), [
@@ -142,6 +154,18 @@ void main() {
         p.join(root.path, 'topics', 'guide', 'images', 'logo.png'),
       ).readAsBytesSync(),
       [1, 2, 3],
+    );
+    expect(
+      File(
+        p.join(root.path, 'topics', 'guide', 'images', 'demo.mp4'),
+      ).readAsBytesSync(),
+      [4, 5, 6],
+    );
+    expect(
+      File(
+        p.join(root.path, 'topics', 'guide', 'images', 'demo.png'),
+      ).readAsBytesSync(),
+      [7, 8, 9],
     );
     expect(
       File(p.join(root.path, 'topics', 'guide', 'other.md')).existsSync(),

@@ -11,9 +11,9 @@ abstract final class BusyMarkDocumentTextGeometry {
   static const double editableLayoutInset =
       editableCaretGap + editableCursorWidth;
 
-  /// Matches Flutter's native-platform `EditableText` selection geometry.
-  static const BoxHeightStyle selectionHeightStyle =
-      BoxHeightStyle.includeLineSpacingMiddle;
+  /// Uses the complete text strut so selection has balanced breathing room
+  /// above capitals and below descenders in both Source and Editor views.
+  static const BoxHeightStyle selectionHeightStyle = BoxHeightStyle.strut;
   static const BoxWidthStyle selectionWidthStyle = BoxWidthStyle.tight;
   static const double fallbackSelectionAlpha = 0.40;
 }

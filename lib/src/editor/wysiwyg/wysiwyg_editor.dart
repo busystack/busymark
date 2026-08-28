@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
@@ -7,22 +8,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html_parser;
+import 'package:path/path.dart' as p;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../ai/ai_models.dart';
+import '../../assets/asset_ingestion_service.dart';
+import '../../assets/asset_input_service.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_toast.dart';
+import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
+import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
+import '../document_collapsible.dart';
 import '../document_layout.dart';
 import '../document_surface.dart';
 import '../document_text_geometry.dart';
@@ -30,20 +38,31 @@ import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
+import 'wysiwyg_session_state.dart';
 import 'wysiwyg_toolbar.dart';
 
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
+typedef BusyMarkWysiwygSessionChanged =
+    void Function(String documentId, WysiwygEditorSessionState state);
 
 class BusyMarkWysiwygEditor extends StatefulWidget {
   const BusyMarkWysiwygEditor({
     super.key,
     required this.document,
     required this.onSourceChanged,
+    this.documentId,
+    this.initialSessionState = const WysiwygEditorSessionState(),
+    this.onSessionChanged,
+    this.useExternalUndoHistory = false,
     this.onDocumentChanged,
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.assetWorkspaceKind,
+    this.assetIngestionService = const AssetIngestionService(),
+    this.assetInputService,
+    this.onAssetSaveRequired,
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
@@ -57,18 +76,29 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onVisibleHeadingChanged,
     this.onOpenSearch,
     this.onCloseSearch,
+    this.onUndo,
+    this.onRedo,
     this.headerBarService,
     this.documentLayout,
     this.visualizationRevision = 0,
     this.onAiEdit,
+    this.onMathDiagnostic,
   });
 
   final BusyDocument document;
   final BusyMarkWysiwygSourceChanged onSourceChanged;
+  final String? documentId;
+  final WysiwygEditorSessionState initialSessionState;
+  final BusyMarkWysiwygSessionChanged? onSessionChanged;
+  final bool useExternalUndoHistory;
   final ValueChanged<BusyDocument>? onDocumentChanged;
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final AssetWorkspaceKind? assetWorkspaceKind;
+  final AssetIngestionService assetIngestionService;
+  final AssetInputService? assetInputService;
+  final VoidCallback? onAssetSaveRequired;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
@@ -82,10 +112,13 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final ValueChanged<DocumentOutlineHeading?>? onVisibleHeadingChanged;
   final VoidCallback? onOpenSearch;
   final VoidCallback? onCloseSearch;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
   final int visualizationRevision;
   final BusyMarkAiEditCallback? onAiEdit;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -98,6 +131,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _textControllers = <String, BusyMarkWysiwygTextController>{};
   final _textUndoControllers = <String, UndoHistoryController>{};
   final _focusNodes = <String, FocusNode>{};
+  StreamSubscription<List<String>>? _assetDropSubscription;
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
   final _redoStack = <BusyDocument>[];
@@ -105,6 +139,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _itemPositionsListener = ItemPositionsListener.create();
   List<({int itemIndex, DocumentOutlineHeading heading})>
   _viewportOutlineStops = const [];
+  List<String> _viewportBlockIds = const [];
   String? _reportedVisibleHeadingKey;
   bool _hasReportedVisibleHeading = false;
   late final FocusNode _selectionFocusNode;
@@ -122,6 +157,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _initialFocusScheduled = false;
   var _toolbarVisible = true;
   var _documentGeneration = 0;
+  bool _sessionReportScheduled = false;
+
+  String get _documentId => widget.documentId ?? widget.document.filePath;
 
   @override
   void initState() {
@@ -133,11 +171,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
     )..addListener(_handleDocumentControllerChanged);
+    _listenForDroppedAssets();
     _itemPositionsListener.itemPositions.addListener(
       _handleVisibleItemsChanged,
     );
     _syncBlockControllers();
-    _scheduleInitialFocus();
+    _scheduleSessionRestore(widget.initialSessionState);
     _scheduleHeadingScroll();
     _scheduleSearchScroll();
     _scheduleVisibleHeadingReport();
@@ -146,19 +185,28 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   void didUpdateWidget(covariant BusyMarkWysiwygEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final fileChanged = oldWidget.document.filePath != widget.document.filePath;
+    if (oldWidget.assetInputService != widget.assetInputService) {
+      unawaited(_assetDropSubscription?.cancel());
+      _listenForDroppedAssets();
+    }
+    final oldDocumentId = oldWidget.documentId ?? oldWidget.document.filePath;
+    final fileChanged = oldDocumentId != _documentId;
     final sourceChanged = oldWidget.document.source != widget.document.source;
     if (fileChanged || (sourceChanged && !_internalChange)) {
       _hasReportedVisibleHeading = false;
-      _undoStack.clear();
-      _redoStack.clear();
       if (fileChanged) {
+        _reportSessionNow(
+          callback: oldWidget.onSessionChanged,
+          documentId: oldDocumentId,
+        );
+        _undoStack.clear();
+        _redoStack.clear();
         _internalChange = false;
         _resetPerDocumentState();
       }
       _documentController.replaceDocument(widget.document);
       _initialFocusScheduled = false;
-      _scheduleInitialFocus();
+      _scheduleSessionRestore(widget.initialSessionState);
       _scheduleVisibleHeadingReport();
     } else if (oldWidget.onVisibleHeadingChanged !=
         widget.onVisibleHeadingChanged) {
@@ -173,6 +221,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    unawaited(_assetDropSubscription?.cancel());
     _itemPositionsListener.itemPositions.removeListener(
       _handleVisibleItemsChanged,
     );
@@ -221,7 +270,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleVisibleItemsChanged() {
-    if (!mounted || _viewportOutlineStops.isEmpty) {
+    if (!mounted) {
       return;
     }
     int? firstVisible;
@@ -234,6 +283,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
     if (firstVisible == null) {
+      return;
+    }
+    _scheduleSessionReport();
+    if (_viewportOutlineStops.isEmpty) {
       return;
     }
     var low = 0;
@@ -264,6 +317,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final commandRegistry =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
     final entries = _editableBlockEntries(_documentController.document.blocks);
     final renderEntries = _editorRenderEntries(
       _documentController.document.blocks,
@@ -283,6 +339,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             case final heading?)
           (itemIndex: index, heading: heading),
     ];
+    _viewportBlockIds = [for (final entry in renderEntries) entry.block.id];
     final blocks = entries.map((entry) => entry.block).toList();
     final blockSelectionActive = _hasBlockSelection;
     final selectionRangesByBlockId = {
@@ -303,19 +360,23 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final selectedBlockIds = _fullySelectedBlockIds(blocks);
     return Shortcuts(
       shortcuts: {
-        ...BusyMarkEditorShortcutActivators.intentMap(
-          _EditorShortcutIntent.new,
+        ...commandRegistry.shortcutIntents(
+          scopes: const {BusyMarkCommandScope.editor},
+          intentFor: BusyMarkContextCommandIntent.new,
         ),
-        BusyMarkTextEditingShortcutActivators.paste: const _PasteTextIntent(),
-        BusyMarkTextEditingShortcutActivators.selectAll:
+        commandRegistry[BusyMarkCommandIds.textPaste]!.shortcut!.activator:
+            const _PasteTextIntent(),
+        commandRegistry[BusyMarkCommandIds.textSelectAll]!.shortcut!.activator:
             const _SelectAllTextIntent(),
-        BusyMarkTextEditingShortcutActivators.undo: const _UndoEditorIntent(),
-        BusyMarkTextEditingShortcutActivators.redo: const _RedoEditorIntent(),
+        commandRegistry['text.undo']!.shortcut!.activator:
+            const _UndoEditorIntent(),
+        commandRegistry['text.redo']!.shortcut!.activator:
+            const _RedoEditorIntent(),
         if (blockSelectionActive)
-          BusyMarkTextEditingShortcutActivators.copy:
+          commandRegistry[BusyMarkCommandIds.textCopy]!.shortcut!.activator:
               const _CopyBlockSelectionIntent(),
         if (blockSelectionActive)
-          BusyMarkTextEditingShortcutActivators.cut:
+          commandRegistry[BusyMarkCommandIds.textCut]!.shortcut!.activator:
               const _CutBlockSelectionIntent(),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.backspace):
@@ -324,11 +385,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.delete):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
-          BusyMarkTextEditingShortcutActivators.escape:
+          commandRegistry['text.escape']!.shortcut!.activator:
               const _ClearBlockSelectionIntent(),
       },
       child: Actions(
         actions: {
+          BusyMarkContextCommandIntent: BusyMarkContextCommandAction(
+            isCommandEnabled: _canApplyContextCommand,
+            onCommand: _applyContextCommand,
+          ),
           _EditorShortcutIntent: CallbackAction<_EditorShortcutIntent>(
             onInvoke: (intent) {
               _applyEditorShortcutAction(intent.action);
@@ -375,13 +440,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               ),
           _UndoEditorIntent: CallbackAction<_UndoEditorIntent>(
             onInvoke: (intent) {
-              _undoEditorChange();
+              if (widget.useExternalUndoHistory || !_undoEditorChange()) {
+                widget.onUndo?.call();
+              }
               return null;
             },
           ),
           _RedoEditorIntent: CallbackAction<_RedoEditorIntent>(
             onInvoke: (intent) {
-              _redoEditorChange();
+              if (widget.useExternalUndoHistory || !_redoEditorChange()) {
+                widget.onRedo?.call();
+              }
               return null;
             },
           ),
@@ -443,8 +512,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                         widget.toolbarDirection,
                       ),
                       onBlockCommand: _applyBlockCommand,
+                      onAdmonitionCommand: _applyAdmonitionCommand,
+                      admonitionsEnabled:
+                          _documentController.document.mode ==
+                          MarkdownMode.writersideMarkdown,
                       onInlineCommand: _applyInlineCommand,
                       onLinkCommand: () => unawaited(_applyLinkCommand()),
+                      onInlineMathCommand: _applyInlineMathCommand,
+                      onDisplayMathCommand: _applyDisplayMathCommand,
                       onImageCommand: () => unawaited(_applyImageCommand()),
                       onInlineImageCommand: () =>
                           unawaited(_applyInlineImageCommand()),
@@ -487,7 +562,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       block,
       fallback: Directionality.of(context),
     );
-    final content = entry.children == null
+    final content = entry.collapsible
+        ? _buildCollapsibleEntry(
+            context,
+            entry,
+            documentLayout: documentLayout,
+            first: first,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : entry.children == null
         ? _buildEditableBlockField(
             block,
             first: first,
@@ -519,6 +603,95 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
+  Widget _buildCollapsibleEntry(
+    BuildContext context,
+    _EditorRenderEntry entry, {
+    required BusyMarkDocumentLayoutSpec documentLayout,
+    required bool first,
+    required Set<String> selectedBlockIds,
+    required Map<String, BusyMarkWysiwygSelectionRange>
+    selectionRangesByBlockId,
+  }) {
+    final block = entry.block;
+    final heading = block.kind == BusyBlockKind.heading;
+    final title = heading
+        ? block.plainText
+        : _wysiwygCollapsibleTitle(context, block);
+    final header = heading
+        ? _buildEditableBlockField(
+            block,
+            first: first,
+            listRunEnd: false,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : Text(
+            title,
+            style: block.kind == BusyBlockKind.codeBlock
+                ? busyMarkDocumentCodeTextStyle(context)
+                : busyMarkDocumentBodyTextStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600),
+          );
+    final children = entry.children;
+    final expandedChild = children == null
+        ? _buildEditableBlockField(
+            block,
+            first: false,
+            listRunEnd: entry.listRunEnd,
+            selectedBlockIds: selectedBlockIds,
+            selectionRangesByBlockId: selectionRangesByBlockId,
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (index, child) in children.indexed)
+                _buildRenderEntry(
+                  context,
+                  child,
+                  documentLayout: documentLayout,
+                  applyDocumentFrame: false,
+                  first: index == 0,
+                  selectedBlockIds: selectedBlockIds,
+                  selectionRangesByBlockId: selectionRangesByBlockId,
+                ),
+            ],
+          );
+    return BusyMarkDocumentCollapsible(
+      key: ValueKey('wysiwyg-collapsible-${block.id}'),
+      initiallyExpanded: busyMarkWritersideInitiallyExpanded(block.attributes),
+      kindLabel: title,
+      framed: !heading,
+      toggleOnHeaderTap: false,
+      margin: heading
+          ? (first
+                ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
+                : BusyMarkInsets.documentHeadingBlock)
+          : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
+      header: header,
+      child: expandedChild,
+    );
+  }
+
+  String _wysiwygCollapsibleTitle(BuildContext context, BusyBlock block) {
+    final configured = block
+        .attributes[busyMarkWritersideCollapsedTitleAttribute]
+        ?.trim();
+    if (configured != null && configured.isNotEmpty) {
+      return configured;
+    }
+    if (block.kind == BusyBlockKind.codeBlock) {
+      final firstLine = block.plainText
+          .split('\n')
+          .map((line) => line.trim())
+          .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+      return firstLine.isEmpty ? context.l10n.codeBlock : firstLine;
+    }
+    return block.attributes['title']?.trim().isNotEmpty == true
+        ? block.attributes['title']!.trim()
+        : block.plainText;
+  }
+
   Widget _buildBlockquoteEntry(
     BuildContext context,
     _EditorRenderEntry entry, {
@@ -530,35 +703,49 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }) {
     final children = entry.children!;
     final firstEditableBlock = _firstEditableBlockIn(children);
+    final onTap = firstEditableBlock == null
+        ? null
+        : () {
+            _handleBlockFocused(firstEditableBlock.id);
+            _focusNodeFor(firstEditableBlock).requestFocus();
+          };
+    final child = Builder(
+      builder: (quoteContext) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, child) in children.indexed)
+            _buildRenderEntry(
+              quoteContext,
+              child,
+              documentLayout: documentLayout,
+              applyDocumentFrame: false,
+              first: index == 0,
+              selectedBlockIds: selectedBlockIds,
+              selectionRangesByBlockId: selectionRangesByBlockId,
+            ),
+        ],
+      ),
+    );
+    final style = busyAdmonitionStyleFromName(entry.block.attributes['style']);
+    final admonition =
+        entry.block.attributes[busyMarkWritersideAdmonitionAttribute] ==
+            'true' &&
+        style != BusyAdmonitionStyle.quote;
     return Directionality(
       textDirection: blockTextDirection,
-      child: BusyMarkDocumentCallout(
-        key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
-        icon: BusyMarkGlyphs.blockquote,
-        onTap: firstEditableBlock == null
-            ? null
-            : () {
-                _handleBlockFocused(firstEditableBlock.id);
-                _focusNodeFor(firstEditableBlock).requestFocus();
-              },
-        child: Builder(
-          builder: (quoteContext) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (index, child) in children.indexed)
-                _buildRenderEntry(
-                  quoteContext,
-                  child,
-                  documentLayout: documentLayout,
-                  applyDocumentFrame: false,
-                  first: index == 0,
-                  selectedBlockIds: selectedBlockIds,
-                  selectionRangesByBlockId: selectionRangesByBlockId,
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: admonition
+          ? BusyMarkDocumentAdmonition(
+              key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
+              style: style?.name,
+              onTap: onTap,
+              child: child,
+            )
+          : BusyMarkDocumentCallout(
+              key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
+              icon: BusyMarkGlyphs.blockquote,
+              onTap: onTap,
+              child: child,
+            ),
     );
   }
 
@@ -596,6 +783,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       imagesDir: widget.imagesDir,
       allowRemoteImages: widget.allowRemoteImages,
       onRemoteImageBlocked: widget.onRemoteImageBlocked,
+      onMathDiagnostic: widget.onMathDiagnostic,
       controller: _textControllerFor(block),
       undoController: _textUndoControllerFor(block),
       focusNode: _focusNodeFor(block),
@@ -624,6 +812,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           _handleTableColumnInserted(block.id, columnIndex, after: after),
       onTableColumnDeleted: (columnIndex) =>
           _handleTableColumnDeleted(block.id, columnIndex),
+      onTableColumnAlignmentChanged: (columnIndex, alignment) =>
+          _handleTableColumnAlignmentChanged(block.id, columnIndex, alignment),
       onTableDeleted: () => _handleTableDeleted(block.id),
       onImageEditRequested: () =>
           unawaited(_handleImageBlockEditRequested(block.id)),
@@ -706,13 +896,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   BusyMarkWysiwygTextController _textControllerFor(BusyBlock block) {
-    final controller = _textControllers.putIfAbsent(
-      block.id,
-      () => BusyMarkWysiwygTextController(
-        text: block.plainText,
-        ranges: busyInlineStyleRanges(block.inlines),
-      ),
-    );
+    final controller = _textControllers.putIfAbsent(block.id, () {
+      final created = BusyMarkWysiwygTextController(
+        text: busyMarkWysiwygEditableText(block),
+        ranges: busyMarkWysiwygBlockContainsMath(block)
+            ? const []
+            : busyInlineStyleRanges(block.inlines),
+      );
+      created.addListener(_scheduleSessionReport);
+      return created;
+    });
     controller.updateFromBlock(block);
     return controller;
   }
@@ -773,7 +966,34 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
         )
         .toList();
-    for (final (index, block) in visibleBlocks.indexed) {
+    var index = 0;
+    while (index < visibleBlocks.length) {
+      final block = visibleBlocks[index];
+      if (_isWritersideCollapsibleHeading(block)) {
+        final level = int.tryParse(block.attributes['level'] ?? '') ?? 6;
+        var end = index + 1;
+        while (end < visibleBlocks.length) {
+          final candidate = visibleBlocks[end];
+          if (candidate.kind == BusyBlockKind.heading &&
+              (int.tryParse(candidate.attributes['level'] ?? '') ?? 6) <=
+                  level) {
+            break;
+          }
+          end += 1;
+        }
+        entries.add(
+          _EditorRenderEntry.collapsible(
+            block: block,
+            depth: depth,
+            children: _editorRenderEntries(
+              visibleBlocks.sublist(index + 1, end),
+              depth,
+            ),
+          ),
+        );
+        index = end;
+        continue;
+      }
       if (_isStructuralBlockquote(block)) {
         entries.add(
           _EditorRenderEntry.blockquote(
@@ -782,25 +1002,48 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             children: _editorRenderEntries(block.children),
           ),
         );
+        index += 1;
         continue;
       }
       final nextBlock = index + 1 < visibleBlocks.length
           ? visibleBlocks[index + 1]
           : null;
-      entries.add(
-        _EditorRenderEntry.block(
-          block: block,
-          depth: depth,
-          listRunEnd:
-              _isListItemBlock(block) &&
-              (nextBlock == null || !_isListItemBlock(nextBlock)),
-        ),
-      );
+      final entry = _isWritersideCollapsibleLeaf(block)
+          ? _EditorRenderEntry.collapsible(
+              block: block,
+              depth: depth,
+              listRunEnd:
+                  _isListItemBlock(block) &&
+                  (nextBlock == null || !_isListItemBlock(nextBlock)),
+            )
+          : _EditorRenderEntry.block(
+              block: block,
+              depth: depth,
+              listRunEnd:
+                  _isListItemBlock(block) &&
+                  (nextBlock == null || !_isListItemBlock(nextBlock)),
+            );
+      entries.add(entry);
       if (_showsNestedEditorBlocks(block)) {
         entries.addAll(_editorRenderEntries(block.children, depth + 1));
       }
+      index += 1;
     }
     return entries;
+  }
+
+  bool _isWritersideCollapsibleHeading(BusyBlock block) {
+    return _documentController.document.mode ==
+            MarkdownMode.writersideMarkdown &&
+        block.kind == BusyBlockKind.heading &&
+        busyMarkWritersideIsCollapsible(block.attributes);
+  }
+
+  bool _isWritersideCollapsibleLeaf(BusyBlock block) {
+    return _documentController.document.mode ==
+            MarkdownMode.writersideMarkdown &&
+        block.kind != BusyBlockKind.heading &&
+        busyMarkWritersideIsCollapsible(block.attributes);
   }
 
   bool _isStructuralBlockquote(BusyBlock block) =>
@@ -824,6 +1067,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _setActiveBlock(String blockId) {
     _activeBlockId = blockId;
+    _scheduleSessionReport();
   }
 
   KeyEventResult _handleDocumentSelectionKeyEvent(
@@ -956,6 +1200,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     _recordUndoSnapshot();
+    final currentBlock = _documentController.blockById(blockId);
+    if (currentBlock != null &&
+        busyMarkWysiwygBlockContainsMath(currentBlock)) {
+      _documentController.updateMathSource(blockId, value);
+      _emitMarkdown();
+      return;
+    }
     final controller = _textControllers[blockId];
     final offset =
         controller?.selection.extentOffset.clamp(0, value.length).toInt() ??
@@ -1063,6 +1314,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _emitMarkdown();
   }
 
+  void _handleTableColumnAlignmentChanged(
+    String tableBlockId,
+    int columnIndex,
+    BusyTableAlignment alignment,
+  ) {
+    _clearBlockSelection();
+    _setActiveBlock(tableBlockId);
+    _recordUndoSnapshot();
+    _documentController.setTableColumnAlignment(
+      tableBlockId,
+      columnIndex,
+      alignment,
+    );
+    _emitMarkdown();
+  }
+
   void _handleTableDeleted(String tableBlockId) {
     _clearBlockSelection();
     _recordUndoSnapshot();
@@ -1126,10 +1393,153 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _initialFocusScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final firstPlainBlock = _focusableBlocks()
+          .where((block) => !busyMarkWysiwygBlockContainsMath(block))
+          .firstOrNull;
+      if (firstPlainBlock == null) {
+        return;
+      }
+      _activeBlockId = firstPlainBlock.id;
+      _focusActiveOrFirstBlock(initialSelectionOffset: 0);
+    });
+  }
+
+  void _scheduleSessionRestore(WysiwygEditorSessionState session) {
+    if (session.activeBlockId == null &&
+        session.anchorBlockId == null &&
+        session.viewportBlockId == null) {
+      _scheduleInitialFocus();
+      return;
+    }
+    _initialFocusScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final activeBlock = session.activeBlockId == null
+          ? null
+          : _documentController.blockById(session.activeBlockId!);
+      _activeBlockId = activeBlock?.id ?? _focusableBlocks().firstOrNull?.id;
+      final anchorBlockId = session.anchorBlockId;
+      final extentBlockId = session.extentBlockId;
+      if (anchorBlockId != null && extentBlockId != null) {
+        final anchor = _documentController.blockById(anchorBlockId);
+        final extent = _documentController.blockById(extentBlockId);
+        if (anchor != null && extent != null) {
+          if (anchorBlockId == extentBlockId) {
+            final controller = _textControllers[anchorBlockId];
+            if (controller != null) {
+              controller.selection = TextSelection(
+                baseOffset: session.anchorOffset
+                    .clamp(0, controller.text.length)
+                    .toInt(),
+                extentOffset: session.extentOffset
+                    .clamp(0, controller.text.length)
+                    .toInt(),
+              );
+            }
+          } else {
+            _documentSelection = _DocumentTextSelection(
+              anchor: _DocumentTextPosition(
+                blockId: anchorBlockId,
+                offset: session.anchorOffset
+                    .clamp(0, anchor.plainText.length)
+                    .toInt(),
+              ),
+              extent: _DocumentTextPosition(
+                blockId: extentBlockId,
+                offset: session.extentOffset
+                    .clamp(0, extent.plainText.length)
+                    .toInt(),
+              ),
+            );
+          }
+        }
+      }
+      final viewportBlockId = session.viewportBlockId;
+      if (viewportBlockId != null) {
+        _jumpToBlock(
+          viewportBlockId,
+          alignment: session.viewportAlignment.clamp(0.0, 1.0),
+        );
+      }
+      _focusActiveOrFirstBlock();
       if (mounted) {
-        _focusActiveOrFirstBlock(initialSelectionOffset: 0);
+        setState(() {});
       }
     });
+  }
+
+  void _scheduleSessionReport() {
+    if (_sessionReportScheduled || widget.onSessionChanged == null) {
+      return;
+    }
+    _sessionReportScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sessionReportScheduled = false;
+      if (mounted) {
+        _reportSessionNow();
+      }
+    });
+  }
+
+  void _reportSessionNow({
+    BusyMarkWysiwygSessionChanged? callback,
+    String? documentId,
+  }) {
+    final report = callback ?? widget.onSessionChanged;
+    if (report == null) {
+      return;
+    }
+    String? anchorBlockId;
+    String? extentBlockId;
+    var anchorOffset = 0;
+    var extentOffset = 0;
+    final documentSelection = _documentSelection;
+    if (documentSelection != null) {
+      anchorBlockId = documentSelection.anchor.blockId;
+      anchorOffset = documentSelection.anchor.offset;
+      extentBlockId = documentSelection.extent.blockId;
+      extentOffset = documentSelection.extent.offset;
+    } else if (_activeBlockId case final blockId?) {
+      final selection = _textControllers[blockId]?.selection;
+      if (selection != null && selection.isValid) {
+        anchorBlockId = blockId;
+        anchorOffset = selection.baseOffset;
+        extentBlockId = blockId;
+        extentOffset = selection.extentOffset;
+      }
+    }
+    String? viewportBlockId;
+    var viewportAlignment = 0.0;
+    final positions =
+        _itemPositionsListener.itemPositions.value
+            .where(
+              (position) =>
+                  position.itemTrailingEdge > 0 && position.itemLeadingEdge < 1,
+            )
+            .toList()
+          ..sort((left, right) => left.index.compareTo(right.index));
+    if (positions.isNotEmpty &&
+        positions.first.index < _viewportBlockIds.length) {
+      viewportBlockId = _viewportBlockIds[positions.first.index];
+      viewportAlignment = positions.first.itemLeadingEdge.clamp(0.0, 1.0);
+    }
+    report(
+      documentId ?? _documentId,
+      WysiwygEditorSessionState(
+        activeBlockId: _activeBlockId,
+        anchorBlockId: anchorBlockId,
+        anchorOffset: anchorOffset,
+        extentBlockId: extentBlockId,
+        extentOffset: extentOffset,
+        viewportBlockId: viewportBlockId,
+        viewportAlignment: viewportAlignment,
+      ),
+    );
   }
 
   void _scheduleHeadingScroll() {
@@ -1293,6 +1703,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   KeyEventResult _handleBlockKeyEvent(String blockId, KeyEvent event) {
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    final commands =
+        BusyMarkCommandRegistryScope.read(context) ??
+        BusyMarkCommandCatalog.metadata;
     if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
         key == LogicalKeyboardKey.tab &&
         !_hasCommandModifierPressed()) {
@@ -1308,7 +1721,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
     if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
-        BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
+        commands.shortcutAccepts(
+          BusyMarkCommandIds.textInsertIndentation,
           event,
           keyboard,
         )) {
@@ -1327,48 +1741,76 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return KeyEventResult.ignored;
     }
     _activeBlockId = blockId;
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyA) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textSelectAll,
+      event,
+      keyboard,
+    )) {
       _selectAllForBlock(blockId);
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed &&
-        key == LogicalKeyboardKey.keyC &&
+    if (commands.shortcutAccepts(
+          BusyMarkCommandIds.textCopy,
+          event,
+          keyboard,
+        ) &&
         _copyCurrentSelection()) {
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed &&
-        key == LogicalKeyboardKey.keyX &&
+    if (commands.shortcutAccepts(BusyMarkCommandIds.textCut, event, keyboard) &&
         _cutCurrentSelection()) {
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed &&
-        !keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.keyV) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textPaste,
+      event,
+      keyboard,
+    )) {
       unawaited(_pasteIntoActiveBlock());
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.keyZ) {
-      _redoEditorChange();
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textRedo,
+      event,
+      keyboard,
+    )) {
+      if (widget.useExternalUndoHistory || !_redoEditorChange()) {
+        widget.onRedo?.call();
+      }
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyZ) {
-      _undoEditorChange();
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textUndo,
+      event,
+      keyboard,
+    )) {
+      if (widget.useExternalUndoHistory || !_undoEditorChange()) {
+        widget.onUndo?.call();
+      }
       return KeyEventResult.handled;
     }
-    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch?.call();
       return KeyEventResult.handled;
     }
-    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textEscape,
+      event,
+      keyboard,
+    )) {
       widget.onCloseSearch?.call();
       return KeyEventResult.handled;
     }
-    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
+    final commandId = commands.matchingCommandId(
       event,
       keyboard,
+      scope: BusyMarkCommandScope.editor,
     );
+    final shortcutAction = commandId == null
+        ? null
+        : BusyMarkEditorShortcutAction.values
+              .where((action) => commandId == 'editor.${action.name}')
+              .firstOrNull;
     if (shortcutAction != null) {
       if (shortcutAction == BusyMarkEditorShortcutAction.refineWithAi &&
           (widget.onAiEdit == null || _currentSelectionRanges().isEmpty)) {
@@ -2070,6 +2512,35 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _emitMarkdown();
   }
 
+  void _applyAdmonitionCommand(BusyAdmonitionStyle style) {
+    if (_documentController.document.mode != MarkdownMode.writersideMarkdown) {
+      return;
+    }
+    final selectedBlocks = _selectedBlocks();
+    if (selectedBlocks.isNotEmpty) {
+      _recordUndoSnapshot();
+      _documentController.applyAdmonitionStyleToBlocks(
+        selectedBlocks
+            .map((block) => _documentController.admonitionTargetId(block.id))
+            .toSet(),
+        style,
+      );
+      _clearBlockSelection();
+      _emitMarkdown();
+      return;
+    }
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    _documentController.applyAdmonitionStyle(
+      _documentController.admonitionTargetId(blockId),
+      style,
+    );
+    _emitMarkdown();
+  }
+
   void _applyInlineCommand(BusyWysiwygInlineCommand command) {
     final selectedRanges = _selectedTextRanges();
     if (selectedRanges.isNotEmpty) {
@@ -2204,6 +2675,58 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
+  bool _canApplyContextCommand(String commandId) {
+    if (commandId.startsWith('editor.')) {
+      final name = commandId.substring('editor.'.length);
+      return BusyMarkEditorShortcutAction.values.any(
+        (action) => action.name == name,
+      );
+    }
+    return switch (commandId) {
+      BusyMarkCommandIds.textSelectAll ||
+      BusyMarkCommandIds.textCut ||
+      BusyMarkCommandIds.textCopy ||
+      BusyMarkCommandIds.textPaste ||
+      'text.pastePlainText' ||
+      'text.undo' ||
+      'text.redo' => true,
+      _ => false,
+    };
+  }
+
+  void _applyContextCommand(String commandId) {
+    if (commandId.startsWith('editor.')) {
+      final name = commandId.substring('editor.'.length);
+      final action = BusyMarkEditorShortcutAction.values
+          .where((candidate) => candidate.name == name)
+          .firstOrNull;
+      if (action != null) {
+        _applyEditorShortcutAction(action);
+      }
+      return;
+    }
+    switch (commandId) {
+      case BusyMarkCommandIds.textSelectAll:
+        _selectAllForActiveBlock();
+      case BusyMarkCommandIds.textCut:
+        _cutCurrentSelection();
+      case BusyMarkCommandIds.textCopy:
+        _copyCurrentSelection();
+      case BusyMarkCommandIds.textPaste:
+        unawaited(_pasteIntoActiveBlock());
+      case 'text.pastePlainText':
+        unawaited(_pastePlainTextIntoActiveBlock());
+      case 'text.undo':
+        if (widget.useExternalUndoHistory || !_undoEditorChange()) {
+          widget.onUndo?.call();
+        }
+      case 'text.redo':
+        if (widget.useExternalUndoHistory || !_redoEditorChange()) {
+          widget.onRedo?.call();
+        }
+    }
+  }
+
   Set<BusyInlineKind> _activeInlineKindsAt(String blockId, int offset) {
     final block = _documentController.blockById(blockId);
     final active = <BusyInlineKind>{...?_pendingInlineKindsByBlockId[blockId]};
@@ -2266,15 +2789,30 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _applyLinkCommand() async {
     final selectedRanges = _selectedTextRanges();
     if (selectedRanges.isNotEmpty) {
+      final existingLink = selectedRanges.length == 1
+          ? _linkCoveringRange(selectedRanges.single)
+          : null;
+      final rangesToApply = existingLink == null
+          ? selectedRanges
+          : [
+              _SelectedTextRange(
+                block: selectedRanges.single.block,
+                start: existingLink.start,
+                end: existingLink.end,
+              ),
+            ];
       final target = _captureDialogTarget();
-      final destination = await _showLinkDialog(context);
+      final destination = await _showLinkDialog(
+        context,
+        initialDestination: existingLink?.destination ?? '',
+      );
       if (!_isDialogTargetCurrent(target) ||
           destination == null ||
           destination.trim().isEmpty) {
         return;
       }
       _recordUndoSnapshot();
-      for (final range in selectedRanges) {
+      for (final range in rangesToApply) {
         _documentController.applyInlineCommand(
           range.block.id,
           BusyWysiwygInlineCommand.link,
@@ -2293,11 +2831,42 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final controller = _textControllers[blockId];
     final selection = controller?.selection;
-    if (controller == null || selection == null || selection.isCollapsed) {
+    final block = _documentController.blockById(blockId);
+    if (controller == null ||
+        selection == null ||
+        !selection.isValid ||
+        block == null) {
       return;
     }
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, controller.text.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, controller.text.length)
+        .toInt();
+    final selectedRange = _SelectedTextRange(
+      block: block,
+      start: start,
+      end: end,
+    );
+    final existingLink = _linkCoveringRange(selectedRange);
+    if (selection.isCollapsed && existingLink == null) {
+      return;
+    }
+    final rangeToApply = existingLink == null
+        ? selectedRange
+        : _SelectedTextRange(
+            block: block,
+            start: existingLink.start,
+            end: existingLink.end,
+          );
     final target = _captureDialogTarget();
-    final destination = await _showLinkDialog(context);
+    final destination = await _showLinkDialog(
+      context,
+      initialDestination: existingLink?.destination ?? '',
+    );
     if (!_isDialogTargetCurrent(target) ||
         destination == null ||
         destination.trim().isEmpty) {
@@ -2307,11 +2876,121 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController.applyInlineCommand(
       blockId,
       BusyWysiwygInlineCommand.link,
-      selection.start,
-      selection.end,
+      rangeToApply.start,
+      rangeToApply.end,
       destination: destination.trim(),
     );
     _emitMarkdown();
+  }
+
+  BusyInlineStyleRange? _linkCoveringRange(_SelectedTextRange selection) {
+    final textLength = selection.block.plainText.length;
+    final start = selection.start.clamp(0, textLength).toInt();
+    final end = selection.end.clamp(start, textLength).toInt();
+    for (final link in _linkRanges(selection.block.inlines)) {
+      if (link.start <= start && link.end >= end) {
+        return link;
+      }
+    }
+    return null;
+  }
+
+  List<BusyInlineStyleRange> _linkRanges(List<BusyInline> inlines) {
+    final ranges = <BusyInlineStyleRange>[];
+    var offset = 0;
+
+    void visit(BusyInline inline) {
+      final start = offset;
+      if (inline.children.isEmpty) {
+        offset += inline.plainText.length;
+      } else {
+        for (final child in inline.children) {
+          visit(child);
+        }
+      }
+      if (inline.kind == BusyInlineKind.link && offset > start) {
+        ranges.add(
+          BusyInlineStyleRange(
+            start: start,
+            end: offset,
+            kind: BusyInlineKind.link,
+            destination: inline.destination,
+          ),
+        );
+      }
+    }
+
+    for (final inline in inlines) {
+      visit(inline);
+    }
+    return ranges;
+  }
+
+  void _applyInlineMathCommand() {
+    final blockId = _activeBlockId;
+    final controller = blockId == null ? null : _textControllers[blockId];
+    if (blockId == null || controller == null) {
+      return;
+    }
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: controller.text.length);
+    final start = math.min(selection.start, selection.end);
+    final end = math.max(selection.start, selection.end);
+    final selected = controller.text.substring(start, end);
+    final expression = selected.isEmpty ? 'x' : selected;
+    final currentBlock = _documentController.blockById(blockId);
+    if (currentBlock != null &&
+        !busyMarkWysiwygBlockContainsMath(currentBlock)) {
+      _recordUndoSnapshot();
+      final insertion = _documentController.insertInlineMath(
+        blockId,
+        start,
+        end,
+        fallbackExpression: expression,
+      );
+      if (insertion == null) {
+        return;
+      }
+      _emitMarkdown();
+      _focusBlockAfterFrame(blockId, offset: insertion.selectionEnd);
+      return;
+    }
+    final insertion = _documentController.buildInlineMathSourceInsertion(
+      blockId,
+      controller.text,
+      start,
+      end,
+      fallbackExpression: expression,
+    );
+    if (insertion == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    controller.value = TextEditingValue(
+      text: insertion.source,
+      selection: TextSelection(
+        baseOffset: insertion.selectionStart,
+        extentOffset: insertion.selectionEnd,
+      ),
+    );
+    _documentController.updateMathSource(blockId, insertion.source);
+    _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: insertion.selectionEnd);
+  }
+
+  void _applyDisplayMathCommand() {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    final mathId = _documentController.insertDisplayMathAfter(blockId);
+    if (mathId == null) {
+      return;
+    }
+    _emitMarkdown();
+    _focusBlockAfterFrame(mathId, offset: 4);
   }
 
   Future<void> _applyImageCommand() async {
@@ -2342,16 +3021,43 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _pasteIntoActiveBlock() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text;
-    if (text == null || text.isEmpty) {
+    if (text != null && text.isNotEmpty) {
+      final internalClipboard = _internalClipboard;
+      if (internalClipboard != null &&
+          internalClipboard.text == text &&
+          _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+        return;
+      }
+      final filePath = _localFilePathFromClipboardText(text);
+      if (filePath != null &&
+          await _ingestExternalImageFile(
+            filePath,
+            AssetIngestionOrigin.clipboardImageFile,
+            reportInvalidImage: false,
+          )) {
+        return;
+      }
+      await _pastePlainTextIntoActiveBlock(textOverride: text);
       return;
     }
-    final internalClipboard = _internalClipboard;
-    if (internalClipboard != null &&
-        internalClipboard.text == text &&
-        _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+    final assetInput = widget.assetInputService ?? busyMarkAssetInputService;
+    final clipboardFiles = await assetInput.readClipboardImageFiles();
+    if (clipboardFiles.isNotEmpty &&
+        await _ingestExternalImageFile(
+          clipboardFiles.first,
+          AssetIngestionOrigin.clipboardImageFile,
+        )) {
       return;
     }
-    await _pastePlainTextIntoActiveBlock(textOverride: text);
+    final png = await assetInput.readClipboardImagePng();
+    if (png != null && png.isNotEmpty) {
+      await _ingestExternalImageBytes(
+        png,
+        suggestedFileName:
+            'screenshot-${DateTime.now().millisecondsSinceEpoch}.png',
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+    }
   }
 
   bool _pasteInternalClipboardIntoActiveBlock(
@@ -2759,8 +3465,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  Future<String?> _showLinkDialog(BuildContext context) {
-    var destination = '';
+  Future<String?> _showLinkDialog(
+    BuildContext context, {
+    String initialDestination = '',
+  }) {
+    var destination = initialDestination;
     return _showEditorDialog<String>(
       context,
       builder: (context) => BusyMarkModalEditorScaffold(
@@ -2776,6 +3485,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               BusyMarkGroupedTextEntry(
                 key: const ValueKey('wysiwyg-link-destination-field'),
                 label: context.l10n.source,
+                initialValue: initialDestination,
                 autofocus: true,
                 textDirection: TextDirection.ltr,
                 onChanged: (value) => destination = value,
@@ -2808,8 +3518,167 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         initialSource: initialSource,
         initialAlt: initialAlt,
         submitLabel: submitLabel,
+        ingestSelectedImage: _ingestSelectedImage,
+        onSaveRequired: widget.onAssetSaveRequired,
       ),
     );
+  }
+
+  Future<String> _ingestSelectedImage(String sourcePath) async {
+    final asset = await widget.assetIngestionService.ingestFile(
+      sourcePath: sourcePath,
+      request: _assetIngestionRequest,
+      origin: AssetIngestionOrigin.imagePicker,
+    );
+    return asset.markdownPath;
+  }
+
+  AssetIngestionRequest get _assetIngestionRequest => AssetIngestionRequest(
+    documentFilePath: _documentController.document.filePath,
+    workspaceKind:
+        widget.assetWorkspaceKind ??
+        (widget.writersideRoot != null
+            ? AssetWorkspaceKind.writerside
+            : widget.workspaceRoot != null
+            ? AssetWorkspaceKind.markdownWorkspace
+            : AssetWorkspaceKind.standalone),
+    workspaceRoot: widget.workspaceRoot,
+    writersideRoot: widget.writersideRoot,
+    imagesDir: widget.imagesDir,
+  );
+
+  void _listenForDroppedAssets() {
+    final input = widget.assetInputService ?? busyMarkAssetInputService;
+    _assetDropSubscription = input.droppedFiles.listen((paths) {
+      unawaited(_ingestDroppedAssetFiles(paths));
+    });
+  }
+
+  Future<void> _ingestDroppedAssetFiles(List<String> paths) async {
+    for (final path in paths) {
+      if (!mounted) {
+        return;
+      }
+      await _ingestExternalImageFile(path, AssetIngestionOrigin.dragAndDrop);
+    }
+  }
+
+  String? _localFilePathFromClipboardText(String value) {
+    final trimmed = value.trim();
+    if (trimmed.contains('\n') || trimmed.contains('\r')) {
+      return null;
+    }
+    final uri = Uri.tryParse(trimmed);
+    final candidate = uri?.scheme == 'file' ? File.fromUri(uri!).path : trimmed;
+    return File(candidate).existsSync() ? candidate : null;
+  }
+
+  Future<bool> _ingestExternalImageFile(
+    String sourcePath,
+    AssetIngestionOrigin origin, {
+    bool reportInvalidImage = true,
+  }) async {
+    try {
+      final asset = await widget.assetIngestionService.ingestFile(
+        sourcePath: sourcePath,
+        request: _assetIngestionRequest,
+        origin: origin,
+      );
+      await _requestAltAndInsertAsset(
+        asset,
+        suggestedAlt: p.basenameWithoutExtension(sourcePath),
+      );
+      return true;
+    } on AssetSaveRequiredException {
+      widget.onAssetSaveRequired?.call();
+      return true;
+    } on AssetIngestionException catch (error) {
+      if (reportInvalidImage && mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return false;
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  Future<bool> _ingestExternalImageBytes(
+    Uint8List bytes, {
+    required String suggestedFileName,
+    required AssetIngestionOrigin origin,
+  }) async {
+    try {
+      final asset = await widget.assetIngestionService.ingestBytes(
+        bytes: bytes,
+        suggestedFileName: suggestedFileName,
+        request: _assetIngestionRequest,
+        origin: origin,
+      );
+      await _requestAltAndInsertAsset(asset, suggestedAlt: 'Screenshot');
+      return true;
+    } on AssetSaveRequiredException {
+      widget.onAssetSaveRequired?.call();
+      return true;
+    } on AssetIngestionException catch (error) {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _requestAltAndInsertAsset(
+    IngestedAsset asset, {
+    required String suggestedAlt,
+  }) async {
+    if (!mounted) {
+      return;
+    }
+    final fallbackAltText = context.l10n.image;
+    final target = _captureDialogTarget();
+    final result = await _showImageDialog(
+      context,
+      title: context.l10n.image,
+      initialSource: asset.markdownPath,
+      initialAlt: suggestedAlt,
+      submitLabel: context.l10n.insert,
+    );
+    if (!_isDialogTargetCurrent(target) || result == null) {
+      if (!asset.reusedExisting) {
+        try {
+          await File(asset.absolutePath).delete();
+        } on FileSystemException {
+          // A cancelled dialog should not make the editor unusable.
+        }
+      }
+      return;
+    }
+    final blockId = _activeBlockId;
+    final controller = blockId == null ? null : _textControllers[blockId];
+    if (blockId == null || controller == null) {
+      return;
+    }
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: controller.text.length);
+    _recordUndoSnapshot();
+    _documentController.insertInlineImage(
+      blockId,
+      selectionStart: selection.start,
+      selectionEnd: selection.end,
+      source: result.source,
+      alt: result.alt,
+      fallbackAltText: fallbackAltText,
+    );
+    _emitMarkdown();
   }
 
   Future<_TableDialogResult?> _showTableDialog(
@@ -2940,9 +3809,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     if (_documentController.markdown != originalSource) {
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+        message: context.l10n.aiStaleProposal,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final invocation = result.invocation;
@@ -2954,9 +3825,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         start < 0 ||
         end < start ||
         end > originalSource.length) {
-      ScaffoldMessenger.of(
+      BusyMarkToastOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+        message: context.l10n.aiStaleProposal,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final candidate = originalSource.replaceRange(
@@ -3995,6 +4868,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         text.isNotEmpty
             ? text
             : (block.attributes['src'] ?? block.rawSource ?? ''),
+      BusyBlockKind.video => block.attributes['src'] ?? block.rawSource ?? '',
       _ => text.isNotEmpty ? text : (block.rawSource ?? ''),
     };
   }
@@ -4200,18 +5074,28 @@ class _EditorRenderEntry {
     required this.block,
     required this.depth,
     required this.listRunEnd,
-  }) : children = null;
+  }) : children = null,
+       collapsible = false;
 
   const _EditorRenderEntry.blockquote({
     required this.block,
     required this.depth,
     required this.children,
-  }) : listRunEnd = false;
+  }) : listRunEnd = false,
+       collapsible = false;
+
+  const _EditorRenderEntry.collapsible({
+    required this.block,
+    required this.depth,
+    this.listRunEnd = false,
+    this.children,
+  }) : collapsible = true;
 
   final BusyBlock block;
   final int depth;
   final bool listRunEnd;
   final List<_EditorRenderEntry>? children;
+  final bool collapsible;
 }
 
 class _FloatingWysiwygToolbar extends StatelessWidget {
@@ -4488,12 +5372,16 @@ class _ImageDialog extends StatefulWidget {
     this.initialSource = '',
     this.initialAlt = '',
     required this.submitLabel,
+    required this.ingestSelectedImage,
+    this.onSaveRequired,
   });
 
   final String title;
   final String initialSource;
   final String initialAlt;
   final String submitLabel;
+  final Future<String> Function(String sourcePath) ingestSelectedImage;
+  final VoidCallback? onSaveRequired;
 
   @override
   State<_ImageDialog> createState() => _ImageDialogState();
@@ -4502,6 +5390,7 @@ class _ImageDialog extends StatefulWidget {
 class _ImageDialogState extends State<_ImageDialog> {
   final _sourceController = TextEditingController();
   final _altController = TextEditingController();
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -4552,6 +5441,21 @@ class _ImageDialogState extends State<_ImageDialog> {
                 onPressed: _chooseImage,
               ),
             ),
+            if (_errorMessage case final message?)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  BusyMarkSpacing.md,
+                  BusyMarkSpacing.xs,
+                  BusyMarkSpacing.md,
+                  BusyMarkSpacing.sm,
+                ),
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             BusyMarkGroupedTextEntry(
               key: BusyMarkImageDialogKeys.alt,
               label: context.l10n.altText,
@@ -4587,9 +5491,26 @@ class _ImageDialogState extends State<_ImageDialog> {
     if (file == null || !mounted) {
       return;
     }
-    _sourceController.text = file.path;
-    if (_altController.text.trim().isEmpty) {
-      _altController.text = file.name;
+    try {
+      final markdownPath = await widget.ingestSelectedImage(file.path);
+      if (!mounted) {
+        return;
+      }
+      _sourceController.text = markdownPath;
+      if (_altController.text.trim().isEmpty) {
+        _altController.text = p.basenameWithoutExtension(file.name);
+      }
+      setState(() => _errorMessage = null);
+    } on AssetSaveRequiredException {
+      if (!mounted) {
+        return;
+      }
+      Navigator.pop(context);
+      widget.onSaveRequired?.call();
+    } on AssetIngestionException catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
+      }
     }
   }
 

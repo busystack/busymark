@@ -8,6 +8,7 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
     show sourceTextHeightBehavior;
@@ -491,6 +492,72 @@ void main() {
     expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
   });
 
+  testWidgets('source Replace All is one editor operation', (tester) async {
+    final en = AppLocalizationsEn();
+    var replacement = '';
+    var currentText = 'cat cat';
+    String? undoText;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: currentText,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'cat'),
+                searchReplacement: replacement,
+                onSearchReplacementChanged: (value) =>
+                    setState(() => replacement = value),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) {
+                  undoText = currentText;
+                  setState(() => currentText = text);
+                },
+                onUndo: () {
+                  final previous = undoText;
+                  if (previous == null) {
+                    return null;
+                  }
+                  undoText = null;
+                  setState(() => currentText = previous);
+                  return previous;
+                },
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('source-search-replacement')),
+      'dog',
+    );
+    await tester.pump();
+    await tester.tap(find.byTooltip(en.sourceSearchReplaceAll));
+    await tester.pump();
+
+    expect(currentText, 'dog dog');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(currentText, 'cat cat');
+  });
+
   testWidgets(
     'source editor gives glyphs, caret, and selection breathing room',
     (tester) async {
@@ -534,7 +601,14 @@ void main() {
       );
       expect(renderEditable, isNotNull);
       expect(field.style?.height, BusyMarkTypography.sourceEditorLineHeight);
-      expect(field.selectionHeightStyle, BoxHeightStyle.strut);
+      expect(
+        field.selectionHeightStyle,
+        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      );
+      expect(
+        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        BoxHeightStyle.strut,
+      );
       expect(
         field.cursorHeight,
         fontSize * BusyMarkTypography.sourceCursorHeightScale,

@@ -19,6 +19,45 @@ Identifiers are classified case-insensitively. Saving preserves the exact
 source fence. History and diff views show source rather than generated output.
 Whole-file YAML/JSON OpenAPI editing is not part of this feature.
 
+## Writerside diagram forms
+
+Writerside Markdown and XML topics can also use semantic code blocks for
+Mermaid, PlantUML, and D2:
+
+```xml
+<code-block lang="mermaid">flowchart LR
+  A --&gt; B</code-block>
+
+<code-block lang="plantuml"><![CDATA[
+@startuml
+A -> B
+@enduml
+]]></code-block>
+
+<code-block lang="d2">a -> b</code-block>
+```
+
+Writerside's referenced-source form is supported for all three renderers. The
+path is relative to the current topic and must remain inside the open
+Writerside project:
+
+````markdown
+<code-block lang="D2" src="../codeSnippets/graph.d2"/>
+
+```mermaid
+```
+{ src="../codeSnippets/flow.mmd" }
+````
+
+Referenced files are read as strict UTF-8, size-limited, and resolved through
+BusyMark's anchored-path checks. Absolute paths, URI schemes, traversal outside
+the project, and symlink escapes are rejected. Semantic tags and the `src`
+attribute form are enabled only for Writerside projects; ordinary Markdown
+keeps them as ordinary HTML/text. These forms track the official Writerside
+documentation for [D2](https://www.jetbrains.com/help/writerside/d2-diagrams.html),
+[PlantUML](https://www.jetbrains.com/help/writerside/plantuml-diagrams.html),
+and [Mermaid](https://www.jetbrains.com/help/writerside/mermaid-diagrams.html).
+
 Demonstrations are available in:
 
 - [`demo/visualizations.md`](../demo/visualizations.md)
@@ -32,8 +71,8 @@ revision cancellation, priority scheduling, memory/disk LRU caches, generated
 SVG normalization, D2 execution, and OpenAPI dependency resolution. Cache keys
 include the renderer and sanitizer versions, source, theme, preview/PDF profile,
 options, and hashes of local dependencies. The disk cache is stored below
-`$XDG_CACHE_HOME/busymark/visualizations`; the strict Snap maps that location to
-`$SNAP_USER_DATA/.cache`.
+`$XDG_CACHE_HOME/busymark/visualizations` for both conventional packages and
+the strict Snap.
 
 The Linux runner provides a first-party Flutter platform-channel host backed by
 WebKitGTK 4.1. It uses one reusable hidden render view in an ephemeral WebKit
@@ -55,10 +94,9 @@ The CSP permits WebAssembly evaluation for the official PlantUML/Viz.js build
 and JavaScript evaluation for Scalar's bundled schema validator. Those
 permissions are confined to the private, allow-listed, no-network harness.
 
-WebKit's subprocess sandbox remains enabled for ordinary Linux packages. The
-strict Snap uses the auto-connected `browser-support` interface with
-`allow-sandbox: false`, so WebKit's internal sandbox is disabled there and the
-processes remain inside snapd's AppArmor/seccomp confinement.
+WebKit's subprocess sandbox remains enabled for ordinary Linux packages and
+the strict Snap. The private rendering scheme, ephemeral context, disabled
+storage, and no-network content policy apply in both package forms.
 
 ## Renderer policy
 
@@ -111,7 +149,7 @@ warning; it does not abort the document export.
 
 | Component | Version | Verified artifact SHA-256 |
 | --- | --- | --- |
-| Mermaid | 11.16.1 | `ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4` |
+| Mermaid source | 11.16.1 | `0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11` |
 | `@plantuml/core` | 1.2026.6 | `798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413` |
 | `@scalar/openapi-parser` | 0.28.14 | `993bb7ebb3480cc574665b0eac52d9cd4a817fdf5b4444894bb70e174880513d` |
 | `@scalar/api-reference` | 1.65.1 | `68b6f22ca530ac50e3cd034c5189d89cc5457c3c2d325b44e90db05c9f08c573` |
@@ -128,6 +166,11 @@ application bundle. The build requires Node.js 22 or newer; the core24 Snap
 recipe uses the official `node/24/stable` build snap. Node.js and npm are build
 tools only. Runtime rendering does not require Node.js, Chromium, Java, a
 public rendering service, or a first-run download.
+
+BusyMark builds the complete Mermaid source profile with Mermaid's internal
+math rendering disabled. This keeps the existing diagram families while
+removing KaTeX from both the locked dependency graph and the shipped web
+bundle; mathematical document content is rendered only by MathJax.
 
 D2 is packaged only for Linux amd64. BusyMark must not advertise another
 architecture until the Snap platform, upstream artifact, and full corpus are
@@ -172,7 +215,7 @@ raster paths, OpenAPI model, live WebKit process termination/recovery, and Typst
 PDF export through the release executable.
 
 The same workflow builds the final strict Snap in a clean core24 build
-environment, installs it without changing its strict confinement, and runs that
+environment, installs it as an unasserted confined package, and runs that
 release verification under both X11 and Wayland. Automated suites also cover
 cancellation, stale-result rejection, timeout wiring, sanitization and external
 resources, traversal and symlink escapes, circular OpenAPI references, input
@@ -194,8 +237,8 @@ is not a substitute for these automated product-path checks.
 - [D2 icons and images](https://d2lang.com/tour/icons/)
 - [Scalar OpenAPI parser](https://github.com/scalar/scalar/blob/main/packages/openapi-parser/README.md)
 - [Scalar API Reference configuration](https://scalar.com/products/api-references/configuration)
-- [Snap browser-support interface](https://snapcraft.io/docs/reference/interfaces/browser-support-interface/)
-- [Snapcraft GNOME extension](https://forum.snapcraft.io/t/the-gnome-extension/31449)
+- [Snap confinement](https://snapcraft.io/docs/explanation/security/snap-confinement/)
+- [Snapcraft GNOME extension](https://documentation.ubuntu.com/snapcraft/latest/reference/extensions/gnome-extension/)
 - [Snapcraft project-file `grade` semantics](https://documentation.ubuntu.com/snapcraft/latest/reference/project-file/snapcraft-yaml/)
 - [GitHub Ubuntu 24.04 runner image](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md)
 - [Ubuntu 24.04 WebKitGTK 4.1 development package](https://packages.ubuntu.com/noble-updates/libwebkit2gtk-4.1-dev)

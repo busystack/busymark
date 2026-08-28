@@ -13,6 +13,7 @@ import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
 import 'markdown_model.dart';
+import 'math_syntax.dart';
 import 'raw_html_policy.dart';
 
 // Cross-file diagnostics are intentionally scoped to Markdown files that
@@ -227,6 +228,7 @@ class MarkdownParser {
         source: source,
         line: line,
         lineOffset: offset,
+        mode: mode,
         diagnostics: diagnostics,
       );
 
@@ -426,7 +428,11 @@ class MarkdownParser {
   ) {
     final sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
-        : _scannedBlockSources(document.filePath, document.source!);
+        : _scannedBlockSources(
+            document.filePath,
+            document.source!,
+            mode: document.mode,
+          );
     final contentBlocks = document.blocks
         .where(
           (block) =>
@@ -669,6 +675,7 @@ class MarkdownParser {
             );
             break;
           case BusyInlineKind.text:
+          case BusyInlineKind.math:
           case BusyInlineKind.strong:
           case BusyInlineKind.emphasis:
           case BusyInlineKind.underline:
@@ -744,8 +751,9 @@ class MarkdownParser {
 
   List<_ScannedBlockSource> _scannedBlockSources(
     String filePath,
-    String source,
-  ) {
+    String source, {
+    required MarkdownMode mode,
+  }) {
     var scanOffset = _frontMatterEndOffset(source);
     final sourceLocationMapper = SourceLocationMapper(source);
     final chunks = <_ScannedBlockSource>[];
@@ -818,7 +826,19 @@ class MarkdownParser {
           }
           index += 1;
         }
+        if (mode == MarkdownMode.writersideMarkdown &&
+            index < indexedLines.length &&
+            _isWritersideCodeAttributeLine(indexedLines[index].trimmed)) {
+          index += 1;
+        }
         addChunk(startIndex, index);
+        continue;
+      }
+
+      final displayMathEnd = _displayMathEndIndex(indexedLines, index);
+      if (displayMathEnd != null) {
+        addChunk(startIndex, displayMathEnd);
+        index = displayMathEnd;
         continue;
       }
 
@@ -827,6 +847,17 @@ class MarkdownParser {
         addChunk(startIndex, htmlEndIndex);
         index = htmlEndIndex;
         continue;
+      }
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final writersideEndIndex = _writersideContainerSourceEndIndex(
+          indexedLines,
+          index,
+        );
+        if (writersideEndIndex != null) {
+          addChunk(startIndex, writersideEndIndex);
+          index = writersideEndIndex;
+          continue;
+        }
       }
 
       if (_isAtxHeading(indexedLines[index].line) ||
@@ -862,6 +893,7 @@ class MarkdownParser {
         final line = indexedLines[index];
         if (line.trimmed.isEmpty ||
             MarkdownFence.parse(line.line) != null ||
+            _startsDisplayMath(line.line) ||
             _isAtxHeading(line.line) ||
             (!startsWithBlockquote && _isBlockquoteStart(line.line)) ||
             _listItemIndent(line.line) != null) {
@@ -880,6 +912,13 @@ class MarkdownParser {
       addChunk(startIndex, index);
     }
     return chunks;
+  }
+
+  bool _isWritersideCodeAttributeLine(String line) {
+    return RegExp(
+      r'^\{[^{}]*(?:\bcollapsible\s*=\s*"true"|\bsrc\s*=\s*"[^"]+")[^{}]*\}\s*$',
+      caseSensitive: false,
+    ).hasMatch(line);
   }
 
   bool _containsNestedDefinitions(String source) {
@@ -1067,10 +1106,59 @@ class MarkdownParser {
   }
 
   md.Document _markdownDocument() {
-    return md.Document(
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: false,
-    );
+    return busyMarkMarkdownDocument(MarkdownMode.commonMark);
+  }
+
+  int? _displayMathEndIndex(List<_ScannedSourceLine> lines, int startIndex) {
+    if (!_startsDisplayMath(lines[startIndex].line)) {
+      return null;
+    }
+    final first = lines[startIndex].line;
+    final opening = first.indexOf(r'$$');
+    final tail = first.substring(opening + 2);
+    final firstClose = _displayMathCloseIndex(tail);
+    if (firstClose != null) {
+      return tail.substring(0, firstClose).trim().isEmpty
+          ? null
+          : startIndex + 1;
+    }
+    final expression = StringBuffer(tail);
+    for (var index = startIndex + 1; index < lines.length; index++) {
+      final line = lines[index].line;
+      final close = _displayMathCloseIndex(line);
+      if (close != null) {
+        if (expression.isNotEmpty) expression.writeln();
+        expression.write(line.substring(0, close));
+        return expression.toString().trim().isEmpty ? null : index + 1;
+      }
+      if (expression.isNotEmpty) expression.writeln();
+      expression.write(line);
+    }
+    return null;
+  }
+
+  bool _startsDisplayMath(String line) {
+    return RegExp(r'^ {0,3}\$\$(?!\$)').hasMatch(line);
+  }
+
+  int? _displayMathCloseIndex(String line) {
+    for (var index = 0; index + 1 < line.length; index++) {
+      if (!line.startsWith(r'$$', index)) {
+        continue;
+      }
+      var backslashes = 0;
+      for (
+        var cursor = index - 1;
+        cursor >= 0 && line.codeUnitAt(cursor) == 0x5c;
+        cursor--
+      ) {
+        backslashes += 1;
+      }
+      if (backslashes.isEven && line.substring(index + 2).trim().isEmpty) {
+        return index;
+      }
+    }
+    return null;
   }
 
   int _consumedLineCount(md.BlockParser parser, List<md.Line> lines) {
@@ -1113,6 +1201,42 @@ class MarkdownParser {
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
       if ((balance <= 0 && index > startIndex) || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  int? _writersideContainerSourceEndIndex(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(lines[startIndex].line);
+    final tag = match?.group(1)?.toLowerCase();
+    if (tag == null ||
+        !{
+          'note',
+          'tip',
+          'warning',
+          'quote',
+          'tabs',
+          'tab',
+          'procedure',
+          'step',
+          'chapter',
+          'code-block',
+          'deflist',
+          'def',
+          'video',
+        }.contains(tag)) {
+      return null;
+    }
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (balance <= 0) {
         return index + 1;
       }
     }
@@ -1301,8 +1425,16 @@ class MarkdownParser {
     required String source,
     required String line,
     required int lineOffset,
+    required MarkdownMode mode,
     required List<Diagnostic> diagnostics,
   }) {
+    if (mode == MarkdownMode.writersideMarkdown &&
+        RegExp(
+          r'^\s{0,3}<video(?:\s|/?>)',
+          caseSensitive: false,
+        ).hasMatch(line)) {
+      return;
+    }
     if (!hasUnsafeHtml(line)) {
       return;
     }
@@ -1338,6 +1470,8 @@ class MarkdownParser {
       'note',
       'tip',
       'warning',
+      'quote',
+      'video',
     }.contains(tag);
   }
 

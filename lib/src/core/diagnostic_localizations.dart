@@ -61,7 +61,21 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     'markdown.image.missing-file' => l10n.diagnosticMarkdownImageMissingFile(
       value('destination'),
     ),
+    'writerside.video.missing-source' =>
+      l10n.diagnosticWritersideVideoMissingSource,
+    'writerside.video.unsupported-source' =>
+      l10n.diagnosticWritersideVideoUnsupportedSource(value('source')),
+    'writerside.video.missing-file' =>
+      l10n.diagnosticWritersideVideoMissingFile(value('source')),
+    'writerside.video.missing-preview' =>
+      l10n.diagnosticWritersideVideoMissingPreview(value('preview')),
     'markdown.table.empty-header' => l10n.diagnosticMarkdownTableEmptyHeader,
+    'math.invalidTex' ||
+    'math.resourceLimit' ||
+    'math.timeout' ||
+    'math.rendererUnavailable' ||
+    'math.unsafeOutput' ||
+    'math.cancelled' => l10n.mathRenderFailed,
     'writerside.config.invalid-xml' ||
     'writerside.build-profiles.invalid-xml' ||
     'writerside.instance-groups.invalid-xml' ||

@@ -31,9 +31,58 @@
 #show heading.where(level: 2): set text(size: 17pt, weight: "bold")
 #show heading.where(level: 3): set text(size: 13.5pt, weight: "bold")
 #show heading.where(level: 4): set text(size: 11.5pt, weight: "bold")
+#show heading.where(level: 5): set text(size: 10.5pt, weight: "bold")
+#show heading.where(level: 6): set text(size: 10.5pt, weight: "bold")
 #show link: set text(fill: rgb("2563a5"))
 
 #let value-or(item, key, default) = item.at(key, default: default)
+
+#let render-math(item, inline: false) = {
+  let asset = value-or(item, "asset", "")
+  let source = value-or(item, "text", "")
+  if asset == "" {
+    if inline { raw(source) } else {
+      block(
+        width: 100%,
+        fill: rgb("fff4e5"),
+        inset: 7pt,
+        radius: 3pt,
+        raw(source, block: true),
+      )
+    }
+  } else {
+    let natural-width = float(value-or(item, "width", "1")) * 1pt
+    let natural-height = float(value-or(item, "height", "1")) * 1pt
+    let depth = float(value-or(item, "depth", "0")) * 1pt
+    if inline {
+      box(
+        width: natural-width,
+        height: natural-height,
+        baseline: depth,
+        image(
+          asset,
+          width: natural-width,
+          height: natural-height,
+          fit: "contain",
+          alt: source,
+        ),
+      )
+    } else {
+      block(
+        width: 100%,
+        above: 0.8em,
+        below: 0.8em,
+        breakable: false,
+        align(center, layout(size => image(
+          asset,
+          width: calc.min(natural-width, size.width),
+          fit: "contain",
+          alt: source,
+        ))),
+      )
+    }
+  }
+}
 
 #let render-inlines(items) = {
   for item in items {
@@ -74,6 +123,8 @@
       } else {
         image(asset, width: 1.25em, height: 1.25em, fit: "contain", alt: alt)
       }
+    } else if kind == "math" {
+      render-math(item, inline: true)
     } else if kind == "softBreak" {
       text(" ")
     } else if kind == "hardBreak" {
@@ -190,8 +241,30 @@
         raw(value-or(block-data, "text", ""), block: true, lang: language)
       },
     )
+  } else if kind == "math" {
+    render-math(block-data)
   } else if kind == "list" {
     render-list(block-data, render-block)
+  } else if kind == "admonition" {
+    let style = value-or(block-data, "style", "note")
+    let fill = if style == "warning" {
+      rgb("fff4d6")
+    } else if style == "tip" {
+      rgb("e8f7ed")
+    } else {
+      rgb("eaf2fb")
+    }
+    block(
+      width: 100%,
+      fill: fill,
+      inset: 9pt,
+      radius: 4pt,
+      if children.len() > 0 {
+        for child in children { render-block(child) }
+      } else {
+        render-inlines(inlines)
+      },
+    )
   } else if kind == "blockquote" {
     quote(
       block: true,
@@ -221,6 +294,28 @@
     } else {
       link(destination, image-body)
     })
+  } else if kind == "video" {
+    let asset = value-or(block-data, "asset", "")
+    let source = value-or(block-data, "source", "")
+    let body = if asset == "" {
+      block(
+        width: 100%,
+        fill: rgb("f7f7f8"),
+        inset: 10pt,
+        radius: 3pt,
+        align(center, emph("Video: " + source)),
+      )
+    } else {
+      block(
+        breakable: false,
+        align(center, image(asset, width: 100%, fit: "contain", alt: "Video")),
+      )
+    }
+    block(
+      above: 0.8em,
+      below: 0.8em,
+      if source.starts-with("https://") { link(source, body) } else { body },
+    )
   } else if kind == "table" {
     render-table(block-data)
   } else if kind == "visualization" {

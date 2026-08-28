@@ -391,9 +391,7 @@ class WritersideProjectCreator {
   }
 
   String _startTopic({required String title}) {
-    return '# ${_markdownHeadingText(title)}\n\n'
-        'Start writing your documentation here.\n\n'
-        'This Writerside-compatible starter project was created by BusyMark.\n';
+    return '# ${_markdownHeadingText(title)}\n';
   }
 
   String _markdownHeadingText(String value) {

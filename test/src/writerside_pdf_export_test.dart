@@ -1,657 +1,272 @@
 import 'dart:io';
 
+import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
-import 'package:busymark/src/export/writerside_pdf_configuration.dart';
+import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/writerside_pdf_export_service.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:xml/xml.dart';
 
 void main() {
-  test('generated configuration contains every documented PDF option', () {
-    const codec = WritersidePdfConfigurationCodec();
-    final document = XmlDocument.parse(
-      codec.encode(
-        const WritersidePdfOptions(
-          orientation: MarkdownPdfOrientation.landscape,
-          layout: 'GNOME',
-          cover: WritersidePdfCoverOptions(
-            enabled: true,
-            title: 'Busy & Mark',
-            logoPath: '/host/logo.svg',
-            description: 'User <Guide>',
-            copyright: 'BusyStack © 2026',
-          ),
-          header: 'BusyMark guide',
-          footer: 'Confidential',
-          tocTitle: 'Contents',
-        ),
-        containerLogoPath: '/opt/sources/Writerside/images/logo.svg',
-      ),
-    );
-
-    final root = document.rootElement;
-    expect(root.name.local, 'pdf');
-    expect(root.getAttribute('landscape'), 'true');
-    expect(
-      root.getElement('cover-page')?.getElement('title')?.innerText,
-      'Busy & Mark',
-    );
-    expect(
-      root.getElement('cover-page')?.getElement('logo')?.innerText,
-      '/opt/sources/Writerside/images/logo.svg',
-    );
-    expect(
-      root.getElement('cover-page')?.getElement('description')?.innerText,
-      'User <Guide>',
-    );
-    expect(root.getElement('header')?.innerText, 'BusyMark guide');
-    expect(root.getElement('footer')?.innerText, 'Confidential');
-    expect(root.getElement('toc-title')?.innerText, 'Contents');
-    expect(root.getElement('layout')?.innerText, 'GNOME');
-  });
-
-  test('discovers PDF configurations and instance keymap layouts', () async {
-    final root = await Directory.systemTemp.createTemp(
-      'busymark-writerside-pdf-config-test-',
-    );
-    addTearDown(() => root.delete(recursive: true));
-    final cfg = await Directory(p.join(root.path, 'cfg')).create();
-    await File(p.join(cfg.path, 'PDF.xml')).writeAsString('<pdf/>');
-    await File(
-      p.join(cfg.path, 'not-pdf.xml'),
-    ).writeAsString('<buildprofiles/>');
-    await File(p.join(cfg.path, 'broken.xml')).writeAsString('<pdf>');
-    await File(p.join(cfg.path, 'buildprofiles.xml')).writeAsString('''
-<buildprofiles>
-  <shortcuts>
-    <layout name="Windows" display-name="Windows and Linux"/>
-    <layout name="macOS" display-name="macOS" instance="other"/>
-  </shortcuts>
-  <shortcuts instance="guide,reference">
-    <layout name="GNOME" display-name="Linux"/>
-  </shortcuts>
-</buildprofiles>
-''');
-    const codec = WritersidePdfConfigurationCodec();
-
-    final configurations = await codec.discover(
-      moduleRoot: root.path,
-      buildConfigDirectory: 'cfg',
-    );
-    final layouts = await codec.discoverLayouts(
-      moduleRoot: root.path,
-      buildConfigDirectory: 'cfg',
-      instanceId: 'guide',
-    );
-
-    expect(configurations, [p.join(cfg.path, 'PDF.xml')]);
-    expect(layouts.map((item) => item.name), ['Windows', 'GNOME']);
-    expect(layouts.map((item) => item.displayName), [
-      'Windows and Linux',
-      'Linux',
-    ]);
-  });
-
   test(
-    'generated export uses a private source copy and leaves sources unchanged',
+    'native export composes the selected instance without a container runtime',
     () async {
-      if (!Platform.isLinux) {
-        return;
-      }
-      final fixture = await _WritersideFixture.create(withConfig: false);
+      final fixture = await _WritersideFixture.create();
       addTearDown(fixture.dispose);
-      final runner = _FakeBuilderRunner();
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: runner,
-      );
+      final exporter = _RecordingMarkdownExporter();
+      final service = WritersidePdfExportService(markdownExporter: exporter);
       final destination = p.join(fixture.root.path, 'guide.pdf');
-      await Directory(p.join(fixture.root.path, '.git')).create();
-      await File(
-        p.join(fixture.root.path, '.git', 'config'),
-      ).writeAsString('[core]\n');
-      await File(
-        p.join(fixture.module.path, 'pdfSourceGUIDE.pdf'),
-      ).writeAsBytes(_validPdf);
-      await File(
-        p.join(fixture.module.path, 'images.dat'),
-      ).writeAsBytes([0, 1, 2]);
 
       final result = await service.export(
-        fixture.request(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          instanceId: 'guide',
           destinationPath: destination,
-          options: const WritersidePdfOptions(
-            cover: WritersidePdfCoverOptions(enabled: true, title: 'Guide'),
+          overwrite: false,
+          options: const MarkdownPdfOptions(
+            pageSize: MarkdownPdfPageSize.letter,
+            orientation: MarkdownPdfOrientation.landscape,
           ),
         ),
       );
 
-      final arguments = runner.buildArguments!;
+      final request = exporter.request!;
       expect(result.destinationPath, destination);
-      expect(result.pageCount, 1);
-      expect(await File(destination).exists(), isTrue);
+      expect(result.pageCount, 3);
+      expect(request.mode, MarkdownMode.writersideMarkdown);
+      expect(request.workspaceRoot, fixture.module.path);
+      expect(request.options.pageSize, MarkdownPdfPageSize.letter);
+      expect(request.options.orientation, MarkdownPdfOrientation.landscape);
+      expect(request.source, contains('# BusyMark Guide'));
+      expect(request.source, contains('# Advanced'));
+      expect(request.source, contains('XML topic content.'));
+      expect(request.source, contains(r'$$'));
+      expect(request.source, contains('x < y'));
+      expect(request.source, contains('file://'));
       expect(
-        await Directory(p.join(fixture.module.path, 'cfg')).exists(),
-        isFalse,
-      );
-      expect(
-        await Directory(p.join(fixture.root.path, '.idea')).exists(),
-        isFalse,
-      );
-      expect(arguments, containsAllInOrder(['--network', 'none']));
-      expect(arguments, containsAllInOrder(['--shm-size', '1g']));
-      expect(arguments, contains('SOURCE_DIR=/opt/sources'));
-      expect(arguments, contains('MODULE_INSTANCE=Writerside/guide'));
-      expect(arguments, contains('PDF=BusyMark-PDF.xml'));
-      expect(
-        arguments,
-        contains(
-          '$writersideBuilderRepository:$writersideBuilderDefaultVersion',
-        ),
-      );
-      expect(runner.generatedConfiguration, contains('<title>Guide</title>'));
-      expect(runner.mountTargets, containsAll(['/opt/sources', '/opt/output']));
-      expect(runner.mountTargets, hasLength(2));
-      expect(runner.readOnlyMountTargets, isEmpty);
-      expect(runner.copiedGitMetadata, isFalse);
-      expect(runner.copiedStalePdfArtifact, isFalse);
-      expect(runner.copiedUnsupportedResource, isTrue);
-      expect(runner.calls.where((call) => call.first == 'pull'), isEmpty);
-    },
-  );
-
-  test(
-    'retries once when the builder process crashes before producing PDF',
-    () async {
-      if (!Platform.isLinux) {
-        return;
-      }
-      final fixture = await _WritersideFixture.create(withConfig: false);
-      addTearDown(fixture.dispose);
-      final runner = _FakeBuilderRunner(crashFirstBuild: true);
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: runner,
-      );
-      final destination = p.join(fixture.root.path, 'retried.pdf');
-
-      final result = await service.export(
-        fixture.request(destinationPath: destination),
-      );
-
-      expect(result.destinationPath, destination);
-      expect(runner.buildRunCount, 2);
-      expect(result.buildLog, contains('PDF generation retried.'));
-      expect(await File(destination).exists(), isTrue);
-    },
-  );
-
-  test(
-    'existing project PDF configuration is passed through unchanged',
-    () async {
-      if (!Platform.isLinux) {
-        return;
-      }
-      final fixture = await _WritersideFixture.create(withConfig: true);
-      addTearDown(fixture.dispose);
-      final runner = _FakeBuilderRunner();
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: runner,
-      );
-      final destination = p.join(fixture.root.path, 'configured.pdf');
-
-      await service.export(
-        fixture.request(
-          destinationPath: destination,
-          configurationMode: WritersidePdfConfigurationMode.projectFile,
-          projectConfigurationPath: fixture.configurationFile.path,
-        ),
-      );
-
-      expect(runner.buildArguments, contains('PDF=Release-PDF.xml'));
-      expect(runner.mountTargets, containsAll(['/opt/sources', '/opt/output']));
-      expect(runner.mountTargets, hasLength(2));
-      expect(runner.readOnlyMountTargets, isEmpty);
-      expect(
-        await Directory(p.join(fixture.root.path, '.idea')).exists(),
-        isFalse,
-      );
-      expect(
-        await fixture.configurationFile.readAsString(),
-        '<pdf><toc-title>Release contents</toc-title></pdf>',
+        request.source.indexOf('# BusyMark Guide'),
+        lessThan(request.source.indexOf('# Advanced')),
       );
     },
   );
 
-  test(
-    'missing builder image is reported without starting a container',
-    () async {
-      final fixture = await _WritersideFixture.create(withConfig: false);
-      addTearDown(fixture.dispose);
-      final runner = _FakeBuilderRunner(imageAvailable: false);
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: runner,
-      );
-
-      await expectLater(
-        service.export(
-          fixture.request(
-            destinationPath: p.join(fixture.root.path, 'missing.pdf'),
-          ),
-        ),
-        throwsA(
-          isA<WritersidePdfExportException>().having(
-            (error) => error.code,
-            'code',
-            WritersidePdfFailureCode.builderImageUnavailable,
-          ),
-        ),
-      );
-      expect(runner.buildArguments, isNull);
-    },
-  );
-
-  test(
-    'pre-cancelled export reports the Writerside cancellation type',
-    () async {
-      final fixture = await _WritersideFixture.create(withConfig: false);
-      addTearDown(fixture.dispose);
-      final token = WritersidePdfCancellationToken()..cancel();
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: _FakeBuilderRunner(),
-      );
-
-      await expectLater(
-        service.export(
-          fixture.request(
-            destinationPath: p.join(fixture.root.path, 'cancelled.pdf'),
-          ),
-          cancellationToken: token,
-        ),
-        throwsA(
-          isA<WritersidePdfExportException>().having(
-            (error) => error.code,
-            'code',
-            WritersidePdfFailureCode.cancelled,
-          ),
-        ),
-      );
-    },
-  );
-
-  test(
-    'generated overlay rejects symlinks outside the selected source root',
-    () async {
-      final fixture = await _WritersideFixture.create(withConfig: false);
-      final outside = await Directory.systemTemp.createTemp(
-        'busymark-writerside-pdf-outside-test-',
-      );
-      addTearDown(fixture.dispose);
-      addTearDown(() => outside.delete(recursive: true));
-      await File(p.join(outside.path, 'private.txt')).writeAsString('private');
-      await Link(p.join(fixture.module.path, 'outside')).create(outside.path);
-      final runner = _FakeBuilderRunner();
-      final service = WritersidePdfExportService(
-        dockerLocator: const _FixedDockerLocator(),
-        commandRunner: runner,
-      );
-
-      await expectLater(
-        service.export(
-          fixture.request(
-            destinationPath: p.join(fixture.root.path, 'unsafe.pdf'),
-          ),
-        ),
-        throwsA(
-          isA<WritersidePdfExportException>()
-              .having(
-                (error) => error.code,
-                'code',
-                WritersidePdfFailureCode.invalidRequest,
-              )
-              .having((error) => error.detail, 'detail', contains('symlink')),
-        ),
-      );
-      expect(runner.buildArguments, isNull);
-    },
-  );
-
-  test('builder runner force-stops a process after its timeout', () async {
-    if (!Platform.isLinux) {
-      return;
-    }
-    final root = await Directory.systemTemp.createTemp(
-      'busymark-writerside-pdf-timeout-test-',
-    );
-    addTearDown(() => root.delete(recursive: true));
-    final executable = File(p.join(root.path, 'slow-builder'));
-    await executable.writeAsString('''#!/bin/sh
-trap '' TERM
-while :; do :; done
-''');
-    final chmod = await Process.run('chmod', ['700', executable.path]);
-    expect(chmod.exitCode, 0);
-    final stopwatch = Stopwatch()..start();
+  test('pre-cancelled native export never starts PDF compilation', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    final exporter = _RecordingMarkdownExporter();
+    final service = WritersidePdfExportService(markdownExporter: exporter);
+    final token = WritersidePdfCancellationToken()..cancel();
 
     await expectLater(
-      const DartWritersideBuilderCommandRunner().run(
-        executable: executable.path,
-        arguments: const [],
-        timeout: const Duration(milliseconds: 100),
-        cancellationToken: WritersidePdfCancellationToken(),
+      service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'cancelled.pdf'),
+          overwrite: false,
+        ),
+        cancellationToken: token,
       ),
       throwsA(
         isA<WritersidePdfExportException>().having(
           (error) => error.code,
           'code',
-          WritersidePdfFailureCode.timedOut,
+          WritersidePdfFailureCode.cancelled,
         ),
       ),
     );
-    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 3)));
+    expect(exporter.request, isNull);
+  });
+
+  test('unknown Writerside instance is rejected before compilation', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    final exporter = _RecordingMarkdownExporter();
+    final service = WritersidePdfExportService(markdownExporter: exporter);
+
+    await expectLater(
+      service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          instanceId: 'missing',
+          destinationPath: p.join(fixture.root.path, 'missing.pdf'),
+          overwrite: false,
+        ),
+      ),
+      throwsA(
+        isA<WritersidePdfExportException>().having(
+          (error) => error.code,
+          'code',
+          WritersidePdfFailureCode.invalidRequest,
+        ),
+      ),
+    );
+    expect(exporter.request, isNull);
+  });
+
+  test('native exporter failures use Writerside failure codes', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    final service = WritersidePdfExportService(
+      markdownExporter: _RecordingMarkdownExporter(
+        failure: const MarkdownPdfExportException(
+          MarkdownPdfFailureCode.compilerUnavailable,
+        ),
+      ),
+    );
+
+    await expectLater(
+      service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'unavailable.pdf'),
+          overwrite: false,
+        ),
+      ),
+      throwsA(
+        isA<WritersidePdfExportException>().having(
+          (error) => error.code,
+          'code',
+          WritersidePdfFailureCode.exporterUnavailable,
+        ),
+      ),
+    );
   });
 
   test(
-    'official builder exports the Writerside demo through Docker',
+    'native Writerside demo runs through the bundled PDF pipeline',
     () async {
       final output = await Directory.systemTemp.createTemp(
-        'busymark-writerside-pdf-integration-test-',
+        'busymark-writerside-native-pdf-',
       );
       addTearDown(() => output.delete(recursive: true));
       final module = Directory('demo/writerside-instances').absolute;
       final destination = p.join(output.path, 'writerside-demo.pdf');
-      const service = WritersidePdfExportService();
-
-      expect(
-        await service.isBuilderAvailable(writersideBuilderDefaultVersion),
-        isTrue,
-        reason:
-            'Install $writersideBuilderRepository:'
-            '$writersideBuilderDefaultVersion before running this test.',
-      );
-      final result = await service.export(
-        WritersidePdfExportRequest(
-          moduleRoot: module.path,
-          sourceRoot: module.parent.path,
-          moduleName: 'BusyMark Instance Demo',
-          buildConfigDirectory: 'cfg',
-          instanceId: 'guide',
-          destinationPath: destination,
-          overwrite: false,
-          builderVersion: writersideBuilderDefaultVersion,
-          configurationMode: WritersidePdfConfigurationMode.projectFile,
-          projectConfigurationPath: p.join(module.path, 'cfg', 'PDF.xml'),
-        ),
-      );
-
-      expect(await File(destination).length(), greaterThan(1024));
-      expect(result.pageCount, isNotNull);
-    },
-    skip: Platform.environment['BUSYMARK_WRITERSIDE_PDF_INTEGRATION'] == '1'
-        ? false
-        : 'Set BUSYMARK_WRITERSIDE_PDF_INTEGRATION=1 after installing the '
-              'official builder image.',
-    timeout: const Timeout(Duration(minutes: 16)),
-  );
-
-  test(
-    'official builder accepts generated BusyMark PDF settings',
-    () async {
-      final output = await Directory.systemTemp.createTemp(
-        'busymark-writerside-pdf-generated-integration-test-',
-      );
-      addTearDown(() => output.delete(recursive: true));
-      final module = Directory('demo/writerside-instances').absolute;
-      final destination = p.join(output.path, 'writerside-customized.pdf');
-      const service = WritersidePdfExportService();
-
-      expect(
-        await service.isBuilderAvailable(writersideBuilderDefaultVersion),
-        isTrue,
-        reason:
-            'Install $writersideBuilderRepository:'
-            '$writersideBuilderDefaultVersion before running this test.',
-      );
-      final result = await service.export(
-        WritersidePdfExportRequest(
-          moduleRoot: module.path,
-          sourceRoot: module.parent.path,
-          moduleName: 'BusyMark Instance Demo',
-          buildConfigDirectory: 'cfg',
-          instanceId: 'guide',
-          destinationPath: destination,
-          overwrite: false,
-          builderVersion: writersideBuilderDefaultVersion,
-          configurationMode: WritersidePdfConfigurationMode.generated,
-          options: WritersidePdfOptions(
-            orientation: MarkdownPdfOrientation.landscape,
-            cover: WritersidePdfCoverOptions(
-              enabled: true,
-              title: 'Customized BusyMark Guide',
-              logoPath: p.join(module.path, 'images', 'busymark-mark.svg'),
-              description: 'Generated configuration integration test',
-              copyright: 'BusyStack © 2026',
-            ),
-            header: 'BusyMark Writerside export',
-            footer: 'Generated by the official Writerside builder',
-            tocTitle: 'Customized contents',
+      const service = WritersidePdfExportService(
+        markdownExporter: MarkdownPdfExportService(
+          compilerLocator: TypstCompilerLocator(
+            environment: {'BUSYMARK_TYPST_PATH': '/bin/true'},
           ),
+          commandRunner: _PdfWritingTypstRunner(),
+        ),
+      );
+
+      final result = await service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: module.path,
+          instanceId: 'guide',
+          destinationPath: destination,
+          overwrite: false,
         ),
       );
 
       expect(await File(destination).length(), greaterThan(1024));
       expect(result.pageCount, isNotNull);
     },
-    skip: Platform.environment['BUSYMARK_WRITERSIDE_PDF_INTEGRATION'] == '1'
-        ? false
-        : 'Set BUSYMARK_WRITERSIDE_PDF_INTEGRATION=1 after installing the '
-              'official builder image.',
-    timeout: const Timeout(Duration(minutes: 16)),
   );
 }
 
 class _WritersideFixture {
-  _WritersideFixture({
-    required this.root,
-    required this.module,
-    required this.configurationFile,
-  });
+  const _WritersideFixture({required this.root, required this.module});
 
   final Directory root;
   final Directory module;
-  final File configurationFile;
 
-  static Future<_WritersideFixture> create({required bool withConfig}) async {
+  static Future<_WritersideFixture> create() async {
     final root = await Directory.systemTemp.createTemp(
-      'busymark-writerside-pdf-service-test-',
+      'busymark-writerside-native-service-',
     );
     final module = await Directory(p.join(root.path, 'Writerside')).create();
-    await File(
-      p.join(module.path, 'writerside.cfg'),
-    ).writeAsString('<ihp><instance src="guide.tree"/></ihp>');
-    await File(
-      p.join(module.path, 'guide.tree'),
-    ).writeAsString('<instance-profile id="guide" name="Guide"/>');
-    final topics = await Directory(p.join(module.path, 'topics')).create();
-    await File(p.join(topics.path, 'intro.md')).writeAsString('# Introduction');
-    final configurationFile = File(
-      p.join(module.path, 'cfg', 'Release-PDF.xml'),
-    );
-    if (withConfig) {
-      await configurationFile.parent.create();
-      await configurationFile.writeAsString(
-        '<pdf><toc-title>Release contents</toc-title></pdf>',
-      );
-    }
-    return _WritersideFixture(
-      root: root,
-      module: module,
-      configurationFile: configurationFile,
-    );
-  }
+    await Directory(p.join(module.path, 'topics')).create();
+    await Directory(p.join(module.path, 'images')).create();
+    await File(p.join(module.path, 'writerside.cfg')).writeAsString('''
+<ihp version="2026.2">
+  <module name="Native export test"/>
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <vars src="v.list"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+    await File(p.join(module.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" name="Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="advanced.topic"/>
+</instance-profile>
+''');
+    await File(p.join(module.path, 'v.list')).writeAsString('''
+<vars><var name="product" value="BusyMark Guide"/></vars>
+''');
+    await File(p.join(module.path, 'topics', 'intro.md')).writeAsString('''
+# %product%
 
-  WritersidePdfExportRequest request({
-    required String destinationPath,
-    WritersidePdfConfigurationMode configurationMode =
-        WritersidePdfConfigurationMode.generated,
-    String? projectConfigurationPath,
-    WritersidePdfOptions options = const WritersidePdfOptions(),
-  }) {
-    return WritersidePdfExportRequest(
-      moduleRoot: module.path,
-      sourceRoot: root.path,
-      moduleName: 'Writerside',
-      buildConfigDirectory: 'cfg',
-      instanceId: 'guide',
-      destinationPath: destinationPath,
-      overwrite: false,
-      builderVersion: writersideBuilderDefaultVersion,
-      configurationMode: configurationMode,
-      projectConfigurationPath: projectConfigurationPath,
-      options: options,
+![Logo](logo.png)
+
+Inline math: \$x^2\$.
+''');
+    await File(p.join(module.path, 'topics', 'advanced.topic')).writeAsString(
+      '''
+<topic id="advanced" title="Advanced">
+  <p>XML topic content.</p>
+  <math>x &lt; y</math>
+</topic>
+''',
     );
+    await File(
+      p.join(module.path, 'images', 'logo.png'),
+    ).writeAsBytes(const [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    return _WritersideFixture(root: root, module: module);
   }
 
   Future<void> dispose() => root.delete(recursive: true);
 }
 
-class _FixedDockerLocator extends DockerExecutableLocator {
-  const _FixedDockerLocator();
+class _RecordingMarkdownExporter extends MarkdownPdfExportService {
+  _RecordingMarkdownExporter({this.failure});
+
+  final MarkdownPdfExportException? failure;
+  MarkdownPdfExportRequest? request;
 
   @override
-  String locate() => '/bin/true';
-}
-
-class _FakeBuilderRunner implements WritersideBuilderCommandRunner {
-  _FakeBuilderRunner({
-    this.imageAvailable = true,
-    this.crashFirstBuild = false,
-  });
-
-  final bool imageAvailable;
-  final bool crashFirstBuild;
-  final List<List<String>> calls = [];
-  List<String>? buildArguments;
-  String? generatedConfiguration;
-  final List<String> mountTargets = [];
-  final List<String> readOnlyMountTargets = [];
-  var buildRunCount = 0;
-  var copiedGitMetadata = false;
-  var copiedStalePdfArtifact = false;
-  var copiedUnsupportedResource = false;
-
-  @override
-  Future<WritersideBuilderProcessResult> run({
-    required String executable,
-    required List<String> arguments,
-    required Duration timeout,
-    required WritersidePdfCancellationToken cancellationToken,
-    String? containerName,
+  Future<MarkdownPdfExportResult> export(
+    MarkdownPdfExportRequest request, {
+    MarkdownPdfCancellationToken? cancellationToken,
   }) async {
-    cancellationToken.throwIfCancelled();
-    calls.add(List.unmodifiable(arguments));
-    if (arguments.first == 'version') {
-      return const WritersideBuilderProcessResult(
-        exitCode: 0,
-        stdout: '28.5.1',
-        stderr: '',
-      );
+    this.request = request;
+    if (failure case final error?) {
+      throw error;
     }
-    if (arguments.first == 'image') {
-      return WritersideBuilderProcessResult(
-        exitCode: imageAvailable ? 0 : 1,
-        stdout: imageAvailable ? 'sha256:test' : '',
-        stderr: imageAvailable ? '' : 'No such image',
-      );
-    }
-    if (arguments.first != 'run') {
-      return const WritersideBuilderProcessResult(
-        exitCode: 0,
-        stdout: '',
-        stderr: '',
-      );
-    }
-    buildRunCount++;
-    buildArguments = List.unmodifiable(arguments);
-    String? outputPath;
-    String? sourceOverlayPath;
-    for (var index = 0; index < arguments.length - 1; index++) {
-      if (arguments[index] != '--mount') {
-        continue;
-      }
-      final mount = _mountValues(arguments[index + 1]);
-      final target = mount['target']!;
-      mountTargets.add(target);
-      if (mount.containsKey('readonly')) {
-        readOnlyMountTargets.add(target);
-      }
-      if (target == '/opt/output') {
-        outputPath = mount['source'];
-      }
-      if (target == '/opt/sources' && !mount.containsKey('readonly')) {
-        sourceOverlayPath = mount['source'];
-      }
-    }
-    if (sourceOverlayPath != null) {
-      copiedGitMetadata = await Directory(
-        p.join(sourceOverlayPath, '.git'),
-      ).exists();
-      copiedStalePdfArtifact = await File(
-        p.join(sourceOverlayPath, 'Writerside', 'pdfSourceGUIDE.pdf'),
-      ).exists();
-      copiedUnsupportedResource = await File(
-        p.join(sourceOverlayPath, 'Writerside', 'images.dat'),
-      ).exists();
-      await File(
-        p.join(sourceOverlayPath, '.idea', 'workspace.xml'),
-      ).writeAsString('<project/>');
-    }
-    if (sourceOverlayPath != null &&
-        arguments.contains('PDF=BusyMark-PDF.xml')) {
-      generatedConfiguration = await File(
-        p.join(sourceOverlayPath, 'Writerside', 'cfg', 'BusyMark-PDF.xml'),
-      ).readAsString();
-    }
-    if (crashFirstBuild && buildRunCount == 1) {
-      return const WritersideBuilderProcessResult(
-        exitCode: 0,
-        stdout: '',
-        stderr: '*** stack smashing detected ***',
-      );
-    }
-    await File(
-      p.join(outputPath!, 'pdfSourceGUIDE.pdf'),
-    ).writeAsBytes(_validPdf, flush: true);
-    return const WritersideBuilderProcessResult(
-      exitCode: 0,
-      stdout: 'PDF generated',
-      stderr: '',
+    cancellationToken?.throwIfCancelled();
+    return MarkdownPdfExportResult(
+      destinationPath: request.destinationPath,
+      pageCount: 3,
+      warnings: const [],
     );
   }
-
-  Map<String, String> _mountValues(String specification) {
-    return {
-      for (final part in specification.split(','))
-        if (part.contains('='))
-          part.substring(0, part.indexOf('=')): part.substring(
-            part.indexOf('=') + 1,
-          )
-        else
-          part: '',
-    };
-  }
 }
 
-final _validPdf =
-    '''%PDF-1.7
-1 0 obj
-<< /Type /Page >>
-endobj
-%%EOF
-'''
-        .codeUnits;
+class _PdfWritingTypstRunner implements TypstCommandRunner {
+  const _PdfWritingTypstRunner();
+
+  @override
+  Future<TypstProcessResult> compile({
+    required String executable,
+    required Directory workingDirectory,
+    required Duration timeout,
+    required MarkdownPdfCancellationToken cancellationToken,
+  }) async {
+    cancellationToken.throwIfCancelled();
+    final bytes = <int>[
+      ...'%PDF-1.7\n1 0 obj\n<< /Type /Page >>\nendobj\n'.codeUnits,
+      ...List<int>.filled(1200, 0x20),
+      ...'\n%%EOF\n'.codeUnits,
+    ];
+    await File(
+      p.join(workingDirectory.path, 'output.pdf'),
+    ).writeAsBytes(bytes, flush: true);
+    return const TypstProcessResult(exitCode: 0, stdout: '', stderr: '');
+  }
+}

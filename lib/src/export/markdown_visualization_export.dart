@@ -10,6 +10,7 @@ import '../visualization/generated_svg_normalizer.dart';
 import '../visualization/visualization_coordinator.dart';
 import '../visualization/visualization_models.dart';
 import '../visualization/visualization_renderer.dart';
+import '../writerside/writerside_diagram_source_loader.dart';
 import 'markdown_export_document.dart';
 import 'markdown_pdf_models.dart';
 import 'openapi_static_export_mapper.dart';
@@ -32,6 +33,7 @@ class MarkdownVisualizationExportRenderer {
     required this.coordinator,
     this.svgNormalizer = const GeneratedSvgNormalizer(),
     this.openApiMapper = const OpenApiStaticExportMapper(),
+    this.diagramSourceLoader = const WritersideDiagramSourceLoader(),
     this.maximumBlocks = 64,
     this.maximumGeneratedBytes = 64 * 1024 * 1024,
   });
@@ -39,6 +41,7 @@ class MarkdownVisualizationExportRenderer {
   final VisualizationCoordinator coordinator;
   final GeneratedSvgNormalizer svgNormalizer;
   final OpenApiStaticExportMapper openApiMapper;
+  final WritersideDiagramSourceLoader diagramSourceLoader;
   final int maximumBlocks;
   final int maximumGeneratedBytes;
 
@@ -146,11 +149,20 @@ class MarkdownVisualizationExportRenderer {
       block.attributes['language'],
     );
     try {
+      var source = block.plainText;
+      final sourceReference = block.attributes['src']?.trim() ?? '';
+      if (sourceReference.isNotEmpty) {
+        source = await diagramSourceLoader.load(
+          reference: sourceReference,
+          documentPath: documentPath,
+          workspaceRoot: workspaceRoot,
+        );
+      }
       final result = await coordinator.render(
         VisualizationRenderRequest(
           blockKey: blockKey,
           kind: descriptor.kind,
-          source: block.plainText,
+          source: source,
           sourceStartLine: block.sourceSpan?.startLine ?? 1,
           documentPath: documentPath,
           workspaceRoot: workspaceRoot,

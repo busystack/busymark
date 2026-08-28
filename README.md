@@ -26,11 +26,15 @@ projects.
 - Edit and save local files.
 - Read rendered Markdown without editing it.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
+- Typeset inline and display mathematics locally and offline with bundled
+  MathJax, including Writerside math forms and vector PDF output.
 - Edit Markdown with free-form AI instructions, an explicit change target, and
   explicitly selected context through Ollama, OpenAI, or Gemini, with
   diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
+- Review, stage, commit, branch, synchronize, and inspect history in Git-backed
+  documentation workspaces using the user's normal Git configuration and tools.
 - Run basic diagnostics.
 - Reopen recent workspaces.
 - Use native Linux desktop chrome with a GTK headerbar.
@@ -84,6 +88,16 @@ build settings, Markdown import, status, ID refactoring, instance groups,
 conditional and reusable TOC sections, and cross-instance topic references.
 See [Writerside instances](docs/writerside-instances.md) for behavior, safety
 rules, an openable example, and the authoritative JetBrains references.
+Writerside `<video>` elements are recognized in Markdown and XML topics, with
+local preview images plus HTTPS YouTube and Vimeo sources. See
+[Writerside videos](docs/videos.md) for syntax and preview/export behavior.
+Writerside tip, note, warning, and quote blocks render as native document
+callouts and can be inserted from the WYSIWYG toolbar. See
+[Writerside admonitions](docs/admonitions.md) for supported syntax.
+Writerside chapters, procedures, code blocks, and definition lists support
+documented collapsed and expanded states in Preview and WYSIWYG views. See
+[Writerside collapsible elements](docs/collapsible-elements.md) for syntax and
+the ordinary-Markdown boundary.
 
 Folder workspaces show all files and directories, including hidden project
 files such as `.gitignore`. Unsupported and binary files remain visible but are
@@ -103,6 +117,12 @@ compiler; users do not install or configure a separate program. Local PNG,
 JPEG, GIF, and safe SVG images are included. Remote images are deliberately not
 downloaded during export and are represented by their alternative text.
 
+Inline and display equations use the same bundled MathJax semantics in preview
+and PDF export. Safe generated equations remain self-contained vector SVG, with
+inline baseline metrics carried into Typst. See [mathematical expressions](docs/math.md)
+for supported Markdown and Writerside forms, the scientific TeX package profile,
+editing behavior, and offline security boundaries.
+
 Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
 SVG where possible and a local high-resolution raster fallback for browser-only
 labels. OpenAPI fences become static, selectable API reference content. Failed
@@ -114,16 +134,13 @@ examples are in [demo/visualizations.md](demo/visualizations.md),
 [demo/openapi-local-reference.md](demo/openapi-local-reference.md), and
 [demo/plantuml-conformance.md](demo/plantuml-conformance.md).
 
-Writerside PDF export builds one selected output instance with JetBrains'
-official, versioned Writerside builder image. It supports generated settings or
-an existing project `PDF.xml`, including orientation, keymap, cover page,
-header, footer, and table-of-contents title. Docker is required, the large image
-is downloaded only after confirmation, project sources stay read-only, and
-builder network access is disabled unless explicitly enabled. See
-[Writerside PDF export](docs/writerside-pdf-export.md) for setup, customization,
-security boundaries, Snap limitations, and the authoritative JetBrains
-references. An exportable configuration is included in
-[demo/writerside-instances](demo/writerside-instances).
+Writerside PDF export builds one selected output instance with BusyMark's
+bundled native Typst, MathJax, and diagram pipeline. It follows the resolved
+instance TOC and supports Writerside Markdown and `.topic` XML without Docker,
+a Writerside installation, a daemon, or a network connection. See
+[Writerside PDF export](docs/writerside-pdf-export.md) for supported layout
+options, security boundaries, and native-export scope. An exportable example is
+included in [demo/writerside-instances](demo/writerside-instances).
 
 ## AI editing
 
@@ -254,6 +271,18 @@ flutter test
 
 Linux `.desktop` and AppStream metadata are localized in the repository. Snap
 Store listing translations are managed outside `snap/snapcraft.yaml`.
+
+The Snap uses strict confinement and bundles Git and OpenSSH. If Git cannot
+find an author identity while committing, BusyMark opens a native form, saves
+the chosen repository or BusyMark-wide identity, and retries the commit. Install
+it with:
+
+```bash
+sudo snap install busymark
+```
+
+The [Snap confinement notes](docs/snap-confinement.md) document supported
+interfaces and the limits of host Git integration.
 
 ## Build Linux Locally
 

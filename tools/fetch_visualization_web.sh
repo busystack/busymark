@@ -3,7 +3,7 @@
 set -euo pipefail
 
 MERMAID_VERSION="11.16.1"
-MERMAID_SHA256="ebd9885111092c78cefc79a76f6c1dc34ed5b834b02ae8f338227ce79c003de4"
+MERMAID_SOURCE_SHA256="0ee99b3bb82766e5d6c34b8cc768b8530ce8f1aaa13790ae368aebeef3de9d11"
 PLANTUML_VERSION="1.2026.6"
 PLANTUML_SHA256="798f99592eb03a6446519d2becf78e6f1008d0d25c75d60b37a0f46e39e3c413"
 SCALAR_PARSER_VERSION="0.28.14"
@@ -14,6 +14,10 @@ SCALAR_JSON_MAGIC_VERSION="0.13.0"
 SCALAR_JSON_MAGIC_SHA256="f1adefc461f3594afd4ad16974820a5a88b271f7e8051045c2ac7a34eb974d33"
 YAML_VERSION="2.9.0"
 YAML_SHA256="008fa204cb1ba700e0272ba045abbf09a6ffe63456e8146ba97cac6c2ad1ef91"
+MATHJAX_VERSION="4.1.3"
+MATHJAX_SHA256="4611bed26b338dfc4b5757b8ed2d7ba82a85bcbd05d2729fb3465fba17b8896c"
+MATHJAX_NEWCM_VERSION="4.1.3"
+MATHJAX_NEWCM_SHA256="87d7b869c6a2a6169d9a53acc4eab6c846a9cbe11752738226461bb5070c8b88"
 ESBUILD_VERSION="0.28.2"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,16 +26,20 @@ SOURCE_DIR="${SCRIPT_DIR}/visualization"
 OUTPUT_DIR="${1:-${PROJECT_DIR}/build/visualization/web}"
 SOURCE_FINGERPRINT="$({
   sha256sum \
+    "${BASH_SOURCE[0]}" \
     "${SOURCE_DIR}/package.json" \
     "${SOURCE_DIR}/package-lock.json" \
     "${SOURCE_DIR}/render_engines.js" \
+    "${SOURCE_DIR}/mathjax_renderer.js" \
+    "${SOURCE_DIR}/mermaid_math_disabled.js" \
+    "${SOURCE_DIR}/build_render_engines.js" \
     "${SOURCE_DIR}/reference.js" \
     "${SOURCE_DIR}/bootstrap.js" \
     "${SOURCE_DIR}/harness.html" \
     "${SOURCE_DIR}/reference.html" \
     "${SOURCE_DIR}/generate_notices.js"
 } | sha256sum | cut -d ' ' -f 1)"
-VERSION_FINGERPRINT="mermaid=${MERMAID_VERSION};plantuml=${PLANTUML_VERSION};scalar-parser=${SCALAR_PARSER_VERSION};scalar-reference=${SCALAR_REFERENCE_VERSION};scalar-json-magic=${SCALAR_JSON_MAGIC_VERSION};yaml=${YAML_VERSION};esbuild=${ESBUILD_VERSION};sources=${SOURCE_FINGERPRINT}"
+VERSION_FINGERPRINT="mermaid=${MERMAID_VERSION};plantuml=${PLANTUML_VERSION};scalar-parser=${SCALAR_PARSER_VERSION};scalar-reference=${SCALAR_REFERENCE_VERSION};scalar-json-magic=${SCALAR_JSON_MAGIC_VERSION};yaml=${YAML_VERSION};mathjax=${MATHJAX_VERSION};mathjax-newcm=${MATHJAX_NEWCM_VERSION};esbuild=${ESBUILD_VERSION};sources=${SOURCE_FINGERPRINT}"
 
 if [[ -f "${OUTPUT_DIR}/VERSION" ]] &&
    [[ "$(<"${OUTPUT_DIR}/VERSION")" == "${VERSION_FINGERPRINT}" ]] &&
@@ -61,6 +69,8 @@ TOOL_DIR="${TEMP_DIR}/tool"
 mkdir -p -- "${TOOL_DIR}"
 cp -- "${SOURCE_DIR}/package.json" "${SOURCE_DIR}/package-lock.json" "${TOOL_DIR}/"
 cp -- "${SOURCE_DIR}/render_engines.js" "${TOOL_DIR}/"
+cp -- "${SOURCE_DIR}/mathjax_renderer.js" "${TOOL_DIR}/"
+cp -- "${SOURCE_DIR}/build_render_engines.js" "${TOOL_DIR}/"
 npm ci \
   --prefix "${TOOL_DIR}" \
   --ignore-scripts \
@@ -83,9 +93,9 @@ verify_package() {
 }
 
 verify_package \
-  mermaid \
-  "https://registry.npmjs.org/mermaid/-/mermaid-${MERMAID_VERSION}.tgz" \
-  "${MERMAID_SHA256}"
+  mermaid-source \
+  "https://github.com/mermaid-js/mermaid/archive/refs/tags/mermaid@${MERMAID_VERSION}.tar.gz" \
+  "${MERMAID_SOURCE_SHA256}"
 verify_package \
   plantuml \
   "https://registry.npmjs.org/@plantuml/core/-/core-${PLANTUML_VERSION}.tgz" \
@@ -106,16 +116,25 @@ verify_package \
   yaml \
   "https://registry.npmjs.org/yaml/-/yaml-${YAML_VERSION}.tgz" \
   "${YAML_SHA256}"
+verify_package \
+  mathjax \
+  "https://registry.npmjs.org/@mathjax/src/-/src-${MATHJAX_VERSION}.tgz" \
+  "${MATHJAX_SHA256}"
+verify_package \
+  mathjax-newcm \
+  "https://registry.npmjs.org/@mathjax/mathjax-newcm-font/-/mathjax-newcm-font-${MATHJAX_NEWCM_VERSION}.tgz" \
+  "${MATHJAX_NEWCM_SHA256}"
 
 BUILD_DIR="${TEMP_DIR}/output"
 mkdir -p -- "${BUILD_DIR}"
-node "${TOOL_DIR}/node_modules/esbuild/bin/esbuild" \
+cp -R -- \
+  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/packages/mermaid" \
+  "${TOOL_DIR}/mermaid-source"
+node "${TOOL_DIR}/build_render_engines.js" \
   "${TOOL_DIR}/render_engines.js" \
-  --bundle \
-  --format=esm \
-  --platform=browser \
-  --target=safari16 \
-  --outfile="${BUILD_DIR}/render-engines.js"
+  "${BUILD_DIR}/render-engines.js" \
+  "${TOOL_DIR}/mermaid-source" \
+  "${SOURCE_DIR}/mermaid_math_disabled.js"
 
 install -m 0644 "${SOURCE_DIR}/harness.html" "${BUILD_DIR}/harness.html"
 install -m 0644 "${SOURCE_DIR}/reference.html" "${BUILD_DIR}/reference.html"
@@ -132,7 +151,11 @@ printf '%s\n' "${VERSION_FINGERPRINT}" > "${BUILD_DIR}/VERSION"
 LICENSE_DIR="${BUILD_DIR}/licenses"
 node "${SOURCE_DIR}/generate_notices.js" \
   "${TOOL_DIR}/node_modules" \
-  "${LICENSE_DIR}/npm"
+  "${LICENSE_DIR}/npm" \
+  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/packages/mermaid"
+install -D -m 0644 \
+  "${TEMP_DIR}/mermaid-source/mermaid-mermaid-${MERMAID_VERSION}/LICENSE" \
+  "${LICENSE_DIR}/mermaid/LICENSE"
 # @scalar/api-reference and @scalar/openapi-parser are released from the same
 # Scalar repository. The reference package omits LICENSE from its npm files;
 # preserve the repository's distributed MIT text from the parser package.
@@ -144,5 +167,8 @@ install -D -m 0644 \
   "${LICENSE_DIR}/package-lock.json"
 
 mkdir -p -- "${OUTPUT_DIR}"
+if [[ -d "${OUTPUT_DIR}/licenses" ]]; then
+  mv -- "${OUTPUT_DIR}/licenses" "${TEMP_DIR}/previous-licenses"
+fi
 cp -R -- "${BUILD_DIR}/." "${OUTPUT_DIR}/"
 echo "Prepared offline visualization web assets in ${OUTPUT_DIR}"

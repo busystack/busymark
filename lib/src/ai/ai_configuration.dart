@@ -3,7 +3,7 @@ import 'ai_models.dart';
 import 'ai_provider.dart';
 
 extension AiSettingsConfiguration on AppSettings {
-  AiProviderKind? get aiProviderKind => switch (aiProviderPreference) {
+  AiProviderKind? get defaultAiProviderKind => switch (aiProviderPreference) {
     AiProviderPreference.disabled => null,
     AiProviderPreference.ollamaLocal => AiProviderKind.ollamaLocal,
     AiProviderPreference.openAi => AiProviderKind.openAi,

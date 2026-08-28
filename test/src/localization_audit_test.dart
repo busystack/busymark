@@ -33,8 +33,9 @@ void main() {
       _LiteralPattern('labelText literal', r"\blabelText:\s*'([^']+)'"),
       _LiteralPattern('semanticLabel literal', r"\bsemanticLabel:\s*'([^']+)'"),
       _LiteralPattern(
-        'SnackBar Text literal',
-        r"\bSnackBar\([^)]*content:\s*Text\(\s*'([^']*[A-Z][^']*)'",
+        'toast message literal',
+        r'\bBusyMarkToastOverlay\.(?:show|maybeShow)\([^)]*'
+            r"message:\s*'([^']*[A-Z][^']*)'",
         dotAll: true,
       ),
       _LiteralPattern(
@@ -293,12 +294,6 @@ void main() {
       expect(
         l10n.diagnosticWritersideVariableUnresolved('api-version'),
         contains('$fsi%api-version%$pdi'),
-      );
-      expect(
-        l10n.writersidePdfBuilderDownloadDescription(
-          'jetbrains/writerside-builder:2026.07.8925',
-        ),
-        contains('${fsi}jetbrains/writerside-builder:2026.07.8925$pdi'),
       );
     }
   });
@@ -613,6 +608,7 @@ const _sharedEnglishMatches = <String>{
   'languageHindi',
   'languageEstonian',
   'writerside',
+  'video',
   'xml',
   'fileTypeMarkdown',
   'pdfPageSizeA4',
@@ -651,6 +647,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'actions',
     'source',
     'validation',
     'fileTypeImages',
@@ -678,7 +675,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
   },
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
-  'pl': {'folder', 'foldKindTag'},
+  'pl': {'folder', 'foldKindTag', 'aiModel'},
   'pt': {
     'editor',
     'link',

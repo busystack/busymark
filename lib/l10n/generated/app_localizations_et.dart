@@ -218,6 +218,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get keyboardShortcuts => 'Kiirklahvid';
 
   @override
+  String get commandPalette => 'Käskude palett';
+
+  @override
+  String get commandPaletteHint => 'Sisesta käsk';
+
+  @override
+  String get commandPaletteEmpty => 'Sobivaid käske pole';
+
+  @override
+  String get commandUnavailableInContext =>
+      'See käsk pole praeguses kontekstis saadaval.';
+
+  @override
   String get lightTheme => 'Hele';
 
   @override
@@ -710,6 +723,14 @@ class AppLocalizationsEt extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Aken';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Eelmise tööruumi taasavamine käivitamisel';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Ava BusyMarki käivitamisel eelmise seansi tööruum ja vahekaardid.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Küsi salvestamata muudatuste korral enne sulgemist kinnitust';
 
@@ -759,6 +780,11 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumendis on salvestamata muudatusi. Kas salvestada need enne jätkamist?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'Faili on kettal muudetud';
 
   @override
@@ -797,6 +823,40 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get image => 'Pilt';
+
+  @override
+  String get video => 'Video';
+
+  @override
+  String get openVideo => 'Esita videot';
+
+  @override
+  String get pauseVideo => 'Peata video';
+
+  @override
+  String get videoUnavailable => 'Video pole saadaval';
+
+  @override
+  String get videoPreview => 'Video eelvaade';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Videol puudub atribuut src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Toetamata videoallikas: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Videofaili pole olemas: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Video eelvaatepilti pole olemas: $preview';
+  }
 
   @override
   String get inlineImage => 'Reasisene pilt';
@@ -891,6 +951,18 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get deleteColumn => 'Kustuta veerg';
+
+  @override
+  String get tableAlignmentUnspecified => 'Joondus: määramata';
+
+  @override
+  String get tableAlignmentLeft => 'Joondus: vasakule';
+
+  @override
+  String get tableAlignmentCenter => 'Joondus: keskele';
+
+  @override
+  String get tableAlignmentRight => 'Joondus: paremale';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1318,6 +1390,131 @@ class AppLocalizationsEt extends AppLocalizations {
   String get sourceSearchRegex => 'Regulaaravaldis';
 
   @override
+  String get sourceSearchReplacement => 'Asenda väärtusega';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Asenda praegune vaste';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Asenda ja leia järgmine';
+
+  @override
+  String get sourceSearchReplaceAll => 'Asenda kõik';
+
+  @override
+  String get workspaceReplace => 'Asenda tööruumis';
+
+  @override
+  String get reviewReplacements => 'Vaata asendused üle';
+
+  @override
+  String get applyReplacements => 'Rakenda asendused';
+
+  @override
+  String get skippedFiles => 'Vahele jäetud failid';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Salvestamata redaktori sisu';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Kettale salvestatud sisu';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Vali kõik $count vastet';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Asendati $matches vastet $files failis; vahele jäeti $skipped.';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Lõpus on reavahetus';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Lõpus pole reavahetust';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normaliseeri reavahetused';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'See dokument sisaldab eri tüüpi reavahetusi. Vali vorming.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return 'Fail $fileName kasutab eri tüüpi reavahetusi. Vali enne asendamist vorming.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Liiga suur fail jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Fail, mida ei saanud lugeda, jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Fail, mis pole korrektne UTF-8, jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueTruncated => 'Asenduste eelvaade kärbiti.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Pärast eelvaadet muutunud fail jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Pärast eelvaadet muutunud redaktoripuhver jäeti vahele.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Vali enne asendamist LF- või CRLF-normaliseerimine.';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Tagasivõtmine peatati, sest faili muudeti samal ajal. Mõned asendused võivad alles jääda; väljatõrjutud sisu säilitati alloleval teel.';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Asendusi ei rakendatud, sest läbivaadatud kogumit ei saanud turvaliselt salvestada.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Välised muudatused — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'See fail kustutati kettalt.';
+
+  @override
+  String get externalFileChanged =>
+      'See fail muutus kettal ajal, kui sul on salvestamata muudatusi.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Faili $fileName salvestamata sisu taastati. Vaadake see üle ning salvestage, salvestage nimega või hüljake.';
+  }
+
+  @override
+  String get compare => 'Võrdle';
+
+  @override
+  String get reloadFromDisk => 'Laadi kettalt uuesti';
+
+  @override
+  String get keepMine => 'Säilita minu versioon';
+
+  @override
+  String get saveAs => 'Salvesta nimega';
+
+  @override
   String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
 
   @override
@@ -1326,6 +1523,12 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get nothingToRead => 'Pole midagi lugeda';
+
+  @override
+  String get admonition => 'Märkusplokk';
+
+  @override
+  String get quote => 'Tsitaat';
 
   @override
   String get note => 'Märkus';
@@ -1453,6 +1656,16 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Valideerimine nurjus: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Taastati $count salvestamata dokumenti. Vaadake iga taastatud dokument enne jätkamist üle.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return '$count rikutud taastekirjet ei saanud taastada. Kehtivad taastatud dokumendid on endiselt saadaval.';
   }
 
   @override
@@ -2274,6 +2487,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get fileActions => 'Failitoimingud';
 
   @override
+  String get actions => 'Toimingud';
+
+  @override
   String get gitStatusAdded => 'Lisatud';
 
   @override
@@ -2346,8 +2562,34 @@ class AppLocalizationsEt extends AppLocalizations {
       'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Giti autentimine nurjus. Snap-paketis võib SSH-kaughoidlate kasutamiseks olla vaja ühendada liides ssh-keys.';
+  String get gitErrorAuthorIdentity =>
+      'Git vajab enne sissekande loomist autori nime ja e-posti aadressi.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Giti autori identiteet';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Sisesta identiteet, mille Git peaks sissekannetele lisama. BusyMark salvestab selle ja proovib sissekannet uuesti.';
+
+  @override
+  String get gitAuthorName => 'Nimi';
+
+  @override
+  String get gitAuthorEmail => 'E-post';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Kasuta kõigis hoidlates';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'Snapi paigalduses kehtib see BusyMarkis avatud hoidlatele.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Salvesta ja loo sissekanne';
+
+  @override
+  String get gitErrorAuthentication => 'Giti autentimine nurjus.';
 
   @override
   String get gitErrorNetwork => 'Giti võrgutoiming nurjus.';
@@ -2929,134 +3171,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get exportWritersideAsPdf => 'Ekspordi Writerside PDF-ina';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Valige eksemplar ja PDF-i sätted. BusyMark kasutab JetBrainsi ametlikku Writerside’i koosturit.';
-
-  @override
   String get writersidePdfContent => 'Ekspordi sisu';
-
-  @override
-  String get writersidePdfSettings => 'PDF-i sätted';
-
-  @override
-  String get writersidePdfConfigureHere => 'Seadista selle ekspordi jaoks';
-
-  @override
-  String get writersidePdfProjectConfiguration =>
-      'Kasuta projekti konfiguratsiooni';
-
-  @override
-  String get writersidePdfConfigurationFile => 'PDF-i konfiguratsioonifail';
 
   @override
   String get writersidePdfPage => 'Lehekülg';
 
   @override
-  String get writersidePdfKeymap => 'Klahvipaigutus';
-
-  @override
-  String get writersidePdfNoKeymap => 'Klahvipaigutuseta';
-
-  @override
-  String get writersidePdfTocTitle => 'Sisukorra pealkiri';
-
-  @override
-  String get writersidePdfCover => 'Tiitelleht';
-
-  @override
-  String get writersidePdfIncludeCover => 'Lisa tiitelleht';
-
-  @override
-  String get writersidePdfCoverTitle => 'Tiitellehe pealkiri';
-
-  @override
-  String get writersidePdfCoverDescription => 'Tiitellehe kirjeldus';
-
-  @override
-  String get writersidePdfCopyright => 'Autoriõigus';
-
-  @override
-  String get writersidePdfCoverLogo => 'Tiitellehe logo';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Vali tiitellehe logo';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Päis ja jalus';
-
-  @override
-  String get writersidePdfHeader => 'Päis';
-
-  @override
-  String get writersidePdfFooter => 'Jalus';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Need väärtused seovad avatud mooduli koosturi lähtepaigutusega.';
-
-  @override
-  String get writersidePdfModuleName => 'Mooduli nimi';
-
-  @override
-  String get writersidePdfSourceRoot => 'Lähtejuur';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Vali lähtejuur';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Koosturi versioon';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Luba koostamise ajal võrk';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Vaikimisi keelatud. Luba ainult siis, kui projekt vajab teadlikult kaugkoostusressursse.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Sisesta mooduli nimi.';
-
-  @override
-  String get writersidePdfSourceRootRequired => 'Vali lähtejuur.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Sisesta kehtiv koosturi versioon.';
-
-  @override
-  String get writersidePdfBuilderRequired => 'Writerside’i koostur on nõutav';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark kasutab ametlikku konteineripilti $image. Kas laadida see kohe alla? Pilt on suur ja Docker talletab selle.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Writerside’i koosturi allalaadimine…';
-
-  @override
   String get exportingWritersidePdf => 'Writerside’i PDF-i eksportimine…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Writerside’i PDF-i eksportimiseks on vaja Dockerit. Paigalda ja käivita Docker ning proovi uuesti.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Soovitud Writerside’i koosturi pilt pole saadaval.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Writerside’i PDF-i konfiguratsioon on vigane.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Writerside’i koostur ei suutnud PDF-i luua.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Writerside’i koostur ei loonud kehtivat PDF-i.';
 
   @override
   String get ai => 'TI';
@@ -3073,6 +3194,15 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiProvider => 'TI-teenuse pakkuja';
+
+  @override
+  String get aiDefaultProvider => 'Vaikimisi teenusepakkuja';
+
+  @override
+  String get aiConfigureProvider => 'Seadista teenusepakkujat';
+
+  @override
+  String get aiChooseProvider => 'Vali TI-teenuse pakkuja';
 
   @override
   String get aiOllamaEndpoint => 'Ollama lõpp-punkt';
@@ -3092,8 +3222,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama töötab, kuid installitud mudeleid ei leitud.';
+  String get aiNoModels => 'Mudelit pole valitud.';
 
   @override
   String get aiConnectionFailed =>
@@ -3197,19 +3326,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiContentSentToAi => 'TI-le saadetav sisu';
 
   @override
-  String get aiPrivacyDisabled =>
-      'Tehisintellekt on keelatud. BusyMark ei saada dokumendi sisu kunagi ilma selgesõnalise TI-toiminguta.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult seadistatud kohalikule Ollama teenusele. Ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult teenusele $provider. Päringud on olekuta ja ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
-  }
-
-  @override
   String get aiApiKey => 'API-võti';
 
   @override
@@ -3246,6 +3362,9 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'Eelistatud mudel';
+
+  @override
+  String get aiModel => 'Mudel';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3331,4 +3450,13 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
+
+  @override
+  String get mathRenderFailed => 'Matemaatilist avaldist ei saanud kuvada.';
+
+  @override
+  String get inlineMath => 'Reasisene matemaatika';
+
+  @override
+  String get displayMath => 'Plokina matemaatika';
 }

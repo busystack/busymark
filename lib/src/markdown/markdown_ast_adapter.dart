@@ -1,9 +1,11 @@
 import 'package:markdown/markdown.dart' as md;
+import 'package:xml/xml.dart';
 
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_model.dart';
+import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
 
@@ -56,8 +58,34 @@ class MarkdownAstAdapter {
     required MarkdownMode mode,
   }) {
     final blocks = <BusyBlock>[];
-    for (final segment in _rawHtmlAwareSegments(source)) {
+    for (final segment in _rawHtmlAwareSegments(source, mode)) {
       if (segment.rawHtml) {
+        if (mode == MarkdownMode.writersideMarkdown) {
+          final writerside = _writersideBlockFromText(
+            segment.text,
+            nextId: nextId,
+            allowVideo: true,
+          );
+          if (writerside != null) {
+            blocks.add(writerside);
+            continue;
+          }
+        }
+        final customTag = RegExp(
+          r'^\s*<([A-Za-z][A-Za-z0-9_-]*)\b',
+        ).firstMatch(segment.text)?.group(1)?.toLowerCase();
+        if (customTag != null && _writersideBlockTag(customTag)) {
+          blocks.add(
+            BusyBlock(
+              id: nextId(),
+              kind: BusyBlockKind.htmlBlock,
+              rawSource: segment.text.trimRight(),
+              preserveRaw: true,
+              attributes: const {'sourceFormat': 'html'},
+            ),
+          );
+          continue;
+        }
         final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
         if (html != null) {
           blocks.add(
@@ -89,15 +117,15 @@ class MarkdownAstAdapter {
     final packageSource = _protectProseHyphenLines(
       _protectImageDestinationsWithSpaces(source),
     );
-    final document = md.Document(
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: false,
-    );
+    final document = busyMarkMarkdownDocument(mode);
     final nodes = document.parse(packageSource);
-    return [
+    final blocks = [
       for (final node in nodes)
         ..._blocksFromNode(node, nextId: nextId, mode: mode),
     ];
+    return mode == MarkdownMode.writersideMarkdown
+        ? _attachWritersideCodeAttributes(blocks)
+        : blocks;
   }
 
   List<BusyBlock> _applyImageAttributes(
@@ -130,6 +158,16 @@ class MarkdownAstAdapter {
       final text = rawText.trim();
       if (text.isEmpty) {
         return const [];
+      }
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final writerside = _writersideBlockFromText(
+          rawText,
+          nextId: nextId,
+          allowVideo: true,
+        );
+        if (writerside != null) {
+          return [writerside];
+        }
       }
       final html = _rawHtmlAdapter.parseRawHtmlBlock(rawText, nextId);
       if (html != null) {
@@ -165,30 +203,62 @@ class MarkdownAstAdapter {
 
     final tag = node.tag.toLowerCase();
     final children = node.children ?? const <md.Node>[];
+    if (tag == busyMarkMathBlockTag) {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.math,
+          inlines: [
+            BusyInline(
+              kind: BusyInlineKind.math,
+              text:
+                  node.attributes[busyMarkMathExpressionAttribute] ??
+                  node.textContent,
+              attributes: node.attributes,
+            ),
+          ],
+          attributes: node.attributes,
+        ),
+      ];
+    }
     if (_headingLevel(tag) case final level?) {
       final rawText = node.textContent.trim();
       final attrId = _attributeValue(rawText, 'id');
-      final text = _stripTrailingAttributeBlock(rawText);
+      final trailingAttributes = mode == MarkdownMode.writersideMarkdown
+          ? _trailingAttributeBlock(rawText)
+          : const <String, String>{};
+      final hasSupportedAttributeBlock =
+          attrId != null || trailingAttributes.isNotEmpty;
+      final text = hasSupportedAttributeBlock
+          ? _stripTrailingAttributeBlock(rawText)
+          : rawText;
       final anchorId = attrId ?? slugForHeading(text);
+      final parsedInlines = _inlinesFromNodes(children);
       return [
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.heading,
-          inlines: _stripTrailingAttributeInline(_inlinesFromNodes(children)),
+          inlines: hasSupportedAttributeBlock
+              ? _stripTrailingAttributeInline(parsedInlines)
+              : parsedInlines,
           attributes: {
             'level': '$level',
             'id': anchorId,
             'generatedId': '${attrId == null}',
+            ...trailingAttributes,
           },
         ),
       ];
     }
 
     if (tag == 'p') {
-      final writerside = _writersideBlockFromText(
-        node.textContent,
-        nextId: nextId,
-      );
+      final writerside = mode == MarkdownMode.writersideMarkdown
+          ? _writersideBlockFromText(
+              node.textContent,
+              nextId: nextId,
+              allowVideo: true,
+            )
+          : null;
       if (writerside != null) {
         return [writerside];
       }
@@ -215,6 +285,39 @@ class MarkdownAstAdapter {
       final language = className.startsWith('language-')
           ? className.substring('language-'.length)
           : '';
+      final normalizedLanguage = language.trim().toLowerCase();
+      final mathSourceForm = switch (normalizedLanguage) {
+        'math' => BusyMathSourceForm.mathFence,
+        'tex' when mode == MarkdownMode.writersideMarkdown =>
+          BusyMathSourceForm.writersideTexFence,
+        _ => null,
+      };
+      if (mathSourceForm != null) {
+        final expression = _codeBlockText(code.textContent);
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.math,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.math,
+                text: expression,
+                attributes: {
+                  busyMarkMathExpressionAttribute: expression,
+                  busyMarkMathDisplayAttribute: 'true',
+                  busyMarkMathSourceFormAttribute: mathSourceForm.name,
+                },
+              ),
+            ],
+            attributes: {
+              busyMarkMathExpressionAttribute: expression,
+              busyMarkMathDisplayAttribute: 'true',
+              busyMarkMathSourceFormAttribute: mathSourceForm.name,
+              'language': normalizedLanguage,
+            },
+          ),
+        ];
+      }
       return [
         BusyBlock(
           id: nextId(),
@@ -235,22 +338,40 @@ class MarkdownAstAdapter {
     }
 
     if (tag == 'ul' || tag == 'ol') {
-      return _listBlocksFromNode(node, ordered: tag == 'ol', nextId: nextId);
+      return _listBlocksFromNode(
+        node,
+        ordered: tag == 'ol',
+        nextId: nextId,
+        mode: mode,
+      );
     }
 
     if (tag == 'blockquote') {
-      final blocks = [
+      var blocks = [
         for (final child in children)
           ..._blocksFromNode(child, nextId: nextId, mode: mode),
       ];
+      final attributes = <String, String>{};
+      if (mode == MarkdownMode.writersideMarkdown) {
+        final admonition = _writersideBlockquoteAdmonition(blocks);
+        blocks = admonition.blocks;
+        attributes.addAll({
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'blockquote',
+          'style': admonition.style.name,
+        });
+      }
       return [
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.blockquote,
-          inlines: blocks.isEmpty
+          inlines: mode == MarkdownMode.writersideMarkdown
+              ? const <BusyInline>[]
+              : blocks.isEmpty
               ? _inlinesFromNodes(children)
               : const <BusyInline>[],
           children: blocks,
+          attributes: attributes,
         ),
       ];
     }
@@ -280,15 +401,47 @@ class MarkdownAstAdapter {
       ];
     }
 
-    if (_writersideBlockTag(tag)) {
+    if (mode == MarkdownMode.writersideMarkdown && _writersideBlockTag(tag)) {
+      if (tag == 'code-block') {
+        return [
+          _writersideCodeBlock(
+            text: node.textContent,
+            attributes: node.attributes,
+            rawSource: node.textContent,
+            nextId: nextId,
+          ),
+        ];
+      }
       return [
         BusyBlock(
           id: nextId(),
           kind: _writersideKind(tag),
           inlines: _inlinesFromNodes(children),
-          attributes: {...node.attributes, 'element': tag},
+          attributes: {
+            ...node.attributes,
+            'element': tag,
+            if (_writersideAdmonitionTag(tag)) ...{
+              busyMarkWritersideAdmonitionAttribute: 'true',
+              busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+              'style': tag,
+            },
+          },
           rawSource: node.textContent,
           preserveRaw: !_editableWritersideTag(tag),
+        ),
+      ];
+    }
+
+    // These names remain protected custom HTML outside Writerside mode. They
+    // deliberately receive neither Writerside kinds nor Writerside attributes.
+    if (_writersideBlockTag(tag)) {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.htmlBlock,
+          rawSource: node.textContent,
+          preserveRaw: true,
+          attributes: const {'sourceFormat': 'html'},
         ),
       ];
     }
@@ -319,6 +472,7 @@ class MarkdownAstAdapter {
     md.Element node, {
     required bool ordered,
     required String Function() nextId,
+    required MarkdownMode mode,
   }) {
     final result = <BusyBlock>[];
     final items =
@@ -341,7 +495,7 @@ class MarkdownAstAdapter {
                 child.tag == 'pre' ||
                 child.tag == 'table')) {
           nestedBlocks.addAll(
-            _blocksFromNode(child, nextId: nextId, mode: MarkdownMode.gfm),
+            _blocksFromNode(child, nextId: nextId, mode: mode),
           );
         } else {
           inlineNodes.add(child);
@@ -392,6 +546,15 @@ class MarkdownAstAdapter {
     final children = _inlinesFromNodes(node.children ?? const <md.Node>[]);
     final text = node.textContent;
     return switch (tag) {
+      busyMarkMathInlineTag => [
+        BusyInline(
+          kind: BusyInlineKind.math,
+          text:
+              node.attributes[busyMarkMathExpressionAttribute] ??
+              node.textContent,
+          attributes: node.attributes,
+        ),
+      ],
       'strong' || 'b' => [
         BusyInline(kind: BusyInlineKind.strong, text: text, children: children),
       ],
@@ -581,7 +744,61 @@ class MarkdownAstAdapter {
   BusyBlock? _writersideBlockFromText(
     String value, {
     required String Function() nextId,
+    required bool allowVideo,
   }) {
+    try {
+      final fragment = XmlDocumentFragment.parse(value.trim());
+      final elements = fragment.children.whereType<XmlElement>().toList();
+      if (elements.length == 1 &&
+          !fragment.children.whereType<XmlText>().any(
+            (node) => node.value.trim().isNotEmpty,
+          )) {
+        final element = elements.single;
+        final tag = element.name.local.toLowerCase();
+        if (_writersideBlockTag(tag) && (tag != 'video' || allowVideo)) {
+          final text = tag == 'code-block'
+              ? element.innerText
+                    .replaceFirst(RegExp(r'^\n'), '')
+                    .replaceFirst(RegExp(r'\n\s*$'), '')
+              : element.innerText.trim();
+          final attributes = <String, String>{
+            'element': tag,
+            for (final attribute in element.attributes)
+              attribute.name.local: attribute.value,
+            if (tag == 'code-block' && element.getAttribute('lang') != null)
+              'language': element.getAttribute('lang')!,
+          };
+          if (tag == 'code-block') {
+            return _writersideCodeBlock(
+              text: text,
+              attributes: attributes,
+              rawSource: value,
+              nextId: nextId,
+            );
+          }
+          return BusyBlock(
+            id: nextId(),
+            kind: _writersideKind(tag),
+            inlines: text.isEmpty
+                ? const []
+                : [BusyInline(kind: BusyInlineKind.text, text: text)],
+            attributes: {
+              ...attributes,
+              if (_writersideAdmonitionTag(tag)) ...{
+                busyMarkWritersideAdmonitionAttribute: 'true',
+                busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+                'style': tag,
+              },
+            },
+            rawSource: value,
+            preserveRaw: !_editableWritersideTag(tag),
+          );
+        }
+      }
+    } on Object {
+      // The established paired-tag fallback below remains tolerant while the
+      // Markdown topic is being edited.
+    }
     final match = RegExp(
       r'^\s*<([A-Za-z][A-Za-z0-9_-]*)\b([^>]*)>(.*?)</\1>\s*$',
       dotAll: true,
@@ -593,14 +810,89 @@ class MarkdownAstAdapter {
     if (!_writersideBlockTag(tag)) {
       return null;
     }
-    final text = match.group(3)!.trim();
+    final rawText = match.group(3)!.trim();
+    final attributes = <String, String>{
+      'element': tag,
+      ..._parseAttributePairs(match.group(2)!),
+    };
+    if (tag == 'code-block') {
+      final language = attributes['lang'];
+      return _writersideCodeBlock(
+        text: busyMarkDecodeXmlMathText(rawText),
+        attributes: {...attributes, if (language != null) 'language': language},
+        rawSource: value,
+        nextId: nextId,
+      );
+    }
     return BusyBlock(
       id: nextId(),
       kind: _writersideKind(tag),
-      inlines: [BusyInline(kind: BusyInlineKind.text, text: text)],
-      attributes: {'element': tag, ..._parseAttributePairs(match.group(2)!)},
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: rawText)],
+      attributes: {
+        ...attributes,
+        if (_writersideAdmonitionTag(tag)) ...{
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+          'style': tag,
+        },
+      },
       rawSource: value,
       preserveRaw: !_editableWritersideTag(tag),
+    );
+  }
+
+  BusyBlock _writersideCodeBlock({
+    required String text,
+    required Map<String, String> attributes,
+    required String rawSource,
+    required String Function() nextId,
+  }) {
+    final language = (attributes['language'] ?? attributes['lang'] ?? '')
+        .trim();
+    final normalizedLanguage = language.toLowerCase();
+    final commonAttributes = <String, String>{
+      ...attributes,
+      'element': 'code-block',
+      if (language.isNotEmpty) ...{'lang': language, 'language': language},
+      busyMarkWritersideCodeBlockSourceFormAttribute:
+          busyMarkWritersideCodeBlockElementSourceForm,
+    };
+    if (normalizedLanguage == 'tex') {
+      return BusyBlock(
+        id: nextId(),
+        kind: BusyBlockKind.math,
+        inlines: [
+          BusyInline(
+            kind: BusyInlineKind.math,
+            text: text,
+            attributes: {
+              busyMarkMathExpressionAttribute: text,
+              busyMarkMathDisplayAttribute: 'true',
+              busyMarkMathSourceFormAttribute:
+                  BusyMathSourceForm.writersideTexElement.name,
+            },
+          ),
+        ],
+        attributes: {
+          ...commonAttributes,
+          busyMarkMathExpressionAttribute: text,
+          busyMarkMathDisplayAttribute: 'true',
+          busyMarkMathSourceFormAttribute:
+              BusyMathSourceForm.writersideTexElement.name,
+        },
+        rawSource: rawSource,
+        preserveRaw: false,
+      );
+    }
+    return BusyBlock(
+      id: nextId(),
+      kind: BusyBlockKind.codeBlock,
+      inlines: text.isEmpty
+          ? const []
+          : [BusyInline(kind: BusyInlineKind.text, text: text)],
+      attributes: commonAttributes,
+      rawSource: rawSource,
+      preserveRaw: false,
     );
   }
 
@@ -675,6 +967,44 @@ class MarkdownAstAdapter {
 
   String _stripTrailingAttributeBlock(String value) {
     return value.replaceFirst(RegExp(r'\s*\{[^}]+\}\s*$'), '').trim();
+  }
+
+  Map<String, String> _trailingAttributeBlock(String value) {
+    final match = RegExp(r'(\{[^{}]+\})\s*$').firstMatch(value);
+    return match == null ? const {} : _parseAttributeBlock(match.group(1)!);
+  }
+
+  List<BusyBlock> _attachWritersideCodeAttributes(List<BusyBlock> blocks) {
+    final result = <BusyBlock>[];
+    var index = 0;
+    while (index < blocks.length) {
+      final block = blocks[index];
+      if (block.kind == BusyBlockKind.codeBlock && index + 1 < blocks.length) {
+        final attributeBlock = blocks[index + 1];
+        final attributes = attributeBlock.kind == BusyBlockKind.paragraph
+            ? _standaloneAttributeBlock(attributeBlock.plainText)
+            : const <String, String>{};
+        if (busyMarkWritersideIsCollapsible(attributes) ||
+            (attributes['src']?.trim().isNotEmpty ?? false)) {
+          result.add(
+            block.copyWith(attributes: {...block.attributes, ...attributes}),
+          );
+          index += 2;
+          continue;
+        }
+      }
+      result.add(block);
+      index += 1;
+    }
+    return result;
+  }
+
+  Map<String, String> _standaloneAttributeBlock(String value) {
+    final trimmed = value.trim();
+    if (!RegExp(r'^\{[^{}]+\}$').hasMatch(trimmed)) {
+      return const {};
+    }
+    return _parseAttributeBlock(trimmed);
   }
 
   String? _attributeValue(String raw, String key) {
@@ -836,24 +1166,119 @@ class MarkdownAstAdapter {
       'note',
       'tip',
       'warning',
+      'quote',
       'tabs',
       'tab',
       'procedure',
+      'step',
       'chapter',
+      'code-block',
+      'deflist',
+      'def',
+      'video',
     }.contains(tag);
   }
 
   bool _editableWritersideTag(String tag) {
-    return {'note', 'tip', 'warning'}.contains(tag);
+    return _writersideAdmonitionTag(tag);
+  }
+
+  bool _writersideAdmonitionTag(String tag) {
+    return busyAdmonitionStyleFromName(tag) != null;
   }
 
   BusyBlockKind _writersideKind(String tag) {
     return switch (tag) {
-      'note' || 'tip' || 'warning' => BusyBlockKind.writersideAdmonition,
+      'note' ||
+      'tip' ||
+      'warning' ||
+      'quote' => BusyBlockKind.writersideAdmonition,
       'tabs' || 'tab' => BusyBlockKind.writersideTabs,
       'procedure' => BusyBlockKind.writersideProcedure,
+      'video' => BusyBlockKind.video,
       _ => BusyBlockKind.writersideRawXml,
     };
+  }
+
+  ({BusyAdmonitionStyle style, List<BusyBlock> blocks})
+  _writersideBlockquoteAdmonition(List<BusyBlock> blocks) {
+    for (var index = blocks.length - 1; index >= 0; index -= 1) {
+      final block = blocks[index];
+      if (block.kind != BusyBlockKind.paragraph || block.inlines.isEmpty) {
+        continue;
+      }
+      final match = RegExp(r'\s*\{([^{}]*)\}\s*$').firstMatch(block.plainText);
+      if (match == null) {
+        break;
+      }
+      final style = busyAdmonitionStyleFromName(
+        _parseAttributePairs(match.group(1)!)['style'],
+      );
+      if (style == null) {
+        break;
+      }
+      final cleaned = _takeInlinePrefix(block.inlines, match.start);
+      final updated = [...blocks];
+      if (cleaned.isEmpty && block.children.isEmpty) {
+        updated.removeAt(index);
+      } else {
+        updated[index] = block.copyWith(inlines: cleaned);
+      }
+      return (style: style, blocks: updated);
+    }
+    return (style: BusyAdmonitionStyle.tip, blocks: blocks);
+  }
+
+  List<BusyInline> _takeInlinePrefix(List<BusyInline> inlines, int length) {
+    if (length <= 0) {
+      return const [];
+    }
+    final result = <BusyInline>[];
+    var remaining = length;
+    for (final inline in inlines) {
+      final inlineLength = inline.plainText.length;
+      if (inlineLength == 0) {
+        result.add(inline);
+        continue;
+      }
+      if (remaining >= inlineLength) {
+        result.add(inline);
+        remaining -= inlineLength;
+        continue;
+      }
+      if (remaining > 0) {
+        if (inline.children.isEmpty) {
+          result.add(
+            inline.copyWith(text: inline.text.substring(0, remaining)),
+          );
+        } else {
+          result.add(
+            inline.copyWith(
+              children: _takeInlinePrefix(inline.children, remaining),
+            ),
+          );
+        }
+      }
+      break;
+    }
+    while (result.isNotEmpty &&
+        (result.last.kind == BusyInlineKind.softBreak ||
+            result.last.kind == BusyInlineKind.hardBreak)) {
+      result.removeLast();
+    }
+    final last = result.lastOrNull;
+    if (last != null &&
+        last.children.isEmpty &&
+        last.kind == BusyInlineKind.text &&
+        last.text.trimRight() != last.text) {
+      final trimmed = last.text.trimRight();
+      if (trimmed.isEmpty) {
+        result.removeLast();
+      } else {
+        result[result.length - 1] = last.copyWith(text: trimmed);
+      }
+    }
+    return result;
   }
 
   _FrontMatter? _extractFrontMatter(String source) {
@@ -898,7 +1323,10 @@ class MarkdownAstAdapter {
     return lines.join('\n');
   }
 
-  List<_MarkdownSourceSegment> _rawHtmlAwareSegments(String source) {
+  List<_MarkdownSourceSegment> _rawHtmlAwareSegments(
+    String source,
+    MarkdownMode mode,
+  ) {
     final lines = _markdownSourceLines(source);
     final segments = <_MarkdownSourceSegment>[];
     var segmentStart = 0;
@@ -918,6 +1346,38 @@ class MarkdownAstAdapter {
       fence = MarkdownFence.parse(line);
       if (fence != null) {
         index += 1;
+        continue;
+      }
+
+      if (mode == MarkdownMode.writersideMarkdown &&
+          RegExp(
+            r'^\s{0,3}<math(?:\s|/?>)',
+            caseSensitive: false,
+          ).hasMatch(line)) {
+        index += 1;
+        continue;
+      }
+
+      final writersideEndIndex = _writersideContainerEndIndex(lines, index);
+      if (writersideEndIndex != null) {
+        final startOffset = lines[index].offset;
+        final endOffset = lines[writersideEndIndex - 1].endOffset;
+        if (segmentStart < startOffset) {
+          segments.add(
+            _MarkdownSourceSegment(
+              text: source.substring(segmentStart, startOffset),
+              rawHtml: false,
+            ),
+          );
+        }
+        segments.add(
+          _MarkdownSourceSegment(
+            text: source.substring(startOffset, endOffset),
+            rawHtml: true,
+          ),
+        );
+        segmentStart = endOffset;
+        index = writersideEndIndex;
         continue;
       }
 
@@ -981,6 +1441,27 @@ class MarkdownAstAdapter {
     for (var index = startIndex; index < lines.length; index += 1) {
       balance += _rawHtmlTagBalance(lines[index].line, tag);
       if (balance <= 0 && index > startIndex || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  int? _writersideContainerEndIndex(
+    List<_MarkdownSourceLine> lines,
+    int startIndex,
+  ) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(lines[startIndex].line);
+    final tag = match?.group(1)?.toLowerCase();
+    if (tag == null || !_writersideBlockTag(tag)) {
+      return null;
+    }
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (balance <= 0) {
         return index + 1;
       }
     }

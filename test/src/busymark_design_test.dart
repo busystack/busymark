@@ -1322,8 +1322,12 @@ void main() {
                 color: colors.view,
                 child: BusyMarkWysiwygToolbar(
                   onBlockCommand: (_) {},
+                  onAdmonitionCommand: (_) {},
+                  admonitionsEnabled: true,
                   onInlineCommand: (_) {},
                   onLinkCommand: () {},
+                  onInlineMathCommand: () {},
+                  onDisplayMathCommand: () {},
                   onImageCommand: () {},
                   onInlineImageCommand: () {},
                   onTableCommand: () {},
@@ -1341,7 +1345,7 @@ void main() {
       await tester.pump();
 
       final toolbar = find.byType(BusyMarkWysiwygToolbar);
-      final popup = tester.widget<BusyMarkHeaderPopupMenuButton>(
+      final popups = tester.widgetList<BusyMarkHeaderPopupMenuButton>(
         find.descendant(
           of: toolbar,
           matching: find.byWidgetPredicate(
@@ -1349,13 +1353,26 @@ void main() {
           ),
         ),
       );
-      expect(popup.transparent, isFalse);
-      expect(popup.elevated, isTrue);
-      expect(popup.foregroundColor, BusyMarkLinuxPalette.white);
-      expect(popup.backgroundColor?.resolve({}), accent);
+      expect(popups, hasLength(2));
+      expect(popups.every((popup) => !popup.transparent), isTrue);
+      expect(popups.every((popup) => popup.elevated), isTrue);
       expect(
-        popup.backgroundColor?.resolve({WidgetState.disabled}),
-        colors.disabledControl,
+        popups.every(
+          (popup) => popup.foregroundColor == BusyMarkLinuxPalette.white,
+        ),
+        isTrue,
+      );
+      expect(
+        popups.every((popup) => popup.backgroundColor?.resolve({}) == accent),
+        isTrue,
+      );
+      expect(
+        popups.every(
+          (popup) =>
+              popup.backgroundColor?.resolve({WidgetState.disabled}) ==
+              colors.disabledControl,
+        ),
+        isTrue,
       );
       final l10n = AppLocalizations.of(tester.element(toolbar));
       final buttons = tester
@@ -1374,9 +1391,12 @@ void main() {
         l10n.strikethrough,
         l10n.inlineCode,
         l10n.link,
+        l10n.inlineMath,
         l10n.hardLineBreak,
+        l10n.admonition,
         l10n.blockquote,
         l10n.codeBlock,
+        l10n.displayMath,
         l10n.htmlBlock,
         l10n.thematicBreak,
         l10n.unorderedList,

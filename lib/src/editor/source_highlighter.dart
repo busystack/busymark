@@ -528,6 +528,7 @@ List<TextSpan> _highlightMarkdown(
   MarkdownFence? openFence;
   var fenceLanguage = '';
   var inFrontMatter = source.startsWith('---\n') || source == '---';
+  var inDisplayMath = false;
 
   for (final line in source.split('\n')) {
     final lineStart = offset;
@@ -543,6 +544,20 @@ List<TextSpan> _highlightMarkdown(
       );
       if (lineStart > 0 && line.trim() == '---') {
         inFrontMatter = false;
+      }
+      offset = lineEnd + 1;
+      continue;
+    }
+
+    if (inDisplayMath) {
+      _addRange(
+        ranges,
+        lineStart,
+        lineEnd,
+        baseStyle.copyWith(color: palette.literal),
+      );
+      if (line.trimRight().endsWith(r'$$')) {
+        inDisplayMath = false;
       }
       offset = lineEnd + 1;
       continue;
@@ -591,6 +606,20 @@ List<TextSpan> _highlightMarkdown(
       );
       openFence = openingFence;
       fenceLanguage = _normalizedFenceLanguage(openingFence.language ?? '');
+      offset = lineEnd + 1;
+      continue;
+    }
+
+    final displayStart = RegExp(r'^\s{0,3}\$\$').firstMatch(line);
+    if (displayStart != null) {
+      _addRange(
+        ranges,
+        lineStart,
+        lineEnd,
+        baseStyle.copyWith(color: palette.literal),
+      );
+      final remainder = line.substring(displayStart.end);
+      inDisplayMath = !remainder.contains(r'$$');
       offset = lineEnd + 1;
       continue;
     }
@@ -667,6 +696,13 @@ List<TextSpan> _highlightMarkdown(
       closingLength: 1,
       markerStyle: inlineMarkerStyle,
     );
+    _addMarkdownInlineMathRanges(
+      ranges,
+      lineStart,
+      line,
+      baseStyle.copyWith(color: palette.literal),
+      inlineMarkerStyle,
+    );
     _addLinkLabelMatches(
       ranges,
       lineStart,
@@ -742,6 +778,84 @@ List<TextSpan> _highlightMarkdown(
     baseStyle,
     styleOverride: styleOverride,
   );
+}
+
+void _addMarkdownInlineMathRanges(
+  List<_HighlightRange> ranges,
+  int lineStart,
+  String line,
+  TextStyle expressionStyle,
+  TextStyle markerStyle,
+) {
+  var index = 0;
+  while (index < line.length) {
+    final start = line.indexOf(r'$', index);
+    if (start < 0) return;
+    final globalStart = lineStart + start;
+    if (_isEscapedAt(line, start) ||
+        _positionInsideRange(ranges, globalStart) ||
+        (start + 1 < line.length && line[start + 1] == r'$')) {
+      index = start + 1;
+      continue;
+    }
+    final github = start + 1 < line.length && line[start + 1] == '`';
+    final closeToken = github ? '`\$' : r'$';
+    var close = line.indexOf(closeToken, start + (github ? 2 : 1));
+    while (close >= 0 && !github && _isEscapedAt(line, close)) {
+      close = line.indexOf(closeToken, close + 1);
+    }
+    if (close < 0 || close == start + 1) {
+      index = start + 1;
+      continue;
+    }
+    final end = close + closeToken.length;
+    if ((!github && _positionInsideRange(ranges, lineStart + close)) ||
+        (!github && _looksLikeCurrencyRange(line, start, close))) {
+      index = end;
+      continue;
+    }
+    final openingLength = github ? 2 : 1;
+    _addRange(
+      ranges,
+      globalStart,
+      globalStart + openingLength,
+      markerStyle,
+      priority: 10,
+    );
+    _addRange(
+      ranges,
+      globalStart + openingLength,
+      lineStart + close,
+      expressionStyle,
+      priority: 10,
+    );
+    _addRange(
+      ranges,
+      lineStart + close,
+      lineStart + end,
+      markerStyle,
+      priority: 10,
+    );
+    index = end;
+  }
+}
+
+bool _isEscapedAt(String source, int offset) {
+  var backslashes = 0;
+  for (var index = offset - 1; index >= 0 && source[index] == r'\'; index--) {
+    backslashes++;
+  }
+  return backslashes.isOdd;
+}
+
+bool _looksLikeCurrencyRange(String line, int start, int close) {
+  if (start + 1 >= close ||
+      !RegExp(r'\d').hasMatch(line[start + 1]) ||
+      close + 1 >= line.length ||
+      !RegExp(r'\d').hasMatch(line[close + 1])) {
+    return false;
+  }
+  return true;
 }
 
 bool _addFencedCodeLineRanges(

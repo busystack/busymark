@@ -264,6 +264,54 @@ void main() {
     },
   );
 
+  test(
+    'removes multiple entries atomically against one tree snapshot',
+    () async {
+      final root = await tempModule();
+
+      await editor.removeEntries(targetFor(root), const [
+        WritersideTocRemovalRequest(entryPath: [0, 1]),
+        WritersideTocRemovalRequest(entryPath: [2]),
+      ]);
+
+      final tree = readTree(root);
+      expect(rootIds(tree), ['a', 'b']);
+      expect(childIds(byId(tree, 'a')), ['a1']);
+    },
+  );
+
+  test('batch removal handles a selected descendant and ancestor', () async {
+    final root = await tempModule();
+
+    await editor.removeEntries(targetFor(root), const [
+      WritersideTocRemovalRequest(entryPath: [0]),
+      WritersideTocRemovalRequest(entryPath: [0, 0]),
+    ]);
+
+    final tree = readTree(root);
+    expect(rootIds(tree), ['a1x', 'a2', 'b', 'c']);
+  });
+
+  test('moves multiple subtrees as an ordered group', () async {
+    final root = await tempModule();
+
+    await editor.moveSubtrees(
+      targetFor(root),
+      const WritersideTocBatchMoveRequest(
+        sources: [
+          WritersideTocMoveEntry(sourcePath: [0, 1]),
+          WritersideTocMoveEntry(sourcePath: [2]),
+        ],
+        placement: WritersideTopicCreatePlacement.sibling,
+        referencePath: [1],
+      ),
+    );
+
+    final tree = readTree(root);
+    expect(rootIds(tree), ['a', 'b', 'a2', 'c']);
+    expect(childIds(byId(tree, 'a')), ['a1']);
+  });
+
   test('rejects a tree outside the guarded module root', () async {
     final root = await tempModule();
     final outside = await Directory.systemTemp.createTemp(

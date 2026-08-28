@@ -54,6 +54,10 @@ void main() {
         ).existsSync(),
         isTrue,
       );
+      expect(
+        File(result.startTopicPath).readAsStringSync(),
+        '# Getting started\n',
+      );
 
       final module = await moduleService.load(result.rootPath);
 

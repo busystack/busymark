@@ -24,6 +24,11 @@ class OpenApiSourceReference {
 }
 
 abstract interface class WebRenderHost {
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  });
+
   Future<Map<Object?, Object?>> renderMermaid({
     required String source,
     required VisualizationTheme theme,
@@ -74,11 +79,38 @@ class PlatformWebRenderHost implements WebRenderHost {
     ),
     this.renderTimeout = const Duration(seconds: 20),
     this.rasterTimeout = const Duration(seconds: 20),
+    this.mathTimeout = const Duration(seconds: 10),
+    this.mathTimeoutPerAdditionalExpression = const Duration(milliseconds: 250),
+    this.maximumMathTimeout = const Duration(seconds: 45),
   }) : _channel = channel;
 
   final MethodChannel _channel;
   final Duration renderTimeout;
   final Duration rasterTimeout;
+  final Duration mathTimeout;
+  final Duration mathTimeoutPerAdditionalExpression;
+  final Duration maximumMathTimeout;
+
+  Duration mathBatchTimeoutForExpressionCount(int expressionCount) {
+    final additional =
+        mathTimeoutPerAdditionalExpression *
+        (expressionCount - 1).clamp(0, 1 << 20);
+    final scaled = mathTimeout + additional;
+    return scaled > maximumMathTimeout ? maximumMathTimeout : scaled;
+  }
+
+  @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) {
+    return _invokeMap(
+      'renderMathBatch',
+      {'expressions': expressions},
+      mathBatchTimeoutForExpressionCount(expressions.length),
+      cancellationToken,
+    );
+  }
 
   /// Release verification hook. The Linux runner accepts this operation only
   /// when `BUSYMARK_RELEASE_SMOKE=1` is present in its environment.

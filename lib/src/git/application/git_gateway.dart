@@ -92,6 +92,12 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String message,
   );
+  Future<GitOperationResult> configureAuthorIdentity(
+    GitRepositoryInfo repository, {
+    required String name,
+    required String email,
+    required bool globally,
+  });
   Future<GitOperationResult> fetch(GitRepositoryInfo repository);
   Future<GitOperationResult> pullFastForwardOnly(GitRepositoryInfo repository);
   Future<GitOperationResult> push(GitRepositoryInfo repository);

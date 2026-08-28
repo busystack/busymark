@@ -97,6 +97,7 @@ class AppSettings {
     required this.trustedGitWorkspacePaths,
     required this.selectedWritersideInstanceIds,
     required this.writersideInstanceIconColors,
+    required this.reopenPreviousWorkspaceOnStartup,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -127,6 +128,7 @@ class AppSettings {
       trustedGitWorkspacePaths: [],
       selectedWritersideInstanceIds: {},
       writersideInstanceIconColors: {},
+      reopenPreviousWorkspaceOnStartup: false,
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -206,6 +208,9 @@ class AppSettings {
       writersideInstanceIconColors: _stringMapFromJson(
         json['writersideInstanceIconColors'],
       ),
+      reopenPreviousWorkspaceOnStartup:
+          json['reopenPreviousWorkspaceOnStartup'] as bool? ??
+          defaults.reopenPreviousWorkspaceOnStartup,
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
@@ -244,6 +249,7 @@ class AppSettings {
   final List<String> trustedGitWorkspacePaths;
   final Map<String, String> selectedWritersideInstanceIds;
   final Map<String, String> writersideInstanceIconColors;
+  final bool reopenPreviousWorkspaceOnStartup;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -276,6 +282,7 @@ class AppSettings {
     'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
     'selectedWritersideInstanceIds': selectedWritersideInstanceIds,
     'writersideInstanceIconColors': writersideInstanceIconColors,
+    'reopenPreviousWorkspaceOnStartup': reopenPreviousWorkspaceOnStartup,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
@@ -347,6 +354,7 @@ class AppSettings {
     List<String>? trustedGitWorkspacePaths,
     Map<String, String>? selectedWritersideInstanceIds,
     Map<String, String>? writersideInstanceIconColors,
+    bool? reopenPreviousWorkspaceOnStartup,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -386,6 +394,9 @@ class AppSettings {
           selectedWritersideInstanceIds ?? this.selectedWritersideInstanceIds,
       writersideInstanceIconColors:
           writersideInstanceIconColors ?? this.writersideInstanceIconColors,
+      reopenPreviousWorkspaceOnStartup:
+          reopenPreviousWorkspaceOnStartup ??
+          this.reopenPreviousWorkspaceOnStartup,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -470,13 +481,17 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void>? _lastSave;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
   var _loaded = false;
+  late Future<void> _loadFuture;
 
   @override
   AppSettings build() {
     _store = ref.read(localSettingsStoreProvider);
-    unawaited(_load());
+    _loadFuture = _load();
+    unawaited(_loadFuture);
     return AppSettings.defaults();
   }
+
+  Future<void> waitUntilLoaded() => _loadFuture;
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
     return _mutate(
@@ -709,6 +724,13 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
     return _mutate(
       (settings) => settings.copyWith(confirmCloseWithUnsavedChanges: enabled),
+    );
+  }
+
+  Future<void> setReopenPreviousWorkspaceOnStartup(bool enabled) {
+    return _mutate(
+      (settings) =>
+          settings.copyWith(reopenPreviousWorkspaceOnStartup: enabled),
     );
   }
 

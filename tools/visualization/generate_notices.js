@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const [nodeModulesRoot, outputRoot] = process.argv.slice(2)
+const [nodeModulesRoot, outputRoot, ...additionalPackageRoots] = process.argv.slice(2)
 if (!nodeModulesRoot || !outputRoot) {
   throw new Error('Usage: generate_notices.js NODE_MODULES OUTPUT')
 }
@@ -16,37 +16,44 @@ function visit(directory) {
       visit(child)
       continue
     }
-    const manifestPath = path.join(child, 'package.json')
-    if (!fs.existsSync(manifestPath)) continue
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-    const name = String(manifest.name ?? entry.name)
-    const version = String(manifest.version ?? '')
-    const license = typeof manifest.license === 'string' ? manifest.license : 'SEE PACKAGE'
-    const homepage = typeof manifest.homepage === 'string'
-      ? manifest.homepage
-      : typeof manifest.repository?.url === 'string'
-        ? manifest.repository.url
-        : ''
-    const destination = path.join(outputRoot, name.replaceAll('/', '__'))
-    fs.mkdirSync(destination, { recursive: true })
-    const licenseFiles = fs.readdirSync(child).filter((filename) =>
-      /^(?:licen[cs]e|copying|notice)(?:\..*)?$/i.test(filename),
-    )
-    for (const filename of licenseFiles) {
-      fs.copyFileSync(path.join(child, filename), path.join(destination, filename))
-    }
-    fs.writeFileSync(
-      path.join(destination, 'PACKAGE'),
-      `${name}\n${version}\n${license}\n${homepage}\n`,
-    )
-    packages.push({ name, version, license, homepage })
-    const nested = path.join(child, 'node_modules')
-    if (fs.existsSync(nested)) visit(nested)
+    collectPackage(child, entry.name)
   }
+}
+
+function collectPackage(child, fallbackName) {
+  const manifestPath = path.join(child, 'package.json')
+  if (!fs.existsSync(manifestPath)) return
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  const name = String(manifest.name ?? fallbackName)
+  const version = String(manifest.version ?? '')
+  const license = typeof manifest.license === 'string' ? manifest.license : 'SEE PACKAGE'
+  const homepage = typeof manifest.homepage === 'string'
+    ? manifest.homepage
+    : typeof manifest.repository?.url === 'string'
+      ? manifest.repository.url
+      : ''
+  const destination = path.join(outputRoot, name.replaceAll('/', '__'))
+  fs.mkdirSync(destination, { recursive: true })
+  const licenseFiles = fs.readdirSync(child).filter((filename) =>
+    /^(?:licen[cs]e|copying|notice)(?:\..*)?$/i.test(filename),
+  )
+  for (const filename of licenseFiles) {
+    fs.copyFileSync(path.join(child, filename), path.join(destination, filename))
+  }
+  fs.writeFileSync(
+    path.join(destination, 'PACKAGE'),
+    `${name}\n${version}\n${license}\n${homepage}\n`,
+  )
+  packages.push({ name, version, license, homepage })
+  const nested = path.join(child, 'node_modules')
+  if (fs.existsSync(nested)) visit(nested)
 }
 
 fs.mkdirSync(outputRoot, { recursive: true })
 visit(nodeModulesRoot)
+for (const packageRoot of additionalPackageRoots) {
+  collectPackage(packageRoot, path.basename(packageRoot))
+}
 packages.sort((left, right) => left.name.localeCompare(right.name) || left.version.localeCompare(right.version))
 fs.writeFileSync(
   path.join(outputRoot, 'THIRD_PARTY_NOTICES.md'),

@@ -57,6 +57,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData keyboard = YaruIcons.keyboard_shortcuts;
   static const IconData link = YaruIcons.insert_link;
   static const IconData markdownFile = YaruIcons.text_editor;
+  static const IconData math = Icons.functions;
+  static const IconData play = YaruIcons.media_play;
   static const IconData menuHorizontal = YaruIcons.view_more_horizontal;
   static const IconData menuVertical = YaruIcons.view_more;
   static const IconData newDocument = YaruIcons.document_new;
@@ -95,6 +97,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData undo = YaruIcons.undo;
   static const IconData unorderedList = YaruIcons.unordered_list;
   static const IconData upArrow = YaruIcons.pan_up;
+  static const IconData video = YaruIcons.multimedia_player;
   static const IconData warning = YaruIcons.warning;
   static const IconData windowClose = YaruIcons.window_close;
   static const IconData writersideProject = YaruIcons.book;
@@ -249,6 +252,9 @@ abstract final class BusyMarkGlyphs {
     if (icon == paste) {
       return 'edit-paste-symbolic';
     }
+    if (icon == play) {
+      return 'media-playback-start-symbolic';
+    }
     if (icon == preview || icon == previewView) {
       return 'image-viewer-symbolic';
     }
@@ -314,6 +320,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == warning) {
       return 'dialog-warning-symbolic';
+    }
+    if (icon == video) {
+      return 'multimedia-player-symbolic';
     }
     if (icon == writersideProject) {
       return 'folder-documents-symbolic';

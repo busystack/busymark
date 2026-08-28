@@ -7,7 +7,11 @@ import 'package:path/path.dart' as p;
 
 import '../export/markdown_pdf_export_service.dart';
 import '../export/markdown_pdf_models.dart';
+import '../export/markdown_math_export.dart';
 import '../export/markdown_visualization_export.dart';
+import '../math/math_coordinator.dart';
+import '../math/math_models.dart';
+import '../math/math_renderer.dart';
 import 'd2_renderer.dart';
 import 'visualization_cache.dart';
 import 'visualization_coordinator.dart';
@@ -54,6 +58,7 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
     ),
     maximumConcurrentRenders: 1,
   );
+  final mathCoordinator = MathCoordinator(renderer: MathRenderer(host: host));
   final checks = <String, Object?>{};
   Future<void> checkpoint(String phase) async {
     await _writeReport(reportFile, {
@@ -86,9 +91,117 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
     );
     checks['mermaidFormat'] = await _expectDiagram(host, mermaid, 'Mermaid');
 
+    await checkpoint('rendering sequential NewCM math');
+    final doubleStruck = await _renderMath(
+      mathCoordinator,
+      expression: r'\mathbb{R}',
+      key: 'release-smoke-mathbb',
+    );
+    final calligraphic = await _renderMath(
+      mathCoordinator,
+      expression: r'\mathcal{L}',
+      key: 'release-smoke-mathcal',
+    );
+    final scientific = await _renderMath(
+      mathCoordinator,
+      expression:
+          r'\ce{2H2 + O2 -> 2H2O}\quad '
+          r'\Braket{\psi|\phi}+\cancel{x}+\upalpha+a\coloneqq b+\units{m}',
+      key: 'release-smoke-scientific',
+      display: true,
+    );
+    final bold = await _renderMath(
+      mathCoordinator,
+      expression: r'\boldsymbol{\alpha}',
+      key: 'release-smoke-boldsymbol',
+    );
+    final cases = await _renderMath(
+      mathCoordinator,
+      expression: r'f(x)=\begin{cases}x&x>0\\0&x\leq0\end{cases}',
+      key: 'release-smoke-cases',
+      display: true,
+    );
+    final generatedSymbol = await _renderMath(
+      mathCoordinator,
+      expression: r'90\degree',
+      key: 'release-smoke-gensymb',
+    );
+    final emphasizedEquation = await _renderMath(
+      mathCoordinator,
+      expression: r'\begin{empheq}{align}E&=mc^2\end{empheq}',
+      key: 'release-smoke-empheq',
+      display: true,
+    );
+    final ams = await _renderMath(
+      mathCoordinator,
+      expression: r'\begin{align}a&=b\end{align}',
+      key: 'release-smoke-ams',
+      display: true,
+    );
+    for (final entry in <String, MathRenderResult>{
+      'double-struck': doubleStruck,
+      'calligraphic': calligraphic,
+      'scientific profile': scientific,
+      'boldsymbol': bold,
+      'cases': cases,
+      'gensymb': generatedSymbol,
+      'empheq': emphasizedEquation,
+      'AMS': ams,
+    }.entries) {
+      final name = entry.key;
+      final result = entry.value;
+      if (result is! RenderedMathResult || !result.vectorSvg.contains('<svg')) {
+        final detail = result is FailedMathResult
+            ? '${result.code}: ${result.debugDetail ?? result.code}'
+            : result.runtimeType.toString();
+        throw StateError(
+          'MathJax did not render the $name expression: $detail',
+        );
+      }
+    }
+    checks['mathJaxVersion'] = busyMarkMathJaxVersion;
+    checks['mathJaxFontVersion'] = busyMarkMathJaxFontVersion;
+    checks['newCmSequential'] = true;
+    checks['mathVectorSvg'] = true;
+
+    await checkpoint('checking independent formula state and partial failure');
+    final macroDefinition = await _renderMath(
+      mathCoordinator,
+      expression: r'\newcommand{\busyisolated}{z}\busyisolated',
+      key: 'release-smoke-macro-definition',
+    );
+    final leakedMacro = await _renderMath(
+      mathCoordinator,
+      expression: r'\busyisolated',
+      key: 'release-smoke-macro-isolation',
+    );
+    final validAfterFailure = await _renderMath(
+      mathCoordinator,
+      expression: r'\sqrt{x^2+y^2}',
+      key: 'release-smoke-after-failure',
+    );
+    if (macroDefinition is! RenderedMathResult ||
+        leakedMacro is! FailedMathResult ||
+        leakedMacro.kind != MathRenderErrorKind.invalidTex ||
+        validAfterFailure is! RenderedMathResult) {
+      throw StateError('Math expression isolation or partial failure failed.');
+    }
+    checks['mathExpressionIsolation'] = true;
+    checks['mathPartialFailure'] = true;
+
     await checkpoint('terminating and recovering WebKit');
     await host.terminateWebProcessForReleaseSmoke();
     checks['webKitRecovery'] = true;
+
+    final mathAfterRecovery = await _renderMath(
+      mathCoordinator,
+      expression: r'\mathbb{R}\oplus\mathcal{L}',
+      key: 'release-smoke-math-recovery',
+    );
+    if (mathAfterRecovery is! RenderedMathResult) {
+      throw StateError('MathJax did not recover with the WebKit process.');
+    }
+    checks['mathWebKitRecovery'] = true;
 
     await checkpoint('rendering PlantUML after recovery');
     final plantUml = await _render(
@@ -148,6 +261,9 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
           visualizationRenderer: MarkdownVisualizationExportRenderer(
             coordinator: coordinator,
           ),
+          mathRenderer: MarkdownMathExportRenderer(
+            coordinator: mathCoordinator,
+          ),
         ).export(
           MarkdownPdfExportRequest(
             source: _pdfSource,
@@ -186,12 +302,34 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
     return 1;
   } finally {
     coordinator.dispose();
+    mathCoordinator.dispose();
     try {
       await workingDirectory.delete(recursive: true);
     } on FileSystemException {
       // The report already records the product-path result.
     }
   }
+}
+
+Future<MathRenderResult> _renderMath(
+  MathCoordinator coordinator, {
+  required String expression,
+  required String key,
+  bool display = false,
+}) {
+  return coordinator.render(
+    MathRenderRequest(
+      expressionId: key,
+      expression: expression,
+      display: display,
+      blockKey: key,
+      editRevision: 1,
+      em: 16,
+      ex: 8,
+      containerWidth: 720,
+      renderProfile: 'release-smoke',
+    ),
+  );
 }
 
 Future<VisualizationRenderResult> _render(
@@ -321,6 +459,12 @@ paths:
 const _pdfSource =
     '''
 # Visualization release smoke
+
+Inline math remains in the sentence: \$x^2\$, \$\\frac{a}{b}\$, and \$\\Braket{\\psi|\\phi}\$.
+
+\$\$
+\\ce{2H2 + O2 -> 2H2O}
+\$\$
 
 ```mermaid
 flowchart LR

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
+import '../../core/source_span.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_list_marker.dart';
@@ -11,12 +13,18 @@ import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
+import '../writerside_video_view.dart';
 import '../../markdown/busymark_document.dart';
+import '../../math/math_widget.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
+import '../../writerside/writerside_video.dart';
 import '../editor_text_context_menu.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_visualization_navigation.dart';
+
+typedef BusyMarkWysiwygMathDiagnosticCallback =
+    void Function(String expressionId, String? code, SourceSpan? sourceSpan);
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -61,7 +69,8 @@ EdgeInsets busyMarkWysiwygOuterPadding(
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
     BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
-    BusyBlockKind.image => BusyMarkInsets.documentImageBlock,
+    BusyBlockKind.image ||
+    BusyBlockKind.video => BusyMarkInsets.documentImageBlock,
     BusyBlockKind.thematicBreak => EdgeInsets.zero,
     BusyBlockKind.unorderedListItem ||
     BusyBlockKind.orderedListItem ||
@@ -138,6 +147,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.imagesDir = 'images',
     required this.allowRemoteImages,
     this.onRemoteImageBlocked,
+    this.onMathDiagnostic,
     required this.controller,
     required this.undoController,
     required this.focusNode,
@@ -147,6 +157,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableRowDeleted,
     required this.onTableColumnInserted,
     required this.onTableColumnDeleted,
+    required this.onTableColumnAlignmentChanged,
     required this.onTableDeleted,
     required this.onImageEditRequested,
     required this.onHtmlEditRequested,
@@ -170,6 +181,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final String imagesDir;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
   final BusyMarkWysiwygTextController controller;
   final UndoHistoryController undoController;
   final FocusNode focusNode;
@@ -180,6 +192,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final void Function(int columnIndex, {required bool after})
   onTableColumnInserted;
   final ValueChanged<int> onTableColumnDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onTableColumnAlignmentChanged;
   final VoidCallback onTableDeleted;
   final VoidCallback onImageEditRequested;
   final VoidCallback onHtmlEditRequested;
@@ -195,10 +209,19 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, _) => _buildBlock(context),
+    );
+  }
+
+  Widget _buildBlock(BuildContext context) {
     final style = _textStyle(context);
     final prefix = _prefix(context);
     final readOnly = _readOnly;
-    final tapHandler = block.kind == BusyBlockKind.table
+    final VoidCallback? tapHandler = block.kind == BusyBlockKind.video
+        ? null
+        : block.kind == BusyBlockKind.table
         ? onFocused
         : block.kind == BusyBlockKind.image
         ? _editImageBlock
@@ -226,6 +249,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
               key: ValueKey('wysiwyg-visualization-${block.id}'),
               descriptor: visualization,
               source: block.plainText,
+              sourceReference: block.attributes['src'],
               sourceFence:
                   block.rawSource ??
                   _visualizationFenceSource(block, visualization),
@@ -249,31 +273,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                 child: content,
               ),
             )
-          : block.kind == BusyBlockKind.blockquote
+          : block.kind == BusyBlockKind.blockquote ||
+                block.kind == BusyBlockKind.writersideAdmonition
           ? Directionality(
               textDirection: busyMarkWysiwygBlockTextDirection(
                 block,
                 fallback: Directionality.of(context),
               ),
-              child: BusyMarkDocumentCallout(
-                icon: BusyMarkGlyphs.blockquote,
-                margin: _padding,
-                onTap: tapHandler,
-                child: content,
-              ),
-            )
-          : block.kind == BusyBlockKind.writersideAdmonition
-          ? Directionality(
-              textDirection: busyMarkWysiwygBlockTextDirection(
-                block,
-                fallback: Directionality.of(context),
-              ),
-              child: BusyMarkDocumentAdmonition(
-                style: block.attributes['element'] ?? block.attributes['style'],
-                margin: _padding,
-                onTap: tapHandler,
-                child: content,
-              ),
+              child: _callout(content, tapHandler),
             )
           : Padding(
               padding: _padding,
@@ -303,6 +310,31 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     );
   }
 
+  Widget _callout(Widget content, VoidCallback? onTap) {
+    final style = busyAdmonitionStyleFromName(
+      block.attributes['style'] ?? block.attributes['element'],
+    );
+    final admonition =
+        (block.kind == BusyBlockKind.writersideAdmonition ||
+            block.attributes[busyMarkWritersideAdmonitionAttribute] ==
+                'true') &&
+        style != BusyAdmonitionStyle.quote;
+    if (admonition) {
+      return BusyMarkDocumentAdmonition(
+        style: style?.name,
+        margin: _padding,
+        onTap: onTap,
+        child: content,
+      );
+    }
+    return BusyMarkDocumentCallout(
+      icon: BusyMarkGlyphs.blockquote,
+      margin: _padding,
+      onTap: onTap,
+      child: content,
+    );
+  }
+
   Widget _blockContent(
     BuildContext context,
     TextStyle style,
@@ -328,8 +360,33 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           onRowDeleted: onTableRowDeleted,
           onColumnInserted: onTableColumnInserted,
           onColumnDeleted: onTableColumnDeleted,
+          onColumnAlignmentChanged: onTableColumnAlignmentChanged,
           onTableDeleted: onTableDeleted,
+          editRevision: editRevision,
+          onMathDiagnostic: onMathDiagnostic,
         ),
+      );
+    }
+    if (block.kind == BusyBlockKind.video) {
+      final source = block.attributes['src'] ?? '';
+      return BusyMarkWritersideVideoView(
+        source: source,
+        previewSource: block.attributes['preview-src'],
+        activeFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
+        onOpenFailed: () => BusyMarkToastOverlay.maybeShow(
+          context,
+          message: context.l10n.couldNotOpenTarget(source),
+          priority: BusyMarkToastPriority.high,
+        ),
+        width: busyMarkVideoDimension(block.attributes['width']),
+        height: busyMarkVideoDimension(block.attributes['height']),
+        miniPlayer: block.attributes['mini-player'] == 'true',
+        borderEffect: block.attributes['border-effect'] ?? 'none',
       );
     }
     if (_isRenderedHtmlBlock) {
@@ -344,6 +401,23 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         onEdit: _editHtmlBlock,
       );
     }
+    final renderedMath =
+        busyMarkWysiwygBlockContainsMath(block) && !focusNode.hasFocus
+        ? Focus(
+            focusNode: focusNode,
+            child: GestureDetector(
+              key: ValueKey('wysiwyg-rendered-math-${block.id}'),
+              behavior: HitTestBehavior.translucent,
+              onTap: _focusBlock,
+              child: _RenderedMathBlock(
+                block: block,
+                editRevision: editRevision,
+                style: style,
+                onMathDiagnostic: onMathDiagnostic,
+              ),
+            ),
+          )
+        : null;
     return Directionality(
       textDirection: textDirection,
       child: Row(
@@ -354,101 +428,105 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
             const SizedBox(width: BusyMarkSpacing.sm),
           ],
           Expanded(
-            child: block.kind == BusyBlockKind.image
-                ? _ImageBlockEditor(
-                    block: block,
-                    documentFilePath: documentFilePath,
-                    workspaceRoot: workspaceRoot,
-                    writersideRoot: writersideRoot,
-                    imagesDir: imagesDir,
-                    allowRemoteImages: allowRemoteImages,
-                    onRemoteImageBlocked: onRemoteImageBlocked,
-                  )
-                : readOnly
-                ? SelectableText(
-                    _readOnlyText,
-                    textDirection: textDirection,
-                    style: style.copyWith(
-                      color: colors.mutedForeground,
-                      fontFamily: BusyMarkTypography.monoFontFamily,
-                      fontFamilyFallback:
-                          BusyMarkTypography.monoFontFamilyFallback,
-                    ),
-                  )
-                : Stack(
-                    children: [
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _WysiwygSelectionPainter(
-                              text: controller.text,
-                              style: style,
-                              selectionRange: selectionRange,
-                              color:
-                                  DefaultSelectionStyle.of(
-                                    context,
-                                  ).selectionColor ??
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(
-                                    alpha: BusyMarkDocumentTextGeometry
-                                        .fallbackSelectionAlpha,
-                                  ),
-                              textDirection: textDirection,
-                              textScaler: MediaQuery.textScalerOf(context),
-                              locale: Localizations.maybeLocaleOf(context),
-                              layoutWidthInset: BusyMarkDocumentTextGeometry
-                                  .editableLayoutInset,
+            child:
+                renderedMath ??
+                (block.kind == BusyBlockKind.image
+                    ? _ImageBlockEditor(
+                        block: block,
+                        documentFilePath: documentFilePath,
+                        workspaceRoot: workspaceRoot,
+                        writersideRoot: writersideRoot,
+                        imagesDir: imagesDir,
+                        allowRemoteImages: allowRemoteImages,
+                        onRemoteImageBlocked: onRemoteImageBlocked,
+                      )
+                    : readOnly
+                    ? SelectableText(
+                        _readOnlyText,
+                        textDirection: textDirection,
+                        style: style.copyWith(
+                          color: colors.mutedForeground,
+                          fontFamily: BusyMarkTypography.monoFontFamily,
+                          fontFamilyFallback:
+                              BusyMarkTypography.monoFontFamilyFallback,
+                        ),
+                      )
+                    : Stack(
+                        children: [
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                painter: _WysiwygSelectionPainter(
+                                  text: controller.text,
+                                  style: style,
+                                  selectionRange: selectionRange,
+                                  color:
+                                      DefaultSelectionStyle.of(
+                                        context,
+                                      ).selectionColor ??
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withValues(
+                                        alpha: BusyMarkDocumentTextGeometry
+                                            .fallbackSelectionAlpha,
+                                      ),
+                                  textDirection: textDirection,
+                                  textScaler: MediaQuery.textScalerOf(context),
+                                  locale: Localizations.maybeLocaleOf(context),
+                                  layoutWidthInset: BusyMarkDocumentTextGeometry
+                                      .editableLayoutInset,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      TextSelectionTheme(
-                        data: selectionRange == null
-                            ? Theme.of(context).textSelectionTheme
-                            : Theme.of(context).textSelectionTheme.copyWith(
-                                selectionColor:
-                                    BusyMarkLinuxPalette.transparent,
+                          TextSelectionTheme(
+                            data: selectionRange == null
+                                ? Theme.of(context).textSelectionTheme
+                                : Theme.of(context).textSelectionTheme.copyWith(
+                                    selectionColor:
+                                        BusyMarkLinuxPalette.transparent,
+                                  ),
+                            child: TextField(
+                              key: ValueKey(
+                                'wysiwyg-field-$documentFilePath-${block.id}',
                               ),
-                        child: TextField(
-                          key: ValueKey(
-                            'wysiwyg-field-$documentFilePath-${block.id}',
-                          ),
-                          controller: controller,
-                          undoController: undoController,
-                          focusNode: focusNode,
-                          maxLines: null,
-                          minLines: 1,
-                          textDirection: textDirection,
-                          style: style,
-                          cursorWidth:
-                              BusyMarkDocumentTextGeometry.editableCursorWidth,
-                          selectionHeightStyle:
-                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
-                          selectionWidthStyle:
-                              BusyMarkDocumentTextGeometry.selectionWidthStyle,
-                          decoration: const InputDecoration(
-                            isCollapsed: true,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
-                            hoverColor: BusyMarkLinuxPalette.transparent,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          contextMenuBuilder: (context, editableTextState) =>
-                              buildBusyMarkEditorTextContextMenu(
-                                context,
-                                editableTextState,
-                                refineWithAiLabel: context.l10n.aiRefineWithAi,
-                                onRefineWithAi: onRefineWithAi,
+                              controller: controller,
+                              undoController: undoController,
+                              focusNode: focusNode,
+                              maxLines: null,
+                              minLines: 1,
+                              textDirection: textDirection,
+                              style: style,
+                              cursorWidth: BusyMarkDocumentTextGeometry
+                                  .editableCursorWidth,
+                              selectionHeightStyle: BusyMarkDocumentTextGeometry
+                                  .selectionHeightStyle,
+                              selectionWidthStyle: BusyMarkDocumentTextGeometry
+                                  .selectionWidthStyle,
+                              decoration: const InputDecoration(
+                                isCollapsed: true,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                filled: false,
+                                hoverColor: BusyMarkLinuxPalette.transparent,
+                                contentPadding: EdgeInsets.zero,
                               ),
-                          onTap: onFocused,
-                          onChanged: onChanged,
-                        ),
-                      ),
-                    ],
-                  ),
+                              contextMenuBuilder:
+                                  (context, editableTextState) =>
+                                      buildBusyMarkEditorTextContextMenu(
+                                        context,
+                                        editableTextState,
+                                        refineWithAiLabel:
+                                            context.l10n.aiRefineWithAi,
+                                        onRefineWithAi: onRefineWithAi,
+                                      ),
+                              onTap: onFocused,
+                              onChanged: onChanged,
+                            ),
+                          ),
+                        ],
+                      )),
           ),
         ],
       ),
@@ -517,7 +595,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => fontSize * 2.4,
-      BusyBlockKind.image => BusyMarkSizes.documentImageMinHeight,
+      BusyBlockKind.image ||
+      BusyBlockKind.video => BusyMarkSizes.documentImageMinHeight,
       _ => 0,
     };
   }
@@ -539,6 +618,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
     return switch (block.kind) {
       BusyBlockKind.heading => busyMarkDocumentHeadingTextStyle(context, level),
+      _ when busyMarkWysiwygBlockContainsMath(block) && focusNode.hasFocus =>
+        busyMarkDocumentCodeTextStyle(context),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => busyMarkDocumentBodyTextStyle(context),
     };
@@ -593,6 +674,108 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.unknown => Border.all(color: colors.subtleBorder),
       _ => null,
     };
+  }
+}
+
+class _RenderedMathBlock extends StatelessWidget {
+  const _RenderedMathBlock({
+    required this.block,
+    required this.editRevision,
+    required this.style,
+    this.onMathDiagnostic,
+  });
+
+  final BusyBlock block;
+  final int editRevision;
+  final TextStyle style;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.kind == BusyBlockKind.math) {
+      final expressionId = 'block-${block.id}';
+      return BusyMarkDisplayMath(
+        expression: block.attributes['mathExpression'] ?? block.plainText,
+        expressionId: expressionId,
+        editRevision: editRevision,
+        onFailure: (failure) => onMathDiagnostic?.call(
+          expressionId,
+          failure.code,
+          block.sourceSpan,
+        ),
+        onSuccess: () =>
+            onMathDiagnostic?.call(expressionId, null, block.sourceSpan),
+      );
+    }
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          for (final (index, inline) in block.inlines.indexed)
+            _span(inline, style, editRevision, 'i$index'),
+        ],
+      ),
+    );
+  }
+
+  InlineSpan _span(
+    BusyInline inline,
+    TextStyle inherited,
+    int revision,
+    String path,
+  ) {
+    final nextStyle = switch (inline.kind) {
+      BusyInlineKind.strong => inherited.copyWith(fontWeight: FontWeight.w700),
+      BusyInlineKind.emphasis => inherited.copyWith(
+        fontStyle: FontStyle.italic,
+      ),
+      BusyInlineKind.underline => inherited.copyWith(
+        decoration: TextDecoration.underline,
+      ),
+      BusyInlineKind.strikethrough => inherited.copyWith(
+        decoration: TextDecoration.lineThrough,
+      ),
+      BusyInlineKind.code => inherited.copyWith(
+        fontFamily: BusyMarkTypography.monoFontFamily,
+      ),
+      _ => inherited,
+    };
+    if (inline.kind == BusyInlineKind.math) {
+      final expressionId = 'inline-block-${block.id}.$path';
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: BusyMarkInlineMath(
+          expression: inline.text,
+          expressionId: expressionId,
+          editRevision: revision,
+          textStyle: nextStyle,
+          onFailure: (failure) => onMathDiagnostic?.call(
+            expressionId,
+            failure.code,
+            block.sourceSpan,
+          ),
+          onSuccess: () =>
+              onMathDiagnostic?.call(expressionId, null, block.sourceSpan),
+        ),
+      );
+    }
+    if (inline.kind == BusyInlineKind.hardBreak) {
+      return const TextSpan(text: '\n');
+    }
+    if (inline.kind == BusyInlineKind.softBreak) {
+      return const TextSpan(text: ' ');
+    }
+    if (inline.children.isNotEmpty) {
+      return TextSpan(
+        style: nextStyle,
+        children: [
+          for (final (index, child) in inline.children.indexed)
+            _span(child, nextStyle, revision, '$path.i$index'),
+        ],
+      );
+    }
+    return TextSpan(text: inline.text, style: nextStyle);
   }
 }
 
@@ -1234,7 +1417,10 @@ class _TableBlockEditor extends StatelessWidget {
     required this.onRowDeleted,
     required this.onColumnInserted,
     required this.onColumnDeleted,
+    required this.onColumnAlignmentChanged,
     required this.onTableDeleted,
+    required this.editRevision,
+    this.onMathDiagnostic,
   });
 
   static const double _controlSize = BusyMarkSizes.tableControl;
@@ -1246,7 +1432,11 @@ class _TableBlockEditor extends StatelessWidget {
   final ValueChanged<int> onRowDeleted;
   final void Function(int columnIndex, {required bool after}) onColumnInserted;
   final ValueChanged<int> onColumnDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onColumnAlignmentChanged;
   final VoidCallback onTableDeleted;
+  final int editRevision;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
   Widget build(BuildContext context) {
@@ -1284,8 +1474,10 @@ class _TableBlockEditor extends StatelessWidget {
                 for (var column = 0; column < columnCount; column++)
                   _TableColumnControlCell(
                     columnIndex: column,
+                    alignment: _alignmentForColumn(rows, column),
                     onInserted: onColumnInserted,
                     onDeleted: onColumnDeleted,
+                    onAlignmentChanged: onColumnAlignmentChanged,
                   ),
               ],
             ),
@@ -1311,6 +1503,9 @@ class _TableBlockEditor extends StatelessWidget {
                       style: busyMarkDocumentBodyTextStyle(context),
                       onFocused: onFocused,
                       onChanged: onCellChanged,
+                      editRevision: editRevision,
+                      sourceSpan: block.sourceSpan,
+                      onMathDiagnostic: onMathDiagnostic,
                     ),
                 ],
               ),
@@ -1333,9 +1528,31 @@ class _TableBlockEditor extends StatelessWidget {
   bool _isHeaderRow(BusyBlock row, int index) {
     return index == 0 || row.attributes['header'] == 'true';
   }
+
+  BusyTableAlignment _alignmentForColumn(List<BusyBlock> rows, int column) {
+    for (final row in rows) {
+      if (column < row.children.length) {
+        final alignment = busyTableAlignmentFromAttribute(
+          row.children[column].attributes['align'],
+        );
+        if (alignment != BusyTableAlignment.unspecified) {
+          return alignment;
+        }
+      }
+    }
+    return BusyTableAlignment.unspecified;
+  }
 }
 
-enum _TableControlAction { insertBefore, insertAfter, delete }
+enum _TableControlAction {
+  insertBefore,
+  insertAfter,
+  alignUnspecified,
+  alignLeft,
+  alignCenter,
+  alignRight,
+  delete,
+}
 
 class _TableCornerCell extends StatelessWidget {
   const _TableCornerCell({required this.onTableDeleted});
@@ -1361,13 +1578,18 @@ class _TableCornerCell extends StatelessWidget {
 class _TableColumnControlCell extends StatelessWidget {
   const _TableColumnControlCell({
     required this.columnIndex,
+    required this.alignment,
     required this.onInserted,
     required this.onDeleted,
+    required this.onAlignmentChanged,
   });
 
   final int columnIndex;
+  final BusyTableAlignment alignment;
   final void Function(int columnIndex, {required bool after}) onInserted;
   final ValueChanged<int> onDeleted;
+  final void Function(int columnIndex, BusyTableAlignment alignment)
+  onAlignmentChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1377,12 +1599,27 @@ class _TableColumnControlCell extends StatelessWidget {
       beforeLabel: context.l10n.insertColumnLeft,
       afterLabel: context.l10n.insertColumnRight,
       deleteLabel: context.l10n.deleteColumn,
+      alignment: alignment,
+      alignmentLabels: (
+        unspecified: context.l10n.tableAlignmentUnspecified,
+        left: context.l10n.tableAlignmentLeft,
+        center: context.l10n.tableAlignmentCenter,
+        right: context.l10n.tableAlignmentRight,
+      ),
       onSelected: (action) {
         switch (action) {
           case _TableControlAction.insertBefore:
             onInserted(columnIndex, after: false);
           case _TableControlAction.insertAfter:
             onInserted(columnIndex, after: true);
+          case _TableControlAction.alignUnspecified:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.unspecified);
+          case _TableControlAction.alignLeft:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.left);
+          case _TableControlAction.alignCenter:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.center);
+          case _TableControlAction.alignRight:
+            onAlignmentChanged(columnIndex, BusyTableAlignment.right);
           case _TableControlAction.delete:
             onDeleted(columnIndex);
         }
@@ -1416,6 +1653,11 @@ class _TableRowControlCell extends StatelessWidget {
             onInserted(rowIndex, after: false);
           case _TableControlAction.insertAfter:
             onInserted(rowIndex, after: true);
+          case _TableControlAction.alignUnspecified ||
+              _TableControlAction.alignLeft ||
+              _TableControlAction.alignCenter ||
+              _TableControlAction.alignRight:
+            return;
           case _TableControlAction.delete:
             onDeleted(rowIndex);
         }
@@ -1432,6 +1674,8 @@ class _TableControlMenuButton extends StatelessWidget {
     required this.afterLabel,
     required this.deleteLabel,
     required this.onSelected,
+    this.alignment,
+    this.alignmentLabels,
   });
 
   final String tooltip;
@@ -1440,6 +1684,9 @@ class _TableControlMenuButton extends StatelessWidget {
   final String afterLabel;
   final String deleteLabel;
   final ValueChanged<_TableControlAction> onSelected;
+  final BusyTableAlignment? alignment;
+  final ({String unspecified, String left, String center, String right})?
+  alignmentLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -1455,6 +1702,28 @@ class _TableControlMenuButton extends StatelessWidget {
           value: _TableControlAction.insertAfter,
           label: afterLabel,
         ),
+        if (alignmentLabels case final labels?) ...[
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignUnspecified,
+            label: labels.unspecified,
+            checked: alignment == BusyTableAlignment.unspecified,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignLeft,
+            label: labels.left,
+            checked: alignment == BusyTableAlignment.left,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignCenter,
+            label: labels.center,
+            checked: alignment == BusyTableAlignment.center,
+          ),
+          BusyMarkPopupMenuItem(
+            value: _TableControlAction.alignRight,
+            label: labels.right,
+            checked: alignment == BusyTableAlignment.right,
+          ),
+        ],
         BusyMarkPopupMenuItem(
           value: _TableControlAction.delete,
           label: deleteLabel,
@@ -1472,6 +1741,9 @@ class _TableCellEditor extends StatefulWidget {
     required this.style,
     required this.onFocused,
     required this.onChanged,
+    required this.editRevision,
+    this.sourceSpan,
+    this.onMathDiagnostic,
   });
 
   final BusyBlock? cell;
@@ -1479,6 +1751,9 @@ class _TableCellEditor extends StatefulWidget {
   final TextStyle style;
   final VoidCallback onFocused;
   final void Function(String cellId, String text) onChanged;
+  final int editRevision;
+  final SourceSpan? sourceSpan;
+  final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
@@ -1488,13 +1763,15 @@ class _TableCellEditorState extends State<_TableCellEditor> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
   String? _cellId;
+  bool _sourceEditing = false;
 
   @override
   void initState() {
     super.initState();
     _cellId = widget.cell?.id;
-    _controller = TextEditingController(text: widget.cell?.plainText ?? '');
+    _controller = TextEditingController(text: _editableText(widget.cell));
     _focusNode = FocusNode(debugLabel: 'BusyMark table cell $_cellId');
+    _focusNode.addListener(_handleFocusChanged);
   }
 
   @override
@@ -1503,21 +1780,40 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     final cell = widget.cell;
     if (cell?.id != _cellId) {
       _cellId = cell?.id;
-      _controller.text = cell?.plainText ?? '';
+      _controller.text = _editableText(cell);
       return;
     }
-    if (!_focusNode.hasFocus &&
-        cell != null &&
-        cell.plainText != _controller.text) {
-      _controller.text = cell.plainText;
+    final nextText = _editableText(cell);
+    if (!_focusNode.hasFocus && nextText != _controller.text) {
+      _controller.text = nextText;
     }
+  }
+
+  String _editableText(BusyBlock? cell) {
+    if (cell == null) {
+      return '';
+    }
+    return busyMarkWysiwygBlockContainsMath(cell)
+        ? busyMarkWysiwygEditableText(cell)
+        : cell.plainText;
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _handleFocusChanged() {
+    if (mounted) {
+      setState(() {
+        if (!_focusNode.hasFocus) {
+          _sourceEditing = false;
+        }
+      });
+    }
   }
 
   @override
@@ -1530,6 +1826,32 @@ class _TableCellEditorState extends State<_TableCellEditor> {
     if (cell == null) {
       return const SizedBox.shrink();
     }
+    if (busyMarkWysiwygBlockContainsMath(cell) &&
+        !_sourceEditing &&
+        !_focusNode.hasFocus) {
+      return Padding(
+        padding: BusyMarkInsets.documentTableCell,
+        child: GestureDetector(
+          key: ValueKey('wysiwyg-rendered-math-${cell.id}'),
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            widget.onFocused();
+            setState(() => _sourceEditing = true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _focusNode.requestFocus();
+              }
+            });
+          },
+          child: _RenderedMathBlock(
+            block: cell.copyWith(sourceSpan: widget.sourceSpan),
+            editRevision: widget.editRevision,
+            style: textStyle,
+            onMathDiagnostic: widget.onMathDiagnostic,
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: BusyMarkInsets.documentTableCell,
       child: TextField(
@@ -1539,6 +1861,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
         minLines: 1,
         maxLines: null,
         style: textStyle,
+        selectionHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
         decoration: InputDecoration(
           isCollapsed: true,
           border: InputBorder.none,
@@ -1597,6 +1921,7 @@ class _WysiwygSelectionPainter extends CustomPainter {
     }
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
+      strutStyle: StrutStyle.fromTextStyle(style),
       textDirection: textDirection,
       textScaler: textScaler,
       locale: locale,

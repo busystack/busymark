@@ -4,6 +4,9 @@ import '../../core/path_utils.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_parser.dart';
+import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -30,7 +33,327 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   String blockText(String blockId) {
     final block = blockById(blockId);
-    return block?.plainText ?? '';
+    return block == null ? '' : busyMarkWysiwygEditableText(block);
+  }
+
+  String _sourceWithBlockStructure(BusyBlock block, String source) {
+    final prefix = switch (block.kind) {
+      BusyBlockKind.heading =>
+        '${'#' * (int.tryParse(block.attributes['level'] ?? '') ?? 1)} ',
+      BusyBlockKind.unorderedListItem =>
+        '${block.attributes['marker'] ?? '-'} ',
+      BusyBlockKind.orderedListItem => '${block.attributes['marker'] ?? '1.'} ',
+      BusyBlockKind.taskListItem =>
+        '${block.attributes['ordered'] == 'true' ? block.attributes['marker'] ?? '1.' : '-'} '
+            '[${block.attributes['task'] == 'true' ? 'x' : ' '}] ',
+      BusyBlockKind.blockquote => '> ',
+      _ => '',
+    };
+    return '$prefix$source';
+  }
+
+  void updateMathSource(String blockId, String source) {
+    final current = blockById(blockId);
+    if (current == null) {
+      return;
+    }
+    final parsed = const MarkdownParser().parse(
+      filePath: _document.filePath,
+      source: _sourceWithBlockStructure(current, source),
+      mode: _document.mode,
+      validateLocalReferences: false,
+    );
+    final parsedBlocks = parsed.busyDocument.blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+        )
+        .toList(growable: false);
+    final replacements = parsedBlocks.isEmpty
+        ? [
+            BusyBlock(
+              id: current.id,
+              kind: BusyBlockKind.paragraph,
+              inlines: [BusyInline(kind: BusyInlineKind.text, text: source)],
+              sourceSpan: current.sourceSpan,
+              dirty: true,
+            ),
+          ]
+        : [
+            for (final (index, parsedBlock) in parsedBlocks.indexed)
+              BusyBlock(
+                id: index == 0
+                    ? current.id
+                    : _nextGeneratedBlockId('math-edit'),
+                kind: parsedBlock.kind,
+                inlines: parsedBlock.inlines,
+                children: index == 0 ? current.children : parsedBlock.children,
+                attributes: _mathEditedBlockAttributes(
+                  current,
+                  parsedBlock,
+                  firstReplacement: index == 0,
+                ),
+                rawSource: parsedBlock.rawSource,
+                sourceSpan: index == 0 ? current.sourceSpan : null,
+                preserveRaw: false,
+                dirty: true,
+              ),
+          ];
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
+    );
+    notifyListeners();
+  }
+
+  ({int selectionStart, int selectionEnd})? insertInlineMath(
+    String blockId,
+    int selectionStart,
+    int selectionEnd, {
+    String fallbackExpression = 'x',
+  }) {
+    final current = blockById(blockId);
+    if (current == null || busyMarkWysiwygBlockContainsMath(current)) {
+      return null;
+    }
+    final text = current.plainText;
+    final rawStart = selectionStart < selectionEnd
+        ? selectionStart
+        : selectionEnd;
+    final rawEnd = selectionStart < selectionEnd
+        ? selectionEnd
+        : selectionStart;
+    final start = rawStart.clamp(0, text.length).toInt();
+    final end = rawEnd.clamp(start, text.length).toInt();
+    final rawExpression = start == end
+        ? fallbackExpression
+        : text.substring(start, end);
+    final parts = _inlineMathExpressionParts(rawExpression);
+    if (parts == null) {
+      return null;
+    }
+    final collapsed = start == end;
+    final contentStart = collapsed ? start : start + parts.leading.length;
+    final contentEnd = collapsed ? end : end - parts.trailing.length;
+    final partition = _partitionInlinesForReplacement(
+      current.inlines,
+      contentStart,
+      contentEnd,
+    );
+    final before = [
+      ...partition.before,
+      if (collapsed && parts.leading.isNotEmpty)
+        BusyInline(kind: BusyInlineKind.text, text: parts.leading),
+    ];
+    final after = [
+      if (collapsed && parts.trailing.isNotEmpty)
+        BusyInline(kind: BusyInlineKind.text, text: parts.trailing),
+      ...partition.after,
+    ];
+    BusyInline? math;
+    List<BusyInline>? inlines;
+    for (final form in const [
+      BusyMathSourceForm.dollarInline,
+      BusyMathSourceForm.githubDollarBacktick,
+    ]) {
+      final candidate = _inlineMath(parts.expression, form);
+      final candidateInlines = [...before, candidate, ...after];
+      if (_serializedInlineMathParses(
+        candidateInlines,
+        mode: _document.mode,
+        serializer: _serializer,
+      )) {
+        math = candidate;
+        inlines = candidateInlines;
+        break;
+      }
+    }
+    if (math == null || inlines == null) {
+      return null;
+    }
+    final updated = current.copyWith(
+      inlines: inlines,
+      attributes: _attributesAfterInlineMathEdit(current, inlines),
+      preserveRaw: false,
+      dirty: true,
+    );
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(_document.blocks, blockId, (_) => updated),
+    );
+    final prefixSource = _serializer.serializeBlock(
+      BusyBlock(
+        id: 'wysiwyg-math-prefix',
+        kind: BusyBlockKind.paragraph,
+        inlines: before,
+        dirty: true,
+      ),
+    );
+    final form = busyMathSourceFormFromName(
+      math.attributes[busyMarkMathSourceFormAttribute],
+    );
+    final openingLength = form == BusyMathSourceForm.githubDollarBacktick
+        ? 2
+        : 1;
+    notifyListeners();
+    return (
+      selectionStart: prefixSource.length + openingLength,
+      selectionEnd:
+          prefixSource.length + openingLength + parts.expression.length,
+    );
+  }
+
+  ({String source, int selectionStart, int selectionEnd})?
+  buildInlineMathSourceInsertion(
+    String blockId,
+    String source,
+    int selectionStart,
+    int selectionEnd, {
+    String fallbackExpression = 'x',
+  }) {
+    final current = blockById(blockId);
+    if (current == null) {
+      return null;
+    }
+    final rawStart = selectionStart < selectionEnd
+        ? selectionStart
+        : selectionEnd;
+    final rawEnd = selectionStart < selectionEnd
+        ? selectionEnd
+        : selectionStart;
+    final start = rawStart.clamp(0, source.length).toInt();
+    final end = rawEnd.clamp(start, source.length).toInt();
+    final collapsed = start == end;
+    final rawExpression = collapsed
+        ? fallbackExpression
+        : source.substring(start, end);
+    final parts = _inlineMathExpressionParts(rawExpression);
+    if (parts == null) {
+      return null;
+    }
+    final replaceStart = collapsed ? start : start + parts.leading.length;
+    final replaceEnd = collapsed ? end : end - parts.trailing.length;
+    final existing = _parseMathEditSource(current, source);
+    final existingMath = _mathInlineCount(existing);
+    for (final form in const [
+      BusyMathSourceForm.dollarInline,
+      BusyMathSourceForm.githubDollarBacktick,
+    ]) {
+      final mathSource = _inlineMathSource(parts.expression, form);
+      final replacement = collapsed
+          ? '${parts.leading}$mathSource${parts.trailing}'
+          : mathSource;
+      final candidate = source.replaceRange(
+        replaceStart,
+        replaceEnd,
+        replacement,
+      );
+      final parsed = _parseMathEditSource(current, candidate);
+      final validationExpression = _uniqueMathValidationExpression(
+        source,
+        parts.expression,
+      );
+      final validationSource = _inlineMathSource(validationExpression, form);
+      final validationReplacement = collapsed
+          ? '${parts.leading}$validationSource${parts.trailing}'
+          : validationSource;
+      final validationCandidate = source.replaceRange(
+        replaceStart,
+        replaceEnd,
+        validationReplacement,
+      );
+      final validationParsed = _parseMathEditSource(
+        current,
+        validationCandidate,
+      );
+      final expectedInlines = _singleEditableBlockInlines(validationParsed);
+      final actualInlines = _singleEditableBlockInlines(parsed);
+      if (_mathInlineCount(validationParsed) != existingMath + 1 ||
+          _matchingMathInlineCount(
+                validationParsed,
+                expression: validationExpression,
+                form: form,
+              ) !=
+              1 ||
+          expectedInlines == null ||
+          actualInlines == null ||
+          !_inlineListsSemanticallyEqual(
+            _replaceValidationMath(
+              expectedInlines,
+              validationExpression: validationExpression,
+              expression: parts.expression,
+              form: form,
+            ),
+            actualInlines,
+          )) {
+        continue;
+      }
+      final expressionStart =
+          replaceStart +
+          (collapsed ? parts.leading.length : 0) +
+          (form == BusyMathSourceForm.githubDollarBacktick ? 2 : 1);
+      return (
+        source: candidate,
+        selectionStart: expressionStart,
+        selectionEnd: expressionStart + parts.expression.length,
+      );
+    }
+    return null;
+  }
+
+  BusyDocument _parseMathEditSource(BusyBlock current, String source) {
+    return const MarkdownParser()
+        .parse(
+          filePath: _document.filePath,
+          source: _sourceWithBlockStructure(current, source),
+          mode: _document.mode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+  }
+
+  String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
+    if (blockById(blockId) == null) {
+      return null;
+    }
+    final mathId = _nextGeneratedBlockId('math');
+    final paragraphId = _nextGeneratedBlockId('paragraph');
+    _document = _document.copyWith(
+      blocks: _insertBlocksAfter(_document.blocks, blockId, [
+        BusyBlock(
+          id: mathId,
+          kind: BusyBlockKind.math,
+          inlines: [
+            BusyInline(
+              kind: BusyInlineKind.math,
+              text: expression,
+              attributes: {
+                busyMarkMathExpressionAttribute: expression,
+                busyMarkMathDisplayAttribute: 'true',
+                busyMarkMathSourceFormAttribute:
+                    BusyMathSourceForm.doubleDollarDisplay.name,
+              },
+            ),
+          ],
+          attributes: {
+            busyMarkMathExpressionAttribute: expression,
+            busyMarkMathDisplayAttribute: 'true',
+            busyMarkMathSourceFormAttribute:
+                BusyMathSourceForm.doubleDollarDisplay.name,
+          },
+          rawSource: '\$\$\n$expression\n\$\$',
+          preserveRaw: false,
+          dirty: true,
+        ),
+        BusyBlock(
+          id: paragraphId,
+          kind: BusyBlockKind.paragraph,
+          inlines: _textInlines(''),
+          attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
+          dirty: true,
+        ),
+      ]),
+    );
+    notifyListeners();
+    return mathId;
   }
 
   BusyBlock? blockById(String blockId) {
@@ -40,6 +363,30 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       }
     }
     return null;
+  }
+
+  String admonitionTargetId(String blockId) {
+    String? target;
+
+    void visit(List<BusyBlock> blocks, BusyBlock? enclosingAdmonition) {
+      for (final block in blocks) {
+        final isAdmonition =
+            block.kind == BusyBlockKind.writersideAdmonition ||
+            block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true';
+        final nextEnclosing = isAdmonition ? block : enclosingAdmonition;
+        if (block.id == blockId) {
+          target = nextEnclosing?.id ?? blockId;
+          return;
+        }
+        visit(block.children, nextEnclosing);
+        if (target != null) {
+          return;
+        }
+      }
+    }
+
+    visit(_document.blocks, null);
+    return target ?? blockId;
   }
 
   void updateBlockText(
@@ -70,7 +417,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           final cells = <BusyBlock>[];
           for (final cell in row.children) {
             if (cell.id == cellId) {
-              cells.add(_blockWithEditedText(cell, text));
+              cells.add(_tableCellWithEditedSource(cell, text));
               rowChanged = true;
               changed = true;
             } else {
@@ -90,6 +437,29 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (changed) {
       notifyListeners();
     }
+  }
+
+  BusyBlock _tableCellWithEditedSource(BusyBlock cell, String source) {
+    final parsed = const MarkdownParser().parse(
+      filePath: _document.filePath,
+      source: '$source\n',
+      mode: _document.mode,
+      validateLocalReferences: false,
+    );
+    final parsedBlock = parsed.busyDocument.blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+        )
+        .firstOrNull;
+    final inlines = parsedBlock?.inlines;
+    return cell.copyWith(
+      inlines: inlines == null || inlines.isEmpty
+          ? _textInlines(source)
+          : inlines,
+      preserveRaw: false,
+      dirty: true,
+    );
   }
 
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(
@@ -209,6 +579,35 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: command == BusyWysiwygBlockCommand.orderedList
           ? _normalizeOrderedListMarkers(replaced)
           : replaced,
+    );
+    notifyListeners();
+  }
+
+  void applyAdmonitionStyle(String blockId, BusyAdmonitionStyle style) {
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(
+        _document.blocks,
+        blockId,
+        (block) => _blockWithAdmonitionStyle(block, style),
+      ),
+    );
+    notifyListeners();
+  }
+
+  void applyAdmonitionStyleToBlocks(
+    Iterable<String> blockIds,
+    BusyAdmonitionStyle style,
+  ) {
+    final ids = blockIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    _document = _document.copyWith(
+      blocks: _replaceBlocksByIds(
+        _document.blocks,
+        ids,
+        (block) => _blockWithAdmonitionStyle(block, style),
+      ),
     );
     notifyListeners();
   }
@@ -418,10 +817,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? 0
           : rowIndex.clamp(0, rows.length - 1).toInt();
       final insertIndex = rows.isEmpty ? 0 : safeRow + (after ? 1 : 0);
+      final alignments = [
+        for (var column = 0; column < columnCount; column++)
+          _tableColumnAlignment(block, column),
+      ];
       final nextRows = [...rows]
         ..insert(
           insertIndex.clamp(0, rows.length).toInt(),
-          _newTableRow(columnCount),
+          _newTableRow(columnCount, alignments: alignments),
         );
       return block.copyWith(
         children: _normalizedTableRows(nextRows),
@@ -525,6 +928,59 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     });
   }
 
+  BusyTableAlignment tableColumnAlignment(
+    String tableBlockId,
+    int columnIndex,
+  ) {
+    final table = blockById(tableBlockId);
+    if (table == null || table.kind != BusyBlockKind.table) {
+      return BusyTableAlignment.unspecified;
+    }
+    return _tableColumnAlignment(table, columnIndex);
+  }
+
+  void setTableColumnAlignment(
+    String tableBlockId,
+    int columnIndex,
+    BusyTableAlignment alignment,
+  ) {
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final columnCount = _tableColumnCount(block);
+      final safeColumn = columnIndex.clamp(0, columnCount - 1).toInt();
+      final attribute = busyTableAlignmentAttribute(alignment);
+      return block.copyWith(
+        children: [
+          for (final row in block.children)
+            row.copyWith(
+              children: [
+                for (final (index, cell) in _cellsPaddedTo(
+                  row,
+                  columnCount,
+                ).indexed)
+                  if (index == safeColumn)
+                    cell.copyWith(
+                      attributes: {
+                        for (final entry in cell.attributes.entries)
+                          if (entry.key != 'align') entry.key: entry.value,
+                        if (attribute != null) 'align': attribute,
+                      },
+                      dirty: true,
+                    )
+                  else
+                    cell,
+              ],
+              dirty: true,
+            ),
+        ],
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
   void deleteTable(String tableBlockId) {
     final nextDocument = BusyDocument(
       filePath: _document.filePath,
@@ -586,7 +1042,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                 _tableCellText(template, rowIndex, column) ??
                     (header ? headerTextForColumn(column + 1) : cellText),
               ),
-              attributes: {'cell': header ? 'th' : 'td'},
+              attributes: {
+                'cell': header ? 'th' : 'td',
+                if (template != null)
+                  if (busyTableAlignmentAttribute(
+                        _tableColumnAlignment(template, column),
+                      )
+                      case final alignment?)
+                    'align': alignment,
+              },
               dirty: true,
             ),
         ],
@@ -608,24 +1072,53 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
-  BusyBlock _newTableRow(int columns) {
+  BusyBlock _newTableRow(
+    int columns, {
+    List<BusyTableAlignment> alignments = const [],
+  }) {
     return BusyBlock(
       id: _nextGeneratedBlockId('table-row'),
       kind: BusyBlockKind.table,
       children: [
-        for (var column = 0; column < columns; column++) _newTableCell(),
+        for (var column = 0; column < columns; column++)
+          _newTableCell(
+            alignment: column < alignments.length
+                ? alignments[column]
+                : BusyTableAlignment.unspecified,
+          ),
       ],
       dirty: true,
     );
   }
 
-  BusyBlock _newTableCell() {
+  BusyBlock _newTableCell({
+    BusyTableAlignment alignment = BusyTableAlignment.unspecified,
+  }) {
     return BusyBlock(
       id: _nextGeneratedBlockId('table-cell'),
       kind: BusyBlockKind.paragraph,
       inlines: _textInlines(''),
+      attributes: {
+        if (busyTableAlignmentAttribute(alignment) case final value?)
+          'align': value,
+      },
       dirty: true,
     );
+  }
+
+  BusyTableAlignment _tableColumnAlignment(BusyBlock table, int column) {
+    for (final row in table.children) {
+      if (column >= row.children.length) {
+        continue;
+      }
+      final alignment = busyTableAlignmentFromAttribute(
+        row.children[column].attributes['align'],
+      );
+      if (alignment != BusyTableAlignment.unspecified) {
+        return alignment;
+      }
+    }
+    return BusyTableAlignment.unspecified;
   }
 
   int _tableColumnCount(BusyBlock table) {
@@ -1535,6 +2028,298 @@ Map<String, String> _attributesForText(
   return updated;
 }
 
+Map<String, String> _mathEditedBlockAttributes(
+  BusyBlock current,
+  BusyBlock parsed, {
+  required bool firstReplacement,
+}) {
+  final attributes = {...parsed.attributes};
+  if (firstReplacement &&
+      current.kind == BusyBlockKind.heading &&
+      parsed.kind == BusyBlockKind.heading &&
+      current.attributes['generatedId'] == 'false') {
+    final explicitId = current.attributes['id'];
+    if (explicitId != null && explicitId.isNotEmpty) {
+      attributes['id'] = explicitId;
+      attributes['generatedId'] = 'false';
+    }
+  }
+  return attributes;
+}
+
+Map<String, String> _attributesAfterInlineMathEdit(
+  BusyBlock block,
+  List<BusyInline> inlines,
+) {
+  final attributes = {...block.attributes};
+  if (block.kind == BusyBlockKind.heading &&
+      attributes['generatedId'] != 'false') {
+    attributes['id'] = slugForHeading(
+      inlines.map((inline) => inline.plainText).join().trim(),
+    );
+    attributes['generatedId'] = 'true';
+  }
+  return attributes;
+}
+
+({List<BusyInline> before, List<BusyInline> after})
+_partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
+  final before = <BusyInline>[];
+  final after = <BusyInline>[];
+  var offset = 0;
+  for (final inline in inlines) {
+    final length = inline.plainText.length;
+    final inlineEnd = offset + length;
+    if (length == 0) {
+      // Text selections cannot address zero-width semantic nodes. Keep each
+      // one on a deterministic side of the replacement instead of silently
+      // treating it as selected content.
+      (offset <= start ? before : after).add(inline);
+    } else if (inlineEnd <= start) {
+      before.add(inline);
+    } else if (offset >= end) {
+      after.add(inline);
+    } else {
+      final localStart = (start - offset).clamp(0, length).toInt();
+      final localEnd = (end - offset).clamp(localStart, length).toInt();
+      final partition = _partitionInlineForReplacement(
+        inline,
+        localStart,
+        localEnd,
+      );
+      if (partition.before != null) {
+        before.add(partition.before!);
+      }
+      if (partition.after != null) {
+        after.add(partition.after!);
+      }
+    }
+    offset = inlineEnd;
+  }
+  return (before: before, after: after);
+}
+
+({BusyInline? before, BusyInline? after}) _partitionInlineForReplacement(
+  BusyInline inline,
+  int start,
+  int end,
+) {
+  final length = inline.plainText.length;
+  if (inline.children.isNotEmpty) {
+    final partition = _partitionInlinesForReplacement(
+      inline.children,
+      start,
+      end,
+    );
+    return (
+      before: partition.before.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.before.map((child) => child.plainText).join(),
+              children: partition.before,
+            ),
+      after: partition.after.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.after.map((child) => child.plainText).join(),
+              children: partition.after,
+            ),
+    );
+  }
+  return (
+    before: start == 0
+        ? null
+        : inline.copyWith(text: inline.text.substring(0, start)),
+    after: end == length
+        ? null
+        : inline.copyWith(text: inline.text.substring(end)),
+  );
+}
+
+({String expression, String leading, String trailing})?
+_inlineMathExpressionParts(String value) {
+  if (value.contains('\n') || value.contains('\r')) {
+    return null;
+  }
+  final withoutLeading = value.trimLeft();
+  final leadingLength = value.length - withoutLeading.length;
+  final expression = withoutLeading.trimRight();
+  if (expression.isEmpty) {
+    return null;
+  }
+  return (
+    expression: expression,
+    leading: value.substring(0, leadingLength),
+    trailing: withoutLeading.substring(expression.length),
+  );
+}
+
+BusyInline _inlineMath(String expression, BusyMathSourceForm form) {
+  return BusyInline(
+    kind: BusyInlineKind.math,
+    text: expression,
+    attributes: {
+      busyMarkMathExpressionAttribute: expression,
+      busyMarkMathDisplayAttribute: 'false',
+      busyMarkMathSourceFormAttribute: form.name,
+    },
+  );
+}
+
+String _inlineMathSource(String expression, BusyMathSourceForm form) {
+  return form == BusyMathSourceForm.githubDollarBacktick
+      ? '\$`$expression`\$'
+      : '\$$expression\$';
+}
+
+bool _serializedInlineMathParses(
+  List<BusyInline> inlines, {
+  required MarkdownMode mode,
+  required BusyMarkMarkdownSerializer serializer,
+}) {
+  final source = serializer.serializeBlock(
+    BusyBlock(
+      id: 'wysiwyg-inline-math-validation',
+      kind: BusyBlockKind.paragraph,
+      inlines: inlines,
+      dirty: true,
+    ),
+  );
+  final parsed = const MarkdownParser()
+      .parse(
+        filePath: 'wysiwyg-inline-math-validation.md',
+        source: source,
+        mode: mode,
+        validateLocalReferences: false,
+      )
+      .busyDocument;
+  final parsedInlines = _singleEditableBlockInlines(parsed);
+  return parsedInlines != null &&
+      _inlineListsSemanticallyEqual(inlines, parsedInlines);
+}
+
+List<BusyInline>? _singleEditableBlockInlines(BusyDocument document) {
+  final blocks = document.blocks
+      .where(
+        (block) =>
+            block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+      )
+      .toList(growable: false);
+  return blocks.length == 1 ? blocks.single.inlines : null;
+}
+
+String _uniqueMathValidationExpression(String source, String expression) {
+  var value = 'BusyMarkMathValidationToken';
+  while (source.contains(value) || expression.contains(value)) {
+    value += 'X';
+  }
+  return value;
+}
+
+List<BusyInline> _replaceValidationMath(
+  List<BusyInline> inlines, {
+  required String validationExpression,
+  required String expression,
+  required BusyMathSourceForm form,
+}) {
+  return [
+    for (final inline in inlines)
+      if (inline.kind == BusyInlineKind.math &&
+          inline.text == validationExpression &&
+          inline.attributes[busyMarkMathSourceFormAttribute] == form.name)
+        _inlineMath(expression, form)
+      else if (inline.children.isNotEmpty)
+        inline.copyWith(
+          children: _replaceValidationMath(
+            inline.children,
+            validationExpression: validationExpression,
+            expression: expression,
+            form: form,
+          ),
+        )
+      else
+        inline,
+  ];
+}
+
+bool _inlineListsSemanticallyEqual(
+  List<BusyInline> expected,
+  List<BusyInline> actual,
+) {
+  final expectedNodes = _coalescedInlineNodes(expected);
+  final actualNodes = _coalescedInlineNodes(actual);
+  if (expectedNodes.length != actualNodes.length) {
+    return false;
+  }
+  for (var index = 0; index < expectedNodes.length; index++) {
+    final left = expectedNodes[index];
+    final right = actualNodes[index];
+    if (left.kind != right.kind ||
+        left.text != right.text ||
+        left.destination != right.destination ||
+        !_inlineListsSemanticallyEqual(left.children, right.children)) {
+      return false;
+    }
+    if (left.kind == BusyInlineKind.math &&
+        left.attributes[busyMarkMathSourceFormAttribute] !=
+            right.attributes[busyMarkMathSourceFormAttribute]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+List<BusyInline> _coalescedInlineNodes(List<BusyInline> inlines) {
+  final result = <BusyInline>[];
+  for (final inline in inlines) {
+    if (inline.kind == BusyInlineKind.text &&
+        inline.children.isEmpty &&
+        result.isNotEmpty &&
+        result.last.kind == BusyInlineKind.text &&
+        result.last.children.isEmpty) {
+      result[result.length - 1] = result.last.copyWith(
+        text: '${result.last.text}${inline.text}',
+      );
+    } else {
+      result.add(inline);
+    }
+  }
+  return result;
+}
+
+int _mathInlineCount(BusyDocument document) {
+  return _walkInlines(
+    document.blocks,
+  ).where((inline) => inline.kind == BusyInlineKind.math).length;
+}
+
+int _matchingMathInlineCount(
+  BusyDocument document, {
+  required String expression,
+  BusyMathSourceForm? form,
+}) {
+  return _walkInlines(document.blocks).where((inline) {
+    return inline.kind == BusyInlineKind.math &&
+        inline.text == expression &&
+        (form == null ||
+            inline.attributes[busyMarkMathSourceFormAttribute] == form.name);
+  }).length;
+}
+
+Iterable<BusyInline> _walkInlines(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield* _walkInlineNodes(block.inlines);
+    yield* _walkInlines(block.children);
+  }
+}
+
+Iterable<BusyInline> _walkInlineNodes(Iterable<BusyInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _walkInlineNodes(inline.children);
+  }
+}
+
 bool _shouldSplitNewlines(BusyBlockKind kind) {
   return switch (kind) {
     BusyBlockKind.paragraph ||
@@ -1635,7 +2420,13 @@ BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     ..remove('ordered')
     ..remove('marker')
     ..remove('task')
+    ..remove(busyMarkWritersideAdmonitionAttribute)
+    ..remove(busyMarkWritersideAdmonitionSourceFormAttribute)
+    ..remove('style')
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (block.kind == BusyBlockKind.writersideAdmonition) {
+    attributes.remove('element');
+  }
   if (command == BusyWysiwygBlockCommand.heading1) {
     attributes['level'] = '1';
   } else if (command == BusyWysiwygBlockCommand.heading2) {
@@ -1673,6 +2464,39 @@ BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     attributes['task'] = block.attributes['task'] ?? 'false';
   }
   return block.copyWith(kind: kind, attributes: attributes, dirty: true);
+}
+
+BusyBlock _blockWithAdmonitionStyle(
+  BusyBlock block,
+  BusyAdmonitionStyle style,
+) {
+  final semanticElement = block.kind == BusyBlockKind.writersideAdmonition;
+  final attributes = {...block.attributes}
+    ..remove('ordered')
+    ..remove('marker')
+    ..remove('task')
+    ..remove('level')
+    ..remove('id')
+    ..remove('generatedId')
+    ..remove(busyMarkPreserveEmptyParagraphAttribute)
+    ..[busyMarkWritersideAdmonitionAttribute] = 'true'
+    ..[busyMarkWritersideAdmonitionSourceFormAttribute] = semanticElement
+        ? 'element'
+        : 'blockquote'
+    ..['style'] = style.name;
+  if (semanticElement) {
+    attributes['element'] = style.name;
+  } else {
+    attributes.remove('element');
+  }
+  return block.copyWith(
+    kind: semanticElement
+        ? BusyBlockKind.writersideAdmonition
+        : BusyBlockKind.blockquote,
+    attributes: attributes,
+    preserveRaw: false,
+    dirty: true,
+  );
 }
 
 BusyBlock _numberIndentedListItem(

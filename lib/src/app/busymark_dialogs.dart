@@ -9,6 +9,7 @@ import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
 import 'busymark_dialog_identity.dart';
 import 'busymark_shortcuts.dart';
+import 'command_registry.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
@@ -35,16 +36,16 @@ class _DismissBusyMarkModalIntent extends Intent {
 }
 
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
-  for (final shortcut in BusyMarkAppShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  for (final entry in BusyMarkEditorShortcuts.definitions.entries)
-    if (entry.key != BusyMarkEditorShortcutAction.pastePlainText)
-      entry.value.activator: const DoNothingAndStopPropagationIntent(),
-  for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  BusyMarkTextEditingShortcutActivators.escape:
+  for (final command in BusyMarkCommandCatalog.metadata.commands)
+    if (command.shortcut != null &&
+        command.id != BusyMarkCommandIds.textPastePlainText &&
+        command.scope != BusyMarkCommandScope.tree &&
+        command.scope != BusyMarkCommandScope.textEditing)
+      command.shortcut!.activator: const DoNothingAndStopPropagationIntent(),
+  BusyMarkCommandCatalog
+          .metadata[BusyMarkCommandIds.textEscape]!
+          .shortcut!
+          .activator:
       const _DismissBusyMarkModalIntent(),
 };
 
@@ -367,6 +368,53 @@ Future<void> _openApacheLicense() async {
 }
 
 void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
+  final registry =
+      BusyMarkCommandRegistryScope.maybeOf(context) ??
+      BusyMarkCommandCatalog.metadata;
+  final headerBar = LinuxHeaderBarService.instance;
+  unawaited(
+    showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) {
+        final grouped = <String, List<BusyMarkCommand>>{};
+        final shortcutLabels = <String>{};
+        for (final command in registry.commands) {
+          final shortcut = command.shortcut;
+          if (shortcut == null || !shortcutLabels.add(shortcut.label)) {
+            continue;
+          }
+          grouped.putIfAbsent(command.category(context), () => []).add(command);
+        }
+        return _BusyMarkInfoDialog(
+          title: context.l10n.keyboardShortcuts,
+          icon: BusyMarkGlyphs.keyboard,
+          maxWidth: 460,
+          children: [
+            for (final entry in grouped.entries)
+              BusyMarkGroupedList(
+                title: entry.key,
+                filled: true,
+                children: [
+                  for (final command in entry.value)
+                    BusyMarkActionRow(
+                      title: command.label(context),
+                      subtitle: command.description?.call(context),
+                      leading: const Icon(BusyMarkGlyphs.keyboard),
+                      trailing: _KeyboardShortcutBadge(command.shortcut!.label),
+                    ),
+                ],
+              ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+// Retained temporarily as a layout reference while every shortcut consumer is
+// migrated to the registry-backed presentation above.
+void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
   final headerBar = LinuxHeaderBarService.instance;
   unawaited(
     showBusyMarkModalDialog<void>(

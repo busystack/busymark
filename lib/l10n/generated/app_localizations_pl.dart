@@ -220,6 +220,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get keyboardShortcuts => 'Skróty klawiaturowe';
 
   @override
+  String get commandPalette => 'Paleta poleceń';
+
+  @override
+  String get commandPaletteHint => 'Wpisz polecenie';
+
+  @override
+  String get commandPaletteEmpty => 'Brak pasujących poleceń';
+
+  @override
+  String get commandUnavailableInContext =>
+      'To polecenie nie jest dostępne w bieżącym kontekście.';
+
+  @override
   String get lightTheme => 'Jasny';
 
   @override
@@ -717,6 +730,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsWindowSectionTitle => 'Okno';
 
   @override
+  String get settingsReopenWorkspaceOnStartupTitle =>
+      'Otwieraj poprzedni obszar roboczy przy uruchamianiu';
+
+  @override
+  String get settingsReopenWorkspaceOnStartupDescription =>
+      'Otwórz obszar roboczy i karty z poprzedniej sesji podczas uruchamiania BusyMark.';
+
+  @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
       'Potwierdzaj zamknięcie przy niezapisanych zmianach';
 
@@ -770,6 +791,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String unsavedChangesMultipleMessage(int count) {
+    return '$count dokumenty zawierają niezapisane zmiany. Zapisać je przed kontynuowaniem?';
+  }
+
+  @override
   String get fileChangedOnDisk => 'Plik zmieniony na dysku';
 
   @override
@@ -808,6 +834,40 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get image => 'Obraz';
+
+  @override
+  String get video => 'Wideo';
+
+  @override
+  String get openVideo => 'Odtwórz wideo';
+
+  @override
+  String get pauseVideo => 'Wstrzymaj wideo';
+
+  @override
+  String get videoUnavailable => 'Wideo jest niedostępne';
+
+  @override
+  String get videoPreview => 'Podgląd wideo';
+
+  @override
+  String get diagnosticWritersideVideoMissingSource =>
+      'Wideo nie ma atrybutu src.';
+
+  @override
+  String diagnosticWritersideVideoUnsupportedSource(String source) {
+    return 'Nieobsługiwane źródło wideo: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingFile(String source) {
+    return 'Plik wideo nie istnieje: $source';
+  }
+
+  @override
+  String diagnosticWritersideVideoMissingPreview(String preview) {
+    return 'Obraz podglądu wideo nie istnieje: $preview';
+  }
 
   @override
   String get inlineImage => 'Obraz w tekście';
@@ -902,6 +962,18 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get deleteColumn => 'Usuń kolumnę';
+
+  @override
+  String get tableAlignmentUnspecified => 'Wyrównanie: nieokreślone';
+
+  @override
+  String get tableAlignmentLeft => 'Wyrównanie: do lewej';
+
+  @override
+  String get tableAlignmentCenter => 'Wyrównanie: do środka';
+
+  @override
+  String get tableAlignmentRight => 'Wyrównanie: do prawej';
 
   @override
   String tableRowNumber(int rowNumber) {
@@ -1340,6 +1412,132 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sourceSearchRegex => 'Wyrażenie regularne';
 
   @override
+  String get sourceSearchReplacement => 'Zamień na';
+
+  @override
+  String get sourceSearchReplaceCurrent => 'Zamień bieżące';
+
+  @override
+  String get sourceSearchReplaceAndFindNext => 'Zamień i znajdź następne';
+
+  @override
+  String get sourceSearchReplaceAll => 'Zamień wszystko';
+
+  @override
+  String get workspaceReplace => 'Zamień w obszarze roboczym';
+
+  @override
+  String get reviewReplacements => 'Przejrzyj zamiany';
+
+  @override
+  String get applyReplacements => 'Zastosuj zamiany';
+
+  @override
+  String get skippedFiles => 'Pominięte pliki';
+
+  @override
+  String get workspaceReplaceDirtyBuffer => 'Niezapisana zawartość edytora';
+
+  @override
+  String get workspaceReplaceDiskContent => 'Zawartość zapisana na dysku';
+
+  @override
+  String selectFileMatches(int count) {
+    return 'Wybierz wszystkie dopasowania ($count)';
+  }
+
+  @override
+  String workspaceReplaceApplied(int matches, int files, int skipped) {
+    return 'Zamieniono $matches dopasowań w $files plikach; pominięto $skipped.';
+  }
+
+  @override
+  String documentFormatWithFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Końcowy znak nowego wiersza';
+  }
+
+  @override
+  String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
+    return '$encoding · $lineEnding · Brak końcowego znaku nowego wiersza';
+  }
+
+  @override
+  String get normalizeLineEndings => 'Normalizuj zakończenia wierszy';
+
+  @override
+  String get mixedLineEndingsSavePrompt =>
+      'Ten dokument zawiera mieszane zakończenia wierszy. Wybierz format.';
+
+  @override
+  String workspaceReplaceMixedLineEndings(String fileName) {
+    return '$fileName używa mieszanych zakończeń wierszy. Wybierz format przed zamianą.';
+  }
+
+  @override
+  String get workspaceReplaceIssueOversized => 'Pominięto zbyt duży plik.';
+
+  @override
+  String get workspaceReplaceIssueUnreadable =>
+      'Pominięto plik, którego nie można odczytać.';
+
+  @override
+  String get workspaceReplaceIssueInvalidUtf8 =>
+      'Pominięto plik z nieprawidłowym kodowaniem UTF-8.';
+
+  @override
+  String get workspaceReplaceIssueTruncated =>
+      'Podgląd zamian został skrócony.';
+
+  @override
+  String get workspaceReplaceIssueFileChanged =>
+      'Pominięto plik zmieniony po utworzeniu podglądu.';
+
+  @override
+  String get workspaceReplaceIssueBufferChanged =>
+      'Pominięto bufor edytora zmieniony po utworzeniu podglądu.';
+
+  @override
+  String get workspaceReplaceIssueNormalizationRequired =>
+      'Przed zamianą wybierz normalizację LF lub CRLF.';
+
+  @override
+  String get workspaceReplaceIssuePartialConflict =>
+      'Wycofywanie zatrzymano, ponieważ plik został jednocześnie zmieniony. Niektóre zamiany mogą pozostać; zastąpioną zawartość zachowano w poniższej ścieżce.';
+
+  @override
+  String get workspaceReplaceIssueApplyFailed =>
+      'Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.';
+
+  @override
+  String externalChangesTitle(String fileName) {
+    return 'Zmiany zewnętrzne — $fileName';
+  }
+
+  @override
+  String get externalFileDeleted => 'Ten plik został usunięty z dysku.';
+
+  @override
+  String get externalFileChanged =>
+      'Ten plik zmienił się na dysku, gdy masz niezapisane zmiany.';
+
+  @override
+  String recoveredDocumentReview(String fileName) {
+    return 'Odzyskano niezapisaną treść pliku $fileName. Przejrzyj ją, a następnie zapisz, zapisz jako lub odrzuć.';
+  }
+
+  @override
+  String get compare => 'Porównaj';
+
+  @override
+  String get reloadFromDisk => 'Wczytaj ponownie z dysku';
+
+  @override
+  String get keepMine => 'Zachowaj moją wersję';
+
+  @override
+  String get saveAs => 'Zapisz jako';
+
+  @override
   String get sourceSearchInvalidRegex => 'Nieprawidłowe wyrażenie regularne';
 
   @override
@@ -1348,6 +1546,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nothingToRead => 'Brak treści do przeczytania';
+
+  @override
+  String get admonition => 'Adnotacja';
+
+  @override
+  String get quote => 'Cytat';
 
   @override
   String get note => 'Uwaga';
@@ -1475,6 +1679,16 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String workspaceErrorValidationFailed(String error) {
     return 'Sprawdzanie poprawności nie powiodło się: $error';
+  }
+
+  @override
+  String workspaceRecoveryRestored(int count) {
+    return 'Odzyskano $count niezapisanych dokumentów. Przejrzyj każdy odzyskany dokument przed kontynuowaniem.';
+  }
+
+  @override
+  String workspaceRecoveryDamaged(int count) {
+    return 'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe odzyskane dokumenty są nadal dostępne.';
   }
 
   @override
@@ -2312,6 +2526,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fileActions => 'Działania na pliku';
 
   @override
+  String get actions => 'Działania';
+
+  @override
   String get gitStatusAdded => 'Dodany';
 
   @override
@@ -2387,8 +2604,34 @@ class AppLocalizationsPl extends AppLocalizations {
       'Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.';
 
   @override
-  String get gitErrorAuthentication =>
-      'Uwierzytelnianie Git nie powiodło się. W pakiecie snap repozytoria SSH mogą wymagać podłączenia interfejsu ssh-keys.';
+  String get gitErrorAuthorIdentity =>
+      'Git wymaga nazwy autora i adresu e-mail przed utworzeniem commita.';
+
+  @override
+  String get gitAuthorIdentityTitle => 'Tożsamość autora Git';
+
+  @override
+  String get gitAuthorIdentityMessage =>
+      'Wprowadź tożsamość, którą Git ma zapisywać w commitach. BusyMark ją zapisze i ponowi ten commit.';
+
+  @override
+  String get gitAuthorName => 'Nazwa';
+
+  @override
+  String get gitAuthorEmail => 'E-mail';
+
+  @override
+  String get gitAuthorIdentityGlobal => 'Używaj we wszystkich repozytoriach';
+
+  @override
+  String get gitAuthorIdentityGlobalDescription =>
+      'W instalacji Snap dotyczy to repozytoriów otwieranych w BusyMark.';
+
+  @override
+  String get gitSaveIdentityAndCommit => 'Zapisz i utwórz commit';
+
+  @override
+  String get gitErrorAuthentication => 'Uwierzytelnianie Git nie powiodło się.';
 
   @override
   String get gitErrorNetwork => 'Operacja sieciowa Git nie powiodła się.';
@@ -2969,135 +3212,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get exportWritersideAsPdf => 'Eksportuj Writerside jako PDF';
 
   @override
-  String get writersidePdfExportDescription =>
-      'Wybierz instancję i ustawienia PDF. BusyMark używa oficjalnego programu budującego Writerside firmy JetBrains.';
-
-  @override
   String get writersidePdfContent => 'Zawartość eksportu';
-
-  @override
-  String get writersidePdfSettings => 'Ustawienia PDF';
-
-  @override
-  String get writersidePdfConfigureHere => 'Skonfiguruj dla tego eksportu';
-
-  @override
-  String get writersidePdfProjectConfiguration => 'Użyj konfiguracji projektu';
-
-  @override
-  String get writersidePdfConfigurationFile => 'Plik konfiguracji PDF';
 
   @override
   String get writersidePdfPage => 'Strona';
 
   @override
-  String get writersidePdfKeymap => 'Mapa klawiszy';
-
-  @override
-  String get writersidePdfNoKeymap => 'Bez mapy klawiszy';
-
-  @override
-  String get writersidePdfTocTitle => 'Tytuł spisu treści';
-
-  @override
-  String get writersidePdfCover => 'Strona tytułowa';
-
-  @override
-  String get writersidePdfIncludeCover => 'Dołącz stronę tytułową';
-
-  @override
-  String get writersidePdfCoverTitle => 'Tytuł na okładce';
-
-  @override
-  String get writersidePdfCoverDescription => 'Opis na okładce';
-
-  @override
-  String get writersidePdfCopyright => 'Prawa autorskie';
-
-  @override
-  String get writersidePdfCoverLogo => 'Logo na okładce';
-
-  @override
-  String get writersidePdfChooseCoverLogo => 'Wybierz logo na okładkę';
-
-  @override
-  String get writersidePdfHeaderAndFooter => 'Nagłówek i stopka';
-
-  @override
-  String get writersidePdfHeader => 'Nagłówek';
-
-  @override
-  String get writersidePdfFooter => 'Stopka';
-
-  @override
-  String get writersidePdfAdvancedDescription =>
-      'Te wartości odwzorowują otwarty moduł na układ źródeł programu budującego.';
-
-  @override
-  String get writersidePdfModuleName => 'Nazwa modułu';
-
-  @override
-  String get writersidePdfSourceRoot => 'Katalog główny źródeł';
-
-  @override
-  String get writersidePdfChooseSourceRoot => 'Wybierz katalog główny źródeł';
-
-  @override
-  String get writersidePdfBuilderVersion => 'Wersja programu budującego';
-
-  @override
-  String get writersidePdfAllowNetwork => 'Zezwól na sieć podczas budowania';
-
-  @override
-  String get writersidePdfAllowNetworkDescription =>
-      'Domyślnie wyłączone. Włącz tylko wtedy, gdy projekt świadomie wymaga zdalnych zasobów do budowania.';
-
-  @override
-  String get writersidePdfModuleNameRequired => 'Wprowadź nazwę modułu.';
-
-  @override
-  String get writersidePdfSourceRootRequired =>
-      'Wybierz katalog główny źródeł.';
-
-  @override
-  String get writersidePdfBuilderVersionInvalid =>
-      'Wprowadź prawidłową wersję programu budującego.';
-
-  @override
-  String get writersidePdfBuilderRequired =>
-      'Wymagany program budujący Writerside';
-
-  @override
-  String writersidePdfBuilderDownloadDescription(String image) {
-    return 'BusyMark używa oficjalnego obrazu kontenera $image. Pobrać go teraz? Obraz jest duży i zostanie zapisany przez Docker.';
-  }
-
-  @override
-  String get writersidePdfDownloadingBuilder =>
-      'Pobieranie programu budującego Writerside…';
-
-  @override
   String get exportingWritersidePdf => 'Eksportowanie PDF Writerside…';
-
-  @override
-  String get writersidePdfDockerUnavailable =>
-      'Docker jest wymagany do eksportu Writerside do PDF. Zainstaluj i uruchom Docker, a następnie spróbuj ponownie.';
-
-  @override
-  String get writersidePdfBuilderUnavailable =>
-      'Żądany obraz programu budującego Writerside jest niedostępny.';
-
-  @override
-  String get writersidePdfConfigurationInvalid =>
-      'Konfiguracja PDF Writerside jest nieprawidłowa.';
-
-  @override
-  String get writersidePdfBuildFailed =>
-      'Program budujący Writerside nie mógł utworzyć pliku PDF.';
-
-  @override
-  String get writersidePdfInvalidOutput =>
-      'Program budujący Writerside nie utworzył prawidłowego pliku PDF.';
 
   @override
   String get ai => 'SI';
@@ -3114,6 +3235,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiProvider => 'Dostawca SI';
+
+  @override
+  String get aiDefaultProvider => 'Domyślny dostawca';
+
+  @override
+  String get aiConfigureProvider => 'Skonfiguruj dostawcę';
+
+  @override
+  String get aiChooseProvider => 'Wybierz dostawcę SI';
 
   @override
   String get aiOllamaEndpoint => 'Punkt końcowy Ollama';
@@ -3133,8 +3263,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get aiNoModels =>
-      'Ollama działa, ale nie znaleziono zainstalowanych modeli.';
+  String get aiNoModels => 'Nie wybrano modelu.';
 
   @override
   String get aiConnectionFailed =>
@@ -3238,19 +3367,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiContentSentToAi => 'Treść wysyłana do SI';
 
   @override
-  String get aiPrivacyDisabled =>
-      'SI jest wyłączona. BusyMark nigdy nie wysyła treści dokumentu bez jawnego działania SI.';
-
-  @override
-  String get aiPrivacyLocal =>
-      'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do skonfigurowanej lokalnej usługi Ollama. Propozycje nigdy nie są stosowane bez sprawdzenia.';
-
-  @override
-  String aiPrivacyCloud(String provider) {
-    return 'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do $provider. Żądania są bezstanowe, a propozycje nigdy nie są stosowane bez sprawdzenia.';
-  }
-
-  @override
   String get aiApiKey => 'Klucz API';
 
   @override
@@ -3287,6 +3403,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiPreferredModel => 'Preferowany model';
+
+  @override
+  String get aiModel => 'Model';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
@@ -3371,4 +3490,14 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
       'Nagłówki tabeli muszą identyfikować kolumny; uzupełnij każdy pusty nagłówek.';
+
+  @override
+  String get mathRenderFailed =>
+      'Nie udało się wyrenderować wyrażenia matematycznego.';
+
+  @override
+  String get inlineMath => 'Matematyka w tekście';
+
+  @override
+  String get displayMath => 'Matematyka blokowa';
 }

@@ -5,6 +5,60 @@ import 'markdown_model.dart';
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 
+const busyMarkWritersideAdmonitionAttribute = 'writersideAdmonition';
+const busyMarkWritersideAdmonitionSourceFormAttribute =
+    'writersideAdmonitionSourceForm';
+
+const busyMarkWritersideCollapsibleAttribute = 'collapsible';
+const busyMarkWritersideDefaultStateAttribute = 'default-state';
+const busyMarkWritersideCollapsedTitleAttribute = 'collapsed-title';
+const busyMarkWritersideCodeBlockSourceFormAttribute =
+    'writersideCodeBlockSourceForm';
+const busyMarkWritersideCodeBlockElementSourceForm = 'element';
+
+bool busyMarkWritersideIsCollapsible(Map<String, String> attributes) {
+  return attributes[busyMarkWritersideCollapsibleAttribute]
+          ?.trim()
+          .toLowerCase() ==
+      'true';
+}
+
+bool busyMarkWritersideInitiallyExpanded(Map<String, String> attributes) {
+  return attributes[busyMarkWritersideDefaultStateAttribute]
+          ?.trim()
+          .toLowerCase() ==
+      'expanded';
+}
+
+enum BusyAdmonitionStyle { tip, note, warning, quote }
+
+BusyAdmonitionStyle? busyAdmonitionStyleFromName(String? value) {
+  final normalized = value?.trim().toLowerCase();
+  return BusyAdmonitionStyle.values
+      .where((style) => style.name == normalized)
+      .firstOrNull;
+}
+
+enum BusyTableAlignment { unspecified, left, center, right }
+
+BusyTableAlignment busyTableAlignmentFromAttribute(String? value) {
+  return switch (value?.toLowerCase()) {
+    'left' => BusyTableAlignment.left,
+    'center' => BusyTableAlignment.center,
+    'right' => BusyTableAlignment.right,
+    _ => BusyTableAlignment.unspecified,
+  };
+}
+
+String? busyTableAlignmentAttribute(BusyTableAlignment alignment) {
+  return switch (alignment) {
+    BusyTableAlignment.unspecified => null,
+    BusyTableAlignment.left => 'left',
+    BusyTableAlignment.center => 'center',
+    BusyTableAlignment.right => 'right',
+  };
+}
+
 class BusyDocument {
   const BusyDocument({
     required this.filePath,
@@ -50,6 +104,7 @@ class BusyDocument {
 enum BusyBlockKind {
   heading,
   paragraph,
+  math,
   codeBlock,
   unorderedListItem,
   orderedListItem,
@@ -57,6 +112,7 @@ enum BusyBlockKind {
   blockquote,
   thematicBreak,
   image,
+  video,
   table,
   htmlBlock,
   writersideAdmonition,
@@ -131,6 +187,7 @@ class BusyBlock {
 
 enum BusyInlineKind {
   text,
+  math,
   strong,
   emphasis,
   underline,

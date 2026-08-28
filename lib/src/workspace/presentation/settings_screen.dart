@@ -127,6 +127,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         filled: true,
         children: [
           BusyMarkSwitchRow(
+            title: l10n.settingsReopenWorkspaceOnStartupTitle,
+            subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
+            value: settings.reopenPreviousWorkspaceOnStartup,
+            onChanged: controller.setReopenPreviousWorkspaceOnStartup,
+            leading: const Icon(BusyMarkGlyphs.history),
+          ),
+          BusyMarkSwitchRow(
             title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
             subtitle: l10n.settingsConfirmCloseWithUnsavedChangesDescription,
             value: settings.confirmCloseWithUnsavedChanges,
@@ -341,6 +348,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.commandPalette:
+        return;
       case BusyMarkMainMenuAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
@@ -971,7 +980,8 @@ class _AiSettingsPage extends ConsumerStatefulWidget {
 class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
   late final TextEditingController _endpointController;
   late final TextEditingController _apiKeyController;
-  List<AiModelInfo> _models = const [];
+  late AiProviderKind _configurationProvider;
+  final Map<AiProviderKind, List<AiModelInfo>> _modelsByProvider = {};
   String? _status;
   BusyMarkStatusKind _statusKind = BusyMarkStatusKind.information;
   var _testing = false;
@@ -980,11 +990,14 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
   @override
   void initState() {
     super.initState();
+    final settings = ref.read(appSettingsControllerProvider);
+    _configurationProvider =
+        settings.defaultAiProviderKind ?? AiProviderKind.ollamaLocal;
     _endpointController = TextEditingController(
-      text: ref.read(appSettingsControllerProvider).aiOllamaEndpoint,
+      text: settings.aiOllamaEndpoint,
     );
     _apiKeyController = TextEditingController();
-    unawaited(_loadCredentialState());
+    unawaited(_loadCredentialState(_configurationProvider));
   }
 
   @override
@@ -998,44 +1011,36 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsControllerProvider);
     final controller = ref.read(appSettingsControllerProvider.notifier);
-    final providerKind = settings.aiProviderKind;
-    final enabled = providerKind != null;
+    final enabled = settings.defaultAiProviderKind != null;
+    final providerKind = _configurationProvider;
     final local = providerKind == AiProviderKind.ollamaLocal;
-    final cloud = providerKind?.isCloud ?? false;
-    final provider = providerKind == null
-        ? null
-        : ref.watch(aiProviderRegistryProvider).require(providerKind);
-    final selectedModel = providerKind == null
-        ? ''
-        : settings.selectedAiModel(providerKind);
+    final cloud = providerKind.isCloud;
+    final provider = ref
+        .watch(aiProviderRegistryProvider)
+        .require(providerKind);
+    final selectedModel = settings.selectedAiModel(providerKind);
     final modelNames = <String>{
       if (selectedModel.isNotEmpty) selectedModel,
-      if (provider != null)
-        for (final values in provider.capabilities.recommendedModels.values)
-          ...values,
-      for (final model in _models) model.name,
+      for (final values in provider.capabilities.recommendedModels.values)
+        ...values,
+      for (final model
+          in _modelsByProvider[providerKind] ?? const <AiModelInfo>[])
+        model.name,
     }.toList(growable: false);
     final usage = ref.watch(aiMonthlyUsageProvider).value;
     return BusyMarkGroupedList(
       title: context.l10n.ai,
       filled: true,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(BusyMarkSpacing.md),
-          child: BusyMarkStatusBox(
-            message: _privacyDescription(providerKind),
-            kind: BusyMarkStatusKind.information,
-          ),
-        ),
         BusyMarkActionRow(
-          title: context.l10n.aiProvider,
+          title: context.l10n.aiDefaultProvider,
           leading: const Icon(BusyMarkGlyphs.ai),
           trailing: SizedBox(
             width: BusyMarkSizes.controlRowWidth,
             child: BusyMarkPopupSelector<AiProviderPreference>(
               value: settings.aiProviderPreference,
               label: _providerLabel(settings.aiProviderPreference),
-              tooltip: context.l10n.aiProvider,
+              tooltip: context.l10n.aiDefaultProvider,
               options: [
                 BusyMarkPopupSelectorOption(
                   value: AiProviderPreference.disabled,
@@ -1055,7 +1060,29 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
                 ),
               ],
               onSelected: (preference) =>
-                  unawaited(_selectProvider(preference)),
+                  unawaited(_selectDefaultProvider(preference)),
+            ),
+          ),
+        ),
+        BusyMarkActionRow(
+          title: context.l10n.aiConfigureProvider,
+          leading: const Icon(BusyMarkGlyphs.settings),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: BusyMarkPopupSelector<AiProviderKind>(
+              value: providerKind,
+              label: _providerKindLabel(providerKind),
+              tooltip: context.l10n.aiConfigureProvider,
+              options: [
+                for (final kind in AiProviderKind.values)
+                  BusyMarkPopupSelectorOption(
+                    value: kind,
+                    label: _providerKindLabel(kind),
+                  ),
+              ],
+              onSelected: !_testing
+                  ? (kind) => unawaited(_selectConfigurationProvider(kind))
+                  : (_) {},
             ),
           ),
         ),
@@ -1070,7 +1097,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
           ),
         if (cloud) ...[
           BusyMarkGroupedTextEntry(
-            key: ValueKey('ai-api-key-${providerKind!.id}'),
+            key: ValueKey('ai-api-key-${providerKind.id}'),
             label: context.l10n.aiApiKey,
             hintText: _credentialConfigured
                 ? context.l10n.aiApiKeyStoredHint
@@ -1157,9 +1184,8 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
                       for (final model in modelNames)
                         BusyMarkPopupSelectorOption(value: model, label: model),
                     ],
-                    onSelected: enabled
-                        ? (model) => _saveSelectedModel(providerKind, model)
-                        : (_) {},
+                    onSelected: (model) =>
+                        _saveSelectedModel(providerKind, model),
                   ),
           ),
         ),
@@ -1173,7 +1199,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(BusyMarkGlyphs.refresh),
-          onTap: enabled && !_testing && (!cloud || _credentialConfigured)
+          onTap: !_testing && (!cloud || _credentialConfigured)
               ? _testConnection
               : null,
         ),
@@ -1209,12 +1235,13 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
     );
     try {
       var settings = ref.read(appSettingsControllerProvider);
-      final providerKind = settings.aiProviderKind;
-      if (providerKind == null) {
-        throw AiException(
-          AiFailureCode.invalidConfiguration,
-          l10n.aiEnableProvider,
-        );
+      final providerKind = _configurationProvider;
+      if (providerKind.isCloud && !settings.hasCloudConsent(providerKind)) {
+        final confirmed = await _confirmCloudConsent(providerKind);
+        if (!confirmed) {
+          return;
+        }
+        settings = ref.read(appSettingsControllerProvider);
       }
       if (providerKind == AiProviderKind.ollamaLocal) {
         final endpoint = AiPolicy.validateLocalOllamaEndpoint(
@@ -1268,7 +1295,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
         return;
       }
       setState(() {
-        _models = health!.models;
+        _modelsByProvider[providerKind] = health!.models;
         final verified = l10n.aiGenerationVerified(
           health.model.displayName ?? health.model.name,
           health.models.length,
@@ -1301,7 +1328,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
     }
   }
 
-  Future<void> _selectProvider(AiProviderPreference preference) async {
+  Future<void> _selectDefaultProvider(AiProviderPreference preference) async {
     final kind = switch (preference) {
       AiProviderPreference.disabled => null,
       AiProviderPreference.ollamaLocal => AiProviderKind.ollamaLocal,
@@ -1310,30 +1337,9 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
     };
     final settings = ref.read(appSettingsControllerProvider);
     if (kind?.isCloud == true && !settings.hasCloudConsent(kind!)) {
-      final confirmed = await showBusyMarkModalDialog<bool>(
-        context,
-        builder: (dialogContext) => BusyMarkDialogShell(
-          title: dialogContext.l10n.aiCloudConsentTitle(kind.displayName),
-          actions: [
-            BusyMarkDialogButton(
-              label: dialogContext.l10n.cancel,
-              onPressed: () => Navigator.pop(dialogContext, false),
-            ),
-            BusyMarkDialogButton(
-              label: dialogContext.l10n.aiCloudConsentEnable(kind.displayName),
-              suggested: true,
-              onPressed: () => Navigator.pop(dialogContext, true),
-            ),
-          ],
-          children: [Text(dialogContext.l10n.aiCloudConsentMessage)],
-        ),
-      );
-      if (confirmed != true || !mounted) {
+      if (!await _confirmCloudConsent(kind) || !mounted) {
         return;
       }
-      await ref
-          .read(appSettingsControllerProvider.notifier)
-          .grantAiCloudProviderConsent(kind.id);
     }
     await ref
         .read(appSettingsControllerProvider.notifier)
@@ -1341,31 +1347,35 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
     if (!mounted) {
       return;
     }
+  }
+
+  Future<void> _selectConfigurationProvider(AiProviderKind provider) async {
+    if (provider == _configurationProvider) {
+      return;
+    }
     _apiKeyController.clear();
     setState(() {
-      _models = const [];
+      _configurationProvider = provider;
       _status = null;
       _credentialConfigured = false;
     });
-    await _loadCredentialState();
+    await _loadCredentialState(provider);
   }
 
-  Future<void> _loadCredentialState() async {
-    final kind = ref.read(appSettingsControllerProvider).aiProviderKind;
-    if (kind?.isCloud != true) {
-      if (mounted) {
+  Future<void> _loadCredentialState(AiProviderKind kind) async {
+    if (!kind.isCloud) {
+      if (mounted && _configurationProvider == kind) {
         setState(() => _credentialConfigured = false);
       }
       return;
     }
     try {
-      final stored = await ref.read(aiSecretStoreProvider).read(kind!);
-      if (mounted &&
-          ref.read(appSettingsControllerProvider).aiProviderKind == kind) {
+      final stored = await ref.read(aiSecretStoreProvider).read(kind);
+      if (mounted && _configurationProvider == kind) {
         setState(() => _credentialConfigured = stored != null);
       }
     } on AiException catch (error) {
-      if (mounted) {
+      if (mounted && _configurationProvider == kind) {
         setState(() {
           _status = error.message;
           _statusKind = BusyMarkStatusKind.error;
@@ -1379,7 +1389,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
       await ref
           .read(aiSecretStoreProvider)
           .write(provider, _apiKeyController.text);
-      if (mounted) {
+      if (mounted && _configurationProvider == provider) {
         _apiKeyController.clear();
         setState(() {
           _credentialConfigured = true;
@@ -1388,7 +1398,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
         });
       }
     } on AiException catch (error) {
-      if (mounted) {
+      if (mounted && _configurationProvider == provider) {
         setState(() {
           _status = error.message;
           _statusKind = BusyMarkStatusKind.error;
@@ -1400,7 +1410,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
   Future<void> _removeApiKey(AiProviderKind provider) async {
     try {
       await ref.read(aiSecretStoreProvider).delete(provider);
-      if (mounted) {
+      if (mounted && _configurationProvider == provider) {
         _apiKeyController.clear();
         setState(() {
           _credentialConfigured = false;
@@ -1409,7 +1419,7 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
         });
       }
     } on AiException catch (error) {
-      if (mounted) {
+      if (mounted && _configurationProvider == provider) {
         setState(() {
           _status = error.message;
           _statusKind = BusyMarkStatusKind.error;
@@ -1435,12 +1445,41 @@ class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
         AiProviderPreference.gemini => 'Google Gemini',
       };
 
-  String _privacyDescription(AiProviderKind? provider) => switch (provider) {
-    null => context.l10n.aiPrivacyDisabled,
-    AiProviderKind.ollamaLocal => context.l10n.aiPrivacyLocal,
-    AiProviderKind.openAi ||
-    AiProviderKind.gemini => context.l10n.aiPrivacyCloud(provider.displayName),
+  String _providerKindLabel(AiProviderKind provider) => switch (provider) {
+    AiProviderKind.ollamaLocal => context.l10n.aiLocalOllama,
+    AiProviderKind.openAi => 'OpenAI',
+    AiProviderKind.gemini => 'Google Gemini',
   };
+
+  Future<bool> _confirmCloudConsent(AiProviderKind provider) async {
+    final confirmed = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.aiCloudConsentTitle(provider.displayName),
+        actions: [
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.cancel,
+            onPressed: () => Navigator.pop(dialogContext, false),
+          ),
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.aiCloudConsentEnable(
+              provider.displayName,
+            ),
+            suggested: true,
+            onPressed: () => Navigator.pop(dialogContext, true),
+          ),
+        ],
+        children: [Text(dialogContext.l10n.aiCloudConsentMessage)],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return false;
+    }
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .grantAiCloudProviderConsent(provider.id);
+    return mounted;
+  }
 
   Future<void> _saveEndpoint(String value) async {
     try {

@@ -846,7 +846,11 @@ class GitController extends Notifier<GitState> {
         currentPath == null) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await _gateway.restoreFileFromCommit(
         operation.repository,
@@ -1064,6 +1068,21 @@ class GitController extends Notifier<GitState> {
       await loadProjectHistory();
     }
     return completed;
+  }
+
+  Future<bool> configureAuthorIdentity({
+    required String name,
+    required String email,
+    required bool globally,
+  }) {
+    return _runOperation(
+      (repository) => _gateway.configureAuthorIdentity(
+        repository,
+        name: name,
+        email: email,
+        globally: globally,
+      ),
+    );
   }
 
   Future<GitStagedDiffSnapshot?> stagedDiffForAi() async {
@@ -1558,7 +1577,11 @@ class GitController extends Notifier<GitState> {
         !_isCurrentRepositoryOperation(currentContext)) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await operation(currentContext.repository);
       if (!_isCurrentRepositoryOperation(currentContext)) {
@@ -1598,7 +1621,11 @@ class GitController extends Notifier<GitState> {
     if (!_isCurrentWorkspaceOperation(context)) {
       return false;
     }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      lastOperationMessage: null,
+    );
     try {
       final result = await operation(rootPath);
       if (!_isCurrentWorkspaceOperation(context)) {
@@ -2053,6 +2080,14 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String message,
   ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> configureAuthorIdentity(
+    GitRepositoryInfo repository, {
+    required String name,
+    required String email,
+    required bool globally,
+  }) => _unavailable();
 
   @override
   Future<GitOperationResult> fetch(GitRepositoryInfo repository) =>
