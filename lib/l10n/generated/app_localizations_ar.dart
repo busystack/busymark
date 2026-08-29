@@ -267,6 +267,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reading => 'وضع القراءة';
 
   @override
+  String get removeFromRecent => 'إزالة من الأخيرة';
+
+  @override
   String get recent => 'الأخيرة';
 
   @override

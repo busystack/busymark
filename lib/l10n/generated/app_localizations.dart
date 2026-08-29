@@ -609,6 +609,12 @@ abstract class AppLocalizations {
   /// **'Reading'**
   String get reading;
 
+  /// Action that removes a workspace from the Recent list without deleting its files.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Recent'**
+  String get removeFromRecent;
+
   /// Recent workspaces section title.
   ///
   /// In en, this message translates to:

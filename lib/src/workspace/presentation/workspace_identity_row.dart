@@ -10,6 +10,7 @@ class WorkspaceIdentityRow extends StatelessWidget {
     required this.path,
     this.height,
     this.horizontalPadding = BusyMarkSpacing.sm,
+    this.trailing,
   });
 
   final IconData icon;
@@ -17,6 +18,7 @@ class WorkspaceIdentityRow extends StatelessWidget {
   final String path;
   final double? height;
   final double horizontalPadding;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,10 @@ class WorkspaceIdentityRow extends StatelessWidget {
             ],
           ),
         ),
+        if (trailing != null) ...[
+          const SizedBox(width: BusyMarkSpacing.xs),
+          trailing!,
+        ],
         SizedBox(width: horizontalPadding),
       ],
     );

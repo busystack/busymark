@@ -151,6 +151,7 @@
   "@pasteWithoutFormatting": {"description": "Plain text paste command label."},
   "reading": "Lugemisvaade",
   "@reading": {"description": "Reading view label."},
+  "removeFromRecent": "Eemalda hiljutiste seast",
   "recent": "Hiljutised",
   "@recent": {"description": "Recent workspaces section title."},
   "redo": "Tee uuesti",

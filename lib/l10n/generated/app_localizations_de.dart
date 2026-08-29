@@ -271,6 +271,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reading => 'Leseansicht';
 
   @override
+  String get removeFromRecent => 'Aus „Zuletzt verwendet“ entfernen';
+
+  @override
   String get recent => 'Zuletzt verwendet';
 
   @override

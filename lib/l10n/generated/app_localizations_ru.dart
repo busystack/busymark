@@ -270,6 +270,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reading => 'Режим чтения';
 
   @override
+  String get removeFromRecent => 'Удалить из недавних';
+
+  @override
   String get recent => 'Недавние';
 
   @override

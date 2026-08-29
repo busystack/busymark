@@ -269,6 +269,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get reading => 'Режим читання';
 
   @override
+  String get removeFromRecent => 'Вилучити з нещодавніх';
+
+  @override
   String get recent => 'Останні';
 
   @override
