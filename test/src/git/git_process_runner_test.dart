@@ -118,38 +118,34 @@ void main() {
     expect(gitEnvironmentForSnap(''), isEmpty);
   });
 
-  test(
-    'snap launcher never falls back to the confined host setsid',
-    () async {
-      final snapRoot = await Directory.systemTemp.createTemp(
-        'busymark-snap-launcher-',
-      );
-      addTearDown(() => snapRoot.delete(recursive: true));
-      final launcher = GitProcessGroupLauncher(snapRootOverride: snapRoot.path);
+  test('snap launcher never falls back to the confined host setsid', () async {
+    final snapRoot = await Directory.systemTemp.createTemp(
+      'busymark-snap-launcher-',
+    );
+    addTearDown(() => snapRoot.delete(recursive: true));
+    final launcher = GitProcessGroupLauncher(snapRootOverride: snapRoot.path);
 
-      final direct = launcher.resolve('/snap/busymark/usr/bin/git', const [
-        '--version',
-      ]);
-      expect(direct.executable, '/snap/busymark/usr/bin/git');
-      expect(direct.arguments, const ['--version']);
-      expect(direct.processGroup, isFalse);
+    final direct = launcher.resolve('/snap/busymark/usr/bin/git', const [
+      '--version',
+    ]);
+    expect(direct.executable, '/snap/busymark/usr/bin/git');
+    expect(direct.arguments, const ['--version']);
+    expect(direct.processGroup, isFalse);
 
-      final bundledSetsid = File('${snapRoot.path}/usr/bin/setsid');
-      await bundledSetsid.create(recursive: true);
-      final wrapped = launcher.resolve('/snap/busymark/usr/bin/git', const [
-        '--version',
-      ]);
-      expect(wrapped.executable, bundledSetsid.path);
-      expect(wrapped.arguments, const [
-        '--wait',
-        '--',
-        '/snap/busymark/usr/bin/git',
-        '--version',
-      ]);
-      expect(wrapped.processGroup, isTrue);
-    },
-    skip: !Platform.isLinux,
-  );
+    final bundledSetsid = File('${snapRoot.path}/usr/bin/setsid');
+    await bundledSetsid.create(recursive: true);
+    final wrapped = launcher.resolve('/snap/busymark/usr/bin/git', const [
+      '--version',
+    ]);
+    expect(wrapped.executable, bundledSetsid.path);
+    expect(wrapped.arguments, const [
+      '--wait',
+      '--',
+      '/snap/busymark/usr/bin/git',
+      '--version',
+    ]);
+    expect(wrapped.processGroup, isTrue);
+  }, skip: !Platform.isLinux);
 
   test('Git locator preserves process launcher failures', () async {
     final availability = await const GitExecutableLocator(
