@@ -2379,6 +2379,29 @@ void main() {
 
     expect(gitController.stagedPaths, ['README.md']);
 
+    final readmeRow = find
+        .ancestor(
+          of: find.text('README.md').first,
+          matching: find.byType(InkWell),
+        )
+        .first;
+    final readmeActions = find.descendant(
+      of: readmeRow,
+      matching: find.byTooltip(l10n.actions),
+    );
+    expect(readmeActions, findsOneWidget);
+    await tester.tap(readmeActions);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.fileHistory), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.fileHistory), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
     await tester.tap(
       find.text('README.md').first,
       buttons: kSecondaryMouseButton,
@@ -2772,9 +2795,13 @@ void main() {
     );
     expect(outlineFileMenu, findsOneWidget);
     expect(find.byTooltip(first.path), findsOneWidget);
-    expect(find.byTooltip(l10n.actions), findsOneWidget);
+    final outlineFileActions = find.descendant(
+      of: outlineFileMenu,
+      matching: find.byTooltip(l10n.actions),
+    );
+    expect(outlineFileActions, findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.actions));
+    await tester.tap(outlineFileActions);
     await tester.pumpAndSettle();
     expect(find.text(l10n.copyFileName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
@@ -2785,7 +2812,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(clipboardText, 'Intro.md');
 
-    await tester.tap(find.byTooltip(l10n.actions));
+    await tester.tap(outlineFileActions);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.copyPath));
     await tester.pumpAndSettle();
@@ -2988,6 +3015,22 @@ void main() {
         );
       }
     }
+
+    await selectView(LogicalKeyboardKey.digit2);
+    final selectedTopicActions = find.byTooltip(l10n.actions);
+    expect(selectedTopicActions, findsOneWidget);
+    await tester.tap(selectedTopicActions);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.newSiblingTopic), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.newSiblingTopic), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Files view colors entries by Git status', (tester) async {
@@ -5143,11 +5186,17 @@ After break.
     expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
     expect(find.byTooltip(startupPath), findsOneWidget);
+    final outlineFileMenu = find.byKey(
+      const ValueKey('workspace-sidebar-outline-file-menu'),
+    );
+    expect(outlineFileMenu, findsOneWidget);
     expect(
-      find.byKey(const ValueKey('workspace-sidebar-outline-file-menu')),
+      find.descendant(
+        of: outlineFileMenu,
+        matching: find.byTooltip(l10n.actions),
+      ),
       findsOneWidget,
     );
-    expect(find.byTooltip(l10n.actions), findsOneWidget);
     final primarySidebarLabel = find.descendant(
       of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
       matching: find.byType(Text),
@@ -5592,7 +5641,9 @@ Gamma body.
     Color outlineRowColor(int index) {
       final material = find.descendant(
         of: outlineRow(index),
-        matching: find.byType(Material),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Material && widget.type == MaterialType.canvas,
+        ),
       );
       expect(material, findsOneWidget);
       return tester.widget<Material>(material).color ?? Colors.transparent;
@@ -6156,6 +6207,108 @@ Draft paragraph.
 
     expect(service.openedPath, recentPath);
     expect(find.text(l10n.openMarkdownFile), findsNothing);
+  });
+
+  testWidgets('recent workspace menus support pointer and keyboard actions', (
+    tester,
+  ) async {
+    const recentPath = '/tmp/busymark-recent-actions';
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            recentWorkspaces: [
+              RecentWorkspace(
+                path: recentPath,
+                kind: 'markdownFolder',
+                lastOpenedAt: DateTime(2026, 1, 2),
+              ),
+            ],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        startupPathProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .waitUntilLoaded();
+    await tester.pumpAndSettle();
+
+    final recentLabel = find.text('busymark-recent-actions');
+    expect(recentLabel, findsOneWidget);
+    final recentRow = find
+        .ancestor(of: recentLabel, matching: find.byType(InkWell))
+        .first;
+    final menuButton = find.descendant(
+      of: recentRow,
+      matching: find.byTooltip(l10n.actions),
+    );
+    expect(menuButton, findsOneWidget);
+
+    await tester.tap(menuButton);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    expect(find.text(l10n.removeFromRecent), findsOneWidget);
+
+    await tester.tap(find.text(l10n.copyPath));
+    await tester.pumpAndSettle();
+    expect(clipboardText, recentPath);
+
+    await tester.tap(recentRow, buttons: kSecondaryMouseButton);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.removeFromRecent), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.f10);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.f10);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.removeFromRecent), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.tap(recentRow, buttons: kSecondaryMouseButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.removeFromRecent));
+    await tester.pumpAndSettle();
+
+    expect(recentLabel, findsNothing);
+    expect(
+      container.read(appSettingsControllerProvider).recentWorkspaces,
+      isEmpty,
+    );
+    expect(AppSettings.fromJson(settingsStore.value).recentWorkspaces, isEmpty);
   });
 
   testWidgets('shared Markdown image renderer resolves local images', (
