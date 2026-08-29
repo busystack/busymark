@@ -1348,10 +1348,7 @@ void main() {
     expect(workspace, contains('_visibleOutlineTreeEntries'));
     expect(workspace, contains('onToggle: hasChildren ? toggle : null'));
     expect(workspace, contains('AnimatedRotation'));
-    expect(
-      workspace,
-      contains('BusyMarkGlyphs.collapsedTreeArrowFor(direction)'),
-    );
+    expect(workspace, contains('BusyMarkGlyphs.collapsedTreeArrowFor('));
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
@@ -1359,7 +1356,7 @@ void main() {
     expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
     expect(
       workspace,
-      contains('busyMarkVcsFileStatusColor(context, vcsColor!)'),
+      contains('busyMarkVcsFileStatusColor(context, widget.vcsColor!)'),
     );
     expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
     expect(workspace, contains('_isOpenableTextDocument(file)'));
@@ -1367,6 +1364,11 @@ void main() {
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
     expect(workspace, contains('onSecondaryTapUp'));
+    expect(workspace, contains('onMenuRequested'));
+    expect(workspace, contains('_ShowSelectedSidebarTreeMenuIntent'));
+    expect(workspace, contains('LogicalKeyboardKey.contextMenu'));
+    expect(workspace, contains('LogicalKeyboardKey.f10, shift: true'));
+    expect(workspace, contains('BusyMarkGlyphs.menuVertical'));
     expect(
       RegExp(
         r'BusyMarkCommandIds\s*\.treeDeleteSelection',
@@ -1438,6 +1440,26 @@ void main() {
     expect(workspace, isNot(contains('class _SidebarTile')));
     expect(workspace, isNot(contains('title: file.relativePath')));
     expect(workspace, isNot(contains('subtitle: _documentKindLabel')));
+  });
+
+  test('recent workspaces expose one native menu action model', () {
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
+
+    expect(welcome, contains('enum _RecentWorkspaceAction'));
+    expect(welcome, contains('_recentWorkspaceMenuItems'));
+    expect(welcome, contains('BusyMarkMenuButton<_RecentWorkspaceAction>'));
+    expect(
+      welcome,
+      contains('showBusyMarkContextMenu<_RecentWorkspaceAction>'),
+    );
+    expect(welcome, contains('isBusyMarkContextMenuKeyEvent(event)'));
+    expect(welcome, contains('label: context.l10n.openInFiles'));
+    expect(welcome, contains('label: context.l10n.copyPath'));
+    expect(welcome, contains('label: context.l10n.removeFromRecent'));
+    expect(settings, contains('removeRecentWorkspace(String path)'));
   });
 
   test('outline tree drives source and preview heading navigation', () {

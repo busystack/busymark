@@ -207,6 +207,7 @@
   "@reading": {
     "description": "Reading view label."
   },
+  "removeFromRecent": "हालिया से हटाएँ",
   "recent": "हालिया",
   "@recent": {
     "description": "Recent workspaces section title."

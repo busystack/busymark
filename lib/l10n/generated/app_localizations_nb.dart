@@ -270,6 +270,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get reading => 'Lesevisning';
 
   @override
+  String get removeFromRecent => 'Fjern fra nylige';
+
+  @override
   String get recent => 'Nylige';
 
   @override

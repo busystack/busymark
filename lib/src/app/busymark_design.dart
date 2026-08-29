@@ -1088,6 +1088,7 @@ class BusyMarkCompactIconButton extends StatelessWidget {
     this.size = BusyMarkSizes.compactIconButton,
     this.glyphSize = BusyMarkSizes.compactIcon,
     this.foregroundColor,
+    this.focusNode,
   });
 
   final String tooltip;
@@ -1096,6 +1097,7 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   final double size;
   final double glyphSize;
   final Color? foregroundColor;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -1120,6 +1122,7 @@ class BusyMarkCompactIconButton extends StatelessWidget {
       constraints: BoxConstraints.tightFor(width: size, height: size),
       padding: EdgeInsets.zero,
       style: semanticStyle.merge(yaruDefaults),
+      focusNode: focusNode,
       onPressed: onPressed,
     );
     return YaruTheme.maybeOf(context)?.focusBorders == true
@@ -1714,7 +1717,8 @@ class _BusyMarkMenuButtonState<T> extends State<BusyMarkMenuButton<T>> {
     if (!widget.enabled || event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
-    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+    if (isBusyMarkContextMenuKeyEvent(event) ||
+        event.logicalKey == LogicalKeyboardKey.arrowDown ||
         event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.space) {
       if (!_open) {
@@ -1787,6 +1791,18 @@ class _BusyMarkMenuButtonState<T> extends State<BusyMarkMenuButton<T>> {
     });
     unawaited(session.dismiss());
   }
+}
+
+/// Whether [event] is the standard desktop request for an item context menu.
+///
+/// Linux applications conventionally support both the Menu key and Shift+F10.
+bool isBusyMarkContextMenuKeyEvent(KeyEvent event) {
+  if (event is! KeyDownEvent) {
+    return false;
+  }
+  return event.logicalKey == LogicalKeyboardKey.contextMenu ||
+      (event.logicalKey == LogicalKeyboardKey.f10 &&
+          HardwareKeyboard.instance.isShiftPressed);
 }
 
 class BusyMarkPopupSelectorOption<T> {

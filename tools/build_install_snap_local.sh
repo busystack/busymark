@@ -303,6 +303,11 @@ cp -a "$SNAP_SCAFFOLD/." "$SNAP_ROOT/"
 
 test -f "$SNAP_ROOT/meta/snap.yaml" || fail "missing $SNAP_ROOT/meta/snap.yaml"
 
+echo "== Align GTK SVG runtime =="
+# The GNOME content snap owns both its SVG pixbuf loader and matching librsvg.
+# An older copy retained from the scaffold breaks every GTK symbolic SVG icon.
+rm -f "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
+
 echo "== Replace Flutter payload =="
 rm -rf "$SNAP_ROOT/$BINARY_NAME" "$SNAP_ROOT/data" "$SNAP_ROOT/lib"
 cp -a "$BUNDLE_DIR/." "$SNAP_ROOT/"
@@ -589,6 +594,8 @@ if [[ -d "$BUNDLE_DIR/lib" ]]; then
 fi
 ! unsquashfs -cat "$OUT" meta/snap.yaml | grep -q '^icon:'
 ! unsquashfs -cat "$OUT" meta/snap.yaml | grep -q '^[[:space:]]*desktop:'
+! unsquashfs -ll "$OUT" | grep -q \
+  'squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'
 
 echo "Built snap: $OUT"
 if [[ "$INSTALL_AFTER_BUILD" == "1" ]]; then

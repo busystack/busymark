@@ -267,6 +267,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get reading => 'حالت مطالعه';
 
   @override
+  String get removeFromRecent => 'حذف از موارد اخیر';
+
+  @override
   String get recent => 'موارد اخیر';
 
   @override

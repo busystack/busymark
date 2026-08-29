@@ -207,6 +207,7 @@
   "@reading": {
     "description": "Reading view label."
   },
+  "removeFromRecent": "Usuń z ostatnich",
   "recent": "Ostatnie",
   "@recent": {
     "description": "Recent workspaces section title."

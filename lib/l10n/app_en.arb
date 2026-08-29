@@ -168,6 +168,8 @@
   "@pasteWithoutFormatting": {"description": "Plain text paste command label."},
   "reading": "Reading",
   "@reading": {"description": "Reading view label."},
+  "removeFromRecent": "Remove from Recent",
+  "@removeFromRecent": {"description": "Action that removes a workspace from the Recent list without deleting its files."},
   "recent": "Recent",
   "@recent": {"description": "Recent workspaces section title."},
   "redo": "Redo",

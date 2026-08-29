@@ -269,6 +269,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get reading => 'पठन दृश्य';
 
   @override
+  String get removeFromRecent => 'हालिया से हटाएँ';
+
+  @override
   String get recent => 'हालिया';
 
   @override

@@ -268,6 +268,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reading => 'Reading';
 
   @override
+  String get removeFromRecent => 'Remove from Recent';
+
+  @override
   String get recent => 'Recent';
 
   @override

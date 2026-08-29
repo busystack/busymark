@@ -752,6 +752,17 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _mutate((settings) => settings.copyWith(recentWorkspaces: []));
   }
 
+  Future<void> removeRecentWorkspace(String path) {
+    return _mutate(
+      (settings) => settings.copyWith(
+        recentWorkspaces: [
+          for (final item in settings.recentWorkspaces)
+            if (!p.equals(item.path, path)) item,
+        ],
+      ),
+    );
+  }
+
   Future<void> _load() async {
     AppSettings loaded;
     try {

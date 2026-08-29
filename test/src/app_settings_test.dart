@@ -464,6 +464,51 @@ void main() {
     },
   );
 
+  test(
+    'removing a recent workspace persists without affecting files',
+    () async {
+      final store = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              recentWorkspaces: [
+                RecentWorkspace(
+                  path: '/tmp/docs',
+                  kind: WorkspaceKindForTest.singleMarkdown,
+                  lastOpenedAt: DateTime(2026, 1, 2),
+                ),
+                RecentWorkspace(
+                  path: '/tmp/other',
+                  kind: WorkspaceKindForTest.singleMarkdown,
+                  lastOpenedAt: DateTime(2026, 1, 1),
+                ),
+              ],
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+
+      await controller.removeRecentWorkspace('/tmp/docs/.');
+
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .recentWorkspaces
+            .map((item) => item.path),
+        ['/tmp/other'],
+      );
+      expect(
+        AppSettings.fromJson(
+          store.value,
+        ).recentWorkspaces.map((item) => item.path),
+        ['/tmp/other'],
+      );
+    },
+  );
+
   test('remote image permissions persist globally and per workspace', () async {
     final store = _MemorySettingsStore();
     final container = ProviderContainer(

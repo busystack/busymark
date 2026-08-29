@@ -269,6 +269,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reading => 'Widok do czytania';
 
   @override
+  String get removeFromRecent => 'Usuń z ostatnich';
+
+  @override
   String get recent => 'Ostatnie';
 
   @override

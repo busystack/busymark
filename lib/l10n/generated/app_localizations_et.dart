@@ -267,6 +267,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get reading => 'Lugemisvaade';
 
   @override
+  String get removeFromRecent => 'Eemalda hiljutiste seast';
+
+  @override
   String get recent => 'Hiljutised';
 
   @override

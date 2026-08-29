@@ -5,8 +5,10 @@ import 'package:file_selector/file_selector.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
@@ -16,6 +18,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/debug_log.dart';
@@ -93,6 +96,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       child: _WelcomeSidebar(
         recentWorkspaces: settings.recentWorkspaces,
         onOpenRecent: _openPath,
+        onRecentAction: _performRecentAction,
       ),
     );
     final welcomeContent = Expanded(
@@ -444,16 +448,58 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       context.go('/workspace');
     }
   }
+
+  Future<void> _performRecentAction(
+    RecentWorkspace recent,
+    _RecentWorkspaceAction action,
+  ) async {
+    switch (action) {
+      case _RecentWorkspaceAction.openInFiles:
+        final rawPath = recent.path.trim();
+        if (rawPath.isEmpty) {
+          return;
+        }
+        final normalized = p.normalize(rawPath);
+        final target =
+            FileSystemEntity.typeSync(normalized) ==
+                FileSystemEntityType.directory
+            ? normalized
+            : p.dirname(normalized);
+        final launched = await launchUrl(
+          Uri.file(target),
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched && mounted) {
+          BusyMarkToastOverlay.show(
+            context,
+            message: context.l10n.couldNotOpenTarget(target),
+            priority: BusyMarkToastPriority.high,
+          );
+        }
+      case _RecentWorkspaceAction.copyPath:
+        await Clipboard.setData(ClipboardData(text: recent.path));
+      case _RecentWorkspaceAction.removeFromRecent:
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .removeRecentWorkspace(recent.path);
+    }
+  }
 }
 
 class _WelcomeSidebar extends StatelessWidget {
   const _WelcomeSidebar({
     required this.recentWorkspaces,
     required this.onOpenRecent,
+    required this.onRecentAction,
   });
 
   final List<RecentWorkspace> recentWorkspaces;
   final Future<void> Function(String path) onOpenRecent;
+  final Future<void> Function(
+    RecentWorkspace recent,
+    _RecentWorkspaceAction action,
+  )
+  onRecentAction;
 
   @override
   Widget build(BuildContext context) {
@@ -473,6 +519,8 @@ class _WelcomeSidebar extends StatelessWidget {
                         _WelcomeRecentRow(
                           recent: recent,
                           onTap: () => unawaited(onOpenRecent(recent.path)),
+                          onAction: (action) =>
+                              unawaited(onRecentAction(recent, action)),
                         ),
                     ],
                   ),
@@ -510,33 +558,158 @@ class _WelcomeSidebarSection extends StatelessWidget {
   }
 }
 
-class _WelcomeRecentRow extends StatelessWidget {
-  const _WelcomeRecentRow({required this.recent, required this.onTap});
+enum _RecentWorkspaceAction { openInFiles, copyPath, removeFromRecent }
+
+class _WelcomeRecentRow extends StatefulWidget {
+  const _WelcomeRecentRow({
+    required this.recent,
+    required this.onTap,
+    required this.onAction,
+  });
 
   final RecentWorkspace recent;
   final VoidCallback onTap;
+  final ValueChanged<_RecentWorkspaceAction> onAction;
+
+  @override
+  State<_WelcomeRecentRow> createState() => _WelcomeRecentRowState();
+}
+
+class _WelcomeRecentRowState extends State<_WelcomeRecentRow> {
+  final _rowKey = GlobalKey();
+  late final FocusNode _rowFocusNode;
+  var _contextMenuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _rowFocusNode = FocusNode(debugLabel: 'BusyMark recent workspace row');
+  }
+
+  @override
+  void dispose() {
+    _rowFocusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!isBusyMarkContextMenuKeyEvent(event)) {
+      return KeyEventResult.ignored;
+    }
+    unawaited(_showContextMenu());
+    return KeyEventResult.handled;
+  }
+
+  Future<void> _showContextMenu([Offset? position]) async {
+    if (_contextMenuOpen) {
+      return;
+    }
+    final rowContext = _rowKey.currentContext;
+    if (rowContext == null) {
+      return;
+    }
+    setState(() => _contextMenuOpen = true);
+    _RecentWorkspaceAction? action;
+    try {
+      final items = _recentWorkspaceMenuItems(rowContext);
+      action = position == null
+          ? await showBusyMarkMenu<_RecentWorkspaceAction>(
+              context: rowContext,
+              anchorContext: rowContext,
+              items: items,
+              focusFirst: true,
+            )
+          : await showBusyMarkContextMenu<_RecentWorkspaceAction>(
+              rowContext,
+              position,
+              items: items,
+            );
+    } finally {
+      if (mounted) {
+        setState(() => _contextMenuOpen = false);
+      }
+    }
+    if (mounted && action != null) {
+      widget.onAction(action);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-      child: Material(
-        color: BusyMarkLinuxPalette.transparent,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          hoverColor: busyMarkRowHoverColor(context),
-          onTap: onTap,
-          child: WorkspaceIdentityRow(
-            height: BusyMarkSizes.sidebarTreeRowHeight * 2,
-            icon: WorkspaceGlyphs.forRecent(recent),
-            name: busyMarkLtrIsolateFor(context, _displayPath(recent.path)),
-            path: busyMarkLtrIsolateFor(context, recent.path),
+    final items = _recentWorkspaceMenuItems(context);
+    return KeyedSubtree(
+      key: _rowKey,
+      child: Focus(
+        onKeyEvent: _handleKeyEvent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: BusyMarkStroke.hairline,
+          ),
+          child: Material(
+            color: _contextMenuOpen
+                ? busyMarkRowHoverColor(context)
+                : BusyMarkLinuxPalette.transparent,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              hoverColor: busyMarkRowHoverColor(context),
+              focusNode: _rowFocusNode,
+              onTap: widget.onTap,
+              onSecondaryTapUp: (details) {
+                _rowFocusNode.requestFocus();
+                unawaited(_showContextMenu(details.globalPosition));
+              },
+              child: WorkspaceIdentityRow(
+                height: BusyMarkSizes.sidebarTreeRowHeight * 2,
+                icon: WorkspaceGlyphs.forRecent(widget.recent),
+                name: busyMarkLtrIsolateFor(
+                  context,
+                  _displayPath(widget.recent.path),
+                ),
+                path: busyMarkLtrIsolateFor(context, widget.recent.path),
+                trailing: BusyMarkMenuButton<_RecentWorkspaceAction>(
+                  tooltip: context.l10n.actions,
+                  items: items,
+                  onSelected: widget.onAction,
+                  triggerBuilder: (context, trigger) => trigger.anchor(
+                    child: BusyMarkCompactIconButton(
+                      tooltip: context.l10n.actions,
+                      icon: BusyMarkGlyphs.menuVertical,
+                      focusNode: trigger.focusNode,
+                      onPressed: trigger.onPressed,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+List<PopupMenuEntry<_RecentWorkspaceAction>> _recentWorkspaceMenuItems(
+  BuildContext context,
+) {
+  return [
+    BusyMarkPopupMenuItem(
+      value: _RecentWorkspaceAction.openInFiles,
+      label: context.l10n.openInFiles,
+      icon: BusyMarkGlyphs.folderOpen,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _RecentWorkspaceAction.copyPath,
+      label: context.l10n.copyPath,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _RecentWorkspaceAction.removeFromRecent,
+      label: context.l10n.removeFromRecent,
+      icon: BusyMarkGlyphs.clear,
+    ),
+  ];
 }
 
 String _displayPath(String path) {
