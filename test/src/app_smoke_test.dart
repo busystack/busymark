@@ -166,6 +166,16 @@ void main() {
     expect(app.supportedLocales, contains(const Locale('ar')));
     expect(app.supportedLocales, contains(const Locale('fa')));
     expect(app.supportedLocales, contains(const Locale('hi')));
+    expect(app.supportedLocales, contains(const Locale('id')));
+    expect(app.supportedLocales, contains(const Locale('ja')));
+    expect(app.supportedLocales, contains(const Locale('ko')));
+    expect(app.supportedLocales, contains(const Locale('nl')));
+    expect(app.supportedLocales, contains(const Locale('tr')));
+    expect(app.supportedLocales, contains(const Locale('vi')));
+    expect(
+      app.supportedLocales,
+      contains(const Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN')),
+    );
     expect(app.onGenerateTitle, isNotNull);
     expect(find.text(l10n.appTitle), findsWidgets);
   });

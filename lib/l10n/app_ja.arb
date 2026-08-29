@@ -1,0 +1,4616 @@
+{
+  "@@locale": "ja",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Markdown ファイルおよび Writerside 互換のドキュメントプロジェクト用エディター。",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "BusyMark について",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutTagline": "Markdown と Writerside のエディター",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "ライセンス",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "ウェブサイト",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutSourceCode": "ソースコード",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
+  },
+  "reportIssue": "問題を報告",
+  "@reportIssue": {
+    "description": "Menu action and dialog title for reporting an issue."
+  },
+  "feedbackCategory": "カテゴリ",
+  "@feedbackCategory": {
+    "description": "Feedback category field label."
+  },
+  "feedbackChooseCategory": "カテゴリを選択",
+  "@feedbackChooseCategory": {
+    "description": "Placeholder for the feedback category selector."
+  },
+  "feedbackCategoryProblem": "問題またはバグ",
+  "@feedbackCategoryProblem": {
+    "description": "Feedback category for a problem or bug."
+  },
+  "feedbackCategoryFeature": "機能リクエスト",
+  "@feedbackCategoryFeature": {
+    "description": "Feedback category for a feature request."
+  },
+  "feedbackCategoryPrivacySecurity": "プライバシーまたはセキュリティに関する懸念",
+  "@feedbackCategoryPrivacySecurity": {
+    "description": "Feedback category for a privacy or security concern."
+  },
+  "feedbackCategoryUsability": "使いやすさに関する懸念",
+  "@feedbackCategoryUsability": {
+    "description": "Feedback category for a usability concern."
+  },
+  "feedbackCategoryOther": "その他",
+  "@feedbackCategoryOther": {
+    "description": "Feedback category for other concerns."
+  },
+  "feedbackSubject": "件名",
+  "@feedbackSubject": {
+    "description": "Feedback subject field label."
+  },
+  "feedbackMessage": "詳細なメッセージ",
+  "@feedbackMessage": {
+    "description": "Detailed feedback message field label."
+  },
+  "feedbackReplyEmail": "返信用メールアドレス（任意）",
+  "@feedbackReplyEmail": {
+    "description": "Optional reply email field label."
+  },
+  "feedbackIncludeTechnicalDetails": "技術的な詳細を含める",
+  "@feedbackIncludeTechnicalDetails": {
+    "description": "Checkbox label for optional technical details."
+  },
+  "feedbackTechnicalDetailsDisclosure": "有効にすると、Linux のオペレーティングシステムのバージョンと BusyMark のアプリケーション言語のみが追加されます。ログ、ファイル、アカウントデータ、その他の診断情報は添付されません。",
+  "@feedbackTechnicalDetailsDisclosure": {
+    "description": "Disclosure explaining exactly which optional technical details are submitted."
+  },
+  "feedbackSubmit": "送信",
+  "@feedbackSubmit": {
+    "description": "Button that submits feedback."
+  },
+  "feedbackSubmitting": "送信中…",
+  "@feedbackSubmitting": {
+    "description": "Button label while feedback is being submitted."
+  },
+  "feedbackCategoryRequired": "カテゴリを選択してください。",
+  "@feedbackCategoryRequired": {
+    "description": "Validation error for a missing feedback category."
+  },
+  "feedbackSubjectLength": "件名は 3～120 文字で入力してください。",
+  "@feedbackSubjectLength": {
+    "description": "Validation error for feedback subject length."
+  },
+  "feedbackMessageLength": "メッセージは 10～5,000 文字で入力してください。",
+  "@feedbackMessageLength": {
+    "description": "Validation error for feedback message length."
+  },
+  "feedbackReplyEmailInvalid": "有効なメールアドレスを入力するか、この項目を空欄にしてください。",
+  "@feedbackReplyEmailInvalid": {
+    "description": "Validation error for an invalid optional reply email."
+  },
+  "feedbackConnectionFailure": "BusyMark は接続できませんでした。インターネット接続を確認して、もう一度お試しください。",
+  "@feedbackConnectionFailure": {
+    "description": "Feedback submission error for a connection failure."
+  },
+  "feedbackTimeoutFailure": "リクエストがタイムアウトしました。もう一度お試しください。",
+  "@feedbackTimeoutFailure": {
+    "description": "Feedback submission error for a timeout."
+  },
+  "feedbackRateLimitedFailure": "この接続から送信されたレポートが多すぎます。しばらく待ってから、もう一度お試しください。",
+  "@feedbackRateLimitedFailure": {
+    "description": "Feedback submission error when the server rate limit is reached."
+  },
+  "feedbackRejectedFailure": "サーバーがこのレポートを拒否しました。フォームの項目を確認して、もう一度お試しください。",
+  "@feedbackRejectedFailure": {
+    "description": "Feedback submission error when the server rejects invalid request data."
+  },
+  "feedbackServerFailure": "サーバーがレポートを受け付けられませんでした。後でもう一度お試しください。",
+  "@feedbackServerFailure": {
+    "description": "Generic feedback submission server error."
+  },
+  "feedbackSuccess": "フィードバックを送信しました。参照 ID：{id}",
+  "@feedbackSuccess": {
+    "description": "Success message containing the server reference ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "advanced": "詳細設定",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "addToGit": "Git に追加",
+  "@addToGit": {
+    "description": "Menu action that stages the selected file or folder in Git."
+  },
+  "appearance": "外観",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "適用",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "戻る",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "左下",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "右下",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "キャンセル",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "選択",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "場所を選択",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "コピー",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "copyName": "名前をコピー",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyFileName": "ファイル名をコピー",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
+  "copyPath": "パスをコピー",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
+  "create": "作成",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "作成中…",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "切り取り",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "promoteSection": "セクションのレベルを上げる",
+  "@promoteSection": {
+    "description": "Outline action that raises a heading section, including descendant headings, by one rank."
+  },
+  "demoteSection": "セクションのレベルを下げる",
+  "@demoteSection": {
+    "description": "Outline action that lowers a heading section, including descendant headings, by one rank."
+  },
+  "moveSectionUp": "セクションを上へ移動",
+  "@moveSectionUp": {
+    "description": "Outline action that swaps a heading section with its previous sibling section."
+  },
+  "moveSectionDown": "セクションを下へ移動",
+  "@moveSectionDown": {
+    "description": "Outline action that swaps a heading section with its next sibling section."
+  },
+  "confirmDeleteSectionTitle": "このセクションを削除しますか？",
+  "@confirmDeleteSectionTitle": {
+    "description": "Confirmation title before deleting a Markdown heading section."
+  },
+  "confirmDeleteSectionMessage": "「{name}」と、そのセクション内のすべての内容を削除しますか？この操作は取り消せません。",
+  "@confirmDeleteSectionMessage": {
+    "description": "Confirmation message before deleting a Markdown heading section.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "darkTheme": "ダーク",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "delete": "削除",
+  "@delete": {
+    "description": "Delete command label."
+  },
+  "discard": "破棄",
+  "@discard": {
+    "description": "Destructive button that throws away unsaved editor changes. Translate it distinctly from Cancel."
+  },
+  "editor": "エディター",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "ファイル",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "fileHistory": "ファイル履歴",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
+  },
+  "folder": "フォルダー",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "挿入",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "キーボードショートカット",
+  "commandPalette": "コマンドパレット",
+  "@commandPalette": {
+    "description": "Title and command label for the searchable command palette."
+  },
+  "commandPaletteHint": "コマンドを入力",
+  "@commandPaletteHint": {
+    "description": "Search hint in the command palette."
+  },
+  "commandPaletteEmpty": "一致するコマンドはありません",
+  "@commandPaletteEmpty": {
+    "description": "Empty state in the command palette."
+  },
+  "commandUnavailableInContext": "現在のエディターのコンテキストでは利用できません",
+  "@commandUnavailableInContext": {
+    "description": "Reason shown for a disabled contextual command."
+  },
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "lightTheme": "ライト",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "メインメニュー",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "全画面",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "開く",
+  "@open": {
+    "description": "Open action label."
+  },
+  "openInFiles": "ファイルで開く",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "パスの操作",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
+  },
+  "outline": "アウトライン",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "上書き",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "貼り付け",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "書式なしで貼り付け",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "reading": "閲覧",
+  "@reading": {
+    "description": "Reading view label."
+  },
+  "removeFromRecent": "最近使った項目から削除",
+  "@removeFromRecent": {
+    "description": "Action that removes a workspace from the Recent list without deleting its files."
+  },
+  "recent": "最近使った項目",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "やり直し",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "保存",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "検索",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "すべて選択",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "設定",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "ソース",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "分割",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "システム",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "テーマ",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "言語",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "システム",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
+  },
+  "toggleSidebar": "サイドバーパネル",
+  "@toggleSidebar": {
+    "description": "Keyboard shortcuts label for the sidebar panel toggle."
+  },
+  "topLeft": "左上",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "右上",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "元に戻す",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "検証",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "検証",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "表示モード",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "ようこそ",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "画像",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "Markdown ファイルを開く",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md または .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "フォルダーまたは Writerside プロジェクトを開く",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Markdown フォルダーまたは Writerside 互換プロジェクト",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "noOpenFile": "開いているファイルはありません",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
+  "shortcutDeleteTreeItemDescription": "選択したファイル項目を削除するか、選択したトピックを目次から削除",
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
+  "shortcutGroupGeneral": "全般",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
+  },
+  "shortcutNewDocument": "作成",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for opening the content creation chooser."
+  },
+  "shortcutNewDocumentDescription": "Markdown ファイルまたは Writerside プロジェクトを作成",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
+  },
+  "shortcutOpenDescription": "Markdown ファイル、フォルダー、または Writerside プロジェクトを開く",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "現在のドキュメントを保存",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutSearchDescription": "現在のワークスペースを検索",
+  "@shortcutSearchDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "このキーボードショートカット一覧を表示",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutMarkdownAndHtmlDescription": "Markdown と HTML のリファレンスを開く",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "BusyMark の設定を開く",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
+  "shortcutNextTab": "次のタブ",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next tab."
+  },
+  "shortcutNextTabDescription": "次に開いているタブへ移動",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next tab."
+  },
+  "shortcutPreviousTab": "前のタブ",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous tab."
+  },
+  "shortcutPreviousTabDescription": "前に開いているタブへ移動",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous tab."
+  },
+  "shortcutCloseTab": "タブを閉じる",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active tab."
+  },
+  "shortcutCloseTabDescription": "アクティブなタブを閉じる",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active tab."
+  },
+  "shortcutCloseAllTabs": "すべてのタブを閉じる",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all tabs."
+  },
+  "shortcutCloseAllTabsDescription": "開いているすべてのタブを閉じる",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all tabs."
+  },
+  "shortcutGroupTextEditing": "テキスト編集",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "ソースモードではすべてのテキストを選択し、エディターモードでは 2 回押すとすべてのブロックを選択",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
+  },
+  "shortcutCutDescription": "選択したテキストを切り取り",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "選択したテキストをコピー",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "クリップボードから貼り付け",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "書式なしのクリップボードテキストを貼り付け",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "直前の編集を元に戻す",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "直前に元に戻した編集をやり直す",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "shortcutInsertIndentation": "インデントを挿入",
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
+  "shortcutInsertIndentationDescription": "カーソル位置にインデントを挿入",
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
+  "shortcutOutdentSource": "ソースのインデントを減らす",
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
+  "shortcutOutdentSourceDescription": "ソースモードでインデントを 1 レベル減らす",
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
+  "shortcutEscape": "検索を閉じるか、ブロックの選択を解除",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
+  },
+  "shortcutEscapeDescription": "ワークスペース検索を閉じるか、エディターモードでブロックの選択を解除",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
+  },
+  "shortcutGroupFormatting": "書式設定",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "選択したテキストの太字を切り替え",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "選択したテキストの斜体を切り替え",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "選択したテキストの下線を切り替え",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "リンクを挿入または編集",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "選択したテキストのインラインコードを切り替え",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "選択したテキストの取り消し線を切り替え",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "ブロック",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "現在のブロックを段落に設定",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "現在のブロックを見出し 1 に設定",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "現在のブロックを見出し 2 に設定",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "現在のブロックを見出し 3 に設定",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "現在のブロックを見出し 4 に設定",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "現在のブロックを見出し 5 に設定",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "現在のブロックを見出し 6 に設定",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "リスト",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "番号付きリスト",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "番号付きリストの書式を切り替え",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "箇条書きリスト",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "箇条書きリストの書式を切り替え",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "チェックリスト",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "チェックリストの書式を切り替え",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "サイドバー",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "サイドバーの表示",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
+  },
+  "createMarkdownFile": "Markdown ファイルを作成",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "未保存のローカル Markdown ドキュメントの作成を開始",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "Writerside プロジェクトを作成",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "ローカルの Writerside 互換プロジェクトの作成を開始",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "ドキュメント",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "ユーザーガイド",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "はじめに",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "プロジェクト名",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "ディレクトリ名",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "インスタンス名",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "インスタンス ID",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "開始トピックのタイトル",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "場所",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "プロジェクト名は必須です。",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "ディレクトリ名は必須です。",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "安全な単一のディレクトリ名を使用してください。",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "小文字、数字、アンダースコア、ハイフンのみを含む小文字の識別子を使用してください。",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "開始トピックのタイトルは必須です。",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "Writerside プロジェクトを作成できませんでした。",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "BusyMark の設定",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "autoSave": "自動保存",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "短時間操作がないときにファイルの変更を自動保存",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
+  "wordWrap": "折り返し",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "エディターのフォントサイズ",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "編集時に検証",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "最近使ったワークスペースを消去",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtonsPosition": "編集ボタンの位置",
+  "@editingButtonsPosition": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsPositionDescription": "フローティング WYSIWYG 編集ボタンを表示する位置を選択",
+  "@editingButtonsPositionDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "編集ボタンの方向",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "フローティング WYSIWYG 編集ボタンを水平または垂直に配置するか選択",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "水平",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "垂直",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "プライバシー",
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
+  "allowRemoteImages": "リモート画像を読み込む",
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
+  "allowRemoteImagesDescription": "Markdown のプレビューとエディターで http および https URL の画像を読み込めるようにする",
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
+  "clearRemoteImagePermissions": "リモート画像の権限を消去",
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
+  "clearRemoteImagePermissionsDescription": "リモート画像の読み込みを許可したワークスペースの権限を忘れる",
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
+  "clearGitWorkspaceTrust": "信頼済み Git ワークスペースを消去",
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
+  "clearGitWorkspaceTrustDescription": "以前信頼したワークスペースで Git 機能を有効にする前に確認する",
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
+  "settingsWindowSectionTitle": "ウィンドウ",
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
+  "settingsReopenWorkspaceOnStartupTitle": "起動時に前回のワークスペースを再び開く",
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
+  "settingsReopenWorkspaceOnStartupDescription": "BusyMark の起動時に前回のセッションのワークスペースとタブを開く",
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
+  "settingsConfirmCloseWithUnsavedChangesTitle": "未保存の変更がある場合は閉じる前に確認",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "ドキュメントに未保存の変更がある場合、BusyMark を閉じる前に確認する",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
+  "closeUnsavedChangesTitle": "未保存の変更",
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
+  "closeUnsavedChangesSingleMessage": "このドキュメントには未保存の変更があります。BusyMark を閉じる前に変更を保存しますか？",
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{BusyMark を閉じる前に変更を保存しますか？} =1{未保存の変更があるドキュメントが 1 件あります。BusyMark を閉じる前に変更を保存しますか？} other{未保存の変更があるドキュメントが {count} 件あります。BusyMark を閉じる前に変更を保存しますか？}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "closeUnsavedChangesCancel": "キャンセル",
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "破棄",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Destructive button that closes BusyMark without saving editor changes. Translate it distinctly from Cancel."
+  },
+  "closeUnsavedChangesSave": "保存",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "currentFile": "現在のファイル",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "未保存の変更",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "{fileName} に未保存の変更があります。続行する前に保存しますか？",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChangesMultipleMessage": "{count, plural, =1{未保存の変更があるドキュメントが 1 件あります。続行する前に保存しますか？} other{未保存の変更があるドキュメントが {count} 件あります。続行する前に保存しますか？}}",
+  "@unsavedChangesMultipleMessage": {
+    "description": "Confirmation message before replacing workspace state when several documents are dirty.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileChangedOnDisk": "ディスク上でファイルが変更されました",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "このファイルは開いた後にディスク上で変更されています。上書きしますか？",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "無題.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "箇条書きリスト",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "番号付きリスト",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "タスクリスト",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "タスクの完了状態を切り替え",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "リスト項目をインデント",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "リスト項目のインデントを減らす",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "引用ブロック",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "コードブロック",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "コードブロックの言語",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "画像",
+  "video": "動画",
+  "openVideo": "動画を再生",
+  "pauseVideo": "動画を一時停止",
+  "videoUnavailable": "動画を利用できません",
+  "videoPreview": "動画のプレビュー",
+  "diagnosticWritersideVideoMissingSource": "動画に src 属性がありません。",
+  "diagnosticWritersideVideoUnsupportedSource": "サポートされていない動画ソース：{source}",
+  "@diagnosticWritersideVideoUnsupportedSource": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingFile": "動画ファイルが存在しません：{source}",
+  "@diagnosticWritersideVideoMissingFile": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingPreview": "動画のプレビュー画像が存在しません：{preview}",
+  "@diagnosticWritersideVideoMissingPreview": {
+    "placeholders": {
+      "preview": {
+        "type": "String"
+      }
+    }
+  },
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "inlineImage": "インライン画像",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "表",
+  "@table": {
+    "description": "Table command label."
+  },
+  "htmlBlock": "HTML ブロック",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "htmlContentDefault": "HTML コンテンツ",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
+  "shortcutHtmlBlockDescription": "HTML ブロックを挿入または編集",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "レンダリングされた HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "HTML を編集",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "HTML ソース",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
+  "thematicBreak": "水平線",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "太字",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "斜体",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "下線",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "取り消し線",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "インラインコード",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "リンク",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "強制改行",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "テキストスタイル",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "段落",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "見出し 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "見出し 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "見出し 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "見出し 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "見出し 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "見出し 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "表を削除",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "列 {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "左に列を挿入",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "右に列を挿入",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "列を削除",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableAlignmentUnspecified": "配置：未指定",
+  "@tableAlignmentUnspecified": {
+    "description": "Menu item for using unspecified Markdown table-column alignment."
+  },
+  "tableAlignmentLeft": "配置：左",
+  "@tableAlignmentLeft": {
+    "description": "Menu item for left-aligning a Markdown table column."
+  },
+  "tableAlignmentCenter": "配置：中央",
+  "@tableAlignmentCenter": {
+    "description": "Menu item for centering a Markdown table column."
+  },
+  "tableAlignmentRight": "配置：右",
+  "@tableAlignmentRight": {
+    "description": "Menu item for right-aligning a Markdown table column."
+  },
+  "tableRowNumber": "行 {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "上に行を挿入",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "下に行を挿入",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "行を削除",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "ヘッダー",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "セル",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "言語",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "編集ボタンを非表示",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "編集ボタンを表示",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "代替テキスト",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "editorPlaceholderText": "テキスト",
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
+  "editorPlaceholderCode": "コード",
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
+  "editorPlaceholderAltText": "代替テキスト",
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
+  "describeTheImage": "画像を説明",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "列",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "行",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "ヘッダー {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "セル",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "画像ソースがありません",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "remoteImageBlocked": "リモート画像がブロックされています",
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
+  "remoteImageBlockedTooltip": "BusyMark にリモート画像の読み込みを許可するか選択",
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
+  "remoteImagesBlockedTitle": "リモート画像がブロックされています",
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
+  "remoteImagesBlockedMessage": "このドキュメントはインターネット上の画像を参照しています。読み込むと、画像ホストにネットワーク情報が公開される可能性があります。",
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
+  "loadRemoteImagesForWorkspace": "このワークスペースで読み込む",
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
+  "alwaysLoadRemoteImages": "常にリモート画像を読み込む",
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
+  "hideSidebar": "サイドバーパネルを非表示",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar panel."
+  },
+  "showSidebar": "サイドバーパネルを表示",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar panel."
+  },
+  "showPreview": "プレビューを表示",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "プレビューを非表示",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "未保存の Markdown ファイル",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "単一の Markdown ファイル",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Markdown フォルダー",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Writerside モジュール",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "問題",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{診断情報はありません} =1{診断情報 1 件} other{診断情報 {count} 件}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "ファイル",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "目次",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "tocActions": "目次の操作",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
+  "markdownUnsaved": "Markdown - 未保存",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} - {count, plural, =1{ファイル 1 件} other{ファイル {count} 件}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "ファイルはありません",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "newFile": "新しいファイル",
+  "@newFile": {
+    "description": "Menu action and dialog title for creating a new file."
+  },
+  "noWritersideToc": "Writerside の目次はありません",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "目次セクション",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "新しいトピック",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "新しい子トピック",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "新しい兄弟トピック",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "トピックファイルの名前を変更",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "目次内の位置",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "目次のルート",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "選択したトピックの後",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "選択したトピック内",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "後に貼り付け",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "子として貼り付け",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "目次から削除",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "目次から削除しますか？",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "{name} をこの目次から削除しますか？トピックファイルは保持されます。",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "トピックファイルを削除しますか？",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "{name} を削除し、すべての目次から削除しますか？この操作は取り消せません。",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicFile": "トピックファイルを安全に削除…",
+  "@safeDeleteTopicFile": {
+    "description": "Writerside action that safely deletes a topic after checking usages."
+  },
+  "removeTocElement": "目次要素を削除",
+  "@removeTocElement": {
+    "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "reviewUsages": "使用箇所を確認",
+  "@reviewUsages": {
+    "description": "Action that opens the Writerside topic usages review."
+  },
+  "deleteTopicFile": "トピックファイルを削除",
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic source file."
+  },
+  "removeAction": "削除",
+  "@removeAction": {
+    "description": "Short action label for removing an item without deleting its source file."
+  },
+  "topicRemovalSummary": "選択したインスタンスから「{topic}」を削除します。トピックファイルは保持されます。",
+  "@topicRemovalSummary": {
+    "description": "Summary in the dialog for removing a topic from one Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicSummary": "「{topic}」を削除し、この Writerside プロジェクト全体の参照を安全に更新します。",
+  "@safeDeleteTopicSummary": {
+    "description": "Summary in the Writerside safe-delete dialog.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "childTopicsPromoted": "{count, plural, =1{子トピック 1 件を 1 レベル上へ移動します。} other{子トピック {count} 件を 1 レベル上へ移動します。}}",
+  "@childTopicsPromoted": {
+    "description": "Disclosure that children of a removed TOC element are promoted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "topicIsStartPageRemovalWarning": "このトピックはインスタンスの開始ページとして使用されています。使用箇所を確認し、続行する前に別の開始ページを割り当ててください。",
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning that blocks deletion of a Writerside start-page topic."
+  },
+  "topicUsagesCount": "使用箇所（{count}）",
+  "@topicUsagesCount": {
+    "description": "Heading with the number of Writerside topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noBreakingTopicUsages": "リンク切れになる参照は見つかりませんでした。",
+  "@noBreakingTopicUsages": {
+    "description": "Safe-delete message when no breaking references were found."
+  },
+  "topicUsagesFound": "BusyMark はこのトピックへの次の参照を見つけました。",
+  "@topicUsagesFound": {
+    "description": "Description above Writerside topic usage groups."
+  },
+  "topicUsageTocElements": "目次要素",
+  "@topicUsageTocElements": {
+    "description": "Usage group label for Writerside TOC elements."
+  },
+  "topicUsageStartPages": "開始ページ",
+  "@topicUsageStartPages": {
+    "description": "Usage group label for Writerside instance start pages."
+  },
+  "topicUsageTopicLinks": "トピックリンク",
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to a Writerside topic."
+  },
+  "topicUsageIncludes": "インクルード",
+  "@topicUsageIncludes": {
+    "description": "Usage group label for Writerside include elements."
+  },
+  "usageCount": "{count, plural, =1{使用箇所 1 件} other{使用箇所 {count} 件}}",
+  "@usageCount": {
+    "description": "Number of references that use a Writerside topic.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refactoringOptions": "リファクタリングのオプション",
+  "@refactoringOptions": {
+    "description": "Heading for Writerside topic removal options."
+  },
+  "updateUsagesAutomatically": "使用箇所を自動的に更新",
+  "@updateUsagesAutomatically": {
+    "description": "Option to rewrite Writerside topic usages during removal."
+  },
+  "updateUsagesAutomaticallyDescription": "目次の参照とインクルードを削除し、リンクテキストを保持",
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic Writerside usage updates."
+  },
+  "manualUsageUpdatesRequired": "このリファクタリングの前に手動で変更が必要な使用箇所があります。",
+  "@manualUsageUpdatesRequired": {
+    "description": "Message when some Writerside usages cannot be updated automatically."
+  },
+  "setRedirectTo": "リダイレクト先を設定",
+  "@setRedirectTo": {
+    "description": "Option to redirect an old Writerside page to another topic."
+  },
+  "noRedirectDescription": "以前公開されたページをリダイレクトしない",
+  "@noRedirectDescription": {
+    "description": "Description when no Writerside page redirect is selected."
+  },
+  "redirectTarget": "リダイレクト先",
+  "@redirectTarget": {
+    "description": "Field label for a Writerside redirect destination."
+  },
+  "remainingUsagesBlockRemoval": "続行する前に残りの使用箇所を確認して更新するか、利用可能な場合は自動更新を有効にしてください。",
+  "@remainingUsagesBlockRemoval": {
+    "description": "Instruction shown when unresolved usages block topic removal."
+  },
+  "usagesOfTopic": "{topic} の使用箇所",
+  "@usagesOfTopic": {
+    "description": "Writerside usages sidebar title.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "noUsagesFound": "使用箇所は見つかりませんでした",
+  "@noUsagesFound": {
+    "description": "Empty state in the Writerside usages review."
+  },
+  "outsideSelectedInstance": "選択したインスタンスの外部",
+  "@outsideSelectedInstance": {
+    "description": "Marker for a usage outside the selected Writerside instance."
+  },
+  "doRefactor": "リファクタリングを実行",
+  "@doRefactor": {
+    "description": "Action to return from usage review and continue the topic refactoring."
+  },
+  "orphanTopicTitle": "トピックファイルは使用されていません",
+  "@orphanTopicTitle": {
+    "description": "Dialog title after a topic is removed from its last table of contents."
+  },
+  "keepTopicFile": "トピックファイルを保持",
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned Writerside topic file."
+  },
+  "orphanTopicMessage": "「{topic}」はこの Writerside プロジェクト内で使用されていません。ファイルを削除するか、別のインスタンスで使用するために保持してください。",
+  "@orphanTopicMessage": {
+    "description": "Prompt to delete or keep an orphaned Writerside topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultNewTopicTitle": "新しいトピック",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "トピックのタイトル",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "ファイル名",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "トピックのタイトルは必須です。",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "ファイル名は必須です。",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "rename": "名前を変更",
+  "@rename": {
+    "description": "Rename command label."
+  },
+  "confirmDeleteFileTitle": "ファイルを削除しますか？",
+  "@confirmDeleteFileTitle": {
+    "description": "Confirmation dialog title before deleting a file."
+  },
+  "confirmDeleteFolderTitle": "フォルダーを削除しますか？",
+  "@confirmDeleteFolderTitle": {
+    "description": "Confirmation dialog title before deleting a folder."
+  },
+  "confirmDeleteFileMessage": "{name} を削除しますか？この操作は取り消せません。",
+  "@confirmDeleteFileMessage": {
+    "description": "Confirmation dialog message before deleting a file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteFolderMessage": "{name} と、その中のすべてのファイルを削除しますか？この操作は取り消せません。",
+  "@confirmDeleteFolderMessage": {
+    "description": "Confirmation dialog message before deleting a folder.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "useSingleSafeFileName": "安全な単一のファイル名を使用してください。",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "選択した形式の拡張子 {extension} を使用してください。",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "拡張子の前には、文字、数字、アンダースコア、ハイフンのみを使用してください。",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "トピック ID はすでに存在します。",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "Writerside トピックを作成できませんでした。",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "アウトラインはありません",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "{kind} を展開",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "{kind} を折りたたむ",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "セクション",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "リスト",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "引用",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "タグ",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "sourceSearchPreviousMatch": "前の一致",
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
+  "sourceSearchNextMatch": "次の一致",
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
+  "sourceSearchCaseSensitive": "大文字と小文字を区別",
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
+  "sourceSearchWholeWord": "単語単位",
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
+  "sourceSearchRegex": "正規表現",
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
+  "sourceSearchReplacement": "置換後",
+  "@sourceSearchReplacement": {
+    "description": "Placeholder for the active-document replacement field."
+  },
+  "sourceSearchReplaceCurrent": "現在の一致を置換",
+  "@sourceSearchReplaceCurrent": {
+    "description": "Tooltip for replacing the current search match."
+  },
+  "sourceSearchReplaceAndFindNext": "置換して次を検索",
+  "@sourceSearchReplaceAndFindNext": {
+    "description": "Tooltip for replacing the current match and moving to the next."
+  },
+  "sourceSearchReplaceAll": "すべて置換",
+  "@sourceSearchReplaceAll": {
+    "description": "Tooltip for replacing every active-document search match."
+  },
+  "workspaceReplace": "ワークスペースで置換",
+  "@workspaceReplace": {
+    "description": "Action that previews replacements across the workspace."
+  },
+  "reviewReplacements": "置換内容を確認",
+  "@reviewReplacements": {
+    "description": "Action and dialog title for reviewing workspace replacements."
+  },
+  "applyReplacements": "置換を適用",
+  "@applyReplacements": {
+    "description": "Action that applies selected workspace replacements."
+  },
+  "skippedFiles": "スキップしたファイル",
+  "@skippedFiles": {
+    "description": "Heading for files excluded from a workspace replacement."
+  },
+  "workspaceReplaceDirtyBuffer": "未保存のエディター内容",
+  "@workspaceReplaceDirtyBuffer": {
+    "description": "Source label for a workspace replacement preview using a dirty document buffer."
+  },
+  "workspaceReplaceDiskContent": "ディスク上の保存済み内容",
+  "@workspaceReplaceDiskContent": {
+    "description": "Source label for a workspace replacement preview using disk content."
+  },
+  "selectFileMatches": "{count} 件の一致をすべて選択",
+  "@selectFileMatches": {
+    "description": "Checkbox label for selecting every replacement match in a file.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceReplaceApplied": "{files} 個のファイルで {matches} 件の一致を置換しました。{skipped} 件をスキップしました。",
+  "@workspaceReplaceApplied": {
+    "description": "Summary shown after applying workspace replacements.",
+    "placeholders": {
+      "matches": {
+        "type": "int"
+      },
+      "files": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · 末尾に改行あり",
+  "@documentFormatWithFinalNewline": {
+    "description": "Document format tooltip when the file ends with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · 末尾に改行なし",
+  "@documentFormatWithoutFinalNewline": {
+    "description": "Document format tooltip when the file does not end with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "normalizeLineEndings": "行末を正規化",
+  "@normalizeLineEndings": {
+    "description": "Dialog title for selecting a line-ending style."
+  },
+  "mixedLineEndingsSavePrompt": "このドキュメントには混在した行末があります。形式を選択してください。",
+  "@mixedLineEndingsSavePrompt": {
+    "description": "Prompt shown before saving a document with mixed line endings."
+  },
+  "workspaceReplaceMixedLineEndings": "{fileName} には混在した行末があります。置換前に使用する形式を選択してください。",
+  "@workspaceReplaceMixedLineEndings": {
+    "description": "Prompt shown before replacing content in a mixed-line-ending file.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReplaceIssueOversized": "サイズが大きすぎるファイルをスキップしました。",
+  "@workspaceReplaceIssueOversized": {
+    "description": "Workspace replacement issue for a file above the size limit."
+  },
+  "workspaceReplaceIssueUnreadable": "読み取れないファイルをスキップしました。",
+  "@workspaceReplaceIssueUnreadable": {
+    "description": "Workspace replacement issue for an unreadable file."
+  },
+  "workspaceReplaceIssueInvalidUtf8": "有効な UTF-8 ではないファイルをスキップしました。",
+  "@workspaceReplaceIssueInvalidUtf8": {
+    "description": "Workspace replacement issue for invalid UTF-8 content."
+  },
+  "workspaceReplaceIssueTruncated": "置換プレビューは途中で切り詰められました。",
+  "@workspaceReplaceIssueTruncated": {
+    "description": "Workspace replacement issue when the match limit is reached."
+  },
+  "workspaceReplaceIssueFileChanged": "プレビュー後に変更されたファイルをスキップしました。",
+  "@workspaceReplaceIssueFileChanged": {
+    "description": "Workspace replacement issue for stale disk content."
+  },
+  "workspaceReplaceIssueBufferChanged": "プレビュー後に変更されたエディターバッファーをスキップしました。",
+  "@workspaceReplaceIssueBufferChanged": {
+    "description": "Workspace replacement issue for stale in-memory content."
+  },
+  "workspaceReplaceIssueNormalizationRequired": "置換前に LF または CRLF の正規化を選択してください。",
+  "@workspaceReplaceIssueNormalizationRequired": {
+    "description": "Workspace replacement issue for mixed line endings without a selected format."
+  },
+  "workspaceReplaceIssuePartialConflict": "ファイルが同時に変更されたため、ロールバックを停止しました。一部の置換が残っている可能性があります。置き換えられた内容は下記のパスに保存されています。",
+  "@workspaceReplaceIssuePartialConflict": {
+    "description": "Workspace replacement issue when a concurrent edit prevents safe transactional rollback."
+  },
+  "workspaceReplaceIssueApplyFailed": "確認済みの置換をコミットできませんでした。ファイルは変更されていません。",
+  "@workspaceReplaceIssueApplyFailed": {
+    "description": "Workspace replacement issue when the transactional file commit fails."
+  },
+  "externalChangesTitle": "外部変更 — {fileName}",
+  "@externalChangesTitle": {
+    "description": "Title of the external-file comparison dialog.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "externalFileDeleted": "このファイルはディスク上で削除されました。",
+  "@externalFileDeleted": {
+    "description": "Persistent banner shown when an open file is deleted externally."
+  },
+  "externalFileChanged": "未保存の編集を行っている間に、このファイルがディスク上で変更されました。",
+  "@externalFileChanged": {
+    "description": "Persistent banner shown when a dirty file changes externally."
+  },
+  "recoveredDocumentReview": "{fileName} の未保存の内容を復元しました。確認してから保存、名前を付けて保存、または破棄してください。",
+  "@recoveredDocumentReview": {
+    "description": "Persistent recovery review banner.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "compare": "比較",
+  "@compare": {
+    "description": "Action that compares the editor buffer with the disk version."
+  },
+  "reloadFromDisk": "ディスクから再読み込み",
+  "@reloadFromDisk": {
+    "description": "Action that replaces the editor buffer with the disk version."
+  },
+  "keepMine": "自分の変更を保持",
+  "@keepMine": {
+    "description": "Action that keeps the editor buffer after an external change."
+  },
+  "saveAs": "名前を付けて保存",
+  "@saveAs": {
+    "description": "Action that saves the current document to another path."
+  },
+  "sourceSearchInvalidRegex": "無効な正規表現",
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
+  "sourceLargeFileFeaturesPaused": "大きなファイル：ハイライトと折りたたみを一時停止しています",
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
+  "nothingToRead": "読み取るものはありません",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
+  },
+  "admonition": "注記",
+  "@admonition": {
+    "description": "Tooltip for the Writerside admonition editing menu."
+  },
+  "quote": "引用",
+  "@quote": {
+    "description": "Label for a neutral Writerside quote block."
+  },
+  "note": "注記",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "ヒント",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "警告",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "タブ",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "タブ",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "手順",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "ステップ",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "トピック",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "章",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "{target} を開けませんでした",
+  "@couldNotOpenTarget": {
+    "description": "Toast shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "リンク先が見つかりません：{targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Toast shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "このファイル形式はエディターで開けません",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Toast shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "アンカーが見つかりません：{anchor}",
+  "@anchorNotFound": {
+    "description": "Toast shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "問題は見つかりませんでした",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "結果はありません",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} - {lineNumber} 行目",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "無題の結果",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Markdown ファイル",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Writerside Markdown トピック",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "Writerside XML トピック",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Writerside ツリー",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "構成ファイル",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "変数ファイル",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "カテゴリファイル",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "リソースファイル",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "開くことができませんでした：{error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "Writerside プロジェクトを作成できませんでした：{error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "Writerside トピックを作成できませんでした：{error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "ファイルを開けませんでした：{error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "この Markdown ファイルの保存場所を選択してください。",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "保存できません：ファイルがディスク上で変更されました。",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "保存に失敗しました：{error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorFileOperationFailed": "ファイル操作に失敗しました：{error}",
+  "@workspaceErrorFileOperationFailed": {
+    "description": "Workspace error message shown when creating, renaming, moving, or deleting a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "検証に失敗しました：{error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRecoveryRestored": "{count, plural, =1{未保存のドキュメント 1 件を復元しました。保存または破棄する前に確認してください。} other{未保存のドキュメント {count} 件を復元しました。保存または破棄する前にそれぞれ確認してください。}}",
+  "@workspaceRecoveryRestored": {
+    "description": "Notice shown after crash recovery restores documents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceRecoveryDamaged": "{count, plural, =1{破損した復元レコード 1 件を復元できませんでした。元の復元ファイルは確認用に保持されています。} other{破損した復元レコード {count} 件を復元できませんでした。有効な復元レコードは引き続き利用できます。}}",
+  "@workspaceRecoveryDamaged": {
+    "description": "Notice shown when recovery data is partly or wholly malformed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "パスが存在しません：{path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "対象ディレクトリはすでに存在し、空ではありません：{path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "対象パスはすでに存在しますが、ディレクトリではありません：{path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "生成されたファイルはすでに存在します：{path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "親ディレクトリは必須です。",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "親ディレクトリが存在しません：{path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDirectoryMissing": "ディレクトリが存在しません：{path}",
+  "@errorDirectoryMissing": {
+    "description": "Detail for a missing directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathAlreadyExists": "パスはすでに存在します：{path}",
+  "@errorPathAlreadyExists": {
+    "description": "Detail for a file operation target that already exists.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNameRequired": "ファイル名は必須です。",
+  "@errorFileNameRequired": {
+    "description": "Detail for a missing file name in a file operation."
+  },
+  "errorFileNameUnsafe": "ファイル名は安全な単一のパスセグメントである必要があります。",
+  "@errorFileNameUnsafe": {
+    "description": "Detail for an unsafe file name in a file operation."
+  },
+  "errorFileOperationInvalidTarget": "フォルダーをその中へ移動することはできません。",
+  "@errorFileOperationInvalidTarget": {
+    "description": "Detail for an invalid file operation target."
+  },
+  "errorFileOperationOutsideRoot": "ファイル操作はワークスペース内で行う必要があります。",
+  "@errorFileOperationOutsideRoot": {
+    "description": "Detail for a file operation outside the workspace root."
+  },
+  "errorFileOperationRoot": "ファイルツリーからワークスペースのルートを変更することはできません。",
+  "@errorFileOperationRoot": {
+    "description": "Detail for a file operation attempted on the workspace root."
+  },
+  "errorProjectNameRequired": "プロジェクト名は必須です。",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "ディレクトリ名は必須です。",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "ディレクトリ名は安全な単一のパスセグメントである必要があります。",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "インスタンス ID は小文字で始まり、小文字、数字、アンダースコア、ハイフンのみを含む必要があります。",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "トピックファイル名は、パス区切り文字を含まない Markdown ファイル名である必要があります。",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "トピックのタイトルは必須です。",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "Writerside モジュールのルートが存在しません：{path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "トピックを作成するには Writerside モジュールを開く必要があります。",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "Writerside モジュールにインスタンスツリーがありません。",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Writerside ツリーファイルが存在しません：{path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "トピック ID「{topicId}」はこのヘルプモジュールにすでに存在します。",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "トピックファイルはすでに存在します：{path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "選択したツリーに参照トピックがありません：{topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "選択した目次エントリはすでに存在しません。",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "目次エントリを自分自身またはその子の中へ移動することはできません。",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "開始トピック {topic} は削除できません。先に別の開始ページを選択してください。",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideSafeDeleteRequired": "Writerside トピックファイルには「安全な削除」を使用してください。",
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Error shown when generic file deletion is attempted for a Writerside topic."
+  },
+  "errorWritersideTopicUsageScanFailed": "トピックの使用箇所をスキャンできませんでした。ファイルは変更されていません。",
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
+  "errorWritersideTopicUsagesRemain": "一部のトピックの使用箇所には引き続き対応が必要です。続行する前に確認してください。",
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
+  "errorWritersideRedirectInvalid": "選択したリダイレクト先は無効になっています。もう一度選択してください。",
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
+  "errorWritersideRollbackFailed": "トピックの削除を完全にはロールバックできませんでした。続行する前に次のパスを確認してください：{paths}",
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "トピックのルートは安全な相対ディレクトリである必要があります。",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "トピックファイル名は安全な単一のパスセグメントである必要があります。",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "トピックファイルの拡張子は、選択した形式（{extension}）と一致する必要があります。",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "トピックファイル名には、文字、数字、アンダースコア、ハイフンのみを使用できます。",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "不明なエラー：{code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "ファイルのメタデータを読み取れませんでした：{error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "大きなワークスペースが検出されました。アプリの応答性を保つため、一部のファイルをスキップしました。",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "ワークスペース項目を検査できませんでした：{error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "ファイルがベータ版自動解析の上限を超えています。",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "Markdown ファイルを読み取れませんでした：{error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Writerside の見出し属性ブロックの形式が正しくありません。",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "見出し ID「{id}」が重複しています。",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "追加のトップレベル H1 見出しは章として扱われます。",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown トピックに H1 または front matter のタイトルがありません。",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "XML トピックにタイトルがありません。",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "トピック「{fileName}」にタイトルがありません。",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "front matter が閉じられていません。",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "安全でない HTML 要素です。",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "リンク先が存在しません：{targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "アンカー「{anchor}」が存在しません。",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "画像「{destination}」に代替テキストがありません。",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "画像が存在しません：{destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "無効な XML：{message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "writerside.cfg のルートは <ihp> である必要があります。",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets 宣言に src がありません。",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups 宣言に src がありません。",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "サポートされていない keymaps モード：{mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "instance 宣言に src がありません。",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg にインスタンスが登録されていません。",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": ".tree のルートは <instance-profile> である必要があります。",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "インスタンスプロファイルに id がありません。",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "ツリーファイルの拡張子を除いた名前がインスタンス ID「{id}」と一致しません。",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "ライブラリ以外のインスタンスに start-page がありません。",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "開始ページ「{startPage}」が存在しません。",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "トピック「{topic}」がこのインスタンスの目次に複数回登場します。",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "変数宣言には名前と値が必要です。",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "変数「{name}」が複数回宣言されています。",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "カテゴリに id がありません。",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "カテゴリ「{id}」が複数回宣言されています。",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "カテゴリの順序「{order}」が複数回宣言されています。",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": ".topic のルートは <topic> である必要があります。",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "XML トピックにルート id がありません。",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "XML トピックのルート ID「{id}」はファイル名「{expectedId}」と一致する必要があります。",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "要素 ID「{elementId}」が複数回登場します。",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> に href がありません。",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Writerside モードには writerside.cfg が必要です。",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "設定されたビルド構成ディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "設定された API 仕様ディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "設定された snippets ディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "設定された変数ファイルがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "設定されたカテゴリファイルがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "設定されたインスタンスグループファイルがありません：{relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "登録されたインスタンスツリー「{source}」が存在しません。",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "トピックファイルを読み取れませんでした：{error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "デフォルトのトピックディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "設定されたトピックディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "設定された画像ディレクトリがありません：{relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "要素 ID「{id}」が複数回登場します。",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "目次が存在しないトピック「{topic}」を参照しています。",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "外部 href「{href}」が無効です。",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "変数「%{name}%」が宣言されていません。",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "トピックリンク「{destination}」を解決できません。",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "「{targetName}」にアンカー「{anchor}」が存在しません。",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "<include> に from がありません。",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "インクルードソース「{from}」が存在しません。",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "「{from}」にインクルード要素「{elementId}」が存在しません。",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "seealso カテゴリ「{ref}」が宣言されていません。",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "トピック参照「{reference}」があいまいです。",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "不明な診断情報：{code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "close": "閉じる",
+  "@close": {
+    "description": "Close action label."
+  },
+  "git": "Git",
+  "@git": {
+    "description": "Git sidebar tab label."
+  },
+  "gitDiff": "Git の差分",
+  "@gitDiff": {
+    "description": "Title for the Git diff viewer."
+  },
+  "gitShowDiff": "差分を表示",
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
+  "gitDiffHunkRange": "旧 {oldRange} → 新 {newRange}",
+  "@gitDiffHunkRange": {
+    "description": "Readable old-to-new line range shown for a Git diff hunk.",
+    "placeholders": {
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
+    }
+  },
+  "gitDiffNoLines": "行はありません",
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
+  "gitUnavailableTitle": "Git を利用できません",
+  "@gitUnavailableTitle": {
+    "description": "Git empty state title when Git cannot be used."
+  },
+  "gitUnavailableMessage": "{reason, select, other{Git をインストールするか、利用可能な Git 実行ファイルを使用するよう BusyMark を設定してください。{reason}}}",
+  "@gitUnavailableMessage": {
+    "description": "Git empty state message when Git cannot be used.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "gitTrustRequiredTitle": "このワークスペースを信頼して Git を使用しますか？",
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
+  "gitTrustRequiredMessage": "Git リポジトリでは、フック、フィルター、その他の設定を通じてプログラムを実行できます。BusyMark がリポジトリデータを読み取ったり Git 操作を有効にしたりする前に、このワークスペースを信頼してください。",
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
+  "gitTrustWorkspace": "ワークスペースを信頼",
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
+  "gitNotRepositoryTitle": "Git リポジトリではありません",
+  "@gitNotRepositoryTitle": {
+    "description": "Git empty state title for non-repository workspaces."
+  },
+  "gitNotRepositoryMessage": "このワークスペースは Git リポジトリ内にありません。",
+  "@gitNotRepositoryMessage": {
+    "description": "Git empty state message for non-repository workspaces."
+  },
+  "gitInitializeRepository": "リポジトリを初期化",
+  "@gitInitializeRepository": {
+    "description": "Action label for git init."
+  },
+  "gitDetachedHead": "分離した HEAD",
+  "@gitDetachedHead": {
+    "description": "Detached HEAD label."
+  },
+  "gitDetachedHeadAt": "HEAD は {commit} で分離しています",
+  "@gitDetachedHeadAt": {
+    "description": "Detached HEAD label with short commit.",
+    "placeholders": {
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitNoUpstream": "アップストリームなし",
+  "@gitNoUpstream": {
+    "description": "Repository label when no upstream branch is configured."
+  },
+  "gitAheadCount": "{count, plural, =1{未プッシュのコミット 1 件} other{未プッシュのコミット {count} 件}}",
+  "@gitAheadCount": {
+    "description": "Count of local commits not pushed to the upstream branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitBehindCount": "{count, plural, =1{プルが必要なコミット 1 件} other{プルが必要なコミット {count} 件}}",
+  "@gitBehindCount": {
+    "description": "Count of upstream commits not pulled into the local branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitClean": "クリーン",
+  "@gitClean": {
+    "description": "Git clean state label."
+  },
+  "gitConflicts": "競合",
+  "@gitConflicts": {
+    "description": "Git conflicts group label."
+  },
+  "gitChanges": "変更",
+  "@gitChanges": {
+    "description": "Git changes view label."
+  },
+  "gitStaged": "ステージ済み",
+  "@gitStaged": {
+    "description": "Git staged changes group label."
+  },
+  "gitUnstaged": "未ステージ",
+  "@gitUnstaged": {
+    "description": "Git unstaged changes group label."
+  },
+  "gitHistory": "履歴",
+  "@gitHistory": {
+    "description": "Git history view label."
+  },
+  "gitBranches": "ブランチ",
+  "@gitBranches": {
+    "description": "Git branch menu label."
+  },
+  "gitActions": "Git の操作",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
+  },
+  "gitPull": "Pull",
+  "@gitPull": {
+    "description": "Git pull action label."
+  },
+  "gitFetch": "Fetch",
+  "@gitFetch": {
+    "description": "Git fetch action label."
+  },
+  "gitPush": "Push",
+  "@gitPush": {
+    "description": "Git push action label."
+  },
+  "gitCommit": "Commit",
+  "@gitCommit": {
+    "description": "Git commit action label."
+  },
+  "gitSelectForCommit": "ファイルをステージ",
+  "@gitSelectForCommit": {
+    "description": "Tooltip for staging a Git file."
+  },
+  "gitRemoveFromCommit": "ファイルをアンステージ",
+  "@gitRemoveFromCommit": {
+    "description": "Tooltip for unstaging a Git file."
+  },
+  "gitDiscard": "ロールバック",
+  "@gitDiscard": {
+    "description": "Action that rolls a tracked file back to HEAD."
+  },
+  "gitOpenFile": "ファイルを開く",
+  "@gitOpenFile": {
+    "description": "Action label for opening a file from a Git row or diff."
+  },
+  "gitMarkResolved": "解決済みとしてマーク",
+  "@gitMarkResolved": {
+    "description": "Tooltip for marking a conflicted Git file as resolved."
+  },
+  "gitUntracked": "未追跡",
+  "@gitUntracked": {
+    "description": "Git untracked files group label."
+  },
+  "gitCommitMessage": "コミットメッセージ",
+  "@gitCommitMessage": {
+    "description": "Commit message field label."
+  },
+  "gitCommitSelectedFiles": "選択したファイル",
+  "@gitCommitSelectedFiles": {
+    "description": "Commit panel selected files section label."
+  },
+  "gitCommitNoSelectedFiles": "コミットする前に、少なくとも 1 つのファイルをステージしてください。",
+  "@gitCommitNoSelectedFiles": {
+    "description": "Commit validation error when the repository index is empty."
+  },
+  "gitStagedFileCount": "{count, plural, =1{ステージ済みファイル 1 件} other{ステージ済みファイル {count} 件}}",
+  "@gitStagedFileCount": {
+    "description": "Number of repository files currently staged for commit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitOutsideWorkspace": "ワークスペース外",
+  "@gitOutsideWorkspace": {
+    "description": "Marker for a staged repository file outside the opened workspace."
+  },
+  "gitCommitMessageRequired": "コミットメッセージを入力してください。",
+  "@gitCommitMessageRequired": {
+    "description": "Commit validation error when the message is empty."
+  },
+  "gitCreateBranch": "ブランチを作成",
+  "@gitCreateBranch": {
+    "description": "Git create branch action label."
+  },
+  "gitNewBranch": "新しいブランチ",
+  "@gitNewBranch": {
+    "description": "Git branch dropdown action for creating a new branch."
+  },
+  "gitBranchName": "ブランチ名",
+  "@gitBranchName": {
+    "description": "Branch name field label."
+  },
+  "gitSwitchBranch": "切り替え",
+  "@gitSwitchBranch": {
+    "description": "Git switch branch action label."
+  },
+  "gitNoChanges": "変更はありません",
+  "@gitNoChanges": {
+    "description": "Git empty state when there are no changes."
+  },
+  "gitNoHistory": "履歴はありません",
+  "@gitNoHistory": {
+    "description": "Git empty state when history is empty."
+  },
+  "gitNoBranches": "ブランチはありません",
+  "@gitNoBranches": {
+    "description": "Git empty state when branch list is empty."
+  },
+  "gitNoDiff": "表示する差分はありません",
+  "@gitNoDiff": {
+    "description": "Git diff empty state."
+  },
+  "gitBinaryFile": "バイナリファイルです。BusyMark はバイナリパッチをレンダリングしません。",
+  "@gitBinaryFile": {
+    "description": "Git diff binary file message."
+  },
+  "gitBinaryFileInfo": "バイナリファイル（{size} バイト）です。BusyMark はバイナリパッチをレンダリングしません。",
+  "@gitBinaryFileInfo": {
+    "description": "Git diff binary file message with file size.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "gitUnsavedChangesBanner": "保存するまで、未保存のエディターの変更は含まれません。",
+  "@gitUnsavedChangesBanner": {
+    "description": "Git diff banner for unsaved editor changes."
+  },
+  "gitConfirmDiscardTitle": "Git の変更を破棄しますか？",
+  "@gitConfirmDiscardTitle": {
+    "description": "Confirmation title for discarding Git changes."
+  },
+  "gitConfirmDiscardTracked": "{count, plural, =1{選択した追跡対象ファイルのステージ済みおよび未ステージの変更をすべて HEAD に復元します。} other{選択した追跡対象ファイルのステージ済みおよび未ステージの変更をすべて HEAD に復元します。}}",
+  "@gitConfirmDiscardTracked": {
+    "description": "Confirmation body for discarding tracked changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardUntracked": "{count, plural, =1{選択した未追跡ファイルを削除します。} other{選択した未追跡ファイルを削除します。}}",
+  "@gitConfirmDiscardUntracked": {
+    "description": "Confirmation body for deleting untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardMixed": "{count, plural, =1{Git の状態に応じて、選択したファイルを復元または削除します。} other{Git の状態に応じて、選択したファイルを復元または削除します。}}",
+  "@gitConfirmDiscardMixed": {
+    "description": "Confirmation body for discarding mixed tracked and untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchTitle": "{branch} に切り替えますか？",
+  "@gitConfirmSwitchBranchTitle": {
+    "description": "Confirmation title for switching branches.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchMessage": "Git がブランチを切り替えた後、BusyMark はディスクからワークスペースを再読み込みします。",
+  "@gitConfirmSwitchBranchMessage": {
+    "description": "Confirmation body for switching branches."
+  },
+  "gitConfirmPushSetUpstreamTitle": "アップストリームブランチを設定しますか？",
+  "@gitConfirmPushSetUpstreamTitle": {
+    "description": "Confirmation title for pushing with set-upstream."
+  },
+  "gitConfirmPushSetUpstreamMessage": "このブランチにはアップストリームがありません。リモートが 1 つだけ設定されている場合、BusyMark は {branch} をプッシュしてアップストリームを設定できます。",
+  "@gitConfirmPushSetUpstreamMessage": {
+    "description": "Confirmation body for pushing with set-upstream.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitProjectHistory": "プロジェクト履歴",
+  "@gitProjectHistory": {
+    "description": "Project history action label."
+  },
+  "gitFileHistory": "ファイル履歴",
+  "@gitFileHistory": {
+    "description": "Current file history action label."
+  },
+  "gitFileHistoryRequiresOpenFile": "ファイル履歴を表示するには Markdown ファイルを開く必要があります。",
+  "@gitFileHistoryRequiresOpenFile": {
+    "description": "File History empty state when no Markdown file is active."
+  },
+  "gitLoadMore": "さらに読み込む",
+  "@gitLoadMore": {
+    "description": "Action to load another page of Git history."
+  },
+  "gitChangesInCommit": "このコミットの変更",
+  "@gitChangesInCommit": {
+    "description": "Historical comparison between a commit and its parent."
+  },
+  "gitCompareWithCurrent": "現在の状態と比較",
+  "@gitCompareWithCurrent": {
+    "description": "Historical comparison between a commit and the working-tree file."
+  },
+  "gitRestoreVersion": "このバージョンを復元",
+  "@gitRestoreVersion": {
+    "description": "Action to restore one file from a selected commit."
+  },
+  "gitConfirmRestoreTitle": "このファイルのバージョンを復元しますか？",
+  "@gitConfirmRestoreTitle": {
+    "description": "Confirmation title for restoring a historical file version."
+  },
+  "gitConfirmRestoreMessage": "BusyMark は、現在の作業ツリーのファイルを選択したコミット済みバージョンで置き換えます。復元されたファイルは未ステージのままになります。",
+  "@gitConfirmRestoreMessage": {
+    "description": "Confirmation body for restoring a historical file version."
+  },
+  "gitCommitActions": "コミット操作",
+  "@gitCommitActions": {
+    "description": "Tooltip for actions on a selected Git commit."
+  },
+  "gitResetCurrentBranchToHere": "現在のブランチをここにリセット…",
+  "@gitResetCurrentBranchToHere": {
+    "description": "Project History action that moves the current branch to the selected commit."
+  },
+  "gitResetCurrentBranchTitle": "{branch} を {commit} にリセットしますか？",
+  "@gitResetCurrentBranchTitle": {
+    "description": "Title for choosing how to reset the current branch to a selected commit.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitResetCurrentBranchMessage": "ブランチ {branch} をコミット {commit} に移動します。Git がインデックスと作業ツリーを更新する方法を選択してください。",
+  "@gitResetCurrentBranchMessage": {
+    "description": "Explanation shown before resetting the current branch.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitReset": "リセット",
+  "@gitReset": {
+    "description": "Action that confirms resetting the current Git branch."
+  },
+  "gitResetModeSoft": "ソフト",
+  "@gitResetModeSoft": {
+    "description": "Git soft reset mode label."
+  },
+  "gitResetModeSoftDescription": "ブランチのみを移動します。インデックスと作業ツリーは変更せず、選択したコミットとの差分をステージ済みのままにします。",
+  "@gitResetModeSoftDescription": {
+    "description": "Git soft reset mode explanation."
+  },
+  "gitResetModeMixed": "ミックス",
+  "@gitResetModeMixed": {
+    "description": "Git mixed reset mode label."
+  },
+  "gitResetModeMixedDescription": "ブランチを移動してインデックスをリセットします。作業ツリーは変更せず、差分を未ステージの状態にします。",
+  "@gitResetModeMixedDescription": {
+    "description": "Git mixed reset mode explanation."
+  },
+  "gitResetModeHard": "ハード",
+  "@gitResetModeHard": {
+    "description": "Git hard reset mode label."
+  },
+  "gitResetModeHardDescription": "ブランチを移動してインデックスと作業ツリーをリセットします。追跡対象の変更は破棄され、妨げとなる未追跡ファイルは削除される可能性があります。",
+  "@gitResetModeHardDescription": {
+    "description": "Git hard reset mode explanation."
+  },
+  "gitResetModeKeep": "保持",
+  "@gitResetModeKeep": {
+    "description": "Git keep reset mode label."
+  },
+  "gitResetModeKeepDescription": "ローカルの変更を保持しながら、ブランチを移動して追跡対象ファイルをリセットします。変更がリセットと競合する場合、Git は中止します。",
+  "@gitResetModeKeepDescription": {
+    "description": "Git keep reset mode explanation."
+  },
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "@gitAdditionsDeletions": {
+    "description": "Diff additions and deletions count.",
+    "placeholders": {
+      "additions": {
+        "type": "int"
+      },
+      "deletions": {
+        "type": "int"
+      }
+    }
+  },
+  "fileActions": "ファイル操作",
+  "@fileActions": {
+    "description": "Tooltip for a file action menu."
+  },
+  "actions": "操作",
+  "@actions": {
+    "description": "Tooltip for a general action menu."
+  },
+  "gitStatusAdded": "追加済み",
+  "@gitStatusAdded": {
+    "description": "Git file status label."
+  },
+  "gitStatusDeleted": "削除済み",
+  "@gitStatusDeleted": {
+    "description": "Git file status label."
+  },
+  "gitStatusRenamed": "名前変更済み",
+  "@gitStatusRenamed": {
+    "description": "Git file status label."
+  },
+  "gitStatusCopied": "コピー済み",
+  "@gitStatusCopied": {
+    "description": "Git file status label."
+  },
+  "gitStatusUntracked": "未追跡",
+  "@gitStatusUntracked": {
+    "description": "Git file status label."
+  },
+  "gitStatusConflicted": "競合あり",
+  "@gitStatusConflicted": {
+    "description": "Git file status label."
+  },
+  "gitStatusIgnored": "無視済み",
+  "@gitStatusIgnored": {
+    "description": "Git file status label."
+  },
+  "gitStatusTypeChanged": "種類を変更済み",
+  "@gitStatusTypeChanged": {
+    "description": "Git file status label."
+  },
+  "gitStatusModified": "変更済み",
+  "@gitStatusModified": {
+    "description": "Git file status label."
+  },
+  "gitStatusUnknown": "不明",
+  "@gitStatusUnknown": {
+    "description": "Git file status label."
+  },
+  "gitErrorUnavailable": "Git を利用できません。",
+  "@gitErrorUnavailable": {
+    "description": "Git error message."
+  },
+  "gitErrorNotRepository": "このワークスペースは Git リポジトリではありません。",
+  "@gitErrorNotRepository": {
+    "description": "Git error message."
+  },
+  "gitErrorUnsafePath": "BusyMark は安全でない Git パスをブロックしました。",
+  "@gitErrorUnsafePath": {
+    "description": "Git error message."
+  },
+  "gitErrorInvalidBranchName": "有効なブランチ名を入力してください。",
+  "@gitErrorInvalidBranchName": {
+    "description": "Git error message."
+  },
+  "gitErrorNoRemote": "Git のリモートが設定されていません。",
+  "@gitErrorNoRemote": {
+    "description": "Git error message."
+  },
+  "gitErrorNoUpstream": "アップストリームブランチが設定されていません。",
+  "@gitErrorNoUpstream": {
+    "description": "Git error message."
+  },
+  "gitErrorMultipleRemotes": "複数のリモートが設定されています。BusyMark の外部でアップストリームを選択してください。",
+  "@gitErrorMultipleRemotes": {
+    "description": "Git error message."
+  },
+  "gitErrorDirtyWorkspace": "ブランチを切り替える前に、BusyMark エディターの変更を保存または破棄してください。",
+  "@gitErrorDirtyWorkspace": {
+    "description": "Git error message."
+  },
+  "gitErrorResetDirtyWorkspace": "現在のブランチをリセットする前に、BusyMark エディターの変更を保存または破棄してください。",
+  "@gitErrorResetDirtyWorkspace": {
+    "description": "Git reset error shown when the editor has unsaved content."
+  },
+  "gitErrorRestoreStagedFile": "過去のバージョンを復元する前に、このファイルをアンステージしてください。",
+  "@gitErrorRestoreStagedFile": {
+    "description": "Git error shown when historical restoration is blocked because the current file is staged."
+  },
+  "gitErrorResetDetachedHead": "リセットする前にブランチをチェックアウトしてください。",
+  "@gitErrorResetDetachedHead": {
+    "description": "Git reset error shown while HEAD is detached."
+  },
+  "gitErrorDiverged": "ブランチが分岐しています。BusyMark の外部でマージまたはリベースの問題を解決してください。",
+  "@gitErrorDiverged": {
+    "description": "Git error message."
+  },
+  "gitErrorAuthorIdentity": "コミットするには、Git に作成者名とメールアドレスが必要です。",
+  "@gitErrorAuthorIdentity": {
+    "description": "Git error shown when no commit author identity is configured."
+  },
+  "gitAuthorIdentityTitle": "Git の作成者情報",
+  "@gitAuthorIdentityTitle": {
+    "description": "Title of the Git author identity recovery dialog."
+  },
+  "gitAuthorIdentityMessage": "コミットに記録する Git の識別情報を入力してください。BusyMark はそれを保存して、このコミットを再試行します。",
+  "@gitAuthorIdentityMessage": {
+    "description": "Explanation in the Git author identity recovery dialog."
+  },
+  "gitAuthorName": "名前",
+  "@gitAuthorName": {
+    "description": "Git commit author name field label."
+  },
+  "gitAuthorEmail": "メールアドレス",
+  "@gitAuthorEmail": {
+    "description": "Git commit author email field label."
+  },
+  "gitAuthorIdentityGlobal": "すべてのリポジトリに使用",
+  "@gitAuthorIdentityGlobal": {
+    "description": "Switch label for saving Git identity globally."
+  },
+  "gitAuthorIdentityGlobalDescription": "Snap としてインストールした場合、BusyMark で開いたリポジトリに適用されます。",
+  "@gitAuthorIdentityGlobalDescription": {
+    "description": "Description of global Git identity scope in the Snap."
+  },
+  "gitSaveIdentityAndCommit": "保存してコミット",
+  "@gitSaveIdentityAndCommit": {
+    "description": "Action that saves Git author identity and retries a commit."
+  },
+  "gitErrorAuthentication": "Git の認証に失敗しました。",
+  "@gitErrorAuthentication": {
+    "description": "Git error message."
+  },
+  "gitErrorNetwork": "Git のネットワーク操作に失敗しました。",
+  "@gitErrorNetwork": {
+    "description": "Git error message."
+  },
+  "gitErrorConflict": "Git から未解決の競合が報告されました。",
+  "@gitErrorConflict": {
+    "description": "Git error message."
+  },
+  "gitErrorCommandFailed": "Git コマンドに失敗しました。",
+  "@gitErrorCommandFailed": {
+    "description": "Git error message."
+  },
+  "markdownAndHtml": "Markdown と HTML",
+  "@markdownAndHtml": {
+    "description": "Markdown and HTML reference dialog title and menu item."
+  },
+  "markdownHtmlMarkdownBlocks": "Markdown ブロック",
+  "@markdownHtmlMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "markdownHtmlMarkdownBlocksDescription": "Markdown のソースとプレビューでサポートされるブロック構造",
+  "@markdownHtmlMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "markdownHtmlInlineFormatting": "インライン Markdown",
+  "@markdownHtmlInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "markdownHtmlInlineFormattingDescription": "段落、リスト項目、表のセル内で使用できる書式",
+  "@markdownHtmlInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "markdownHtmlRawHtmlBlocks": "生 HTML ブロック",
+  "@markdownHtmlRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "markdownHtmlRawHtmlBlocksDescription": "BusyMark のプレビューウィジェットでレンダリングされる安全なブロックレベル HTML タグ",
+  "@markdownHtmlRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "markdownHtmlRawHtmlInline": "生 HTML インラインタグ",
+  "@markdownHtmlRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "markdownHtmlRawHtmlInlineDescription": "リテラルタグを表示せずにレンダリングされる安全なインライン HTML タグ",
+  "@markdownHtmlRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "markdownHtmlSafety": "安全性のルール",
+  "@markdownHtmlSafety": {
+    "description": "Reference section title for raw HTML safety rules."
+  },
+  "markdownHtmlSafetyDescription": "生 HTML はプレビューのレンダリング前に解析およびサニタイズされます。",
+  "@markdownHtmlSafetyDescription": {
+    "description": "Reference section description for raw HTML safety rules."
+  },
+  "markdownHtmlHeadings": "見出し",
+  "@markdownHtmlHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "markdownHtmlParagraphs": "段落",
+  "@markdownHtmlParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "markdownHtmlLists": "リスト",
+  "@markdownHtmlLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "markdownHtmlHtmlContainers": "コンテナー",
+  "@markdownHtmlHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "markdownHtmlHtmlTextBlocks": "テキストブロック",
+  "@markdownHtmlHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "markdownHtmlHtmlFigures": "図と画像",
+  "@markdownHtmlHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "markdownHtmlHtmlPreformatted": "整形済みコード",
+  "@markdownHtmlHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "markdownHtmlHtmlDisclosure": "折りたたみブロック",
+  "@markdownHtmlHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "markdownHtmlHtmlDescriptionLists": "説明リスト",
+  "@markdownHtmlHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "markdownHtmlHtmlFormattingTags": "書式タグ",
+  "@markdownHtmlHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "markdownHtmlHtmlInlineCodeTags": "インラインコードタグ",
+  "@markdownHtmlHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "markdownHtmlHtmlNeutralInlineTags": "セマンティックテキストタグ",
+  "@markdownHtmlHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "markdownHtmlSanitizedPreview": "サニタイズ済みプレビュー",
+  "@markdownHtmlSanitizedPreview": {
+    "description": "Reference row label for sanitized preview behavior."
+  },
+  "markdownHtmlSanitizedPreviewDescription": "許可された HTML はブラウザーでレンダリングされず、BusyMark のプレビューブロックに変換されます。",
+  "@markdownHtmlSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "markdownHtmlSourcePreserved": "ソースを保持",
+  "@markdownHtmlSourcePreserved": {
+    "description": "Reference row label for raw source preservation."
+  },
+  "markdownHtmlSourcePreservedDescription": "編集されていない生 HTML はソーステキストのまま正確に保存されます。",
+  "@markdownHtmlSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "markdownHtmlMarkdownInsideHtml": "HTML 内の Markdown",
+  "@markdownHtmlMarkdownInsideHtml": {
+    "description": "Reference row label for Markdown inside raw HTML."
+  },
+  "markdownHtmlMarkdownInsideHtmlDescription": "生 HTML 内の Markdown マーカーはリテラルテキストとしてレンダリングされます。",
+  "@markdownHtmlMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "markdownHtmlBlockedContent": "ブロックされたアクティブコンテンツ",
+  "@markdownHtmlBlockedContent": {
+    "description": "Reference row label for blocked HTML content."
+  },
+  "markdownHtmlBlockedContentDescription": "スクリプト、スタイル、フレーム、フォーム、SVG、MathML、イベント、安全でない属性はブロックされます。",
+  "@markdownHtmlBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "markdownHtmlSafeUrls": "安全な URL のみ",
+  "@markdownHtmlSafeUrls": {
+    "description": "Reference row label for safe URL policy."
+  },
+  "markdownHtmlSafeUrlsDescription": "リンクでは http、https、mailto、tel、相対パス、フラグメント URL が許可されます。安全でないスキームはブロックされます。",
+  "@markdownHtmlSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
+  "exportAsPdf": "PDF としてエクスポート",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."
+  },
+  "pdfExportDescription": "ページレイアウトを選択して、整った自己完結型の PDF を生成",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "エクスポート中にリモート画像はダウンロードされません。利用可能な場合はローカル画像が含まれます。",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "ページサイズ",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "向き",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "縦向き",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "横向き",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "余白",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "狭い",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "標準",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "広い",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "ページ番号を含める",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "エクスポート",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "PDF をエクスポート中…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "PDF ドキュメント",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} をエクスポートしました。",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} を {count} 件の警告付きでエクスポートしました。",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some content fell back or was omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "PDF エクスポートコンポーネントがありません。BusyMark を再インストールして、もう一度お試しください。",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "PDF のエクスポートに時間がかかりすぎたため停止しました。",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark はこのドキュメントを PDF としてエクスポートできませんでした。",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
+  "visualizationRendering": "レンダリング中…",
+  "@visualizationRendering": {
+    "description": "Status shown while a fenced visualization is rendering."
+  },
+  "visualizationStale": "最後に有効だったレンダリング結果を表示中",
+  "@visualizationStale": {
+    "description": "Status shown when a visualization displays its last valid result while newer source renders or is invalid."
+  },
+  "visualizationShowSource": "ソースを表示",
+  "@visualizationShowSource": {
+    "description": "Action that reveals the original source fence for a visualization."
+  },
+  "visualizationShowRender": "レンダリング結果を表示",
+  "@visualizationShowRender": {
+    "description": "Action that returns from visualization source to its rendered output."
+  },
+  "visualizationFitWidth": "幅に合わせる",
+  "@visualizationFitWidth": {
+    "description": "Action that resets diagram zoom to fit its card."
+  },
+  "visualizationSaveImage": "画像を保存",
+  "@visualizationSaveImage": {
+    "description": "Action that saves a rendered diagram as an SVG or PNG file."
+  },
+  "visualizationCopyImage": "画像をコピー",
+  "@visualizationCopyImage": {
+    "description": "Action that copies a rendered diagram to the image clipboard."
+  },
+  "visualizationImageCopied": "画像をコピーしました",
+  "@visualizationImageCopied": {
+    "description": "Confirmation after copying a rendered diagram to the clipboard."
+  },
+  "visualizationOpenApiReference": "API リファレンスを開く",
+  "@visualizationOpenApiReference": {
+    "description": "Action that opens the complete interactive OpenAPI reference window."
+  },
+  "visualizationValid": "有効",
+  "@visualizationValid": {
+    "description": "OpenAPI validation success state."
+  },
+  "visualizationInvalid": "無効",
+  "@visualizationInvalid": {
+    "description": "OpenAPI validation failure state."
+  },
+  "visualizationServers": "サーバー",
+  "@visualizationServers": {
+    "description": "OpenAPI server count label."
+  },
+  "visualizationPaths": "パス",
+  "@visualizationPaths": {
+    "description": "OpenAPI path count label."
+  },
+  "visualizationOperations": "操作",
+  "@visualizationOperations": {
+    "description": "OpenAPI operation count label."
+  },
+  "visualizationTags": "タグ",
+  "@visualizationTags": {
+    "description": "OpenAPI tag summary label."
+  },
+  "visualizationNoOperations": "一致する操作はありません",
+  "@visualizationNoOperations": {
+    "description": "Empty state for the filtered OpenAPI operation list."
+  },
+  "visualizationSearchOperations": "操作を検索",
+  "@visualizationSearchOperations": {
+    "description": "Hint for the OpenAPI operation search field."
+  },
+  "visualizationRenderFailed": "この可視化をレンダリングできませんでした。",
+  "@visualizationRenderFailed": {
+    "description": "Fallback message for a failed visualization render."
+  },
+  "visualizationRetry": "再試行",
+  "@visualizationRetry": {
+    "description": "Action that retries a failed visualization render."
+  },
+  "visualizationSaved": "{fileName} を保存しました",
+  "@visualizationSaved": {
+    "description": "Confirmation after saving a rendered diagram.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutExportPdfDescription": "現在のドキュメントまたは Writerside モジュールを PDF としてエクスポート",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
+  "instances": "インスタンス",
+  "@instances": {
+    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+  },
+  "newInstance": "新しいインスタンス",
+  "@newInstance": {
+    "description": "Action that creates a Writerside instance."
+  },
+  "newTocLibrary": "新しい目次ライブラリ",
+  "@newTocLibrary": {
+    "description": "Action that creates a Writerside library instance for reusable TOC sections."
+  },
+  "editInstance": "インスタンスを編集",
+  "@editInstance": {
+    "description": "Action and dialog title for editing a Writerside instance."
+  },
+  "openTocFile": "目次ファイルを開く",
+  "@openTocFile": {
+    "description": "Action that opens the selected Writerside instance tree file."
+  },
+  "createInstance": "インスタンスを作成",
+  "@createInstance": {
+    "description": "Dialog title for creating a Writerside instance."
+  },
+  "createTocLibrary": "目次ライブラリを作成",
+  "@createTocLibrary": {
+    "description": "Dialog title for creating a Writerside TOC library instance."
+  },
+  "instanceContent": "コンテンツ",
+  "@instanceContent": {
+    "description": "Group title for choosing the initial content of a Writerside instance."
+  },
+  "instanceContentSource": "作成元",
+  "@instanceContentSource": {
+    "description": "Field for choosing how a Writerside instance is initialized."
+  },
+  "emptyInstance": "空のインスタンス",
+  "@emptyInstance": {
+    "description": "Option to create a Writerside instance without imported topics."
+  },
+  "markdownFiles": "ローカル Markdown ファイル",
+  "@markdownFiles": {
+    "description": "Option to initialize a Writerside instance from Markdown files."
+  },
+  "chooseMarkdownFolder": "Markdown フォルダーを選択",
+  "@chooseMarkdownFolder": {
+    "description": "Action to choose a folder containing Markdown files."
+  },
+  "errorWritersideInstanceImportSourceRequired": "Markdown ファイルを含むフォルダーを選択してください。",
+  "@errorWritersideInstanceImportSourceRequired": {
+    "description": "Validation shown when an imported instance has no source folder."
+  },
+  "instanceAppearance": "外観",
+  "@instanceAppearance": {
+    "description": "Group title for the local appearance of a Writerside instance."
+  },
+  "instanceColor": "アイコンの色",
+  "@instanceColor": {
+    "description": "Writerside instance icon-color field."
+  },
+  "instanceVersion": "バージョン",
+  "@instanceVersion": {
+    "description": "Writerside instance version field."
+  },
+  "instanceVersionInherited": "この項目が空の場合、プロジェクトのバージョンは {version} です。",
+  "@instanceVersionInherited": {
+    "description": "Explanation of an inherited Writerside project version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "instanceWebPath": "ウェブパス",
+  "@instanceWebPath": {
+    "description": "Writerside instance publication web-path field."
+  },
+  "instanceStatus": "ステータス",
+  "@instanceStatus": {
+    "description": "Writerside instance status field."
+  },
+  "instanceStatusRelease": "リリース",
+  "@instanceStatusRelease": {
+    "description": "Regular Writerside instance status."
+  },
+  "instanceStatusEap": "早期アクセス",
+  "@instanceStatusEap": {
+    "description": "Writerside early-access instance status."
+  },
+  "instanceStatusDeprecated": "非推奨",
+  "@instanceStatusDeprecated": {
+    "description": "Writerside deprecated instance status."
+  },
+  "allowSearchEngineIndexing": "検索エンジンによるインデックス登録を許可",
+  "@allowSearchEngineIndexing": {
+    "description": "Per-instance Writerside search-engine indexing setting."
+  },
+  "allowSearchEngineIndexingDescription": "外部検索エンジンによるこの出力のインデックス登録を許可",
+  "@allowSearchEngineIndexingDescription": {
+    "description": "Description of the Writerside indexing setting."
+  },
+  "offlineArtifact": "オフラインアーティファクト",
+  "@offlineArtifact": {
+    "description": "Per-instance Writerside offline artifact setting."
+  },
+  "offlineArtifactDescription": "構築したドキュメントを自己完結させるためにリソースをバンドル",
+  "@offlineArtifactDescription": {
+    "description": "Description of the Writerside offline artifact setting."
+  },
+  "instanceOutputSettings": "出力設定",
+  "@instanceOutputSettings": {
+    "description": "Group title for Writerside instance build and publication settings."
+  },
+  "markdownImportSource": "Markdown ソース",
+  "@markdownImportSource": {
+    "description": "Group title for the source directory of a Writerside Markdown import."
+  },
+  "markdownImportFiles": "Markdown ファイル",
+  "@markdownImportFiles": {
+    "description": "Group title for files selected for a Writerside Markdown import."
+  },
+  "selectNone": "すべて選択解除",
+  "@selectNone": {
+    "description": "Action that clears all items in a multiple selection."
+  },
+  "markdownFilesFound": "Markdown ファイルが {count} 件見つかりました",
+  "@markdownFilesFound": {
+    "description": "Count of discovered Markdown import files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMarkdownFilesFound": "このディレクトリに Markdown ファイルは見つかりませんでした。",
+  "@noMarkdownFilesFound": {
+    "description": "Empty state for a Writerside Markdown import source."
+  },
+  "copyReferencedMedia": "参照されたメディアをコピー",
+  "@copyReferencedMedia": {
+    "description": "Option to copy media used by imported Markdown files."
+  },
+  "copyReferencedMediaDescription": "選択したファイルから参照されているローカル画像と動画を、相対パスを保持したままコピー",
+  "@copyReferencedMediaDescription": {
+    "description": "Description of the Writerside Markdown media import option."
+  },
+  "instanceIdRenameWarningTitle": "インスタンス ID の名前を変更しますか？",
+  "@instanceIdRenameWarningTitle": {
+    "description": "Confirmation title before refactoring a Writerside instance ID."
+  },
+  "instanceIdRenameWarning": "BusyMark は .tree ファイルの名前を変更し、Writerside プロジェクトの参照を「{oldId}」から「{newId}」に更新します。公開スクリプトは変更されないため、別途更新する必要があります。",
+  "@instanceIdRenameWarning": {
+    "description": "Warning shown before a Writerside instance ID refactor.",
+    "placeholders": {
+      "oldId": {
+        "type": "String"
+      },
+      "newId": {
+        "type": "String"
+      }
+    }
+  },
+  "renameAndUpdateReferences": "名前を変更して参照を更新",
+  "@renameAndUpdateReferences": {
+    "description": "Confirmation action for a Writerside instance ID refactor."
+  },
+  "tocLibraryDescription": "目次ライブラリには再利用可能なセクションが保存され、独自の出力は生成されません。",
+  "@tocLibraryDescription": {
+    "description": "Explanation shown while creating a Writerside TOC library."
+  },
+  "defaultTocLibraryName": "共有目次",
+  "@defaultTocLibraryName": {
+    "description": "Default name for a new Writerside TOC library instance."
+  },
+  "instanceColorAutomatic": "自動",
+  "@instanceColorAutomatic": {
+    "description": "Automatic Writerside instance icon color option."
+  },
+  "instanceColorBlue": "青",
+  "@instanceColorBlue": {
+    "description": "Blue Writerside instance icon color option."
+  },
+  "instanceColorGreen": "緑",
+  "@instanceColorGreen": {
+    "description": "Green Writerside instance icon color option."
+  },
+  "instanceColorOrange": "オレンジ",
+  "@instanceColorOrange": {
+    "description": "Orange Writerside instance icon color option."
+  },
+  "instanceColorPurple": "紫",
+  "@instanceColorPurple": {
+    "description": "Purple Writerside instance icon color option."
+  },
+  "instanceColorRed": "赤",
+  "@instanceColorRed": {
+    "description": "Red Writerside instance icon color option."
+  },
+  "instanceColorTeal": "青緑",
+  "@instanceColorTeal": {
+    "description": "Teal Writerside instance icon color option."
+  },
+  "instanceColorYellow": "黄",
+  "@instanceColorYellow": {
+    "description": "Yellow Writerside instance icon color option."
+  },
+  "errorWritersideInstanceNameRequired": "インスタンス名を入力してください。",
+  "@errorWritersideInstanceNameRequired": {
+    "description": "Validation error for an empty Writerside instance name."
+  },
+  "errorWritersideInstanceIdExists": "ID「{id}」のインスタンスはすでに存在します。",
+  "@errorWritersideInstanceIdExists": {
+    "description": "Error for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceTreeExists": "インスタンスツリーはすでに存在します：{path}",
+  "@errorWritersideInstanceTreeExists": {
+    "description": "Error for an existing Writerside instance tree path.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSourceMissing": "Markdown ソースディレクトリが存在しません：{path}",
+  "@errorWritersideInstanceImportSourceMissing": {
+    "description": "Error for a missing Writerside Markdown import source.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSelectionRequired": "インポートする Markdown ファイルを少なくとも 1 つ選択してください。",
+  "@errorWritersideInstanceImportSelectionRequired": {
+    "description": "Validation error when no Markdown import files are selected."
+  },
+  "errorWritersideInstanceImportFileInvalid": "選択したソース内に読み取り可能な Markdown ファイルではないものがあります：{path}",
+  "@errorWritersideInstanceImportFileInvalid": {
+    "description": "Error for an invalid Writerside Markdown import file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportTargetExists": "インポートすると既存のプロジェクトファイルが上書きされます：{path}",
+  "@errorWritersideInstanceImportTargetExists": {
+    "description": "Error for a colliding Writerside Markdown import target.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceFilesChanged": "インスタンスのファイルがディスク上で変更されました。確認して、もう一度お試しください。",
+  "@errorWritersideInstanceFilesChanged": {
+    "description": "Concurrent-change error for a Writerside instance mutation."
+  },
+  "errorWritersideInstanceRollbackFailed": "BusyMark はインスタンスの変更を完全にはロールバックできませんでした。続行する前に次のファイルを確認してください：{paths}",
+  "@errorWritersideInstanceRollbackFailed": {
+    "description": "Error when a Writerside instance mutation rollback is incomplete.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceLibraryImport": "目次ライブラリに Markdown トピックをインポートすることはできません。",
+  "@errorWritersideInstanceLibraryImport": {
+    "description": "Error when Markdown import is requested for a TOC library."
+  },
+  "errorWritersideInstanceWebPathInvalid": "ウェブパスは 1 行である必要があります。",
+  "@errorWritersideInstanceWebPathInvalid": {
+    "description": "Validation error for an invalid Writerside instance web path."
+  },
+  "errorWritersideInstanceConfigurationInvalid": "Writerside インスタンスの構成が無効です。診断情報を修正して、もう一度お試しください。",
+  "@errorWritersideInstanceConfigurationInvalid": {
+    "description": "Error when an instance tree, project config, or build profiles file cannot be safely edited."
+  },
+  "errorWritersideInstanceTemporaryFile": "BusyMark はインスタンスの変更を安全にステージできませんでした。",
+  "@errorWritersideInstanceTemporaryFile": {
+    "description": "Error when a temporary file for an instance mutation cannot be created."
+  },
+  "diagnosticWritersideTreeInvalidStatus": "不明なインスタンスステータス「{status}」です。release、eap、deprecated のいずれかを使用してください。",
+  "@diagnosticWritersideTreeInvalidStatus": {
+    "description": "Diagnostic for an unsupported Writerside instance status.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDuplicateInstanceId": "インスタンス ID「{id}」が複数のツリーファイルで使用されています。",
+  "@diagnosticWritersideDuplicateInstanceId": {
+    "description": "Diagnostic for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfilesInvalidRoot": "buildprofiles.xml には <buildprofiles> ルート要素が必要です。",
+  "@diagnosticWritersideBuildProfilesInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside build profiles root."
+  },
+  "diagnosticWritersideBuildProfilesInvalidBoolean": "{name} の値「{value}」は true または false である必要があります。",
+  "@diagnosticWritersideBuildProfilesInvalidBoolean": {
+    "description": "Diagnostic for an invalid Writerside build profile Boolean.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfileMissingInstance": "<build-profile> 要素にはインスタンス ID の指定が必要です。",
+  "@diagnosticWritersideBuildProfileMissingInstance": {
+    "description": "Diagnostic for a Writerside build profile without an instance attribute."
+  },
+  "diagnosticWritersideTreeInvalidInclude": "ツリーの <include> には from と element-id の両方を指定する必要があります。",
+  "@diagnosticWritersideTreeInvalidInclude": {
+    "description": "Diagnostic for an incomplete Writerside tree include."
+  },
+  "diagnosticWritersideTreeMissingSnippetId": "ツリーの <snippet> には id の指定が必要です。",
+  "@diagnosticWritersideTreeMissingSnippetId": {
+    "description": "Diagnostic for a Writerside tree snippet without an ID."
+  },
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "インスタンス間の目次参照には ref と in の両方を指定する必要があります。",
+  "@diagnosticWritersideTreeInvalidCrossInstanceReference": {
+    "description": "Diagnostic for an incomplete Writerside ref/in pair."
+  },
+  "diagnosticWritersideTreeConflictingTargets": "目次要素が複数のトピック、参照、リンク、またはリダイレクトを対象にすることはできません。",
+  "@diagnosticWritersideTreeConflictingTargets": {
+    "description": "Diagnostic for conflicting Writerside TOC targets."
+  },
+  "diagnosticWritersideTreeDuplicateElementId": "ツリー要素 ID「{id}」が複数回宣言されています。",
+  "@diagnosticWritersideTreeDuplicateElementId": {
+    "description": "Diagnostic for a duplicate Writerside tree element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "インスタンスグループファイルには <instance-groups> ルート要素が必要です。",
+  "@diagnosticWritersideInstanceGroupsInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside instance groups root."
+  },
+  "diagnosticWritersideInstanceGroupInvalid": "インスタンスグループには空でない id とインスタンスリストの指定が必要です。",
+  "@diagnosticWritersideInstanceGroupInvalid": {
+    "description": "Diagnostic for an invalid Writerside instance group."
+  },
+  "diagnosticWritersideInstanceGroupDuplicateId": "インスタンスグループ ID「{id}」が複数回宣言されています。",
+  "@diagnosticWritersideInstanceGroupDuplicateId": {
+    "description": "Diagnostic for a duplicate Writerside instance group ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideExternalTreeInclude": "目次のインクルード「{source}#{id}」は外部モジュール「{origin}」に属しているため、このワークスペースでは展開できません。",
+  "@diagnosticWritersideExternalTreeInclude": {
+    "description": "Diagnostic for a tree include from another Writerside module.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeIncludeElementMissing": "登録されたツリー「{source}」にツリー要素「{id}」が存在しません。",
+  "@diagnosticWritersideTreeIncludeElementMissing": {
+    "description": "Diagnostic for a missing reusable tree element.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeCircularInclude": "ツリーのインクルード「{source}#{id}」が循環を作成しています。",
+  "@diagnosticWritersideTreeCircularInclude": {
+    "description": "Diagnostic for a circular Writerside tree include.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideUnknownInstanceGroup": "インスタンス条件が不明なグループ「@{group}」を参照しています。",
+  "@diagnosticWritersideUnknownInstanceGroup": {
+    "description": "Diagnostic for an unknown Writerside instance group.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceInstanceMissing": "インスタンス間参照が不明なインスタンス「{instance}」を対象にしています。",
+  "@diagnosticWritersideReferenceInstanceMissing": {
+    "description": "Diagnostic for a missing Writerside reference instance.",
+    "placeholders": {
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceTopicMissing": "トピック「{topic}」は参照先のインスタンス「{instance}」にありません。",
+  "@diagnosticWritersideReferenceTopicMissing": {
+    "description": "Diagnostic for a missing topic in a cross-instance Writerside reference.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "download": "ダウンロード",
+  "@download": {
+    "description": "Button label that downloads a required component."
+  },
+  "exportWritersideAsPdf": "Writerside を PDF としてエクスポート",
+  "@exportWritersideAsPdf": {
+    "description": "Menu action and dialog title for exporting a Writerside instance as PDF."
+  },
+  "writersidePdfContent": "エクスポートする内容",
+  "@writersidePdfContent": {
+    "description": "Group title for selecting Writerside PDF content."
+  },
+  "writersidePdfPage": "ページ",
+  "@writersidePdfPage": {
+    "description": "Writerside PDF page settings group title."
+  },
+  "exportingWritersidePdf": "Writerside PDF をエクスポート中…",
+  "@exportingWritersidePdf": {
+    "description": "Progress title while building a Writerside PDF."
+  },
+  "ai": "AI",
+  "@ai": {
+    "description": "Settings section and editing menu label for artificial-intelligence features."
+  },
+  "aiLocalOllama": "ローカル Ollama",
+  "@aiLocalOllama": {
+    "description": "AI provider option for a loopback Ollama service."
+  },
+  "aiDisabled": "無効",
+  "@aiDisabled": {
+    "description": "AI provider option that disables AI features."
+  },
+  "aiLocalOnlyDescription": "AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。",
+  "@aiLocalOnlyDescription": {
+    "description": "Privacy description for BusyMark local AI."
+  },
+  "aiProvider": "AI プロバイダー",
+  "@aiProvider": {
+    "description": "Label for an AI provider selection."
+  },
+  "aiDefaultProvider": "デフォルトのプロバイダー",
+  "@aiDefaultProvider": {
+    "description": "Settings label for the provider selected by default for AI actions."
+  },
+  "aiConfigureProvider": "プロバイダーを設定",
+  "@aiConfigureProvider": {
+    "description": "Settings label for choosing which AI provider configuration to edit."
+  },
+  "aiChooseProvider": "AI プロバイダーを選択",
+  "@aiChooseProvider": {
+    "description": "Dialog title shown before selecting the AI provider for an action."
+  },
+  "aiOllamaEndpoint": "Ollama エンドポイント",
+  "@aiOllamaEndpoint": {
+    "description": "Settings label for the local Ollama origin."
+  },
+  "aiOllamaModel": "Ollama モデル",
+  "@aiOllamaModel": {
+    "description": "Settings label for the installed Ollama model."
+  },
+  "aiTestConnection": "接続をテスト",
+  "@aiTestConnection": {
+    "description": "Button that verifies generation with the configured AI provider and model."
+  },
+  "aiTestingConnection": "テスト中…",
+  "@aiTestingConnection": {
+    "description": "Status while BusyMark verifies the configured AI provider and model."
+  },
+  "aiConnectionReady": "接続しました。インストール済みのモデルが {count} 件見つかりました。",
+  "@aiConnectionReady": {
+    "description": "Successful Ollama connection status.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiNoModels": "モデルが選択されていません。",
+  "@aiNoModels": {
+    "description": "AI model setting shown before a model has been selected or discovered."
+  },
+  "aiConnectionFailed": "BusyMark は AI によるテキスト生成を確認できませんでした。",
+  "@aiConnectionFailed": {
+    "description": "Generic failure shown while testing AI generation."
+  },
+  "aiConfigureFirst": "設定 → AI で AI プロバイダーを有効にして、モデルを確認してください。",
+  "aiEditWithAi": "AI で編集",
+  "aiRefineWithAi": "AI で改善",
+  "@aiRefineWithAi": {
+    "description": "Selected-text context-menu action that opens AI refinement."
+  },
+  "aiInstruction": "指示",
+  "aiChangeTarget": "変更対象",
+  "aiSharedContext": "AI と共有するコンテキスト",
+  "aiTargetSelection": "選択したコンテンツ",
+  "aiTargetInsertAfterBlock": "現在のブロックの後に挿入",
+  "aiTargetCurrentBlock": "現在のブロック",
+  "aiTargetCurrentSection": "現在のセクション",
+  "aiTargetCompleteDocument": "ドキュメント全体",
+  "aiContextNone": "ドキュメントのコンテキストなし",
+  "aiContextSelection": "選択したコンテンツ",
+  "aiContextCurrentBlock": "現在のブロック",
+  "aiContextCurrentSection": "現在のセクション",
+  "aiContextCompleteDocument": "ドキュメント全体",
+  "@aiConfigureFirst": {
+    "description": "Message shown when an AI action is unavailable."
+  },
+  "aiGenerating": "提案を生成中…",
+  "@aiGenerating": {
+    "description": "Progress text while an AI proposal streams."
+  },
+  "aiProposal": "AI の提案",
+  "@aiProposal": {
+    "description": "Title of the AI proposal review dialog."
+  },
+  "aiGenerateProposal": "提案を生成",
+  "@aiGenerateProposal": {
+    "description": "Button that starts generation after the user reviews the AI instruction, change target, and shared context."
+  },
+  "aiContextDisclosure": "選択したプロバイダーは、表示されたコンテキストから {count} 文字を受け取ります。",
+  "@aiContextDisclosure": {
+    "description": "Disclosure of AI context size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiOriginal": "元の内容",
+  "@aiOriginal": {
+    "description": "Label for original text in an AI proposal review."
+  },
+  "aiSuggested": "提案された内容",
+  "@aiSuggested": {
+    "description": "Label for proposed text in an AI proposal review."
+  },
+  "aiApplyProposal": "提案を適用",
+  "@aiApplyProposal": {
+    "description": "Button that applies a reviewed AI proposal."
+  },
+  "aiTokenUsage": "入力トークン：{input} · 出力トークン：{output}",
+  "@aiTokenUsage": {
+    "description": "Local Ollama token usage for one proposal.",
+    "placeholders": {
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiStaleProposal": "この提案の生成中にドキュメントが変更されました。操作をもう一度実行してください。",
+  "gitAiStagedChangesChanged": "コミットメッセージの生成中にステージ済みの変更が変わりました。操作をもう一度実行してください。",
+  "@gitAiStagedChangesChanged": {
+    "description": "Warning shown when an AI commit-message proposal was generated from an obsolete staged diff."
+  },
+  "@aiStaleProposal": {
+    "description": "Message for an AI result based on an old editor revision."
+  },
+  "aiViewContext": "送信されたコンテキストを表示",
+  "@aiViewContext": {
+    "description": "Action that reveals the exact AI input context."
+  },
+  "aiReviewExactContent": "正確な内容を確認",
+  "@aiReviewExactContent": {
+    "description": "Action that reveals the exact content affected by and shared with an AI edit."
+  },
+  "aiContentToChange": "変更する内容",
+  "@aiContentToChange": {
+    "description": "Label for the exact Markdown that an AI proposal may change."
+  },
+  "aiContentSentToAi": "AI に送信された内容",
+  "@aiContentSentToAi": {
+    "description": "Label for the exact document context that will be sent to the configured AI provider."
+  },
+  "aiApiKey": "API キー",
+  "@aiApiKey": {
+    "description": "Label for a cloud AI provider API key."
+  },
+  "aiApiKeyStoredHint": "キーはシステムの認証情報ストアに保存されています",
+  "@aiApiKeyStoredHint": {
+    "description": "Hint when a cloud API key is already stored."
+  },
+  "aiApiKeyEnterHint": "プロバイダーの API キーを入力",
+  "@aiApiKeyEnterHint": {
+    "description": "Hint for entering a cloud provider API key."
+  },
+  "aiReplaceApiKey": "API キーを置き換え",
+  "@aiReplaceApiKey": {
+    "description": "Action that replaces a stored cloud provider key."
+  },
+  "aiSaveApiKey": "API キーを安全に保存",
+  "@aiSaveApiKey": {
+    "description": "Action that saves a cloud provider key to the system credential store."
+  },
+  "aiRemoveApiKey": "保存した API キーを削除",
+  "@aiRemoveApiKey": {
+    "description": "Action that removes a cloud provider key from the system credential store."
+  },
+  "aiCredentialSaved": "API キーをシステムの認証情報ストアに保存しました。",
+  "@aiCredentialSaved": {
+    "description": "Confirmation after saving an AI provider key."
+  },
+  "aiCredentialRemoved": "保存した API キーを削除しました。",
+  "@aiCredentialRemoved": {
+    "description": "Confirmation after removing an AI provider key."
+  },
+  "aiModelRouting": "モデルのルーティング",
+  "@aiModelRouting": {
+    "description": "Settings label for AI model routing."
+  },
+  "aiAutomaticRouting": "タスクに応じて自動選択",
+  "@aiAutomaticRouting": {
+    "description": "AI model routing option that chooses by task class."
+  },
+  "aiFixedModelRouting": "選択したモデルを使用",
+  "@aiFixedModelRouting": {
+    "description": "AI model routing option that always uses the preferred model."
+  },
+  "aiPreferredModel": "優先モデル",
+  "@aiPreferredModel": {
+    "description": "Settings label for a preferred cloud AI model."
+  },
+  "aiModel": "モデル",
+  "@aiModel": {
+    "description": "Label for selecting a model for one AI request."
+  },
+  "aiUsageThisMonth": "{requests} 件のリクエスト · 入力トークン {input} · 出力トークン {output}",
+  "@aiUsageThisMonth": {
+    "description": "Local monthly AI usage summary.",
+    "placeholders": {
+      "requests": {
+        "type": "int"
+      },
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiCloudConsentTitle": "{provider} にコンテンツを送信しますか？",
+  "@aiCloudConsentTitle": {
+    "description": "Cloud AI data-sharing confirmation title.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentEnable": "{provider} を有効にする",
+  "@aiCloudConsentEnable": {
+    "description": "Action that confirms use of a cloud AI provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentMessage": "各 AI レビューダイアログに表示された内容のみが送信されます。リクエストは状態を保持せず、提案には確認が必要です。API キーは Linux のシステム認証情報ストアに保存されます。",
+  "@aiCloudConsentMessage": {
+    "description": "Cloud AI data-sharing and credential disclosure."
+  },
+  "aiCloudConsentRequired": "先に設定 → AI で {provider} とのデータ共有を確認してください。",
+  "@aiCloudConsentRequired": {
+    "description": "AI action error when cloud consent is missing.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiGenerationVerified": "{model} で生成機能を確認しました。互換性のあるモデルが {count} 件利用できます。",
+  "@aiGenerationVerified": {
+    "description": "Successful AI model generation qualification.",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiColdStartObserved": "ローカルモデルのコールドスタートを検出しました。",
+  "@aiColdStartObserved": {
+    "description": "Additional model qualification status when local generation required a cold start."
+  },
+  "aiNoCompatibleModels": "互換性のあるテキスト生成モデルがありません。",
+  "@aiNoCompatibleModels": {
+    "description": "AI connection status when no compatible generation model is available."
+  },
+  "aiEnableProvider": "先に AI プロバイダーを有効にしてください。",
+  "@aiEnableProvider": {
+    "description": "AI settings error when no provider is enabled."
+  },
+  "aiDraftCommitMessage": "コミットメッセージを下書き",
+  "@aiDraftCommitMessage": {
+    "description": "AI action that drafts a Git commit message."
+  },
+  "aiDrafting": "下書き中…",
+  "@aiDrafting": {
+    "description": "Progress label while AI drafts a commit message."
+  },
+  "aiDraftWithAi": "AI で下書き",
+  "@aiDraftWithAi": {
+    "description": "Action that drafts a Git commit message with AI."
+  },
+  "generateOrUpdateMarkdownToc": "目次を生成／更新",
+  "@generateOrUpdateMarkdownToc": {
+    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
+  },
+  "markdownTocTitle": "目次",
+  "@markdownTocTitle": {
+    "description": "Heading inserted above a generated Markdown table of contents."
+  },
+  "markdownTocUpdated": "{count} 件の項目で目次を更新しました。",
+  "@markdownTocUpdated": {
+    "description": "Confirmation after generating a Markdown table of contents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markdownTocNoHeadings": "目次を生成する前に、セクション見出しを 1 つ以上追加してください。",
+  "@markdownTocNoHeadings": {
+    "description": "Message when a Markdown document has no section headings for a generated table of contents."
+  },
+  "markdownTocMalformedMarkers": "BusyMark の目次マーカーがないか、重複しているか、順序が正しくありません。",
+  "@markdownTocMalformedMarkers": {
+    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
+  },
+  "diagnosticMarkdownHeadingSkippedLevel": "見出しレベル {level} はレベル {previousLevel} の後に続いています。セクションの入れ子を確認してください。",
+  "@diagnosticMarkdownHeadingSkippedLevel": {
+    "description": "Accessibility diagnostic for a skipped Markdown heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "previousLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkEmptyText": "リンクテキストが空です。用途を説明するアクセシブルな名前を指定してください。",
+  "@diagnosticMarkdownLinkEmptyText": {
+    "description": "Accessibility diagnostic for a Markdown link without text."
+  },
+  "diagnosticMarkdownLinkReviewText": "リンクテキスト「{text}」が文脈内で用途を説明しているか確認してください。",
+  "@diagnosticMarkdownLinkReviewText": {
+    "description": "Accessibility hint for potentially non-descriptive Markdown link text.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownTableEmptyHeader": "表のヘッダーセルは列を識別できる必要があります。空のヘッダーをすべて入力してください。",
+  "@diagnosticMarkdownTableEmptyHeader": {
+    "description": "Accessibility diagnostic for an empty Markdown table header cell."
+  },
+  "mathRenderFailed": "数式をレンダリングできませんでした。",
+  "@mathRenderFailed": {
+    "description": "Tooltip and diagnostic text shown when a mathematical expression cannot be rendered."
+  },
+  "inlineMath": "インライン数式",
+  "@inlineMath": {
+    "description": "Editor action that inserts an inline mathematical expression."
+  },
+  "displayMath": "ディスプレイ数式",
+  "@displayMath": {
+    "description": "Editor action that inserts a display mathematical expression."
+  }
+}

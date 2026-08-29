@@ -264,6 +264,14 @@
   "@languageGerman": {
     "description": "Language selector option for German."
   },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
   "languageItalian": "Italiano",
   "@languageItalian": {
     "description": "Language selector option for Italian."
@@ -308,9 +316,25 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
   "languageEstonian": "Eesti",
   "@languageEstonian": {
     "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {"description": "Language selector option for Japanese."},
+  "languageKorean": "한국어",
+  "@languageKorean": {"description": "Language selector option for Korean."},
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
   },
   "toggleSidebar": "Panel lateral",
   "@toggleSidebar": {

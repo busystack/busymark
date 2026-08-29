@@ -313,6 +313,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
@@ -346,7 +352,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'Sidebar panel';

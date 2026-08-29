@@ -241,19 +241,26 @@ flutter test
 BusyMark has ARB localization files for:
 
 - Arabic (ar)
+- Dutch (nl)
 - English (en)
 - Estonian (et)
 - French (fr)
 - German (de)
 - Hindi (hi)
+- Indonesian (id)
 - Italian (it)
+- Japanese (ja)
+- Korean (ko)
 - Norwegian Bokmål (nb)
 - Persian (fa)
 - Polish (pl)
 - Portuguese (pt)
 - Russian (ru)
+- Simplified Chinese (zh-CN)
 - Spanish (es)
+- Turkish (tr)
 - Ukrainian (uk)
+- Vietnamese (vi)
 
 English in `lib/l10n/app_en.arb` is the source of truth for app strings.
 

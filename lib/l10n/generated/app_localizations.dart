@@ -14,12 +14,19 @@ import 'app_localizations_et.dart';
 import 'app_localizations_fa.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_hi.dart';
+import 'app_localizations_id.dart';
 import 'app_localizations_it.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
 import 'app_localizations_nb.dart';
+import 'app_localizations_nl.dart';
 import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
+import 'app_localizations_tr.dart';
 import 'app_localizations_uk.dart';
+import 'app_localizations_vi.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -115,12 +122,20 @@ abstract class AppLocalizations {
     Locale('fa'),
     Locale('fr'),
     Locale('hi'),
+    Locale('id'),
     Locale('it'),
+    Locale('ja'),
+    Locale('ko'),
     Locale('nb'),
+    Locale('nl'),
     Locale('pl'),
     Locale('pt'),
     Locale('ru'),
+    Locale('tr'),
     Locale('uk'),
+    Locale('vi'),
+    Locale('zh'),
+    Locale('zh', 'CN'),
   ];
 
   /// Application name.
@@ -699,6 +714,18 @@ abstract class AppLocalizations {
   /// **'Deutsch'**
   String get languageGerman;
 
+  /// Language selector option for Dutch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nederlands'**
+  String get languageDutch;
+
+  /// Language selector option for Turkish.
+  ///
+  /// In en, this message translates to:
+  /// **'Türkçe'**
+  String get languageTurkish;
+
   /// Language selector option for Italian.
   ///
   /// In en, this message translates to:
@@ -765,11 +792,41 @@ abstract class AppLocalizations {
   /// **'हिन्दी'**
   String get languageHindi;
 
+  /// Language selector option for Indonesian.
+  ///
+  /// In en, this message translates to:
+  /// **'Bahasa Indonesia'**
+  String get languageIndonesian;
+
   /// Language selector option for Estonian.
   ///
   /// In en, this message translates to:
   /// **'Eesti'**
   String get languageEstonian;
+
+  /// Language selector option for Vietnamese.
+  ///
+  /// In en, this message translates to:
+  /// **'Tiếng Việt'**
+  String get languageVietnamese;
+
+  /// Language selector option for Japanese.
+  ///
+  /// In en, this message translates to:
+  /// **'日本語'**
+  String get languageJapanese;
+
+  /// Language selector option for Korean.
+  ///
+  /// In en, this message translates to:
+  /// **'한국어'**
+  String get languageKorean;
+
+  /// Language selector option for Simplified Chinese.
+  ///
+  /// In en, this message translates to:
+  /// **'简体中文'**
+  String get languageSimplifiedChinese;
 
   /// Keyboard shortcuts label for the sidebar panel toggle.
   ///
@@ -5867,12 +5924,19 @@ class _AppLocalizationsDelegate
     'fa',
     'fr',
     'hi',
+    'id',
     'it',
+    'ja',
+    'ko',
     'nb',
+    'nl',
     'pl',
     'pt',
     'ru',
+    'tr',
     'uk',
+    'vi',
+    'zh',
   ].contains(locale.languageCode);
 
   @override
@@ -5880,6 +5944,18 @@ class _AppLocalizationsDelegate
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'zh':
+      {
+        switch (locale.countryCode) {
+          case 'CN':
+            return AppLocalizationsZhCn();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
     case 'ar':
@@ -5898,18 +5974,32 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsFr();
     case 'hi':
       return AppLocalizationsHi();
+    case 'id':
+      return AppLocalizationsId();
     case 'it':
       return AppLocalizationsIt();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
     case 'nb':
       return AppLocalizationsNb();
+    case 'nl':
+      return AppLocalizationsNl();
     case 'pl':
       return AppLocalizationsPl();
     case 'pt':
       return AppLocalizationsPt();
     case 'ru':
       return AppLocalizationsRu();
+    case 'tr':
+      return AppLocalizationsTr();
     case 'uk':
       return AppLocalizationsUk();
+    case 'vi':
+      return AppLocalizationsVi();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(

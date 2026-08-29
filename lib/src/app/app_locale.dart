@@ -22,12 +22,22 @@ const busyMarkLocaleOptions = <BusyMarkLocaleOption>[
   BusyMarkLocaleOption(locale: Locale('fa'), endonym: 'فارسی'),
   BusyMarkLocaleOption(locale: Locale('fr'), endonym: 'Français'),
   BusyMarkLocaleOption(locale: Locale('hi'), endonym: 'हिन्दी'),
+  BusyMarkLocaleOption(locale: Locale('id'), endonym: 'Bahasa Indonesia'),
   BusyMarkLocaleOption(locale: Locale('it'), endonym: 'Italiano'),
+  BusyMarkLocaleOption(locale: Locale('ja'), endonym: '日本語'),
+  BusyMarkLocaleOption(locale: Locale('ko'), endonym: '한국어'),
   BusyMarkLocaleOption(locale: Locale('nb'), endonym: 'Norsk'),
+  BusyMarkLocaleOption(locale: Locale('nl'), endonym: 'Nederlands'),
   BusyMarkLocaleOption(locale: Locale('pl'), endonym: 'Polski'),
   BusyMarkLocaleOption(locale: Locale('pt'), endonym: 'Português'),
   BusyMarkLocaleOption(locale: Locale('ru'), endonym: 'Русский'),
+  BusyMarkLocaleOption(locale: Locale('tr'), endonym: 'Türkçe'),
   BusyMarkLocaleOption(locale: Locale('uk'), endonym: 'Українська'),
+  BusyMarkLocaleOption(locale: Locale('vi'), endonym: 'Tiếng Việt'),
+  BusyMarkLocaleOption(
+    locale: Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
+    endonym: '简体中文',
+  ),
 ];
 
 Locale? busyMarkLocaleFromTag(String? tag) {
