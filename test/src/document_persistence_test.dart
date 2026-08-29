@@ -175,17 +175,21 @@ void main() {
     },
   );
 
-  test('recovery state is written with private POSIX permissions', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-recovery-permissions-',
-    );
-    addTearDown(() => directory.delete(recursive: true));
-    final path = p.join(directory.path, 'recovery.json');
-    final store = JsonDocumentRecoveryStore(filePathOverride: path);
+  test(
+    'recovery state is written with private POSIX permissions',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recovery-permissions-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'recovery.json');
+      final store = JsonDocumentRecoveryStore(filePathOverride: path);
 
-    await store.writeEntries(const []);
+      await store.writeEntries(const []);
 
-    expect((await File(path).stat()).mode & 0x1ff, 0x180);
-    expect((await directory.stat()).mode & 0x1ff, 0x1c0);
-  }, skip: Platform.isWindows ? 'POSIX permissions only.' : false);
+      expect((await File(path).stat()).mode & 0x1ff, 0x180);
+      expect((await directory.stat()).mode & 0x1ff, 0x1c0);
+    },
+    skip: Platform.isWindows ? 'POSIX permissions only.' : false,
+  );
 }

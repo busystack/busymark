@@ -937,77 +937,88 @@ void main() {
     skip: Platform.isWindows,
   );
 
-  test('diff APIs do not run a repository-configured textconv', () async {
-    if (!await _gitAvailable()) {
-      markTestSkipped('Git executable is unavailable.');
-      return;
-    }
-    final fixture = await _createTextconvFixture();
-    final sentinel = File('${fixture.probe.path}.ran');
+  test(
+    'diff APIs do not run a repository-configured textconv',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final fixture = await _createTextconvFixture();
+      final sentinel = File('${fixture.probe.path}.ran');
 
-    await _git(fixture.root.path, ['diff', '--textconv', '--', 'README.md']);
-    expect(
-      await sentinel.exists(),
-      isTrue,
-      reason: 'The textconv probe must execute without the mitigation.',
-    );
-    await sentinel.delete();
+      await _git(fixture.root.path, ['diff', '--textconv', '--', 'README.md']);
+      expect(
+        await sentinel.exists(),
+        isTrue,
+        reason: 'The textconv probe must execute without the mitigation.',
+      );
+      await sentinel.delete();
 
-    final fileDiff = await fixture.gateway.diffFile(
-      fixture.info,
-      'README.md',
-      staged: false,
-    );
-    expect(fileDiff.rawPatch, contains('Working tree change.'));
-    expect(
-      await sentinel.exists(),
-      isFalse,
-      reason: 'Git diffFile must disable repository textconv commands.',
-    );
+      final fileDiff = await fixture.gateway.diffFile(
+        fixture.info,
+        'README.md',
+        staged: false,
+      );
+      expect(fileDiff.rawPatch, contains('Working tree change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git diffFile must disable repository textconv commands.',
+      );
 
-    final allDiff = await fixture.gateway.diffAll(fixture.info, staged: false);
-    expect(allDiff.rawPatch, contains('Working tree change.'));
-    expect(
-      await sentinel.exists(),
-      isFalse,
-      reason: 'Git diffAll must disable repository textconv commands.',
-    );
-  }, skip: Platform.isWindows);
+      final allDiff = await fixture.gateway.diffAll(
+        fixture.info,
+        staged: false,
+      );
+      expect(allDiff.rawPatch, contains('Working tree change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git diffAll must disable repository textconv commands.',
+      );
+    },
+    skip: Platform.isWindows,
+  );
 
-  test('commit details do not run a repository-configured textconv', () async {
-    if (!await _gitAvailable()) {
-      markTestSkipped('Git executable is unavailable.');
-      return;
-    }
-    final fixture = await _createTextconvFixture();
-    final sentinel = File('${fixture.probe.path}.ran');
+  test(
+    'commit details do not run a repository-configured textconv',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final fixture = await _createTextconvFixture();
+      final sentinel = File('${fixture.probe.path}.ran');
 
-    await _git(fixture.root.path, [
-      'show',
-      '--textconv',
-      '--format=',
-      '--patch',
-      fixture.commitHash,
-    ]);
-    expect(
-      await sentinel.exists(),
-      isTrue,
-      reason: 'The textconv probe must execute for raw Git show.',
-    );
-    await sentinel.delete();
+      await _git(fixture.root.path, [
+        'show',
+        '--textconv',
+        '--format=',
+        '--patch',
+        fixture.commitHash,
+      ]);
+      expect(
+        await sentinel.exists(),
+        isTrue,
+        reason: 'The textconv probe must execute for raw Git show.',
+      );
+      await sentinel.delete();
 
-    final details = await fixture.gateway.commitDetails(
-      fixture.info,
-      fixture.commitHash,
-    );
+      final details = await fixture.gateway.commitDetails(
+        fixture.info,
+        fixture.commitHash,
+      );
 
-    expect(details.patch, contains('Committed change.'));
-    expect(
-      await sentinel.exists(),
-      isFalse,
-      reason: 'Git show must disable repository textconv commands.',
-    );
-  }, skip: Platform.isWindows);
+      expect(details.patch, contains('Committed change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git show must disable repository textconv commands.',
+      );
+    },
+    skip: Platform.isWindows,
+  );
 }
 
 Future<Directory> _createRepository(String prefix) async {

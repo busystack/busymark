@@ -206,46 +206,50 @@ void main() {
     );
   });
 
-  test('Git executes with the canonical path that was trusted', () async {
-    final root = await Directory.systemTemp.createTemp(
-      'busymark-controller-git-trust-',
-    );
-    addTearDown(() async {
-      if (await root.exists()) {
-        await root.delete(recursive: true);
-      }
-    });
-    final trusted = await Directory('${root.path}/trusted').create();
-    final replacement = await Directory('${root.path}/replacement').create();
-    final workspaceLink = Link('${root.path}/workspace');
-    await workspaceLink.create(trusted.path);
-    final gateway = _TrustRequiredFakeGitGateway();
-    final container = _container(gateway);
-    await container
-        .read(appSettingsControllerProvider.notifier)
-        .trustGitWorkspace(workspaceLink.path);
-    final controller = container.read(gitControllerProvider.notifier);
+  test(
+    'Git executes with the canonical path that was trusted',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-git-trust-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      final trusted = await Directory('${root.path}/trusted').create();
+      final replacement = await Directory('${root.path}/replacement').create();
+      final workspaceLink = Link('${root.path}/workspace');
+      await workspaceLink.create(trusted.path);
+      final gateway = _TrustRequiredFakeGitGateway();
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(workspaceLink.path);
+      final controller = container.read(gitControllerProvider.notifier);
 
-    controller.attachWorkspace(
-      _workspace(id: workspaceLink.path, rootPath: workspaceLink.path),
-    );
-    await controller.refresh();
+      controller.attachWorkspace(
+        _workspace(id: workspaceLink.path, rootPath: workspaceLink.path),
+      );
+      await controller.refresh();
 
-    expect(gateway.lastDetectedWorkspacePath, trusted.path);
-    await controller.initializeRepository();
-    expect(gateway.lastInitializeRootPath, trusted.path);
-    final trustedDetectCalls = gateway.detectCalls;
-    await workspaceLink.delete();
-    await workspaceLink.create(replacement.path);
+      expect(gateway.lastDetectedWorkspacePath, trusted.path);
+      await controller.initializeRepository();
+      expect(gateway.lastInitializeRootPath, trusted.path);
+      final trustedDetectCalls = gateway.detectCalls;
+      await workspaceLink.delete();
+      await workspaceLink.create(replacement.path);
 
-    await controller.refresh();
+      await controller.refresh();
 
-    expect(gateway.detectCalls, trustedDetectCalls);
-    expect(
-      container.read(gitControllerProvider).requiresWorkspaceTrust,
-      isTrue,
-    );
-  }, skip: Platform.isWindows);
+      expect(gateway.detectCalls, trustedDetectCalls);
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+    },
+    skip: Platform.isWindows,
+  );
 
   test('stage and unstage update state', () async {
     final gateway = _FakeGitGateway();
