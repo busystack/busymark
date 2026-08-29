@@ -480,6 +480,38 @@ void main() {
     );
   });
 
+  test('strict Snap keeps the GTK SVG loader ABI-aligned with GNOME', () {
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final localSnapBuilder = File(
+      'tools/build_install_snap_local.sh',
+    ).readAsStringSync();
+    final workflow = File(
+      '.github/workflows/flutter-linux.yml',
+    ).readAsStringSync();
+
+    expect(
+      snapcraft,
+      contains(
+        r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
+      ),
+    );
+    expect(
+      localSnapBuilder,
+      contains(r'rm -f "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*'),
+    );
+    expect(
+      localSnapBuilder,
+      contains('squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'),
+    );
+    expect(workflow, contains('Verify GTK SVG icon loader'));
+    expect(workflow, contains('libpixbufloader_svg.so'));
+    expect(
+      workflow,
+      contains(r'$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2'),
+    );
+    expect(workflow, contains(r'\"svg\" 6 \"gdk-pixbuf\"'));
+  });
+
   test('local snap builder stages bundled Git tools', () {
     final script = File('tools/build_install_snap_local.sh').readAsStringSync();
 

@@ -176,6 +176,16 @@ jobs:
           sudo snap install --dangerous
           "${{ steps.snapcraft.outputs.snap }}"
 
+      - name: Verify GTK SVG icon loader
+        run: |
+          snap run --shell busymark -c '
+            test ! -e \
+              "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/librsvg-2.so.2"
+            query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
+            loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
+            "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+          '
+
       - name: Exercise strict Snap visualization and PDF paths under X11
         run: |
           report="$HOME/snap/busymark/common/visualization-release-x11.json"

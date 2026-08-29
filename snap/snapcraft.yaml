@@ -129,6 +129,10 @@ parts:
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so" \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0" \
         "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/caca/libgl_plugin.so.0.0.0"
+      # GStreamer stages the core24 librsvg, but the GNOME runtime supplies
+      # the matching SVG pixbuf loader and a newer librsvg. Let that pair stay
+      # together; otherwise every SVG-backed GTK symbolic icon fails to load.
+      rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
       mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
       cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"
       cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"
