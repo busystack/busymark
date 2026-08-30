@@ -18,7 +18,7 @@
   "feedbackCategoryRequired": "Escolha uma categoria.",
   "feedbackSubjectLength": "O assunto deve ter entre 3 e 120 caracteres.",
   "feedbackMessageLength": "A mensagem deve ter entre 10 e 5000 caracteres.",
-  "feedbackReplyEmailInvalid": "Introduza um endereço de e-mail válido ou deixe este campo vazio.",
+  "feedbackReplyEmailInvalid": "Digite um endereço de e-mail válido ou deixe este campo vazio.",
   "feedbackConnectionFailure": "O BusyMark não conseguiu estabelecer conexão. Verifique a conexão com a Internet e tente novamente.",
   "feedbackTimeoutFailure": "O pedido excedeu o tempo limite. Tente novamente.",
   "feedbackRateLimitedFailure": "Foram enviados relatórios demais a partir desta conexão. Aguarde e tente novamente.",
@@ -1422,7 +1422,7 @@
     "description": "Status banner shown when source highlighting and folding are disabled for a large file."
   },
   "nothingToRead": "Nenhum conteúdo para ler",
-  "admonition": "Observação",
+  "admonition": "Bloco de destaque",
   "quote": "Citação",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
@@ -2746,7 +2746,7 @@
   "@export": {
     "description": "Button label that starts an export."
   },
-  "exportingPdf": "A exportar PDF…",
+  "exportingPdf": "Exportando PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
   },
@@ -2775,7 +2775,7 @@
       }
     }
   },
-  "pdfExportUnavailable": "O componente de exportação para PDF está em falta. Reinstale o BusyMark e tente novamente.",
+  "pdfExportUnavailable": "O componente de exportação para PDF está ausente. Reinstale o BusyMark e tente novamente.",
   "@pdfExportUnavailable": {
     "description": "Error shown when the bundled PDF compiler is unavailable."
   },
@@ -2788,7 +2788,7 @@
     "description": "Generic PDF export failure message."
   },
   "visualizationRendering": "Renderizando…",
-  "visualizationStale": "A mostrar a última renderização válida",
+  "visualizationStale": "Exibindo a última renderização válida",
   "visualizationShowSource": "Mostrar código-fonte",
   "visualizationShowRender": "Mostrar renderização",
   "visualizationFitWidth": "Ajustar à largura",
@@ -2806,7 +2806,7 @@
   "visualizationSearchOperations": "Pesquisar operações",
   "visualizationRenderFailed": "Não foi possível renderizar esta visualização.",
   "visualizationRetry": "Tentar novamente",
-  "visualizationSaved": "{fileName} guardado",
+  "visualizationSaved": "{fileName} salvo",
   "shortcutExportPdfDescription": "Exportar o documento ativo ou o módulo do Writerside como PDF.",
   "@shortcutExportPdfDescription": {
     "description": "Keyboard-shortcut description for PDF export."
@@ -2835,11 +2835,11 @@
   "gitResetModeMixed": "Mixed",
   "gitResetModeMixedDescription": "Mover a branch e redefinir o índice. Manter a árvore de trabalho inalterada, deixando as diferenças não preparadas.",
   "gitResetModeHard": "Hard",
-  "gitResetModeHardDescription": "Mover a branch e redefinir o índice e a árvore de trabalho. As alterações monitorizadas são descartadas; os arquivos não monitorizados que bloqueiam a operação podem ser eliminados.",
+  "gitResetModeHardDescription": "Mover a branch e redefinir o índice e a árvore de trabalho. As alterações rastreadas são descartadas; os arquivos não rastreados que bloqueiam a operação podem ser excluídos.",
   "gitResetModeKeep": "Keep",
-  "gitResetModeKeepDescription": "Mover a branch e redefinir os arquivos monitorizados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.",
-  "gitErrorResetDirtyWorkspace": "Guarde ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.",
-  "gitErrorResetDetachedHead": "Mude para uma branch antes de a redefinir.",
+  "gitResetModeKeepDescription": "Mover a branch e redefinir os arquivos rastreados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.",
+  "gitErrorResetDirtyWorkspace": "Salve ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.",
+  "gitErrorResetDetachedHead": "Alterne para uma branch antes de redefini-la.",
   "instances": "Instâncias",
   "newInstance": "Nova instância",
   "newTocLibrary": "Nova biblioteca de sumário",
@@ -2850,10 +2850,10 @@
   "instanceContent": "Conteúdo",
   "instanceContentSource": "Criar a partir de",
   "emptyInstance": "Instância vazia",
-  "markdownFiles": "Ficheiros Markdown locais",
+  "markdownFiles": "Arquivos Markdown locais",
   "chooseMarkdownFolder": "Escolher pasta de Markdown",
   "errorWritersideInstanceImportSourceRequired": "Escolha uma pasta que contenha arquivos Markdown.",
-  "instanceAppearance": "Aspeto",
+  "instanceAppearance": "Aparência",
   "instanceColor": "Cor do ícone",
   "instanceVersion": "Versão",
   "instanceVersionInherited": "Quando este campo está vazio, é usada a versão do projeto {version}.",
@@ -2862,13 +2862,13 @@
   "instanceStatusRelease": "Lançamento",
   "instanceStatusEap": "Acesso antecipado",
   "instanceStatusDeprecated": "Obsoleta",
-  "allowSearchEngineIndexing": "Permitir indexação por motores de pesquisa",
-  "allowSearchEngineIndexingDescription": "Permita que motores de pesquisa externos indexem esta saída.",
-  "offlineArtifact": "Artefacto offline",
+  "allowSearchEngineIndexing": "Permitir indexação por mecanismos de busca",
+  "allowSearchEngineIndexingDescription": "Permita que mecanismos de busca externos indexem esta saída.",
+  "offlineArtifact": "Artefato offline",
   "offlineArtifactDescription": "Inclua os recursos para que a documentação gerada funcione de forma autônoma.",
-  "instanceOutputSettings": "Definições de saída",
+  "instanceOutputSettings": "Configurações de saída",
   "markdownImportSource": "Origem Markdown",
-  "markdownImportFiles": "Ficheiros Markdown",
+  "markdownImportFiles": "Arquivos Markdown",
   "selectNone": "Não selecionar nenhum",
   "markdownFilesFound": "{count, plural, =1{Foi encontrado 1 arquivo Markdown} other{Foram encontrados {count} arquivos Markdown}}",
   "noMarkdownFilesFound": "Não foram encontrados arquivos Markdown neste diretório.",
@@ -2877,8 +2877,8 @@
   "instanceIdRenameWarningTitle": "Mudar o nome do ID da instância?",
   "instanceIdRenameWarning": "O BusyMark vai renomear o arquivo .tree e atualizar as referências do projeto Writerside de “{oldId}” para “{newId}”. Os scripts de publicação não são alterados e devem ser atualizados separadamente.",
   "renameAndUpdateReferences": "Mudar o nome e atualizar referências",
-  "tocLibraryDescription": "Uma biblioteca de sumário armazena secções reutilizáveis e não produz uma saída própria.",
-  "defaultTocLibraryName": "Sumário partilhado",
+  "tocLibraryDescription": "Uma biblioteca de sumário armazena seções reutilizáveis e não produz uma saída própria.",
+  "defaultTocLibraryName": "Sumário compartilhado",
   "instanceColorAutomatic": "Automático",
   "instanceColorBlue": "Azul",
   "instanceColorGreen": "Verde",
@@ -2887,7 +2887,7 @@
   "instanceColorRed": "Vermelho",
   "instanceColorTeal": "Verde-azulado",
   "instanceColorYellow": "Amarelo",
-  "errorWritersideInstanceNameRequired": "Introduza um nome para a instância.",
+  "errorWritersideInstanceNameRequired": "Digite um nome para a instância.",
   "errorWritersideInstanceIdExists": "Já existe uma instância com o ID “{id}”.",
   "errorWritersideInstanceTreeExists": "A árvore da instância já existe: {path}",
   "errorWritersideInstanceImportSourceMissing": "O diretório de origem Markdown não existe: {path}",
@@ -2914,7 +2914,7 @@
   "diagnosticWritersideInstanceGroupInvalid": "Um grupo de instâncias deve especificar um id e uma lista de instâncias não vazios.",
   "diagnosticWritersideInstanceGroupDuplicateId": "O ID do grupo de instâncias “{id}” foi declarado mais de uma vez.",
   "diagnosticWritersideExternalTreeInclude": "A inclusão de sumário “{source}#{id}” pertence ao módulo externo “{origin}” e não pode ser expandida neste espaço de trabalho.",
-  "diagnosticWritersideTreeIncludeElementMissing": "O elemento de árvore “{id}” não existe na árvore registada “{source}”.",
+  "diagnosticWritersideTreeIncludeElementMissing": "O elemento de árvore “{id}” não existe na árvore registrada “{source}”.",
   "diagnosticWritersideTreeCircularInclude": "A inclusão de árvore “{source}#{id}” cria um ciclo.",
   "diagnosticWritersideUnknownInstanceGroup": "A condição de instância referencia o grupo desconhecido “@{group}”.",
   "diagnosticWritersideReferenceInstanceMissing": "A referência entre instâncias aponta para a instância desconhecida “{instance}”.",

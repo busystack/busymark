@@ -3636,7 +3636,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get feedbackReplyEmailInvalid =>
-      'Introduza um endereço de e-mail válido ou deixe este campo vazio.';
+      'Digite um endereço de e-mail válido ou deixe este campo vazio.';
 
   @override
   String get feedbackConnectionFailure =>
@@ -5111,7 +5111,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get nothingToRead => 'Nenhum conteúdo para ler';
 
   @override
-  String get admonition => 'Observação';
+  String get admonition => 'Bloco de destaque';
 
   @override
   String get quote => 'Citação';
@@ -6077,14 +6077,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitResetModeHardDescription =>
-      'Mover a branch e redefinir o índice e a árvore de trabalho. As alterações monitorizadas são descartadas; os arquivos não monitorizados que bloqueiam a operação podem ser eliminados.';
+      'Mover a branch e redefinir o índice e a árvore de trabalho. As alterações rastreadas são descartadas; os arquivos não rastreados que bloqueiam a operação podem ser excluídos.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
   String get gitResetModeKeepDescription =>
-      'Mover a branch e redefinir os arquivos monitorizados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.';
+      'Mover a branch e redefinir os arquivos rastreados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -6157,7 +6157,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitErrorResetDirtyWorkspace =>
-      'Guarde ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.';
+      'Salve ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.';
 
   @override
   String get gitErrorRestoreStagedFile =>
@@ -6165,7 +6165,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get gitErrorResetDetachedHead =>
-      'Mude para uma branch antes de a redefinir.';
+      'Alterne para uma branch antes de redefini-la.';
 
   @override
   String get gitErrorDiverged =>
@@ -6367,7 +6367,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get export => 'Exportar';
 
   @override
-  String get exportingPdf => 'A exportar PDF…';
+  String get exportingPdf => 'Exportando PDF…';
 
   @override
   String get fileTypePdf => 'Documento PDF';
@@ -6390,7 +6390,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get pdfExportUnavailable =>
-      'O componente de exportação para PDF está em falta. Reinstale o BusyMark e tente novamente.';
+      'O componente de exportação para PDF está ausente. Reinstale o BusyMark e tente novamente.';
 
   @override
   String get pdfExportTimedOut =>
@@ -6404,7 +6404,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get visualizationRendering => 'Renderizando…';
 
   @override
-  String get visualizationStale => 'A mostrar a última renderização válida';
+  String get visualizationStale => 'Exibindo a última renderização válida';
 
   @override
   String get visualizationShowSource => 'Mostrar código-fonte';
@@ -6460,7 +6460,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String visualizationSaved(String fileName) {
-    return '$fileName guardado';
+    return '$fileName salvo';
   }
 
   @override
@@ -6498,7 +6498,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get emptyInstance => 'Instância vazia';
 
   @override
-  String get markdownFiles => 'Ficheiros Markdown locais';
+  String get markdownFiles => 'Arquivos Markdown locais';
 
   @override
   String get chooseMarkdownFolder => 'Escolher pasta de Markdown';
@@ -6508,7 +6508,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Escolha uma pasta que contenha arquivos Markdown.';
 
   @override
-  String get instanceAppearance => 'Aspeto';
+  String get instanceAppearance => 'Aparência';
 
   @override
   String get instanceColor => 'Cor do ícone';
@@ -6538,27 +6538,27 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get allowSearchEngineIndexing =>
-      'Permitir indexação por motores de pesquisa';
+      'Permitir indexação por mecanismos de busca';
 
   @override
   String get allowSearchEngineIndexingDescription =>
-      'Permita que motores de pesquisa externos indexem esta saída.';
+      'Permita que mecanismos de busca externos indexem esta saída.';
 
   @override
-  String get offlineArtifact => 'Artefacto offline';
+  String get offlineArtifact => 'Artefato offline';
 
   @override
   String get offlineArtifactDescription =>
       'Inclua os recursos para que a documentação gerada funcione de forma autônoma.';
 
   @override
-  String get instanceOutputSettings => 'Definições de saída';
+  String get instanceOutputSettings => 'Configurações de saída';
 
   @override
   String get markdownImportSource => 'Origem Markdown';
 
   @override
-  String get markdownImportFiles => 'Ficheiros Markdown';
+  String get markdownImportFiles => 'Arquivos Markdown';
 
   @override
   String get selectNone => 'Não selecionar nenhum';
@@ -6599,10 +6599,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get tocLibraryDescription =>
-      'Uma biblioteca de sumário armazena secções reutilizáveis e não produz uma saída própria.';
+      'Uma biblioteca de sumário armazena seções reutilizáveis e não produz uma saída própria.';
 
   @override
-  String get defaultTocLibraryName => 'Sumário partilhado';
+  String get defaultTocLibraryName => 'Sumário compartilhado';
 
   @override
   String get instanceColorAutomatic => 'Automático';
@@ -6630,7 +6630,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get errorWritersideInstanceNameRequired =>
-      'Introduza um nome para a instância.';
+      'Digite um nome para a instância.';
 
   @override
   String errorWritersideInstanceIdExists(String id) {
@@ -6760,7 +6760,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
     String source,
     String id,
   ) {
-    return 'O elemento de árvore “$id” não existe na árvore registada “$source”.';
+    return 'O elemento de árvore “$id” não existe na árvore registrada “$source”.';
   }
 
   @override
