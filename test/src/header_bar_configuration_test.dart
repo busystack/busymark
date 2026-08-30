@@ -427,6 +427,19 @@ void main() {
     expect(_tooltipTheme.toMap(), containsPair('verticalPadding', 6.0));
     expect(_tooltipTheme.toMap(), containsPair('minimumHeight', 30.0));
   });
+
+  test('native header labels expose the Syntax Reference command', () {
+    expect(
+      _labels.toMap(),
+      containsPair('syntaxReference', 'Syntax Reference'),
+    );
+    expect(_labels.toMap(), containsPair('syntaxReferenceShortcut', 'F1'));
+    expect(
+      _labels.toMap(),
+      containsPair('syntaxReferenceGtkAccelerator', 'F1'),
+    );
+    expect(_labels.toMap(), isNot(contains('markdownAndHtml')));
+  });
 }
 
 HeaderBarConfiguration _configuration({
@@ -493,9 +506,9 @@ const _labels = HeaderBarLabels(
   keyboardShortcuts: 'Keyboard Shortcuts',
   keyboardShortcutsShortcut: 'Ctrl+?',
   keyboardShortcutsGtkAccelerator: '<Primary>question',
-  markdownAndHtml: 'Markdown and HTML',
-  markdownAndHtmlShortcut: 'F1',
-  markdownAndHtmlGtkAccelerator: 'F1',
+  syntaxReference: 'Syntax Reference',
+  syntaxReferenceShortcut: 'F1',
+  syntaxReferenceGtkAccelerator: 'F1',
   reportIssue: 'Report Issue',
   aboutBusyMark: 'About BusyMark',
 );

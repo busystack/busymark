@@ -455,8 +455,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Tastaturkürzelübersicht anzeigen';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Markdown- und HTML-Referenz öffnen';
+  String get shortcutSyntaxReferenceDescription => 'Syntaxreferenz öffnen';
 
   @override
   String get shortcutSettingsDescription => 'BusyMark-Einstellungen öffnen';
@@ -2681,113 +2680,288 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git-Befehl fehlgeschlagen.';
 
   @override
-  String get markdownAndHtml => 'Markdown und HTML';
+  String get syntaxReference => 'Syntaxreferenz';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown-Blöcke';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown-Blöcke';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Blockstrukturen, die in Markdown-Quelltext und Vorschau unterstützt werden.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Inline-Markdown';
+  String get syntaxReferenceInlineFormatting => 'Inline-Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Formatierung innerhalb von Absätzen, Listeneinträgen und Tabellenzellen.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Roh-HTML-Blöcke';
+  String get syntaxReferenceRawHtmlBlocks => 'Roh-HTML-Blöcke';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Sichere HTML-Blocktags, die über BusyMark-Vorschauwidgets gerendert werden.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Roh-HTML-Inline-Tags';
+  String get syntaxReferenceRawHtmlInline => 'Roh-HTML-Inline-Tags';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Sichere Inline-HTML-Tags, die ohne sichtbare Tags gerendert werden.';
 
   @override
-  String get markdownHtmlSafety => 'Sicherheitsregeln';
+  String get syntaxReferenceSafety => 'Sicherheitsregeln';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'Roh-HTML wird vor der Vorschau geparst und bereinigt.';
 
   @override
-  String get markdownHtmlHeadings => 'Überschriften';
+  String get syntaxReferenceHeadings => 'Überschriften';
 
   @override
-  String get markdownHtmlParagraphs => 'Absätze';
+  String get syntaxReferenceParagraphs => 'Absätze';
 
   @override
-  String get markdownHtmlLists => 'Listen';
+  String get syntaxReferenceLists => 'Listen';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Container';
+  String get syntaxReferenceHtmlContainers => 'Container';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Textblöcke';
+  String get syntaxReferenceHtmlTextBlocks => 'Textblöcke';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Abbildungen und Bilder';
+  String get syntaxReferenceHtmlFigures => 'Abbildungen und Bilder';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Vorformatierter Code';
+  String get syntaxReferenceHtmlPreformatted => 'Vorformatierter Code';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Aufklappblöcke';
+  String get syntaxReferenceHtmlDisclosure => 'Aufklappblöcke';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Beschreibungslisten';
+  String get syntaxReferenceHtmlDescriptionLists => 'Beschreibungslisten';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Formatierungstags';
+  String get syntaxReferenceHtmlFormattingTags => 'Formatierungstags';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Inline-Code-Tags';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Inline-Code-Tags';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Semantische Texttags';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Semantische Texttags';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Bereinigte Vorschau';
+  String get syntaxReferenceSanitizedPreview => 'Bereinigte Vorschau';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Erlaubtes HTML wird in BusyMark-Vorschaublöcke umgewandelt, nicht im Browser gerendert.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Quelltext bleibt erhalten';
+  String get syntaxReferenceSourcePreserved => 'Quelltext bleibt erhalten';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Unverändertes Roh-HTML wird exakt als Quelltext gespeichert.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown in HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown in HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-Zeichen innerhalb von Roh-HTML werden als normaler Text angezeigt.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blockierte aktive Inhalte';
+  String get syntaxReferenceBlockedContent => 'Blockierte aktive Inhalte';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Skripte, Styles, Frames, Formulare, SVG, MathML, Events und unsichere Attribute werden blockiert.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Nur sichere URLs';
+  String get syntaxReferenceSafeUrls => 'Nur sichere URLs';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere URL-Schemata werden blockiert.';
+
+  @override
+  String get syntaxReferenceCategory => 'Kategorie';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagramme und API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Mathematik';
+
+  @override
+  String get syntaxReferenceExample => 'Beispiel';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Bezeichner und Aliase';
+
+  @override
+  String get syntaxReferenceScope => 'Geltungsbereich';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark-Einschränkung';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Offizielle Dokumentation';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Normales Markdown und Writerside-Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Nur Writerside-Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Nur Writerside-Markdown und Writerside-XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Die grundlegenden Markdown-Formen, die BusyMark erstellen und in der Vorschau anzeigen kann.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Ein Textabsatz.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tabellen verwenden die Pipe-Syntax von GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'zwei Leerzeichen am Zeilenende, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark akzeptiert eine gezielte sichere Teilmenge von Roh-HTML in Markdown-Quelltext.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Eingezäunte Mermaid-, PlantUML-, D2- und OpenAPI-Blöcke funktionieren in Markdown-Quelltext. Fence-Bezeichner unterscheiden nicht zwischen Groß- und Kleinschreibung; BusyMark bewahrt die ursprüngliche Schreibweise.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Verwenden Sie eingezäunten YAML- oder JSON-Inhalt. BusyMark behandelt ein beliebiges vollständiges YAML- oder JSON-Dokument nicht als OpenAPI-Referenz.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantische Diagramm-Codeblöcke';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantische code-block- und src-Formen unterstützen Mermaid, PlantUML und D2, nicht OpenAPI, und nur in Writerside-Projekten.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Referenzierte Diagrammquelle';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Pfade müssen relativ sein und im geöffneten Writerside-Projekt bleiben; die Kombination aus Fence und src gilt nur für Writerside-Markdown.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark unterstützt TeX-Ausdrücke, keine vollständigen TeX- oder LaTeX-Dokumente.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Mathematik im Text';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'GitHub-Mathematik mit Dollarzeichen und Backticks';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Mathematische Formel als Block';
+
+  @override
+  String get syntaxReferenceMathFence => 'math-Fence';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex-Fence';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark erkennt \\(...\\) und \\[...\\] nicht als Markdown-Mathematikbegrenzer.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Außerhalb des Writerside-Modus bleibt ein tex-Fence ein gewöhnlicher Codeblock.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside-math-Element';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'Das math-Element ist semantische Writerside-Syntax und kein zulässiges rohes HTML-MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Semantischer TeX-Codeblock';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Diese gezielten Erweiterungen werden nur in geöffneten Writerside-Projekten interpretiert.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Hinweis-Blockzitat';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Ein einfaches Blockzitat ist in Writerside-Markdown ein Tipp; in normalem Markdown bleibt es ein gewöhnliches Zitat.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Semantische Hinweise';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Normales Markdown interpretiert diese semantischen Writerside-Elemente nicht.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Einklappbare Überschrift';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Einklappbarer Code-Fence';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantische einklappbare Inhalte';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark unterstützt einklappbare Kapitel-, Prozedur-, code-block- und Definitionslistenformen, nicht den vollständigen Writerside-Katalog.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantische Codeblöcke für Mathematik und Diagramme';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside-Video';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Lokale Videos verwenden ein lokales preview-src-Bild; gehostete Videoquellen müssen unterstützte HTTPS-URLs von YouTube oder Vimeo sein.';
 
   @override
   String get exportAsPdf => 'Als PDF exportieren';

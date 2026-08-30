@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Mở tham chiếu Markdown và HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Mở tham chiếu cú pháp",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Mở cài đặt BusyMark",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown và HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Tham chiếu cú pháp",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Khối Markdown",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Khối Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Định dạng Markdown nội tuyến",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Định dạng Markdown nội tuyến",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Khối HTML thô",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Khối HTML thô",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Thẻ HTML nội tuyến thô",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Thẻ HTML nội tuyến thô",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Quy tắc an toàn",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Quy tắc an toàn",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "HTML thô được phân tích cú pháp và làm sạch trước khi kết xuất bản xem trước.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "HTML thô được phân tích cú pháp và làm sạch trước khi kết xuất bản xem trước.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Tiêu đề",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Tiêu đề",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Đoạn văn",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Đoạn văn",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Danh sách",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Danh sách",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Vùng chứa",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Vùng chứa",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Khối văn bản",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Khối văn bản",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Figure và hình ảnh",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Figure và hình ảnh",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Mã định dạng sẵn",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Mã định dạng sẵn",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Khối mở rộng",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Khối mở rộng",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Danh sách mô tả",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Danh sách mô tả",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Thẻ định dạng",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Thẻ định dạng",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Thẻ mã nội tuyến",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Thẻ mã nội tuyến",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Thẻ văn bản ngữ nghĩa",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Thẻ văn bản ngữ nghĩa",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Bản xem trước đã làm sạch",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Bản xem trước đã làm sạch",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Giữ nguyên mã nguồn",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Giữ nguyên mã nguồn",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown bên trong HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown bên trong HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Nội dung hoạt động bị chặn",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Nội dung hoạt động bị chặn",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Chỉ URL an toàn",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Chỉ URL an toàn",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Danh mục",
+  "syntaxReferenceCategoryDiagramsAndApi": "Sơ đồ và API",
+  "syntaxReferenceCategoryMathematics": "Toán học",
+  "syntaxReferenceExample": "Ví dụ",
+  "syntaxReferenceIdentifiers": "Định danh và bí danh",
+  "syntaxReferenceScope": "Phạm vi",
+  "syntaxReferenceLimitation": "Giới hạn của BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Tài liệu chính thức",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown thông thường và Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdown": "Chỉ Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Chỉ Markdown Writerside và XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Các dạng Markdown cốt lõi mà BusyMark có thể soạn và xem trước.",
+  "syntaxReferenceParagraphExample": "Một đoạn văn bản.",
+  "syntaxReferenceTableLimitation": "Bảng dùng cú pháp dấu gạch đứng của GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "hai dấu cách ở cuối dòng, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark chấp nhận một tập con HTML thô an toàn, có giới hạn trong mã nguồn Markdown.",
+  "syntaxReferenceDiagramsDescription": "Các khối có hàng rào Mermaid, PlantUML, D2 và OpenAPI hoạt động trong mã nguồn Markdown. Định danh hàng rào không phân biệt hoa thường và BusyMark giữ nguyên cách viết ban đầu.",
+  "syntaxReferenceOpenApiLimitation": "Dùng nội dung YAML hoặc JSON có hàng rào. BusyMark không coi một tài liệu YAML hoặc JSON toàn tệp bất kỳ là tham chiếu OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Khối mã ngữ nghĩa cho sơ đồ",
+  "syntaxReferenceSemanticDiagramLimitation": "Dạng ngữ nghĩa code-block và src hỗ trợ Mermaid, PlantUML và D2, không hỗ trợ OpenAPI, và chỉ dùng trong dự án Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Nguồn sơ đồ được tham chiếu",
+  "syntaxReferenceReferencedDiagramLimitation": "Đường dẫn phải tương đối và nằm trong dự án Writerside đang mở; dạng hàng rào kèm src chỉ dành cho Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark hỗ trợ biểu thức TeX, không hỗ trợ tài liệu TeX hoặc LaTeX hoàn chỉnh.",
+  "syntaxReferenceInlineMath": "Toán học nội dòng",
+  "syntaxReferenceGithubMath": "Toán học GitHub với dấu đô la và dấu huyền",
+  "syntaxReferenceDisplayMath": "Toán học dạng khối",
+  "syntaxReferenceMathFence": "Hàng rào math",
+  "syntaxReferenceTexFence": "Hàng rào tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark không nhận dạng \\(...\\) hoặc \\[...\\] là dấu phân cách toán học Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Ngoài chế độ Writerside, hàng rào tex vẫn là khối mã thông thường.",
+  "syntaxReferenceWritersideMathElement": "Phần tử math của Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "Phần tử math là cú pháp Writerside ngữ nghĩa, không phải HTML MathML thô được phép.",
+  "syntaxReferenceSemanticTexBlock": "Khối mã TeX ngữ nghĩa",
+  "syntaxReferenceWritersideDescription": "Các phần mở rộng trọng tâm này chỉ được diễn giải trong dự án Writerside đang mở.",
+  "syntaxReferenceAdmonitionBlockquote": "Trích dẫn khối lưu ý",
+  "syntaxReferenceAdmonitionLimitation": "Trích dẫn khối thuần là mẹo trong Markdown Writerside; trong Markdown thông thường, nó vẫn là trích dẫn thường.",
+  "syntaxReferenceSemanticAdmonitions": "Lưu ý ngữ nghĩa",
+  "syntaxReferenceSemanticMarkupLimitation": "Markdown thông thường không diễn giải các phần tử Writerside ngữ nghĩa này.",
+  "syntaxReferenceCollapsibleHeading": "Tiêu đề có thể thu gọn",
+  "syntaxReferenceCollapsibleCode": "Hàng rào mã có thể thu gọn",
+  "syntaxReferenceSemanticCollapsibles": "Nội dung ngữ nghĩa có thể thu gọn",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark hỗ trợ các dạng chapter, procedure, code-block và danh sách định nghĩa có thể thu gọn, không hỗ trợ toàn bộ danh mục Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Khối mã ngữ nghĩa cho toán học và sơ đồ",
+  "syntaxReferenceVideo": "Video Writerside",
+  "syntaxReferenceVideoLimitation": "Video cục bộ dùng ảnh preview-src cục bộ; nguồn lưu trữ phải là URL HTTPS YouTube hoặc Vimeo được hỗ trợ.",
   "exportAsPdf": "Xuất dưới dạng PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

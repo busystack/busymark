@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "باز کردن مرجع Markdown و HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "باز کردن راهنمای نحو",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "باز کردن تنظیمات BusyMark",
   "@shortcutSettingsDescription": {
@@ -2389,136 +2389,136 @@
   "gitErrorNetwork": "عملیات شبکهٔ Git ناموفق بود.",
   "gitErrorConflict": "Git تداخل‌های حل‌نشده گزارش کرد.",
   "gitErrorCommandFailed": "فرمان Git ناموفق بود.",
-  "markdownAndHtml": "Markdown و HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "راهنمای نحو",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "بلوک‌های Markdown",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "بلوک‌های Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Markdown درون‌خطی",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Markdown درون‌خطی",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "بلوک‌های HTML خام",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "بلوک‌های HTML خام",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "تگ‌های HTML درون‌خطی",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "تگ‌های HTML درون‌خطی",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "قوانین امنیتی",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "قوانین امنیتی",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "عنوان‌ها",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "عنوان‌ها",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "پاراگراف‌ها",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "پاراگراف‌ها",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "فهرست‌ها",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "فهرست‌ها",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "کانتینرها",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "کانتینرها",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "بلوک‌های متن",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "بلوک‌های متن",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "شکل‌ها و تصاویر",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "شکل‌ها و تصاویر",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "کد پیش‌قالب‌بندی‌شده",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "کد پیش‌قالب‌بندی‌شده",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "بلوک‌های بازشونده",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "بلوک‌های بازشونده",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "فهرست‌های توصیفی",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "فهرست‌های توصیفی",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "تگ‌های قالب‌بندی",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "تگ‌های قالب‌بندی",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "تگ‌های کد درون‌خطی",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "تگ‌های کد درون‌خطی",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "تگ‌های متنی معنایی",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "تگ‌های متنی معنایی",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "پیش‌نمایش پاک‌سازی‌شده",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "پیش‌نمایش پاک‌سازی‌شده",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "منبع حفظ می‌شود",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "منبع حفظ می‌شود",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown داخل HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown داخل HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "محتوای فعال مسدود است",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "محتوای فعال مسدود است",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "فقط URLهای امن",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "فقط URLهای امن",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "افزودن به Git",
@@ -2728,6 +2728,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "دسته‌بندی",
+  "syntaxReferenceCategoryDiagramsAndApi": "نمودارها و API",
+  "syntaxReferenceCategoryMathematics": "ریاضیات",
+  "syntaxReferenceExample": "نمونه",
+  "syntaxReferenceIdentifiers": "شناسه‌ها و نام‌های مستعار",
+  "syntaxReferenceScope": "دامنه",
+  "syntaxReferenceLimitation": "محدودیت BusyMark",
+  "syntaxReferenceOfficialDocumentation": "مستندات رسمی",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown معمولی و Markdown در Writerside",
+  "syntaxReferenceScopeWritersideMarkdown": "فقط Markdown در Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "فقط Markdown و XML در Writerside",
+  "syntaxReferenceMarkdownDescription": "شکل‌های اصلی Markdown که BusyMark می‌تواند بنویسد و پیش‌نمایش کند.",
+  "syntaxReferenceParagraphExample": "یک بند متنی.",
+  "syntaxReferenceTableLimitation": "جدول‌ها از نحو خط عمودی GitHub Flavored Markdown استفاده می‌کنند.",
+  "syntaxReferenceHardBreakIdentifiers": "دو فاصله در پایان خط، \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark زیرمجموعه‌ای محدود و امن از HTML خام را در منبع Markdown می‌پذیرد.",
+  "syntaxReferenceDiagramsDescription": "بلوک‌های حصاردار Mermaid، PlantUML، D2 و OpenAPI در منبع Markdown کار می‌کنند. شناسه‌های حصار به بزرگی و کوچکی حروف حساس نیستند و BusyMark املای اصلی را نگه می‌دارد.",
+  "syntaxReferenceOpenApiLimitation": "از محتوای YAML یا JSON حصاردار استفاده کنید. BusyMark هر سند کامل YAML یا JSON را مرجع OpenAPI در نظر نمی‌گیرد.",
+  "syntaxReferenceSemanticDiagramBlocks": "بلوک‌های کد معنایی نمودار",
+  "syntaxReferenceSemanticDiagramLimitation": "شکل‌های معنایی code-block و src از Mermaid، PlantUML و D2 پشتیبانی می‌کنند، نه OpenAPI، و فقط در پروژه‌های Writerside کار می‌کنند.",
+  "syntaxReferenceReferencedDiagramSource": "منبع ارجاع‌شدهٔ نمودار",
+  "syntaxReferenceReferencedDiagramLimitation": "مسیرها باید نسبی باشند و درون پروژهٔ بازشدهٔ Writerside بمانند؛ شکل حصار همراه src فقط ویژهٔ Markdown در Writerside است.",
+  "syntaxReferenceMathematicsDescription": "BusyMark از عبارت‌های TeX پشتیبانی می‌کند، نه اسناد کامل TeX یا LaTeX.",
+  "syntaxReferenceInlineMath": "ریاضی درون‌خطی",
+  "syntaxReferenceGithubMath": "ریاضی GitHub با دلار و بک‌تیک",
+  "syntaxReferenceDisplayMath": "ریاضی نمایشی",
+  "syntaxReferenceMathFence": "حصار math",
+  "syntaxReferenceTexFence": "حصار tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark، ⁨\\(...\\)⁩ یا ⁨\\[...\\]⁩ را جداکنندهٔ ریاضی Markdown نمی‌شناسد.",
+  "syntaxReferenceTexFenceLimitation": "بیرون از حالت Writerside، حصار tex یک بلوک کد معمولی باقی می‌ماند.",
+  "syntaxReferenceWritersideMathElement": "عنصر math در Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "عنصر math نحو معنایی Writerside است، نه HTML MathML خام مجاز.",
+  "syntaxReferenceSemanticTexBlock": "بلوک کد معنایی TeX",
+  "syntaxReferenceWritersideDescription": "این افزونه‌های مشخص فقط در پروژه‌های بازشدهٔ Writerside تفسیر می‌شوند.",
+  "syntaxReferenceAdmonitionBlockquote": "نقل‌قول بلوکی هشدار",
+  "syntaxReferenceAdmonitionLimitation": "نقل‌قول بلوکی ساده در Markdown درون Writerside یک نکته است؛ در Markdown معمولی همان نقل‌قول عادی می‌ماند.",
+  "syntaxReferenceSemanticAdmonitions": "هشدارهای معنایی",
+  "syntaxReferenceSemanticMarkupLimitation": "Markdown معمولی این عناصر معنایی Writerside را تفسیر نمی‌کند.",
+  "syntaxReferenceCollapsibleHeading": "عنوان جمع‌شونده",
+  "syntaxReferenceCollapsibleCode": "حصار کد جمع‌شونده",
+  "syntaxReferenceSemanticCollapsibles": "محتوای معنایی جمع‌شونده",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark شکل‌های جمع‌شوندهٔ chapter، procedure، code-block و فهرست تعریف را پشتیبانی می‌کند، نه همهٔ فهرست Writerside را.",
+  "syntaxReferenceSemanticCodeBlocks": "بلوک‌های کد معنایی برای ریاضی و نمودارها",
+  "syntaxReferenceVideo": "ویدیوی Writerside",
+  "syntaxReferenceVideoLimitation": "ویدیوی محلی از تصویر محلی preview-src استفاده می‌کند؛ منابع میزبانی‌شده باید نشانی HTTPS پشتیبانی‌شدهٔ YouTube یا Vimeo باشند.",
   "exportAsPdf": "خروجی به‌صورت PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

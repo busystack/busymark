@@ -250,7 +250,7 @@ abstract final class BusyMarkCommandIds {
   static const search = 'search.find';
   static const keyboardShortcuts = 'help.keyboardShortcuts';
   static const commandPalette = 'view.commandPalette';
-  static const markdownAndHtml = 'help.markdownAndHtml';
+  static const syntaxReference = 'help.syntaxReference';
   static const settings = 'application.settings';
   static const nextTab = 'tabs.next';
   static const previousTab = 'tabs.previous';
@@ -397,8 +397,8 @@ abstract final class BusyMarkCommandCatalog {
       BusyMarkCommandIds.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette =>
       BusyMarkCommandIds.commandPalette,
-    BusyMarkAppShortcutAction.markdownAndHtml =>
-      BusyMarkCommandIds.markdownAndHtml,
+    BusyMarkAppShortcutAction.syntaxReference =>
+      BusyMarkCommandIds.syntaxReference,
     BusyMarkAppShortcutAction.settings => BusyMarkCommandIds.settings,
     BusyMarkAppShortcutAction.nextTab => BusyMarkCommandIds.nextTab,
     BusyMarkAppShortcutAction.previousTab => BusyMarkCommandIds.previousTab,
@@ -421,7 +421,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette => context.l10n.commandPalette,
-    BusyMarkAppShortcutAction.markdownAndHtml => context.l10n.markdownAndHtml,
+    BusyMarkAppShortcutAction.syntaxReference => context.l10n.syntaxReference,
     BusyMarkAppShortcutAction.settings => context.l10n.settings,
     BusyMarkAppShortcutAction.nextTab => context.l10n.shortcutNextTab,
     BusyMarkAppShortcutAction.previousTab => context.l10n.shortcutPreviousTab,
@@ -466,8 +466,8 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.search => context.l10n.shortcutSearchDescription,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.shortcutKeyboardShortcutsDescription,
-    BusyMarkAppShortcutAction.markdownAndHtml =>
-      context.l10n.shortcutMarkdownAndHtmlDescription,
+    BusyMarkAppShortcutAction.syntaxReference =>
+      context.l10n.shortcutSyntaxReferenceDescription,
     BusyMarkAppShortcutAction.settings =>
       context.l10n.shortcutSettingsDescription,
     BusyMarkAppShortcutAction.nextTab =>

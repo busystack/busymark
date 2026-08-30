@@ -453,8 +453,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Vis denne oversikten over tastatursnarveier';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Åpne Markdown- og HTML-referansen';
+  String get shortcutSyntaxReferenceDescription => 'Åpne syntaksreferansen';
 
   @override
   String get shortcutSettingsDescription => 'Åpne BusyMark-innstillinger';
@@ -2653,113 +2652,287 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git-kommandoen mislyktes.';
 
   @override
-  String get markdownAndHtml => 'Markdown og HTML';
+  String get syntaxReference => 'Syntaksreferanse';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown-blokker';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown-blokker';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Inline-Markdown';
+  String get syntaxReferenceInlineFormatting => 'Inline-Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Formatering i avsnitt, listeelementer og tabellceller.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Rå HTML-blokker';
+  String get syntaxReferenceRawHtmlBlocks => 'Rå HTML-blokker';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Rå HTML-inline-tagger';
+  String get syntaxReferenceRawHtmlInline => 'Rå HTML-inline-tagger';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
 
   @override
-  String get markdownHtmlSafety => 'Sikkerhetsregler';
+  String get syntaxReferenceSafety => 'Sikkerhetsregler';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'Rå HTML analyseres og renses før forhåndsvisning.';
 
   @override
-  String get markdownHtmlHeadings => 'Overskrifter';
+  String get syntaxReferenceHeadings => 'Overskrifter';
 
   @override
-  String get markdownHtmlParagraphs => 'Avsnitt';
+  String get syntaxReferenceParagraphs => 'Avsnitt';
 
   @override
-  String get markdownHtmlLists => 'Lister';
+  String get syntaxReferenceLists => 'Lister';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Beholdere';
+  String get syntaxReferenceHtmlContainers => 'Beholdere';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Tekstblokker';
+  String get syntaxReferenceHtmlTextBlocks => 'Tekstblokker';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figurer og bilder';
+  String get syntaxReferenceHtmlFigures => 'Figurer og bilder';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Forhåndsformatert kode';
+  String get syntaxReferenceHtmlPreformatted => 'Forhåndsformatert kode';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Utvidbare blokker';
+  String get syntaxReferenceHtmlDisclosure => 'Utvidbare blokker';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Beskrivelseslister';
+  String get syntaxReferenceHtmlDescriptionLists => 'Beskrivelseslister';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Formateringstagger';
+  String get syntaxReferenceHtmlFormattingTags => 'Formateringstagger';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Inline-kodetagger';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Inline-kodetagger';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Semantiske teksttagger';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Semantiske teksttagger';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Renset forhåndsvisning';
+  String get syntaxReferenceSanitizedPreview => 'Renset forhåndsvisning';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Kilden bevares';
+  String get syntaxReferenceSourcePreserved => 'Kilden bevares';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Uendret rå HTML lagres nøyaktig som kildetekst.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown inni HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown inni HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blokkert aktivt innhold';
+  String get syntaxReferenceBlockedContent => 'Blokkert aktivt innhold';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Bare trygge URL-er';
+  String get syntaxReferenceSafeUrls => 'Bare trygge URL-er';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
+
+  @override
+  String get syntaxReferenceCategory => 'Kategori';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagrammer og API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matematikk';
+
+  @override
+  String get syntaxReferenceExample => 'Eksempel';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Identifikatorer og aliaser';
+
+  @override
+  String get syntaxReferenceScope => 'Omfang';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark-begrensning';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Offisiell dokumentasjon';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Vanlig Markdown og Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Bare Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Bare Writerside Markdown og Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Et tekstavsnitt.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'to mellomrom på slutten av linjen, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantiske kodeblokker for diagrammer';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => 'Referert diagramkilde';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Matematikk i linjen';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'GitHub-matematikk med dollartegn og grav aksent';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Matematikk som blokk';
+
+  @override
+  String get syntaxReferenceMathFence => 'math-blokk';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex-blokk';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside-math-element';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Semantisk TeX-kodeblokk';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Merknadssitat';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Semantiske merknader';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Sammenleggbar overskrift';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Sammenleggbar kodeblokk';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantisk sammenleggbart innhold';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantiske kodeblokker for matematikk og diagrammer';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside-video';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.';
 
   @override
   String get exportAsPdf => 'Eksporter som PDF';

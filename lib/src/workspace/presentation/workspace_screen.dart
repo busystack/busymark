@@ -907,8 +907,8 @@ class WorkspaceScreen extends ConsumerWidget {
         execute(BusyMarkCommandIds.settings);
       case HeaderBarAction.keyboardShortcuts:
         execute(BusyMarkCommandIds.keyboardShortcuts);
-      case HeaderBarAction.markdownAndHtml:
-        execute(BusyMarkCommandIds.markdownAndHtml);
+      case HeaderBarAction.syntaxReference:
+        execute(BusyMarkCommandIds.syntaxReference);
       case HeaderBarAction.reportIssue:
         final headerBar = ref.read(linuxHeaderBarServiceProvider);
         showBusyMarkFeedbackDialog(
@@ -958,8 +958,8 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.commandPalette:
         return;
-      case BusyMarkMainMenuAction.markdownAndHtml:
-        showBusyMarkMarkdownHtmlDialog(context);
+      case BusyMarkMainMenuAction.syntaxReference:
+        showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
         final headerBar = ref.read(linuxHeaderBarServiceProvider);
         showBusyMarkFeedbackDialog(

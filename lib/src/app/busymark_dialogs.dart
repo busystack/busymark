@@ -17,6 +17,24 @@ import 'localization.dart';
 const _busyMarkWebsiteUrl = 'https://busystack.org';
 const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark/';
 const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
+const _commonMarkDocumentationUrl = 'https://spec.commonmark.org/current/';
+const _githubMarkdownDocumentationUrl = 'https://github.github.com/gfm/';
+const _htmlDocumentationUrl = 'https://html.spec.whatwg.org/multipage/';
+const _mermaidDocumentationUrl =
+    'https://mermaid.js.org/intro/syntax-reference.html';
+const _plantUmlDocumentationUrl = 'https://plantuml.com/guide';
+const _d2DocumentationUrl = 'https://d2lang.com/tour/intro/';
+const _openApiDocumentationUrl = 'https://spec.openapis.org/oas/latest.html';
+const _writersideAdmonitionDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/admonitions.html';
+const _writersideCollapsibleDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/collapsible-elements.html';
+const _writersideMathDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/math-support.html';
+const _writersideMermaidDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/mermaid-diagrams.html';
+const _writersideVideoDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/videos.html';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
 const _supportedRawHtmlBlockTags =
     'article, aside, div, section, header, footer, main, nav, h1-h6, p, '
@@ -30,6 +48,30 @@ const _supportedRawHtmlInlineTags =
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
+final _commonMarkDocumentationUri = Uri.parse(_commonMarkDocumentationUrl);
+final _githubMarkdownDocumentationUri = Uri.parse(
+  _githubMarkdownDocumentationUrl,
+);
+final _htmlDocumentationUri = Uri.parse(_htmlDocumentationUrl);
+final _mermaidDocumentationUri = Uri.parse(_mermaidDocumentationUrl);
+final _plantUmlDocumentationUri = Uri.parse(_plantUmlDocumentationUrl);
+final _d2DocumentationUri = Uri.parse(_d2DocumentationUrl);
+final _openApiDocumentationUri = Uri.parse(_openApiDocumentationUrl);
+final _writersideAdmonitionDocumentationUri = Uri.parse(
+  _writersideAdmonitionDocumentationUrl,
+);
+final _writersideCollapsibleDocumentationUri = Uri.parse(
+  _writersideCollapsibleDocumentationUrl,
+);
+final _writersideMathDocumentationUri = Uri.parse(
+  _writersideMathDocumentationUrl,
+);
+final _writersideMermaidDocumentationUri = Uri.parse(
+  _writersideMermaidDocumentationUrl,
+);
+final _writersideVideoDocumentationUri = Uri.parse(
+  _writersideVideoDocumentationUrl,
+);
 
 class _DismissBusyMarkModalIntent extends Intent {
   const _DismissBusyMarkModalIntent();
@@ -494,11 +536,11 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.markdownAndHtml,
-                subtitle: context.l10n.shortcutMarkdownAndHtmlDescription,
+                title: context.l10n.syntaxReference,
+                subtitle: context.l10n.shortcutSyntaxReferenceDescription,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkAppShortcutLabels.markdownAndHtml,
+                  BusyMarkAppShortcutLabels.syntaxReference,
                 ),
               ),
               BusyMarkActionRow(
@@ -939,255 +981,709 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
   );
 }
 
-void showBusyMarkMarkdownHtmlDialog(BuildContext context) {
+void showBusyMarkSyntaxReferenceDialog(BuildContext context) {
   final headerBar = LinuxHeaderBarService.instance;
   unawaited(
     showBusyMarkModalDialog<void>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => _BusyMarkInfoDialog(
-        title: context.l10n.markdownAndHtml,
-        icon: BusyMarkGlyphs.markdownFile,
-        maxWidth: BusyMarkSizes.dialogWide,
-        children: [
-          BusyMarkGroupedList(
-            title: context.l10n.markdownHtmlMarkdownBlocks,
-            description: context.l10n.markdownHtmlMarkdownBlocksDescription,
-            filled: true,
-            children: [
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHeadings,
-                syntax: '#, ##, ###',
-                icon: BusyMarkGlyphs.heading,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlParagraphs,
-                syntax: 'text',
-                icon: BusyMarkGlyphs.paragraph,
-              ),
-              _ReferenceRow(
-                title: context.l10n.blockquote,
-                syntax: '> quote',
-                icon: BusyMarkGlyphs.blockquote,
-              ),
-              _ReferenceRow(
-                title: context.l10n.codeBlock,
-                syntax: '```',
-                icon: BusyMarkGlyphs.code,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlLists,
-                syntax: '-, *, 1.',
-                icon: BusyMarkGlyphs.unorderedList,
-              ),
-              _ReferenceRow(
-                title: context.l10n.checklist,
-                syntax: '- [ ]',
-                icon: BusyMarkGlyphs.checklist,
-              ),
-              _ReferenceRow(
-                title: context.l10n.table,
-                syntax: '| --- |',
-                icon: BusyMarkGlyphs.table,
-              ),
-              _ReferenceRow(
-                title: context.l10n.image,
-                syntax: '![alt](src)',
-                icon: BusyMarkGlyphs.image,
-              ),
-              _ReferenceRow(
-                title: context.l10n.thematicBreak,
-                syntax: '---',
-                icon: BusyMarkGlyphs.thematicBreak,
-              ),
-            ],
-          ),
-          BusyMarkGroupedList(
-            title: context.l10n.markdownHtmlInlineFormatting,
-            description: context.l10n.markdownHtmlInlineFormattingDescription,
-            filled: true,
-            children: [
-              _ReferenceRow(
-                title: context.l10n.bold,
-                syntax: '**text**',
-                icon: BusyMarkGlyphs.bold,
-              ),
-              _ReferenceRow(
-                title: context.l10n.italic,
-                syntax: '*text*',
-                icon: BusyMarkGlyphs.italic,
-              ),
-              _ReferenceRow(
-                title: context.l10n.underline,
-                syntax: '<u>text</u>',
-                icon: BusyMarkGlyphs.underline,
-              ),
-              _ReferenceRow(
-                title: context.l10n.strikethrough,
-                syntax: '~~text~~',
-                icon: BusyMarkGlyphs.strikethrough,
-              ),
-              _ReferenceRow(
-                title: context.l10n.inlineCode,
-                syntax: '`code`',
-                icon: BusyMarkGlyphs.code,
-              ),
-              _ReferenceRow(
-                title: context.l10n.link,
-                syntax: '[text](url)',
-                icon: BusyMarkGlyphs.link,
-              ),
-              _ReferenceRow(
-                title: context.l10n.hardLineBreak,
-                syntax: '<br>',
-                icon: BusyMarkGlyphs.hardBreak,
-              ),
-            ],
-          ),
-          BusyMarkGroupedList(
-            title: context.l10n.markdownHtmlRawHtmlBlocks,
-            description:
-                '${context.l10n.markdownHtmlRawHtmlBlocksDescription}\n'
-                '$_supportedRawHtmlBlockTags.',
-            filled: true,
-            children: [
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlContainers,
-                syntax: 'div, section',
-                icon: BusyMarkGlyphs.insertObject,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlTextBlocks,
-                syntax: 'p, h1-h6',
-                icon: BusyMarkGlyphs.text,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlLists,
-                syntax: 'ul, ol, li',
-                icon: BusyMarkGlyphs.orderedList,
-              ),
-              _ReferenceRow(
-                title: context.l10n.table,
-                syntax: 'table, tr, td',
-                icon: BusyMarkGlyphs.table,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlFigures,
-                syntax: 'figure, img',
-                icon: BusyMarkGlyphs.image,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlPreformatted,
-                syntax: 'pre, code',
-                icon: BusyMarkGlyphs.code,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlDisclosure,
-                syntax: 'details',
-                icon: BusyMarkGlyphs.info,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlDescriptionLists,
-                syntax: 'dl, dt, dd',
-                icon: BusyMarkGlyphs.unorderedList,
-              ),
-            ],
-          ),
-          BusyMarkGroupedList(
-            title: context.l10n.markdownHtmlRawHtmlInline,
-            description:
-                '${context.l10n.markdownHtmlRawHtmlInlineDescription}\n'
-                '$_supportedRawHtmlInlineTags.',
-            filled: true,
-            children: [
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlFormattingTags,
-                syntax: 'strong, em, u',
-                icon: BusyMarkGlyphs.bold,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlInlineCodeTags,
-                syntax: 'kbd, samp, var',
-                icon: BusyMarkGlyphs.code,
-              ),
-              _ReferenceRow(
-                title: context.l10n.link,
-                syntax: 'a[href]',
-                icon: BusyMarkGlyphs.link,
-              ),
-              _ReferenceRow(
-                title: context.l10n.inlineImage,
-                syntax: 'img[src]',
-                icon: BusyMarkGlyphs.inlineImage,
-              ),
-              _ReferenceRow(
-                title: context.l10n.markdownHtmlHtmlNeutralInlineTags,
-                syntax: 'span, time',
-                icon: BusyMarkGlyphs.symbols,
-              ),
-              _ReferenceRow(
-                title: context.l10n.hardLineBreak,
-                syntax: 'br, wbr',
-                icon: BusyMarkGlyphs.hardBreak,
-              ),
-            ],
-          ),
-          BusyMarkGroupedList(
-            title: context.l10n.markdownHtmlSafety,
-            description: context.l10n.markdownHtmlSafetyDescription,
-            filled: true,
-            children: [
-              BusyMarkActionRow(
-                title: context.l10n.markdownHtmlSanitizedPreview,
-                subtitle: context.l10n.markdownHtmlSanitizedPreviewDescription,
-                leading: const Icon(BusyMarkGlyphs.check),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.markdownHtmlSourcePreserved,
-                subtitle: context.l10n.markdownHtmlSourcePreservedDescription,
-                leading: const Icon(BusyMarkGlyphs.document),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.markdownHtmlMarkdownInsideHtml,
-                subtitle:
-                    context.l10n.markdownHtmlMarkdownInsideHtmlDescription,
-                leading: const Icon(BusyMarkGlyphs.markdownFile),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.markdownHtmlBlockedContent,
-                subtitle: context.l10n.markdownHtmlBlockedContentDescription,
-                leading: const Icon(BusyMarkGlyphs.warning),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.markdownHtmlSafeUrls,
-                subtitle: context.l10n.markdownHtmlSafeUrlsDescription,
-                leading: const Icon(BusyMarkGlyphs.link),
-              ),
-            ],
-          ),
-        ],
-      ),
+      builder: (context) => const _SyntaxReferenceDialog(),
     ),
   );
 }
 
-class _ReferenceRow extends StatelessWidget {
-  const _ReferenceRow({
-    required this.title,
-    required this.syntax,
-    required this.icon,
-  });
+enum _SyntaxReferenceCategory {
+  markdown,
+  html,
+  diagramsAndApi,
+  mathematics,
+  writerside,
+}
 
-  final String title;
-  final String syntax;
-  final IconData icon;
+class _SyntaxReferenceDialog extends StatefulWidget {
+  const _SyntaxReferenceDialog();
+
+  @override
+  State<_SyntaxReferenceDialog> createState() => _SyntaxReferenceDialogState();
+}
+
+class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
+  final _scrollController = ScrollController();
+  var _category = _SyntaxReferenceCategory.markdown;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkActionRow(
-      title: title,
-      leading: Icon(icon),
-      trailing: _KeyboardShortcutBadge(syntax),
+    final colorScheme = Theme.of(context).colorScheme;
+    return BusyMarkInformationalDialog(
+      key: const ValueKey('syntax-reference-dialog'),
+      closeLabel: context.l10n.close,
+      maxWidth: BusyMarkSizes.dialogWide,
+      maxHeight: 680,
+      scrollable: false,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          BusyMarkSpacing.lg,
+          BusyMarkSpacing.md,
+          BusyMarkSpacing.lg,
+          BusyMarkSpacing.lg,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  BusyMarkGlyphs.markdownFile,
+                  size: BusyMarkSizes.iconButton,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Text(
+                    context.l10n.syntaxReference,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: BusyMarkSpacing.md),
+            InputDecorator(
+              decoration: InputDecoration(
+                labelText: context.l10n.syntaxReferenceCategory,
+                prefixIcon: const Icon(BusyMarkGlyphs.category),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<_SyntaxReferenceCategory>(
+                  key: const ValueKey('syntax-reference-category-selector'),
+                  value: _category,
+                  isExpanded: true,
+                  isDense: true,
+                  items: [
+                    for (final category in _SyntaxReferenceCategory.values)
+                      DropdownMenuItem(
+                        value: category,
+                        child: Text(_categoryLabel(context, category)),
+                      ),
+                  ],
+                  onChanged: (category) {
+                    if (category == null || category == _category) {
+                      return;
+                    }
+                    setState(() => _category = category);
+                    if (_scrollController.hasClients) {
+                      _scrollController.jumpTo(0);
+                    }
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: BusyMarkSpacing.md),
+            Expanded(
+              child: Scrollbar(
+                controller: _scrollController,
+                child: SingleChildScrollView(
+                  key: ValueKey('syntax-reference-category-${_category.name}'),
+                  controller: _scrollController,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: _categoryContent(context, _category),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _categoryLabel(
+    BuildContext context,
+    _SyntaxReferenceCategory category,
+  ) => switch (category) {
+    _SyntaxReferenceCategory.markdown => context.l10n.markdown,
+    _SyntaxReferenceCategory.html => context.l10n.syntaxReferenceCategoryHtml,
+    _SyntaxReferenceCategory.diagramsAndApi =>
+      context.l10n.syntaxReferenceCategoryDiagramsAndApi,
+    _SyntaxReferenceCategory.mathematics =>
+      context.l10n.syntaxReferenceCategoryMathematics,
+    _SyntaxReferenceCategory.writerside => context.l10n.writerside,
+  };
+
+  Widget _categoryContent(
+    BuildContext context,
+    _SyntaxReferenceCategory category,
+  ) => switch (category) {
+    _SyntaxReferenceCategory.markdown => _markdownReference(context),
+    _SyntaxReferenceCategory.html => _htmlReference(context),
+    _SyntaxReferenceCategory.diagramsAndApi => _diagramsAndApiReference(
+      context,
+    ),
+    _SyntaxReferenceCategory.mathematics => _mathematicsReference(context),
+    _SyntaxReferenceCategory.writerside => _writersideReference(context),
+  };
+
+  Widget _markdownReference(BuildContext context) {
+    final l10n = context.l10n;
+    final scope = l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    return _SyntaxReferenceCategoryContent(
+      description: l10n.syntaxReferenceMarkdownDescription,
+      entries: [
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHeadings,
+          example: '# Heading',
+          identifiers: '#, ##, ###, ####, #####, ######',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceParagraphs,
+          example: l10n.syntaxReferenceParagraphExample,
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.blockquote,
+          example: '> Quoted text',
+          identifiers: '>',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.codeBlock,
+          example: '```dart\nprint("Hello");\n```',
+          identifiers: '```, ~~~',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceLists,
+          example: '- Item\n1. First',
+          identifiers: '-, *, +, 1., 1)',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.checklist,
+          example: '- [ ] Draft\n- [x] Published',
+          identifiers: '- [ ], - [x], - [X]',
+          scope: scope,
+          documentationUri: _githubMarkdownDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.table,
+          example: '| Name | Value |\n| --- | --- |\n| A | 1 |',
+          identifiers: '| --- |',
+          scope: scope,
+          limitation: l10n.syntaxReferenceTableLimitation,
+          documentationUri: _githubMarkdownDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.link,
+          example: '[BusyMark](https://busystack.org)',
+          identifiers: '[text](url), [text][label]',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.image,
+          example: '![Alternative text](image.png)',
+          identifiers: '![alt](src), ![alt][label]',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceInlineFormatting,
+          example: '**bold** *italic* ~~removed~~ `code`',
+          identifiers: '**, __, *, _, ~~, `',
+          scope: scope,
+          documentationUri: _githubMarkdownDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.thematicBreak,
+          example: '---',
+          identifiers: '---, ***, ___',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.hardLineBreak,
+          example: 'First line  \nSecond line',
+          identifiers: l10n.syntaxReferenceHardBreakIdentifiers,
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+      ],
+    );
+  }
+
+  Widget _htmlReference(BuildContext context) {
+    final l10n = context.l10n;
+    return _SyntaxReferenceCategoryContent(
+      description: l10n.syntaxReferenceHtmlDescription,
+      entries: [
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceRawHtmlBlocks,
+          example: '<section>\n  <p>Text</p>\n</section>',
+          identifiers: _supportedRawHtmlBlockTags,
+          scope: l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown,
+          limitation: l10n.syntaxReferenceMarkdownInsideHtmlDescription,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceRawHtmlInline,
+          example: '<strong>Important</strong>',
+          identifiers: _supportedRawHtmlInlineTags,
+          scope: l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+      ],
+      footer: BusyMarkGroupedList(
+        title: l10n.syntaxReferenceSafety,
+        description: l10n.syntaxReferenceSafetyDescription,
+        filled: true,
+        children: [
+          BusyMarkActionRow(
+            title: l10n.syntaxReferenceSanitizedPreview,
+            subtitle: l10n.syntaxReferenceSanitizedPreviewDescription,
+            leading: const Icon(BusyMarkGlyphs.check),
+          ),
+          BusyMarkActionRow(
+            title: l10n.syntaxReferenceSourcePreserved,
+            subtitle: l10n.syntaxReferenceSourcePreservedDescription,
+            leading: const Icon(BusyMarkGlyphs.document),
+          ),
+          BusyMarkActionRow(
+            title: l10n.syntaxReferenceMarkdownInsideHtml,
+            subtitle: l10n.syntaxReferenceMarkdownInsideHtmlDescription,
+            leading: const Icon(BusyMarkGlyphs.markdownFile),
+          ),
+          BusyMarkActionRow(
+            title: l10n.syntaxReferenceBlockedContent,
+            subtitle: l10n.syntaxReferenceBlockedContentDescription,
+            leading: const Icon(BusyMarkGlyphs.warning),
+          ),
+          BusyMarkActionRow(
+            title: l10n.syntaxReferenceSafeUrls,
+            subtitle: l10n.syntaxReferenceSafeUrlsDescription,
+            leading: const Icon(BusyMarkGlyphs.link),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _diagramsAndApiReference(BuildContext context) {
+    final l10n = context.l10n;
+    final scope = l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    return _SyntaxReferenceCategoryContent(
+      description: l10n.syntaxReferenceDiagramsDescription,
+      entries: [
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceMermaid,
+          example: '```mermaid\nflowchart LR\n  A --> B\n```',
+          identifiers: 'mermaid',
+          scope: scope,
+          documentationUri: _mermaidDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferencePlantUml,
+          example: '```plantuml\n@startuml\nAlice -> Bob: Hello\n@enduml\n```',
+          identifiers: 'plantuml, puml',
+          scope: scope,
+          documentationUri: _plantUmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceD2,
+          example: '```d2\nclient -> server\n```',
+          identifiers: 'd2',
+          scope: scope,
+          documentationUri: _d2DocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceOpenApi,
+          example:
+              '```openapi\nopenapi: 3.0.3\ninfo:\n  title: Sample API\n'
+              '  version: 1.0.0\npaths: {}\n```',
+          identifiers: 'openapi, oas, swagger',
+          scope: scope,
+          limitation: l10n.syntaxReferenceOpenApiLimitation,
+          documentationUri: _openApiDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticDiagramBlocks,
+          example:
+              '<code-block lang="mermaid">flowchart LR\n'
+              '  A --&gt; B</code-block>',
+          identifiers: 'mermaid, plantuml, puml, d2',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceSemanticDiagramLimitation,
+          documentationUri: _writersideMermaidDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceReferencedDiagramSource,
+          example:
+              '<code-block lang="d2" src="../codeSnippets/graph.d2"/>\n\n'
+              '```mermaid\n```\n{src="../codeSnippets/flow.mmd"}',
+          identifiers: 'src',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceReferencedDiagramLimitation,
+          documentationUri: _writersideMermaidDocumentationUri,
+        ),
+      ],
+    );
+  }
+
+  Widget _mathematicsReference(BuildContext context) {
+    final l10n = context.l10n;
+    final markdownScope =
+        l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    return _SyntaxReferenceCategoryContent(
+      description: l10n.syntaxReferenceMathematicsDescription,
+      entries: [
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceInlineMath,
+          example: r'Euler: $e^{i\pi}+1=0$',
+          identifiers: r'$...$',
+          scope: markdownScope,
+          limitation: l10n.syntaxReferenceMathDelimitersLimitation,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceGithubMath,
+          example: r'The value is $`\sqrt{x^2+y^2}`$.',
+          identifiers: r'$`...`$',
+          scope: markdownScope,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceDisplayMath,
+          example: r'''$$
+\int_0^1 x^2\,dx = \frac{1}{3}
+$$''',
+          identifiers: r'$$...$$',
+          scope: markdownScope,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceMathFence,
+          example: '```math\nE = mc^2\n```',
+          identifiers: 'math',
+          scope: markdownScope,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceTexFence,
+          example: '```tex\n\\sum_{i=1}^n i\n```',
+          identifiers: 'tex',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdown,
+          limitation: l10n.syntaxReferenceTexFenceLimitation,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceWritersideMathElement,
+          example: r'The domain is <math>\mathbb{R}</math>.',
+          identifiers: '<math>...</math>',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceWritersideMathElementLimitation,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticTexBlock,
+          example:
+              '<code-block lang="tex">\n'
+              '<![CDATA[\\sum_{i=1}^n i < n^2]]>\n'
+              '</code-block>',
+          identifiers: 'tex',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+      ],
+    );
+  }
+
+  Widget _writersideReference(BuildContext context) {
+    final l10n = context.l10n;
+    return _SyntaxReferenceCategoryContent(
+      description: l10n.syntaxReferenceWritersideDescription,
+      entries: [
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceAdmonitionBlockquote,
+          example: '> Check this setting.\n{style="warning"}',
+          identifiers: '>, style="note", style="warning", style="quote"',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdown,
+          limitation: l10n.syntaxReferenceAdmonitionLimitation,
+          documentationUri: _writersideAdmonitionDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticAdmonitions,
+          example:
+              '<tip>Try this first.</tip>\n'
+              '<note>Remember this.</note>\n'
+              '<warning>Use care.</warning>\n'
+              '<quote>Quoted text.</quote>',
+          identifiers: 'tip, note, warning, quote',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceSemanticMarkupLimitation,
+          documentationUri: _writersideAdmonitionDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceCollapsibleHeading,
+          example:
+              '## Advanced details {collapsible="true"}\n\nHidden content.',
+          identifiers: 'collapsible="true"',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdown,
+          documentationUri: _writersideCollapsibleDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceCollapsibleCode,
+          example:
+              '```kotlin\nval answer = 42\n```\n'
+              '{collapsible="true" collapsed-title="Example.kt"}',
+          identifiers: 'collapsible, collapsed-title',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdown,
+          documentationUri: _writersideCollapsibleDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticCollapsibles,
+          example:
+              '<chapter title="Details" collapsible="true">\n'
+              '  <p>Hidden content.</p>\n'
+              '</chapter>',
+          identifiers: 'chapter, procedure, code-block, deflist',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceSemanticCollapsiblesLimitation,
+          documentationUri: _writersideCollapsibleDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticCodeBlocks,
+          example:
+              '<code-block lang="tex">E = mc^2</code-block>\n'
+              '<code-block lang="d2">a -> b</code-block>',
+          identifiers: 'tex, mermaid, plantuml, puml, d2',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceSemanticDiagramLimitation,
+          documentationUri: _writersideMathDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceReferencedDiagramSource,
+          example: '<code-block lang="plantuml" src="../diagrams/model.puml"/>',
+          identifiers: 'src',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceReferencedDiagramLimitation,
+          documentationUri: _writersideMermaidDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceVideo,
+          example:
+              '<video src="sample.mp4" preview-src="sample.png"/>\n'
+              '<video src="https://youtu.be/BeJu9bMPLGU"/>\n'
+              '<video src="https://vimeo.com/76979871"/>',
+          identifiers:
+              'video, preview-src, youtu.be, youtube.com, '
+              'youtube-nocookie.com, vimeo.com',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceVideoLimitation,
+          documentationUri: _writersideVideoDocumentationUri,
+        ),
+      ],
+    );
+  }
+}
+
+class _SyntaxReferenceCategoryContent extends StatelessWidget {
+  const _SyntaxReferenceCategoryContent({
+    required this.description,
+    required this.entries,
+    this.footer,
+  });
+
+  final String description;
+  final List<Widget> entries;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          description,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        for (final (index, entry) in entries.indexed) ...[
+          entry,
+          if (index < entries.length - 1)
+            const SizedBox(height: BusyMarkSpacing.sm),
+        ],
+        if (footer case final footer?) footer,
+      ],
+    );
+  }
+}
+
+class _SyntaxReferenceEntry extends StatelessWidget {
+  const _SyntaxReferenceEntry({
+    required this.title,
+    required this.example,
+    required this.scope,
+    required this.documentationUri,
+    this.identifiers,
+    this.limitation,
+  });
+
+  final String title;
+  final String example;
+  final String? identifiers;
+  final String scope;
+  final String? limitation;
+  final Uri documentationUri;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    return BusyMarkGroupedSurface(
+      child: Padding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SyntaxReferenceCode(
+              label: l10n.syntaxReferenceExample,
+              value: example,
+            ),
+            if (identifiers case final identifiers?) ...[
+              const SizedBox(height: BusyMarkSpacing.sm),
+              _SyntaxReferenceValue(
+                label: l10n.syntaxReferenceIdentifiers,
+                value: identifiers,
+                monospace: true,
+              ),
+            ],
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SyntaxReferenceValue(
+              label: l10n.syntaxReferenceScope,
+              value: scope,
+            ),
+            if (limitation case final limitation?) ...[
+              const SizedBox(height: BusyMarkSpacing.sm),
+              _SyntaxReferenceValue(
+                label: l10n.syntaxReferenceLimitation,
+                value: limitation,
+              ),
+            ],
+            const SizedBox(height: BusyMarkSpacing.xs),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: () => unawaited(
+                  launchUrl(
+                    documentationUri,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                icon: const Icon(BusyMarkGlyphs.externalLink),
+                label: Text(l10n.syntaxReferenceOfficialDocumentation),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SyntaxReferenceCode extends StatelessWidget {
+  const _SyntaxReferenceCode({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: BusyMarkSpacing.xxs),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.control,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+            border: Border.all(color: colors.subtleBorder),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: SelectableText(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SyntaxReferenceValue extends StatelessWidget {
+  const _SyntaxReferenceValue({
+    required this.label,
+    required this.value,
+    this.monospace = false,
+  });
+
+  final String label;
+  final String value;
+  final bool monospace;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final valueWidget = SelectableText(
+      value,
+      style: textTheme.bodySmall?.copyWith(
+        fontFamily: monospace ? BusyMarkTypography.monoFontFamily : null,
+        fontFamilyFallback: monospace
+            ? BusyMarkTypography.monoFontFamilyFallback
+            : null,
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: textTheme.labelMedium),
+        const SizedBox(height: BusyMarkSpacing.xxs),
+        if (monospace)
+          Directionality(textDirection: TextDirection.ltr, child: valueWidget)
+        else
+          valueWidget,
+      ],
     );
   }
 }

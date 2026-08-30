@@ -452,8 +452,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Tampilkan referensi pintasan keyboard ini';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Buka referensi Markdown dan HTML';
+  String get shortcutSyntaxReferenceDescription => 'Buka referensi sintaks';
 
   @override
   String get shortcutSettingsDescription => 'Buka pengaturan BusyMark';
@@ -2659,114 +2658,291 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitErrorCommandFailed => 'Perintah Git gagal.';
 
   @override
-  String get markdownAndHtml => 'Markdown dan HTML';
+  String get syntaxReference => 'Referensi Sintaks';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Blok Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'Blok Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Struktur blok didukung dalam sumber Markdown dan pratinjau.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Markdown Sebaris';
+  String get syntaxReferenceInlineFormatting => 'Markdown Sebaris';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Pemformatan yang bisa muncul di dalam paragraf, item daftar, dan sel tabel.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Blok HTML Mentah';
+  String get syntaxReferenceRawHtmlBlocks => 'Blok HTML Mentah';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Tag HTML tingkat blok yang aman dirender melalui widget pratinjau BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Tag Sebaris HTML Mentah';
+  String get syntaxReferenceRawHtmlInline => 'Tag Sebaris HTML Mentah';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Tag HTML sebaris aman dirender tanpa menampilkan tag literal.';
 
   @override
-  String get markdownHtmlSafety => 'Aturan Keamanan';
+  String get syntaxReferenceSafety => 'Aturan Keamanan';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'HTML mentah diurai dan dibersihkan sebelum rendering pratinjau.';
 
   @override
-  String get markdownHtmlHeadings => 'Judul';
+  String get syntaxReferenceHeadings => 'Judul';
 
   @override
-  String get markdownHtmlParagraphs => 'Paragraf';
+  String get syntaxReferenceParagraphs => 'Paragraf';
 
   @override
-  String get markdownHtmlLists => 'Daftar';
+  String get syntaxReferenceLists => 'Daftar';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Kontainer';
+  String get syntaxReferenceHtmlContainers => 'Kontainer';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Blok teks';
+  String get syntaxReferenceHtmlTextBlocks => 'Blok teks';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Gambar dan ilustrasi';
+  String get syntaxReferenceHtmlFigures => 'Gambar dan ilustrasi';
 
   @override
-  String get markdownHtmlHtmlPreformatted =>
+  String get syntaxReferenceHtmlPreformatted =>
       'Kode yang telah diformat sebelumnya';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Blok detail yang dapat dibuka';
+  String get syntaxReferenceHtmlDisclosure => 'Blok detail yang dapat dibuka';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Daftar deskripsi';
+  String get syntaxReferenceHtmlDescriptionLists => 'Daftar deskripsi';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Tag pemformatan';
+  String get syntaxReferenceHtmlFormattingTags => 'Tag pemformatan';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Tag kode sebaris';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Tag kode sebaris';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Tag teks semantik';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Tag teks semantik';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Pratinjau yang sudah disanitasi';
+  String get syntaxReferenceSanitizedPreview =>
+      'Pratinjau yang sudah disanitasi';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML yang diizinkan diubah menjadi blok pratinjau BusyMark, tidak dirender di browser.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Sumber dipertahankan';
+  String get syntaxReferenceSourcePreserved => 'Sumber dipertahankan';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'HTML mentah yang belum diedit disimpan kembali persis seperti teks sumber.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown di dalam HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown di dalam HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Penanda Markdown di dalam HTML mentah dirender sebagai teks literal.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Konten aktif yang diblokir';
+  String get syntaxReferenceBlockedContent => 'Konten aktif yang diblokir';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Skrip, gaya, bingkai, formulir, SVG, MathML, peristiwa, dan atribut tidak aman diblokir.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Hanya URL aman';
+  String get syntaxReferenceSafeUrls => 'Hanya URL aman';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Tautan mengizinkan URL http, https, mailto, tel, relatif, dan fragmen; skema yang tidak aman diblokir.';
+
+  @override
+  String get syntaxReferenceCategory => 'Kategori';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagram dan API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matematika';
+
+  @override
+  String get syntaxReferenceExample => 'Contoh';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Pengenal dan alias';
+
+  @override
+  String get syntaxReferenceScope => 'Cakupan';
+
+  @override
+  String get syntaxReferenceLimitation => 'Batasan BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Dokumentasi resmi';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Markdown biasa dan Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Hanya Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Hanya Markdown Writerside dan XML Writerside';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Bentuk Markdown utama yang dapat ditulis dan dipratinjau BusyMark.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Sebuah paragraf teks.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tabel memakai sintaks garis vertikal GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'dua spasi di akhir baris, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark menerima subset HTML mentah yang terbatas dan aman dalam sumber Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Blok berpagar Mermaid, PlantUML, D2, dan OpenAPI berfungsi dalam sumber Markdown. Pengenal pagar tidak peka huruf besar-kecil dan BusyMark mempertahankan ejaan sumber.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Gunakan konten YAML atau JSON berpagar. BusyMark tidak memperlakukan sembarang dokumen YAML atau JSON utuh sebagai referensi OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Blok kode semantik untuk diagram';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Bentuk semantik code-block dan src mendukung Mermaid, PlantUML, dan D2, bukan OpenAPI, dan hanya dalam proyek Writerside.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Sumber diagram yang dirujuk';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Jalur harus relatif dan tetap di dalam proyek Writerside yang dibuka; bentuk pagar dengan src hanya untuk Markdown Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark mendukung ekspresi TeX, bukan dokumen TeX atau LaTeX lengkap.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Matematika sebaris';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'Matematika GitHub dengan dolar dan tanda petik balik';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Matematika tampilan';
+
+  @override
+  String get syntaxReferenceMathFence => 'Pagar math';
+
+  @override
+  String get syntaxReferenceTexFence => 'Pagar tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark tidak mengenali \\(...\\) atau \\[...\\] sebagai pembatas matematika Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Di luar mode Writerside, pagar tex tetap menjadi blok kode biasa.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Elemen math Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'Elemen math adalah sintaks semantik Writerside, bukan HTML MathML mentah yang diizinkan.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Blok kode TeX semantik';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Ekstensi terpilih ini hanya ditafsirkan di dalam proyek Writerside yang dibuka.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Kutipan blok keterangan';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Kutipan blok biasa menjadi tip dalam Markdown Writerside; dalam Markdown biasa tetap menjadi kutipan biasa.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Keterangan semantik';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Markdown biasa tidak menafsirkan elemen semantik Writerside ini.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Judul yang dapat diciutkan';
+
+  @override
+  String get syntaxReferenceCollapsibleCode =>
+      'Pagar kode yang dapat diciutkan';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Konten semantik yang dapat diciutkan';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark mendukung bentuk chapter, procedure, code-block, dan daftar definisi yang dapat diciutkan, bukan seluruh katalog Writerside.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Blok kode semantik untuk matematika dan diagram';
+
+  @override
+  String get syntaxReferenceVideo => 'Video Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Video lokal memakai gambar preview-src lokal; sumber yang dihosting harus berupa URL HTTPS YouTube atau Vimeo yang didukung.';
 
   @override
   String get exportAsPdf => 'Ekspor sebagai PDF';

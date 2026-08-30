@@ -449,7 +449,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'إظهار مرجع اختصارات لوحة المفاتيح';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription => 'فتح مرجع Markdown وHTML';
+  String get shortcutSyntaxReferenceDescription => 'فتح مرجع بناء الجملة';
 
   @override
   String get shortcutSettingsDescription => 'فتح إعدادات BusyMark';
@@ -2687,113 +2687,286 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitErrorCommandFailed => 'فشل أمر Git.';
 
   @override
-  String get markdownAndHtml => 'Markdown و HTML';
+  String get syntaxReference => 'مرجع بناء الجملة';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'كتل Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'كتل Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'بنى الكتل المدعومة في مصدر Markdown والمعاينة.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Markdown داخل السطر';
+  String get syntaxReferenceInlineFormatting => 'Markdown داخل السطر';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'كتل HTML الخام';
+  String get syntaxReferenceRawHtmlBlocks => 'كتل HTML الخام';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'وسوم HTML داخل السطر';
+  String get syntaxReferenceRawHtmlInline => 'وسوم HTML داخل السطر';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
 
   @override
-  String get markdownHtmlSafety => 'قواعد الأمان';
+  String get syntaxReferenceSafety => 'قواعد الأمان';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.';
 
   @override
-  String get markdownHtmlHeadings => 'العناوين';
+  String get syntaxReferenceHeadings => 'العناوين';
 
   @override
-  String get markdownHtmlParagraphs => 'الفقرات';
+  String get syntaxReferenceParagraphs => 'الفقرات';
 
   @override
-  String get markdownHtmlLists => 'القوائم';
+  String get syntaxReferenceLists => 'القوائم';
 
   @override
-  String get markdownHtmlHtmlContainers => 'الحاويات';
+  String get syntaxReferenceHtmlContainers => 'الحاويات';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'كتل النص';
+  String get syntaxReferenceHtmlTextBlocks => 'كتل النص';
 
   @override
-  String get markdownHtmlHtmlFigures => 'الأشكال والصور';
+  String get syntaxReferenceHtmlFigures => 'الأشكال والصور';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'كود منسق مسبقًا';
+  String get syntaxReferenceHtmlPreformatted => 'كود منسق مسبقًا';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'كتل قابلة للفتح';
+  String get syntaxReferenceHtmlDisclosure => 'كتل قابلة للفتح';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'قوائم وصفية';
+  String get syntaxReferenceHtmlDescriptionLists => 'قوائم وصفية';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'وسوم التنسيق';
+  String get syntaxReferenceHtmlFormattingTags => 'وسوم التنسيق';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'وسوم الكود داخل السطر';
+  String get syntaxReferenceHtmlInlineCodeTags => 'وسوم الكود داخل السطر';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'وسوم نصية دلالية';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'وسوم نصية دلالية';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'معاينة منظفة';
+  String get syntaxReferenceSanitizedPreview => 'معاينة منظفة';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'يتم حفظ المصدر';
+  String get syntaxReferenceSourcePreserved => 'يتم حفظ المصدر';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown داخل HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown داخل HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
 
   @override
-  String get markdownHtmlBlockedContent => 'المحتوى النشط محظور';
+  String get syntaxReferenceBlockedContent => 'المحتوى النشط محظور';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
 
   @override
-  String get markdownHtmlSafeUrls => 'عناوين URL آمنة فقط';
+  String get syntaxReferenceSafeUrls => 'عناوين URL آمنة فقط';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
+
+  @override
+  String get syntaxReferenceCategory => 'الفئة';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'المخططات وواجهات API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'الرياضيات';
+
+  @override
+  String get syntaxReferenceExample => 'مثال';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'المعرّفات والأسماء البديلة';
+
+  @override
+  String get syntaxReferenceScope => 'النطاق';
+
+  @override
+  String get syntaxReferenceLimitation => 'قيد في BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'الوثائق الرسمية';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Markdown العادي وMarkdown في Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Markdown في Writerside فقط';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Markdown وXML في Writerside فقط';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'فقرة نصية.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'تستخدم الجداول صيغة الأنابيب في GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'مسافتان في نهاية السطر، \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'يقبل BusyMark مجموعة محدودة وآمنة من HTML الخام في مصدر Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'تعمل كتل Mermaid وPlantUML وD2 وOpenAPI المسيّجة في مصدر Markdown. لا تتأثر معرّفات السياج بحالة الأحرف، ويحافظ BusyMark على التهجئة الأصلية.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'استخدم محتوى YAML أو JSON داخل سياج. لا يعامل BusyMark مستند YAML أو JSON كاملاً عشوائياً على أنه مرجع OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'كتل شيفرة دلالية للمخططات';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'تدعم صيغتا code-block وsrc الدلاليتان Mermaid وPlantUML وD2، لا OpenAPI، وتعملان داخل مشاريع Writerside فقط.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => 'مصدر مخطط مُشار إليه';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'يجب أن تكون المسارات نسبية وأن تبقى داخل مشروع Writerside المفتوح؛ صيغة السياج مع src خاصة بـMarkdown في Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'يدعم BusyMark تعبيرات TeX، وليس مستندات TeX أو LaTeX الكاملة.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'رياضيات مضمنة';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'رياضيات GitHub بعلامة الدولار والفاصلة العليا المائلة';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'رياضيات معروضة';
+
+  @override
+  String get syntaxReferenceMathFence => 'سياج math';
+
+  @override
+  String get syntaxReferenceTexFence => 'سياج tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'لا يتعرّف BusyMark على ⁨\\(...\\)⁩ أو ⁨\\[...\\]⁩ كمحددات رياضيات في Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'خارج وضع Writerside، يبقى سياج tex كتلة شيفرة عادية.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'عنصر math في Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'عنصر math صيغة دلالية في Writerside، وليس HTML MathML خاماً مسموحاً به.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'كتلة شيفرة TeX دلالية';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'لا تُفسَّر هذه الامتدادات المحددة إلا داخل مشاريع Writerside المفتوحة.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'اقتباس كتلي للتنبيه';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'يكون الاقتباس الكتلي العادي تلميحاً في Markdown ضمن Writerside؛ ويبقى اقتباساً عادياً في Markdown العادي.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'تنبيهات دلالية';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'لا يفسر Markdown العادي عناصر Writerside الدلالية هذه.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'عنوان قابل للطي';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'سياج شيفرة قابل للطي';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => 'محتوى دلالي قابل للطي';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'يدعم BusyMark صيغ chapter وprocedure وcode-block وقائمة التعريفات القابلة للطي، وليس فهرس Writerside كاملاً.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'كتل شيفرة دلالية للرياضيات والمخططات';
+
+  @override
+  String get syntaxReferenceVideo => 'فيديو Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'يستخدم الفيديو المحلي صورة preview-src محلية؛ ويجب أن تكون المصادر المستضافة عناوين HTTPS مدعومة من YouTube أو Vimeo.';
 
   @override
   String get exportAsPdf => 'تصدير بصيغة PDF';

@@ -449,8 +449,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutKeyboardShortcutsDescription => 'Kuva kiirklahvide loend';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Ava Markdowni ja HTML-i teatmik';
+  String get shortcutSyntaxReferenceDescription => 'Ava süntaksiviide';
 
   @override
   String get shortcutSettingsDescription => 'Ava BusyMarki sätted';
@@ -2651,115 +2650,291 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitErrorCommandFailed => 'Giti käsk nurjus.';
 
   @override
-  String get markdownAndHtml => 'Markdown ja HTML';
+  String get syntaxReference => 'Süntaksiviide';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdowni plokid';
+  String get syntaxReferenceMarkdownBlocks => 'Markdowni plokid';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Markdowni lähtekoodis ja eelvaates toetatud plokkstruktuurid.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Reasisene Markdown';
+  String get syntaxReferenceInlineFormatting => 'Reasisene Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Vormindus, mida saab kasutada lõikudes, loendiüksustes ja tabelilahtrites.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Töötlemata HTML-plokid';
+  String get syntaxReferenceRawHtmlBlocks => 'Töötlemata HTML-plokid';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Turvalised plokitaseme HTML-märgendid, mis kuvatakse BusyMarki eelvaatevidinate kaudu.';
 
   @override
-  String get markdownHtmlRawHtmlInline =>
+  String get syntaxReferenceRawHtmlInline =>
       'Reasisesed töötlemata HTML-märgendid';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.';
 
   @override
-  String get markdownHtmlSafety => 'Ohutusreeglid';
+  String get syntaxReferenceSafety => 'Ohutusreeglid';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'Töötlemata HTML parsitakse ja puhastatakse enne eelvaates kuvamist.';
 
   @override
-  String get markdownHtmlHeadings => 'Pealkirjad';
+  String get syntaxReferenceHeadings => 'Pealkirjad';
 
   @override
-  String get markdownHtmlParagraphs => 'Lõigud';
+  String get syntaxReferenceParagraphs => 'Lõigud';
 
   @override
-  String get markdownHtmlLists => 'Loendid';
+  String get syntaxReferenceLists => 'Loendid';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Konteinerid';
+  String get syntaxReferenceHtmlContainers => 'Konteinerid';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Tekstiplokid';
+  String get syntaxReferenceHtmlTextBlocks => 'Tekstiplokid';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Joonised ja pildid';
+  String get syntaxReferenceHtmlFigures => 'Joonised ja pildid';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Eelvormindatud kood';
+  String get syntaxReferenceHtmlPreformatted => 'Eelvormindatud kood';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Laiendatavad plokid';
+  String get syntaxReferenceHtmlDisclosure => 'Laiendatavad plokid';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Kirjeldusloendid';
+  String get syntaxReferenceHtmlDescriptionLists => 'Kirjeldusloendid';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Vormindusmärgendid';
+  String get syntaxReferenceHtmlFormattingTags => 'Vormindusmärgendid';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Reasisesed koodimärgendid';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Reasisesed koodimärgendid';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags =>
+  String get syntaxReferenceHtmlNeutralInlineTags =>
       'Semantilised tekstimärgendid';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Puhastatud eelvaade';
+  String get syntaxReferenceSanitizedPreview => 'Puhastatud eelvaade';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Lähtekood säilitatakse';
+  String get syntaxReferenceSourcePreserved => 'Lähtekood säilitatakse';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown HTML-is';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown HTML-is';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blokeeritud aktiivsisu';
+  String get syntaxReferenceBlockedContent => 'Blokeeritud aktiivsisu';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Ainult turvalised URL-id';
+  String get syntaxReferenceSafeUrls => 'Ainult turvalised URL-id';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.';
+
+  @override
+  String get syntaxReferenceCategory => 'Kategooria';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagrammid ja API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matemaatika';
+
+  @override
+  String get syntaxReferenceExample => 'Näide';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Identifikaatorid ja aliased';
+
+  @override
+  String get syntaxReferenceScope => 'Ulatus';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMarki piirang';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Ametlik dokumentatsioon';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Tavaline Markdown ja Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Ainult Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Ainult Writerside Markdown ja Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Põhilised Markdowni vormid, mida BusyMark võimaldab kirjutada ja eelvaadata.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Tekstilõik.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tabelid kasutavad GitHub Flavored Markdowni püstkriipsusüntaksit.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'kaks tühikut rea lõpus, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark aktsepteerib Markdowni lähtekoodis piiratud turvalist toor-HTML-i alamhulka.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Piiratud Mermaid-, PlantUML-, D2- ja OpenAPI-plokid töötavad Markdowni lähtekoodis. Plokiidentifikaatorid ei ole tõstutundlikud ja BusyMark säilitab algse kirjapildi.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Kasuta piiratud YAML- või JSON-sisu. BusyMark ei käsitle suvalist terviklikku YAML- või JSON-dokumenti OpenAPI viitena.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantilised diagrammi koodiplokid';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantilised code-block- ja src-vormid toetavad Mermaidi, PlantUML-i ja D2-te, mitte OpenAPI-t, ning ainult Writerside\'i projektides.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Viidatud diagrammiallikas';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Teed peavad olema suhtelised ja jääma avatud Writerside\'i projekti sisse; piiratud vorm koos src-ga on ainult Writerside Markdowni jaoks.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark toetab TeX-i avaldisi, mitte terviklikke TeX-i või LaTeX-i dokumente.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Reasisene matemaatika';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'GitHubi matemaatika dollari- ja graavimärgiga';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Plokina matemaatika';
+
+  @override
+  String get syntaxReferenceMathFence => 'math-plokk';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex-plokk';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark ei tuvasta \\(...\\) ega \\[...\\] Markdowni matemaatika eraldajatena.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Väljaspool Writerside\'i režiimi jääb tex-plokk tavaliseks koodiplokiks.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement =>
+      'Writerside\'i math-element';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math-element on semantiline Writerside\'i süntaks, mitte lubatud toor-HTML-i MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Semantiline TeX-i koodiplokk';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Neid valitud laiendusi tõlgendatakse ainult avatud Writerside\'i projektides.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Märkuse plokktsitaat';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Tavaline plokktsitaat on Writerside Markdownis nõuanne; tavalises Markdownis jääb see tavaliseks tsitaadiks.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Semantilised märkused';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Tavaline Markdown ei tõlgenda neid Writerside\'i semantilisi elemente.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Ahendatav pealkiri';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Ahendatav koodiplokk';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantiline ahendatav sisu';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark toetab ahendatavaid chapter-, procedure-, code-block- ja definitsiooniloendi vorme, mitte kogu Writerside\'i kataloogi.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantilised koodiplokid matemaatika ja diagrammide jaoks';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside\'i video';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Kohalik video kasutab kohalikku preview-src-pilti; majutatud allikad peavad olema toetatud YouTube\'i või Vimeo HTTPS-aadressid.';
 
   @override
   String get exportAsPdf => 'Ekspordi PDF-ina';

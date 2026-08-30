@@ -451,8 +451,7 @@ class AppLocalizationsZh extends AppLocalizations {
       'Show this keyboard shortcut reference';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Open the Markdown and HTML reference';
+  String get shortcutSyntaxReferenceDescription => '打开语法参考';
 
   @override
   String get shortcutSettingsDescription => 'Open BusyMark settings';
@@ -2654,113 +2653,280 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git command failed.';
 
   @override
-  String get markdownAndHtml => 'Markdown and HTML';
+  String get syntaxReference => '语法参考';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown Blocks';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown 块';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
-      'Block structures supported in Markdown source and preview.';
+  String get syntaxReferenceMarkdownBlocksDescription =>
+      'Markdown 源代码和预览中支持的块结构。';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Inline Markdown';
+  String get syntaxReferenceInlineFormatting => '行内 Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
-      'Formatting that can appear inside paragraphs, list items, and table cells.';
+  String get syntaxReferenceInlineFormattingDescription =>
+      '可出现在段落、列表项和表格单元格中的格式。';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Raw HTML Blocks';
+  String get syntaxReferenceRawHtmlBlocks => '原始 HTML 块';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
-      'Safe block-level HTML tags rendered through BusyMark preview widgets.';
+  String get syntaxReferenceRawHtmlBlocksDescription =>
+      '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Raw HTML Inline Tags';
+  String get syntaxReferenceRawHtmlInline => '原始 HTML 行内标签';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
-      'Safe inline HTML tags rendered without showing literal tags.';
+  String get syntaxReferenceRawHtmlInlineDescription =>
+      '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
-  String get markdownHtmlSafety => 'Safety Rules';
+  String get syntaxReferenceSafety => '安全规则';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'Raw HTML is parsed and sanitized before preview rendering.';
+  String get syntaxReferenceSafetyDescription => '原始 HTML 会在预览前进行解析和清理。';
 
   @override
-  String get markdownHtmlHeadings => 'Headings';
+  String get syntaxReferenceHeadings => '标题';
 
   @override
-  String get markdownHtmlParagraphs => 'Paragraphs';
+  String get syntaxReferenceParagraphs => '段落';
 
   @override
-  String get markdownHtmlLists => 'Lists';
+  String get syntaxReferenceLists => '列表';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Containers';
+  String get syntaxReferenceHtmlContainers => '容器';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Text blocks';
+  String get syntaxReferenceHtmlTextBlocks => '文本块';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figures and images';
+  String get syntaxReferenceHtmlFigures => '图和图像';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Preformatted code';
+  String get syntaxReferenceHtmlPreformatted => '预格式化代码';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Disclosure blocks';
+  String get syntaxReferenceHtmlDisclosure => '折叠块';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Description lists';
+  String get syntaxReferenceHtmlDescriptionLists => '描述列表';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Formatting tags';
+  String get syntaxReferenceHtmlFormattingTags => '格式标签';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Inline code tags';
+  String get syntaxReferenceHtmlInlineCodeTags => '行内代码标签';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Semantic text tags';
+  String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Sanitized preview';
+  String get syntaxReferenceSanitizedPreview => '已清理的预览';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
-      'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.';
+  String get syntaxReferenceSanitizedPreviewDescription =>
+      '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Source is preserved';
+  String get syntaxReferenceSourcePreserved => '保留源代码';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
-      'Unedited raw HTML is saved back exactly as source text.';
+  String get syntaxReferenceSourcePreservedDescription =>
+      '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown inside HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'HTML 内的 Markdown';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
-      'Markdown markers inside raw HTML render as literal text.';
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
+      '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blocked active content';
+  String get syntaxReferenceBlockedContent => '被阻止的活动内容';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
-      'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.';
+  String get syntaxReferenceBlockedContentDescription =>
+      '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
 
   @override
-  String get markdownHtmlSafeUrls => 'Safe URLs only';
+  String get syntaxReferenceSafeUrls => '仅允许安全 URL';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.';
+  String get syntaxReferenceSafeUrlsDescription =>
+      '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
+
+  @override
+  String get syntaxReferenceCategory => '类别';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => '图表和 API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => '数学';
+
+  @override
+  String get syntaxReferenceExample => '示例';
+
+  @override
+  String get syntaxReferenceIdentifiers => '标识符和别名';
+
+  @override
+  String get syntaxReferenceScope => '适用范围';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark 限制';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => '官方文档';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      '普通 Markdown 和 Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      '仅 Writerside Markdown 和 Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'BusyMark 可以编写和预览的核心 Markdown 形式。';
+
+  @override
+  String get syntaxReferenceParagraphExample => '一段文本。';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      '表格使用 GitHub Flavored Markdown 的竖线语法。';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers => '行尾两个空格、\\、<br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks => '图表的语义代码块';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => '引用的图表源';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
+
+  @override
+  String get syntaxReferenceInlineMath => '行内数学公式';
+
+  @override
+  String get syntaxReferenceGithubMath => '使用美元符号和反引号的 GitHub 数学公式';
+
+  @override
+  String get syntaxReferenceDisplayMath => '显示数学公式';
+
+  @override
+  String get syntaxReferenceMathFence => 'math 围栏';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex 围栏';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside math 元素';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => '语义 TeX 代码块';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      '这些特定扩展仅在已打开的 Writerside 项目中解析。';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => '提示块引用';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => '语义提示';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      '普通 Markdown 不会解析这些 Writerside 语义元素。';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => '可折叠标题';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => '可折叠代码围栏';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => '语义可折叠内容';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks => '数学和图表的语义代码块';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside 视频';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
 
   @override
   String get exportAsPdf => 'Export as PDF';
@@ -3978,7 +4144,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get shortcutKeyboardShortcutsDescription => '显示此键盘快捷键参考';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription => '打开 Markdown 和 HTML 参考';
+  String get shortcutSyntaxReferenceDescription => '打开语法参考';
 
   @override
   String get shortcutSettingsDescription => '打开 BusyMark 设置';
@@ -6069,110 +6235,280 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gitErrorCommandFailed => 'Git 命令失败。';
 
   @override
-  String get markdownAndHtml => 'Markdown 和 HTML';
+  String get syntaxReference => '语法参考';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown 块';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown 块';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription => 'Markdown 源代码和预览中支持的块结构。';
+  String get syntaxReferenceMarkdownBlocksDescription =>
+      'Markdown 源代码和预览中支持的块结构。';
 
   @override
-  String get markdownHtmlInlineFormatting => '行内 Markdown';
+  String get syntaxReferenceInlineFormatting => '行内 Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription => '可出现在段落、列表项和表格单元格中的格式。';
+  String get syntaxReferenceInlineFormattingDescription =>
+      '可出现在段落、列表项和表格单元格中的格式。';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => '原始 HTML 块';
+  String get syntaxReferenceRawHtmlBlocks => '原始 HTML 块';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       '通过 BusyMark 预览组件渲染的安全块级 HTML 标签。';
 
   @override
-  String get markdownHtmlRawHtmlInline => '原始 HTML 行内标签';
+  String get syntaxReferenceRawHtmlInline => '原始 HTML 行内标签';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
-  String get markdownHtmlSafety => '安全规则';
+  String get syntaxReferenceSafety => '安全规则';
 
   @override
-  String get markdownHtmlSafetyDescription => '原始 HTML 会在预览前进行解析和清理。';
+  String get syntaxReferenceSafetyDescription => '原始 HTML 会在预览前进行解析和清理。';
 
   @override
-  String get markdownHtmlHeadings => '标题';
+  String get syntaxReferenceHeadings => '标题';
 
   @override
-  String get markdownHtmlParagraphs => '段落';
+  String get syntaxReferenceParagraphs => '段落';
 
   @override
-  String get markdownHtmlLists => '列表';
+  String get syntaxReferenceLists => '列表';
 
   @override
-  String get markdownHtmlHtmlContainers => '容器';
+  String get syntaxReferenceHtmlContainers => '容器';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => '文本块';
+  String get syntaxReferenceHtmlTextBlocks => '文本块';
 
   @override
-  String get markdownHtmlHtmlFigures => '图和图像';
+  String get syntaxReferenceHtmlFigures => '图和图像';
 
   @override
-  String get markdownHtmlHtmlPreformatted => '预格式化代码';
+  String get syntaxReferenceHtmlPreformatted => '预格式化代码';
 
   @override
-  String get markdownHtmlHtmlDisclosure => '折叠块';
+  String get syntaxReferenceHtmlDisclosure => '折叠块';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => '描述列表';
+  String get syntaxReferenceHtmlDescriptionLists => '描述列表';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => '格式标签';
+  String get syntaxReferenceHtmlFormattingTags => '格式标签';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => '行内代码标签';
+  String get syntaxReferenceHtmlInlineCodeTags => '行内代码标签';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => '语义文本标签';
+  String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get markdownHtmlSanitizedPreview => '已清理的预览';
+  String get syntaxReferenceSanitizedPreview => '已清理的预览';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
 
   @override
-  String get markdownHtmlSourcePreserved => '保留源代码';
+  String get syntaxReferenceSourcePreserved => '保留源代码';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'HTML 内的 Markdown';
+  String get syntaxReferenceMarkdownInsideHtml => 'HTML 内的 Markdown';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get markdownHtmlBlockedContent => '被阻止的活动内容';
+  String get syntaxReferenceBlockedContent => '被阻止的活动内容';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
 
   @override
-  String get markdownHtmlSafeUrls => '仅允许安全 URL';
+  String get syntaxReferenceSafeUrls => '仅允许安全 URL';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       '链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。';
+
+  @override
+  String get syntaxReferenceCategory => '类别';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => '图表和 API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => '数学';
+
+  @override
+  String get syntaxReferenceExample => '示例';
+
+  @override
+  String get syntaxReferenceIdentifiers => '标识符和别名';
+
+  @override
+  String get syntaxReferenceScope => '适用范围';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark 限制';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => '官方文档';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      '普通 Markdown 和 Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      '仅 Writerside Markdown 和 Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'BusyMark 可以编写和预览的核心 Markdown 形式。';
+
+  @override
+  String get syntaxReferenceParagraphExample => '一段文本。';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      '表格使用 GitHub Flavored Markdown 的竖线语法。';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers => '行尾两个空格、\\、<br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      '带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      '请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks => '图表的语义代码块';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      '语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => '引用的图表源';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      '路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。';
+
+  @override
+  String get syntaxReferenceInlineMath => '行内数学公式';
+
+  @override
+  String get syntaxReferenceGithubMath => '使用美元符号和反引号的 GitHub 数学公式';
+
+  @override
+  String get syntaxReferenceDisplayMath => '显示数学公式';
+
+  @override
+  String get syntaxReferenceMathFence => 'math 围栏';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex 围栏';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      '在 Writerside 模式之外，tex 围栏仍是普通代码块。';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside math 元素';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => '语义 TeX 代码块';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      '这些特定扩展仅在已打开的 Writerside 项目中解析。';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => '提示块引用';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      '普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => '语义提示';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      '普通 Markdown 不会解析这些 Writerside 语义元素。';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => '可折叠标题';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => '可折叠代码围栏';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => '语义可折叠内容';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks => '数学和图表的语义代码块';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside 视频';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      '本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。';
 
   @override
   String get exportAsPdf => '导出为 PDF';

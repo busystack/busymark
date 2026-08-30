@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Markdown- und HTML-Referenz öffnen",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Syntaxreferenz öffnen",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "BusyMark-Einstellungen öffnen",
   "@shortcutSettingsDescription": {
@@ -2350,136 +2350,136 @@
   "gitErrorNetwork": "Git-Netzwerkvorgang fehlgeschlagen.",
   "gitErrorConflict": "Git hat ungelöste Konflikte gemeldet.",
   "gitErrorCommandFailed": "Git-Befehl fehlgeschlagen.",
-  "markdownAndHtml": "Markdown und HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Syntaxreferenz",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown-Blöcke",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown-Blöcke",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Blockstrukturen, die in Markdown-Quelltext und Vorschau unterstützt werden.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Blockstrukturen, die in Markdown-Quelltext und Vorschau unterstützt werden.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Inline-Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Inline-Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Formatierung innerhalb von Absätzen, Listeneinträgen und Tabellenzellen.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Formatierung innerhalb von Absätzen, Listeneinträgen und Tabellenzellen.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Roh-HTML-Blöcke",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Roh-HTML-Blöcke",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Sichere HTML-Blocktags, die über BusyMark-Vorschauwidgets gerendert werden.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Sichere HTML-Blocktags, die über BusyMark-Vorschauwidgets gerendert werden.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Roh-HTML-Inline-Tags",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Roh-HTML-Inline-Tags",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Sichere Inline-HTML-Tags, die ohne sichtbare Tags gerendert werden.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Sichere Inline-HTML-Tags, die ohne sichtbare Tags gerendert werden.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Sicherheitsregeln",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Sicherheitsregeln",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Roh-HTML wird vor der Vorschau geparst und bereinigt.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Roh-HTML wird vor der Vorschau geparst und bereinigt.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Überschriften",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Überschriften",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Absätze",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Absätze",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Listen",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Listen",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Container",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Container",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Textblöcke",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Textblöcke",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Abbildungen und Bilder",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Abbildungen und Bilder",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Vorformatierter Code",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Vorformatierter Code",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Aufklappblöcke",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Aufklappblöcke",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Beschreibungslisten",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Beschreibungslisten",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Formatierungstags",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Formatierungstags",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Inline-Code-Tags",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Inline-Code-Tags",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Semantische Texttags",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantische Texttags",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Bereinigte Vorschau",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Bereinigte Vorschau",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Erlaubtes HTML wird in BusyMark-Vorschaublöcke umgewandelt, nicht im Browser gerendert.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "Erlaubtes HTML wird in BusyMark-Vorschaublöcke umgewandelt, nicht im Browser gerendert.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Quelltext bleibt erhalten",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Quelltext bleibt erhalten",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Unverändertes Roh-HTML wird exakt als Quelltext gespeichert.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Unverändertes Roh-HTML wird exakt als Quelltext gespeichert.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown in HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown in HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-Zeichen innerhalb von Roh-HTML werden als normaler Text angezeigt.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-Zeichen innerhalb von Roh-HTML werden als normaler Text angezeigt.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Blockierte aktive Inhalte",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Blockierte aktive Inhalte",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Skripte, Styles, Frames, Formulare, SVG, MathML, Events und unsichere Attribute werden blockiert.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Skripte, Styles, Frames, Formulare, SVG, MathML, Events und unsichere Attribute werden blockiert.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Nur sichere URLs",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Nur sichere URLs",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere URL-Schemata werden blockiert.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere URL-Schemata werden blockiert.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "Zu Git hinzufügen",
@@ -2686,6 +2686,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategorie",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagramme und API",
+  "syntaxReferenceCategoryMathematics": "Mathematik",
+  "syntaxReferenceExample": "Beispiel",
+  "syntaxReferenceIdentifiers": "Bezeichner und Aliase",
+  "syntaxReferenceScope": "Geltungsbereich",
+  "syntaxReferenceLimitation": "BusyMark-Einschränkung",
+  "syntaxReferenceOfficialDocumentation": "Offizielle Dokumentation",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Normales Markdown und Writerside-Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Nur Writerside-Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Nur Writerside-Markdown und Writerside-XML",
+  "syntaxReferenceMarkdownDescription": "Die grundlegenden Markdown-Formen, die BusyMark erstellen und in der Vorschau anzeigen kann.",
+  "syntaxReferenceParagraphExample": "Ein Textabsatz.",
+  "syntaxReferenceTableLimitation": "Tabellen verwenden die Pipe-Syntax von GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "zwei Leerzeichen am Zeilenende, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark akzeptiert eine gezielte sichere Teilmenge von Roh-HTML in Markdown-Quelltext.",
+  "syntaxReferenceDiagramsDescription": "Eingezäunte Mermaid-, PlantUML-, D2- und OpenAPI-Blöcke funktionieren in Markdown-Quelltext. Fence-Bezeichner unterscheiden nicht zwischen Groß- und Kleinschreibung; BusyMark bewahrt die ursprüngliche Schreibweise.",
+  "syntaxReferenceOpenApiLimitation": "Verwenden Sie eingezäunten YAML- oder JSON-Inhalt. BusyMark behandelt ein beliebiges vollständiges YAML- oder JSON-Dokument nicht als OpenAPI-Referenz.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantische Diagramm-Codeblöcke",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantische code-block- und src-Formen unterstützen Mermaid, PlantUML und D2, nicht OpenAPI, und nur in Writerside-Projekten.",
+  "syntaxReferenceReferencedDiagramSource": "Referenzierte Diagrammquelle",
+  "syntaxReferenceReferencedDiagramLimitation": "Pfade müssen relativ sein und im geöffneten Writerside-Projekt bleiben; die Kombination aus Fence und src gilt nur für Writerside-Markdown.",
+  "syntaxReferenceMathematicsDescription": "BusyMark unterstützt TeX-Ausdrücke, keine vollständigen TeX- oder LaTeX-Dokumente.",
+  "syntaxReferenceInlineMath": "Mathematik im Text",
+  "syntaxReferenceGithubMath": "GitHub-Mathematik mit Dollarzeichen und Backticks",
+  "syntaxReferenceDisplayMath": "Mathematische Formel als Block",
+  "syntaxReferenceMathFence": "math-Fence",
+  "syntaxReferenceTexFence": "tex-Fence",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark erkennt \\(...\\) und \\[...\\] nicht als Markdown-Mathematikbegrenzer.",
+  "syntaxReferenceTexFenceLimitation": "Außerhalb des Writerside-Modus bleibt ein tex-Fence ein gewöhnlicher Codeblock.",
+  "syntaxReferenceWritersideMathElement": "Writerside-math-Element",
+  "syntaxReferenceWritersideMathElementLimitation": "Das math-Element ist semantische Writerside-Syntax und kein zulässiges rohes HTML-MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantischer TeX-Codeblock",
+  "syntaxReferenceWritersideDescription": "Diese gezielten Erweiterungen werden nur in geöffneten Writerside-Projekten interpretiert.",
+  "syntaxReferenceAdmonitionBlockquote": "Hinweis-Blockzitat",
+  "syntaxReferenceAdmonitionLimitation": "Ein einfaches Blockzitat ist in Writerside-Markdown ein Tipp; in normalem Markdown bleibt es ein gewöhnliches Zitat.",
+  "syntaxReferenceSemanticAdmonitions": "Semantische Hinweise",
+  "syntaxReferenceSemanticMarkupLimitation": "Normales Markdown interpretiert diese semantischen Writerside-Elemente nicht.",
+  "syntaxReferenceCollapsibleHeading": "Einklappbare Überschrift",
+  "syntaxReferenceCollapsibleCode": "Einklappbarer Code-Fence",
+  "syntaxReferenceSemanticCollapsibles": "Semantische einklappbare Inhalte",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark unterstützt einklappbare Kapitel-, Prozedur-, code-block- und Definitionslistenformen, nicht den vollständigen Writerside-Katalog.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantische Codeblöcke für Mathematik und Diagramme",
+  "syntaxReferenceVideo": "Writerside-Video",
+  "syntaxReferenceVideoLimitation": "Lokale Videos verwenden ein lokales preview-src-Bild; gehostete Videoquellen müssen unterstützte HTTPS-URLs von YouTube oder Vimeo sein.",
   "exportAsPdf": "Als PDF exportieren",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

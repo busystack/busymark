@@ -453,8 +453,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Показати довідку з комбінацій клавіш';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Відкрити довідку з Markdown і HTML';
+  String get shortcutSyntaxReferenceDescription =>
+      'Відкрити довідник із синтаксису';
 
   @override
   String get shortcutSettingsDescription => 'Відкрити налаштування BusyMark';
@@ -2709,113 +2709,288 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitErrorCommandFailed => 'Не вдалося виконати команду Git.';
 
   @override
-  String get markdownAndHtml => 'Markdown і HTML';
+  String get syntaxReference => 'Довідник із синтаксису';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Блоки Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'Блоки Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Вбудований Markdown';
+  String get syntaxReferenceInlineFormatting => 'Вбудований Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Форматування всередині абзаців, елементів списків і комірок таблиць.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Блоки необробленого HTML';
+  String get syntaxReferenceRawHtmlBlocks => 'Блоки необробленого HTML';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Вбудовані HTML-теги';
+  String get syntaxReferenceRawHtmlInline => 'Вбудовані HTML-теги';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Безпечні вбудовані HTML-теги відображаються без показу самих тегів.';
 
   @override
-  String get markdownHtmlSafety => 'Правила безпеки';
+  String get syntaxReferenceSafety => 'Правила безпеки';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'Необроблений HTML аналізується й очищується перед попереднім переглядом.';
 
   @override
-  String get markdownHtmlHeadings => 'Заголовки';
+  String get syntaxReferenceHeadings => 'Заголовки';
 
   @override
-  String get markdownHtmlParagraphs => 'Абзаци';
+  String get syntaxReferenceParagraphs => 'Абзаци';
 
   @override
-  String get markdownHtmlLists => 'Списки';
+  String get syntaxReferenceLists => 'Списки';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Контейнери';
+  String get syntaxReferenceHtmlContainers => 'Контейнери';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Текстові блоки';
+  String get syntaxReferenceHtmlTextBlocks => 'Текстові блоки';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Фігури та зображення';
+  String get syntaxReferenceHtmlFigures => 'Фігури та зображення';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Попередньо форматований код';
+  String get syntaxReferenceHtmlPreformatted => 'Попередньо форматований код';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Розкривні блоки';
+  String get syntaxReferenceHtmlDisclosure => 'Розкривні блоки';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Списки описів';
+  String get syntaxReferenceHtmlDescriptionLists => 'Списки описів';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Теги форматування';
+  String get syntaxReferenceHtmlFormattingTags => 'Теги форматування';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Вбудовані теги коду';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Вбудовані теги коду';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Семантичні текстові теги';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Семантичні текстові теги';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Очищений перегляд';
+  String get syntaxReferenceSanitizedPreview => 'Очищений перегляд';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Вихідний текст зберігається';
+  String get syntaxReferenceSourcePreserved => 'Вихідний текст зберігається';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Незмінений необроблений HTML зберігається точно як вихідний текст.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown всередині HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown всередині HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Активний вміст заблоковано';
+  String get syntaxReferenceBlockedContent => 'Активний вміст заблоковано';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Лише безпечні URL';
+  String get syntaxReferenceSafeUrls => 'Лише безпечні URL';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.';
+
+  @override
+  String get syntaxReferenceCategory => 'Категорія';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Діаграми й API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Математика';
+
+  @override
+  String get syntaxReferenceExample => 'Приклад';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Ідентифікатори й псевдоніми';
+
+  @override
+  String get syntaxReferenceScope => 'Область застосування';
+
+  @override
+  String get syntaxReferenceLimitation => 'Обмеження BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Офіційна документація';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Звичайний Markdown і Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Лише Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Лише Markdown Writerside і XML Writerside';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Основні форми Markdown, які BusyMark дає змогу створювати й переглядати.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Абзац тексту.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Таблиці використовують синтаксис із вертикальними рисками GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'два пробіли в кінці рядка, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark приймає обмежену безпечну підмножину необробленого HTML у вихідному тексті Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Огороджені блоки Mermaid, PlantUML, D2 й OpenAPI працюють у вихідному тексті Markdown. Регістр ідентифікаторів не враховується, а BusyMark зберігає початкове написання.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Використовуйте огороджений вміст YAML або JSON. BusyMark не вважає довільний цілий документ YAML або JSON довідником OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Семантичні блоки коду діаграм';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Семантичні форми code-block і src підтримують Mermaid, PlantUML і D2, але не OpenAPI, і лише в проєктах Writerside.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Посилання на джерело діаграми';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Шляхи мають бути відносними й залишатися у відкритому проєкті Writerside; огороджена форма з src працює лише в Markdown Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark підтримує вирази TeX, але не повні документи TeX або LaTeX.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Вбудована формула';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'Формула GitHub із доларом і зворотною лапкою';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Викладна формула';
+
+  @override
+  String get syntaxReferenceMathFence => 'Огороджений блок math';
+
+  @override
+  String get syntaxReferenceTexFence => 'Огороджений блок tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark не розпізнає \\(...\\) і \\[...\\] як математичні роздільники Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Поза режимом Writerside блок tex залишається звичайним блоком коду.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Елемент math Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'Елемент math — це семантичний синтаксис Writerside, а не дозволений необроблений HTML MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Семантичний блок коду TeX';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Ці окремі розширення інтерпретуються лише у відкритих проєктах Writerside.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Цитата-примітка';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Звичайна блокова цитата стає порадою в Markdown Writerside, а у звичайному Markdown залишається цитатою.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Семантичні примітки';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Звичайний Markdown не інтерпретує ці семантичні елементи Writerside.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Згортаний заголовок';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Згортаний блок коду';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Семантичний згортаний вміст';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark підтримує згортані форми chapter, procedure, code-block і списку визначень, але не весь каталог Writerside.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Семантичні блоки коду для формул і діаграм';
+
+  @override
+  String get syntaxReferenceVideo => 'Відео Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Локальне відео використовує локальне зображення preview-src; розміщені відео повинні мати підтримувані HTTPS-адреси YouTube або Vimeo.';
 
   @override
   String get exportAsPdf => 'Експортувати як PDF';

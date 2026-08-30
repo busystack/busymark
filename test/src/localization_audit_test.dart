@@ -255,6 +255,37 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
+  test('Syntax Reference is localized without legacy message keys', () {
+    final english = AppLocalizationsEn();
+    for (final locale in AppLocalizations.supportedLocales) {
+      if (locale.languageCode == 'en') {
+        continue;
+      }
+      final localizations = lookupAppLocalizations(locale);
+      expect(
+        localizations.syntaxReference,
+        isNot(english.syntaxReference),
+        reason: locale.toLanguageTag(),
+      );
+      expect(
+        localizations.syntaxReferenceDiagramsDescription,
+        isNot(english.syntaxReferenceDiagramsDescription),
+        reason: locale.toLanguageTag(),
+      );
+    }
+
+    for (final file in _arbFiles()) {
+      final messages = _arbMessageStrings(file);
+      expect(messages, contains('syntaxReference'), reason: file.path);
+      expect(messages, isNot(contains('markdownAndHtml')), reason: file.path);
+      expect(
+        messages,
+        isNot(contains('shortcutMarkdownAndHtmlDescription')),
+        reason: file.path,
+      );
+    }
+  });
+
   test('RTL translations isolate technical interpolations', () {
     const fsi = '\u2068';
     const pdi = '\u2069';
@@ -639,6 +670,11 @@ const _sharedEnglishMatches = <String>{
   'languageVietnamese',
   'languageSimplifiedChinese',
   'writerside',
+  'syntaxReferenceCategoryHtml',
+  'syntaxReferenceMermaid',
+  'syntaxReferencePlantUml',
+  'syntaxReferenceD2',
+  'syntaxReferenceOpenApi',
   'video',
   'xml',
   'fileTypeMarkdown',
@@ -762,7 +798,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitDiff',
     'gitFetch',
     'gitCommit',
-    'markdownHtmlHtmlContainers',
+    'syntaxReferenceHtmlContainers',
     'pdfPageSizeLetter',
     'visualizationServers',
     'instanceStatus',

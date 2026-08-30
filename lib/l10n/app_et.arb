@@ -528,9 +528,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Ava Markdowni ja HTML-i teatmik",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Ava süntaksiviide",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Ava BusyMarki sätted",
   "@shortcutSettingsDescription": {
@@ -3014,138 +3014,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown ja HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Süntaksiviide",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdowni plokid",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdowni plokid",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Markdowni lähtekoodis ja eelvaates toetatud plokkstruktuurid.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Markdowni lähtekoodis ja eelvaates toetatud plokkstruktuurid.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Reasisene Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Reasisene Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Vormindus, mida saab kasutada lõikudes, loendiüksustes ja tabelilahtrites.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Vormindus, mida saab kasutada lõikudes, loendiüksustes ja tabelilahtrites.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Töötlemata HTML-plokid",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Töötlemata HTML-plokid",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Turvalised plokitaseme HTML-märgendid, mis kuvatakse BusyMarki eelvaatevidinate kaudu.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Turvalised plokitaseme HTML-märgendid, mis kuvatakse BusyMarki eelvaatevidinate kaudu.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Reasisesed töötlemata HTML-märgendid",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Reasisesed töötlemata HTML-märgendid",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Ohutusreeglid",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Ohutusreeglid",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Töötlemata HTML parsitakse ja puhastatakse enne eelvaates kuvamist.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Töötlemata HTML parsitakse ja puhastatakse enne eelvaates kuvamist.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Pealkirjad",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Pealkirjad",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Lõigud",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Lõigud",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Loendid",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Loendid",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Konteinerid",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Konteinerid",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Tekstiplokid",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Tekstiplokid",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Joonised ja pildid",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Joonised ja pildid",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Eelvormindatud kood",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Eelvormindatud kood",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Laiendatavad plokid",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Laiendatavad plokid",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Kirjeldusloendid",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Kirjeldusloendid",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Vormindusmärgendid",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Vormindusmärgendid",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Reasisesed koodimärgendid",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Reasisesed koodimärgendid",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Semantilised tekstimärgendid",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantilised tekstimärgendid",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Puhastatud eelvaade",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Puhastatud eelvaade",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Lähtekood säilitatakse",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Lähtekood säilitatakse",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown HTML-is",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown HTML-is",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Blokeeritud aktiivsisu",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Blokeeritud aktiivsisu",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Ainult turvalised URL-id",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Ainult turvalised URL-id",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategooria",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammid ja API",
+  "syntaxReferenceCategoryMathematics": "Matemaatika",
+  "syntaxReferenceExample": "Näide",
+  "syntaxReferenceIdentifiers": "Identifikaatorid ja aliased",
+  "syntaxReferenceScope": "Ulatus",
+  "syntaxReferenceLimitation": "BusyMarki piirang",
+  "syntaxReferenceOfficialDocumentation": "Ametlik dokumentatsioon",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Tavaline Markdown ja Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Ainult Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Ainult Writerside Markdown ja Writerside XML",
+  "syntaxReferenceMarkdownDescription": "Põhilised Markdowni vormid, mida BusyMark võimaldab kirjutada ja eelvaadata.",
+  "syntaxReferenceParagraphExample": "Tekstilõik.",
+  "syntaxReferenceTableLimitation": "Tabelid kasutavad GitHub Flavored Markdowni püstkriipsusüntaksit.",
+  "syntaxReferenceHardBreakIdentifiers": "kaks tühikut rea lõpus, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark aktsepteerib Markdowni lähtekoodis piiratud turvalist toor-HTML-i alamhulka.",
+  "syntaxReferenceDiagramsDescription": "Piiratud Mermaid-, PlantUML-, D2- ja OpenAPI-plokid töötavad Markdowni lähtekoodis. Plokiidentifikaatorid ei ole tõstutundlikud ja BusyMark säilitab algse kirjapildi.",
+  "syntaxReferenceOpenApiLimitation": "Kasuta piiratud YAML- või JSON-sisu. BusyMark ei käsitle suvalist terviklikku YAML- või JSON-dokumenti OpenAPI viitena.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantilised diagrammi koodiplokid",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantilised code-block- ja src-vormid toetavad Mermaidi, PlantUML-i ja D2-te, mitte OpenAPI-t, ning ainult Writerside'i projektides.",
+  "syntaxReferenceReferencedDiagramSource": "Viidatud diagrammiallikas",
+  "syntaxReferenceReferencedDiagramLimitation": "Teed peavad olema suhtelised ja jääma avatud Writerside'i projekti sisse; piiratud vorm koos src-ga on ainult Writerside Markdowni jaoks.",
+  "syntaxReferenceMathematicsDescription": "BusyMark toetab TeX-i avaldisi, mitte terviklikke TeX-i või LaTeX-i dokumente.",
+  "syntaxReferenceInlineMath": "Reasisene matemaatika",
+  "syntaxReferenceGithubMath": "GitHubi matemaatika dollari- ja graavimärgiga",
+  "syntaxReferenceDisplayMath": "Plokina matemaatika",
+  "syntaxReferenceMathFence": "math-plokk",
+  "syntaxReferenceTexFence": "tex-plokk",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark ei tuvasta \\(...\\) ega \\[...\\] Markdowni matemaatika eraldajatena.",
+  "syntaxReferenceTexFenceLimitation": "Väljaspool Writerside'i režiimi jääb tex-plokk tavaliseks koodiplokiks.",
+  "syntaxReferenceWritersideMathElement": "Writerside'i math-element",
+  "syntaxReferenceWritersideMathElementLimitation": "math-element on semantiline Writerside'i süntaks, mitte lubatud toor-HTML-i MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantiline TeX-i koodiplokk",
+  "syntaxReferenceWritersideDescription": "Neid valitud laiendusi tõlgendatakse ainult avatud Writerside'i projektides.",
+  "syntaxReferenceAdmonitionBlockquote": "Märkuse plokktsitaat",
+  "syntaxReferenceAdmonitionLimitation": "Tavaline plokktsitaat on Writerside Markdownis nõuanne; tavalises Markdownis jääb see tavaliseks tsitaadiks.",
+  "syntaxReferenceSemanticAdmonitions": "Semantilised märkused",
+  "syntaxReferenceSemanticMarkupLimitation": "Tavaline Markdown ei tõlgenda neid Writerside'i semantilisi elemente.",
+  "syntaxReferenceCollapsibleHeading": "Ahendatav pealkiri",
+  "syntaxReferenceCollapsibleCode": "Ahendatav koodiplokk",
+  "syntaxReferenceSemanticCollapsibles": "Semantiline ahendatav sisu",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark toetab ahendatavaid chapter-, procedure-, code-block- ja definitsiooniloendi vorme, mitte kogu Writerside'i kataloogi.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantilised koodiplokid matemaatika ja diagrammide jaoks",
+  "syntaxReferenceVideo": "Writerside'i video",
+  "syntaxReferenceVideoLimitation": "Kohalik video kasutab kohalikku preview-src-pilti; majutatud allikad peavad olema toetatud YouTube'i või Vimeo HTTPS-aadressid.",
   "exportAsPdf": "Ekspordi PDF-ina",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Åpne Markdown- og HTML-referansen",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Åpne syntaksreferansen",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Åpne BusyMark-innstillinger",
   "@shortcutSettingsDescription": {
@@ -2350,136 +2350,136 @@
   "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
   "gitErrorConflict": "Git rapporterte uløste konflikter.",
   "gitErrorCommandFailed": "Git-kommandoen mislyktes.",
-  "markdownAndHtml": "Markdown og HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Syntaksreferanse",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown-blokker",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown-blokker",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Inline-Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Inline-Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Formatering i avsnitt, listeelementer og tabellceller.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Formatering i avsnitt, listeelementer og tabellceller.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Rå HTML-blokker",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Rå HTML-blokker",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Rå HTML-inline-tagger",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Rå HTML-inline-tagger",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Sikkerhetsregler",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Sikkerhetsregler",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Rå HTML analyseres og renses før forhåndsvisning.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Rå HTML analyseres og renses før forhåndsvisning.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Overskrifter",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Overskrifter",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Avsnitt",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Avsnitt",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Lister",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Lister",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Beholdere",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Beholdere",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Tekstblokker",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Tekstblokker",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Figurer og bilder",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Figurer og bilder",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Forhåndsformatert kode",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Forhåndsformatert kode",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Utvidbare blokker",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Utvidbare blokker",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Beskrivelseslister",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Beskrivelseslister",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Formateringstagger",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Formateringstagger",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Inline-kodetagger",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Inline-kodetagger",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Semantiske teksttagger",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantiske teksttagger",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Renset forhåndsvisning",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Renset forhåndsvisning",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Kilden bevares",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Kilden bevares",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Uendret rå HTML lagres nøyaktig som kildetekst.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Uendret rå HTML lagres nøyaktig som kildetekst.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown inni HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown inni HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Blokkert aktivt innhold",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Blokkert aktivt innhold",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Bare trygge URL-er",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Bare trygge URL-er",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "Legg til i Git",
@@ -2686,6 +2686,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategori",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammer og API",
+  "syntaxReferenceCategoryMathematics": "Matematikk",
+  "syntaxReferenceExample": "Eksempel",
+  "syntaxReferenceIdentifiers": "Identifikatorer og aliaser",
+  "syntaxReferenceScope": "Omfang",
+  "syntaxReferenceLimitation": "BusyMark-begrensning",
+  "syntaxReferenceOfficialDocumentation": "Offisiell dokumentasjon",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Vanlig Markdown og Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Bare Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Bare Writerside Markdown og Writerside XML",
+  "syntaxReferenceMarkdownDescription": "De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.",
+  "syntaxReferenceParagraphExample": "Et tekstavsnitt.",
+  "syntaxReferenceTableLimitation": "Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "to mellomrom på slutten av linjen, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.",
+  "syntaxReferenceDiagramsDescription": "Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.",
+  "syntaxReferenceOpenApiLimitation": "Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantiske kodeblokker for diagrammer",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.",
+  "syntaxReferenceReferencedDiagramSource": "Referert diagramkilde",
+  "syntaxReferenceReferencedDiagramLimitation": "Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.",
+  "syntaxReferenceMathematicsDescription": "BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.",
+  "syntaxReferenceInlineMath": "Matematikk i linjen",
+  "syntaxReferenceGithubMath": "GitHub-matematikk med dollartegn og grav aksent",
+  "syntaxReferenceDisplayMath": "Matematikk som blokk",
+  "syntaxReferenceMathFence": "math-blokk",
+  "syntaxReferenceTexFence": "tex-blokk",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.",
+  "syntaxReferenceWritersideMathElement": "Writerside-math-element",
+  "syntaxReferenceWritersideMathElementLimitation": "math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantisk TeX-kodeblokk",
+  "syntaxReferenceWritersideDescription": "Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.",
+  "syntaxReferenceAdmonitionBlockquote": "Merknadssitat",
+  "syntaxReferenceAdmonitionLimitation": "Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.",
+  "syntaxReferenceSemanticAdmonitions": "Semantiske merknader",
+  "syntaxReferenceSemanticMarkupLimitation": "Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.",
+  "syntaxReferenceCollapsibleHeading": "Sammenleggbar overskrift",
+  "syntaxReferenceCollapsibleCode": "Sammenleggbar kodeblokk",
+  "syntaxReferenceSemanticCollapsibles": "Semantisk sammenleggbart innhold",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantiske kodeblokker for matematikk og diagrammer",
+  "syntaxReferenceVideo": "Writerside-video",
+  "syntaxReferenceVideoLimitation": "Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.",
   "exportAsPdf": "Eksporter som PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

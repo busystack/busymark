@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Открыть справку по Markdown и HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Открыть справочник по синтаксису",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Открыть настройки BusyMark",
   "@shortcutSettingsDescription": {
@@ -2376,136 +2376,136 @@
   "gitErrorNetwork": "Сетевая операция Git не удалась.",
   "gitErrorConflict": "Git сообщил о неразрешённых конфликтах.",
   "gitErrorCommandFailed": "Не удалось выполнить команду Git.",
-  "markdownAndHtml": "Markdown и HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Справочник по синтаксису",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Блоки Markdown",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Блоки Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Блочные структуры, поддерживаемые в исходном Markdown и предварительном просмотре.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Блочные структуры, поддерживаемые в исходном Markdown и предварительном просмотре.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Встроенный Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Встроенный Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Форматирование внутри абзацев, элементов списков и ячеек таблиц.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Форматирование внутри абзацев, элементов списков и ячеек таблиц.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Блоки исходного HTML",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Блоки исходного HTML",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Безопасные блочные HTML-теги, отображаемые через виджеты предварительного просмотра BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Безопасные блочные HTML-теги, отображаемые через виджеты предварительного просмотра BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Встроенные HTML-теги",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Встроенные HTML-теги",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Безопасные встроенные HTML-теги отображаются без показа самих тегов.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Безопасные встроенные HTML-теги отображаются без показа самих тегов.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Правила безопасности",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Правила безопасности",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Исходный HTML разбирается и очищается перед отображением в предварительном просмотре.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Исходный HTML разбирается и очищается перед отображением в предварительном просмотре.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Заголовки",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Заголовки",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Абзацы",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Абзацы",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Списки",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Списки",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Контейнеры",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Контейнеры",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Текстовые блоки",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Текстовые блоки",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Фигуры и изображения",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Фигуры и изображения",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Предформатированный код",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Предформатированный код",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Раскрывающиеся блоки",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Раскрывающиеся блоки",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Списки описаний",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Списки описаний",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Теги форматирования",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Теги форматирования",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Встроенные теги кода",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Встроенные теги кода",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Семантические текстовые теги",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Семантические текстовые теги",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Очищенный предварительный просмотр",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Очищенный предварительный просмотр",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Разрешённый HTML преобразуется в блоки предварительного просмотра BusyMark, а не отображается в браузере.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "Разрешённый HTML преобразуется в блоки предварительного просмотра BusyMark, а не отображается в браузере.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Исходный текст сохраняется",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Исходный текст сохраняется",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Неизменённый исходный HTML сохраняется в точности как исходный текст.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Неизменённый исходный HTML сохраняется в точности как исходный текст.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown внутри HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown внутри HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-разметка внутри исходного HTML отображается как обычный текст.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-разметка внутри исходного HTML отображается как обычный текст.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Активный контент заблокирован",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Активный контент заблокирован",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Скрипты, стили, фреймы, формы, SVG, MathML, события и небезопасные атрибуты блокируются.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Скрипты, стили, фреймы, формы, SVG, MathML, события и небезопасные атрибуты блокируются.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Только безопасные URL",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Только безопасные URL",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Ссылки допускают http, https, mailto, tel, относительные URL и фрагменты; небезопасные схемы блокируются.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Ссылки допускают http, https, mailto, tel, относительные URL и фрагменты; небезопасные схемы блокируются.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "Добавить в Git",
@@ -2712,6 +2712,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Категория",
+  "syntaxReferenceCategoryDiagramsAndApi": "Диаграммы и API",
+  "syntaxReferenceCategoryMathematics": "Математика",
+  "syntaxReferenceExample": "Пример",
+  "syntaxReferenceIdentifiers": "Идентификаторы и псевдонимы",
+  "syntaxReferenceScope": "Область применения",
+  "syntaxReferenceLimitation": "Ограничение BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Официальная документация",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Обычный Markdown и Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdown": "Только Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Только Markdown Writerside и XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Основные формы Markdown, которые BusyMark позволяет создавать и просматривать.",
+  "syntaxReferenceParagraphExample": "Абзац текста.",
+  "syntaxReferenceTableLimitation": "Таблицы используют синтаксис с вертикальными чертами GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "два пробела в конце строки, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark принимает ограниченное безопасное подмножество необработанного HTML в исходном тексте Markdown.",
+  "syntaxReferenceDiagramsDescription": "Ограждённые блоки Mermaid, PlantUML, D2 и OpenAPI работают в исходном тексте Markdown. Регистр идентификаторов не учитывается, а BusyMark сохраняет исходное написание.",
+  "syntaxReferenceOpenApiLimitation": "Используйте ограждённое содержимое YAML или JSON. BusyMark не считает произвольный целый документ YAML или JSON справочником OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Семантические блоки кода диаграмм",
+  "syntaxReferenceSemanticDiagramLimitation": "Семантические формы code-block и src поддерживают Mermaid, PlantUML и D2, но не OpenAPI, и только в проектах Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Ссылка на исходник диаграммы",
+  "syntaxReferenceReferencedDiagramLimitation": "Пути должны быть относительными и оставаться в открытом проекте Writerside; ограждённая форма с src работает только в Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark поддерживает выражения TeX, но не полные документы TeX или LaTeX.",
+  "syntaxReferenceInlineMath": "Встроенная формула",
+  "syntaxReferenceGithubMath": "Формула GitHub с долларом и обратной кавычкой",
+  "syntaxReferenceDisplayMath": "Выкладная формула",
+  "syntaxReferenceMathFence": "Ограждённый блок math",
+  "syntaxReferenceTexFence": "Ограждённый блок tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark не распознаёт \\(...\\) и \\[...\\] как математические разделители Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Вне режима Writerside блок tex остаётся обычным блоком кода.",
+  "syntaxReferenceWritersideMathElement": "Элемент math Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "Элемент math — семантический синтаксис Writerside, а не разрешённый необработанный HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Семантический блок кода TeX",
+  "syntaxReferenceWritersideDescription": "Эти отдельные расширения интерпретируются только в открытых проектах Writerside.",
+  "syntaxReferenceAdmonitionBlockquote": "Цитата-примечание",
+  "syntaxReferenceAdmonitionLimitation": "Обычная блочная цитата становится советом в Markdown Writerside, а в обычном Markdown остаётся цитатой.",
+  "syntaxReferenceSemanticAdmonitions": "Семантические примечания",
+  "syntaxReferenceSemanticMarkupLimitation": "Обычный Markdown не интерпретирует эти семантические элементы Writerside.",
+  "syntaxReferenceCollapsibleHeading": "Сворачиваемый заголовок",
+  "syntaxReferenceCollapsibleCode": "Сворачиваемый блок кода",
+  "syntaxReferenceSemanticCollapsibles": "Семантическое сворачиваемое содержимое",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark поддерживает сворачиваемые формы chapter, procedure, code-block и списка определений, но не весь каталог Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Семантические блоки кода для формул и диаграмм",
+  "syntaxReferenceVideo": "Видео Writerside",
+  "syntaxReferenceVideoLimitation": "Локальное видео использует локальное изображение preview-src; размещённые видео должны иметь поддерживаемые HTTPS-адреса YouTube или Vimeo.",
   "exportAsPdf": "Экспортировать в PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

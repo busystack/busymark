@@ -452,8 +452,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Hiển thị tham chiếu phím tắt này';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Mở tham chiếu Markdown và HTML';
+  String get shortcutSyntaxReferenceDescription => 'Mở tham chiếu cú pháp';
 
   @override
   String get shortcutSettingsDescription => 'Mở cài đặt BusyMark';
@@ -2648,113 +2647,289 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gitErrorCommandFailed => 'Lệnh Git không thành công.';
 
   @override
-  String get markdownAndHtml => 'Markdown và HTML';
+  String get syntaxReference => 'Tham chiếu cú pháp';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Khối Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'Khối Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Định dạng Markdown nội tuyến';
+  String get syntaxReferenceInlineFormatting => 'Định dạng Markdown nội tuyến';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Khối HTML thô';
+  String get syntaxReferenceRawHtmlBlocks => 'Khối HTML thô';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Thẻ HTML nội tuyến thô';
+  String get syntaxReferenceRawHtmlInline => 'Thẻ HTML nội tuyến thô';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.';
 
   @override
-  String get markdownHtmlSafety => 'Quy tắc an toàn';
+  String get syntaxReferenceSafety => 'Quy tắc an toàn';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'HTML thô được phân tích cú pháp và làm sạch trước khi kết xuất bản xem trước.';
 
   @override
-  String get markdownHtmlHeadings => 'Tiêu đề';
+  String get syntaxReferenceHeadings => 'Tiêu đề';
 
   @override
-  String get markdownHtmlParagraphs => 'Đoạn văn';
+  String get syntaxReferenceParagraphs => 'Đoạn văn';
 
   @override
-  String get markdownHtmlLists => 'Danh sách';
+  String get syntaxReferenceLists => 'Danh sách';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Vùng chứa';
+  String get syntaxReferenceHtmlContainers => 'Vùng chứa';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Khối văn bản';
+  String get syntaxReferenceHtmlTextBlocks => 'Khối văn bản';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figure và hình ảnh';
+  String get syntaxReferenceHtmlFigures => 'Figure và hình ảnh';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Mã định dạng sẵn';
+  String get syntaxReferenceHtmlPreformatted => 'Mã định dạng sẵn';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Khối mở rộng';
+  String get syntaxReferenceHtmlDisclosure => 'Khối mở rộng';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Danh sách mô tả';
+  String get syntaxReferenceHtmlDescriptionLists => 'Danh sách mô tả';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Thẻ định dạng';
+  String get syntaxReferenceHtmlFormattingTags => 'Thẻ định dạng';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Thẻ mã nội tuyến';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Thẻ mã nội tuyến';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Thẻ văn bản ngữ nghĩa';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Thẻ văn bản ngữ nghĩa';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Bản xem trước đã làm sạch';
+  String get syntaxReferenceSanitizedPreview => 'Bản xem trước đã làm sạch';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Giữ nguyên mã nguồn';
+  String get syntaxReferenceSourcePreserved => 'Giữ nguyên mã nguồn';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown bên trong HTML';
+  String get syntaxReferenceMarkdownInsideHtml => 'Markdown bên trong HTML';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Nội dung hoạt động bị chặn';
+  String get syntaxReferenceBlockedContent => 'Nội dung hoạt động bị chặn';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Chỉ URL an toàn';
+  String get syntaxReferenceSafeUrls => 'Chỉ URL an toàn';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.';
+
+  @override
+  String get syntaxReferenceCategory => 'Danh mục';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Sơ đồ và API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Toán học';
+
+  @override
+  String get syntaxReferenceExample => 'Ví dụ';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Định danh và bí danh';
+
+  @override
+  String get syntaxReferenceScope => 'Phạm vi';
+
+  @override
+  String get syntaxReferenceLimitation => 'Giới hạn của BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Tài liệu chính thức';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Markdown thông thường và Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Chỉ Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Chỉ Markdown Writerside và XML Writerside';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Các dạng Markdown cốt lõi mà BusyMark có thể soạn và xem trước.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Một đoạn văn bản.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Bảng dùng cú pháp dấu gạch đứng của GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'hai dấu cách ở cuối dòng, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark chấp nhận một tập con HTML thô an toàn, có giới hạn trong mã nguồn Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Các khối có hàng rào Mermaid, PlantUML, D2 và OpenAPI hoạt động trong mã nguồn Markdown. Định danh hàng rào không phân biệt hoa thường và BusyMark giữ nguyên cách viết ban đầu.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Dùng nội dung YAML hoặc JSON có hàng rào. BusyMark không coi một tài liệu YAML hoặc JSON toàn tệp bất kỳ là tham chiếu OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Khối mã ngữ nghĩa cho sơ đồ';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Dạng ngữ nghĩa code-block và src hỗ trợ Mermaid, PlantUML và D2, không hỗ trợ OpenAPI, và chỉ dùng trong dự án Writerside.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Nguồn sơ đồ được tham chiếu';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Đường dẫn phải tương đối và nằm trong dự án Writerside đang mở; dạng hàng rào kèm src chỉ dành cho Markdown Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark hỗ trợ biểu thức TeX, không hỗ trợ tài liệu TeX hoặc LaTeX hoàn chỉnh.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Toán học nội dòng';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'Toán học GitHub với dấu đô la và dấu huyền';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Toán học dạng khối';
+
+  @override
+  String get syntaxReferenceMathFence => 'Hàng rào math';
+
+  @override
+  String get syntaxReferenceTexFence => 'Hàng rào tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark không nhận dạng \\(...\\) hoặc \\[...\\] là dấu phân cách toán học Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Ngoài chế độ Writerside, hàng rào tex vẫn là khối mã thông thường.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement =>
+      'Phần tử math của Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'Phần tử math là cú pháp Writerside ngữ nghĩa, không phải HTML MathML thô được phép.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Khối mã TeX ngữ nghĩa';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Các phần mở rộng trọng tâm này chỉ được diễn giải trong dự án Writerside đang mở.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Trích dẫn khối lưu ý';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Trích dẫn khối thuần là mẹo trong Markdown Writerside; trong Markdown thông thường, nó vẫn là trích dẫn thường.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Lưu ý ngữ nghĩa';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Markdown thông thường không diễn giải các phần tử Writerside ngữ nghĩa này.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Tiêu đề có thể thu gọn';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Hàng rào mã có thể thu gọn';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Nội dung ngữ nghĩa có thể thu gọn';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark hỗ trợ các dạng chapter, procedure, code-block và danh sách định nghĩa có thể thu gọn, không hỗ trợ toàn bộ danh mục Writerside.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Khối mã ngữ nghĩa cho toán học và sơ đồ';
+
+  @override
+  String get syntaxReferenceVideo => 'Video Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Video cục bộ dùng ảnh preview-src cục bộ; nguồn lưu trữ phải là URL HTTPS YouTube hoặc Vimeo được hỗ trợ.';
 
   @override
   String get exportAsPdf => 'Xuất dưới dạng PDF';

@@ -1334,7 +1334,7 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   if (g_strcmp0(action, "fullScreen") == 0) {
     return "view-fullscreen-symbolic";
   }
-  if (g_strcmp0(action, "markdownAndHtml") == 0) {
+  if (g_strcmp0(action, "syntaxReference") == 0) {
     return "text-x-generic-symbolic";
   }
   if (g_strcmp0(action, "reportIssue") == 0) {
@@ -1399,9 +1399,9 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       fl_lookup_string_arg(labels, "keyboardShortcutsGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
-      localized_label_or(labels, "markdownAndHtml", ""),
-      "header.markdown-and-html", main_menu_icon_name("markdownAndHtml"),
-      fl_lookup_string_arg(labels, "markdownAndHtmlGtkAccelerator"));
+      localized_label_or(labels, "syntaxReference", ""),
+      "header.syntax-reference", main_menu_icon_name("syntaxReference"),
+      fl_lookup_string_arg(labels, "syntaxReferenceGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "reportIssue", ""),
@@ -1556,7 +1556,7 @@ static void setup_header_actions(MyApplication* self) {
   set_header_action_enabled(self, "export-pdf", FALSE);
   add_header_gaction(self, "settings", "settings");
   add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
-  add_header_gaction(self, "markdown-and-html", "markdownAndHtml");
+  add_header_gaction(self, "syntax-reference", "syntaxReference");
   add_header_gaction(self, "report-issue", "reportIssue");
   add_header_gaction(self, "about", "aboutBusyMark");
 

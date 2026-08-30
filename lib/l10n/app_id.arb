@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Buka referensi Markdown dan HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Buka referensi sintaks",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Buka pengaturan BusyMark",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown dan HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Referensi Sintaks",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Blok Markdown",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Blok Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Struktur blok didukung dalam sumber Markdown dan pratinjau.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Struktur blok didukung dalam sumber Markdown dan pratinjau.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Markdown Sebaris",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Markdown Sebaris",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Pemformatan yang bisa muncul di dalam paragraf, item daftar, dan sel tabel.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Pemformatan yang bisa muncul di dalam paragraf, item daftar, dan sel tabel.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Blok HTML Mentah",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Blok HTML Mentah",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Tag HTML tingkat blok yang aman dirender melalui widget pratinjau BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Tag HTML tingkat blok yang aman dirender melalui widget pratinjau BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Tag Sebaris HTML Mentah",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Tag Sebaris HTML Mentah",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Tag HTML sebaris aman dirender tanpa menampilkan tag literal.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Tag HTML sebaris aman dirender tanpa menampilkan tag literal.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Aturan Keamanan",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Aturan Keamanan",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "HTML mentah diurai dan dibersihkan sebelum rendering pratinjau.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "HTML mentah diurai dan dibersihkan sebelum rendering pratinjau.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Judul",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Judul",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Paragraf",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Paragraf",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Daftar",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Daftar",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Kontainer",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Kontainer",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Blok teks",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Blok teks",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Gambar dan ilustrasi",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Gambar dan ilustrasi",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Kode yang telah diformat sebelumnya",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Kode yang telah diformat sebelumnya",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Blok detail yang dapat dibuka",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Blok detail yang dapat dibuka",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Daftar deskripsi",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Daftar deskripsi",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Tag pemformatan",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Tag pemformatan",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Tag kode sebaris",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Tag kode sebaris",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Tag teks semantik",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Tag teks semantik",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Pratinjau yang sudah disanitasi",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Pratinjau yang sudah disanitasi",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "HTML yang diizinkan diubah menjadi blok pratinjau BusyMark, tidak dirender di browser.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "HTML yang diizinkan diubah menjadi blok pratinjau BusyMark, tidak dirender di browser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Sumber dipertahankan",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Sumber dipertahankan",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "HTML mentah yang belum diedit disimpan kembali persis seperti teks sumber.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "HTML mentah yang belum diedit disimpan kembali persis seperti teks sumber.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown di dalam HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown di dalam HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Penanda Markdown di dalam HTML mentah dirender sebagai teks literal.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Penanda Markdown di dalam HTML mentah dirender sebagai teks literal.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Konten aktif yang diblokir",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Konten aktif yang diblokir",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Skrip, gaya, bingkai, formulir, SVG, MathML, peristiwa, dan atribut tidak aman diblokir.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Skrip, gaya, bingkai, formulir, SVG, MathML, peristiwa, dan atribut tidak aman diblokir.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Hanya URL aman",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Hanya URL aman",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Tautan mengizinkan URL http, https, mailto, tel, relatif, dan fragmen; skema yang tidak aman diblokir.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Tautan mengizinkan URL http, https, mailto, tel, relatif, dan fragmen; skema yang tidak aman diblokir.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategori",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagram dan API",
+  "syntaxReferenceCategoryMathematics": "Matematika",
+  "syntaxReferenceExample": "Contoh",
+  "syntaxReferenceIdentifiers": "Pengenal dan alias",
+  "syntaxReferenceScope": "Cakupan",
+  "syntaxReferenceLimitation": "Batasan BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Dokumentasi resmi",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown biasa dan Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdown": "Hanya Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Hanya Markdown Writerside dan XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Bentuk Markdown utama yang dapat ditulis dan dipratinjau BusyMark.",
+  "syntaxReferenceParagraphExample": "Sebuah paragraf teks.",
+  "syntaxReferenceTableLimitation": "Tabel memakai sintaks garis vertikal GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "dua spasi di akhir baris, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark menerima subset HTML mentah yang terbatas dan aman dalam sumber Markdown.",
+  "syntaxReferenceDiagramsDescription": "Blok berpagar Mermaid, PlantUML, D2, dan OpenAPI berfungsi dalam sumber Markdown. Pengenal pagar tidak peka huruf besar-kecil dan BusyMark mempertahankan ejaan sumber.",
+  "syntaxReferenceOpenApiLimitation": "Gunakan konten YAML atau JSON berpagar. BusyMark tidak memperlakukan sembarang dokumen YAML atau JSON utuh sebagai referensi OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Blok kode semantik untuk diagram",
+  "syntaxReferenceSemanticDiagramLimitation": "Bentuk semantik code-block dan src mendukung Mermaid, PlantUML, dan D2, bukan OpenAPI, dan hanya dalam proyek Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Sumber diagram yang dirujuk",
+  "syntaxReferenceReferencedDiagramLimitation": "Jalur harus relatif dan tetap di dalam proyek Writerside yang dibuka; bentuk pagar dengan src hanya untuk Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark mendukung ekspresi TeX, bukan dokumen TeX atau LaTeX lengkap.",
+  "syntaxReferenceInlineMath": "Matematika sebaris",
+  "syntaxReferenceGithubMath": "Matematika GitHub dengan dolar dan tanda petik balik",
+  "syntaxReferenceDisplayMath": "Matematika tampilan",
+  "syntaxReferenceMathFence": "Pagar math",
+  "syntaxReferenceTexFence": "Pagar tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark tidak mengenali \\(...\\) atau \\[...\\] sebagai pembatas matematika Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Di luar mode Writerside, pagar tex tetap menjadi blok kode biasa.",
+  "syntaxReferenceWritersideMathElement": "Elemen math Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "Elemen math adalah sintaks semantik Writerside, bukan HTML MathML mentah yang diizinkan.",
+  "syntaxReferenceSemanticTexBlock": "Blok kode TeX semantik",
+  "syntaxReferenceWritersideDescription": "Ekstensi terpilih ini hanya ditafsirkan di dalam proyek Writerside yang dibuka.",
+  "syntaxReferenceAdmonitionBlockquote": "Kutipan blok keterangan",
+  "syntaxReferenceAdmonitionLimitation": "Kutipan blok biasa menjadi tip dalam Markdown Writerside; dalam Markdown biasa tetap menjadi kutipan biasa.",
+  "syntaxReferenceSemanticAdmonitions": "Keterangan semantik",
+  "syntaxReferenceSemanticMarkupLimitation": "Markdown biasa tidak menafsirkan elemen semantik Writerside ini.",
+  "syntaxReferenceCollapsibleHeading": "Judul yang dapat diciutkan",
+  "syntaxReferenceCollapsibleCode": "Pagar kode yang dapat diciutkan",
+  "syntaxReferenceSemanticCollapsibles": "Konten semantik yang dapat diciutkan",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark mendukung bentuk chapter, procedure, code-block, dan daftar definisi yang dapat diciutkan, bukan seluruh katalog Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Blok kode semantik untuk matematika dan diagram",
+  "syntaxReferenceVideo": "Video Writerside",
+  "syntaxReferenceVideoLimitation": "Video lokal memakai gambar preview-src lokal; sumber yang dihosting harus berupa URL HTTPS YouTube atau Vimeo yang didukung.",
   "exportAsPdf": "Ekspor sebagai PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

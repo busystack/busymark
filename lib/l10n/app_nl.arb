@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Open de Markdown- en HTML-referentie",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Syntaxisreferentie openen",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Open BusyMark-instellingen",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown en HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Syntaxisreferentie",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown-blokken",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown-blokken",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Blokstructuren ondersteund in Markdown-bron en preview.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Blokstructuren ondersteund in Markdown-bron en preview.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Inline-opmaak",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Inline-opmaak",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Opmaak die kan verschijnen in alinea's, lijstitems en tabelcellen.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Opmaak die kan verschijnen in alinea's, lijstitems en tabelcellen.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Ruwe HTML-blokken",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Ruwe HTML-blokken",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Veilige HTML-tags op blokniveau weergegeven via BusyMark-voorbeeldwidgets.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "Veilige HTML-tags op blokniveau weergegeven via BusyMark-voorbeeldwidgets.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Onbewerkte HTML-inlinetags",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Onbewerkte HTML-inlinetags",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Veilige inline HTML-tags weergegeven zonder letterlijke tags weer te geven.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Veilige inline HTML-tags weergegeven zonder letterlijke tags weer te geven.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Veiligheidsregels",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Veiligheidsregels",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Onbewerkte HTML wordt geparseerd en opgeschoond voordat de preview wordt weergegeven.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Onbewerkte HTML wordt geparseerd en opgeschoond voordat de preview wordt weergegeven.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Koppen",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Koppen",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Paragrafen",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Paragrafen",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Lijsten",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Lijsten",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Containers",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Containers",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Tekstblokken",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Tekstblokken",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Figuren en afbeeldingen",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Figuren en afbeeldingen",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Voorgeformatteerde code",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Voorgeformatteerde code",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Openklapbare blokken",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Openklapbare blokken",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Beschrijvingslijsten",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Beschrijvingslijsten",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Opmaaktags",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Opmaaktags",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Inline codetags",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Inline codetags",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Semantische inline-tags",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantische inline-tags",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Opgeschoond voorbeeld",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Opgeschoond voorbeeld",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Toegestane HTML wordt geconverteerd naar BusyMark-voorbeeldblokken en niet weergegeven in een browser.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "Toegestane HTML wordt geconverteerd naar BusyMark-voorbeeldblokken en niet weergegeven in een browser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Bron behouden",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Bron behouden",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Ruwe HTML wordt exact als brontekst opgeslagen.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Ruwe HTML wordt exact als brontekst opgeslagen.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown binnen HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown binnen HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-markeringen in onbewerkte HTML worden weergegeven als letterlijke tekst.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markeringen in onbewerkte HTML worden weergegeven als letterlijke tekst.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Actieve inhoud geblokkeerd",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Actieve inhoud geblokkeerd",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Scripts, stijlen, frames, formulieren, SVG, MathML, gebeurtenissen en onveilige attributen worden geblokkeerd.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Scripts, stijlen, frames, formulieren, SVG, MathML, gebeurtenissen en onveilige attributen worden geblokkeerd.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Alleen veilige URL's",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Alleen veilige URL's",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Links staan http-, https-, mailto-, tel-, relatieve en fragment-URL's toe; onveilige schema's worden geblokkeerd.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Links staan http-, https-, mailto-, tel-, relatieve en fragment-URL's toe; onveilige schema's worden geblokkeerd.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Categorie",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammen en API",
+  "syntaxReferenceCategoryMathematics": "Wiskunde",
+  "syntaxReferenceExample": "Voorbeeld",
+  "syntaxReferenceIdentifiers": "Identificatoren en aliassen",
+  "syntaxReferenceScope": "Bereik",
+  "syntaxReferenceLimitation": "BusyMark-beperking",
+  "syntaxReferenceOfficialDocumentation": "Officiële documentatie",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Gewone Markdown en Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Alleen Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Alleen Writerside Markdown en Writerside XML",
+  "syntaxReferenceMarkdownDescription": "De belangrijkste Markdown-vormen die BusyMark kan schrijven en weergeven.",
+  "syntaxReferenceParagraphExample": "Een alinea met tekst.",
+  "syntaxReferenceTableLimitation": "Tabellen gebruiken de pipe-syntaxis van GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "twee spaties aan het einde van de regel, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark accepteert een gerichte, veilige subset van ruwe HTML in Markdown-broncode.",
+  "syntaxReferenceDiagramsDescription": "Afgebakende Mermaid-, PlantUML-, D2- en OpenAPI-blokken werken in Markdown-broncode. Blokidentificatoren zijn niet hoofdlettergevoelig en BusyMark behoudt de oorspronkelijke spelling.",
+  "syntaxReferenceOpenApiLimitation": "Gebruik afgebakende YAML- of JSON-inhoud. BusyMark behandelt een willekeurig volledig YAML- of JSON-document niet als een OpenAPI-referentie.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantische codeblokken voor diagrammen",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantische code-block- en src-vormen ondersteunen Mermaid, PlantUML en D2, niet OpenAPI, en alleen binnen Writerside-projecten.",
+  "syntaxReferenceReferencedDiagramSource": "Diagrambron met verwijzing",
+  "syntaxReferenceReferencedDiagramLimitation": "Paden moeten relatief zijn en binnen het geopende Writerside-project blijven; de afgebakende vorm met src is alleen voor Writerside Markdown.",
+  "syntaxReferenceMathematicsDescription": "BusyMark ondersteunt TeX-expressies, geen volledige TeX- of LaTeX-documenten.",
+  "syntaxReferenceInlineMath": "Wiskunde in de regel",
+  "syntaxReferenceGithubMath": "GitHub-wiskunde met dollar en backtick",
+  "syntaxReferenceDisplayMath": "Wiskunde als blok",
+  "syntaxReferenceMathFence": "math-blok",
+  "syntaxReferenceTexFence": "tex-blok",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark herkent \\(...\\) en \\[...\\] niet als Markdown-wiskundescheidingstekens.",
+  "syntaxReferenceTexFenceLimitation": "Buiten de Writerside-modus blijft een tex-blok een gewoon codeblok.",
+  "syntaxReferenceWritersideMathElement": "Writerside-math-element",
+  "syntaxReferenceWritersideMathElementLimitation": "Het math-element is semantische Writerside-syntaxis, geen toegestane ruwe HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantisch TeX-codeblok",
+  "syntaxReferenceWritersideDescription": "Deze gerichte uitbreidingen worden alleen in geopende Writerside-projecten geïnterpreteerd.",
+  "syntaxReferenceAdmonitionBlockquote": "Waarschuwingscitaat",
+  "syntaxReferenceAdmonitionLimitation": "Een gewoon blokcitaat is een tip in Writerside Markdown; in gewone Markdown blijft het een normaal citaat.",
+  "syntaxReferenceSemanticAdmonitions": "Semantische waarschuwingen",
+  "syntaxReferenceSemanticMarkupLimitation": "Gewone Markdown interpreteert deze semantische Writerside-elementen niet.",
+  "syntaxReferenceCollapsibleHeading": "Inklapbare kop",
+  "syntaxReferenceCollapsibleCode": "Inklapbaar codeblok",
+  "syntaxReferenceSemanticCollapsibles": "Semantische inklapbare inhoud",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark ondersteunt inklapbare chapter-, procedure-, code-block- en definitielijstvormen, niet de volledige Writerside-catalogus.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantische codeblokken voor wiskunde en diagrammen",
+  "syntaxReferenceVideo": "Writerside-video",
+  "syntaxReferenceVideoLimitation": "Lokale video gebruikt een lokale preview-src-afbeelding; gehoste bronnen moeten ondersteunde HTTPS-URL's van YouTube of Vimeo zijn.",
   "exportAsPdf": "Exporteren als PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

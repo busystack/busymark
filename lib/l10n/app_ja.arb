@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Markdown と HTML のリファレンスを開く",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "構文リファレンスを開く",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "BusyMark の設定を開く",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown と HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "構文リファレンス",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown ブロック",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown ブロック",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Markdown のソースとプレビューでサポートされるブロック構造",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown のソースとプレビューでサポートされるブロック構造",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "インライン Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "インライン Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "段落、リスト項目、表のセル内で使用できる書式",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "段落、リスト項目、表のセル内で使用できる書式",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "生 HTML ブロック",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "生 HTML ブロック",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "BusyMark のプレビューウィジェットでレンダリングされる安全なブロックレベル HTML タグ",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "BusyMark のプレビューウィジェットでレンダリングされる安全なブロックレベル HTML タグ",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "生 HTML インラインタグ",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "生 HTML インラインタグ",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "リテラルタグを表示せずにレンダリングされる安全なインライン HTML タグ",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "リテラルタグを表示せずにレンダリングされる安全なインライン HTML タグ",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "安全性のルール",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "安全性のルール",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "生 HTML はプレビューのレンダリング前に解析およびサニタイズされます。",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "生 HTML はプレビューのレンダリング前に解析およびサニタイズされます。",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "見出し",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "見出し",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "段落",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "段落",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "リスト",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "リスト",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "コンテナー",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "コンテナー",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "テキストブロック",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "テキストブロック",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "図と画像",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "図と画像",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "整形済みコード",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "整形済みコード",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "折りたたみブロック",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "折りたたみブロック",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "説明リスト",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "説明リスト",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "書式タグ",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "書式タグ",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "インラインコードタグ",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "インラインコードタグ",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "セマンティックテキストタグ",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "セマンティックテキストタグ",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "サニタイズ済みプレビュー",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "サニタイズ済みプレビュー",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "許可された HTML はブラウザーでレンダリングされず、BusyMark のプレビューブロックに変換されます。",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "許可された HTML はブラウザーでレンダリングされず、BusyMark のプレビューブロックに変換されます。",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "ソースを保持",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "ソースを保持",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "編集されていない生 HTML はソーステキストのまま正確に保存されます。",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "編集されていない生 HTML はソーステキストのまま正確に保存されます。",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "HTML 内の Markdown",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "HTML 内の Markdown",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "生 HTML 内の Markdown マーカーはリテラルテキストとしてレンダリングされます。",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "生 HTML 内の Markdown マーカーはリテラルテキストとしてレンダリングされます。",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "ブロックされたアクティブコンテンツ",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "ブロックされたアクティブコンテンツ",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "スクリプト、スタイル、フレーム、フォーム、SVG、MathML、イベント、安全でない属性はブロックされます。",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "スクリプト、スタイル、フレーム、フォーム、SVG、MathML、イベント、安全でない属性はブロックされます。",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "安全な URL のみ",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "安全な URL のみ",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "リンクでは http、https、mailto、tel、相対パス、フラグメント URL が許可されます。安全でないスキームはブロックされます。",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "リンクでは http、https、mailto、tel、相対パス、フラグメント URL が許可されます。安全でないスキームはブロックされます。",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "カテゴリ",
+  "syntaxReferenceCategoryDiagramsAndApi": "図と API",
+  "syntaxReferenceCategoryMathematics": "数式",
+  "syntaxReferenceExample": "例",
+  "syntaxReferenceIdentifiers": "識別子と別名",
+  "syntaxReferenceScope": "対象",
+  "syntaxReferenceLimitation": "BusyMark での制限",
+  "syntaxReferenceOfficialDocumentation": "公式ドキュメント",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "通常の Markdown と Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Writerside Markdown のみ",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Writerside Markdown と Writerside XML のみ",
+  "syntaxReferenceMarkdownDescription": "BusyMark で作成およびプレビューできる主要な Markdown 形式です。",
+  "syntaxReferenceParagraphExample": "テキストの段落です。",
+  "syntaxReferenceTableLimitation": "表では GitHub Flavored Markdown のパイプ構文を使用します。",
+  "syntaxReferenceHardBreakIdentifiers": "行末の半角スペース 2 個、\\、<br>",
+  "syntaxReferenceHtmlDescription": "BusyMark は Markdown ソース内の限定された安全な生 HTML のみを受け付けます。",
+  "syntaxReferenceDiagramsDescription": "Mermaid、PlantUML、D2、OpenAPI のフェンス付きブロックは Markdown ソースで機能します。フェンス識別子では大文字と小文字を区別せず、BusyMark は元の表記を保持します。",
+  "syntaxReferenceOpenApiLimitation": "フェンス内に YAML または JSON を記述してください。BusyMark は任意の YAML または JSON ファイル全体を OpenAPI リファレンスとして扱いません。",
+  "syntaxReferenceSemanticDiagramBlocks": "図用のセマンティックコードブロック",
+  "syntaxReferenceSemanticDiagramLimitation": "セマンティックな code-block と src 形式で使用できるのは Mermaid、PlantUML、D2 です。OpenAPI には使用できず、Writerside プロジェクト内でのみ機能します。",
+  "syntaxReferenceReferencedDiagramSource": "参照する図のソース",
+  "syntaxReferenceReferencedDiagramLimitation": "パスは相対パスで、開いている Writerside プロジェクト内に収まる必要があります。フェンスと src の形式は Writerside Markdown 専用です。",
+  "syntaxReferenceMathematicsDescription": "BusyMark が対応するのは TeX 式であり、完全な TeX または LaTeX 文書ではありません。",
+  "syntaxReferenceInlineMath": "インライン数式",
+  "syntaxReferenceGithubMath": "ドル記号とバッククォートによる GitHub 数式",
+  "syntaxReferenceDisplayMath": "別行立て数式",
+  "syntaxReferenceMathFence": "math フェンス",
+  "syntaxReferenceTexFence": "tex フェンス",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark は \\(...\\) と \\[...\\] を Markdown の数式区切りとして認識しません。",
+  "syntaxReferenceTexFenceLimitation": "Writerside モード以外では、tex フェンスは通常のコードブロックのままです。",
+  "syntaxReferenceWritersideMathElement": "Writerside の math 要素",
+  "syntaxReferenceWritersideMathElementLimitation": "math 要素は Writerside のセマンティック構文であり、許可された生 HTML MathML ではありません。",
+  "syntaxReferenceSemanticTexBlock": "セマンティック TeX コードブロック",
+  "syntaxReferenceWritersideDescription": "ここで示す拡張は、開いている Writerside プロジェクト内でのみ解釈されます。",
+  "syntaxReferenceAdmonitionBlockquote": "注意書きの引用",
+  "syntaxReferenceAdmonitionLimitation": "通常のブロック引用は Writerside Markdown ではヒントになり、通常の Markdown では通常の引用のままです。",
+  "syntaxReferenceSemanticAdmonitions": "セマンティックな注意書き",
+  "syntaxReferenceSemanticMarkupLimitation": "通常の Markdown は、これらの Writerside セマンティック要素を解釈しません。",
+  "syntaxReferenceCollapsibleHeading": "折りたたみ可能な見出し",
+  "syntaxReferenceCollapsibleCode": "折りたたみ可能なコードフェンス",
+  "syntaxReferenceSemanticCollapsibles": "セマンティックな折りたたみコンテンツ",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark が対応する折りたたみ形式は chapter、procedure、code-block、定義リストです。Writerside の全カタログには対応しません。",
+  "syntaxReferenceSemanticCodeBlocks": "数式と図用のセマンティックコードブロック",
+  "syntaxReferenceVideo": "Writerside 動画",
+  "syntaxReferenceVideoLimitation": "ローカル動画にはローカルの preview-src 画像を使用します。ホスト動画は対応する YouTube または Vimeo の HTTPS URL に限られます。",
   "exportAsPdf": "PDF としてエクスポート",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Markdown ve HTML referansını açın",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Sözdizimi başvurusunu aç",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "BusyMark ayarlarını aç",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown ve HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "Sözdizimi Başvurusu",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown blokları",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown blokları",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Markdown kaynağında ve önizlemesinde desteklenen blok yapıları.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown kaynağında ve önizlemesinde desteklenen blok yapıları.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Satır içi biçimlendirme",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Satır içi biçimlendirme",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Paragrafların, liste öğelerinin ve tablo hücrelerinin içinde görünebilecek biçimlendirme.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "Paragrafların, liste öğelerinin ve tablo hücrelerinin içinde görünebilecek biçimlendirme.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Ham HTML Blokları",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "Ham HTML Blokları",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "BusyMark önizleme widget'ları aracılığıyla oluşturulan güvenli blok düzeyinde HTML etiketleri.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "BusyMark önizleme widget'ları aracılığıyla oluşturulan güvenli blok düzeyinde HTML etiketleri.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Ham HTML Satır İçi Etiketleri",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "Ham HTML Satır İçi Etiketleri",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Güvenlik Kuralları",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "Güvenlik Kuralları",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Ham HTML, önizleme oluşturmadan önce ayrıştırılır ve arındırılır.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "Ham HTML, önizleme oluşturmadan önce ayrıştırılır ve arındırılır.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Başlıklar",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "Başlıklar",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Paragraflar",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "Paragraflar",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Listeler",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "Listeler",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Konteynerler",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "Konteynerler",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Metin blokları",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "Metin blokları",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Şekiller ve görseller",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "Şekiller ve görseller",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Önceden biçimlendirilmiş kod",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "Önceden biçimlendirilmiş kod",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Açıklama blokları",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "Açıklama blokları",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Açıklama listeleri",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "Açıklama listeleri",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Etiketleri biçimlendirme",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "Etiketleri biçimlendirme",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Satır içi kod etiketleri",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "Satır içi kod etiketleri",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Anlamsal metin etiketleri",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "Anlamsal metin etiketleri",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Temizlenmiş önizleme",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "Temizlenmiş önizleme",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Kaynak korunur",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "Kaynak korunur",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "HTML içindeki Markdown",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "HTML içindeki Markdown",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Engellenen etkin içerik",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "Engellenen etkin içerik",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Yalnızca güvenli URL'ler",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "Yalnızca güvenli URL'ler",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Bağlantılar http, https, mailto, tel, göreli ve parça URL'lerine izin verir; güvenli olmayan şemalar engellenir.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "Bağlantılar http, https, mailto, tel, göreli ve parça URL'lerine izin verir; güvenli olmayan şemalar engellenir.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategori",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diyagramlar ve API",
+  "syntaxReferenceCategoryMathematics": "Matematik",
+  "syntaxReferenceExample": "Örnek",
+  "syntaxReferenceIdentifiers": "Tanımlayıcılar ve diğer adlar",
+  "syntaxReferenceScope": "Kapsam",
+  "syntaxReferenceLimitation": "BusyMark sınırlaması",
+  "syntaxReferenceOfficialDocumentation": "Resmî belgeler",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Normal Markdown ve Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "Yalnızca Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Yalnızca Writerside Markdown ve Writerside XML",
+  "syntaxReferenceMarkdownDescription": "BusyMark'ın yazabildiği ve önizleyebildiği temel Markdown biçimleri.",
+  "syntaxReferenceParagraphExample": "Bir metin paragrafı.",
+  "syntaxReferenceTableLimitation": "Tablolar GitHub Flavored Markdown dikey çizgi sözdizimini kullanır.",
+  "syntaxReferenceHardBreakIdentifiers": "satır sonunda iki boşluk, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark, Markdown kaynağında sınırlı ve güvenli bir ham HTML alt kümesini kabul eder.",
+  "syntaxReferenceDiagramsDescription": "Çitle çevrili Mermaid, PlantUML, D2 ve OpenAPI blokları Markdown kaynağında çalışır. Çit tanımlayıcıları büyük/küçük harfe duyarlı değildir ve BusyMark özgün yazımı korur.",
+  "syntaxReferenceOpenApiLimitation": "Çitle çevrili YAML veya JSON içeriği kullanın. BusyMark rastgele bir tam YAML ya da JSON belgesini OpenAPI başvurusu olarak değerlendirmez.",
+  "syntaxReferenceSemanticDiagramBlocks": "Anlamsal diyagram kod blokları",
+  "syntaxReferenceSemanticDiagramLimitation": "Anlamsal code-block ve src biçimleri Mermaid, PlantUML ve D2'yi destekler; OpenAPI'yi desteklemez ve yalnızca Writerside projelerinde çalışır.",
+  "syntaxReferenceReferencedDiagramSource": "Başvurulan diyagram kaynağı",
+  "syntaxReferenceReferencedDiagramLimitation": "Yollar göreli olmalı ve açılan Writerside projesinin içinde kalmalıdır; çit ve src biçimi yalnızca Writerside Markdown içindir.",
+  "syntaxReferenceMathematicsDescription": "BusyMark TeX ifadelerini destekler; tam TeX veya LaTeX belgelerini desteklemez.",
+  "syntaxReferenceInlineMath": "Satır içi matematik",
+  "syntaxReferenceGithubMath": "Dolar ve ters tırnaklı GitHub matematiği",
+  "syntaxReferenceDisplayMath": "Blok matematiği",
+  "syntaxReferenceMathFence": "math çiti",
+  "syntaxReferenceTexFence": "tex çiti",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark \\(...\\) veya \\[...\\] dizilerini Markdown matematik sınırlayıcıları olarak tanımaz.",
+  "syntaxReferenceTexFenceLimitation": "Writerside modu dışında tex çiti normal bir kod bloğu olarak kalır.",
+  "syntaxReferenceWritersideMathElement": "Writerside math öğesi",
+  "syntaxReferenceWritersideMathElementLimitation": "math öğesi anlamsal Writerside sözdizimidir; izin verilen ham HTML MathML değildir.",
+  "syntaxReferenceSemanticTexBlock": "Anlamsal TeX kod bloğu",
+  "syntaxReferenceWritersideDescription": "Bu odaklı uzantılar yalnızca açılmış Writerside projelerinde yorumlanır.",
+  "syntaxReferenceAdmonitionBlockquote": "Uyarı blok alıntısı",
+  "syntaxReferenceAdmonitionLimitation": "Düz blok alıntısı Writerside Markdown'da ipucudur; normal Markdown'da sıradan alıntı olarak kalır.",
+  "syntaxReferenceSemanticAdmonitions": "Anlamsal uyarılar",
+  "syntaxReferenceSemanticMarkupLimitation": "Normal Markdown bu anlamsal Writerside öğelerini yorumlamaz.",
+  "syntaxReferenceCollapsibleHeading": "Daraltılabilir başlık",
+  "syntaxReferenceCollapsibleCode": "Daraltılabilir kod çiti",
+  "syntaxReferenceSemanticCollapsibles": "Anlamsal daraltılabilir içerik",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark daraltılabilir chapter, procedure, code-block ve tanım listesi biçimlerini destekler; Writerside kataloğunun tamamını desteklemez.",
+  "syntaxReferenceSemanticCodeBlocks": "Matematik ve diyagramlar için anlamsal kod blokları",
+  "syntaxReferenceVideo": "Writerside videosu",
+  "syntaxReferenceVideoLimitation": "Yerel video yerel bir preview-src görseli kullanır; barındırılan kaynaklar desteklenen HTTPS YouTube veya Vimeo adresleri olmalıdır.",
   "exportAsPdf": "PDF olarak dışa aktar",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

@@ -979,11 +979,11 @@ abstract class AppLocalizations {
   /// **'Show this keyboard shortcut reference'**
   String get shortcutKeyboardShortcutsDescription;
 
-  /// Keyboard shortcut description for opening the Markdown and HTML reference.
+  /// Keyboard shortcut description for opening the Syntax Reference.
   ///
   /// In en, this message translates to:
-  /// **'Open the Markdown and HTML reference'**
-  String get shortcutMarkdownAndHtmlDescription;
+  /// **'Open the Syntax Reference'**
+  String get shortcutSyntaxReferenceDescription;
 
   /// Keyboard shortcut description for opening settings.
   ///
@@ -4440,203 +4440,503 @@ abstract class AppLocalizations {
   /// **'Git command failed.'**
   String get gitErrorCommandFailed;
 
-  /// Markdown and HTML reference dialog title and menu item.
+  /// Syntax Reference dialog title and menu item.
   ///
   /// In en, this message translates to:
-  /// **'Markdown and HTML'**
-  String get markdownAndHtml;
+  /// **'Syntax Reference'**
+  String get syntaxReference;
 
   /// Reference section title for Markdown block syntax.
   ///
   /// In en, this message translates to:
   /// **'Markdown Blocks'**
-  String get markdownHtmlMarkdownBlocks;
+  String get syntaxReferenceMarkdownBlocks;
 
   /// Reference section description for Markdown block syntax.
   ///
   /// In en, this message translates to:
   /// **'Block structures supported in Markdown source and preview.'**
-  String get markdownHtmlMarkdownBlocksDescription;
+  String get syntaxReferenceMarkdownBlocksDescription;
 
   /// Reference section title for Markdown inline syntax.
   ///
   /// In en, this message translates to:
   /// **'Inline Markdown'**
-  String get markdownHtmlInlineFormatting;
+  String get syntaxReferenceInlineFormatting;
 
   /// Reference section description for Markdown inline syntax.
   ///
   /// In en, this message translates to:
   /// **'Formatting that can appear inside paragraphs, list items, and table cells.'**
-  String get markdownHtmlInlineFormattingDescription;
+  String get syntaxReferenceInlineFormattingDescription;
 
   /// Reference section title for supported raw HTML block tags.
   ///
   /// In en, this message translates to:
   /// **'Raw HTML Blocks'**
-  String get markdownHtmlRawHtmlBlocks;
+  String get syntaxReferenceRawHtmlBlocks;
 
   /// Reference section description for supported raw HTML block tags.
   ///
   /// In en, this message translates to:
   /// **'Safe block-level HTML tags rendered through BusyMark preview widgets.'**
-  String get markdownHtmlRawHtmlBlocksDescription;
+  String get syntaxReferenceRawHtmlBlocksDescription;
 
   /// Reference section title for supported raw HTML inline tags.
   ///
   /// In en, this message translates to:
   /// **'Raw HTML Inline Tags'**
-  String get markdownHtmlRawHtmlInline;
+  String get syntaxReferenceRawHtmlInline;
 
   /// Reference section description for supported raw HTML inline tags.
   ///
   /// In en, this message translates to:
   /// **'Safe inline HTML tags rendered without showing literal tags.'**
-  String get markdownHtmlRawHtmlInlineDescription;
+  String get syntaxReferenceRawHtmlInlineDescription;
 
   /// Reference section title for raw HTML safety rules.
   ///
   /// In en, this message translates to:
   /// **'Safety Rules'**
-  String get markdownHtmlSafety;
+  String get syntaxReferenceSafety;
 
   /// Reference section description for raw HTML safety rules.
   ///
   /// In en, this message translates to:
   /// **'Raw HTML is parsed and sanitized before preview rendering.'**
-  String get markdownHtmlSafetyDescription;
+  String get syntaxReferenceSafetyDescription;
 
   /// Reference row label for Markdown headings.
   ///
   /// In en, this message translates to:
   /// **'Headings'**
-  String get markdownHtmlHeadings;
+  String get syntaxReferenceHeadings;
 
   /// Reference row label for Markdown paragraphs.
   ///
   /// In en, this message translates to:
   /// **'Paragraphs'**
-  String get markdownHtmlParagraphs;
+  String get syntaxReferenceParagraphs;
 
   /// Reference row label for list syntax.
   ///
   /// In en, this message translates to:
   /// **'Lists'**
-  String get markdownHtmlLists;
+  String get syntaxReferenceLists;
 
   /// Reference row label for HTML container tags.
   ///
   /// In en, this message translates to:
   /// **'Containers'**
-  String get markdownHtmlHtmlContainers;
+  String get syntaxReferenceHtmlContainers;
 
   /// Reference row label for HTML text block tags.
   ///
   /// In en, this message translates to:
   /// **'Text blocks'**
-  String get markdownHtmlHtmlTextBlocks;
+  String get syntaxReferenceHtmlTextBlocks;
 
   /// Reference row label for HTML figure and image tags.
   ///
   /// In en, this message translates to:
   /// **'Figures and images'**
-  String get markdownHtmlHtmlFigures;
+  String get syntaxReferenceHtmlFigures;
 
   /// Reference row label for HTML preformatted/code tags.
   ///
   /// In en, this message translates to:
   /// **'Preformatted code'**
-  String get markdownHtmlHtmlPreformatted;
+  String get syntaxReferenceHtmlPreformatted;
 
   /// Reference row label for HTML details/summary tags.
   ///
   /// In en, this message translates to:
   /// **'Disclosure blocks'**
-  String get markdownHtmlHtmlDisclosure;
+  String get syntaxReferenceHtmlDisclosure;
 
   /// Reference row label for HTML description list tags.
   ///
   /// In en, this message translates to:
   /// **'Description lists'**
-  String get markdownHtmlHtmlDescriptionLists;
+  String get syntaxReferenceHtmlDescriptionLists;
 
   /// Reference row label for HTML inline formatting tags.
   ///
   /// In en, this message translates to:
   /// **'Formatting tags'**
-  String get markdownHtmlHtmlFormattingTags;
+  String get syntaxReferenceHtmlFormattingTags;
 
   /// Reference row label for HTML inline code-related tags.
   ///
   /// In en, this message translates to:
   /// **'Inline code tags'**
-  String get markdownHtmlHtmlInlineCodeTags;
+  String get syntaxReferenceHtmlInlineCodeTags;
 
   /// Reference row label for HTML inline semantic tags that render as text.
   ///
   /// In en, this message translates to:
   /// **'Semantic text tags'**
-  String get markdownHtmlHtmlNeutralInlineTags;
+  String get syntaxReferenceHtmlNeutralInlineTags;
 
   /// Reference row label for sanitized preview behavior.
   ///
   /// In en, this message translates to:
   /// **'Sanitized preview'**
-  String get markdownHtmlSanitizedPreview;
+  String get syntaxReferenceSanitizedPreview;
 
   /// Reference row description for sanitized preview behavior.
   ///
   /// In en, this message translates to:
   /// **'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.'**
-  String get markdownHtmlSanitizedPreviewDescription;
+  String get syntaxReferenceSanitizedPreviewDescription;
 
   /// Reference row label for raw source preservation.
   ///
   /// In en, this message translates to:
   /// **'Source is preserved'**
-  String get markdownHtmlSourcePreserved;
+  String get syntaxReferenceSourcePreserved;
 
   /// Reference row description for raw source preservation.
   ///
   /// In en, this message translates to:
   /// **'Unedited raw HTML is saved back exactly as source text.'**
-  String get markdownHtmlSourcePreservedDescription;
+  String get syntaxReferenceSourcePreservedDescription;
 
   /// Reference row label for Markdown inside raw HTML.
   ///
   /// In en, this message translates to:
   /// **'Markdown inside HTML'**
-  String get markdownHtmlMarkdownInsideHtml;
+  String get syntaxReferenceMarkdownInsideHtml;
 
   /// Reference row description for Markdown inside raw HTML.
   ///
   /// In en, this message translates to:
   /// **'Markdown markers inside raw HTML render as literal text.'**
-  String get markdownHtmlMarkdownInsideHtmlDescription;
+  String get syntaxReferenceMarkdownInsideHtmlDescription;
 
   /// Reference row label for blocked HTML content.
   ///
   /// In en, this message translates to:
   /// **'Blocked active content'**
-  String get markdownHtmlBlockedContent;
+  String get syntaxReferenceBlockedContent;
 
   /// Reference row description for blocked HTML content.
   ///
   /// In en, this message translates to:
   /// **'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.'**
-  String get markdownHtmlBlockedContentDescription;
+  String get syntaxReferenceBlockedContentDescription;
 
   /// Reference row label for safe URL policy.
   ///
   /// In en, this message translates to:
   /// **'Safe URLs only'**
-  String get markdownHtmlSafeUrls;
+  String get syntaxReferenceSafeUrls;
 
   /// Reference row description for safe URL policy.
   ///
   /// In en, this message translates to:
   /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
-  String get markdownHtmlSafeUrlsDescription;
+  String get syntaxReferenceSafeUrlsDescription;
+
+  /// Label for the Syntax Reference category selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get syntaxReferenceCategory;
+
+  /// HTML category in the Syntax Reference.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML'**
+  String get syntaxReferenceCategoryHtml;
+
+  /// Diagrams and API category in the Syntax Reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagrams and API'**
+  String get syntaxReferenceCategoryDiagramsAndApi;
+
+  /// Mathematics category in the Syntax Reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Mathematics'**
+  String get syntaxReferenceCategoryMathematics;
+
+  /// Label for a syntax example.
+  ///
+  /// In en, this message translates to:
+  /// **'Example'**
+  String get syntaxReferenceExample;
+
+  /// Label for accepted syntax identifiers and aliases.
+  ///
+  /// In en, this message translates to:
+  /// **'Identifiers and aliases'**
+  String get syntaxReferenceIdentifiers;
+
+  /// Label for the document types where syntax is recognized.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get syntaxReferenceScope;
+
+  /// Label for a concise BusyMark-specific syntax limitation.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark limitation'**
+  String get syntaxReferenceLimitation;
+
+  /// Action that opens official external documentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Official documentation'**
+  String get syntaxReferenceOfficialDocumentation;
+
+  /// Scope label for syntax recognized in ordinary and Writerside Markdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Ordinary Markdown and Writerside Markdown'**
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+
+  /// Scope label for syntax recognized only in Writerside Markdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside Markdown only'**
+  String get syntaxReferenceScopeWritersideMarkdown;
+
+  /// Scope label for syntax recognized in Writerside Markdown and XML topics.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside Markdown and Writerside XML only'**
+  String get syntaxReferenceScopeWritersideMarkdownAndXml;
+
+  /// Introduction to the Markdown syntax category.
+  ///
+  /// In en, this message translates to:
+  /// **'The core Markdown forms BusyMark can author and preview.'**
+  String get syntaxReferenceMarkdownDescription;
+
+  /// Short localized paragraph used as a Markdown syntax example.
+  ///
+  /// In en, this message translates to:
+  /// **'A paragraph of text.'**
+  String get syntaxReferenceParagraphExample;
+
+  /// BusyMark limitation for Markdown table syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables use GitHub Flavored Markdown pipe syntax.'**
+  String get syntaxReferenceTableLimitation;
+
+  /// Accepted hard-line-break forms. Keep the backslash and HTML tag exact.
+  ///
+  /// In en, this message translates to:
+  /// **'two trailing spaces, \\, <br>'**
+  String get syntaxReferenceHardBreakIdentifiers;
+
+  /// Introduction to the HTML syntax category.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark accepts a focused safe subset of raw HTML in Markdown source.'**
+  String get syntaxReferenceHtmlDescription;
+
+  /// Introduction and fence behavior for diagrams and OpenAPI.
+  ///
+  /// In en, this message translates to:
+  /// **'Fenced Mermaid, PlantUML, D2, and OpenAPI work in Markdown source. Fence identifiers are case-insensitive, and BusyMark preserves their original spelling.'**
+  String get syntaxReferenceDiagramsDescription;
+
+  /// Mermaid feature title. Keep the product name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'Mermaid'**
+  String get syntaxReferenceMermaid;
+
+  /// PlantUML feature title. Keep the product name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'PlantUML'**
+  String get syntaxReferencePlantUml;
+
+  /// D2 feature title. Keep the product name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'D2'**
+  String get syntaxReferenceD2;
+
+  /// OpenAPI feature title. Keep the product name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAPI'**
+  String get syntaxReferenceOpenApi;
+
+  /// BusyMark limitation for OpenAPI source recognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Use fenced YAML or JSON content. BusyMark does not treat an arbitrary whole-file YAML or JSON document as an OpenAPI reference.'**
+  String get syntaxReferenceOpenApiLimitation;
+
+  /// Feature title for Writerside semantic diagram code blocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic diagram code blocks'**
+  String get syntaxReferenceSemanticDiagramBlocks;
+
+  /// BusyMark boundary for Writerside semantic diagram code blocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic code-block and src forms support Mermaid, PlantUML, and D2, not OpenAPI, and only inside Writerside projects.'**
+  String get syntaxReferenceSemanticDiagramLimitation;
+
+  /// Feature title for Writerside referenced diagram files.
+  ///
+  /// In en, this message translates to:
+  /// **'Referenced diagram source'**
+  String get syntaxReferenceReferencedDiagramSource;
+
+  /// BusyMark boundary for Writerside referenced diagram paths.
+  ///
+  /// In en, this message translates to:
+  /// **'Paths must be relative and remain inside the opened Writerside project; the fence-plus-src form is Writerside Markdown only.'**
+  String get syntaxReferenceReferencedDiagramLimitation;
+
+  /// Introduction to the mathematics syntax category.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark supports TeX expressions, not complete TeX or LaTeX documents.'**
+  String get syntaxReferenceMathematicsDescription;
+
+  /// Feature title for inline dollar-delimited math.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline math'**
+  String get syntaxReferenceInlineMath;
+
+  /// Feature title for GitHub dollar/backtick math syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub dollar/backtick math'**
+  String get syntaxReferenceGithubMath;
+
+  /// Feature title for double-dollar display math.
+  ///
+  /// In en, this message translates to:
+  /// **'Display math'**
+  String get syntaxReferenceDisplayMath;
+
+  /// Feature title for a fenced code block identified by math. Keep math exact.
+  ///
+  /// In en, this message translates to:
+  /// **'math fence'**
+  String get syntaxReferenceMathFence;
+
+  /// Feature title for a Writerside fenced code block identified by tex. Keep tex exact.
+  ///
+  /// In en, this message translates to:
+  /// **'tex fence'**
+  String get syntaxReferenceTexFence;
+
+  /// BusyMark boundary for unsupported Markdown math delimiters. Keep delimiter tokens exact.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark does not recognize \\(...\\) or \\[...\\] as Markdown math delimiters.'**
+  String get syntaxReferenceMathDelimitersLimitation;
+
+  /// BusyMark boundary for tex fences outside Writerside.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside Writerside mode, a tex fence remains an ordinary code block.'**
+  String get syntaxReferenceTexFenceLimitation;
+
+  /// Feature title for the Writerside math semantic element.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside math element'**
+  String get syntaxReferenceWritersideMathElement;
+
+  /// Clarifies that Writerside math is not raw HTML MathML.
+  ///
+  /// In en, this message translates to:
+  /// **'The math element is semantic Writerside syntax, not permitted raw HTML MathML.'**
+  String get syntaxReferenceWritersideMathElementLimitation;
+
+  /// Feature title for semantic Writerside TeX code blocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic TeX code block'**
+  String get syntaxReferenceSemanticTexBlock;
+
+  /// Introduction to the Writerside syntax category.
+  ///
+  /// In en, this message translates to:
+  /// **'These focused extensions are interpreted only inside opened Writerside projects.'**
+  String get syntaxReferenceWritersideDescription;
+
+  /// Feature title for Writerside blockquote admonitions.
+  ///
+  /// In en, this message translates to:
+  /// **'Admonition blockquote'**
+  String get syntaxReferenceAdmonitionBlockquote;
+
+  /// BusyMark boundary for Writerside blockquote admonitions.
+  ///
+  /// In en, this message translates to:
+  /// **'A plain blockquote is a tip in Writerside Markdown; it remains an ordinary quote in ordinary Markdown.'**
+  String get syntaxReferenceAdmonitionLimitation;
+
+  /// Feature title for Writerside semantic admonition elements.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic admonitions'**
+  String get syntaxReferenceSemanticAdmonitions;
+
+  /// BusyMark boundary for Writerside-only semantic markup.
+  ///
+  /// In en, this message translates to:
+  /// **'Ordinary Markdown does not interpret these Writerside semantic elements.'**
+  String get syntaxReferenceSemanticMarkupLimitation;
+
+  /// Feature title for a collapsible Writerside Markdown heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsible heading'**
+  String get syntaxReferenceCollapsibleHeading;
+
+  /// Feature title for a collapsible Writerside Markdown code fence.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsible code fence'**
+  String get syntaxReferenceCollapsibleCode;
+
+  /// Feature title for supported semantic Writerside collapsible forms.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic collapsible content'**
+  String get syntaxReferenceSemanticCollapsibles;
+
+  /// Focused BusyMark boundary for semantic collapsible forms.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark supports collapsible chapter, procedure, code-block, and definition-list forms, not the full Writerside catalog.'**
+  String get syntaxReferenceSemanticCollapsiblesLimitation;
+
+  /// Feature title for Writerside semantic math and diagram code blocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic code blocks for math and diagrams'**
+  String get syntaxReferenceSemanticCodeBlocks;
+
+  /// Feature title for Writerside semantic video elements.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside video'**
+  String get syntaxReferenceVideo;
+
+  /// BusyMark boundary for Writerside local and hosted video sources.
+  ///
+  /// In en, this message translates to:
+  /// **'Local video uses a local preview-src image; hosted video sources must be supported HTTPS YouTube or Vimeo URLs.'**
+  String get syntaxReferenceVideoLimitation;
 
   /// Menu action and dialog title for exporting the active document or Writerside module as PDF.
   ///

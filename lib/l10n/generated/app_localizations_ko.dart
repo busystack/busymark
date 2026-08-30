@@ -442,7 +442,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shortcutKeyboardShortcutsDescription => '이 키보드 단축키 참조 표시';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription => 'Markdown 및 HTML 참조 열기';
+  String get shortcutSyntaxReferenceDescription => '구문 참조 열기';
 
   @override
   String get shortcutSettingsDescription => 'BusyMark 설정 열기';
@@ -2571,113 +2571,281 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git 명령이 실패했습니다.';
 
   @override
-  String get markdownAndHtml => 'Markdown 및 HTML';
+  String get syntaxReference => '구문 참조';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown 블록';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown 블록';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Markdown 소스 및 미리보기에서 블록 구조가 지원됩니다.';
 
   @override
-  String get markdownHtmlInlineFormatting => '인라인 Markdown';
+  String get syntaxReferenceInlineFormatting => '인라인 Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       '단락, 목록 항목 및 표 셀 내부에 나타날 수 있는 서식입니다.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => '원시 HTML 블록';
+  String get syntaxReferenceRawHtmlBlocks => '원시 HTML 블록';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'BusyMark 미리보기 위젯을 통해 렌더링되는 안전한 블록 수준 HTML 태그입니다.';
 
   @override
-  String get markdownHtmlRawHtmlInline => '원시 HTML 인라인 태그';
+  String get syntaxReferenceRawHtmlInline => '원시 HTML 인라인 태그';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       '리터럴 태그를 표시하지 않고 렌더링되는 안전한 인라인 HTML 태그입니다.';
 
   @override
-  String get markdownHtmlSafety => '안전 규칙';
+  String get syntaxReferenceSafety => '안전 규칙';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       '원시 HTML은 미리 보기 렌더링 전에 구문 분석되고 정리됩니다.';
 
   @override
-  String get markdownHtmlHeadings => '제목';
+  String get syntaxReferenceHeadings => '제목';
 
   @override
-  String get markdownHtmlParagraphs => '단락';
+  String get syntaxReferenceParagraphs => '단락';
 
   @override
-  String get markdownHtmlLists => '목록';
+  String get syntaxReferenceLists => '목록';
 
   @override
-  String get markdownHtmlHtmlContainers => '컨테이너';
+  String get syntaxReferenceHtmlContainers => '컨테이너';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => '텍스트 블록';
+  String get syntaxReferenceHtmlTextBlocks => '텍스트 블록';
 
   @override
-  String get markdownHtmlHtmlFigures => '그림 및 이미지';
+  String get syntaxReferenceHtmlFigures => '그림 및 이미지';
 
   @override
-  String get markdownHtmlHtmlPreformatted => '미리 서식이 지정된 코드';
+  String get syntaxReferenceHtmlPreformatted => '미리 서식이 지정된 코드';
 
   @override
-  String get markdownHtmlHtmlDisclosure => '접기 블록';
+  String get syntaxReferenceHtmlDisclosure => '접기 블록';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => '설명 목록';
+  String get syntaxReferenceHtmlDescriptionLists => '설명 목록';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => '서식 태그';
+  String get syntaxReferenceHtmlFormattingTags => '서식 태그';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => '인라인 코드 태그';
+  String get syntaxReferenceHtmlInlineCodeTags => '인라인 코드 태그';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => '의미 있는 텍스트 태그';
+  String get syntaxReferenceHtmlNeutralInlineTags => '의미 있는 텍스트 태그';
 
   @override
-  String get markdownHtmlSanitizedPreview => '정리된 미리 보기';
+  String get syntaxReferenceSanitizedPreview => '정리된 미리 보기';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       '허용된 HTML은 브라우저에서 렌더링되지 않고 BusyMark 미리보기 블록으로 변환됩니다.';
 
   @override
-  String get markdownHtmlSourcePreserved => '소스 보존';
+  String get syntaxReferenceSourcePreserved => '소스 보존';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       '편집되지 않은 원시 HTML은 소스 텍스트와 동일하게 다시 저장됩니다.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'HTML 내부의 Markdown';
+  String get syntaxReferenceMarkdownInsideHtml => 'HTML 내부의 Markdown';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '원시 HTML 내부의 마크다운 마커는 리터럴 텍스트로 렌더링됩니다.';
 
   @override
-  String get markdownHtmlBlockedContent => '차단된 활성 콘텐츠';
+  String get syntaxReferenceBlockedContent => '차단된 활성 콘텐츠';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       '스크립트, 스타일, 프레임, 양식, SVG, MathML, 이벤트 및 안전하지 않은 속성이 차단됩니다.';
 
   @override
-  String get markdownHtmlSafeUrls => '안전한 URL만 허용';
+  String get syntaxReferenceSafeUrls => '안전한 URL만 허용';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       '링크에는 http, https, mailto, tel, 상대 URL 및 프래그먼트 URL만 허용됩니다. 안전하지 않은 스킴은 차단됩니다.';
+
+  @override
+  String get syntaxReferenceCategory => '범주';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => '다이어그램 및 API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => '수학';
+
+  @override
+  String get syntaxReferenceExample => '예제';
+
+  @override
+  String get syntaxReferenceIdentifiers => '식별자 및 별칭';
+
+  @override
+  String get syntaxReferenceScope => '적용 범위';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark 제한 사항';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => '공식 문서';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      '일반 Markdown 및 Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown => 'Writerside Markdown 전용';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Writerside Markdown 및 Writerside XML 전용';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'BusyMark에서 작성하고 미리 볼 수 있는 핵심 Markdown 형식입니다.';
+
+  @override
+  String get syntaxReferenceParagraphExample => '텍스트 문단입니다.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      '표는 GitHub Flavored Markdown의 파이프 구문을 사용합니다.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers => '줄 끝 공백 두 개, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark는 Markdown 소스에서 제한된 안전한 원시 HTML 하위 집합만 허용합니다.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Mermaid, PlantUML, D2 및 OpenAPI 펜스 블록은 Markdown 소스에서 작동합니다. 펜스 식별자는 대소문자를 구분하지 않으며 BusyMark는 원래 표기를 유지합니다.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      '펜스 안에 YAML 또는 JSON 콘텐츠를 사용하세요. BusyMark는 임의의 전체 YAML 또는 JSON 문서를 OpenAPI 참조로 취급하지 않습니다.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks => '다이어그램용 의미론적 코드 블록';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      '의미론적 code-block 및 src 형식은 Mermaid, PlantUML 및 D2만 지원하고 OpenAPI는 지원하지 않으며 Writerside 프로젝트 안에서만 작동합니다.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => '참조된 다이어그램 소스';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      '경로는 상대 경로여야 하고 열린 Writerside 프로젝트 안에 있어야 합니다. 펜스와 src 형식은 Writerside Markdown 전용입니다.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark는 TeX 수식을 지원하지만 완전한 TeX 또는 LaTeX 문서는 지원하지 않습니다.';
+
+  @override
+  String get syntaxReferenceInlineMath => '인라인 수식';
+
+  @override
+  String get syntaxReferenceGithubMath => '달러와 백틱을 사용하는 GitHub 수식';
+
+  @override
+  String get syntaxReferenceDisplayMath => '표시 수식';
+
+  @override
+  String get syntaxReferenceMathFence => 'math 펜스';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex 펜스';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark는 \\(...\\) 또는 \\[...\\]를 Markdown 수식 구분자로 인식하지 않습니다.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Writerside 모드 밖에서는 tex 펜스가 일반 코드 블록으로 남습니다.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside math 요소';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math 요소는 의미론적 Writerside 구문이며 허용된 원시 HTML MathML이 아닙니다.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => '의미론적 TeX 코드 블록';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      '이 확장 기능은 열린 Writerside 프로젝트 안에서만 해석됩니다.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => '알림 인용구';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      '일반 블록 인용은 Writerside Markdown에서는 팁이고 일반 Markdown에서는 일반 인용으로 남습니다.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => '의미론적 알림';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      '일반 Markdown은 이러한 Writerside 의미론적 요소를 해석하지 않습니다.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => '접을 수 있는 제목';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => '접을 수 있는 코드 펜스';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => '의미론적 접이식 콘텐츠';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark는 접을 수 있는 chapter, procedure, code-block 및 정의 목록 형식을 지원하지만 전체 Writerside 카탈로그를 지원하지는 않습니다.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks => '수식 및 다이어그램용 의미론적 코드 블록';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside 동영상';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      '로컬 동영상은 로컬 preview-src 이미지를 사용합니다. 호스팅 동영상은 지원되는 YouTube 또는 Vimeo HTTPS URL이어야 합니다.';
 
   @override
   String get exportAsPdf => 'PDF로 내보내기';

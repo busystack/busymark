@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "فتح مرجع Markdown وHTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "فتح مرجع بناء الجملة",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "فتح إعدادات BusyMark",
   "@shortcutSettingsDescription": {
@@ -2350,136 +2350,136 @@
   "gitErrorNetwork": "فشلت عملية Git عبر الشبكة.",
   "gitErrorConflict": "أبلغ Git عن تعارضات لم تُحل.",
   "gitErrorCommandFailed": "فشل أمر Git.",
-  "markdownAndHtml": "Markdown و HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "مرجع بناء الجملة",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "كتل Markdown",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "كتل Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "بنى الكتل المدعومة في مصدر Markdown والمعاينة.",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "بنى الكتل المدعومة في مصدر Markdown والمعاينة.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Markdown داخل السطر",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "Markdown داخل السطر",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "كتل HTML الخام",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "كتل HTML الخام",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "وسوم HTML داخل السطر",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "وسوم HTML داخل السطر",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "قواعد الأمان",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "قواعد الأمان",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "العناوين",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "العناوين",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "الفقرات",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "الفقرات",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "القوائم",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "القوائم",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "الحاويات",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "الحاويات",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "كتل النص",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "كتل النص",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "الأشكال والصور",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "الأشكال والصور",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "كود منسق مسبقًا",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "كود منسق مسبقًا",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "كتل قابلة للفتح",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "كتل قابلة للفتح",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "قوائم وصفية",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "قوائم وصفية",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "وسوم التنسيق",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "وسوم التنسيق",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "وسوم الكود داخل السطر",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "وسوم الكود داخل السطر",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "وسوم نصية دلالية",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "وسوم نصية دلالية",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "معاينة منظفة",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "معاينة منظفة",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "يتم حفظ المصدر",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "يتم حفظ المصدر",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown داخل HTML",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "Markdown داخل HTML",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "تعرض علامات Markdown داخل HTML الخام كنص حرفي.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "تعرض علامات Markdown داخل HTML الخام كنص حرفي.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "المحتوى النشط محظور",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "المحتوى النشط محظور",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "عناوين URL آمنة فقط",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "عناوين URL آمنة فقط",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "إضافة إلى Git",
@@ -2686,6 +2686,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "الفئة",
+  "syntaxReferenceCategoryDiagramsAndApi": "المخططات وواجهات API",
+  "syntaxReferenceCategoryMathematics": "الرياضيات",
+  "syntaxReferenceExample": "مثال",
+  "syntaxReferenceIdentifiers": "المعرّفات والأسماء البديلة",
+  "syntaxReferenceScope": "النطاق",
+  "syntaxReferenceLimitation": "قيد في BusyMark",
+  "syntaxReferenceOfficialDocumentation": "الوثائق الرسمية",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown العادي وMarkdown في Writerside",
+  "syntaxReferenceScopeWritersideMarkdown": "Markdown في Writerside فقط",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Markdown وXML في Writerside فقط",
+  "syntaxReferenceMarkdownDescription": "أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.",
+  "syntaxReferenceParagraphExample": "فقرة نصية.",
+  "syntaxReferenceTableLimitation": "تستخدم الجداول صيغة الأنابيب في GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "مسافتان في نهاية السطر، \\, <br>",
+  "syntaxReferenceHtmlDescription": "يقبل BusyMark مجموعة محدودة وآمنة من HTML الخام في مصدر Markdown.",
+  "syntaxReferenceDiagramsDescription": "تعمل كتل Mermaid وPlantUML وD2 وOpenAPI المسيّجة في مصدر Markdown. لا تتأثر معرّفات السياج بحالة الأحرف، ويحافظ BusyMark على التهجئة الأصلية.",
+  "syntaxReferenceOpenApiLimitation": "استخدم محتوى YAML أو JSON داخل سياج. لا يعامل BusyMark مستند YAML أو JSON كاملاً عشوائياً على أنه مرجع OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "كتل شيفرة دلالية للمخططات",
+  "syntaxReferenceSemanticDiagramLimitation": "تدعم صيغتا code-block وsrc الدلاليتان Mermaid وPlantUML وD2، لا OpenAPI، وتعملان داخل مشاريع Writerside فقط.",
+  "syntaxReferenceReferencedDiagramSource": "مصدر مخطط مُشار إليه",
+  "syntaxReferenceReferencedDiagramLimitation": "يجب أن تكون المسارات نسبية وأن تبقى داخل مشروع Writerside المفتوح؛ صيغة السياج مع src خاصة بـMarkdown في Writerside.",
+  "syntaxReferenceMathematicsDescription": "يدعم BusyMark تعبيرات TeX، وليس مستندات TeX أو LaTeX الكاملة.",
+  "syntaxReferenceInlineMath": "رياضيات مضمنة",
+  "syntaxReferenceGithubMath": "رياضيات GitHub بعلامة الدولار والفاصلة العليا المائلة",
+  "syntaxReferenceDisplayMath": "رياضيات معروضة",
+  "syntaxReferenceMathFence": "سياج math",
+  "syntaxReferenceTexFence": "سياج tex",
+  "syntaxReferenceMathDelimitersLimitation": "لا يتعرّف BusyMark على ⁨\\(...\\)⁩ أو ⁨\\[...\\]⁩ كمحددات رياضيات في Markdown.",
+  "syntaxReferenceTexFenceLimitation": "خارج وضع Writerside، يبقى سياج tex كتلة شيفرة عادية.",
+  "syntaxReferenceWritersideMathElement": "عنصر math في Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "عنصر math صيغة دلالية في Writerside، وليس HTML MathML خاماً مسموحاً به.",
+  "syntaxReferenceSemanticTexBlock": "كتلة شيفرة TeX دلالية",
+  "syntaxReferenceWritersideDescription": "لا تُفسَّر هذه الامتدادات المحددة إلا داخل مشاريع Writerside المفتوحة.",
+  "syntaxReferenceAdmonitionBlockquote": "اقتباس كتلي للتنبيه",
+  "syntaxReferenceAdmonitionLimitation": "يكون الاقتباس الكتلي العادي تلميحاً في Markdown ضمن Writerside؛ ويبقى اقتباساً عادياً في Markdown العادي.",
+  "syntaxReferenceSemanticAdmonitions": "تنبيهات دلالية",
+  "syntaxReferenceSemanticMarkupLimitation": "لا يفسر Markdown العادي عناصر Writerside الدلالية هذه.",
+  "syntaxReferenceCollapsibleHeading": "عنوان قابل للطي",
+  "syntaxReferenceCollapsibleCode": "سياج شيفرة قابل للطي",
+  "syntaxReferenceSemanticCollapsibles": "محتوى دلالي قابل للطي",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "يدعم BusyMark صيغ chapter وprocedure وcode-block وقائمة التعريفات القابلة للطي، وليس فهرس Writerside كاملاً.",
+  "syntaxReferenceSemanticCodeBlocks": "كتل شيفرة دلالية للرياضيات والمخططات",
+  "syntaxReferenceVideo": "فيديو Writerside",
+  "syntaxReferenceVideoLimitation": "يستخدم الفيديو المحلي صورة preview-src محلية؛ ويجب أن تكون المصادر المستضافة عناوين HTTPS مدعومة من YouTube أو Vimeo.",
   "exportAsPdf": "تصدير بصيغة PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

@@ -38,6 +38,11 @@ void main() {
       registry[BusyMarkCommandIds.commandPalette]?.shortcut?.label,
       'Ctrl+Shift+P',
     );
+    expect(BusyMarkCommandIds.syntaxReference, 'help.syntaxReference');
+    expect(
+      registry[BusyMarkCommandIds.syntaxReference]?.shortcut?.label,
+      'Ctrl+Alt+M',
+    );
     expect(
       registry.commands.map((command) => command.id).toSet().length,
       registry.commands.length,

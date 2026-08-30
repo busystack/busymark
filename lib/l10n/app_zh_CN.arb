@@ -570,9 +570,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "打开 Markdown 和 HTML 参考",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "打开语法参考",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "打开 BusyMark 设置",
   "@shortcutSettingsDescription": {
@@ -3478,138 +3478,188 @@
   "@gitErrorCommandFailed": {
     "description": "Git error message."
   },
-  "markdownAndHtml": "Markdown 和 HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "语法参考",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown 块",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown 块",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Markdown 源代码和预览中支持的块结构。",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown 源代码和预览中支持的块结构。",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "行内 Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "行内 Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "可出现在段落、列表项和表格单元格中的格式。",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "可出现在段落、列表项和表格单元格中的格式。",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "原始 HTML 块",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "原始 HTML 块",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "通过 BusyMark 预览组件渲染的安全块级 HTML 标签。",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "通过 BusyMark 预览组件渲染的安全块级 HTML 标签。",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "原始 HTML 行内标签",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "原始 HTML 行内标签",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "安全的行内 HTML 标签，渲染时不会显示字面标签。",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "安全的行内 HTML 标签，渲染时不会显示字面标签。",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "安全规则",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "安全规则",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "原始 HTML 会在预览前进行解析和清理。",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "原始 HTML 会在预览前进行解析和清理。",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "标题",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "标题",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "段落",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "段落",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "列表",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "列表",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "容器",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "容器",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "文本块",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "文本块",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "图和图像",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "图和图像",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "预格式化代码",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "预格式化代码",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "折叠块",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "折叠块",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "描述列表",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "描述列表",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "格式标签",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "格式标签",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "行内代码标签",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "行内代码标签",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "语义文本标签",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "语义文本标签",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "已清理的预览",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "已清理的预览",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "保留源代码",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "保留源代码",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "未经编辑的原始 HTML 会按源文本原样保存。",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "未经编辑的原始 HTML 会按源文本原样保存。",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "HTML 内的 Markdown",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "HTML 内的 Markdown",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "原始 HTML 内的 Markdown 标记会按字面文本渲染。",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "原始 HTML 内的 Markdown 标记会按字面文本渲染。",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "被阻止的活动内容",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "被阻止的活动内容",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "仅允许安全 URL",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "仅允许安全 URL",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "类别",
+  "syntaxReferenceCategoryDiagramsAndApi": "图表和 API",
+  "syntaxReferenceCategoryMathematics": "数学",
+  "syntaxReferenceExample": "示例",
+  "syntaxReferenceIdentifiers": "标识符和别名",
+  "syntaxReferenceScope": "适用范围",
+  "syntaxReferenceLimitation": "BusyMark 限制",
+  "syntaxReferenceOfficialDocumentation": "官方文档",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "普通 Markdown 和 Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "仅 Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "仅 Writerside Markdown 和 Writerside XML",
+  "syntaxReferenceMarkdownDescription": "BusyMark 可以编写和预览的核心 Markdown 形式。",
+  "syntaxReferenceParagraphExample": "一段文本。",
+  "syntaxReferenceTableLimitation": "表格使用 GitHub Flavored Markdown 的竖线语法。",
+  "syntaxReferenceHardBreakIdentifiers": "行尾两个空格、\\、<br>",
+  "syntaxReferenceHtmlDescription": "BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。",
+  "syntaxReferenceDiagramsDescription": "带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。",
+  "syntaxReferenceOpenApiLimitation": "请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。",
+  "syntaxReferenceSemanticDiagramBlocks": "图表的语义代码块",
+  "syntaxReferenceSemanticDiagramLimitation": "语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。",
+  "syntaxReferenceReferencedDiagramSource": "引用的图表源",
+  "syntaxReferenceReferencedDiagramLimitation": "路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。",
+  "syntaxReferenceMathematicsDescription": "BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。",
+  "syntaxReferenceInlineMath": "行内数学公式",
+  "syntaxReferenceGithubMath": "使用美元符号和反引号的 GitHub 数学公式",
+  "syntaxReferenceDisplayMath": "显示数学公式",
+  "syntaxReferenceMathFence": "math 围栏",
+  "syntaxReferenceTexFence": "tex 围栏",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。",
+  "syntaxReferenceTexFenceLimitation": "在 Writerside 模式之外，tex 围栏仍是普通代码块。",
+  "syntaxReferenceWritersideMathElement": "Writerside math 元素",
+  "syntaxReferenceWritersideMathElementLimitation": "math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。",
+  "syntaxReferenceSemanticTexBlock": "语义 TeX 代码块",
+  "syntaxReferenceWritersideDescription": "这些特定扩展仅在已打开的 Writerside 项目中解析。",
+  "syntaxReferenceAdmonitionBlockquote": "提示块引用",
+  "syntaxReferenceAdmonitionLimitation": "普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。",
+  "syntaxReferenceSemanticAdmonitions": "语义提示",
+  "syntaxReferenceSemanticMarkupLimitation": "普通 Markdown 不会解析这些 Writerside 语义元素。",
+  "syntaxReferenceCollapsibleHeading": "可折叠标题",
+  "syntaxReferenceCollapsibleCode": "可折叠代码围栏",
+  "syntaxReferenceSemanticCollapsibles": "语义可折叠内容",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。",
+  "syntaxReferenceSemanticCodeBlocks": "数学和图表的语义代码块",
+  "syntaxReferenceVideo": "Writerside 视频",
+  "syntaxReferenceVideoLimitation": "本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。",
   "exportAsPdf": "导出为 PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."

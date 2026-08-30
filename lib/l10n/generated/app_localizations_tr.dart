@@ -453,8 +453,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu klavye kısayolu referansını göster';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Markdown ve HTML referansını açın';
+  String get shortcutSyntaxReferenceDescription => 'Sözdizimi başvurusunu aç';
 
   @override
   String get shortcutSettingsDescription => 'BusyMark ayarlarını aç';
@@ -2653,113 +2652,289 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git komutu başarısız oldu.';
 
   @override
-  String get markdownAndHtml => 'Markdown ve HTML';
+  String get syntaxReference => 'Sözdizimi Başvurusu';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown blokları';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown blokları';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Markdown kaynağında ve önizlemesinde desteklenen blok yapıları.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Satır içi biçimlendirme';
+  String get syntaxReferenceInlineFormatting => 'Satır içi biçimlendirme';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Paragrafların, liste öğelerinin ve tablo hücrelerinin içinde görünebilecek biçimlendirme.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Ham HTML Blokları';
+  String get syntaxReferenceRawHtmlBlocks => 'Ham HTML Blokları';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'BusyMark önizleme widget\'ları aracılığıyla oluşturulan güvenli blok düzeyinde HTML etiketleri.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Ham HTML Satır İçi Etiketleri';
+  String get syntaxReferenceRawHtmlInline => 'Ham HTML Satır İçi Etiketleri';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.';
 
   @override
-  String get markdownHtmlSafety => 'Güvenlik Kuralları';
+  String get syntaxReferenceSafety => 'Güvenlik Kuralları';
 
   @override
-  String get markdownHtmlSafetyDescription =>
+  String get syntaxReferenceSafetyDescription =>
       'Ham HTML, önizleme oluşturmadan önce ayrıştırılır ve arındırılır.';
 
   @override
-  String get markdownHtmlHeadings => 'Başlıklar';
+  String get syntaxReferenceHeadings => 'Başlıklar';
 
   @override
-  String get markdownHtmlParagraphs => 'Paragraflar';
+  String get syntaxReferenceParagraphs => 'Paragraflar';
 
   @override
-  String get markdownHtmlLists => 'Listeler';
+  String get syntaxReferenceLists => 'Listeler';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Konteynerler';
+  String get syntaxReferenceHtmlContainers => 'Konteynerler';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Metin blokları';
+  String get syntaxReferenceHtmlTextBlocks => 'Metin blokları';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Şekiller ve görseller';
+  String get syntaxReferenceHtmlFigures => 'Şekiller ve görseller';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Önceden biçimlendirilmiş kod';
+  String get syntaxReferenceHtmlPreformatted => 'Önceden biçimlendirilmiş kod';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Açıklama blokları';
+  String get syntaxReferenceHtmlDisclosure => 'Açıklama blokları';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Açıklama listeleri';
+  String get syntaxReferenceHtmlDescriptionLists => 'Açıklama listeleri';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Etiketleri biçimlendirme';
+  String get syntaxReferenceHtmlFormattingTags => 'Etiketleri biçimlendirme';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Satır içi kod etiketleri';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Satır içi kod etiketleri';
 
   @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Anlamsal metin etiketleri';
+  String get syntaxReferenceHtmlNeutralInlineTags =>
+      'Anlamsal metin etiketleri';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'Temizlenmiş önizleme';
+  String get syntaxReferenceSanitizedPreview => 'Temizlenmiş önizleme';
 
   @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Kaynak korunur';
+  String get syntaxReferenceSourcePreserved => 'Kaynak korunur';
 
   @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'HTML içindeki Markdown';
+  String get syntaxReferenceMarkdownInsideHtml => 'HTML içindeki Markdown';
 
   @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Engellenen etkin içerik';
+  String get syntaxReferenceBlockedContent => 'Engellenen etkin içerik';
 
   @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Yalnızca güvenli URL\'ler';
+  String get syntaxReferenceSafeUrls => 'Yalnızca güvenli URL\'ler';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
+  String get syntaxReferenceSafeUrlsDescription =>
       'Bağlantılar http, https, mailto, tel, göreli ve parça URL\'lerine izin verir; güvenli olmayan şemalar engellenir.';
+
+  @override
+  String get syntaxReferenceCategory => 'Kategori';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diyagramlar ve API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matematik';
+
+  @override
+  String get syntaxReferenceExample => 'Örnek';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Tanımlayıcılar ve diğer adlar';
+
+  @override
+  String get syntaxReferenceScope => 'Kapsam';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark sınırlaması';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Resmî belgeler';
+
+  @override
+  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
+      'Normal Markdown ve Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Yalnızca Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Yalnızca Writerside Markdown ve Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'BusyMark\'ın yazabildiği ve önizleyebildiği temel Markdown biçimleri.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Bir metin paragrafı.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tablolar GitHub Flavored Markdown dikey çizgi sözdizimini kullanır.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'satır sonunda iki boşluk, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark, Markdown kaynağında sınırlı ve güvenli bir ham HTML alt kümesini kabul eder.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Çitle çevrili Mermaid, PlantUML, D2 ve OpenAPI blokları Markdown kaynağında çalışır. Çit tanımlayıcıları büyük/küçük harfe duyarlı değildir ve BusyMark özgün yazımı korur.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Çitle çevrili YAML veya JSON içeriği kullanın. BusyMark rastgele bir tam YAML ya da JSON belgesini OpenAPI başvurusu olarak değerlendirmez.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Anlamsal diyagram kod blokları';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Anlamsal code-block ve src biçimleri Mermaid, PlantUML ve D2\'yi destekler; OpenAPI\'yi desteklemez ve yalnızca Writerside projelerinde çalışır.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Başvurulan diyagram kaynağı';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Yollar göreli olmalı ve açılan Writerside projesinin içinde kalmalıdır; çit ve src biçimi yalnızca Writerside Markdown içindir.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark TeX ifadelerini destekler; tam TeX veya LaTeX belgelerini desteklemez.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Satır içi matematik';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'Dolar ve ters tırnaklı GitHub matematiği';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Blok matematiği';
+
+  @override
+  String get syntaxReferenceMathFence => 'math çiti';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex çiti';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark \\(...\\) veya \\[...\\] dizilerini Markdown matematik sınırlayıcıları olarak tanımaz.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Writerside modu dışında tex çiti normal bir kod bloğu olarak kalır.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside math öğesi';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math öğesi anlamsal Writerside sözdizimidir; izin verilen ham HTML MathML değildir.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Anlamsal TeX kod bloğu';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Bu odaklı uzantılar yalnızca açılmış Writerside projelerinde yorumlanır.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Uyarı blok alıntısı';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Düz blok alıntısı Writerside Markdown\'da ipucudur; normal Markdown\'da sıradan alıntı olarak kalır.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Anlamsal uyarılar';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Normal Markdown bu anlamsal Writerside öğelerini yorumlamaz.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Daraltılabilir başlık';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Daraltılabilir kod çiti';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Anlamsal daraltılabilir içerik';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark daraltılabilir chapter, procedure, code-block ve tanım listesi biçimlerini destekler; Writerside kataloğunun tamamını desteklemez.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Matematik ve diyagramlar için anlamsal kod blokları';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside videosu';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Yerel video yerel bir preview-src görseli kullanır; barındırılan kaynaklar desteklenen HTTPS YouTube veya Vimeo adresleri olmalıdır.';
 
   @override
   String get exportAsPdf => 'PDF olarak dışa aktar';

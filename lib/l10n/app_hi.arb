@@ -440,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Markdown और HTML संदर्भ खोलें",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "सिंटैक्स संदर्भ खोलें",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "BusyMark सेटिंग्स खोलें",
   "@shortcutSettingsDescription": {
@@ -2350,136 +2350,136 @@
   "gitErrorNetwork": "Git नेटवर्क कार्रवाई विफल रही।",
   "gitErrorConflict": "Git ने अनसुलझे टकराव रिपोर्ट किए।",
   "gitErrorCommandFailed": "Git कमांड विफल रहा।",
-  "markdownAndHtml": "Markdown और HTML",
-  "@markdownAndHtml": {
-    "description": "Markdown and HTML reference dialog title and menu item."
+  "syntaxReference": "सिंटैक्स संदर्भ",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Markdown ब्लॉक",
-  "@markdownHtmlMarkdownBlocks": {
+  "syntaxReferenceMarkdownBlocks": "Markdown ब्लॉक",
+  "@syntaxReferenceMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Markdown स्रोत और प्रीव्यू में समर्थित ब्लॉक संरचनाएँ।",
-  "@markdownHtmlMarkdownBlocksDescription": {
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown स्रोत और प्रीव्यू में समर्थित ब्लॉक संरचनाएँ।",
+  "@syntaxReferenceMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "इनलाइन Markdown",
-  "@markdownHtmlInlineFormatting": {
+  "syntaxReferenceInlineFormatting": "इनलाइन Markdown",
+  "@syntaxReferenceInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।",
-  "@markdownHtmlInlineFormattingDescription": {
+  "syntaxReferenceInlineFormattingDescription": "ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।",
+  "@syntaxReferenceInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "कच्चे HTML ब्लॉक",
-  "@markdownHtmlRawHtmlBlocks": {
+  "syntaxReferenceRawHtmlBlocks": "कच्चे HTML ब्लॉक",
+  "@syntaxReferenceRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "सुरक्षित ब्लॉक-स्तर HTML टैग जिन्हें BusyMark प्रीव्यू विजेट से दिखाया जाता है।",
-  "@markdownHtmlRawHtmlBlocksDescription": {
+  "syntaxReferenceRawHtmlBlocksDescription": "सुरक्षित ब्लॉक-स्तर HTML टैग जिन्हें BusyMark प्रीव्यू विजेट से दिखाया जाता है।",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "इनलाइन HTML टैग",
-  "@markdownHtmlRawHtmlInline": {
+  "syntaxReferenceRawHtmlInline": "इनलाइन HTML टैग",
+  "@syntaxReferenceRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।",
-  "@markdownHtmlRawHtmlInlineDescription": {
+  "syntaxReferenceRawHtmlInlineDescription": "सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।",
+  "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "सुरक्षा नियम",
-  "@markdownHtmlSafety": {
+  "syntaxReferenceSafety": "सुरक्षा नियम",
+  "@syntaxReferenceSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।",
-  "@markdownHtmlSafetyDescription": {
+  "syntaxReferenceSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।",
+  "@syntaxReferenceSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "शीर्षक",
-  "@markdownHtmlHeadings": {
+  "syntaxReferenceHeadings": "शीर्षक",
+  "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "पैराग्राफ",
-  "@markdownHtmlParagraphs": {
+  "syntaxReferenceParagraphs": "पैराग्राफ",
+  "@syntaxReferenceParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "सूचियाँ",
-  "@markdownHtmlLists": {
+  "syntaxReferenceLists": "सूचियाँ",
+  "@syntaxReferenceLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "कंटेनर",
-  "@markdownHtmlHtmlContainers": {
+  "syntaxReferenceHtmlContainers": "कंटेनर",
+  "@syntaxReferenceHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "टेक्स्ट ब्लॉक",
-  "@markdownHtmlHtmlTextBlocks": {
+  "syntaxReferenceHtmlTextBlocks": "टेक्स्ट ब्लॉक",
+  "@syntaxReferenceHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "फ़िगर और चित्र",
-  "@markdownHtmlHtmlFigures": {
+  "syntaxReferenceHtmlFigures": "फ़िगर और चित्र",
+  "@syntaxReferenceHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "पूर्व-स्वरूपित कोड",
-  "@markdownHtmlHtmlPreformatted": {
+  "syntaxReferenceHtmlPreformatted": "पूर्व-स्वरूपित कोड",
+  "@syntaxReferenceHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "खुलने वाले ब्लॉक",
-  "@markdownHtmlHtmlDisclosure": {
+  "syntaxReferenceHtmlDisclosure": "खुलने वाले ब्लॉक",
+  "@syntaxReferenceHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "विवरण सूचियाँ",
-  "@markdownHtmlHtmlDescriptionLists": {
+  "syntaxReferenceHtmlDescriptionLists": "विवरण सूचियाँ",
+  "@syntaxReferenceHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "फ़ॉर्मैटिंग टैग",
-  "@markdownHtmlHtmlFormattingTags": {
+  "syntaxReferenceHtmlFormattingTags": "फ़ॉर्मैटिंग टैग",
+  "@syntaxReferenceHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "इनलाइन कोड टैग",
-  "@markdownHtmlHtmlInlineCodeTags": {
+  "syntaxReferenceHtmlInlineCodeTags": "इनलाइन कोड टैग",
+  "@syntaxReferenceHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
-  "@markdownHtmlHtmlNeutralInlineTags": {
+  "syntaxReferenceHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "साफ़ किया गया प्रीव्यू",
-  "@markdownHtmlSanitizedPreview": {
+  "syntaxReferenceSanitizedPreview": "साफ़ किया गया प्रीव्यू",
+  "@syntaxReferenceSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
-  "@markdownHtmlSanitizedPreviewDescription": {
+  "syntaxReferenceSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
+  "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "स्रोत सुरक्षित रहता है",
-  "@markdownHtmlSourcePreserved": {
+  "syntaxReferenceSourcePreserved": "स्रोत सुरक्षित रहता है",
+  "@syntaxReferenceSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
-  "@markdownHtmlSourcePreservedDescription": {
+  "syntaxReferenceSourcePreservedDescription": "असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
+  "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "HTML के अंदर Markdown",
-  "@markdownHtmlMarkdownInsideHtml": {
+  "syntaxReferenceMarkdownInsideHtml": "HTML के अंदर Markdown",
+  "@syntaxReferenceMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {
+  "syntaxReferenceMarkdownInsideHtmlDescription": "कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "सक्रिय सामग्री अवरुद्ध",
-  "@markdownHtmlBlockedContent": {
+  "syntaxReferenceBlockedContent": "सक्रिय सामग्री अवरुद्ध",
+  "@syntaxReferenceBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।",
-  "@markdownHtmlBlockedContentDescription": {
+  "syntaxReferenceBlockedContentDescription": "स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।",
+  "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "केवल सुरक्षित URL",
-  "@markdownHtmlSafeUrls": {
+  "syntaxReferenceSafeUrls": "केवल सुरक्षित URL",
+  "@syntaxReferenceSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।",
-  "@markdownHtmlSafeUrlsDescription": {
+  "syntaxReferenceSafeUrlsDescription": "लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।",
+  "@syntaxReferenceSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
   "addToGit": "Git में जोड़ें",
@@ -2686,6 +2686,56 @@
       }
     }
   },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "श्रेणी",
+  "syntaxReferenceCategoryDiagramsAndApi": "आरेख और API",
+  "syntaxReferenceCategoryMathematics": "गणित",
+  "syntaxReferenceExample": "उदाहरण",
+  "syntaxReferenceIdentifiers": "पहचानकर्ता और उपनाम",
+  "syntaxReferenceScope": "दायरा",
+  "syntaxReferenceLimitation": "BusyMark की सीमा",
+  "syntaxReferenceOfficialDocumentation": "आधिकारिक दस्तावेज़",
+  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "सामान्य Markdown और Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdown": "केवल Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "केवल Writerside Markdown और Writerside XML",
+  "syntaxReferenceMarkdownDescription": "मुख्य Markdown रूप जिन्हें BusyMark लिख और पूर्वावलोकित कर सकता है।",
+  "syntaxReferenceParagraphExample": "पाठ का एक अनुच्छेद।",
+  "syntaxReferenceTableLimitation": "तालिकाएँ GitHub Flavored Markdown की पाइप सिंटैक्स का उपयोग करती हैं।",
+  "syntaxReferenceHardBreakIdentifiers": "पंक्ति के अंत में दो रिक्तियाँ, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark, Markdown स्रोत में कच्चे HTML का सीमित और सुरक्षित उपसमुच्चय स्वीकार करता है।",
+  "syntaxReferenceDiagramsDescription": "बाड़ वाले Mermaid, PlantUML, D2 और OpenAPI ब्लॉक Markdown स्रोत में काम करते हैं। बाड़ पहचानकर्ता अक्षर केस से स्वतंत्र हैं और BusyMark मूल वर्तनी सुरक्षित रखता है।",
+  "syntaxReferenceOpenApiLimitation": "बाड़ वाला YAML या JSON सामग्री उपयोग करें। BusyMark किसी भी पूरे YAML या JSON दस्तावेज़ को OpenAPI संदर्भ नहीं मानता।",
+  "syntaxReferenceSemanticDiagramBlocks": "आरेखों के लिए सिमैंटिक कोड ब्लॉक",
+  "syntaxReferenceSemanticDiagramLimitation": "सिमैंटिक code-block और src रूप Mermaid, PlantUML और D2 का समर्थन करते हैं, OpenAPI का नहीं, और केवल Writerside परियोजनाओं में काम करते हैं।",
+  "syntaxReferenceReferencedDiagramSource": "संदर्भित आरेख स्रोत",
+  "syntaxReferenceReferencedDiagramLimitation": "पथ सापेक्ष होने चाहिए और खुले Writerside प्रोजेक्ट के भीतर रहने चाहिए; बाड़ के साथ src वाला रूप केवल Writerside Markdown के लिए है।",
+  "syntaxReferenceMathematicsDescription": "BusyMark TeX व्यंजकों का समर्थन करता है, पूर्ण TeX या LaTeX दस्तावेज़ों का नहीं।",
+  "syntaxReferenceInlineMath": "इनलाइन गणित",
+  "syntaxReferenceGithubMath": "डॉलर और बैकटिक वाला GitHub गणित",
+  "syntaxReferenceDisplayMath": "प्रदर्शित गणित",
+  "syntaxReferenceMathFence": "math बाड़",
+  "syntaxReferenceTexFence": "tex बाड़",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark \\(...\\) या \\[...\\] को Markdown गणित सीमांकक नहीं मानता।",
+  "syntaxReferenceTexFenceLimitation": "Writerside मोड के बाहर tex बाड़ सामान्य कोड ब्लॉक ही रहता है।",
+  "syntaxReferenceWritersideMathElement": "Writerside math तत्व",
+  "syntaxReferenceWritersideMathElementLimitation": "math तत्व सिमैंटिक Writerside सिंटैक्स है, अनुमत कच्चा HTML MathML नहीं।",
+  "syntaxReferenceSemanticTexBlock": "सिमैंटिक TeX कोड ब्लॉक",
+  "syntaxReferenceWritersideDescription": "ये केंद्रित एक्सटेंशन केवल खुले Writerside प्रोजेक्ट में समझे जाते हैं।",
+  "syntaxReferenceAdmonitionBlockquote": "सूचना ब्लॉककोट",
+  "syntaxReferenceAdmonitionLimitation": "सादा ब्लॉककोट Writerside Markdown में सुझाव होता है; सामान्य Markdown में वह सामान्य उद्धरण ही रहता है।",
+  "syntaxReferenceSemanticAdmonitions": "सिमैंटिक सूचनाएँ",
+  "syntaxReferenceSemanticMarkupLimitation": "सामान्य Markdown इन सिमैंटिक Writerside तत्वों को नहीं समझता।",
+  "syntaxReferenceCollapsibleHeading": "सिकोड़ा जा सकने वाला शीर्षक",
+  "syntaxReferenceCollapsibleCode": "सिकोड़ा जा सकने वाला कोड बाड़",
+  "syntaxReferenceSemanticCollapsibles": "सिमैंटिक संकुचित सामग्री",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark सिकोड़े जा सकने वाले chapter, procedure, code-block और परिभाषा-सूची रूपों का समर्थन करता है, पूरे Writerside कैटलॉग का नहीं।",
+  "syntaxReferenceSemanticCodeBlocks": "गणित और आरेखों के लिए सिमैंटिक कोड ब्लॉक",
+  "syntaxReferenceVideo": "Writerside वीडियो",
+  "syntaxReferenceVideoLimitation": "स्थानीय वीडियो स्थानीय preview-src चित्र उपयोग करता है; होस्ट किए गए स्रोत समर्थित YouTube या Vimeo HTTPS URL होने चाहिए।",
   "exportAsPdf": "PDF के रूप में निर्यात करें",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."

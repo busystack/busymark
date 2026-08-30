@@ -344,15 +344,15 @@ void main() {
       ),
       findsNothing,
     );
-    expect(find.text(l10n.markdownAndHtml), findsOneWidget);
+    expect(find.text(l10n.syntaxReference), findsOneWidget);
     expect(
-      find.text(BusyMarkAppShortcutLabels.markdownAndHtml),
+      find.text(BusyMarkAppShortcutLabels.syntaxReference),
       findsOneWidget,
     );
     expect(
       find.byTooltip(
-        '${l10n.markdownAndHtml} '
-        '(${BusyMarkAppShortcutLabels.markdownAndHtml})',
+        '${l10n.syntaxReference} '
+        '(${BusyMarkAppShortcutLabels.syntaxReference})',
       ),
       findsNothing,
     );
@@ -459,7 +459,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await pressShortcut(LogicalKeyboardKey.keyM, control: true, alt: true);
-    expect(find.text(l10n.markdownHtmlSafetyDescription), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('syntax-reference-dialog')),
+      findsOneWidget,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
@@ -977,7 +980,7 @@ void main() {
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
     );
-    expect(find.text(l10n.shortcutMarkdownAndHtmlDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutSyntaxReferenceDescription), findsOneWidget);
     expect(find.text(l10n.shortcutSettingsDescription), findsOneWidget);
     expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
     expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
@@ -1073,7 +1076,9 @@ void main() {
     expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
   });
 
-  testWidgets('markdown and html dialog opens from the header', (tester) async {
+  testWidgets('syntax reference categories expose supported authoring forms', (
+    tester,
+  ) async {
     final l10n = AppLocalizationsEn();
     await tester.pumpWidget(
       ProviderScope(
@@ -1087,30 +1092,200 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.mainMenu));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.markdownAndHtml));
+    await tester.tap(find.text(l10n.syntaxReference));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.markdownAndHtml), findsWidgets);
-    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsOneWidget);
-    expect(find.text(l10n.markdownHtmlInlineFormatting), findsOneWidget);
-    expect(find.text(l10n.markdownHtmlRawHtmlBlocks), findsOneWidget);
-    expect(find.text(l10n.markdownHtmlRawHtmlInline), findsOneWidget);
-    expect(find.text(l10n.markdownHtmlSafety), findsOneWidget);
-    expect(find.textContaining('article, aside, div, section'), findsOneWidget);
-    expect(find.textContaining('span, strong, em, b'), findsOneWidget);
+    expect(find.text(l10n.syntaxReference), findsWidgets);
+    expect(find.text('Markdown and HTML'), findsNothing);
     expect(
-      find.text(l10n.markdownHtmlMarkdownInsideHtmlDescription),
+      find.byKey(const ValueKey('syntax-reference-category-selector')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.markdown), findsWidgets);
+    expect(find.text(l10n.syntaxReferenceInlineFormatting), findsOneWidget);
+
+    Future<void> selectCategory(String label) async {
+      await tester.tap(
+        find.byKey(const ValueKey('syntax-reference-category-selector')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(
+      find.byKey(const ValueKey('syntax-reference-category-selector')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.markdown), findsWidgets);
+    expect(find.text(l10n.syntaxReferenceCategoryHtml), findsOneWidget);
+    expect(
+      find.text(l10n.syntaxReferenceCategoryDiagramsAndApi),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.syntaxReferenceCategoryMathematics), findsOneWidget);
+    expect(find.text(l10n.writerside), findsOneWidget);
+    await tester.tap(
+      find.text(l10n.syntaxReferenceCategoryDiagramsAndApi).last,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('mermaid'), findsOneWidget);
+    expect(find.text('plantuml, puml'), findsOneWidget);
+    expect(find.text('d2'), findsOneWidget);
+    expect(find.text('openapi, oas, swagger'), findsOneWidget);
+    expect(find.textContaining('@startuml'), findsOneWidget);
+    expect(find.textContaining('openapi: 3.0.3'), findsOneWidget);
+    expect(
+      find.text(l10n.syntaxReferenceSemanticDiagramLimitation),
       findsOneWidget,
     );
     expect(
-      find.text(l10n.markdownHtmlBlockedContentDescription),
+      find.text(l10n.syntaxReferenceReferencedDiagramLimitation),
+      findsOneWidget,
+    );
+
+    await selectCategory(l10n.syntaxReferenceCategoryMathematics);
+    expect(
+      find.text(l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown),
+      findsNWidgets(4),
+    );
+    expect(
+      find.text(l10n.syntaxReferenceScopeWritersideMarkdown),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.syntaxReferenceScopeWritersideMarkdownAndXml),
+      findsNWidgets(2),
+    );
+    expect(find.text(l10n.syntaxReferenceTexFenceLimitation), findsOneWidget);
+    expect(
+      find.text(l10n.syntaxReferenceMathDelimitersLimitation),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.syntaxReferenceWritersideMathElementLimitation),
+      findsOneWidget,
+    );
+
+    await selectCategory(l10n.writerside);
+    expect(
+      find.text(l10n.syntaxReferenceSemanticMarkupLimitation),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.syntaxReferenceSemanticCodeBlocks), findsOneWidget);
+    expect(find.text(l10n.syntaxReferenceVideo), findsOneWidget);
+
+    await selectCategory(l10n.syntaxReferenceCategoryHtml);
+    expect(find.text(l10n.syntaxReferenceRawHtmlBlocks), findsOneWidget);
+    expect(find.text(l10n.syntaxReferenceRawHtmlInline), findsOneWidget);
+    expect(find.text(l10n.syntaxReferenceSafety), findsOneWidget);
+    expect(find.textContaining('article, aside, div, section'), findsOneWidget);
+    expect(find.textContaining('span, strong, em, b'), findsOneWidget);
+    expect(
+      find.text(l10n.syntaxReferenceMarkdownInsideHtmlDescription),
+      findsWidgets,
+    );
+    expect(
+      find.text(l10n.syntaxReferenceBlockedContentDescription),
       findsOneWidget,
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsNothing);
+    expect(find.byKey(const ValueKey('syntax-reference-dialog')), findsNothing);
+  });
+
+  testWidgets('Ctrl+Alt+M opens and Escape closes the syntax reference', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(BusyMarkAppShortcutLabels.syntaxReference, 'Ctrl+Alt+M');
+    expect(
+      find.byKey(const ValueKey('syntax-reference-dialog')),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('syntax-reference-dialog')), findsNothing);
+  });
+
+  testWidgets('syntax reference remains usable in constrained RTL layout', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(560, 420);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final ar = AppLocalizationsAr();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(localeTag: 'ar').toJson();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    final dialog = find.byKey(const ValueKey('syntax-reference-dialog'));
+    expect(dialog, findsOneWidget);
+    expect(Directionality.of(tester.element(dialog)), TextDirection.rtl);
+    expect(find.text(ar.syntaxReference), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey('syntax-reference-category-selector')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(ar.syntaxReferenceCategoryMathematics).last);
+    await tester.pumpAndSettle();
+    expect(find.text(ar.syntaxReferenceMathematicsDescription), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.drag(
+      find.byKey(const ValueKey('syntax-reference-category-mathematics')),
+      const Offset(0, -600),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('syntax-reference-category-selector')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(dialog, findsNothing);
   });
 
   testWidgets('keyboard shortcuts tabs section title is localized', (
