@@ -324,7 +324,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -426,7 +426,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutDeleteTreeItemDescription =>
-      'Supprimer l’élément sélectionné dans « Fichiers » ou retirer la rubrique sélectionnée de la table des matières';
+      'Supprimer l’élément sélectionné dans « Fichiers » ou retirer le sujet sélectionné de la table des matières';
 
   @override
   String get shortcutGroupGeneral => 'Général';
@@ -815,7 +815,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count documents contiennent des modifications non enregistrées. Les enregistrer avant de continuer ?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documents contiennent des modifications non enregistrées. Enregistrez-les avant de continuer.',
+      one:
+          '1 document contient des modifications non enregistrées. Enregistrez-le avant de continuer.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1432,7 +1440,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourceSearchReplacement => 'Remplacer par';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Remplacer la sélection actuelle';
+  String get sourceSearchReplaceCurrent =>
+      'Remplacer la correspondance actuelle';
 
   @override
   String get sourceSearchReplaceAndFindNext =>
@@ -1702,12 +1711,28 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return '$count documents non enregistrés ont été récupérés. Vérifiez chaque document récupéré avant de continuer.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documents non enregistrés ont été récupérés. Vérifiez chacun avant de l’enregistrer ou de l’ignorer.',
+      one:
+          '1 document non enregistré a été récupéré. Vérifiez-le avant de l’enregistrer ou de l’ignorer.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count enregistrements de récupération endommagés n’ont pas pu être restaurés. Les documents valides récupérés restent disponibles.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count enregistrements de récupération endommagés n’ont pas pu être restaurés. Les enregistrements de récupération valides restent disponibles.',
+      one:
+          'Un enregistrement de récupération endommagé n’a pas pu être restauré. Le fichier de récupération d’origine a été conservé pour inspection.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2403,8 +2428,10 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Les fichiers suivis sélectionnés seront restaurés depuis Git.',
-      one: 'Le fichier suivi sélectionné sera restauré depuis Git.',
+      other:
+          'Toutes les modifications staged et unstaged des fichiers suivis sélectionnés seront restaurées vers HEAD.',
+      one:
+          'Toutes les modifications staged et unstaged du fichier suivi sélectionné seront restaurées vers HEAD.',
     );
     return '$_temp0';
   }
@@ -2451,10 +2478,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Projet';
+  String get gitProjectHistory => 'Historique du projet';
 
   @override
-  String get gitFileHistory => 'Fichier actuel';
+  String get gitFileHistory => 'Historique du fichier';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2819,7 +2846,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName a été exporté. Images non incluses : $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count avertissements',
+      one: '1 avertissement',
+    );
+    return '$fileName a été exporté avec $_temp0.';
   }
 
   @override
@@ -3101,7 +3134,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceLibraryImport =>
-      'Une bibliothèque de sommaire ne peut pas importer de rubriques Markdown.';
+      'Une bibliothèque TOC ne peut pas importer de sujets Markdown.';
 
   @override
   String get errorWritersideInstanceWebPathInvalid =>
@@ -3155,7 +3188,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeConflictingTargets =>
-      'Un élément de sommaire ne peut pas cibler plusieurs rubriques, références, liens ou redirections.';
+      'Un élément de sommaire ne peut pas cibler plusieurs sujets, références, liens ou redirections.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
@@ -3212,7 +3245,7 @@ class AppLocalizationsFr extends AppLocalizations {
     String topic,
     String instance,
   ) {
-    return 'La rubrique « $topic » ne fait pas partie de l’instance référencée « $instance ».';
+    return 'Le sujet « $topic » n’est pas dans l’instance référencée « $instance ».';
   }
 
   @override
@@ -3240,7 +3273,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiDisabled => 'Désactivé';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'L’édition par IA est déclenchée explicitement. BusyMark envoie uniquement le contexte affiché au fournisseur sélectionné et n’applique jamais une proposition sans validation.';
 
   @override

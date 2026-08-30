@@ -68,7 +68,7 @@
   "@feedbackSubject": {
     "description": "Feedback subject field label."
   },
-  "feedbackMessage": "详细信息",
+  "feedbackMessage": "详细留言",
   "@feedbackMessage": {
     "description": "Detailed feedback message field label."
   },
@@ -406,7 +406,7 @@
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -459,9 +459,13 @@
     "description": "Language selector option for Vietnamese."
   },
   "languageJapanese": "日本語",
-  "@languageJapanese": {"description": "Language selector option for Japanese."},
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
   "languageKorean": "한국어",
-  "@languageKorean": {"description": "Language selector option for Korean."},
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
   "languageSimplifiedChinese": "简体中文",
   "@languageSimplifiedChinese": {
     "description": "Language selector option for Simplified Chinese."
@@ -3683,7 +3687,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "已导出 {fileName}，包含 {count} 条警告。",
+  "pdfExportedWithWarnings": "{fileName} 已导出，包含 {count, plural, =1{1 条警告} other{{count} 条警告}}。",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some content fell back or was omitted.",
     "placeholders": {
@@ -4265,10 +4269,6 @@
   "@aiDisabled": {
     "description": "AI provider option that disables AI features."
   },
-  "aiLocalOnlyDescription": "AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。",
-  "@aiLocalOnlyDescription": {
-    "description": "Privacy description for BusyMark local AI."
-  },
   "aiProvider": "AI 提供商",
   "@aiProvider": {
     "description": "Label for an AI provider selection."
@@ -4608,5 +4608,9 @@
   "displayMath": "显示数学",
   "@displayMath": {
     "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
   }
 }

@@ -67,7 +67,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get feedbackMessage => 'Gedetailleerd bericht';
 
   @override
-  String get feedbackReplyEmail => 'E-mail beantwoorden (optioneel)';
+  String get feedbackReplyEmail => 'E-mailadres voor antwoord (optioneel)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Voeg technische details toe';
@@ -324,7 +324,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -538,7 +538,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shortcutBoldDescription =>
-      'Schakel vetgedrukt in op de geselecteerde tekst';
+      'Vetgedrukt in- of uitschakelen voor geselecteerde tekst';
 
   @override
   String get shortcutItalicDescription =>
@@ -683,7 +683,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get autoSaveDescription =>
-      'Bestandswijzigingen automatisch opslaan na een korte inactieve vertraging.';
+      'Sla bestandswijzigingen automatisch op na een korte periode van inactiviteit.';
 
   @override
   String get wordWrap => 'Regelterugloop';
@@ -733,7 +733,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Vergeet werkruimten die externe afbeeldingen mochten laden.';
+      'Verwijder de opgeslagen rechten voor werkruimten die externe afbeeldingen mochten laden.';
 
   @override
   String get clearGitWorkspaceTrust => 'Wis vertrouwde Git-werkruimten';
@@ -1265,7 +1265,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get topicUsageTopicLinks => 'Onderwerplinks';
 
   @override
-  String get topicUsageIncludes => 'Inclusief';
+  String get topicUsageIncludes => 'Include-elementen';
 
   @override
   String usageCount(int count) {
@@ -1428,7 +1428,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sourceSearchReplacement => 'Vervangen door';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Huidige vervangen';
+  String get sourceSearchReplaceCurrent => 'Vervang huidige overeenkomst';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Vervangen en volgende zoeken';
@@ -1536,7 +1536,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return 'Herstelde niet-opgeslagen inhoud voor $fileName. Controleer de inhoud en sla deze op, gebruik Opslaan als of verwijder deze.';
+    return 'Niet-opgeslagen inhoud hersteld voor $fileName. Bekijk de inhoud en sla op, sla op als of verwerp.';
   }
 
   @override
@@ -1562,7 +1562,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nothingToRead => 'Niets te lezen';
 
   @override
-  String get admonition => 'Vermaning';
+  String get admonition => 'Aandachtspunt';
 
   @override
   String get quote => 'Citaat';
@@ -1647,7 +1647,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get documentKindVariablesFile => 'Variabelenbestand';
 
   @override
-  String get documentKindCategoriesFile => 'Categorieën bestand';
+  String get documentKindCategoriesFile => 'Categoriebestand';
 
   @override
   String get documentKindResourceFile => 'Bronbestand';
@@ -1926,7 +1926,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown-onderwerp heeft geen H1- of voorwerktitel.';
+      'Writerside Markdown-onderwerp heeft geen H1 of front matter-titel.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -2139,7 +2139,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC-referenties ontbreken onderwerp \"$topic\".';
+    return 'De inhoudsopgave verwijst naar het ontbrekende onderwerp \"$topic\".';
   }
 
   @override
@@ -2167,11 +2167,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> ontbreekt in.';
+      '<include> ontbreekt in het from-attribuut.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'Bron \"$from\" opnemen bestaat niet.';
+    return 'Includebron \"$from\" bestaat niet.';
   }
 
   @override
@@ -2184,7 +2184,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Zie ook categorie \"$ref\" wordt niet gedeclareerd.';
+    return 'seealso-categorie \"$ref\" is niet gedeclareerd.';
   }
 
   @override
@@ -2247,7 +2247,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze werkruimte bevindt zich niet in een Git-repository.';
 
   @override
-  String get gitInitializeRepository => 'Git-opslagplaats initialiseren';
+  String get gitInitializeRepository => 'Git-repository initialiseren';
 
   @override
   String get gitDetachedHead => 'Losgekoppelde HEAD';
@@ -2283,7 +2283,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get gitClean => 'Schoon';
+  String get gitClean => 'Geen wijzigingen';
 
   @override
   String get gitConflicts => 'Conflicten';
@@ -2307,10 +2307,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get gitActions => 'Git-acties';
 
   @override
-  String get gitPull => 'Pull';
+  String get gitPull => 'Git pull';
 
   @override
-  String get gitFetch => 'Fetch';
+  String get gitFetch => 'Git fetch';
 
   @override
   String get gitPush => 'Push';
@@ -2340,7 +2340,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get gitCommitMessage => 'Commitbericht';
 
   @override
-  String get gitCommitSelectedFiles => 'Geselecteerde bestanden committen';
+  String get gitCommitSelectedFiles => 'Geselecteerde bestanden';
 
   @override
   String get gitCommitNoSelectedFiles =>
@@ -2401,7 +2401,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Niet-opgeslagen editorwijzigingen worden pas opgenomen nadat ze zijn opgeslagen.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Git-wijzigingen negeren?';
+  String get gitConfirmDiscardTitle => 'Git-wijzigingen verwerpen?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
@@ -2461,7 +2461,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get gitProjectHistory => 'Projectgeschiedenis';
 
   @override
-  String get gitFileHistory => 'Bestandsgeschiedenis';
+  String get gitFileHistory => 'Bestandshistorie';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2827,7 +2827,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName is geëxporteerd met $count waarschuwing(en).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count waarschuwingen',
+      one: '1 waarschuwing',
+    );
+    return '$fileName is geëxporteerd met $_temp0.';
   }
 
   @override
@@ -2855,7 +2861,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get visualizationShowRender => 'Render weergeven';
 
   @override
-  String get visualizationFitWidth => 'Aan breedte aanpassen';
+  String get visualizationFitWidth => 'Passend maken op breedte';
 
   @override
   String get visualizationSaveImage => 'Afbeelding opslaan';
@@ -3025,7 +3031,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
-    return 'BusyMark zal de naam van het .tree-bestand hernoemen en de Writerside-projectreferenties bijwerken van “$oldId” naar “$newId”. Publicatiescripts worden niet gewijzigd en moeten afzonderlijk worden bijgewerkt.';
+    return 'BusyMark hernoemt het .tree-bestand en werkt de Writerside-projectreferenties bij van “$oldId” naar “$newId”. Publicatiescripts worden niet gewijzigd en moeten afzonderlijk worden bijgewerkt.';
   }
 
   @override
@@ -3110,7 +3116,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceWebPathInvalid =>
-      'Het webpad moet uit één segment bestaan.';
+      'Het webpad moet uit één regel bestaan.';
 
   @override
   String get errorWritersideInstanceConfigurationInvalid =>
@@ -3139,7 +3145,7 @@ class AppLocalizationsNl extends AppLocalizations {
     String name,
     String value,
   ) {
-    return 'De waarde voor $name “$value” moet waar of onwaar zijn.';
+    return 'De waarde voor $name “$value” moet true of false zijn.';
   }
 
   @override
@@ -3245,8 +3251,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiDisabled => 'Uitgeschakeld';
 
   @override
-  String get aiLocalOnlyDescription =>
-      'AI-bewerking is uitsluitend lokaal. BusyMark stuurt alleen de weergegeven context naar de geselecteerde provider en past nooit een voorstel toe zonder beoordeling.';
+  String get aiExplicitEditingDescription =>
+      'AI-bewerking is expliciet. BusyMark stuurt alleen de weergegeven context naar de geselecteerde provider en past nooit een voorstel toe zonder beoordeling.';
 
   @override
   String get aiProvider => 'AI-provider';

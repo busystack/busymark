@@ -324,7 +324,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -804,7 +804,14 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter.',
+      one: '1 dokument har ulagrede endringer. Lagre det før du fortsetter.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1687,12 +1694,28 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return '$count ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Gjenopprettet $count ulagrede dokumenter. Gå gjennom hvert ett før du lagrer eller forkaster det.',
+      one:
+          'Gjenopprettet 1 ulagret dokument. Gå gjennom det før du lagrer eller forkaster det.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count skadede gjenopprettingsposter kunne ikke gjenopprettes. Gyldige gjenopprettingsposter er fortsatt tilgjengelige.',
+      one:
+          'Kunne ikke gjenopprette 1 skadet gjenopprettingspost. Den opprinnelige gjenopprettingsfilen er bevart for gjennomgang.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2382,8 +2405,10 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'De valgte sporede filene gjenopprettes fra Git.',
-      one: 'Den valgte sporede filen gjenopprettes fra Git.',
+      other:
+          'Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
+      one:
+          'Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
     );
     return '$_temp0';
   }
@@ -2429,10 +2454,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Prosjekt';
+  String get gitProjectHistory => 'Prosjekthistorie';
 
   @override
-  String get gitFileHistory => 'Gjeldende fil';
+  String get gitFileHistory => 'Filhistorie';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2796,7 +2821,13 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName ble eksportert. Bilder som ikke kunne tas med: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count advarsler',
+      one: '1 advarsel',
+    );
+    return '$fileName ble eksportert med $_temp0.';
   }
 
   @override
@@ -3213,7 +3244,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiDisabled => 'Deaktivert';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
 
   @override

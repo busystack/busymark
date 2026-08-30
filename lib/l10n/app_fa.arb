@@ -24,7 +24,7 @@
   "feedbackRateLimitedFailure": "گزارش‌های زیادی از این اتصال ارسال شده است. کمی صبر کنید و دوباره تلاش کنید.",
   "feedbackRejectedFailure": "سرور گزارش را رد کرد. فیلدهای فرم را بررسی کنید و دوباره تلاش کنید.",
   "feedbackServerFailure": "سرور نتوانست گزارش را بپذیرد. بعداً دوباره تلاش کنید.",
-  "feedbackSuccess": "بازخورد ارسال شد. شناسهٔ مرجع: \u2068{id}\u2069",
+  "feedbackSuccess": "بازخورد ارسال شد. شناسهٔ مرجع: ⁨{id}⁩",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -126,7 +126,7 @@
   "moveSectionUp": "انتقال بخش به بالا",
   "moveSectionDown": "انتقال بخش به پایین",
   "confirmDeleteSectionTitle": "بخش حذف شود؟",
-  "confirmDeleteSectionMessage": "«\u2068{name}\u2069» و همهٔ محتوای بخش آن حذف شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteSectionMessage": "«⁨{name}⁩» و همهٔ محتوای بخش آن حذف شود؟ این کار قابل بازگشت نیست.",
   "darkTheme": "تیره",
   "@darkTheme": {
     "description": "Dark theme option."
@@ -276,7 +276,7 @@
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -329,9 +329,13 @@
     "description": "Language selector option for Vietnamese."
   },
   "languageJapanese": "日本語",
-  "@languageJapanese": {"description": "Language selector option for Japanese."},
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
   "languageKorean": "한국어",
-  "@languageKorean": {"description": "Language selector option for Korean."},
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
   "languageSimplifiedChinese": "简体中文",
   "@languageSimplifiedChinese": {
     "description": "Language selector option for Simplified Chinese."
@@ -405,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "حذف مورد انتخاب‌شده در فایل‌ها یا برداشتن موضوع انتخاب‌شده از فهرست مطالب",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "عمومی",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -507,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "درج تورفتگی",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "درج تورفتگی در مکان‌نما",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "کاهش تورفتگی در حالت منبع",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "حذف یک سطح تورفتگی در حالت منبع",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "بستن جستجو یا پاک کردن انتخاب بلوک‌ها",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -747,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "حریم خصوصی",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "بارگیری تصاویر راه دور",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "اجازه دهید تصاویر پیش‌نمایش و ویرایشگر Markdown از نشانی‌های http و https بارگیری شوند.",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "پاک کردن مجوزهای تصاویر راه دور",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "فضاهای کاری‌ای را که اجازهٔ بارگیری تصاویر راه دور داشتند، فراموش کنید.",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "پاک کردن فضاهای کاری مورد اعتماد Git",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "پیش از فعال‌کردن ویژگی‌های Git برای فضاهای کاری که قبلاً مورد اعتماد بوده‌اند، پرسیده شود.",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "پنجره",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "باز کردن دوبارهٔ فضای کاری قبلی هنگام راه‌اندازی",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "هنگام راه‌اندازی BusyMark، فضای کاری و زبانه‌های نشست قبلی باز شوند.",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "تأیید پیش از بستن با تغییرات ذخیره‌نشده",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -790,7 +821,8 @@
     "description": "Window close confirmation message when multiple documents have unsaved changes.",
     "placeholders": {
       "count": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -814,7 +846,7 @@
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "در \u2068{fileName}\u2069 تغییرات ذخیره‌نشده دارید. قبل از ادامه ذخیره شوند؟",
+  "unsavedChangesMessage": "در ⁨{fileName}⁩ تغییرات ذخیره‌نشده دارید. قبل از ادامه ذخیره شوند؟",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -980,12 +1012,13 @@
   "@heading6": {
     "description": "Heading 6 style label."
   },
-  "headingLevelAbbreviation": "\u2068H{level}\u2069",
+  "headingLevelAbbreviation": "⁨H{level}⁩",
   "@headingLevelAbbreviation": {
     "description": "Compact outline badge for a heading level.",
     "placeholders": {
       "level": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -998,7 +1031,8 @@
     "description": "Tooltip for a table column control.",
     "placeholders": {
       "columnNumber": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1019,7 +1053,8 @@
     "description": "Tooltip for a table row control.",
     "placeholders": {
       "rowNumber": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1060,11 +1095,17 @@
     "description": "Image alt text field label."
   },
   "editorPlaceholderText": "متن",
-  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
   "editorPlaceholderCode": "کد",
-  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
   "editorPlaceholderAltText": "متن جایگزین",
-  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
   "describeTheImage": "تصویر را توصیف کنید",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -1082,7 +1123,8 @@
     "description": "Default header text for a newly inserted table column.",
     "placeholders": {
       "columnNumber": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1095,18 +1137,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "تصویر راه دور مسدود است",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "انتخاب کنید BusyMark اجازهٔ بارگیری تصاویر راه دور داشته باشد یا نه.",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "تصاویر راه دور مسدود شده‌اند",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "این سند به تصاویری در اینترنت ارجاع می‌دهد. بارگیری آن‌ها ممکن است اطلاعات شبکه را برای میزبان تصویر آشکار کند.",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "بارگیری برای این فضای کاری",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "همیشه تصاویر راه دور بارگیری شوند",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "پنهان کردن پنل کناری",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1148,7 +1201,8 @@
     "description": "Count of diagnostics in the workspace.",
     "placeholders": {
       "count": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1176,7 +1230,8 @@
         "type": "String"
       },
       "count": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1240,7 +1295,7 @@
   "@confirmRemoveFromTocTitle": {
     "description": "Confirmation title before removing a Writerside TOC entry."
   },
-  "confirmRemoveFromTocMessage": "\u2068{name}\u2069 از این فهرست مطالب حذف شود؟ فایل موضوع حفظ خواهد شد.",
+  "confirmRemoveFromTocMessage": "⁨{name}⁩ از این فهرست مطالب حذف شود؟ فایل موضوع حفظ خواهد شد.",
   "@confirmRemoveFromTocMessage": {
     "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
     "placeholders": {
@@ -1253,7 +1308,7 @@
   "@confirmDeleteTopicTitle": {
     "description": "Confirmation title before deleting a Writerside topic file."
   },
-  "confirmDeleteTopicMessage": "\u2068{name}\u2069 حذف و از همهٔ فهرست‌های مطالب برداشته شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteTopicMessage": "⁨{name}⁩ حذف و از همهٔ فهرست‌های مطالب برداشته شود؟ این کار قابل بازگشت نیست.",
   "@confirmDeleteTopicMessage": {
     "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
     "placeholders": {
@@ -1286,7 +1341,7 @@
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
-  "useExpectedExtension": "از پسوند \u2068{extension}\u2069 برای قالب انتخاب‌شده استفاده کنید.",
+  "useExpectedExtension": "از پسوند ⁨{extension}⁩ برای قالب انتخاب‌شده استفاده کنید.",
   "@useExpectedExtension": {
     "description": "Validation message for an unexpected file extension.",
     "placeholders": {
@@ -1346,19 +1401,33 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "تطابق قبلی",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "تطابق بعدی",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "حساس به بزرگی و کوچکی حروف",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "تمام کلمه",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "عبارت منظم",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "عبارت منظم نامعتبر است",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "محتوایی برای مطالعه وجود ندارد",
   "admonition": "کادر هشدار",
   "quote": "نقل‌قول",
@@ -1401,7 +1470,7 @@
   "@chapter": {
     "description": "Preview label for a chapter element."
   },
-  "couldNotOpenTarget": "باز کردن \u2068{target}\u2069 ممکن نشد",
+  "couldNotOpenTarget": "باز کردن ⁨{target}⁩ ممکن نشد",
   "@couldNotOpenTarget": {
     "description": "Toast shown when a link target cannot be opened.",
     "placeholders": {
@@ -1410,7 +1479,7 @@
       }
     }
   },
-  "linkTargetNotFound": "مقصد پیوند یافت نشد: \u2068{targetPath}\u2069",
+  "linkTargetNotFound": "مقصد پیوند یافت نشد: ⁨{targetPath}⁩",
   "@linkTargetNotFound": {
     "description": "Toast shown when a link target path is missing.",
     "placeholders": {
@@ -1423,7 +1492,7 @@
   "@cannotOpenFileTypeInEditor": {
     "description": "Toast shown when a file type cannot be opened in the editor."
   },
-  "anchorNotFound": "لنگر یافت نشد: \u2068{anchor}\u2069",
+  "anchorNotFound": "لنگر یافت نشد: ⁨{anchor}⁩",
   "@anchorNotFound": {
     "description": "Toast shown when a link anchor is missing.",
     "placeholders": {
@@ -1440,7 +1509,7 @@
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "\u2068{relativePath}\u2069 — خط \u2068{lineNumber}\u2069",
+  "searchResultLine": "⁨{relativePath}⁩ — خط ⁨{lineNumber}⁩",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1448,7 +1517,8 @@
         "type": "String"
       },
       "lineNumber": {
-        "type": "int", "format": "decimalPattern"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1488,7 +1558,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorOpenFailed": "باز کردن ناموفق بود: \u2068{error}\u2069",
+  "workspaceErrorOpenFailed": "باز کردن ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",
     "placeholders": {
@@ -1497,7 +1567,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideProjectFailed": "ایجاد پروژه Writerside ناموفق بود: \u2068{error}\u2069",
+  "workspaceErrorCreateWritersideProjectFailed": "ایجاد پروژه Writerside ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorCreateWritersideProjectFailed": {
     "description": "Workspace error message shown when Writerside project creation fails.",
     "placeholders": {
@@ -1506,7 +1576,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideTopicFailed": "ایجاد موضوع Writerside ناموفق بود: \u2068{error}\u2069",
+  "workspaceErrorCreateWritersideTopicFailed": "ایجاد موضوع Writerside ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorCreateWritersideTopicFailed": {
     "description": "Workspace error message shown when Writerside topic creation fails.",
     "placeholders": {
@@ -1515,7 +1585,7 @@
       }
     }
   },
-  "workspaceErrorCouldNotOpenFile": "باز کردن فایل ممکن نشد: \u2068{error}\u2069",
+  "workspaceErrorCouldNotOpenFile": "باز کردن فایل ممکن نشد: ⁨{error}⁩",
   "@workspaceErrorCouldNotOpenFile": {
     "description": "Workspace error message shown when opening a file fails.",
     "placeholders": {
@@ -1532,7 +1602,7 @@
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
-  "workspaceErrorSaveFailed": "ذخیره ناموفق بود: \u2068{error}\u2069",
+  "workspaceErrorSaveFailed": "ذخیره ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorSaveFailed": {
     "description": "Workspace error message shown when saving fails.",
     "placeholders": {
@@ -1541,7 +1611,7 @@
       }
     }
   },
-  "workspaceErrorValidationFailed": "اعتبارسنجی ناموفق بود: \u2068{error}\u2069",
+  "workspaceErrorValidationFailed": "اعتبارسنجی ناموفق بود: ⁨{error}⁩",
   "@workspaceErrorValidationFailed": {
     "description": "Workspace error message shown when validation fails.",
     "placeholders": {
@@ -1550,7 +1620,7 @@
       }
     }
   },
-  "errorPathDoesNotExist": "مسیر وجود ندارد: \u2068{path}\u2069",
+  "errorPathDoesNotExist": "مسیر وجود ندارد: ⁨{path}⁩",
   "@errorPathDoesNotExist": {
     "description": "Detail for a missing path error.",
     "placeholders": {
@@ -1559,7 +1629,7 @@
       }
     }
   },
-  "errorTargetDirectoryNotEmpty": "پوشه مقصد از قبل وجود دارد و خالی نیست: \u2068{path}\u2069",
+  "errorTargetDirectoryNotEmpty": "پوشه مقصد از قبل وجود دارد و خالی نیست: ⁨{path}⁩",
   "@errorTargetDirectoryNotEmpty": {
     "description": "Detail for a non-empty target directory error.",
     "placeholders": {
@@ -1568,7 +1638,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "مسیر مقصد از قبل وجود دارد، اما پوشه نیست: \u2068{path}\u2069",
+  "errorTargetPathNotDirectory": "مسیر مقصد از قبل وجود دارد، اما پوشه نیست: ⁨{path}⁩",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1577,7 +1647,7 @@
       }
     }
   },
-  "errorGeneratedFileAlreadyExists": "فایل تولیدشده از قبل وجود دارد: \u2068{path}\u2069",
+  "errorGeneratedFileAlreadyExists": "فایل تولیدشده از قبل وجود دارد: ⁨{path}⁩",
   "@errorGeneratedFileAlreadyExists": {
     "description": "Detail for a generated file conflict.",
     "placeholders": {
@@ -1590,7 +1660,7 @@
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
-  "errorParentDirectoryMissing": "پوشه والد وجود ندارد: \u2068{path}\u2069",
+  "errorParentDirectoryMissing": "پوشه والد وجود ندارد: ⁨{path}⁩",
   "@errorParentDirectoryMissing": {
     "description": "Detail for a missing parent directory.",
     "placeholders": {
@@ -1623,7 +1693,7 @@
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
-  "errorWritersideModuleRootMissing": "ریشه ماژول Writerside وجود ندارد: \u2068{path}\u2069",
+  "errorWritersideModuleRootMissing": "ریشه ماژول Writerside وجود ندارد: ⁨{path}⁩",
   "@errorWritersideModuleRootMissing": {
     "description": "Detail for a missing Writerside module root.",
     "placeholders": {
@@ -1640,7 +1710,7 @@
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "فایل درخت Writerside وجود ندارد: \u2068{path}\u2069",
+  "errorWritersideTreeFileMissing": "فایل درخت Writerside وجود ندارد: ⁨{path}⁩",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1649,7 +1719,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "شناسه موضوع «\u2068{topicId}\u2069» از قبل در این ماژول راهنما وجود دارد.",
+  "errorTopicIdAlreadyExists": "شناسه موضوع «⁨{topicId}⁩» از قبل در این ماژول راهنما وجود دارد.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1658,7 +1728,7 @@
       }
     }
   },
-  "errorTopicFileAlreadyExists": "فایل موضوع از قبل وجود دارد: \u2068{path}\u2069",
+  "errorTopicFileAlreadyExists": "فایل موضوع از قبل وجود دارد: ⁨{path}⁩",
   "@errorTopicFileAlreadyExists": {
     "description": "Detail for an existing topic file.",
     "placeholders": {
@@ -1667,7 +1737,7 @@
       }
     }
   },
-  "errorReferenceTopicMissing": "موضوع مرجع در درخت انتخاب‌شده وجود ندارد: \u2068{topic}\u2069",
+  "errorReferenceTopicMissing": "موضوع مرجع در درخت انتخاب‌شده وجود ندارد: ⁨{topic}⁩",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
     "placeholders": {
@@ -1684,7 +1754,7 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "موضوع شروع \u2068{topic}\u2069 را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.",
+  "errorWritersideStartTopicDelete": "موضوع شروع ⁨{topic}⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.",
   "@errorWritersideStartTopicDelete": {
     "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
@@ -1701,7 +1771,7 @@
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
-  "errorTopicFileExtensionMismatch": "پسوند فایل موضوع باید با قالب انتخاب‌شده (\u2068{extension}\u2069) مطابقت داشته باشد.",
+  "errorTopicFileExtensionMismatch": "پسوند فایل موضوع باید با قالب انتخاب‌شده (⁨{extension}⁩) مطابقت داشته باشد.",
   "@errorTopicFileExtensionMismatch": {
     "description": "Detail for a topic file extension mismatch.",
     "placeholders": {
@@ -1714,7 +1784,7 @@
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
-  "errorUnknown": "خطای ناشناخته: \u2068{code}\u2069",
+  "errorUnknown": "خطای ناشناخته: ⁨{code}⁩",
   "@errorUnknown": {
     "description": "Fallback detail for an unknown coded application error.",
     "placeholders": {
@@ -1723,7 +1793,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileStatFailed": "خواندن فرادادهٔ فایل ممکن نشد: \u2068{error}\u2069",
+  "diagnosticWorkspaceFileStatFailed": "خواندن فرادادهٔ فایل ممکن نشد: ⁨{error}⁩",
   "@diagnosticWorkspaceFileStatFailed": {
     "description": "Diagnostic shown when file metadata cannot be read.",
     "placeholders": {
@@ -1736,7 +1806,7 @@
   "@diagnosticWorkspaceScanSkipped": {
     "description": "Diagnostic shown when workspace scanning skips files."
   },
-  "diagnosticWorkspaceScanInspectFailed": "بررسی ورودی فضای کاری ممکن نشد: \u2068{error}\u2069",
+  "diagnosticWorkspaceScanInspectFailed": "بررسی ورودی فضای کاری ممکن نشد: ⁨{error}⁩",
   "@diagnosticWorkspaceScanInspectFailed": {
     "description": "Diagnostic shown when a workspace entry cannot be inspected.",
     "placeholders": {
@@ -1749,7 +1819,7 @@
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
-  "diagnosticWorkspaceFileReadFailed": "خواندن فایل Markdown ممکن نشد: \u2068{error}\u2069",
+  "diagnosticWorkspaceFileReadFailed": "خواندن فایل Markdown ممکن نشد: ⁨{error}⁩",
   "@diagnosticWorkspaceFileReadFailed": {
     "description": "Diagnostic shown when a Markdown file cannot be read.",
     "placeholders": {
@@ -1762,7 +1832,7 @@
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "شناسهٔ عنوان «\u2068{id}\u2069» تکراری است.",
+  "diagnosticMarkdownHeadingDuplicateId": "شناسهٔ عنوان «⁨{id}⁩» تکراری است.",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1783,7 +1853,7 @@
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
-  "diagnosticWritersideTopicFileMissingTitle": "موضوع «\u2068{fileName}\u2069» عنوان ندارد.",
+  "diagnosticWritersideTopicFileMissingTitle": "موضوع «⁨{fileName}⁩» عنوان ندارد.",
   "@diagnosticWritersideTopicFileMissingTitle": {
     "description": "Diagnostic for a Writerside topic file without a title.",
     "placeholders": {
@@ -1800,7 +1870,7 @@
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "هدف پیوند وجود ندارد: \u2068{targetPath}\u2069",
+  "diagnosticMarkdownLinkUnresolvedTarget": "هدف پیوند وجود ندارد: ⁨{targetPath}⁩",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1809,7 +1879,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "لنگر «\u2068{anchor}\u2069» وجود ندارد.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "لنگر «⁨{anchor}⁩» وجود ندارد.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1818,7 +1888,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingAlt": "تصویر «\u2068{destination}\u2069» متن جایگزین ندارد.",
+  "diagnosticMarkdownImageMissingAlt": "تصویر «⁨{destination}⁩» متن جایگزین ندارد.",
   "@diagnosticMarkdownImageMissingAlt": {
     "description": "Markdown parser diagnostic for a missing image alt text.",
     "placeholders": {
@@ -1827,7 +1897,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingFile": "تصویر وجود ندارد: \u2068{destination}\u2069",
+  "diagnosticMarkdownImageMissingFile": "تصویر وجود ندارد: ⁨{destination}⁩",
   "@diagnosticMarkdownImageMissingFile": {
     "description": "Markdown parser diagnostic for a missing image file.",
     "placeholders": {
@@ -1836,7 +1906,7 @@
       }
     }
   },
-  "diagnosticInvalidXml": "XML نامعتبر است: \u2068{message}\u2069",
+  "diagnosticInvalidXml": "XML نامعتبر است: ⁨{message}⁩",
   "@diagnosticInvalidXml": {
     "description": "XML parser diagnostic for invalid XML.",
     "placeholders": {
@@ -1857,7 +1927,7 @@
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "حالت keymaps پشتیبانی نمی‌شود: \u2068{mode}\u2069",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "حالت keymaps پشتیبانی نمی‌شود: ⁨{mode}⁩",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1882,7 +1952,7 @@
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "نام بدون پسوند فایل درخت با شناسهٔ نمونه «\u2068{id}\u2069» مطابقت ندارد.",
+  "diagnosticWritersideTreeIdMismatch": "نام بدون پسوند فایل درخت با شناسهٔ نمونه «⁨{id}⁩» مطابقت ندارد.",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1895,7 +1965,7 @@
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
-  "diagnosticWritersideStartPageMissing": "صفحه شروع «\u2068{startPage}\u2069» وجود ندارد.",
+  "diagnosticWritersideStartPageMissing": "صفحه شروع «⁨{startPage}⁩» وجود ندارد.",
   "@diagnosticWritersideStartPageMissing": {
     "description": "Writerside diagnostic for a missing start page.",
     "placeholders": {
@@ -1904,7 +1974,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "موضوع «\u2068{topic}\u2069» بیش از یک بار در فهرست مطالب این نمونه ظاهر شده است.",
+  "diagnosticWritersideTreeDuplicateTopic": "موضوع «⁨{topic}⁩» بیش از یک بار در فهرست مطالب این نمونه ظاهر شده است.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1917,7 +1987,7 @@
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "متغیر «\u2068{name}\u2069» بیش از یک بار تعریف شده است.",
+  "diagnosticWritersideVariableDuplicateName": "متغیر «⁨{name}⁩» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1930,7 +2000,7 @@
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "دسته‌بندی «\u2068{id}\u2069» بیش از یک بار تعریف شده است.",
+  "diagnosticWritersideCategoryDuplicateId": "دسته‌بندی «⁨{id}⁩» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -1939,7 +2009,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "ترتیب دسته‌بندی «\u2068{order}\u2069» بیش از یک بار تعریف شده است.",
+  "diagnosticWritersideCategoryDuplicateOrder": "ترتیب دسته‌بندی «⁨{order}⁩» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1956,7 +2026,7 @@
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "شناسه ریشه موضوع XML «\u2068{id}\u2069» باید با نام فایل «\u2068{expectedId}\u2069» مطابقت داشته باشد.",
+  "diagnosticWritersideTopicRootIdMismatch": "شناسه ریشه موضوع XML «⁨{id}⁩» باید با نام فایل «⁨{expectedId}⁩» مطابقت داشته باشد.",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1968,7 +2038,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "شناسهٔ عنصر «\u2068{elementId}\u2069» بیش از یک بار ظاهر شده است.",
+  "diagnosticWritersideTopicDuplicateElementId": "شناسهٔ عنصر «⁨{elementId}⁩» بیش از یک بار ظاهر شده است.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1985,7 +2055,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1994,7 +2064,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -2003,7 +2073,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "پوشهٔ snippets تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "پوشهٔ snippets تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -2012,7 +2082,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "فایل متغیرهای تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingVarsFile": "فایل متغیرهای تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -2021,7 +2091,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "فایل دسته‌بندی‌های تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingCategoriesFile": "فایل دسته‌بندی‌های تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -2030,7 +2100,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "فایل گروه‌های نمونهٔ تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "فایل گروه‌های نمونهٔ تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -2039,7 +2109,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "درخت نمونهٔ ثبت‌شده «\u2068{source}\u2069» وجود ندارد.",
+  "diagnosticWritersideConfigMissingInstanceTree": "درخت نمونهٔ ثبت‌شده «⁨{source}⁩» وجود ندارد.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -2048,7 +2118,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicReadFailed": "خواندن فایل موضوع ناموفق بود: \u2068{error}\u2069",
+  "diagnosticWritersideTopicReadFailed": "خواندن فایل موضوع ناموفق بود: ⁨{error}⁩",
   "@diagnosticWritersideTopicReadFailed": {
     "description": "Writerside module diagnostic for a topic file read failure.",
     "placeholders": {
@@ -2057,7 +2127,7 @@
       }
     }
   },
-  "diagnosticWritersideDefaultTopicsDirectoryMissing": "پوشه پیش‌فرض موضوع‌ها وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "پوشه پیش‌فرض موضوع‌ها وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing default topics directory.",
     "placeholders": {
@@ -2066,7 +2136,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicsDirectoryMissing": "پوشه موضوع‌های تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideTopicsDirectoryMissing": "پوشه موضوع‌های تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing topics directory.",
     "placeholders": {
@@ -2075,7 +2145,7 @@
       }
     }
   },
-  "diagnosticWritersideImagesDirectoryMissing": "پوشه تصاویر تنظیم‌شده وجود ندارد: \u2068{relativePath}\u2069",
+  "diagnosticWritersideImagesDirectoryMissing": "پوشه تصاویر تنظیم‌شده وجود ندارد: ⁨{relativePath}⁩",
   "@diagnosticWritersideImagesDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing images directory.",
     "placeholders": {
@@ -2084,7 +2154,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "شناسه عنصر «\u2068{id}\u2069» بیش از یک بار ظاهر شده است.",
+  "diagnosticWritersideTopicDuplicateId": "شناسه عنصر «⁨{id}⁩» بیش از یک بار ظاهر شده است.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -2093,7 +2163,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "فهرست مطالب به موضوع ناموجود «\u2068{topic}\u2069» ارجاع می‌دهد.",
+  "diagnosticWritersideTreeMissingTopic": "فهرست مطالب به موضوع ناموجود «⁨{topic}⁩» ارجاع می‌دهد.",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -2102,7 +2172,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "href خارجی «\u2068{href}\u2069» نامعتبر است.",
+  "diagnosticWritersideTreeInvalidHref": "href خارجی «⁨{href}⁩» نامعتبر است.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -2111,7 +2181,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableUnresolved": "متغیر \"\u2068%{name}%\u2069\" تعریف نشده است.",
+  "diagnosticWritersideVariableUnresolved": "متغیر \"⁨%{name}%⁩\" تعریف نشده است.",
   "@diagnosticWritersideVariableUnresolved": {
     "description": "Writerside module diagnostic for an undeclared variable.",
     "placeholders": {
@@ -2120,7 +2190,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "پیوند موضوع «\u2068{destination}\u2069» قابل حل نیست.",
+  "diagnosticWritersideTopicLinkUnresolved": "پیوند موضوع «⁨{destination}⁩» قابل حل نیست.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -2129,7 +2199,7 @@
       }
     }
   },
-  "diagnosticWritersideAnchorUnresolved": "لنگر «\u2068{anchor}\u2069» در «\u2068{targetName}\u2069» وجود ندارد.",
+  "diagnosticWritersideAnchorUnresolved": "لنگر «⁨{anchor}⁩» در «⁨{targetName}⁩» وجود ندارد.",
   "@diagnosticWritersideAnchorUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic anchor.",
     "placeholders": {
@@ -2145,7 +2215,7 @@
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "منبع include «\u2068{from}\u2069» وجود ندارد.",
+  "diagnosticWritersideIncludeSourceMissing": "منبع include «⁨{from}⁩» وجود ندارد.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -2154,7 +2224,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "عنصر include «\u2068{elementId}\u2069» در «\u2068{from}\u2069» وجود ندارد.",
+  "diagnosticWritersideIncludeElementMissing": "عنصر include «⁨{elementId}⁩» در «⁨{from}⁩» وجود ندارد.",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -2166,7 +2236,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "دسته‌بندی seealso «\u2068{ref}\u2069» تعریف نشده است.",
+  "diagnosticWritersideCategoryUnresolved": "دسته‌بندی seealso «⁨{ref}⁩» تعریف نشده است.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -2175,7 +2245,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAmbiguousReference": "ارجاع موضوع «\u2068{reference}\u2069» مبهم است.",
+  "diagnosticWritersideTopicAmbiguousReference": "ارجاع موضوع «⁨{reference}⁩» مبهم است.",
   "@diagnosticWritersideTopicAmbiguousReference": {
     "description": "Writerside module diagnostic for an ambiguous topic reference.",
     "placeholders": {
@@ -2184,7 +2254,7 @@
       }
     }
   },
-  "diagnosticUnknown": "پیام تشخیصی ناشناخته: \u2068{code}\u2069",
+  "diagnosticUnknown": "پیام تشخیصی ناشناخته: ⁨{code}⁩",
   "@diagnosticUnknown": {
     "description": "Fallback text for an unknown diagnostic code.",
     "placeholders": {
@@ -2197,10 +2267,10 @@
   "git": "Git",
   "gitDiff": "تفاوت‌های Git",
   "gitShowDiff": "نمایش تفاوت‌ها",
-  "gitDiffHunkRange": "قدیمی \u2068{oldRange}\u2069 ← جدید \u2068{newRange}\u2069",
+  "gitDiffHunkRange": "قدیمی ⁨{oldRange}⁩ ← جدید ⁨{newRange}⁩",
   "gitDiffNoLines": "بدون خط",
   "gitUnavailableTitle": "Git در دسترس نیست",
-  "gitUnavailableMessage": "{reason, select, other{Git را نصب کنید یا BusyMark را برای استفاده از یک برنامهٔ اجرایی Git در دسترس پیکربندی کنید. \u2068{reason}\u2069}}",
+  "gitUnavailableMessage": "{reason, select, other{Git را نصب کنید یا BusyMark را برای استفاده از یک برنامهٔ اجرایی Git در دسترس پیکربندی کنید. ⁨{reason}⁩}}",
   "gitTrustRequiredTitle": "برای استفاده از Git به این فضای کاری اعتماد می‌کنید؟",
   "gitTrustRequiredMessage": "مخزن‌های Git می‌توانند از طریق هوک‌ها، فیلترها و پیکربندی‌های دیگر برنامه اجرا کنند. پیش از اینکه BusyMark داده‌های مخزن را بخواند یا عملیات Git را فعال کند، به این فضای کاری اعتماد کنید.",
   "gitTrustWorkspace": "اعتماد به فضای کاری",
@@ -2208,20 +2278,26 @@
   "gitNotRepositoryMessage": "این فضای کاری درون یک مخزن Git نیست.",
   "gitInitializeRepository": "راه‌اندازی مخزن",
   "gitDetachedHead": "HEAD جداشده",
-  "gitDetachedHeadAt": "HEAD در \u2068{commit}\u2069 جدا شده است",
+  "gitDetachedHeadAt": "HEAD در ⁨{commit}⁩ جدا شده است",
   "gitNoUpstream": "شاخهٔ بالادست وجود ندارد",
   "gitAheadCount": "{count, plural, =1{یک کامیت ارسال‌نشده} other{{count} کامیت ارسال‌نشده}}",
   "@gitAheadCount": {
     "description": "Count of local commits not pushed to the upstream branch.",
     "placeholders": {
-      "count": {"type": "int", "format": "decimalPattern"}
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "gitBehindCount": "{count, plural, =1{یک کامیت برای دریافت} other{{count} کامیت برای دریافت}}",
   "@gitBehindCount": {
     "description": "Count of upstream commits not pulled into the local branch.",
     "placeholders": {
-      "count": {"type": "int", "format": "decimalPattern"}
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "gitClean": "بدون تغییر",
@@ -2233,7 +2309,7 @@
   "@gitActions": {
     "description": "Tooltip for the Git action menu button."
   },
-  "gitPull": "دریافت",
+  "gitPull": "کشیدن",
   "gitPush": "ارسال",
   "gitCommit": "کامیت",
   "gitSelectForCommit": "مرحله‌بندی فایل",
@@ -2257,21 +2333,27 @@
   "gitBinaryFile": "فایل دودویی است. BusyMark وصله‌های دودویی را نمایش نمی‌دهد.",
   "gitUnsavedChangesBanner": "تغییرات ذخیره‌نشدهٔ ویرایشگر تا زمان ذخیره‌شدن در نظر گرفته نمی‌شوند.",
   "gitConfirmDiscardTitle": "تغییرات Git دور انداخته شوند؟",
-  "gitConfirmDiscardTracked": "{count, plural, =1{فایل رهگیری‌شدهٔ انتخابی از Git بازیابی خواهد شد.} other{فایل‌های رهگیری‌شدهٔ انتخابی از Git بازیابی خواهند شد.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{تمام تغییرات مرحله‌بندی‌شده و مرحله‌نشده فایل رهگیری‌شدهٔ انتخاب‌شده به HEAD بازگردانده می‌شود.} other{تمام تغییرات مرحله‌بندی‌شده و مرحله‌نشده فایل‌های رهگیری‌شدهٔ انتخاب‌شده به HEAD بازگردانده می‌شود.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{فایل رهگیری‌نشدهٔ انتخابی حذف خواهد شد.} other{فایل‌های رهگیری‌نشدهٔ انتخابی حذف خواهند شد.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{فایل انتخابی بر اساس وضعیت Git آن بازیابی یا حذف خواهد شد.} other{فایل‌های انتخابی بر اساس وضعیت Git آن‌ها بازیابی یا حذف خواهند شد.}}",
-  "gitConfirmSwitchBranchTitle": "به \u2068{branch}\u2069 بروید؟",
+  "gitConfirmSwitchBranchTitle": "به ⁨{branch}⁩ بروید؟",
   "gitConfirmSwitchBranchMessage": "پس از تغییر شاخه توسط Git، BusyMark فضای کاری را دوباره از دیسک بارگیری می‌کند.",
   "gitConfirmPushSetUpstreamTitle": "شاخهٔ بالادست تنظیم شود؟",
-  "gitConfirmPushSetUpstreamMessage": "این شاخه بالادست ندارد. اگر دقیقاً یک مخزن راه دور پیکربندی شده باشد، BusyMark می‌تواند \u2068{branch}\u2069 را ارسال و آن را به‌عنوان بالادست تنظیم کند.",
-  "gitProjectHistory": "پروژه",
-  "gitFileHistory": "فایل فعلی",
-  "gitAdditionsDeletions": "\u2068+{additions} -{deletions}\u2069",
+  "gitConfirmPushSetUpstreamMessage": "این شاخه بالادست ندارد. اگر دقیقاً یک مخزن راه دور پیکربندی شده باشد، BusyMark می‌تواند ⁨{branch}⁩ را ارسال و آن را به‌عنوان بالادست تنظیم کند.",
+  "gitProjectHistory": "سابقه پروژه",
+  "gitFileHistory": "سابقه فایل",
+  "gitAdditionsDeletions": "⁨+{additions} -{deletions}⁩",
   "@gitAdditionsDeletions": {
     "description": "Compact addition and deletion counts.",
     "placeholders": {
-      "additions": {"type": "int", "format": "decimalPattern"},
-      "deletions": {"type": "int", "format": "decimalPattern"}
+      "additions": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "deletions": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "fileActions": "عملیات فایل",
@@ -2307,185 +2389,446 @@
   "gitErrorNetwork": "عملیات شبکهٔ Git ناموفق بود.",
   "gitErrorConflict": "Git تداخل‌های حل‌نشده گزارش کرد.",
   "gitErrorCommandFailed": "فرمان Git ناموفق بود.",
-
   "markdownAndHtml": "Markdown و HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
+  "@markdownAndHtml": {
+    "description": "Markdown and HTML reference dialog title and menu item."
+  },
   "markdownHtmlMarkdownBlocks": "بلوک‌های Markdown",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
+  "@markdownHtmlMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
   "markdownHtmlMarkdownBlocksDescription": "ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
+  "@markdownHtmlMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
   "markdownHtmlInlineFormatting": "Markdown درون‌خطی",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
+  "@markdownHtmlInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
   "markdownHtmlInlineFormattingDescription": "قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
+  "@markdownHtmlInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
   "markdownHtmlRawHtmlBlocks": "بلوک‌های HTML خام",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
+  "@markdownHtmlRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
   "markdownHtmlRawHtmlBlocksDescription": "تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
+  "@markdownHtmlRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
   "markdownHtmlRawHtmlInline": "تگ‌های HTML درون‌خطی",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
+  "@markdownHtmlRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
   "markdownHtmlRawHtmlInlineDescription": "تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
+  "@markdownHtmlRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
   "markdownHtmlSafety": "قوانین امنیتی",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
+  "@markdownHtmlSafety": {
+    "description": "Reference section title for raw HTML safety rules."
+  },
   "markdownHtmlSafetyDescription": "HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
+  "@markdownHtmlSafetyDescription": {
+    "description": "Reference section description for raw HTML safety rules."
+  },
   "markdownHtmlHeadings": "عنوان‌ها",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
+  "@markdownHtmlHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
   "markdownHtmlParagraphs": "پاراگراف‌ها",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
+  "@markdownHtmlParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
   "markdownHtmlLists": "فهرست‌ها",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
+  "@markdownHtmlLists": {
+    "description": "Reference row label for list syntax."
+  },
   "markdownHtmlHtmlContainers": "کانتینرها",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
+  "@markdownHtmlHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
   "markdownHtmlHtmlTextBlocks": "بلوک‌های متن",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
+  "@markdownHtmlHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
   "markdownHtmlHtmlFigures": "شکل‌ها و تصاویر",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
+  "@markdownHtmlHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
   "markdownHtmlHtmlPreformatted": "کد پیش‌قالب‌بندی‌شده",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
+  "@markdownHtmlHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
   "markdownHtmlHtmlDisclosure": "بلوک‌های بازشونده",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
+  "@markdownHtmlHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
   "markdownHtmlHtmlDescriptionLists": "فهرست‌های توصیفی",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
+  "@markdownHtmlHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
   "markdownHtmlHtmlFormattingTags": "تگ‌های قالب‌بندی",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
+  "@markdownHtmlHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
   "markdownHtmlHtmlInlineCodeTags": "تگ‌های کد درون‌خطی",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
+  "@markdownHtmlHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
   "markdownHtmlHtmlNeutralInlineTags": "تگ‌های متنی معنایی",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
+  "@markdownHtmlHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
   "markdownHtmlSanitizedPreview": "پیش‌نمایش پاک‌سازی‌شده",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
+  "@markdownHtmlSanitizedPreview": {
+    "description": "Reference row label for sanitized preview behavior."
+  },
   "markdownHtmlSanitizedPreviewDescription": "HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
+  "@markdownHtmlSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
   "markdownHtmlSourcePreserved": "منبع حفظ می‌شود",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
+  "@markdownHtmlSourcePreserved": {
+    "description": "Reference row label for raw source preservation."
+  },
   "markdownHtmlSourcePreservedDescription": "HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
+  "@markdownHtmlSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
   "markdownHtmlMarkdownInsideHtml": "Markdown داخل HTML",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
+  "@markdownHtmlMarkdownInsideHtml": {
+    "description": "Reference row label for Markdown inside raw HTML."
+  },
   "markdownHtmlMarkdownInsideHtmlDescription": "نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
+  "@markdownHtmlMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
   "markdownHtmlBlockedContent": "محتوای فعال مسدود است",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
+  "@markdownHtmlBlockedContent": {
+    "description": "Reference row label for blocked HTML content."
+  },
   "markdownHtmlBlockedContentDescription": "اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
+  "@markdownHtmlBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
   "markdownHtmlSafeUrls": "فقط URLهای امن",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
+  "@markdownHtmlSafeUrls": {
+    "description": "Reference row label for safe URL policy."
+  },
   "markdownHtmlSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "@markdownHtmlSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "افزودن به Git",
   "delete": "حذف",
   "newFile": "فایل جدید",
   "rename": "تغییر نام",
   "confirmDeleteFileTitle": "فایل حذف شود؟",
   "confirmDeleteFolderTitle": "پوشه حذف شود؟",
-  "confirmDeleteFileMessage": "\u2068{name}\u2069 حذف شود؟ این کار قابل بازگشت نیست.",
-  "confirmDeleteFolderMessage": "\u2068{name}\u2069 و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.",
-  "workspaceErrorFileOperationFailed": "عملیات فایل ناموفق بود: \u2068{error}\u2069",
-  "errorDirectoryMissing": "پوشه وجود ندارد: \u2068{path}\u2069",
-  "errorPathAlreadyExists": "مسیر از قبل وجود دارد: \u2068{path}\u2069",
+  "confirmDeleteFileMessage": "⁨{name}⁩ حذف شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteFolderMessage": "⁨{name}⁩ و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.",
+  "workspaceErrorFileOperationFailed": "عملیات فایل ناموفق بود: ⁨{error}⁩",
+  "errorDirectoryMissing": "پوشه وجود ندارد: ⁨{path}⁩",
+  "errorPathAlreadyExists": "مسیر از قبل وجود دارد: ⁨{path}⁩",
   "errorFileNameRequired": "نام فایل لازم است.",
   "errorFileNameUnsafe": "نام فایل باید یک بخش مسیر امن باشد.",
   "errorFileOperationInvalidTarget": "نمی‌توان یک پوشه را به داخل خودش منتقل کرد.",
   "errorFileOperationOutsideRoot": "عملیات فایل باید داخل فضای کاری بماند.",
   "errorFileOperationRoot": "ریشهٔ فضای کاری را نمی‌توان از درخت فایل تغییر داد.",
   "safeDeleteTopicFile": "حذف ایمن فایل موضوع…",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "حذف عنصر فهرست مطالب",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "مرور موارد استفاده",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "حذف فایل موضوع",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "حذف",
-  "@removeAction": {"description": "Generic remove action label."},
-  "topicRemovalSummary": "«\u2068{topic}\u2069» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
-  "safeDeleteTopicSummary": "«\u2068{topic}\u2069» را حذف کنید و ارجاع‌های آن را در سراسر این پروژهٔ Writerside به‌طور ایمن به‌روزرسانی کنید.",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
+  "topicRemovalSummary": "«⁨{topic}⁩» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.",
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicSummary": "«⁨{topic}⁩» را حذف کنید و ارجاع‌های آن را در سراسر این پروژهٔ Writerside به‌طور ایمن به‌روزرسانی کنید.",
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, =1{۱ موضوع فرزند یک سطح بالاتر می‌رود.} other{{count} موضوع فرزند یک سطح بالاتر می‌روند.}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "موارد استفاده ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "noBreakingTopicUsages": "هیچ ارجاعی که دچار مشکل شود پیدا نشد.",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark ارجاع‌های زیر را به این موضوع پیدا کرد.",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "عناصر فهرست مطالب",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "صفحه‌های آغاز",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "پیوندهای موضوع",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "درج‌ها",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, =1{۱ مورد استفاده} other{{count} مورد استفاده}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "refactoringOptions": "گزینه‌های بازآرایی",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "به‌روزرسانی خودکار موارد استفاده",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "ارجاع‌های فهرست مطالب و درج‌ها حذف و متن پیوندها حفظ می‌شود.",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "برخی موارد استفاده پیش از این بازآرایی به تغییر دستی نیاز دارند.",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "تنظیم تغییر مسیر به",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "صفحهٔ منتشرشدهٔ قدیمی تغییر مسیر داده نشود.",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "مقصد تغییر مسیر",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "پیش از ادامه موارد استفادهٔ باقی‌مانده را مرور و به‌روزرسانی کنید، یا در صورت امکان به‌روزرسانی خودکار را فعال کنید.",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
-  "usagesOfTopic": "موارد استفادهٔ \u2068{topic}\u2069",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
+  "usagesOfTopic": "موارد استفادهٔ ⁨{topic}⁩",
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "هیچ مورد استفاده‌ای پیدا نشد",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "بیرون از نمونهٔ انتخاب‌شده",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "انجام بازآرایی",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "فایل موضوع دیگر استفاده نمی‌شود",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "نگه داشتن فایل موضوع",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
-  "orphanTopicMessage": "«\u2068{topic}\u2069» دیگر در هیچ جای این پروژهٔ Writerside استفاده نمی‌شود. فایل را حذف کنید یا برای استفاده در نمونه‌ای دیگر نگه دارید.",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
+  "orphanTopicMessage": "«⁨{topic}⁩» دیگر در هیچ جای این پروژهٔ Writerside استفاده نمی‌شود. فایل را حذف کنید یا برای استفاده در نمونه‌ای دیگر نگه دارید.",
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "برای فایل‌های موضوع Writerside از حذف ایمن استفاده کنید.",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "بررسی موارد استفاده از موضوع کامل نشد. هیچ فایلی تغییر نکرد.",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "برخی موارد استفاده از موضوع هنوز نیاز به رسیدگی دارند. پیش از ادامه آن‌ها را بازبینی کنید.",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "مقصد تغییر مسیر انتخاب‌شده دیگر معتبر نیست. دوباره آن را انتخاب کنید.",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
-  "errorWritersideRollbackFailed": "حذف موضوع به‌طور کامل بازگردانده نشد. پیش از ادامه این مسیرها را بررسی کنید: \u2068{paths}\u2069",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "خروجی به‌صورت PDF", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "چیدمان صفحه را برای یک PDF حرفه‌ای و مستقل انتخاب کنید.", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "تصاویر راه‌دور هنگام خروجی دانلود نمی‌شوند. تصاویر محلی در صورت دسترس بودن افزوده می‌شوند.", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "اندازه صفحه", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "Letter (نامه)", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "جهت", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "عمودی", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "افقی", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "حاشیه‌ها", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "باریک", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "عادی", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "پهن", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "افزودن شماره صفحه", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "خروجی", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "در حال تهیه PDF…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "سند PDF", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "{fileName} صادر شد.", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "{fileName} صادر شد. تصاویر افزوده‌نشده: {count}.", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "مؤلفه خروجی PDF موجود نیست. BusyMark را دوباره نصب و تلاش کنید.", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "خروجی PDF بیش از حد طول کشید و متوقف شد.", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark نتوانست این سند را به PDF تبدیل کند.", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
+  "errorWritersideRollbackFailed": "حذف موضوع به‌طور کامل بازگردانده نشد. پیش از ادامه این مسیرها را بررسی کنید: ⁨{paths}⁩",
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "exportAsPdf": "خروجی به‌صورت PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "چیدمان صفحه را برای یک PDF حرفه‌ای و مستقل انتخاب کنید.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "تصاویر راه‌دور هنگام خروجی دانلود نمی‌شوند. تصاویر محلی در صورت دسترس بودن افزوده می‌شوند.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "اندازه صفحه",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Letter (نامه)",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "جهت",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "عمودی",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "افقی",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "حاشیه‌ها",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "باریک",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "عادی",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "پهن",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "افزودن شماره صفحه",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "خروجی",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "در حال تهیه PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "سند PDF",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} صادر شد.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} با {count, plural, =1{1 هشدار} other{{count} هشدار}} صادر شد.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "مؤلفه خروجی PDF موجود نیست. BusyMark را دوباره نصب و تلاش کنید.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "خروجی PDF بیش از حد طول کشید و متوقف شد.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark نتوانست این سند را به PDF تبدیل کند.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "در حال رندر…",
   "visualizationStale": "نمایش آخرین رندر معتبر",
   "visualizationShowSource": "نمایش منبع",
@@ -2506,10 +2849,13 @@
   "visualizationRenderFailed": "این تصویرسازی رندر نشد.",
   "visualizationRetry": "تلاش دوباره",
   "visualizationSaved": "{fileName} ذخیره شد",
-  "shortcutExportPdfDescription": "سند فعال یا ماژول Writerside را به PDF صادر کنید.", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "سند فعال یا ماژول Writerside را به PDF صادر کنید.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "مرحله‌بندی‌شده",
   "gitUnstaged": "مرحله‌بندی‌نشده",
-  "gitFetch": "دریافت",
+  "gitFetch": "واکشی",
   "gitStagedFileCount": "{count, plural, =1{۱ فایل مرحله‌بندی‌شده} other{{count} فایل مرحله‌بندی‌شده}}",
   "gitOutsideWorkspace": "خارج از فضای کاری",
   "gitFileHistoryRequiresOpenFile": "تاریخچهٔ فایل به یک فایل Markdown باز نیاز دارد.",
@@ -2523,8 +2869,8 @@
   "gitErrorRestoreStagedFile": "پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید.",
   "gitCommitActions": "عملیات ثبت",
   "gitResetCurrentBranchToHere": "بازنشانی شاخهٔ فعلی به اینجا…",
-  "gitResetCurrentBranchTitle": "\u2068{branch}\u2069 روی \u2068{commit}\u2069 بازنشانی شود؟",
-  "gitResetCurrentBranchMessage": "این کار شاخهٔ \u2068{branch}\u2069 را به ثبت \u2068{commit}\u2069 منتقل می‌کند. نحوهٔ به‌روزرسانی فهرست و درخت کاری توسط Git را انتخاب کنید.",
+  "gitResetCurrentBranchTitle": "⁨{branch}⁩ روی ⁨{commit}⁩ بازنشانی شود؟",
+  "gitResetCurrentBranchMessage": "این کار شاخهٔ ⁨{branch}⁩ را به ثبت ⁨{commit}⁩ منتقل می‌کند. نحوهٔ به‌روزرسانی فهرست و درخت کاری توسط Git را انتخاب کنید.",
   "gitReset": "بازنشانی",
   "gitResetModeSoft": "Soft",
   "gitResetModeSoftDescription": "فقط شاخه را جابه‌جا کنید. فهرست و درخت کاری بدون تغییر می‌مانند؛ تفاوت‌ها با ثبت انتخاب‌شده همچنان مرحله‌بندی‌شده خواهند بود.",
@@ -2623,7 +2969,6 @@
   "ai": "هوش مصنوعی",
   "aiLocalOllama": "Ollama محلی",
   "aiDisabled": "غیرفعال",
-  "aiLocalOnlyDescription": "ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.",
   "aiProvider": "ارائه‌دهندهٔ هوش مصنوعی",
   "aiDefaultProvider": "ارائه‌دهندهٔ پیش‌فرض",
   "aiConfigureProvider": "پیکربندی ارائه‌دهنده",
@@ -2632,7 +2977,7 @@
   "aiOllamaModel": "مدل Ollama",
   "aiTestConnection": "آزمایش اتصال",
   "aiTestingConnection": "در حال آزمایش…",
-  "aiConnectionReady": "متصل شد. \u2068{count}\u2069 مدل نصب‌شده پیدا شد.",
+  "aiConnectionReady": "متصل شد. ⁨{count}⁩ مدل نصب‌شده پیدا شد.",
   "aiNoModels": "هیچ مدلی انتخاب نشده است.",
   "aiConnectionFailed": "BusyMark نتوانست تولید متن با هوش مصنوعی را تأیید کند.",
   "aiConfigureFirst": "ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال و مدلی را در تنظیمات ← هوش مصنوعی تأیید کنید.",
@@ -2658,7 +3003,7 @@
   "aiOriginal": "متن اصلی",
   "aiSuggested": "متن پیشنهادی",
   "aiApplyProposal": "اعمال پیشنهاد",
-  "aiTokenUsage": "\u2068{input}\u2069 توکن ورودی · \u2068{output}\u2069 توکن خروجی",
+  "aiTokenUsage": "⁨{input}⁩ توکن ورودی · ⁨{output}⁩ توکن خروجی",
   "aiStaleProposal": "سند هنگام تولید این پیشنهاد تغییر کرد. کنش را دوباره اجرا کنید.",
   "gitAiStagedChangesChanged": "تغییرات مرحله‌بندی‌شده هنگام تولید این پیام کامیت تغییر کرد. کنش را دوباره اجرا کنید.",
   "aiViewContext": "نمایش بافت ارسال‌شده",
@@ -2707,7 +3052,7 @@
   "tableAlignmentCenter": "تراز: وسط",
   "tableAlignmentRight": "تراز: راست",
   "sourceSearchReplacement": "جایگزینی با",
-  "sourceSearchReplaceCurrent": "جایگزینی مورد فعلی",
+  "sourceSearchReplaceCurrent": "جایگزینی تطابق فعلی",
   "sourceSearchReplaceAndFindNext": "جایگزینی و یافتن بعدی",
   "sourceSearchReplaceAll": "جایگزینی همه",
   "workspaceReplace": "جایگزینی در فضای کاری",
@@ -2737,14 +3082,18 @@
   "reloadFromDisk": "بارگیری دوباره از دیسک",
   "keepMine": "نگه‌داشتن نسخهٔ من",
   "saveAs": "ذخیره با نام",
-  "unsavedChangesMultipleMessage": "تعداد {count} سند تغییرات ذخیره‌نشده دارند. پیش از ادامه ذخیره شوند؟",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{۱ سند دارای تغییرات ذخیره‌نشده است. قبل از ادامه ذخیره کنید.} other{{count} سند دارای تغییرات ذخیره‌نشده هستند. قبل از ادامه ذخیره کنید.}}",
   "workspaceReplaceIssuePartialConflict": "بازگردانی متوقف شد، زیرا فایل هم‌زمان تغییر کرد. ممکن است برخی جایگزینی‌ها باقی مانده باشند؛ محتوای جابه‌جا‌شده در مسیر زیر حفظ شد.",
   "workspaceReplaceIssueApplyFailed": "هیچ جایگزینی اعمال نشد، زیرا مجموعهٔ بازبینی‌شده را نمی‌شد با ایمنی ذخیره کرد.",
-  "workspaceRecoveryRestored": "تعداد {count} سند ذخیره‌نشده بازیابی شد. پیش از ادامه هر سند بازیابی‌شده را بررسی کنید.",
-  "workspaceRecoveryDamaged": "تعداد {count} رکورد بازیابی آسیب‌دیده قابل بازیابی نبود. سندهای معتبر بازیابی‌شده همچنان در دسترس‌اند.",
+  "workspaceRecoveryRestored": "{count, plural, =1{یک سند ذخیره‌نشده بازیابی شد. قبل از ذخیره یا حذف آن بازبینی کنید.} other{{count} سند ذخیره‌نشده بازیابی شدند. هر کدام را قبل از ذخیره یا حذف بازبینی کنید.}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{یک رکورد بازیابی آسیب‌دیده را نتوانستیم بازیابی کنیم. فایل بازیابی اولیه برای بررسی حفظ شده است.} other{{count} رکورد بازیابی آسیب‌دیده نتوانستیم بازیابی کنیم. رکوردهای بازیابی معتبر همچنان در دسترس هستند.}}",
   "recoveredDocumentReview": "محتوای ذخیره‌نشدهٔ {fileName} بازیابی شده است. آن را بررسی کنید و سپس ذخیره، ذخیره با نام یا رد کنید.",
   "commandUnavailableInContext": "این فرمان در زمینهٔ فعلی در دسترس نیست.",
   "mathRenderFailed": "عبارت ریاضی قابل نمایش نبود.",
   "inlineMath": "ریاضی درون‌خطی",
-  "displayMath": "ریاضی نمایشی"
+  "displayMath": "ریاضی نمایشی",
+  "aiExplicitEditingDescription": "ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

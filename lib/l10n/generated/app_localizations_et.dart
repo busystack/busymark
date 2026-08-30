@@ -321,7 +321,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -805,7 +805,15 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count dokumendis on salvestamata muudatusi. Kas salvestada need enne jätkamist?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumendil on salvestamata muudatusi. Salvestage need enne jätkamist.',
+      one:
+          '1 dokumendil on salvestamata muudatusi. Salvestage see enne jätkamist.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1684,12 +1692,28 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Taastati $count salvestamata dokumenti. Vaadake iga taastatud dokument enne jätkamist üle.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Taastati $count salvestamata dokumenti. Kontrolli igaüht enne salvestamist või hülgamist.',
+      one:
+          'Taastati 1 salvestamata dokumendi. Kontrolli see enne salvestamist või hülgamist.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count rikutud taastekirjet ei saanud taastada. Kehtivad taastatud dokumendid on endiselt saadaval.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count kahjustunud taastamiskirjet ei õnnestunud taastada. Kehtivad taastamiskirjed jäävad alles.',
+      one:
+          'Ühte kahjustunud taastamiskirjet ei õnnestunud taastada. Algne taastamisfail on ülevaatuseks alles jäetud.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2379,8 +2403,10 @@ class AppLocalizationsEt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Valitud jälgitavad failid taastatakse Gitist.',
-      one: 'Valitud jälgitav fail taastatakse Gitist.',
+      other:
+          'Valitud jälgitavate failide kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
+      one:
+          'Valitud jälgitava faili kõiki indekseeritud ja indekseerimata muudatusi taastatakse HEAD-ile.',
     );
     return '$_temp0';
   }
@@ -2427,10 +2453,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Projekt';
+  String get gitProjectHistory => 'Projekti ajalugu';
 
   @override
-  String get gitFileHistory => 'Praegune fail';
+  String get gitFileHistory => 'Faili ajalugu';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2795,7 +2821,13 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName eksporditi. Lisamata jäänud pilte: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hoiatusaga',
+      one: '1 hoiatusuga',
+    );
+    return '$fileName eksporditi $_temp0.';
   }
 
   @override
@@ -3213,7 +3245,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiDisabled => 'Keelatud';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.';
 
   @override

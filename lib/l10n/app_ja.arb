@@ -406,7 +406,7 @@
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -3687,7 +3687,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "{fileName} を {count} 件の警告付きでエクスポートしました。",
+  "pdfExportedWithWarnings": "{fileName} は {count, plural, =1{1 件の警告} other{{count} 件の警告}} とともにエクスポートされました。",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some content fell back or was omitted.",
     "placeholders": {
@@ -4269,10 +4269,6 @@
   "@aiDisabled": {
     "description": "AI provider option that disables AI features."
   },
-  "aiLocalOnlyDescription": "AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。",
-  "@aiLocalOnlyDescription": {
-    "description": "Privacy description for BusyMark local AI."
-  },
   "aiProvider": "AI プロバイダー",
   "@aiProvider": {
     "description": "Label for an AI provider selection."
@@ -4612,5 +4608,9 @@
   "displayMath": "ディスプレイ数式",
   "@displayMath": {
     "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
   }
 }

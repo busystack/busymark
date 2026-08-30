@@ -323,7 +323,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -812,7 +812,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count documenti contengono modifiche non salvate. Salvarli prima di continuare?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documenti hanno modifiche non salvate. Salvali prima di continuare?',
+      one:
+          '1 documento ha modifiche non salvate. Salvarlo prima di continuare?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1429,7 +1437,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sourceSearchReplacement => 'Sostituisci con';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Sostituisci corrente';
+  String get sourceSearchReplaceCurrent =>
+      'Sostituisci la corrispondenza corrente';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Sostituisci e trova successivo';
@@ -1537,7 +1546,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return 'È stato recuperato il contenuto non salvato di $fileName. Controllarlo, quindi salvarlo, salvarlo con nome o eliminarlo.';
+    return 'Recuperato il contenuto non salvato di $fileName. Esaminalo, quindi salvalo, salvalo con un altro nome o scartalo.';
   }
 
   @override
@@ -1698,12 +1707,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Sono stati recuperati $count documenti non salvati. Controllare ogni documento recuperato prima di continuare.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Sono stati recuperati $count documenti non salvati. Revisiona ciascuno prima di salvare o scartare.',
+      one:
+          'È stato recuperato 1 documento non salvato. Revisionalo prima di salvarlo o scartarlo.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'Non è stato possibile ripristinare $count record di recupero danneggiati. I documenti recuperati validi restano disponibili.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count record di ripristino danneggiati non sono stati ripristinati. I record di ripristino validi sono ancora disponibili.',
+      one:
+          'Un record di recupero danneggiato non può essere ripristinato. Il file di recupero originale è stato conservato per la revisione.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2400,8 +2425,10 @@ class AppLocalizationsIt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'I file tracciati selezionati verranno ripristinati da Git.',
-      one: 'Il file tracciato selezionato verrà ripristinato da Git.',
+      other:
+          'Tutte le modifiche staged e non staged nei file tracciati selezionati saranno ripristinate in HEAD.',
+      one:
+          'Tutte le modifiche staged e non staged nel file tracciato selezionato saranno ripristinate in HEAD.',
     );
     return '$_temp0';
   }
@@ -2448,10 +2475,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Progetto';
+  String get gitProjectHistory => 'Cronologia del progetto';
 
   @override
-  String get gitFileHistory => 'File corrente';
+  String get gitFileHistory => 'Cronologia del file';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2817,7 +2844,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName è stato esportato. Immagini non incluse: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count avvisi',
+      one: '1 avviso',
+    );
+    return '$fileName è stato esportato con $_temp0.';
   }
 
   @override
@@ -3237,7 +3270,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiDisabled => 'Disabilitato';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.';
 
   @override

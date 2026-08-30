@@ -323,7 +323,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -816,7 +816,14 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count dokumenty zawierają niezapisane zmiany. Zapisać je przed kontynuowaniem?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumenty mają niezapisane zmiany. Zapisz każdy przed kontynuowaniem.',
+      one: '1 dokument ma niezapisane zmiany. Zapisz go przed kontynuowaniem.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1439,7 +1446,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sourceSearchReplacement => 'Zamień na';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Zamień bieżące';
+  String get sourceSearchReplaceCurrent => 'Zamień bieżące dopasowanie';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Zamień i znajdź następne';
@@ -1707,12 +1714,28 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Odzyskano $count niezapisanych dokumentów. Przejrzyj każdy odzyskany dokument przed kontynuowaniem.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Przywrócono $count dokumentów bez zapisania. Sprawdź każdy przed zapisaniem lub usunięciem.',
+      one:
+          'Przywrócono 1 dokument bez zapisania. Przed zapisaniem lub usunięciem sprawdź go.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe odzyskane dokumenty są nadal dostępne.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe rekordy odzyskiwania pozostają dostępne.',
+      one:
+          'Nie udało się przywrócić 1 uszkodzonego rekordu odzyskiwania. Oryginalny plik odzyskiwania zachowano do przeglądu.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2354,6 +2377,8 @@ class AppLocalizationsPl extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count plików w indeksie',
+      many: '$count plików w indeksie',
+      few: '$count pliki w indeksie',
       one: '1 plik w indeksie',
     );
     return '$_temp0';
@@ -2410,10 +2435,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Wybrane śledzone pliki zostaną przywrócone z Git.',
-      many: 'Wybrane śledzone pliki zostaną przywrócone z Git.',
-      few: 'Wybrane śledzone pliki zostaną przywrócone z Git.',
-      one: 'Wybrany śledzony plik zostanie przywrócony z Git.',
+      other:
+          'Wszystkie oznaczone i nieoznaczone zmiany w wybranych śledzonych plikach zostaną przywrócone do HEAD.',
+      one:
+          'Wszystkie oznaczone i nieoznaczone zmiany w wybranym śledzonym pliku zostaną przywrócone do HEAD.',
     );
     return '$_temp0';
   }
@@ -2466,10 +2491,10 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Projekt';
+  String get gitProjectHistory => 'Historia projektu';
 
   @override
-  String get gitFileHistory => 'Bieżący plik';
+  String get gitFileHistory => 'Historia pliku';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2835,7 +2860,13 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'Wyeksportowano $fileName. Obrazy, których nie udało się dołączyć: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ostrzeżeniami',
+      one: '1 ostrzeżeniem',
+    );
+    return '$fileName został wyeksportowany z $_temp0.';
   }
 
   @override
@@ -3254,7 +3285,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiDisabled => 'Wyłączone';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Edycja z użyciem SI jest uruchamiana wyłącznie jawnie. BusyMark wysyła do wybranego dostawcy tylko pokazany kontekst i nigdy nie stosuje propozycji bez jej sprawdzenia.';
 
   @override

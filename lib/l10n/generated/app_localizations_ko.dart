@@ -65,7 +65,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get feedbackMessage => '자세한 메시지';
 
   @override
-  String get feedbackReplyEmail => '이메일 답장(선택사항)';
+  String get feedbackReplyEmail => '회신용 이메일 주소(선택)';
 
   @override
   String get feedbackIncludeTechnicalDetails => '기술 세부정보 포함';
@@ -108,7 +108,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '서버가 이 보고서를 거부했습니다. 양식 필드를 확인하고 다시 시도하세요.';
 
   @override
-  String get feedbackServerFailure => '서버가 보고서를 승인할 수 없습니다. 나중에 다시 시도하세요.';
+  String get feedbackServerFailure => '서버가 보고서를 수락할 수 없습니다. 나중에 다시 시도하세요.';
 
   @override
   String feedbackSuccess(String id) {
@@ -316,7 +316,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -650,7 +650,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get autoSave => '자동 저장';
 
   @override
-  String get autoSaveDescription => '짧은 유휴 지연 후에 파일 변경 사항을 자동으로 저장합니다.';
+  String get autoSaveDescription => '파일 변경 사항은 짧은 유휴 기간이 지나면 자동으로 저장됩니다.';
 
   @override
   String get wordWrap => '자동 줄 바꿈';
@@ -699,7 +699,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      '원격 이미지를 로드하도록 허용된 작업공간은 잊어버리세요.';
+      '원격 이미지 로드 권한이 허용된 작업공간의 저장된 권한을 삭제합니다.';
 
   @override
   String get clearGitWorkspaceTrust => '신뢰할 수 있는 Git 작업공간 초기화';
@@ -738,8 +738,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '변경된 문서가 $count개 있습니다. BusyMark를 닫기 전에 저장하시겠습니까?',
-      one: '변경된 문서가 1개 있습니다. BusyMark를 닫기 전에 저장하시겠습니까?',
+      other: '미저장 문서가 $count개 있습니다. 계속하기 전에 저장하시겠습니까?',
+      one: '미저장 문서가 1개 있습니다. 계속하기 전에 저장하시겠습니까?',
       zero: 'BusyMark를 닫기 전에 변경 사항을 저장하시겠습니까?',
     );
     return '$_temp0';
@@ -770,8 +770,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '변경된 문서가 $count개 있습니다. 계속하기 전에 저장하시겠습니까?',
-      one: '변경된 문서가 1개 있습니다. 계속하기 전에 저장하시겠습니까?',
+      other: '미저장 문서가 $count개 있습니다. 계속하기 전에 저장하시겠습니까?',
+      one: '미저장 문서가 1개 있습니다. 계속하기 전에 저장하시겠습니까?',
     );
     return '$_temp0';
   }
@@ -1220,7 +1220,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get topicUsageTopicLinks => '토픽 링크';
 
   @override
-  String get topicUsageIncludes => '포함';
+  String get topicUsageIncludes => 'include 요소';
 
   @override
   String usageCount(int count) {
@@ -1237,11 +1237,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get refactoringOptions => '리팩토링 옵션';
 
   @override
-  String get updateUsagesAutomatically => '자동으로 사용량 업데이트';
+  String get updateUsagesAutomatically => '참조 사용량을 자동으로 업데이트';
 
   @override
   String get updateUsagesAutomaticallyDescription =>
-      '목차 참조 및 포함을 제거하고 링크 텍스트를 유지합니다.';
+      '목차 참조와 include 요소를 제거하고 링크 텍스트를 유지합니다.';
 
   @override
   String get manualUsageUpdatesRequired => '일부 사용처는 이 리팩터링 전에 수동으로 변경해야 합니다.';
@@ -1253,7 +1253,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noRedirectDescription => '이전에 게시된 페이지를 리디렉션하지 마세요.';
 
   @override
-  String get redirectTarget => '대상 리디렉션';
+  String get redirectTarget => '리디렉션 대상';
 
   @override
   String get remainingUsagesBlockRemoval =>
@@ -1355,10 +1355,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foldKindList => '목록';
 
   @override
-  String get foldKindQuote => '인용하다';
+  String get foldKindQuote => '인용문';
 
   @override
-  String get foldKindTag => '꼬리표';
+  String get foldKindTag => '태그';
 
   @override
   String get sourceSearchPreviousMatch => '이전 일치 항목';
@@ -1379,7 +1379,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sourceSearchReplacement => '다음으로 바꾸기';
 
   @override
-  String get sourceSearchReplaceCurrent => '현재 항목 바꾸기';
+  String get sourceSearchReplaceCurrent => '현재 일치 항목 바꾸기';
 
   @override
   String get sourceSearchReplaceAndFindNext => '바꾸고 다음 찾기';
@@ -1481,7 +1481,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return '$fileName의 저장되지 않은 콘텐츠를 복구했습니다. 검토한 후 저장, 다른 이름으로 저장 또는 삭제하세요.';
+    return '$fileName의 저장되지 않은 콘텐츠가 복구되었습니다. 검토한 다음 저장, 다른 이름으로 저장 또는 변경사항을 버리세요.';
   }
 
   @override
@@ -1833,7 +1833,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWorkspaceFileTooLarge => '파일이 자동 파싱 한도를 초과했습니다.';
+  String get diagnosticWorkspaceFileTooLarge => '이 파일은 베타 자동 파싱 한도보다 큽니다.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1855,7 +1855,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown 토픽에는 H1 또는 머리말 제목이 없습니다.';
+      'Writerside Markdown 주제에 H1 또는 front matter 제목이 없습니다.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle => 'XML 토픽에 제목이 없습니다.';
@@ -1866,7 +1866,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get diagnosticMarkdownFrontMatterMalformed => '머리말이 닫히지 않았습니다.';
+  String get diagnosticMarkdownFrontMatterMalformed =>
+      'front matter가 닫히지 않았습니다.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => '안전하지 않은 HTML 요소.';
@@ -1935,7 +1936,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      '라이브러리가 아닌 인스턴스에 시작 페이지가 없습니다.';
+      '라이브러리가 아닌 인스턴스에 start-page가 누락되었습니다.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2065,7 +2066,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return '목차에서 \"$topic\" 토픽이 누락되었습니다.';
+    return 'TOC에서 존재하지 않는 주제를 참조합니다: \"$topic\".';
   }
 
   @override
@@ -2088,11 +2089,12 @@ class AppLocalizationsKo extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return '\"$targetName\" 앵커 \"$anchor\"이(가) 존재하지 않습니다.';
+    return '대상 \"$targetName\"에 앵커 \"$anchor\"가 존재하지 않습니다.';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include>가 누락되었습니다.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include>에 from 속성이 없습니다.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2109,7 +2111,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return '또한 카테고리 \"$ref\"가 선언되지 않았습니다.';
+    return 'seealso 카테고리 \"$ref\"가 선언되지 않았습니다.';
   }
 
   @override
@@ -2123,7 +2125,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get close => '닫다';
+  String get close => '닫기';
 
   @override
   String get git => 'Git';
@@ -2206,7 +2208,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get gitClean => '깨끗함';
+  String get gitClean => '변경 사항 없음';
 
   @override
   String get gitConflicts => '충돌';
@@ -2321,7 +2323,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitUnsavedChangesBanner => '저장되지 않은 편집기 변경 사항은 저장될 때까지 포함되지 않습니다.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Git 변경사항을 삭제하시겠습니까?';
+  String get gitConfirmDiscardTitle => 'Git 변경사항을 버리시겠습니까?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
@@ -2390,7 +2392,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gitChangesInCommit => '이 커밋의 변경 사항';
 
   @override
-  String get gitCompareWithCurrent => '현재와 ​​비교';
+  String get gitCompareWithCurrent => '현재 버전과 비교';
 
   @override
   String get gitRestoreVersion => '이 버전을 복원하세요';
@@ -2514,7 +2516,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitErrorDirtyWorkspace =>
-      '분기를 전환하기 전에 BusyMark 편집기 변경 사항을 저장하거나 삭제하세요.';
+      'Git 분기를 전환하기 전에 BusyMark 편집기 변경 사항을 저장하거나 버리세요.';
 
   @override
   String get gitErrorResetDirtyWorkspace =>
@@ -2531,7 +2533,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '브랜치가 분기되었습니다. 이 BusyMark 버전 외부에서 병합 또는 리베이스를 해결하세요.';
 
   @override
-  String get gitErrorAuthorIdentity => 'Git을 커밋하려면 작성자 이름과 이메일 주소가 필요합니다.';
+  String get gitErrorAuthorIdentity => '커밋하기 전에 Git에 작성자 이름과 이메일 주소가 필요합니다.';
 
   @override
   String get gitAuthorIdentityTitle => 'Git 작성자 ID';
@@ -2736,7 +2738,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$count개의 경고와 함께 $fileName을 내보냈습니다.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '경고 $count개',
+      one: '경고 1개',
+    );
+    return '$fileName을(를) $_temp0와 함께 내보냈습니다.';
   }
 
   @override
@@ -3024,7 +3032,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
-    return '알 수 없는 인스턴스 상태 “$status”. 릴리스, eap 또는 더 이상 사용되지 않음을 사용하십시오.';
+    return '알 수 없는 인스턴스 상태 “$status”. release, eap 또는 deprecated를 사용하세요.';
   }
 
   @override
@@ -3041,7 +3049,7 @@ class AppLocalizationsKo extends AppLocalizations {
     String name,
     String value,
   ) {
-    return '$name 값 \"$value\"은(는) true 또는 false여야 합니다.';
+    return '설정 값 $name “$value”는 true 또는 false 여야 합니다.';
   }
 
   @override
@@ -3147,7 +3155,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiDisabled => '사용 안 함';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'AI 편집은 명시적입니다. BusyMark는 선택한 공급자에 대해 표시된 컨텍스트만 보내고 검토 없이 제안을 적용하지 않습니다.';
 
   @override
@@ -3216,7 +3224,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiTargetCurrentSection => '현재 섹션';
 
   @override
-  String get aiTargetCompleteDocument => '완전한 문서';
+  String get aiTargetCompleteDocument => '전체 문서';
 
   @override
   String get aiContextNone => '문서 컨텍스트 없음';
@@ -3231,7 +3239,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiContextCurrentSection => '현재 섹션';
 
   @override
-  String get aiContextCompleteDocument => '완전한 문서';
+  String get aiContextCompleteDocument => '전체 문서';
 
   @override
   String get aiGenerating => '제안 생성 중…';
@@ -3266,7 +3274,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get gitAiStagedChangesChanged =>
-      '이 커밋 메시지가 생성되는 동안 단계적 변경 사항이 변경되었습니다. 작업을 다시 실행하십시오.';
+      '스테이징된 변경 사항이 이 커밋 메시지 생성 중에 변경되었습니다. 작업을 다시 실행하세요.';
 
   @override
   String get aiViewContext => '전송된 컨텍스트 보기';
@@ -3391,7 +3399,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownLinkEmptyText =>
-      '링크 텍스트가 비어 있습니다. 목적을 설명하는 접근 가능한 이름을 제공합니다.';
+      '링크 텍스트가 비어 있습니다. 링크의 목적을 설명하는 접근 가능한 이름을 제공하세요.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {

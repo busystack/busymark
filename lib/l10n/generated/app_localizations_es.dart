@@ -324,7 +324,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -816,7 +816,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'Hay $count documentos con cambios sin guardar. ¿Desea guardarlos antes de continuar?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Hay $count documentos con cambios sin guardar. ¿Desea guardarlos antes de continuar?',
+      one:
+          'Hay 1 documento con cambios sin guardar. ¿Desea guardarlo antes de continuar?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1433,7 +1441,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sourceSearchReplacement => 'Reemplazar por';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Reemplazar actual';
+  String get sourceSearchReplaceCurrent => 'Reemplazar la coincidencia actual';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Reemplazar y buscar siguiente';
@@ -1702,12 +1710,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Se recuperaron $count documentos sin guardar. Revise cada documento recuperado antes de continuar.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Se recuperaron $count documentos sin guardar. Revise cada uno antes de guardar o descartarlo.',
+      one:
+          'Se recuperó 1 documento sin guardar. Revísalo antes de guardarlo o descartarlo.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'No se pudieron restaurar $count registros de recuperación dañados. Los documentos recuperados válidos siguen disponibles.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'No se pudieron recuperar $count registros de recuperación dañados. Los registros de recuperación válidos siguen disponibles.',
+      one:
+          'No se pudo recuperar 1 registro de recuperación dañado. Se conservó el archivo de recuperación original para su revisión.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2406,9 +2430,9 @@ class AppLocalizationsEs extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Los archivos seleccionados que están bajo seguimiento se restaurarán desde Git.',
+          'Se restaurarán en HEAD todos los cambios staged y no staged de los archivos rastreados seleccionados.',
       one:
-          'El archivo seleccionado que está bajo seguimiento se restaurará desde Git.',
+          'Se restaurarán en HEAD todos los cambios staged y no staged del archivo rastreado seleccionado.',
     );
     return '$_temp0';
   }
@@ -2455,10 +2479,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Proyecto';
+  String get gitProjectHistory => 'Historial del proyecto';
 
   @override
-  String get gitFileHistory => 'Archivo actual';
+  String get gitFileHistory => 'Historial del archivo';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2826,7 +2850,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'Se exportó $fileName. Imágenes que no se pudieron incluir: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count advertencias',
+      one: '1 advertencia',
+    );
+    return '$fileName se exportó con $_temp0.';
   }
 
   @override
@@ -3246,7 +3276,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiDisabled => 'Desactivado';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'La edición con IA solo se ejecuta de forma explícita. BusyMark envía únicamente el contexto mostrado al proveedor seleccionado y nunca aplica una propuesta sin revisarla.';
 
   @override

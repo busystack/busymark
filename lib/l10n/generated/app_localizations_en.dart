@@ -66,7 +66,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackMessage => 'Detailed message';
 
   @override
-  String get feedbackReplyEmail => 'Reply email (optional)';
+  String get feedbackReplyEmail => 'Email address for replies (optional)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Include technical details';
@@ -322,7 +322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -1420,7 +1420,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceSearchReplacement => 'Replace with';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Replace current';
+  String get sourceSearchReplaceCurrent => 'Replace current match';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Replace and find next';
@@ -1448,7 +1448,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String selectFileMatches(int count) {
-    return 'Select all $count matches';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Select all $count matches',
+      one: 'Select 1 match',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2159,7 +2165,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> is missing from.';
+      '<include> is missing the from attribute.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2816,7 +2822,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName was exported with $count warning(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings',
+      one: '1 warning',
+    );
+    return '$fileName was exported with $_temp0.';
   }
 
   @override
@@ -2994,7 +3006,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String markdownFilesFound(int count) {
-    return '$count Markdown file(s) found';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Markdown files found',
+      one: '1 Markdown file found',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3232,7 +3250,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiDisabled => 'Disabled';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.';
 
   @override
@@ -3261,7 +3279,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiConnectionReady(int count) {
-    return 'Connected. $count installed model(s) found.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count installed models found',
+      one: '1 installed model found',
+    );
+    return 'Connected. $_temp0.';
   }
 
   @override
@@ -3331,7 +3355,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'The selected provider will receive $count characters from the displayed context.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count characters',
+      one: '1 character',
+    );
+    return 'The selected provider will receive $_temp0 from the displayed context.';
   }
 
   @override
@@ -3435,7 +3465,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiGenerationVerified(String model, int count) {
-    return 'Generation verified with $model. $count compatible model(s) available.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count compatible models available',
+      one: '1 compatible model available',
+    );
+    return 'Generation verified with $model. $_temp0.';
   }
 
   @override
@@ -3465,7 +3501,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String markdownTocUpdated(int count) {
-    return 'Table of contents updated with $count entries.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return 'Table of contents updated with $_temp0.';
   }
 
   @override

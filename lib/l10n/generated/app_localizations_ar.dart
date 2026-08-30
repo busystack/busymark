@@ -321,7 +321,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -798,7 +798,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'يحتوي $count من المستندات على تغييرات غير محفوظة. هل تريد حفظها قبل المتابعة؟';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count مستندات تحتوي على تغييرات غير محفوظة. احفظها قبل المتابعة؟',
+      one: 'يوجد 1 مستند يحتوي على تغييرات غير محفوظة. احفظه قبل المتابعة؟',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1689,12 +1696,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'تمت استعادة $count من المستندات غير المحفوظة. راجع كل مستند تمت استعادته قبل المتابعة.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'تم استعادة $count مستندات غير محفوظة. راجع كل واحد قبل الحفظ أو تجاهله.',
+      one: 'تم استعادة مستند غير محفوظ واحد. راجعه قبل الحفظ أو تجاهله.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'تعذرت استعادة $count من سجلات الاستعادة التالفة. تظل المستندات الصالحة التي تمت استعادتها متاحة.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'تعذر استعادة $count سجلات استرداد تالف. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      one:
+          'تعذر استعادة سجل استعادة تالف واحد. تم الاحتفاظ بملف الاسترداد الأصلي للفحص.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2336,7 +2358,10 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count ملفات مُرحَّلة',
+      other: '$count ملفات مرحّلة',
+      many: '$count ملفات مرحّلة',
+      few: '$count ملفات مرحّلة',
+      two: 'ملفان مرحّلان',
       one: 'ملف مُرحَّل واحد',
     );
     return '$_temp0';
@@ -2393,12 +2418,10 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      many: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      few: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      two: 'ستتم استعادة الملفين المتعقبين المحددين من Git.',
-      one: 'ستتم استعادة الملف المتعقب المحدد من Git.',
-      zero: 'لا توجد ملفات متعقبة محددة لاستعادتها من Git.',
+      other:
+          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملفات المتعقبة المحددة إلى HEAD.',
+      one:
+          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملف المتعقب المحدد إلى HEAD.',
     );
     return '$_temp0';
   }
@@ -2451,10 +2474,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'المشروع';
+  String get gitProjectHistory => 'تاريخ المشروع';
 
   @override
-  String get gitFileHistory => 'الملف الحالي';
+  String get gitFileHistory => 'تاريخ الملف';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2816,7 +2839,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'تم تصدير $fileName. صور تعذر تضمينها: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تحذيرات',
+      one: 'تحذير واحد',
+    );
+    return '$fileName تم تصديره مع $_temp0.';
   }
 
   @override
@@ -3233,7 +3262,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiDisabled => 'معطّل';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.';
 
   @override

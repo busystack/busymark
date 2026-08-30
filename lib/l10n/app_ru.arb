@@ -10,7 +10,7 @@
   "feedbackCategoryOther": "Другое",
   "feedbackSubject": "Тема",
   "feedbackMessage": "Подробное сообщение",
-  "feedbackReplyEmail": "Эл. почта для ответа (необязательно)",
+  "feedbackReplyEmail": "Эл. адрес для ответа (необязательно)",
   "feedbackIncludeTechnicalDetails": "Включить технические сведения",
   "feedbackTechnicalDetailsDisclosure": "Если этот параметр включён, добавляются только версия операционной системы Linux и язык и регион приложения BusyMark. Журналы, файлы, данные учётной записи и другие диагностические сведения не прикрепляются.",
   "feedbackSubmit": "Отправить",
@@ -276,7 +276,7 @@
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -329,9 +329,13 @@
     "description": "Language selector option for Vietnamese."
   },
   "languageJapanese": "日本語",
-  "@languageJapanese": {"description": "Language selector option for Japanese."},
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
   "languageKorean": "한국어",
-  "@languageKorean": {"description": "Language selector option for Korean."},
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
   "languageSimplifiedChinese": "简体中文",
   "@languageSimplifiedChinese": {
     "description": "Language selector option for Simplified Chinese."
@@ -405,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "Удалить выбранный элемент в разделе «Файлы» или убрать выбранную тему из оглавления",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "Общие",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -507,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "Вставить отступ",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "Вставить отступ в позицию курсора",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "Уменьшить отступ в исходном тексте",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "Убрать один уровень отступа в режиме исходного текста",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "Закрыть поиск или снять выделение блоков",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -747,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "Конфиденциальность",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "Загружать удалённые изображения",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "Разрешить загрузку изображений в предварительном просмотре Markdown и редакторе по URL-адресам http и https.",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "Сбросить разрешения на удалённые изображения",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "Забыть рабочие области, которым было разрешено загружать удалённые изображения.",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "Очистить список доверенных рабочих областей Git",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "Спрашивать перед включением функций Git для ранее доверенных рабочих областей.",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "Окно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "Открывать предыдущее рабочее пространство при запуске",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "Открывать рабочее пространство и вкладки предыдущего сеанса при запуске BusyMark.",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Подтверждать закрытие при несохранённых изменениях",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -897,7 +928,9 @@
     "description": "HTML block command label."
   },
   "htmlContentDefault": "Содержимое HTML",
-  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
   "shortcutHtmlBlockDescription": "Вставить или изменить блок HTML",
   "@shortcutHtmlBlockDescription": {
     "description": "Keyboard shortcut description for inserting or editing an HTML block."
@@ -1099,18 +1132,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "Удалённое изображение заблокировано",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "Выберите, может ли BusyMark загружать удалённые изображения.",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "Удалённые изображения заблокированы",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "Этот документ ссылается на изображения из интернета. Их загрузка может раскрыть сведения о вашей сети серверам, на которых размещены изображения.",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "Загрузить для этой рабочей области",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "Всегда загружать удалённые изображения",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "Скрыть боковую панель",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1350,19 +1394,33 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "Предыдущее совпадение",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "Следующее совпадение",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "С учётом регистра",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "Слово целиком",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "Регулярное выражение",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "Некорректное регулярное выражение",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "Большой файл: подсветка и сворачивание приостановлены",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "Нет содержимого для чтения",
   "admonition": "Блок-уведомление",
   "quote": "Цитата",
@@ -2201,25 +2259,39 @@
   "git": "Git",
   "gitDiff": "Различия Git",
   "gitShowDiff": "Показать различия",
-  "@gitShowDiff": {"description": "Menu action that opens the diff for a file in Git history."},
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
   "gitDiffHunkRange": "старый диапазон {oldRange} → новый {newRange}",
   "@gitDiffHunkRange": {
     "description": "Readable old-to-new line range shown for a Git diff hunk.",
     "placeholders": {
-      "oldRange": {"type": "String"},
-      "newRange": {"type": "String"}
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
     }
   },
   "gitDiffNoLines": "нет строк",
-  "@gitDiffNoLines": {"description": "Line range text for an empty side of a Git diff hunk."},
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
   "gitUnavailableTitle": "Git недоступен",
   "gitUnavailableMessage": "{reason, select, other{Установите Git или настройте BusyMark для использования доступного исполняемого файла Git. {reason}}}",
   "gitTrustRequiredTitle": "Доверять этой рабочей области при работе с Git?",
-  "@gitTrustRequiredTitle": {"description": "Git empty state title shown before repository-controlled commands may run."},
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
   "gitTrustRequiredMessage": "Репозитории Git могут запускать программы с помощью хуков, фильтров и других настроек. Подтвердите доверие к этой рабочей области, прежде чем BusyMark прочитает данные репозитория или включит действия Git.",
-  "@gitTrustRequiredMessage": {"description": "Security warning shown before Git repository access is enabled for a workspace."},
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
   "gitTrustWorkspace": "Доверять рабочей области",
-  "@gitTrustWorkspace": {"description": "Action label for trusting a workspace before enabling Git."},
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
   "gitNotRepositoryTitle": "Это не репозиторий Git",
   "gitNotRepositoryMessage": "Эта рабочая область не находится в репозитории Git.",
   "gitInitializeRepository": "Инициализировать репозиторий",
@@ -2261,15 +2333,15 @@
   "gitBinaryFile": "Двоичный файл. BusyMark не отображает двоичные патчи.",
   "gitUnsavedChangesBanner": "Несохранённые изменения в редакторе не будут включены, пока вы их не сохраните.",
   "gitConfirmDiscardTitle": "Отменить изменения Git?",
-  "gitConfirmDiscardTracked": "{count, plural, one{Выбранный отслеживаемый файл будет восстановлен из Git.} few{Выбранные отслеживаемые файлы будут восстановлены из Git.} many{Выбранные отслеживаемые файлы будут восстановлены из Git.} other{Выбранные отслеживаемые файлы будут восстановлены из Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{В выбранный отслеживаемый файл и обратно в HEAD будут восстановлены все проиндексированные и не проиндексированные изменения.} other{Во все выбранные отслеживаемые файлы и обратно в HEAD будут восстановлены все проиндексированные и не проиндексированные изменения.}}",
   "gitConfirmDiscardUntracked": "{count, plural, one{Выбранный неотслеживаемый файл будет удалён.} few{Выбранные неотслеживаемые файлы будут удалены.} many{Выбранные неотслеживаемые файлы будут удалены.} other{Выбранные неотслеживаемые файлы будут удалены.}}",
   "gitConfirmDiscardMixed": "{count, plural, one{Выбранный файл будет восстановлен или удалён в зависимости от его статуса Git.} few{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.} many{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.} other{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.}}",
   "gitConfirmSwitchBranchTitle": "Переключиться на {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark перезагрузит рабочую область с диска после переключения ветки в Git.",
   "gitConfirmPushSetUpstreamTitle": "Настроить upstream-ветку?",
   "gitConfirmPushSetUpstreamMessage": "У этой ветки нет upstream-ветки. BusyMark может отправить ветку {branch} и назначить её upstream-веткой, если настроен ровно один удалённый репозиторий.",
-  "gitProjectHistory": "Проект",
-  "gitFileHistory": "Текущий файл",
+  "gitProjectHistory": "История проекта",
+  "gitFileHistory": "История файла",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Действия с файлом",
   "actions": "Действия",
@@ -2304,73 +2376,138 @@
   "gitErrorNetwork": "Сетевая операция Git не удалась.",
   "gitErrorConflict": "Git сообщил о неразрешённых конфликтах.",
   "gitErrorCommandFailed": "Не удалось выполнить команду Git.",
-
   "markdownAndHtml": "Markdown и HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
+  "@markdownAndHtml": {
+    "description": "Markdown and HTML reference dialog title and menu item."
+  },
   "markdownHtmlMarkdownBlocks": "Блоки Markdown",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
+  "@markdownHtmlMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
   "markdownHtmlMarkdownBlocksDescription": "Блочные структуры, поддерживаемые в исходном Markdown и предварительном просмотре.",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
+  "@markdownHtmlMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
   "markdownHtmlInlineFormatting": "Встроенный Markdown",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
+  "@markdownHtmlInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
   "markdownHtmlInlineFormattingDescription": "Форматирование внутри абзацев, элементов списков и ячеек таблиц.",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
+  "@markdownHtmlInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
   "markdownHtmlRawHtmlBlocks": "Блоки исходного HTML",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
+  "@markdownHtmlRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
   "markdownHtmlRawHtmlBlocksDescription": "Безопасные блочные HTML-теги, отображаемые через виджеты предварительного просмотра BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
+  "@markdownHtmlRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
   "markdownHtmlRawHtmlInline": "Встроенные HTML-теги",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
+  "@markdownHtmlRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
   "markdownHtmlRawHtmlInlineDescription": "Безопасные встроенные HTML-теги отображаются без показа самих тегов.",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
+  "@markdownHtmlRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
   "markdownHtmlSafety": "Правила безопасности",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
+  "@markdownHtmlSafety": {
+    "description": "Reference section title for raw HTML safety rules."
+  },
   "markdownHtmlSafetyDescription": "Исходный HTML разбирается и очищается перед отображением в предварительном просмотре.",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
+  "@markdownHtmlSafetyDescription": {
+    "description": "Reference section description for raw HTML safety rules."
+  },
   "markdownHtmlHeadings": "Заголовки",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
+  "@markdownHtmlHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
   "markdownHtmlParagraphs": "Абзацы",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
+  "@markdownHtmlParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
   "markdownHtmlLists": "Списки",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
+  "@markdownHtmlLists": {
+    "description": "Reference row label for list syntax."
+  },
   "markdownHtmlHtmlContainers": "Контейнеры",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
+  "@markdownHtmlHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
   "markdownHtmlHtmlTextBlocks": "Текстовые блоки",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
+  "@markdownHtmlHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
   "markdownHtmlHtmlFigures": "Фигуры и изображения",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
+  "@markdownHtmlHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
   "markdownHtmlHtmlPreformatted": "Предформатированный код",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
+  "@markdownHtmlHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
   "markdownHtmlHtmlDisclosure": "Раскрывающиеся блоки",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
+  "@markdownHtmlHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
   "markdownHtmlHtmlDescriptionLists": "Списки описаний",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
+  "@markdownHtmlHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
   "markdownHtmlHtmlFormattingTags": "Теги форматирования",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
+  "@markdownHtmlHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
   "markdownHtmlHtmlInlineCodeTags": "Встроенные теги кода",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
+  "@markdownHtmlHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
   "markdownHtmlHtmlNeutralInlineTags": "Семантические текстовые теги",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
+  "@markdownHtmlHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
   "markdownHtmlSanitizedPreview": "Очищенный предварительный просмотр",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
+  "@markdownHtmlSanitizedPreview": {
+    "description": "Reference row label for sanitized preview behavior."
+  },
   "markdownHtmlSanitizedPreviewDescription": "Разрешённый HTML преобразуется в блоки предварительного просмотра BusyMark, а не отображается в браузере.",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
+  "@markdownHtmlSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
   "markdownHtmlSourcePreserved": "Исходный текст сохраняется",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
+  "@markdownHtmlSourcePreserved": {
+    "description": "Reference row label for raw source preservation."
+  },
   "markdownHtmlSourcePreservedDescription": "Неизменённый исходный HTML сохраняется в точности как исходный текст.",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
+  "@markdownHtmlSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
   "markdownHtmlMarkdownInsideHtml": "Markdown внутри HTML",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
+  "@markdownHtmlMarkdownInsideHtml": {
+    "description": "Reference row label for Markdown inside raw HTML."
+  },
   "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-разметка внутри исходного HTML отображается как обычный текст.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
+  "@markdownHtmlMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
   "markdownHtmlBlockedContent": "Активный контент заблокирован",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
+  "@markdownHtmlBlockedContent": {
+    "description": "Reference row label for blocked HTML content."
+  },
   "markdownHtmlBlockedContentDescription": "Скрипты, стили, фреймы, формы, SVG, MathML, события и небезопасные атрибуты блокируются.",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
+  "@markdownHtmlBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
   "markdownHtmlSafeUrls": "Только безопасные URL",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
+  "@markdownHtmlSafeUrls": {
+    "description": "Reference row label for safe URL policy."
+  },
   "markdownHtmlSafeUrlsDescription": "Ссылки допускают http, https, mailto, tel, относительные URL и фрагменты; небезопасные схемы блокируются.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "@markdownHtmlSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "Добавить в Git",
   "delete": "Удалить",
   "newFile": "Новый файл",
@@ -2388,101 +2525,294 @@
   "errorFileOperationOutsideRoot": "Операция с файлом должна выполняться в пределах рабочей области.",
   "errorFileOperationRoot": "Корень рабочей области нельзя изменить через дерево файлов.",
   "safeDeleteTopicFile": "Безопасно удалить файл темы…",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "Удалить элемент оглавления",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "Просмотреть использования",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "Удалить файл темы",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "Удалить",
-  "@removeAction": {"description": "Generic remove action label."},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
   "topicRemovalSummary": "Удалить «{topic}» из выбранного экземпляра. Файл темы будет сохранён.",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "safeDeleteTopicSummary": "Удалить «{topic}» и безопасно обновить ссылки на неё во всём этом проекте Writerside.",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, one{1 дочерняя тема будет перемещена на уровень выше.} few{{count} дочерние темы будут перемещены на уровень выше.} many{{count} дочерних тем будут перемещены на уровень выше.} other{{count} дочерней темы будут перемещены на уровень выше.}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "Эта тема используется как стартовая страница экземпляра. Просмотрите её использования и назначьте другую стартовую страницу, прежде чем продолжить.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "Использования ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBreakingTopicUsages": "Ссылок, которые перестали бы работать, не найдено.",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark нашёл следующие ссылки на эту тему.",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "Элементы оглавления",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "Стартовые страницы",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "Ссылки на темы",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "Включения",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, one{1 использование} few{{count} использования} many{{count} использований} other{{count} использования}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "refactoringOptions": "Параметры рефакторинга",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "Обновить использования автоматически",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "Удалить ссылки из оглавлений и включения, сохранив текст ссылок.",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "Некоторые использования необходимо изменить вручную перед этим рефакторингом.",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "Перенаправить на",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "Не перенаправлять старую опубликованную страницу.",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "Цель перенаправления",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "Просмотрите и обновите оставшиеся использования, прежде чем продолжить, или включите автоматическое обновление, если оно доступно.",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
   "usagesOfTopic": "Использования темы {topic}",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "Использований не найдено",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "вне выбранного экземпляра",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "Выполнить рефакторинг",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "Файл темы больше не используется",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "Сохранить файл темы",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
   "orphanTopicMessage": "«{topic}» больше нигде не используется в этом проекте Writerside. Удалите файл или сохраните его для использования в другом экземпляре.",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "Используйте безопасное удаление для файлов тем Writerside.",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "Не удалось завершить поиск использований темы. Файлы не были изменены.",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "Некоторые использования темы всё ещё требуют внимания. Просмотрите их перед продолжением.",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "Выбранная цель перенаправления больше недействительна. Выберите её снова.",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
   "errorWritersideRollbackFailed": "Не удалось полностью откатить удаление темы. Перед продолжением проверьте следующие пути: {paths}",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "Экспортировать в PDF", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "Выберите макет страницы для аккуратного автономного PDF-файла.", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "Удалённые изображения при экспорте не загружаются. Доступные локальные изображения будут добавлены.", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "Размер страницы", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "US Letter", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "Ориентация", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "Книжная", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "Альбомная", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "Поля", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "Узкие", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "Обычные", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "Широкие", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "Добавить номера страниц", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "Экспортировать", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "Экспорт PDF…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "Документ PDF", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "Файл {fileName} экспортирован.", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "Файл {fileName} экспортирован. Не удалось добавить изображений: {count}.", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "Компонент экспорта PDF отсутствует. Переустановите BusyMark и повторите попытку.", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "Экспорт PDF занял слишком много времени и был остановлен.", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark не удалось экспортировать этот документ в PDF.", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "exportAsPdf": "Экспортировать в PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "Выберите макет страницы для аккуратного автономного PDF-файла.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Удалённые изображения при экспорте не загружаются. Доступные локальные изображения будут добавлены.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Размер страницы",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "US Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Ориентация",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Книжная",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Альбомная",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Поля",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Узкие",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Обычные",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Широкие",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Добавить номера страниц",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Экспортировать",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "Экспорт PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "Документ PDF",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "Файл {fileName} экспортирован.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} экспортирован с {count, plural, =1{1 предупреждением} other{{count} предупреждениями}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "Компонент экспорта PDF отсутствует. Переустановите BusyMark и повторите попытку.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "Экспорт PDF занял слишком много времени и был остановлен.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark не удалось экспортировать этот документ в PDF.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "Отрисовка…",
   "visualizationStale": "Показан последний корректный результат",
   "visualizationShowSource": "Показать исходный код",
@@ -2503,11 +2833,14 @@
   "visualizationRenderFailed": "Не удалось отобразить эту визуализацию.",
   "visualizationRetry": "Повторить",
   "visualizationSaved": "Файл {fileName} сохранён",
-  "shortcutExportPdfDescription": "Экспортировать активный документ или модуль Writerside в PDF.", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "Экспортировать активный документ или модуль Writerside в PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "Индексированные",
   "gitUnstaged": "Неиндексированные",
   "gitFetch": "Получить",
-  "gitStagedFileCount": "{count, plural, =1{1 индексированный файл} other{{count} индексированных файлов}}",
+  "gitStagedFileCount": "{count, plural, =1{1 файл в индексе} few{{count} файла в индексе} many{{count} файлов в индексе} other{{count} файлов в индексе}}",
   "gitOutsideWorkspace": "Вне рабочего пространства",
   "gitFileHistoryRequiresOpenFile": "Для истории файла требуется открытый файл Markdown.",
   "gitLoadMore": "Загрузить ещё",
@@ -2620,7 +2953,6 @@
   "ai": "ИИ",
   "aiLocalOllama": "Локальный Ollama",
   "aiDisabled": "Отключено",
-  "aiLocalOnlyDescription": "Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.",
   "aiProvider": "Поставщик ИИ",
   "aiDefaultProvider": "Поставщик по умолчанию",
   "aiConfigureProvider": "Настроить поставщика",
@@ -2704,7 +3036,7 @@
   "tableAlignmentCenter": "Выравнивание: по центру",
   "tableAlignmentRight": "Выравнивание: по правому краю",
   "sourceSearchReplacement": "Заменить на",
-  "sourceSearchReplaceCurrent": "Заменить текущее",
+  "sourceSearchReplaceCurrent": "Заменить текущее совпадение",
   "sourceSearchReplaceAndFindNext": "Заменить и найти следующее",
   "sourceSearchReplaceAll": "Заменить всё",
   "workspaceReplace": "Заменить в рабочей области",
@@ -2734,14 +3066,18 @@
   "reloadFromDisk": "Перезагрузить с диска",
   "keepMine": "Оставить мою версию",
   "saveAs": "Сохранить как",
-  "unsavedChangesMultipleMessage": "В документах ({count}) есть несохранённые изменения. Сохранить их перед продолжением?",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 документ содержит несохранённые изменения. Сохраните его перед продолжением.} other{{count} документа содержат несохранённые изменения. Сохраните каждое перед продолжением.}}",
   "workspaceReplaceIssuePartialConflict": "Откат остановлен, поскольку файл был одновременно изменён. Некоторые замены могли сохраниться; вытесненное содержимое сохранено по указанному ниже пути.",
   "workspaceReplaceIssueApplyFailed": "Замены не применены, поскольку проверенный набор не удалось безопасно сохранить.",
-  "workspaceRecoveryRestored": "Восстановлено несохранённых документов: {count}. Проверьте каждый восстановленный документ перед продолжением.",
-  "workspaceRecoveryDamaged": "Не удалось восстановить повреждённые записи ({count}). Корректные восстановленные документы остаются доступными.",
+  "workspaceRecoveryRestored": "{count, plural, =1{Восстановлен 1 несохранённый документ. Проверьте его перед сохранением или отменой.} other{Восстановлено {count} несохранённых документов. Проверьте каждый перед сохранением или отменой.}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{Не удалось восстановить 1 повреждённую запись восстановления. Оригинальный файл восстановления сохранён для проверки.} other{{count} повреждённых записей восстановления не удалось восстановить. Корректные записи восстановления остаются доступны.}}",
   "recoveredDocumentReview": "Восстановлено несохранённое содержимое файла {fileName}. Проверьте его, затем сохраните, сохраните как новый файл или отбросьте.",
   "commandUnavailableInContext": "Эта команда недоступна в текущем контексте.",
   "mathRenderFailed": "Не удалось отобразить математическое выражение.",
   "inlineMath": "Формула в строке",
-  "displayMath": "Формула отдельным блоком"
+  "displayMath": "Формула отдельным блоком",
+  "aiExplicitEditingDescription": "Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

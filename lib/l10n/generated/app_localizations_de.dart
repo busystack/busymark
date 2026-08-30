@@ -325,7 +325,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -818,7 +818,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count Dokumente enthalten ungespeicherte Änderungen. Vor dem Fortfahren speichern?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Dokumente haben ungespeicherte Änderungen. Speichern Sie diese vor dem Fortfahren.',
+      one:
+          '1 Dokument hat ungespeicherte Änderungen. Speichern Sie es vor dem Fortfahren.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1705,12 +1713,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return '$count ungespeicherte Dokumente wurden wiederhergestellt. Prüfen Sie jedes wiederhergestellte Dokument, bevor Sie fortfahren.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count nicht gespeicherte Dokumente wiederhergestellt. Überprüfen Sie jedes wiederhergestellte Dokument vor dem Speichern oder Verwerfen.',
+      one:
+          '1 nicht gespeichertes Dokument wiederhergestellt. Überprüfen Sie es vor dem Speichern oder Verwerfen.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count beschädigte Wiederherstellungsdatensätze konnten nicht wiederhergestellt werden. Gültige wiederhergestellte Dokumente bleiben verfügbar.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count beschädigte Wiederherstellungsdatensätze konnten nicht wiederhergestellt werden. Die gültigen Wiederherstellungsdatensätze bleiben verfügbar.',
+      one:
+          'Ein beschädigter Wiederherstellungsdatensatz konnte nicht wiederhergestellt werden. Die Originaldatei der Wiederherstellung wurde zur Überprüfung aufbewahrt.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2406,9 +2430,9 @@ class AppLocalizationsDe extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Die ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.',
+          'Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.',
       one:
-          'Die ausgewählte versionierte Datei wird auf den Stand in Git zurückgesetzt.',
+          'Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Datei werden auf den Stand in Git zurückgesetzt.',
     );
     return '$_temp0';
   }
@@ -2455,10 +2479,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Projekt';
+  String get gitProjectHistory => 'Projektverlauf';
 
   @override
-  String get gitFileHistory => 'Aktuelle Datei';
+  String get gitFileHistory => 'Dateiverlauf';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2825,7 +2849,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName wurde exportiert. Nicht einbezogene Bilder: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Warnungen',
+      one: '1 Warnung',
+    );
+    return '$fileName wurde mit $_temp0 exportiert.';
   }
 
   @override
@@ -3245,7 +3275,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiDisabled => 'Deaktiviert';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'KI-Bearbeitung erfolgt nur auf ausdrücklichen Befehl. BusyMark sendet ausschließlich den angezeigten Kontext an den ausgewählten Anbieter und übernimmt keinen Vorschlag ohne Prüfung.';
 
   @override

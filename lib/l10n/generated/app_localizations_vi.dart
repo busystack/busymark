@@ -67,7 +67,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get feedbackMessage => 'Nội dung chi tiết';
 
   @override
-  String get feedbackReplyEmail => 'Email nhận phản hồi (tùy chọn)';
+  String get feedbackReplyEmail => 'Email để trả lời (tùy chọn)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Bao gồm thông tin kỹ thuật';
@@ -322,7 +322,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -385,7 +385,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get validate => 'Kiểm tra';
 
   @override
-  String get validation => 'Xác thực';
+  String get validation => 'Xác minh';
 
   @override
   String get viewMode => 'Chế độ xem';
@@ -640,10 +640,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get directoryName => 'Tên thư mục';
 
   @override
-  String get instanceName => 'Tên phiên bản';
+  String get instanceName => 'Tên thực thể';
 
   @override
-  String get instanceId => 'ID phiên bản';
+  String get instanceId => 'ID thực thể';
 
   @override
   String get startTopicTitle => 'Tiêu đề chủ đề bắt đầu';
@@ -1201,7 +1201,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get removeTocElement => 'Xóa phần tử mục lục';
 
   @override
-  String get reviewUsages => 'Xem lại cách sử dụng';
+  String get reviewUsages => 'Xem lại các tham chiếu';
 
   @override
   String get deleteTopicFile => 'Xóa tệp chủ đề';
@@ -1211,7 +1211,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Xóa “$topic” khỏi phiên bản đã chọn. Tệp chủ đề sẽ được giữ lại.';
+    return 'Xóa “$topic” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.';
   }
 
   @override
@@ -1232,11 +1232,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get topicIsStartPageRemovalWarning =>
-      'Chủ đề này đang được dùng làm trang bắt đầu của một phiên bản. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.';
+      'Chủ đề này đang được dùng làm trang bắt đầu của một thực thể. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.';
 
   @override
   String topicUsagesCount(int count) {
-    return 'Cách sử dụng ($count)';
+    return 'Các tham chiếu ($count)';
   }
 
   @override
@@ -1257,7 +1257,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get topicUsageTopicLinks => 'Liên kết chủ đề';
 
   @override
-  String get topicUsageIncludes => 'Nội dung bao gồm';
+  String get topicUsageIncludes => 'Các phần tử include';
 
   @override
   String usageCount(int count) {
@@ -1307,7 +1307,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get noUsagesFound => 'Không tìm thấy cách sử dụng nào';
 
   @override
-  String get outsideSelectedInstance => 'bên ngoài phiên bản đã chọn';
+  String get outsideSelectedInstance => 'bên ngoài thực thể đã chọn';
 
   @override
   String get doRefactor => 'Tái cấu trúc';
@@ -1320,7 +1320,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String orphanTopicMessage(String topic) {
-    return '“$topic” không còn được sử dụng ở đâu trong dự án Writerside này. Xóa tệp hoặc giữ lại để dùng trong phiên bản khác.';
+    return '“$topic” không còn được sử dụng ở đâu trong dự án Writerside này. Xóa tệp hoặc giữ lại để dùng trong thực thể khác.';
   }
 
   @override
@@ -1780,7 +1780,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorInstanceIdInvalid =>
-      'ID phiên bản phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.';
+      'ID thực thể phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.';
 
   @override
   String get errorTopicFileInvalid =>
@@ -1800,7 +1800,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Mô-đun Writerside không có cây phiên bản.';
+      'Mô-đun Writerside không có cây thực thể.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -1982,18 +1982,18 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg không đăng ký phiên bản nào.';
+      'writerside.cfg không đăng ký thực thể nào.';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
       'Gốc .tree phải là <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'Hồ sơ phiên bản thiếu id.';
+  String get diagnosticWritersideTreeMissingId => 'Hồ sơ thực thể thiếu id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'Tên gốc của tệp cây không khớp với ID phiên bản \"$id\".';
+    return 'Tên gốc của tệp cây không khớp với ID thực thể \"$id\".';
   }
 
   @override
@@ -2007,7 +2007,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'Chủ đề \"$topic\" xuất hiện nhiều hơn một lần trong mục lục của phiên bản này.';
+    return 'Chủ đề \"$topic\" xuất hiện nhiều hơn một lần trong mục lục của thực thể này.';
   }
 
   @override
@@ -2092,12 +2092,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'Tệp nhóm phiên bản đã định không tồn tại: $relativePath';
+    return 'Tệp nhóm thực thể đã định không tồn tại: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'Cây phiên bản đã đăng ký \"$source\" không tồn tại.';
+    return 'Cây thực thể đã đăng ký \"$source\" không tồn tại.';
   }
 
   @override
@@ -2273,7 +2273,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get gitClean => 'Sạch';
+  String get gitClean => 'Không có thay đổi';
 
   @override
   String get gitConflicts => 'Xung đột';
@@ -2585,7 +2585,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài phiên bản BusyMark này.';
+      'Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài thực thể BusyMark này.';
 
   @override
   String get gitErrorDirtyWorkspace =>
@@ -2605,7 +2605,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gitErrorDiverged =>
-      'Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài phiên bản BusyMark này.';
+      'Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài thực thể BusyMark này.';
 
   @override
   String get gitErrorAuthorIdentity =>
@@ -2701,7 +2701,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get markdownHtmlHtmlTextBlocks => 'Khối văn bản';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Hình và hình ảnh';
+  String get markdownHtmlHtmlFigures => 'Figure và hình ảnh';
 
   @override
   String get markdownHtmlHtmlPreformatted => 'Mã định dạng sẵn';
@@ -2816,7 +2816,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'Đã xuất $fileName với $count cảnh báo.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cảnh báo',
+      one: '1 cảnh báo',
+    );
+    return 'Đã xuất $fileName với $_temp0.';
   }
 
   @override
@@ -2899,22 +2905,22 @@ class AppLocalizationsVi extends AppLocalizations {
       'Xuất tài liệu hiện tại hoặc mô-đun Writerside dưới dạng PDF.';
 
   @override
-  String get instances => 'Các phiên bản';
+  String get instances => 'Các thực thể';
 
   @override
-  String get newInstance => 'Phiên bản mới';
+  String get newInstance => 'Thực thể mới';
 
   @override
   String get newTocLibrary => 'Thư viện mục lục mới';
 
   @override
-  String get editInstance => 'Chỉnh sửa phiên bản';
+  String get editInstance => 'Chỉnh sửa thực thể';
 
   @override
   String get openTocFile => 'Mở tệp mục lục';
 
   @override
-  String get createInstance => 'Tạo phiên bản';
+  String get createInstance => 'Tạo thực thể';
 
   @override
   String get createTocLibrary => 'Tạo thư viện mục lục';
@@ -3011,7 +3017,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Sao chép hình ảnh và video cục bộ được các tệp đã chọn tham chiếu, đồng thời giữ nguyên đường dẫn tương đối.';
 
   @override
-  String get instanceIdRenameWarningTitle => 'Đổi tên ID phiên bản?';
+  String get instanceIdRenameWarningTitle => 'Đổi tên ID thực thể?';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
@@ -3053,16 +3059,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get instanceColorYellow => 'Vàng';
 
   @override
-  String get errorWritersideInstanceNameRequired => 'Nhập tên phiên bản.';
+  String get errorWritersideInstanceNameRequired => 'Nhập tên thực thể.';
 
   @override
   String errorWritersideInstanceIdExists(String id) {
-    return 'Đã có phiên bản với ID “$id”.';
+    return 'Đã có thực thể với ID “$id”.';
   }
 
   @override
   String errorWritersideInstanceTreeExists(String path) {
-    return 'Cây phiên bản đã tồn tại: $path';
+    return 'Cây thực thể đã tồn tại: $path';
   }
 
   @override
@@ -3086,11 +3092,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceFilesChanged =>
-      'Các tệp phiên bản đã thay đổi trên đĩa. Hãy xem lại và thử lại.';
+      'Các tệp thực thể đã thay đổi trên đĩa. Hãy xem lại và thử lại.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
-    return 'BusyMark không thể khôi phục hoàn toàn thay đổi phiên bản. Hãy xem lại các tệp này trước khi tiếp tục: $paths';
+    return 'BusyMark không thể khôi phục hoàn toàn thay đổi của thực thể. Hãy xem lại các tệp này trước khi tiếp tục: $paths';
   }
 
   @override
@@ -3103,20 +3109,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceConfigurationInvalid =>
-      'Cấu hình phiên bản Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.';
+      'Cấu hình thực thể Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.';
 
   @override
   String get errorWritersideInstanceTemporaryFile =>
-      'BusyMark không thể đưa các thay đổi phiên bản vào stage một cách an toàn.';
+      'BusyMark không thể đưa các thay đổi của thực thể vào stage một cách an toàn.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
-    return 'Trạng thái phiên bản không xác định “$status”. Sử dụng release, eap hoặc deprecated.';
+    return 'Trạng thái thực thể không xác định “$status”. Sử dụng release, eap hoặc deprecated.';
   }
 
   @override
   String diagnosticWritersideDuplicateInstanceId(String id) {
-    return 'ID phiên bản “$id” được nhiều tệp cây sử dụng.';
+    return 'ID thực thể “$id” được nhiều tệp cây sử dụng.';
   }
 
   @override
@@ -3133,7 +3139,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideBuildProfileMissingInstance =>
-      'Phần tử <build-profile> phải chỉ định ID phiên bản.';
+      'Phần tử <build-profile> phải chỉ định ID thực thể.';
 
   @override
   String get diagnosticWritersideTreeInvalidInclude =>
@@ -3145,7 +3151,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      'Tham chiếu mục lục giữa các phiên bản phải chỉ định cả ref và in.';
+      'Tham chiếu mục lục giữa các thực thể phải chỉ định cả ref và in.';
 
   @override
   String get diagnosticWritersideTreeConflictingTargets =>
@@ -3158,15 +3164,15 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'Tệp nhóm phiên bản phải có phần tử gốc <instance-groups>.';
+      'Tệp nhóm thực thể phải có phần tử gốc <instance-groups>.';
 
   @override
   String get diagnosticWritersideInstanceGroupInvalid =>
-      'Một nhóm phiên bản phải chỉ định id không trống và danh sách phiên bản.';
+      'Một nhóm thực thể phải chỉ định id không trống và danh sách thực thể.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
-    return 'ID nhóm phiên bản “$id” được khai báo nhiều hơn một lần.';
+    return 'ID nhóm thực thể “$id” được khai báo nhiều hơn một lần.';
   }
 
   @override
@@ -3193,12 +3199,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String diagnosticWritersideUnknownInstanceGroup(String group) {
-    return 'Điều kiện phiên bản tham chiếu đến nhóm không xác định “@$group”.';
+    return 'Điều kiện thực thể tham chiếu đến nhóm không xác định “@$group”.';
   }
 
   @override
   String diagnosticWritersideReferenceInstanceMissing(String instance) {
-    return 'Tham chiếu giữa các phiên bản nhắm đến phiên bản không xác định “$instance”.';
+    return 'Tham chiếu giữa các thực thể nhắm đến thực thể không xác định “$instance”.';
   }
 
   @override
@@ -3206,7 +3212,7 @@ class AppLocalizationsVi extends AppLocalizations {
     String topic,
     String instance,
   ) {
-    return 'Chủ đề “$topic” không nằm trong phiên bản được tham chiếu “$instance”.';
+    return 'Chủ đề “$topic” không nằm trong thực thể được tham chiếu “$instance”.';
   }
 
   @override
@@ -3234,7 +3240,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiDisabled => 'Đã tắt';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.';
 
   @override

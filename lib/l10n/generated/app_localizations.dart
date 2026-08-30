@@ -130,6 +130,7 @@ abstract class AppLocalizations {
     Locale('nl'),
     Locale('pl'),
     Locale('pt'),
+    Locale('pt', 'BR'),
     Locale('ru'),
     Locale('tr'),
     Locale('uk'),
@@ -249,7 +250,7 @@ abstract class AppLocalizations {
   /// Optional reply email field label.
   ///
   /// In en, this message translates to:
-  /// **'Reply email (optional)'**
+  /// **'Email address for replies (optional)'**
   String get feedbackReplyEmail;
 
   /// Checkbox label for optional technical details.
@@ -735,7 +736,7 @@ abstract class AppLocalizations {
   /// Language selector option for Norwegian.
   ///
   /// In en, this message translates to:
-  /// **'Norsk'**
+  /// **'Norsk bokmål'**
   String get languageNorwegian;
 
   /// Language selector option for French.
@@ -2643,7 +2644,7 @@ abstract class AppLocalizations {
   /// Tooltip for replacing the current search match.
   ///
   /// In en, this message translates to:
-  /// **'Replace current'**
+  /// **'Replace current match'**
   String get sourceSearchReplaceCurrent;
 
   /// Tooltip for replacing the current match and moving to the next.
@@ -2697,7 +2698,7 @@ abstract class AppLocalizations {
   /// Checkbox label for selecting every replacement match in a file.
   ///
   /// In en, this message translates to:
-  /// **'Select all {count} matches'**
+  /// **'{count, plural, =1{Select 1 match} other{Select all {count} matches}}'**
   String selectFileMatches(int count);
 
   /// Summary shown after applying workspace replacements.
@@ -3677,7 +3678,7 @@ abstract class AppLocalizations {
   /// Writerside module diagnostic for an include without a from attribute.
   ///
   /// In en, this message translates to:
-  /// **'<include> is missing from.'**
+  /// **'<include> is missing the from attribute.'**
   String get diagnosticWritersideIncludeMissingFrom;
 
   /// Writerside module diagnostic for a missing include source.
@@ -4748,7 +4749,7 @@ abstract class AppLocalizations {
   /// PDF export success message when some content fell back or was omitted.
   ///
   /// In en, this message translates to:
-  /// **'{fileName} was exported with {count} warning(s).'**
+  /// **'{fileName} was exported with {count, plural, =1{1 warning} other{{count} warnings}}.'**
   String pdfExportedWithWarnings(String fileName, int count);
 
   /// Error shown when the bundled PDF compiler is unavailable.
@@ -5078,7 +5079,7 @@ abstract class AppLocalizations {
   /// Count of discovered Markdown import files.
   ///
   /// In en, this message translates to:
-  /// **'{count} Markdown file(s) found'**
+  /// **'{count, plural, =1{1 Markdown file found} other{{count} Markdown files found}}'**
   String markdownFilesFound(int count);
 
   /// Empty state for a Writerside Markdown import source.
@@ -5430,11 +5431,11 @@ abstract class AppLocalizations {
   /// **'Disabled'**
   String get aiDisabled;
 
-  /// Privacy description for BusyMark local AI.
+  /// Privacy disclosure for explicit AI editing with selected-provider context visibility.
   ///
   /// In en, this message translates to:
   /// **'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.'**
-  String get aiLocalOnlyDescription;
+  String get aiExplicitEditingDescription;
 
   /// Label for an AI provider selection.
   ///
@@ -5487,7 +5488,7 @@ abstract class AppLocalizations {
   /// Successful Ollama connection status.
   ///
   /// In en, this message translates to:
-  /// **'Connected. {count} installed model(s) found.'**
+  /// **'Connected. {count, plural, =1{1 installed model found} other{{count} installed models found}}.'**
   String aiConnectionReady(int count);
 
   /// AI model setting shown before a model has been selected or discovered.
@@ -5619,7 +5620,7 @@ abstract class AppLocalizations {
   /// Disclosure of AI context size.
   ///
   /// In en, this message translates to:
-  /// **'The selected provider will receive {count} characters from the displayed context.'**
+  /// **'The selected provider will receive {count, plural, =1{1 character} other{{count} characters}} from the displayed context.'**
   String aiContextDisclosure(int count);
 
   /// Label for original text in an AI proposal review.
@@ -5793,7 +5794,7 @@ abstract class AppLocalizations {
   /// Successful AI model generation qualification.
   ///
   /// In en, this message translates to:
-  /// **'Generation verified with {model}. {count} compatible model(s) available.'**
+  /// **'Generation verified with {model}. {count, plural, =1{1 compatible model available} other{{count} compatible models available}}.'**
   String aiGenerationVerified(String model, int count);
 
   /// Additional model qualification status when local generation required a cold start.
@@ -5847,7 +5848,7 @@ abstract class AppLocalizations {
   /// Confirmation after generating a Markdown table of contents.
   ///
   /// In en, this message translates to:
-  /// **'Table of contents updated with {count} entries.'**
+  /// **'Table of contents updated with {count, plural, =1{1 entry} other{{count} entries}}.'**
   String markdownTocUpdated(int count);
 
   /// Message when a Markdown document has no section headings for a generated table of contents.
@@ -5946,6 +5947,14 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when language+country codes are specified.
   switch (locale.languageCode) {
+    case 'pt':
+      {
+        switch (locale.countryCode) {
+          case 'BR':
+            return AppLocalizationsPtBr();
+        }
+        break;
+      }
     case 'zh':
       {
         switch (locale.countryCode) {

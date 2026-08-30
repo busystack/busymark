@@ -1,47 +1,47 @@
 {
-  "@@locale": "pl",
-  "reportIssue": "Zgłoś problem",
-  "feedbackCategory": "Kategoria",
-  "feedbackChooseCategory": "Wybierz kategorię",
-  "feedbackCategoryProblem": "Problem lub błąd",
-  "feedbackCategoryFeature": "Prośba o funkcję",
-  "feedbackCategoryPrivacySecurity": "Obawy dotyczące prywatności lub bezpieczeństwa",
-  "feedbackCategoryUsability": "Problem z użytecznością",
-  "feedbackCategoryOther": "Inne",
-  "feedbackSubject": "Temat",
-  "feedbackMessage": "Szczegółowa wiadomość",
-  "feedbackReplyEmail": "Adres e-mail do odpowiedzi (opcjonalnie)",
-  "feedbackIncludeTechnicalDetails": "Dołącz dane techniczne",
-  "feedbackTechnicalDetailsDisclosure": "Po włączeniu dodawane są wyłącznie wersja systemu operacyjnego Linux i ustawienia regionalne aplikacji BusyMark. Nie są dołączane dzienniki, pliki, dane konta ani inne dane diagnostyczne.",
-  "feedbackSubmit": "Wyślij",
-  "feedbackSubmitting": "Wysyłanie…",
-  "feedbackCategoryRequired": "Wybierz kategorię.",
-  "feedbackSubjectLength": "Temat musi mieć od 3 do 120 znaków.",
-  "feedbackMessageLength": "Wiadomość musi mieć od 10 do 5000 znaków.",
-  "feedbackReplyEmailInvalid": "Wpisz prawidłowy adres e-mail albo pozostaw to pole puste.",
-  "feedbackConnectionFailure": "BusyMark nie mógł się połączyć. Sprawdź połączenie z Internetem i spróbuj ponownie.",
-  "feedbackTimeoutFailure": "Upłynął limit czasu żądania. Spróbuj ponownie.",
-  "feedbackRateLimitedFailure": "Z tego połączenia wysłano zbyt wiele zgłoszeń. Poczekaj i spróbuj ponownie.",
-  "feedbackRejectedFailure": "Serwer odrzucił zgłoszenie. Sprawdź pola formularza i spróbuj ponownie.",
-  "feedbackServerFailure": "Serwer nie mógł przyjąć zgłoszenia. Spróbuj ponownie później.",
-  "feedbackSuccess": "Opinia została wysłana. Identyfikator referencyjny: {id}",
+  "@@locale": "pt_BR",
+  "reportIssue": "Comunicar um problema",
+  "feedbackCategory": "Categoria",
+  "feedbackChooseCategory": "Escolha uma categoria",
+  "feedbackCategoryProblem": "Problema ou erro",
+  "feedbackCategoryFeature": "Pedido de funcionalidade",
+  "feedbackCategoryPrivacySecurity": "Preocupação com privacidade ou segurança",
+  "feedbackCategoryUsability": "Preocupação de usabilidade",
+  "feedbackCategoryOther": "Outro",
+  "feedbackSubject": "Assunto",
+  "feedbackMessage": "Mensagem detalhada",
+  "feedbackReplyEmail": "E-mail para resposta (opcional)",
+  "feedbackIncludeTechnicalDetails": "Incluir detalhes técnicos",
+  "feedbackTechnicalDetailsDisclosure": "Quando esta opção está ativada, adiciona apenas a versão do sistema operacional Linux e o locale do BusyMark. Nenhum log, arquivo, dados de conta ou outro diagnóstico é anexado.",
+  "feedbackSubmit": "Enviar",
+  "feedbackSubmitting": "A enviar…",
+  "feedbackCategoryRequired": "Escolha uma categoria.",
+  "feedbackSubjectLength": "O assunto deve ter entre 3 e 120 caracteres.",
+  "feedbackMessageLength": "A mensagem deve ter entre 10 e 5000 caracteres.",
+  "feedbackReplyEmailInvalid": "Introduza um endereço de e-mail válido ou deixe este campo vazio.",
+  "feedbackConnectionFailure": "O BusyMark não conseguiu estabelecer conexão. Verifique a conexão com a Internet e tente novamente.",
+  "feedbackTimeoutFailure": "O pedido excedeu o tempo limite. Tente novamente.",
+  "feedbackRateLimitedFailure": "Foram enviados relatórios demais a partir desta conexão. Aguarde e tente novamente.",
+  "feedbackRejectedFailure": "O servidor rejeitou o relatório. Verifique os campos do formulário e tente novamente.",
+  "feedbackServerFailure": "O servidor não conseguiu aceitar o relatório. Tente novamente mais tarde.",
+  "feedbackSuccess": "Comentários enviados. ID de referência: {id}",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "Edytor plików Markdown i projektów dokumentacji zgodnych z Writerside.",
+  "appSubtitle": "Editor para arquivos Markdown e projetos de documentação compatíveis com o Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },
-  "aboutBusyMark": "O aplikacji BusyMark",
+  "aboutBusyMark": "Sobre BusyMark",
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutTagline": "Edytor Markdown i Writerside",
+  "aboutTagline": "Editor de Markdown e Writerside",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
   },
-  "aboutLicenseLabel": "Licencja",
+  "aboutLicenseLabel": "Licença",
   "@aboutLicenseLabel": {
     "description": "Label for the license row in the About dialog."
   },
@@ -49,125 +49,125 @@
   "@aboutLicenseName": {
     "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
   },
-  "aboutWebsite": "Strona internetowa",
+  "aboutWebsite": "Site",
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutSourceCode": "Kod źródłowy",
+  "aboutSourceCode": "Código-fonte",
   "@aboutSourceCode": {
     "description": "Label for the source-code repository row in the About dialog."
   },
-  "advanced": "Zaawansowane",
+  "advanced": "Avançado",
   "@advanced": {
     "description": "Settings section title for advanced actions."
   },
-  "appearance": "Wygląd",
+  "appearance": "Aparência",
   "@appearance": {
     "description": "Settings section title for appearance options."
   },
-  "apply": "Zastosuj",
+  "apply": "Aplicar",
   "@apply": {
     "description": "Button label that applies a dialog change."
   },
-  "back": "Wstecz",
+  "back": "Voltar",
   "@back": {
     "description": "Tooltip for navigating back."
   },
-  "bottomLeft": "Na dole po lewej",
+  "bottomLeft": "Canto inferior esquerdo",
   "@bottomLeft": {
     "description": "Editing button position option."
   },
-  "bottomRight": "Na dole po prawej",
+  "bottomRight": "Canto inferior direito",
   "@bottomRight": {
     "description": "Editing button position option."
   },
-  "cancel": "Anuluj",
+  "cancel": "Cancelar",
   "@cancel": {
     "description": "Cancel button label."
   },
-  "choose": "Wybierz",
+  "choose": "Escolher",
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
-  "chooseLocation": "Wybierz lokalizację",
+  "chooseLocation": "Escolher local",
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
-  "copy": "Kopiuj",
+  "copy": "Copiar",
   "@copy": {
     "description": "Copy command label."
   },
-  "copyName": "Kopiuj nazwę",
+  "copyName": "Copiar nome",
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
-  "copyFileName": "Kopiuj nazwę pliku",
+  "copyFileName": "Copiar nome do arquivo",
   "@copyFileName": {
     "description": "Menu action that copies the active document file name."
   },
-  "copyPath": "Kopiuj ścieżkę",
+  "copyPath": "Copiar caminho",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
   },
-  "create": "Utwórz",
+  "create": "Criar",
   "@create": {
     "description": "Create action label."
   },
-  "creating": "Tworzenie...",
+  "creating": "Criando...",
   "@creating": {
     "description": "Progress label while a project or topic is being created."
   },
-  "cut": "Wytnij",
+  "cut": "Recortar",
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteSection": "Podnieś rangę sekcji",
-  "demoteSection": "Obniż rangę sekcji",
-  "moveSectionUp": "Przenieś sekcję wyżej",
-  "moveSectionDown": "Przenieś sekcję niżej",
-  "confirmDeleteSectionTitle": "Usunąć sekcję?",
-  "confirmDeleteSectionMessage": "Usunąć „{name}” i całą zawartość tej sekcji? Tej operacji nie można cofnąć.",
-  "darkTheme": "Ciemny",
+  "promoteSection": "Promover seção",
+  "demoteSection": "Rebaixar seção",
+  "moveSectionUp": "Mover seção para cima",
+  "moveSectionDown": "Mover seção para baixo",
+  "confirmDeleteSectionTitle": "Excluir seção?",
+  "confirmDeleteSectionMessage": "Excluir “{name}” e todo o conteúdo da seção? Isso não pode ser desfeito.",
+  "darkTheme": "Escuro",
   "@darkTheme": {
     "description": "Dark theme option."
   },
-  "discard": "Odrzuć",
+  "discard": "Descartar",
   "@discard": {
     "description": "Discard unsaved changes button label."
   },
-  "editor": "Edytor",
+  "editor": "Editor",
   "@editor": {
     "description": "Editor view label."
   },
-  "file": "Plik",
+  "file": "Arquivo",
   "@file": {
     "description": "Generic file kind label."
   },
-  "fileHistory": "Historia pliku",
+  "fileHistory": "Histórico do arquivo",
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "folder": "Folder",
+  "folder": "Pasta",
   "@folder": {
     "description": "Folder kind label."
   },
-  "insert": "Wstaw",
+  "insert": "Inserir",
   "@insert": {
     "description": "Insert button label."
   },
-  "keyboardShortcuts": "Skróty klawiaturowe",
+  "keyboardShortcuts": "Atalhos de teclado",
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "lightTheme": "Jasny",
+  "lightTheme": "Claro",
   "@lightTheme": {
     "description": "Light theme option."
   },
-  "mainMenu": "Menu główne",
+  "mainMenu": "Menu principal",
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
   },
-  "fullScreen": "Pełny ekran",
+  "fullScreen": "Tela cheia",
   "@fullScreen": {
     "description": "Command that toggles full-screen window mode."
   },
@@ -175,84 +175,84 @@
   "@markdown": {
     "description": "Markdown format label."
   },
-  "open": "Otwórz",
+  "open": "Abrir",
   "@open": {
     "description": "Open action label."
   },
-  "openInFiles": "Otwórz w Plikach",
+  "openInFiles": "Abrir em Arquivos",
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
-  "pathActions": "Działania na ścieżce",
+  "pathActions": "Ações do caminho",
   "@pathActions": {
     "description": "Tooltip for the workspace path action menu button."
   },
-  "outline": "Konspekt",
+  "outline": "Estrutura",
   "@outline": {
     "description": "Outline sidebar tab label."
   },
-  "overwrite": "Nadpisz",
+  "overwrite": "Sobrescrever",
   "@overwrite": {
     "description": "Button label for overwriting a changed file."
   },
-  "paste": "Wklej",
+  "paste": "Colar",
   "@paste": {
     "description": "Paste command label."
   },
-  "pasteWithoutFormatting": "Wklej bez formatowania",
+  "pasteWithoutFormatting": "Colar sem formatar",
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "reading": "Widok do czytania",
+  "reading": "Leitura",
   "@reading": {
     "description": "Reading view label."
   },
-  "removeFromRecent": "Usuń z ostatnich",
-  "recent": "Ostatnie",
+  "removeFromRecent": "Remover dos recentes",
+  "recent": "Recentes",
   "@recent": {
     "description": "Recent workspaces section title."
   },
-  "redo": "Ponów",
+  "redo": "Refazer",
   "@redo": {
     "description": "Redo command label."
   },
-  "save": "Zapisz",
+  "save": "Salvar",
   "@save": {
     "description": "Save action label."
   },
-  "search": "Szukaj",
+  "search": "Pesquisar",
   "@search": {
     "description": "Search action label and field hint."
   },
-  "selectAll": "Zaznacz wszystko",
+  "selectAll": "Selecionar tudo",
   "@selectAll": {
     "description": "Select all command label."
   },
-  "settings": "Ustawienia",
+  "settings": "Configurações",
   "@settings": {
     "description": "Settings action label."
   },
-  "source": "Źródło",
+  "source": "Código-fonte",
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dzielony",
+  "split": "Dividido",
   "@split": {
     "description": "Split view label."
   },
-  "systemTheme": "Systemowy",
+  "systemTheme": "Sistema",
   "@systemTheme": {
     "description": "System theme option."
   },
-  "theme": "Motyw",
+  "theme": "Tema",
   "@theme": {
     "description": "Theme setting label."
   },
-  "appLanguage": "Język aplikacji",
+  "appLanguage": "Idioma",
   "@appLanguage": {
     "description": "Application language setting label."
   },
-  "systemLanguage": "Systemowy",
+  "systemLanguage": "Sistema",
   "@systemLanguage": {
     "description": "Language selector option that follows the operating system locale."
   },
@@ -332,43 +332,43 @@
   "@languageJapanese": {
     "description": "Language selector option for Japanese."
   },
+  "languageKorean": "한국어",
   "@languageKorean": {
     "description": "Language selector option for Korean."
   },
-  "languageKorean": "한국어",
   "languageSimplifiedChinese": "简体中文",
   "@languageSimplifiedChinese": {
     "description": "Language selector option for Simplified Chinese."
   },
-  "toggleSidebar": "Panel boczny",
+  "toggleSidebar": "Painel lateral",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
-  "topLeft": "U góry po lewej",
+  "topLeft": "Canto superior esquerdo",
   "@topLeft": {
     "description": "Editing button position option."
   },
-  "topRight": "U góry po prawej",
+  "topRight": "Canto superior direito",
   "@topRight": {
     "description": "Editing button position option."
   },
-  "undo": "Cofnij",
+  "undo": "Desfazer",
   "@undo": {
     "description": "Undo command label."
   },
-  "validate": "Sprawdź poprawność",
+  "validate": "Validar",
   "@validate": {
     "description": "Validate action label."
   },
-  "validation": "Sprawdzanie poprawności",
+  "validation": "Validação",
   "@validation": {
     "description": "Settings section title for validation options."
   },
-  "viewMode": "Tryb widoku",
+  "viewMode": "Modo de exibição",
   "@viewMode": {
     "description": "Native header bar view mode control label."
   },
-  "welcome": "Witaj",
+  "welcome": "Bem-vindo",
   "@welcome": {
     "description": "Welcome screen label and tooltip."
   },
@@ -384,439 +384,439 @@
   "@fileTypeMarkdown": {
     "description": "Native file picker type label for Markdown files."
   },
-  "fileTypeImages": "Obrazy",
+  "fileTypeImages": "Imagens",
   "@fileTypeImages": {
     "description": "Native file picker type label for images."
   },
-  "openMarkdownFile": "Otwórz plik Markdown",
+  "openMarkdownFile": "Abrir arquivo Markdown",
   "@openMarkdownFile": {
     "description": "Action label for opening a Markdown file."
   },
-  "markdownFileExtensions": ".md lub .markdown",
+  "markdownFileExtensions": ".md ou .markdown",
   "@markdownFileExtensions": {
     "description": "Subtitle describing supported Markdown file extensions."
   },
-  "openFolderOrWritersideProject": "Otwórz folder lub projekt Writerside",
+  "openFolderOrWritersideProject": "Abrir pasta ou projeto Writerside",
   "@openFolderOrWritersideProject": {
     "description": "Action label for opening a folder or Writerside project."
   },
-  "markdownFolderOrWritersideProject": "Folder z plikami Markdown lub projekt zgodny z Writerside",
+  "markdownFolderOrWritersideProject": "Pasta Markdown ou projeto compatível com Writerside",
   "@markdownFolderOrWritersideProject": {
     "description": "Subtitle describing supported folder workspace types."
   },
-  "noOpenFile": "Brak otwartego pliku",
+  "noOpenFile": "Nenhum arquivo aberto",
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutDeleteTreeItemDescription": "Usuń wybrany element w widoku Pliki lub usuń wybrany temat ze spisu treści",
+  "shortcutDeleteTreeItemDescription": "Excluir o item selecionado em Arquivos ou remover o tópico selecionado do sumário",
   "@shortcutDeleteTreeItemDescription": {
     "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
   },
-  "shortcutGroupGeneral": "Ogólne",
+  "shortcutGroupGeneral": "Geral",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Utwórz",
+  "shortcutNewDocument": "Criar",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Utwórz plik Markdown lub projekt Writerside",
+  "shortcutNewDocumentDescription": "Criar arquivo Markdown ou projeto Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Otwórz plik Markdown, folder lub projekt Writerside",
+  "shortcutOpenDescription": "Abrir um arquivo Markdown, uma pasta ou um projeto Writerside",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Zapisz bieżący dokument",
+  "shortcutSaveDescription": "Salvar o documento atual",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutSearchDescription": "Przeszukaj bieżący obszar roboczy",
+  "shortcutSearchDescription": "Pesquisar no espaço de trabalho atual",
   "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Pokaż ten wykaz skrótów klawiaturowych",
+  "shortcutKeyboardShortcutsDescription": "Mostrar esta referência de atalhos de teclado",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Otwórz dokumentację Markdown i HTML",
+  "shortcutMarkdownAndHtmlDescription": "Abrir a referência de Markdown e HTML",
   "@shortcutMarkdownAndHtmlDescription": {
     "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
   },
-  "shortcutSettingsDescription": "Otwórz ustawienia BusyMark",
+  "shortcutSettingsDescription": "Abrir as configurações do BusyMark",
   "@shortcutSettingsDescription": {
     "description": "Keyboard shortcut description for opening settings."
   },
-  "shortcutNextTab": "Następna karta",
+  "shortcutNextTab": "Próxima guia",
   "@shortcutNextTab": {
     "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "Przejdź do następnej otwartej karty",
+  "shortcutNextTabDescription": "Ir para a próxima guia aberta",
   "@shortcutNextTabDescription": {
     "description": "Keyboard shortcut description for moving to the next tab."
   },
-  "shortcutPreviousTab": "Poprzednia karta",
+  "shortcutPreviousTab": "Guia anterior",
   "@shortcutPreviousTab": {
     "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "Przejdź do poprzedniej otwartej karty",
+  "shortcutPreviousTabDescription": "Ir para a guia aberta anterior",
   "@shortcutPreviousTabDescription": {
     "description": "Keyboard shortcut description for moving to the previous tab."
   },
-  "shortcutCloseTab": "Zamknij kartę",
+  "shortcutCloseTab": "Fechar guia",
   "@shortcutCloseTab": {
     "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "Zamknij aktywną kartę",
+  "shortcutCloseTabDescription": "Fechar a guia ativa",
   "@shortcutCloseTabDescription": {
     "description": "Keyboard shortcut description for closing the active tab."
   },
-  "shortcutCloseAllTabs": "Zamknij wszystkie karty",
+  "shortcutCloseAllTabs": "Fechar todas as guias",
   "@shortcutCloseAllTabs": {
     "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "Zamknij wszystkie otwarte karty",
+  "shortcutCloseAllTabsDescription": "Fechar todas as guias abertas",
   "@shortcutCloseAllTabsDescription": {
     "description": "Keyboard shortcut description for closing all tabs."
   },
-  "shortcutGroupTextEditing": "Edycja tekstu",
+  "shortcutGroupTextEditing": "Edição de texto",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "W trybie Źródło zaznacz cały tekst; w trybie edytora naciśnij dwa razy, aby zaznaczyć wszystkie bloki",
+  "shortcutSelectAllDescription": "No modo Código-fonte, selecionar todo o texto; no modo Editor, pressionar duas vezes para selecionar todos os blocos",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
-  "shortcutCutDescription": "Wytnij zaznaczony tekst",
+  "shortcutCutDescription": "Recortar o texto selecionado",
   "@shortcutCutDescription": {
     "description": "Keyboard shortcut description for cut."
   },
-  "shortcutCopyDescription": "Skopiuj zaznaczony tekst",
+  "shortcutCopyDescription": "Copiar o texto selecionado",
   "@shortcutCopyDescription": {
     "description": "Keyboard shortcut description for copy."
   },
-  "shortcutPasteDescription": "Wklej ze schowka",
+  "shortcutPasteDescription": "Colar da área de transferência",
   "@shortcutPasteDescription": {
     "description": "Keyboard shortcut description for paste."
   },
-  "shortcutPastePlainTextDescription": "Wklej tekst ze schowka bez formatowania",
+  "shortcutPastePlainTextDescription": "Colar o texto da área de transferência sem formatação",
   "@shortcutPastePlainTextDescription": {
     "description": "Keyboard shortcut description for plain text paste."
   },
-  "shortcutUndoDescription": "Cofnij ostatnią edycję",
+  "shortcutUndoDescription": "Desfazer a última edição",
   "@shortcutUndoDescription": {
     "description": "Keyboard shortcut description for undo."
   },
-  "shortcutRedoDescription": "Ponów ostatnią cofniętą edycję",
+  "shortcutRedoDescription": "Refazer a última edição desfeita",
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "shortcutInsertIndentation": "Wstaw wcięcie",
+  "shortcutInsertIndentation": "Inserir recuo",
   "@shortcutInsertIndentation": {
     "description": "Keyboard shortcut label for inserting indentation."
   },
-  "shortcutInsertIndentationDescription": "Wstaw wcięcie w miejscu kursora",
+  "shortcutInsertIndentationDescription": "Inserir recuo na posição do cursor",
   "@shortcutInsertIndentationDescription": {
     "description": "Keyboard shortcut description for inserting indentation."
   },
-  "shortcutOutdentSource": "Zmniejsz wcięcie źródła",
+  "shortcutOutdentSource": "Diminuir recuo do código-fonte",
   "@shortcutOutdentSource": {
     "description": "Keyboard shortcut label for outdenting in Source mode."
   },
-  "shortcutOutdentSourceDescription": "Usuń jeden poziom wcięcia w trybie Źródło",
+  "shortcutOutdentSourceDescription": "Remover um nível de recuo no modo Código-fonte",
   "@shortcutOutdentSourceDescription": {
     "description": "Keyboard shortcut description for outdenting in Source mode."
   },
-  "shortcutEscape": "Zamknij wyszukiwanie lub wyczyść zaznaczenie bloków",
+  "shortcutEscape": "Fechar a pesquisa ou limpar a seleção de blocos",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutEscapeDescription": "Zamknij wyszukiwanie w obszarze roboczym lub wyczyść zaznaczenie bloków w trybie edytora",
+  "shortcutEscapeDescription": "Fechar a pesquisa do espaço de trabalho ou limpar uma seleção de blocos no modo Editor",
   "@shortcutEscapeDescription": {
     "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
-  "shortcutGroupFormatting": "Formatowanie",
+  "shortcutGroupFormatting": "Formatação",
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "Włącz lub wyłącz pogrubienie zaznaczonego tekstu",
+  "shortcutBoldDescription": "Alternar negrito no texto selecionado",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "Włącz lub wyłącz kursywę zaznaczonego tekstu",
+  "shortcutItalicDescription": "Alternar itálico no texto selecionado",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "Włącz lub wyłącz podkreślenie zaznaczonego tekstu",
+  "shortcutUnderlineDescription": "Alternar sublinhado no texto selecionado",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
-  "shortcutLinkDescription": "Wstaw lub edytuj łącze",
+  "shortcutLinkDescription": "Inserir ou editar um link",
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "Włącz lub wyłącz formatowanie zaznaczonego tekstu jako kod w tekście",
+  "shortcutInlineCodeDescription": "Alternar código embutido no texto selecionado",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "Włącz lub wyłącz przekreślenie zaznaczonego tekstu",
+  "shortcutStrikethroughDescription": "Alternar tachado no texto selecionado",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
-  "shortcutGroupBlocks": "Bloki",
+  "shortcutGroupBlocks": "Blocos",
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "Ustaw bieżący blok jako akapit",
+  "shortcutParagraphDescription": "Definir o bloco atual como parágrafo",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "Ustaw bieżący blok jako nagłówek 1",
+  "shortcutHeading1Description": "Definir o bloco atual como Título 1",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "Ustaw bieżący blok jako nagłówek 2",
+  "shortcutHeading2Description": "Definir o bloco atual como Título 2",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "Ustaw bieżący blok jako nagłówek 3",
+  "shortcutHeading3Description": "Definir o bloco atual como Título 3",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "Ustaw bieżący blok jako nagłówek 4",
+  "shortcutHeading4Description": "Definir o bloco atual como Título 4",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "Ustaw bieżący blok jako nagłówek 5",
+  "shortcutHeading5Description": "Definir o bloco atual como Título 5",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "Ustaw bieżący blok jako nagłówek 6",
+  "shortcutHeading6Description": "Definir o bloco atual como Título 6",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
-  "shortcutGroupLists": "Listy",
+  "shortcutGroupLists": "Listas",
   "@shortcutGroupLists": {
     "description": "Keyboard shortcut group for list commands."
   },
-  "numberedList": "Lista numerowana",
+  "numberedList": "Lista numerada",
   "@numberedList": {
     "description": "Keyboard shortcut label for numbered list formatting."
   },
-  "shortcutNumberedListDescription": "Włącz lub wyłącz formatowanie listy numerowanej",
+  "shortcutNumberedListDescription": "Alternar formatação de lista numerada",
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
-  "bulletedList": "Lista punktowana",
+  "bulletedList": "Lista com marcadores",
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "Włącz lub wyłącz formatowanie listy punktowanej",
+  "shortcutBulletedListDescription": "Alternar formatação de lista com marcadores",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
-  "checklist": "Lista kontrolna",
+  "checklist": "Lista de verificação",
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "Włącz lub wyłącz formatowanie listy kontrolnej",
+  "shortcutChecklistDescription": "Alternar formatação de lista de verificação",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
-  "shortcutGroupSidebar": "Pasek boczny",
+  "shortcutGroupSidebar": "Barra lateral",
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
-  "sidebarViewMenu": "Widok paska bocznego",
+  "sidebarViewMenu": "Visualização da barra lateral",
   "@sidebarViewMenu": {
     "description": "Tooltip for the sidebar view selector button."
   },
-  "createMarkdownFile": "Utwórz plik Markdown",
+  "createMarkdownFile": "Criar arquivo Markdown",
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."
   },
-  "createMarkdownFileDescription": "Utwórz niezapisany lokalny dokument Markdown",
+  "createMarkdownFileDescription": "Iniciar um documento Markdown local não salvo",
   "@createMarkdownFileDescription": {
     "description": "Welcome screen subtitle for creating a Markdown file."
   },
-  "createWritersideProject": "Utwórz projekt Writerside",
+  "createWritersideProject": "Criar projeto Writerside",
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
-  "createWritersideProjectDescription": "Utwórz lokalny projekt zgodny z Writerside",
+  "createWritersideProjectDescription": "Iniciar um projeto local compatível com Writerside",
   "@createWritersideProjectDescription": {
     "description": "Welcome screen subtitle for creating a Writerside project."
   },
-  "defaultProjectName": "Dokumentacja",
+  "defaultProjectName": "Documentação",
   "@defaultProjectName": {
     "description": "Default project name shown in the create project dialog."
   },
-  "defaultInstanceName": "Podręcznik użytkownika",
+  "defaultInstanceName": "Guia do usuário",
   "@defaultInstanceName": {
     "description": "Default Writerside instance name shown in the create project dialog."
   },
-  "defaultStartTopicTitle": "Pierwsze kroki",
+  "defaultStartTopicTitle": "Primeiros passos",
   "@defaultStartTopicTitle": {
     "description": "Default start topic title shown in the create project dialog."
   },
-  "projectName": "Nazwa projektu",
+  "projectName": "Nome do projeto",
   "@projectName": {
     "description": "Create project dialog field label."
   },
-  "directoryName": "Nazwa katalogu",
+  "directoryName": "Nome do diretório",
   "@directoryName": {
     "description": "Create project dialog field label."
   },
-  "instanceName": "Nazwa instancji",
+  "instanceName": "Nome da instância",
   "@instanceName": {
     "description": "Create project dialog field label."
   },
-  "instanceId": "Identyfikator instancji",
+  "instanceId": "ID da instância",
   "@instanceId": {
     "description": "Create project dialog field label."
   },
-  "startTopicTitle": "Tytuł tematu początkowego",
+  "startTopicTitle": "Título do tópico inicial",
   "@startTopicTitle": {
     "description": "Create project dialog field label."
   },
-  "location": "Lokalizacja",
+  "location": "Local",
   "@location": {
     "description": "Create dialog location section label."
   },
-  "projectNameRequired": "Nazwa projektu jest wymagana.",
+  "projectNameRequired": "O nome do projeto é obrigatório.",
   "@projectNameRequired": {
     "description": "Validation message for missing project name."
   },
-  "directoryNameRequired": "Nazwa katalogu jest wymagana.",
+  "directoryNameRequired": "O nome do diretório é obrigatório.",
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "Użyj pojedynczej bezpiecznej nazwy katalogu.",
+  "useSingleSafeDirectoryName": "Use um único nome de diretório seguro.",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "Użyj identyfikatora pisanego małymi literami; może zawierać litery, cyfry, podkreślenia lub łączniki.",
+  "useLowercaseIdentifier": "Use um identificador em minúsculas com letras, números, sublinhados ou hifens.",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
-  "startTopicTitleRequired": "Tytuł tematu początkowego jest wymagany.",
+  "startTopicTitleRequired": "O título do tópico inicial é obrigatório.",
   "@startTopicTitleRequired": {
     "description": "Validation message for missing start topic title."
   },
-  "createWritersideProjectFailed": "Nie można utworzyć projektu Writerside.",
+  "createWritersideProjectFailed": "Não foi possível criar o projeto Writerside.",
   "@createWritersideProjectFailed": {
     "description": "Fallback error shown when Writerside project creation fails."
   },
-  "settingsTitle": "Ustawienia BusyMark",
+  "settingsTitle": "Configurações do BusyMark",
   "@settingsTitle": {
     "description": "Settings screen title."
   },
-  "autoSave": "Automatyczne zapisywanie",
+  "autoSave": "Salvamento automático",
   "@autoSave": {
     "description": "Editor setting label for saving files automatically."
   },
-  "autoSaveDescription": "Automatycznie zapisuj zmiany w pliku po krótkiej chwili bezczynności.",
+  "autoSaveDescription": "Salva automaticamente as alterações do arquivo após um curto período de inatividade.",
   "@autoSaveDescription": {
     "description": "Editor setting description for saving files automatically."
   },
-  "wordWrap": "Zawijanie wierszy",
+  "wordWrap": "Quebra de linha",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
-  "editorFontSize": "Rozmiar czcionki edytora",
+  "editorFontSize": "Tamanho da fonte do editor",
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
-  "validateOnEdit": "Sprawdzaj poprawność podczas edycji",
+  "validateOnEdit": "Validar ao editar",
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Wyczyść listę ostatnich obszarów roboczych",
+  "clearRecentWorkspaces": "Limpar espaços de trabalho recentes",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtonsPosition": "Położenie przycisków edycji",
+  "editingButtonsPosition": "Posição dos botões de edição",
   "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsPositionDescription": "Wybierz miejsce wyświetlania pływających przycisków edycji WYSIWYG.",
+  "editingButtonsPositionDescription": "Escolha onde os botões flutuantes de edição WYSIWYG aparecem.",
   "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "editingButtonsDirection": "Kierunek układu przycisków edycji",
+  "editingButtonsDirection": "Orientação dos botões de edição",
   "@editingButtonsDirection": {
     "description": "Settings label for WYSIWYG editing button direction."
   },
-  "editingButtonsDirectionDescription": "Wybierz, czy pływające przyciski edycji WYSIWYG mają być ułożone poziomo, czy pionowo.",
+  "editingButtonsDirectionDescription": "Escolha se os botões flutuantes de edição WYSIWYG ficam dispostos horizontalmente ou verticalmente.",
   "@editingButtonsDirectionDescription": {
     "description": "Description for WYSIWYG editing button direction setting."
   },
-  "horizontal": "Poziomo",
+  "horizontal": "Horizontal",
   "@horizontal": {
     "description": "Editing button direction option."
   },
-  "vertical": "Pionowo",
+  "vertical": "Vertical",
   "@vertical": {
     "description": "Editing button direction option."
   },
-  "privacy": "Prywatność",
+  "privacy": "Privacidade",
   "@privacy": {
     "description": "Settings section title for privacy options."
   },
-  "allowRemoteImages": "Wczytuj obrazy zdalne",
+  "allowRemoteImages": "Carregar imagens remotas",
   "@allowRemoteImages": {
     "description": "Settings switch title for loading remote images."
   },
-  "allowRemoteImagesDescription": "Zezwalaj na wczytywanie obrazów w podglądzie Markdown i edytorze z adresów URL http i https.",
+  "allowRemoteImagesDescription": "Permitir que a pré-visualização do Markdown e o editor carreguem imagens de URLs HTTP e HTTPS.",
   "@allowRemoteImagesDescription": {
     "description": "Settings switch description for loading remote images."
   },
-  "clearRemoteImagePermissions": "Wyczyść uprawnienia do obrazów zdalnych",
+  "clearRemoteImagePermissions": "Limpar permissões de imagens remotas",
   "@clearRemoteImagePermissions": {
     "description": "Settings action label for clearing per-workspace remote image permissions."
   },
-  "clearRemoteImagePermissionsDescription": "Zapomnij obszary robocze, którym zezwolono na wczytywanie obrazów zdalnych.",
+  "clearRemoteImagePermissionsDescription": "Esquecer os espaços de trabalho autorizados a carregar imagens remotas.",
   "@clearRemoteImagePermissionsDescription": {
     "description": "Settings action description for clearing per-workspace remote image permissions."
   },
-  "clearGitWorkspaceTrust": "Wyczyść zaufane obszary robocze Git",
+  "clearGitWorkspaceTrust": "Limpar espaços de trabalho confiáveis para o Git",
   "@clearGitWorkspaceTrust": {
     "description": "Settings action label for clearing trusted Git workspaces."
   },
-  "clearGitWorkspaceTrustDescription": "Pytaj przed włączeniem funkcji Git w zaufanych wcześniej obszarach roboczych.",
+  "clearGitWorkspaceTrustDescription": "Perguntar antes de ativar recursos do Git em espaços de trabalho considerados confiáveis anteriormente.",
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
-  "settingsWindowSectionTitle": "Okno",
+  "settingsWindowSectionTitle": "Janela",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
-  "settingsReopenWorkspaceOnStartupTitle": "Otwieraj poprzedni obszar roboczy przy uruchamianiu",
+  "settingsReopenWorkspaceOnStartupTitle": "Reabrir o espaço de trabalho anterior ao iniciar",
   "@settingsReopenWorkspaceOnStartupTitle": {
     "description": "Settings switch title for reopening the previous workspace on a normal startup."
   },
-  "settingsReopenWorkspaceOnStartupDescription": "Otwórz obszar roboczy i karty z poprzedniej sesji podczas uruchamiania BusyMark.",
+  "settingsReopenWorkspaceOnStartupDescription": "Abra o espaço de trabalho e as abas da sessão anterior quando o BusyMark iniciar.",
   "@settingsReopenWorkspaceOnStartupDescription": {
     "description": "Settings switch description for reopening the previous workspace on a normal startup."
   },
-  "settingsConfirmCloseWithUnsavedChangesTitle": "Potwierdzaj zamknięcie przy niezapisanych zmianach",
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Confirmar antes de fechar com alterações não salvas",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
   },
-  "settingsConfirmCloseWithUnsavedChangesDescription": "Pytaj przed zamknięciem BusyMark, gdy dokumenty mają niezapisane zmiany.",
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Perguntar antes de fechar o BusyMark quando documentos tiverem alterações não salvas.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {
     "description": "Settings switch description for close confirmation when documents have unsaved changes."
   },
-  "closeUnsavedChangesTitle": "Niezapisane zmiany",
+  "closeUnsavedChangesTitle": "Alterações não salvas",
   "@closeUnsavedChangesTitle": {
     "description": "Window close confirmation dialog title when documents have unsaved changes."
   },
-  "closeUnsavedChangesSingleMessage": "Ten dokument ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?",
+  "closeUnsavedChangesSingleMessage": "Este documento tem alterações não salvas. Salvar as alterações antes de fechar o BusyMark?",
   "@closeUnsavedChangesSingleMessage": {
     "description": "Window close confirmation message when one document has unsaved changes."
   },
-  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Zapisać zmiany przed zamknięciem BusyMark?} one{{count} dokument ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?} few{{count} dokumenty mają niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?} many{{count} dokumentów ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?} other{{count} dokumentu ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?}}",
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Salvar as alterações antes de fechar o BusyMark?} =1{1 documento tem alterações não salvas. Salvar as alterações antes de fechar o BusyMark?} other{{count} documentos têm alterações não salvas. Salvar as alterações antes de fechar o BusyMark?}}",
   "@closeUnsavedChangesMultipleMessage": {
     "description": "Window close confirmation message when multiple documents have unsaved changes.",
     "placeholders": {
@@ -825,27 +825,27 @@
       }
     }
   },
-  "closeUnsavedChangesCancel": "Anuluj",
+  "closeUnsavedChangesCancel": "Cancelar",
   "@closeUnsavedChangesCancel": {
     "description": "Cancel button label in the window close unsaved-changes dialog."
   },
-  "closeUnsavedChangesDiscard": "Odrzuć",
+  "closeUnsavedChangesDiscard": "Descartar",
   "@closeUnsavedChangesDiscard": {
     "description": "Discard button label in the window close unsaved-changes dialog."
   },
-  "closeUnsavedChangesSave": "Zapisz",
+  "closeUnsavedChangesSave": "Salvar",
   "@closeUnsavedChangesSave": {
     "description": "Save button label in the window close unsaved-changes dialog."
   },
-  "currentFile": "bieżącym pliku",
+  "currentFile": "arquivo atual",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."
   },
-  "unsavedChanges": "Niezapisane zmiany",
+  "unsavedChanges": "Alterações não salvas",
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "Masz niezapisane zmiany w {fileName}. Zapisać je przed kontynuowaniem?",
+  "unsavedChangesMessage": "Você tem alterações não salvas em {fileName}. Salvá-las antes de continuar?",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -854,68 +854,68 @@
       }
     }
   },
-  "fileChangedOnDisk": "Plik zmieniony na dysku",
+  "fileChangedOnDisk": "Arquivo alterado no disco",
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "Ten plik został zmieniony na dysku od czasu jego otwarcia. Nadpisać wersję na dysku?",
+  "fileChangedOnDiskMessage": "Este arquivo foi alterado no disco desde que foi aberto. Sobrescrever?",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
-  "untitledMarkdownFileName": "Bez tytułu.md",
+  "untitledMarkdownFileName": "Sem título.md",
   "@untitledMarkdownFileName": {
     "description": "Display name for a new unsaved Markdown document."
   },
-  "unorderedList": "Lista nienumerowana",
+  "unorderedList": "Lista não ordenada",
   "@unorderedList": {
     "description": "WYSIWYG toolbar tooltip for unordered list."
   },
-  "orderedList": "Lista numerowana",
+  "orderedList": "Lista ordenada",
   "@orderedList": {
     "description": "WYSIWYG toolbar tooltip for ordered list."
   },
-  "taskList": "Lista zadań",
+  "taskList": "Lista de tarefas",
   "@taskList": {
     "description": "WYSIWYG toolbar tooltip for task list."
   },
-  "toggleTaskChecked": "Zaznacz lub odznacz zadanie",
+  "toggleTaskChecked": "Marcar/desmarcar tarefa",
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "Zwiększ wcięcie elementu listy",
+  "indentListItem": "Recuar item da lista",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "Zmniejsz wcięcie elementu listy",
+  "outdentListItem": "Remover recuo do item da lista",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
-  "blockquote": "Cytat blokowy",
+  "blockquote": "Citação em bloco",
   "@blockquote": {
     "description": "Blockquote command label."
   },
-  "codeBlock": "Blok kodu",
+  "codeBlock": "Bloco de código",
   "@codeBlock": {
     "description": "Code block command or preview label."
   },
-  "codeBlockLanguage": "Język bloku kodu",
+  "codeBlockLanguage": "Linguagem do bloco de código",
   "@codeBlockLanguage": {
     "description": "Dialog title and toolbar tooltip for code block language."
   },
-  "image": "Obraz",
-  "video": "Wideo",
-  "openVideo": "Odtwórz wideo",
-  "pauseVideo": "Wstrzymaj wideo",
-  "videoUnavailable": "Wideo jest niedostępne",
-  "videoPreview": "Podgląd wideo",
-  "diagnosticWritersideVideoMissingSource": "Wideo nie ma atrybutu src.",
-  "diagnosticWritersideVideoUnsupportedSource": "Nieobsługiwane źródło wideo: {source}",
-  "diagnosticWritersideVideoMissingFile": "Plik wideo nie istnieje: {source}",
-  "diagnosticWritersideVideoMissingPreview": "Obraz podglądu wideo nie istnieje: {preview}",
+  "image": "Imagem",
+  "video": "Vídeo",
+  "openVideo": "Reproduzir vídeo",
+  "pauseVideo": "Pausar vídeo",
+  "videoUnavailable": "Vídeo indisponível",
+  "videoPreview": "Pré-visualização do vídeo",
+  "diagnosticWritersideVideoMissingSource": "O vídeo não tem o atributo src.",
+  "diagnosticWritersideVideoUnsupportedSource": "Fonte de vídeo não suportada: {source}",
+  "diagnosticWritersideVideoMissingFile": "O arquivo de vídeo não existe: {source}",
+  "diagnosticWritersideVideoMissingPreview": "A imagem de pré-visualização do vídeo não existe: {preview}",
   "@image": {
     "description": "Image command and document kind label."
   },
-  "inlineImage": "Obraz w tekście",
+  "inlineImage": "Imagem embutida",
   "@inlineImage": {
     "description": "Inline image command label."
   },
@@ -923,91 +923,91 @@
   "@table": {
     "description": "Table command label."
   },
-  "htmlBlock": "Blok HTML",
+  "htmlBlock": "Bloco HTML",
   "@htmlBlock": {
     "description": "HTML block command label."
   },
-  "htmlContentDefault": "Treść HTML",
-  "@htmlContentDefault": {
-    "description": "Default editable text inserted into a new HTML block."
-  },
-  "shortcutHtmlBlockDescription": "Wstaw lub edytuj blok HTML",
+  "shortcutHtmlBlockDescription": "Inserir ou editar um bloco HTML",
   "@shortcutHtmlBlockDescription": {
     "description": "Keyboard shortcut description for inserting or editing an HTML block."
   },
-  "renderedHtml": "Wyrenderowany HTML",
+  "renderedHtml": "HTML renderizado",
   "@renderedHtml": {
     "description": "Badge label for HTML rendered in the WYSIWYG editor."
   },
-  "editHtml": "Edytuj HTML",
+  "editHtml": "Editar HTML",
   "@editHtml": {
     "description": "Dialog title and tooltip for editing raw HTML source."
   },
-  "htmlSource": "Źródło HTML",
+  "htmlSource": "Código-fonte HTML",
   "@htmlSource": {
     "description": "Text field label for raw HTML source."
   },
-  "thematicBreak": "Linia pozioma",
+  "htmlContentDefault": "Conteúdo HTML",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
+  "thematicBreak": "Separador temático",
   "@thematicBreak": {
     "description": "Thematic break command label."
   },
-  "bold": "Pogrubienie",
+  "bold": "Negrito",
   "@bold": {
     "description": "Bold command label."
   },
-  "italic": "Kursywa",
+  "italic": "Itálico",
   "@italic": {
     "description": "Italic command label."
   },
-  "underline": "Podkreślenie",
+  "underline": "Sublinhado",
   "@underline": {
     "description": "Underline command label."
   },
-  "strikethrough": "Przekreślenie",
+  "strikethrough": "Tachado",
   "@strikethrough": {
     "description": "Strikethrough command label."
   },
-  "inlineCode": "Kod w tekście",
+  "inlineCode": "Código embutido",
   "@inlineCode": {
     "description": "Inline code command label."
   },
-  "link": "Łącze",
+  "link": "Link",
   "@link": {
     "description": "Link command and preview label."
   },
-  "hardLineBreak": "Twardy podział wiersza",
+  "hardLineBreak": "Quebra de linha forçada",
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
-  "textStyle": "Styl tekstu",
+  "textStyle": "Estilo de texto",
   "@textStyle": {
     "description": "Text style menu tooltip."
   },
-  "paragraph": "Akapit",
+  "paragraph": "Parágrafo",
   "@paragraph": {
     "description": "Paragraph style label."
   },
-  "heading1": "Nagłówek 1",
+  "heading1": "Título 1",
   "@heading1": {
     "description": "Heading 1 style label."
   },
-  "heading2": "Nagłówek 2",
+  "heading2": "Título 2",
   "@heading2": {
     "description": "Heading 2 style label."
   },
-  "heading3": "Nagłówek 3",
+  "heading3": "Título 3",
   "@heading3": {
     "description": "Heading 3 style label."
   },
-  "heading4": "Nagłówek 4",
+  "heading4": "Título 4",
   "@heading4": {
     "description": "Heading 4 style label."
   },
-  "heading5": "Nagłówek 5",
+  "heading5": "Título 5",
   "@heading5": {
     "description": "Heading 5 style label."
   },
-  "heading6": "Nagłówek 6",
+  "heading6": "Título 6",
   "@heading6": {
     "description": "Heading 6 style label."
   },
@@ -1020,11 +1020,11 @@
       }
     }
   },
-  "deleteTable": "Usuń tabelę",
+  "deleteTable": "Excluir tabela",
   "@deleteTable": {
     "description": "Tooltip for deleting a table."
   },
-  "tableColumnNumber": "Kolumna {columnNumber}",
+  "tableColumnNumber": "Coluna {columnNumber}",
   "@tableColumnNumber": {
     "description": "Tooltip for a table column control.",
     "placeholders": {
@@ -1033,19 +1033,19 @@
       }
     }
   },
-  "insertColumnLeft": "Wstaw kolumnę po lewej",
+  "insertColumnLeft": "Inserir coluna à esquerda",
   "@insertColumnLeft": {
     "description": "Menu item for inserting a table column to the left."
   },
-  "insertColumnRight": "Wstaw kolumnę po prawej",
+  "insertColumnRight": "Inserir coluna à direita",
   "@insertColumnRight": {
     "description": "Menu item for inserting a table column to the right."
   },
-  "deleteColumn": "Usuń kolumnę",
+  "deleteColumn": "Excluir coluna",
   "@deleteColumn": {
     "description": "Menu item for deleting a table column."
   },
-  "tableRowNumber": "Wiersz {rowNumber}",
+  "tableRowNumber": "Linha {rowNumber}",
   "@tableRowNumber": {
     "description": "Tooltip for a table row control.",
     "placeholders": {
@@ -1054,67 +1054,67 @@
       }
     }
   },
-  "insertRowAbove": "Wstaw wiersz powyżej",
+  "insertRowAbove": "Inserir linha acima",
   "@insertRowAbove": {
     "description": "Menu item for inserting a table row above."
   },
-  "insertRowBelow": "Wstaw wiersz poniżej",
+  "insertRowBelow": "Inserir linha abaixo",
   "@insertRowBelow": {
     "description": "Menu item for inserting a table row below."
   },
-  "deleteRow": "Usuń wiersz",
+  "deleteRow": "Excluir linha",
   "@deleteRow": {
     "description": "Menu item for deleting a table row."
   },
-  "tableHeaderHint": "Nagłówek",
+  "tableHeaderHint": "Cabeçalho",
   "@tableHeaderHint": {
     "description": "Hint for an empty table header cell."
   },
-  "tableCellHint": "Komórka",
+  "tableCellHint": "Célula",
   "@tableCellHint": {
     "description": "Hint for an empty table body cell."
   },
-  "language": "Język",
+  "language": "Linguagem",
   "@language": {
     "description": "Code block language field label."
   },
-  "hideEditingButtons": "Ukryj przyciski edycji",
+  "hideEditingButtons": "Ocultar botões de edição",
   "@hideEditingButtons": {
     "description": "Tooltip for hiding floating editing buttons."
   },
-  "showEditingButtons": "Pokaż przyciski edycji",
+  "showEditingButtons": "Mostrar botões de edição",
   "@showEditingButtons": {
     "description": "Tooltip for showing floating editing buttons."
   },
-  "altText": "Tekst alternatywny",
+  "altText": "Texto alternativo",
   "@altText": {
     "description": "Image alt text field label."
   },
-  "editorPlaceholderText": "tekst",
+  "editorPlaceholderText": "texto",
   "@editorPlaceholderText": {
     "description": "Default selected text inserted by a source-editor formatting command."
   },
-  "editorPlaceholderCode": "kod",
+  "editorPlaceholderCode": "código",
   "@editorPlaceholderCode": {
     "description": "Default selected code inserted by a source-editor code command."
   },
-  "editorPlaceholderAltText": "tekst alternatywny",
+  "editorPlaceholderAltText": "texto alternativo",
   "@editorPlaceholderAltText": {
     "description": "Default selected image description inserted by a source-editor image command."
   },
-  "describeTheImage": "Opisz obraz",
+  "describeTheImage": "Descreva a imagem",
   "@describeTheImage": {
     "description": "Image alt text hint."
   },
-  "columns": "Kolumny",
+  "columns": "Colunas",
   "@columns": {
     "description": "Table dialog columns field label."
   },
-  "rows": "Wiersze",
+  "rows": "Linhas",
   "@rows": {
     "description": "Table dialog rows field label."
   },
-  "tableHeaderNumber": "Nagłówek {columnNumber}",
+  "tableHeaderNumber": "Cabeçalho {columnNumber}",
   "@tableHeaderNumber": {
     "description": "Default header text for a newly inserted table column.",
     "placeholders": {
@@ -1123,75 +1123,75 @@
       }
     }
   },
-  "tableCellDefault": "Komórka",
+  "tableCellDefault": "Célula",
   "@tableCellDefault": {
     "description": "Default cell text for newly inserted table cells."
   },
-  "noImageSource": "Brak źródła obrazu",
+  "noImageSource": "Nenhuma origem de imagem",
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Zablokowano obraz zdalny",
+  "remoteImageBlocked": "Imagem remota bloqueada",
   "@remoteImageBlocked": {
     "description": "Placeholder label shown when a remote image is blocked."
   },
-  "remoteImageBlockedTooltip": "Wybierz, czy BusyMark może wczytywać obrazy zdalne.",
+  "remoteImageBlockedTooltip": "Escolha se o BusyMark pode carregar imagens remotas.",
   "@remoteImageBlockedTooltip": {
     "description": "Tooltip for a blocked remote image placeholder."
   },
-  "remoteImagesBlockedTitle": "Obrazy zdalne są zablokowane",
+  "remoteImagesBlockedTitle": "As imagens remotas estão bloqueadas",
   "@remoteImagesBlockedTitle": {
     "description": "Dialog title for remote image loading permission."
   },
-  "remoteImagesBlockedMessage": "Ten dokument odwołuje się do obrazów z internetu. Ich wczytanie może ujawnić informacje o twojej sieci serwerom udostępniającym te obrazy.",
+  "remoteImagesBlockedMessage": "Este documento faz referência a imagens da Internet. Carregá-las pode revelar informações de rede ao servidor que as hospeda.",
   "@remoteImagesBlockedMessage": {
     "description": "Dialog message explaining the privacy risk of remote images."
   },
-  "loadRemoteImagesForWorkspace": "Wczytaj w tym obszarze roboczym",
+  "loadRemoteImagesForWorkspace": "Carregar neste espaço de trabalho",
   "@loadRemoteImagesForWorkspace": {
     "description": "Dialog button that allows remote images for the current workspace."
   },
-  "alwaysLoadRemoteImages": "Zawsze wczytuj obrazy zdalne",
+  "alwaysLoadRemoteImages": "Sempre carregar imagens remotas",
   "@alwaysLoadRemoteImages": {
     "description": "Dialog button that enables remote images globally."
   },
-  "hideSidebar": "Ukryj panel boczny",
+  "hideSidebar": "Ocultar painel lateral",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Pokaż panel boczny",
+  "showSidebar": "Mostrar painel lateral",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
-  "showPreview": "Pokaż podgląd",
+  "showPreview": "Mostrar pré-visualização",
   "@showPreview": {
     "description": "Tooltip for showing the preview pane."
   },
-  "hidePreview": "Ukryj podgląd",
+  "hidePreview": "Ocultar pré-visualização",
   "@hidePreview": {
     "description": "Tooltip for hiding the preview pane."
   },
-  "workspaceKindUnsavedMarkdown": "Niezapisany plik Markdown",
+  "workspaceKindUnsavedMarkdown": "Arquivo Markdown não salvo",
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "Pojedynczy plik Markdown",
+  "workspaceKindSingleMarkdown": "Arquivo Markdown único",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
-  "workspaceKindMarkdownFolder": "Folder z plikami Markdown",
+  "workspaceKindMarkdownFolder": "Pasta Markdown",
   "@workspaceKindMarkdownFolder": {
     "description": "Workspace kind label for a Markdown folder."
   },
-  "workspaceKindWritersideModule": "Moduł Writerside",
+  "workspaceKindWritersideModule": "Módulo Writerside",
   "@workspaceKindWritersideModule": {
     "description": "Workspace kind label for a Writerside module."
   },
-  "problems": "Problemy",
+  "problems": "Problemas",
   "@problems": {
     "description": "Diagnostics dialog title."
   },
-  "diagnosticCount": "{count, plural, =0{Brak komunikatów diagnostycznych} one{{count} komunikat diagnostyczny} few{{count} komunikaty diagnostyczne} many{{count} komunikatów diagnostycznych} other{{count} komunikatu diagnostycznego}}",
+  "diagnosticCount": "{count, plural, =0{Nenhum diagnóstico} =1{1 diagnóstico} other{{count} diagnósticos}}",
   "@diagnosticCount": {
     "description": "Count of diagnostics in the workspace.",
     "placeholders": {
@@ -1200,23 +1200,23 @@
       }
     }
   },
-  "files": "Pliki",
+  "files": "Arquivos",
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Spis treści",
+  "toc": "TOC",
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
-  "tocActions": "Działania dotyczące spisu treści",
+  "tocActions": "Ações do sumário",
   "@tocActions": {
     "description": "Tooltip for the Writerside TOC action menu button."
   },
-  "markdownUnsaved": "Markdown – niezapisany",
+  "markdownUnsaved": "Markdown - não salvo",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
   },
-  "workspaceDetail": "{kind} — {count, plural, =0{0 plików} one{{count} plik} few{{count} pliki} many{{count} plików} other{{count} pliku}}",
+  "workspaceDetail": "{kind} - {count, plural, =1{1 arquivo} other{{count} arquivos}}",
   "@workspaceDetail": {
     "description": "Workspace detail with kind and file count.",
     "placeholders": {
@@ -1228,67 +1228,67 @@
       }
     }
   },
-  "noFiles": "Brak plików",
+  "noFiles": "Nenhum arquivo",
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "Brak spisu treści Writerside",
+  "noWritersideToc": "Nenhum TOC do Writerside",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "Sekcja spisu treści",
+  "tocSection": "Seção do TOC",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
-  "newTopic": "Nowy temat",
+  "newTopic": "Novo tópico",
   "@newTopic": {
     "description": "Create new Writerside topic action label."
   },
-  "newChildTopic": "Nowy temat podrzędny",
+  "newChildTopic": "Novo subtópico",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Nowy temat równorzędny",
+  "newSiblingTopic": "Novo tópico no mesmo nível",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
-  "renameTopicFile": "Zmień nazwę pliku tematu",
+  "renameTopicFile": "Renomear arquivo do tópico",
   "@renameTopicFile": {
     "description": "Context-menu action that renames a Writerside topic file."
   },
-  "topicPlacement": "Położenie w spisie treści",
+  "topicPlacement": "Posição no TOC",
   "@topicPlacement": {
     "description": "Create topic dialog label for selecting TOC placement."
   },
-  "tocRoot": "Na najwyższym poziomie spisu treści",
+  "tocRoot": "Na raiz do TOC",
   "@tocRoot": {
     "description": "TOC placement option for the root level."
   },
-  "afterSelectedTopic": "Po wybranym temacie",
+  "afterSelectedTopic": "Após o tópico selecionado",
   "@afterSelectedTopic": {
     "description": "TOC placement option after the selected topic."
   },
-  "insideSelectedTopic": "Wewnątrz wybranego tematu",
+  "insideSelectedTopic": "Dentro do tópico selecionado",
   "@insideSelectedTopic": {
     "description": "TOC placement option inside the selected topic."
   },
-  "pasteAfterTopic": "Wklej poniżej",
+  "pasteAfterTopic": "Colar depois",
   "@pasteAfterTopic": {
     "description": "Action that moves a cut TOC entry after the selected topic."
   },
-  "pasteAsChildTopic": "Wklej jako temat podrzędny",
+  "pasteAsChildTopic": "Colar como subtópico",
   "@pasteAsChildTopic": {
     "description": "Action that moves a cut TOC entry inside the selected topic."
   },
-  "removeFromToc": "Usuń ze spisu treści",
+  "removeFromToc": "Remover do TOC",
   "@removeFromToc": {
     "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
   },
-  "confirmRemoveFromTocTitle": "Usunąć ze spisu treści?",
+  "confirmRemoveFromTocTitle": "Remover do TOC?",
   "@confirmRemoveFromTocTitle": {
     "description": "Confirmation title before removing a Writerside TOC entry."
   },
-  "confirmRemoveFromTocMessage": "Usunąć {name} z tego spisu treści? Plik tematu zostanie zachowany.",
+  "confirmRemoveFromTocMessage": "Remover {name} deste TOC? O arquivo do tópico será mantido.",
   "@confirmRemoveFromTocMessage": {
     "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
     "placeholders": {
@@ -1297,11 +1297,11 @@
       }
     }
   },
-  "confirmDeleteTopicTitle": "Usunąć plik tematu?",
+  "confirmDeleteTopicTitle": "Excluir o arquivo do tópico?",
   "@confirmDeleteTopicTitle": {
     "description": "Confirmation title before deleting a Writerside topic file."
   },
-  "confirmDeleteTopicMessage": "Usunąć {name} i jego wpisy ze wszystkich spisów treści? Tej operacji nie można cofnąć.",
+  "confirmDeleteTopicMessage": "Excluir {name} e removê-lo de todos os TOCs? Isso não pode ser desfeito.",
   "@confirmDeleteTopicMessage": {
     "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
     "placeholders": {
@@ -1310,31 +1310,31 @@
       }
     }
   },
-  "defaultNewTopicTitle": "Nowy temat",
+  "defaultNewTopicTitle": "Novo tópico",
   "@defaultNewTopicTitle": {
     "description": "Default topic title in the create topic dialog."
   },
-  "topicTitle": "Tytuł tematu",
+  "topicTitle": "Título do tópico",
   "@topicTitle": {
     "description": "Create topic dialog field label."
   },
-  "fileName": "Nazwa pliku",
+  "fileName": "Nome do arquivo",
   "@fileName": {
     "description": "Create topic dialog field label."
   },
-  "topicTitleRequired": "Tytuł tematu jest wymagany.",
+  "topicTitleRequired": "O título do tópico é obrigatório.",
   "@topicTitleRequired": {
     "description": "Validation message for missing topic title."
   },
-  "fileNameRequired": "Nazwa pliku jest wymagana.",
+  "fileNameRequired": "O nome do arquivo é obrigatório.",
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
-  "useSingleSafeFileName": "Użyj jednej bezpiecznej nazwy pliku.",
+  "useSingleSafeFileName": "Use um único nome de arquivo seguro.",
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
-  "useExpectedExtension": "Użyj rozszerzenia {extension} dla wybranego formatu.",
+  "useExpectedExtension": "Use a extensão {extension} para o formato selecionado.",
   "@useExpectedExtension": {
     "description": "Validation message for an unexpected file extension.",
     "placeholders": {
@@ -1343,23 +1343,23 @@
       }
     }
   },
-  "useIdentifierCharacters": "Przed rozszerzeniem użyj liter, cyfr, podkreśleń lub łączników.",
+  "useIdentifierCharacters": "Use letras, números, sublinhados ou hifens antes da extensão.",
   "@useIdentifierCharacters": {
     "description": "Validation message for invalid topic IDs."
   },
-  "topicIdAlreadyExists": "Identyfikator tematu już istnieje.",
+  "topicIdAlreadyExists": "O ID do tópico já existe.",
   "@topicIdAlreadyExists": {
     "description": "Validation message for duplicate topic IDs."
   },
-  "createWritersideTopicFailed": "Nie można utworzyć tematu Writerside.",
+  "createWritersideTopicFailed": "Não foi possível criar o tópico do Writerside.",
   "@createWritersideTopicFailed": {
     "description": "Fallback error shown when topic creation fails."
   },
-  "noOutline": "Brak konspektu",
+  "noOutline": "Sem estrutura",
   "@noOutline": {
     "description": "Empty state shown when a document has no outline."
   },
-  "expandKind": "Rozwiń {kind}",
+  "expandKind": "Expandir {kind}",
   "@expandKind": {
     "description": "Tooltip for expanding a foldable source section.",
     "placeholders": {
@@ -1368,7 +1368,7 @@
       }
     }
   },
-  "collapseKind": "Zwiń {kind}",
+  "collapseKind": "Recolher {kind}",
   "@collapseKind": {
     "description": "Tooltip for collapsing a foldable source section.",
     "placeholders": {
@@ -1377,15 +1377,15 @@
       }
     }
   },
-  "foldKindSection": "sekcję",
+  "foldKindSection": "seção",
   "@foldKindSection": {
     "description": "Fold kind label for a section."
   },
-  "foldKindList": "listę",
+  "foldKindList": "lista",
   "@foldKindList": {
     "description": "Fold kind label for a list."
   },
-  "foldKindQuote": "cytat",
+  "foldKindQuote": "citação",
   "@foldKindQuote": {
     "description": "Fold kind label for a blockquote."
   },
@@ -1393,77 +1393,77 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
-  "sourceSearchPreviousMatch": "Poprzednie dopasowanie",
+  "sourceSearchPreviousMatch": "Correspondência anterior",
   "@sourceSearchPreviousMatch": {
     "description": "Tooltip for moving to the previous source search match."
   },
-  "sourceSearchNextMatch": "Następne dopasowanie",
+  "sourceSearchNextMatch": "Próxima correspondência",
   "@sourceSearchNextMatch": {
     "description": "Tooltip for moving to the next source search match."
   },
-  "sourceSearchCaseSensitive": "Uwzględniaj wielkość liter",
+  "sourceSearchCaseSensitive": "Diferenciar maiúsculas de minúsculas",
   "@sourceSearchCaseSensitive": {
     "description": "Tooltip for toggling case-sensitive source search."
   },
-  "sourceSearchWholeWord": "Całe słowo",
+  "sourceSearchWholeWord": "Palavra inteira",
   "@sourceSearchWholeWord": {
     "description": "Tooltip for toggling whole-word source search."
   },
-  "sourceSearchRegex": "Wyrażenie regularne",
+  "sourceSearchRegex": "Expressão regular",
   "@sourceSearchRegex": {
     "description": "Tooltip for toggling regular-expression source search."
   },
-  "sourceSearchInvalidRegex": "Nieprawidłowe wyrażenie regularne",
+  "sourceSearchInvalidRegex": "Expressão regular inválida",
   "@sourceSearchInvalidRegex": {
     "description": "Source search status shown when the regular expression is invalid."
   },
-  "sourceLargeFileFeaturesPaused": "Duży plik: podświetlanie i zwijanie są wstrzymane",
+  "sourceLargeFileFeaturesPaused": "Arquivo grande: o realce e o recolhimento estão pausados",
   "@sourceLargeFileFeaturesPaused": {
     "description": "Status banner shown when source highlighting and folding are disabled for a large file."
   },
-  "nothingToRead": "Brak treści do przeczytania",
-  "admonition": "Adnotacja",
-  "quote": "Cytat",
+  "nothingToRead": "Nenhum conteúdo para ler",
+  "admonition": "Aviso",
+  "quote": "Citação",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
   },
-  "note": "Uwaga",
+  "note": "Observação",
   "@note": {
     "description": "Preview label for a note admonition."
   },
-  "tip": "Wskazówka",
+  "tip": "Dica",
   "@tip": {
     "description": "Preview label for a tip admonition."
   },
-  "warning": "Ostrzeżenie",
+  "warning": "Aviso",
   "@warning": {
     "description": "Preview label for a warning admonition."
   },
-  "tabs": "Karty",
+  "tabs": "Guias",
   "@tabs": {
     "description": "Preview label for a tabs block."
   },
-  "tab": "Karta",
+  "tab": "Guia",
   "@tab": {
     "description": "Preview label for a tab block."
   },
-  "procedure": "Procedura",
+  "procedure": "Procedimento",
   "@procedure": {
     "description": "Preview label for a procedure block."
   },
-  "step": "Krok",
+  "step": "Etapa",
   "@step": {
     "description": "Preview label for a procedure step."
   },
-  "topic": "Temat",
+  "topic": "Tópico",
   "@topic": {
     "description": "Preview label for a topic element."
   },
-  "chapter": "Rozdział",
+  "chapter": "Capítulo",
   "@chapter": {
     "description": "Preview label for a chapter element."
   },
-  "couldNotOpenTarget": "Nie można otworzyć: {target}",
+  "couldNotOpenTarget": "Não foi possível abrir {target}",
   "@couldNotOpenTarget": {
     "description": "Toast shown when a link target cannot be opened.",
     "placeholders": {
@@ -1472,7 +1472,7 @@
       }
     }
   },
-  "linkTargetNotFound": "Nie znaleziono celu łącza: {targetPath}",
+  "linkTargetNotFound": "Destino do link não encontrado: {targetPath}",
   "@linkTargetNotFound": {
     "description": "Toast shown when a link target path is missing.",
     "placeholders": {
@@ -1481,11 +1481,11 @@
       }
     }
   },
-  "cannotOpenFileTypeInEditor": "Nie można otworzyć tego typu pliku w edytorze",
+  "cannotOpenFileTypeInEditor": "Não é possível abrir este tipo de arquivo no editor",
   "@cannotOpenFileTypeInEditor": {
     "description": "Toast shown when a file type cannot be opened in the editor."
   },
-  "anchorNotFound": "Nie znaleziono kotwicy: {anchor}",
+  "anchorNotFound": "Âncora não encontrada: {anchor}",
   "@anchorNotFound": {
     "description": "Toast shown when a link anchor is missing.",
     "placeholders": {
@@ -1494,15 +1494,15 @@
       }
     }
   },
-  "noProblemsFound": "Nie znaleziono żadnych problemów",
+  "noProblemsFound": "Nenhum problema encontrado",
   "@noProblemsFound": {
     "description": "Diagnostics empty state."
   },
-  "noResults": "Brak wyników",
+  "noResults": "Nenhum resultado",
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "{relativePath} — wiersz {lineNumber}",
+  "searchResultLine": "{relativePath} - linha {lineNumber}",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1514,43 +1514,43 @@
       }
     }
   },
-  "untitledResult": "Wynik bez tytułu",
+  "untitledResult": "Resultado sem título",
   "@untitledResult": {
     "description": "Fallback search result title."
   },
-  "documentKindMarkdownFile": "Plik Markdown",
+  "documentKindMarkdownFile": "Arquivo Markdown",
   "@documentKindMarkdownFile": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideMarkdownTopic": "Temat Markdown w Writerside",
+  "documentKindWritersideMarkdownTopic": "Tópico Markdown do Writerside",
   "@documentKindWritersideMarkdownTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideXmlTopic": "Temat XML w Writerside",
+  "documentKindWritersideXmlTopic": "Tópico XML do Writerside",
   "@documentKindWritersideXmlTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideTree": "Drzewo Writerside",
+  "documentKindWritersideTree": "Árvore do Writerside",
   "@documentKindWritersideTree": {
     "description": "Search result document kind label."
   },
-  "documentKindConfigurationFile": "Plik konfiguracyjny",
+  "documentKindConfigurationFile": "Arquivo de configuração",
   "@documentKindConfigurationFile": {
     "description": "Search result document kind label."
   },
-  "documentKindVariablesFile": "Plik zmiennych",
+  "documentKindVariablesFile": "Arquivo de variáveis",
   "@documentKindVariablesFile": {
     "description": "Search result document kind label."
   },
-  "documentKindCategoriesFile": "Plik kategorii",
+  "documentKindCategoriesFile": "Arquivo de categorias",
   "@documentKindCategoriesFile": {
     "description": "Search result document kind label."
   },
-  "documentKindResourceFile": "Plik zasobów",
+  "documentKindResourceFile": "Arquivo de recursos",
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorOpenFailed": "Otwieranie nie powiodło się: {error}",
+  "workspaceErrorOpenFailed": "Falha ao abrir: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",
     "placeholders": {
@@ -1559,7 +1559,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideProjectFailed": "Nie można utworzyć projektu Writerside: {error}",
+  "workspaceErrorCreateWritersideProjectFailed": "Não foi possível criar o projeto Writerside: {error}",
   "@workspaceErrorCreateWritersideProjectFailed": {
     "description": "Workspace error message shown when Writerside project creation fails.",
     "placeholders": {
@@ -1568,7 +1568,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideTopicFailed": "Nie można utworzyć tematu Writerside: {error}",
+  "workspaceErrorCreateWritersideTopicFailed": "Não foi possível criar o tópico do Writerside: {error}",
   "@workspaceErrorCreateWritersideTopicFailed": {
     "description": "Workspace error message shown when Writerside topic creation fails.",
     "placeholders": {
@@ -1577,7 +1577,7 @@
       }
     }
   },
-  "workspaceErrorCouldNotOpenFile": "Nie można otworzyć pliku: {error}",
+  "workspaceErrorCouldNotOpenFile": "Não foi possível abrir o arquivo: {error}",
   "@workspaceErrorCouldNotOpenFile": {
     "description": "Workspace error message shown when opening a file fails.",
     "placeholders": {
@@ -1586,15 +1586,15 @@
       }
     }
   },
-  "workspaceErrorChooseWhereToSaveMarkdown": "Wybierz, gdzie zapisać ten plik Markdown.",
+  "workspaceErrorChooseWhereToSaveMarkdown": "Escolha onde salvar este arquivo Markdown.",
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "Zapis zablokowany: plik został zmieniony na dysku.",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Salvamento bloqueado: o arquivo foi alterado no disco.",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
-  "workspaceErrorSaveFailed": "Zapisywanie nie powiodło się: {error}",
+  "workspaceErrorSaveFailed": "Falha ao salvar: {error}",
   "@workspaceErrorSaveFailed": {
     "description": "Workspace error message shown when saving fails.",
     "placeholders": {
@@ -1603,7 +1603,7 @@
       }
     }
   },
-  "workspaceErrorValidationFailed": "Sprawdzanie poprawności nie powiodło się: {error}",
+  "workspaceErrorValidationFailed": "Falha na validação: {error}",
   "@workspaceErrorValidationFailed": {
     "description": "Workspace error message shown when validation fails.",
     "placeholders": {
@@ -1612,7 +1612,7 @@
       }
     }
   },
-  "errorPathDoesNotExist": "Ścieżka nie istnieje: {path}",
+  "errorPathDoesNotExist": "O caminho não existe: {path}",
   "@errorPathDoesNotExist": {
     "description": "Detail for a missing path error.",
     "placeholders": {
@@ -1621,7 +1621,7 @@
       }
     }
   },
-  "errorTargetDirectoryNotEmpty": "Katalog docelowy już istnieje i nie jest pusty: {path}",
+  "errorTargetDirectoryNotEmpty": "O diretório de destino já existe e não está vazio: {path}",
   "@errorTargetDirectoryNotEmpty": {
     "description": "Detail for a non-empty target directory error.",
     "placeholders": {
@@ -1630,7 +1630,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "Ścieżka docelowa już istnieje, ale nie jest katalogiem: {path}",
+  "errorTargetPathNotDirectory": "O caminho de destino já existe e não é um diretório: {path}",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1639,7 +1639,7 @@
       }
     }
   },
-  "errorGeneratedFileAlreadyExists": "Wygenerowany plik już istnieje: {path}",
+  "errorGeneratedFileAlreadyExists": "O arquivo gerado já existe: {path}",
   "@errorGeneratedFileAlreadyExists": {
     "description": "Detail for a generated file conflict.",
     "placeholders": {
@@ -1648,11 +1648,11 @@
       }
     }
   },
-  "errorParentDirectoryRequired": "Wymagany jest katalog nadrzędny.",
+  "errorParentDirectoryRequired": "O diretório pai é obrigatório.",
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
-  "errorParentDirectoryMissing": "Katalog nadrzędny nie istnieje: {path}",
+  "errorParentDirectoryMissing": "O diretório pai não existe: {path}",
   "@errorParentDirectoryMissing": {
     "description": "Detail for a missing parent directory.",
     "placeholders": {
@@ -1661,31 +1661,31 @@
       }
     }
   },
-  "errorProjectNameRequired": "Nazwa projektu jest wymagana.",
+  "errorProjectNameRequired": "O nome do projeto é obrigatório.",
   "@errorProjectNameRequired": {
     "description": "Detail for a missing project name."
   },
-  "errorDirectoryNameRequired": "Nazwa katalogu jest wymagana.",
+  "errorDirectoryNameRequired": "O nome do diretório é obrigatório.",
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "Nazwa katalogu musi być pojedynczym bezpiecznym segmentem ścieżki.",
+  "errorDirectoryNameUnsafe": "O nome do diretório deve ser um único segmento de caminho seguro.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "Identyfikator instancji musi zaczynać się małą literą i może zawierać tylko małe litery, cyfry, podkreślenia oraz łączniki.",
+  "errorInstanceIdInvalid": "O ID da instância deve começar com uma letra minúscula e conter apenas letras minúsculas, números, sublinhados e hifens.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
-  "errorTopicFileInvalid": "Nazwa pliku tematu musi być nazwą pliku Markdown bez separatorów ścieżki.",
+  "errorTopicFileInvalid": "O nome do arquivo do tópico deve ser um nome de arquivo Markdown sem separadores de caminho.",
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
-  "errorTopicTitleRequired": "Tytuł tematu jest wymagany.",
+  "errorTopicTitleRequired": "O título do tópico é obrigatório.",
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
-  "errorWritersideModuleRootMissing": "Katalog główny modułu Writerside nie istnieje: {path}",
+  "errorWritersideModuleRootMissing": "A raiz do módulo Writerside não existe: {path}",
   "@errorWritersideModuleRootMissing": {
     "description": "Detail for a missing Writerside module root.",
     "placeholders": {
@@ -1694,15 +1694,15 @@
       }
     }
   },
-  "errorWritersideModuleNotOpen": "Aby utworzyć temat, musi być otwarty moduł Writerside.",
+  "errorWritersideModuleNotOpen": "Um módulo Writerside deve estar aberto para criar um tópico.",
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
-  "errorWritersideInstanceTreeMissing": "Moduł Writerside nie ma drzewa instancji.",
+  "errorWritersideInstanceTreeMissing": "O módulo Writerside não tem uma árvore de instância.",
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "Plik drzewa Writerside nie istnieje: {path}",
+  "errorWritersideTreeFileMissing": "O arquivo de árvore do Writerside não existe: {path}",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1711,7 +1711,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "Identyfikator tematu „{topicId}” już istnieje w tym module pomocy.",
+  "errorTopicIdAlreadyExists": "O ID do tópico \"{topicId}\" já existe neste módulo de ajuda.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1720,7 +1720,7 @@
       }
     }
   },
-  "errorTopicFileAlreadyExists": "Plik tematu już istnieje: {path}",
+  "errorTopicFileAlreadyExists": "O arquivo do tópico já existe: {path}",
   "@errorTopicFileAlreadyExists": {
     "description": "Detail for an existing topic file.",
     "placeholders": {
@@ -1729,7 +1729,7 @@
       }
     }
   },
-  "errorReferenceTopicMissing": "Temat odniesienia nie występuje w wybranym drzewie: {topic}",
+  "errorReferenceTopicMissing": "O tópico de referência não está presente na árvore selecionada: {topic}",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
     "placeholders": {
@@ -1738,15 +1738,15 @@
       }
     }
   },
-  "errorWritersideTocNodeMissing": "Wybrany wpis spisu treści już nie istnieje.",
+  "errorWritersideTocNodeMissing": "A entrada selecionada do TOC não existe mais.",
   "@errorWritersideTocNodeMissing": {
     "description": "Detail shown when a selected Writerside TOC entry no longer exists."
   },
-  "errorWritersideTocInvalidMove": "Wpisu spisu treści nie można przenieść do niego samego ani do żadnego z jego elementów podrzędnych.",
+  "errorWritersideTocInvalidMove": "Uma entrada do TOC não pode ser movida para dentro de si mesma nem de um de seus descendentes.",
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Nie można usunąć tematu początkowego {topic}. Najpierw wybierz inną stronę początkową.",
+  "errorWritersideStartTopicDelete": "O tópico inicial {topic} não pode ser excluído. Escolha primeiro outra página inicial.",
   "@errorWritersideStartTopicDelete": {
     "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
@@ -1755,15 +1755,15 @@
       }
     }
   },
-  "errorTopicsRootUnsafe": "Katalog główny tematów musi być bezpiecznym katalogiem względnym.",
+  "errorTopicsRootUnsafe": "A raiz dos tópicos deve ser um diretório relativo seguro.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "Nazwa pliku tematu musi być pojedynczym bezpiecznym segmentem ścieżki.",
+  "errorTopicFileNameUnsafe": "O nome do arquivo do tópico deve ser um único segmento de caminho seguro.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
-  "errorTopicFileExtensionMismatch": "Rozszerzenie pliku tematu musi odpowiadać wybranemu formatowi ({extension}).",
+  "errorTopicFileExtensionMismatch": "A extensão do arquivo do tópico deve corresponder ao formato selecionado ({extension}).",
   "@errorTopicFileExtensionMismatch": {
     "description": "Detail for a topic file extension mismatch.",
     "placeholders": {
@@ -1772,11 +1772,11 @@
       }
     }
   },
-  "errorTopicFileNameInvalid": "Nazwa pliku tematu może zawierać wyłącznie litery, cyfry, podkreślenia i łączniki.",
+  "errorTopicFileNameInvalid": "O nome do arquivo do tópico deve conter apenas letras, números, sublinhados e hifens.",
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
-  "errorUnknown": "Nieznany błąd: {code}",
+  "errorUnknown": "Erro desconhecido: {code}",
   "@errorUnknown": {
     "description": "Fallback detail for an unknown coded application error.",
     "placeholders": {
@@ -1785,7 +1785,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileStatFailed": "Nie można odczytać metadanych pliku: {error}",
+  "diagnosticWorkspaceFileStatFailed": "Não foi possível ler os metadados do arquivo: {error}",
   "@diagnosticWorkspaceFileStatFailed": {
     "description": "Diagnostic shown when file metadata cannot be read.",
     "placeholders": {
@@ -1794,11 +1794,11 @@
       }
     }
   },
-  "diagnosticWorkspaceScanSkipped": "Wykryto duży obszar roboczy. Część plików pominięto, aby aplikacja nadal szybko reagowała.",
+  "diagnosticWorkspaceScanSkipped": "Espaço de trabalho grande detectado. Alguns arquivos foram ignorados para manter o aplicativo responsivo.",
   "@diagnosticWorkspaceScanSkipped": {
     "description": "Diagnostic shown when workspace scanning skips files."
   },
-  "diagnosticWorkspaceScanInspectFailed": "Nie można sprawdzić elementu obszaru roboczego: {error}",
+  "diagnosticWorkspaceScanInspectFailed": "Não foi possível inspecionar a entrada do espaço de trabalho: {error}",
   "@diagnosticWorkspaceScanInspectFailed": {
     "description": "Diagnostic shown when a workspace entry cannot be inspected.",
     "placeholders": {
@@ -1807,11 +1807,11 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "Plik przekracza limit automatycznego analizowania w wersji beta.",
+  "diagnosticWorkspaceFileTooLarge": "O arquivo excede o limite beta de análise automática.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
-  "diagnosticWorkspaceFileReadFailed": "Nie można odczytać pliku Markdown: {error}",
+  "diagnosticWorkspaceFileReadFailed": "Não foi possível ler o arquivo Markdown: {error}",
   "@diagnosticWorkspaceFileReadFailed": {
     "description": "Diagnostic shown when a Markdown file cannot be read.",
     "placeholders": {
@@ -1820,11 +1820,11 @@
       }
     }
   },
-  "diagnosticMarkdownAttributeMalformed": "Nieprawidłowy blok atrybutów nagłówka Writerside.",
+  "diagnosticMarkdownAttributeMalformed": "O bloco de atributos de título do Writerside está malformado.",
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "Powielony identyfikator nagłówka „{id}”.",
+  "diagnosticMarkdownHeadingDuplicateId": "ID de título duplicado \"{id}\".",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1833,19 +1833,19 @@
       }
     }
   },
-  "diagnosticWritersideTopicH1ConvertedToChapter": "Dodatkowe nagłówki H1 najwyższego poziomu są traktowane jako rozdziały.",
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Títulos H1 adicionais no nível superior são tratados como capítulos.",
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "Temat Markdown w Writerside nie ma nagłówka H1 ani tytułu w front matter.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "O tópico Markdown do Writerside não tem H1 nem título no front matter.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
-  "diagnosticWritersideXmlTopicMissingTitle": "Brakuje tytułu tematu XML.",
+  "diagnosticWritersideXmlTopicMissingTitle": "O tópico XML não tem título.",
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
-  "diagnosticWritersideTopicFileMissingTitle": "W temacie „{fileName}” brakuje tytułu.",
+  "diagnosticWritersideTopicFileMissingTitle": "O tópico \"{fileName}\" não tem título.",
   "@diagnosticWritersideTopicFileMissingTitle": {
     "description": "Diagnostic for a Writerside topic file without a title.",
     "placeholders": {
@@ -1854,15 +1854,15 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "Sekcja front matter nie jest zamknięta.",
+  "diagnosticMarkdownFrontMatterMalformed": "O front matter não foi fechado.",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
-  "diagnosticMarkdownRawHtmlUnsafe": "Niebezpieczny element HTML.",
+  "diagnosticMarkdownRawHtmlUnsafe": "Elemento HTML inseguro.",
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "Cel łącza nie istnieje: {targetPath}",
+  "diagnosticMarkdownLinkUnresolvedTarget": "O destino do link não existe: {targetPath}",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1871,7 +1871,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "Kotwica „{anchor}” nie istnieje.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "A âncora \"{anchor}\" não existe.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1880,7 +1880,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingAlt": "Obraz „{destination}” nie ma tekstu alternatywnego.",
+  "diagnosticMarkdownImageMissingAlt": "A imagem \"{destination}\" não tem texto alternativo.",
   "@diagnosticMarkdownImageMissingAlt": {
     "description": "Markdown parser diagnostic for a missing image alt text.",
     "placeholders": {
@@ -1889,7 +1889,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingFile": "Obraz nie istnieje: {destination}",
+  "diagnosticMarkdownImageMissingFile": "A imagem não existe: {destination}",
   "@diagnosticMarkdownImageMissingFile": {
     "description": "Markdown parser diagnostic for a missing image file.",
     "placeholders": {
@@ -1898,7 +1898,7 @@
       }
     }
   },
-  "diagnosticInvalidXml": "Nieprawidłowy XML: {message}",
+  "diagnosticInvalidXml": "XML inválido: {message}",
   "@diagnosticInvalidXml": {
     "description": "XML parser diagnostic for invalid XML.",
     "placeholders": {
@@ -1907,19 +1907,19 @@
       }
     }
   },
-  "diagnosticWritersideConfigInvalidRoot": "Element główny pliku writerside.cfg musi być <ihp>.",
+  "diagnosticWritersideConfigInvalidRoot": "A raiz do arquivo writerside.cfg deve ser <ihp>.",
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "W deklaracji snippets brakuje atrybutu src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "A declaração de snippets está sem o atributo src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "W deklaracji instance-groups brakuje atrybutu src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A declaração de instance-groups está sem o atributo src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "Nieobsługiwany tryb mapowania klawiszy: {mode}",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Modo de keymaps não suportado: {mode}",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1928,23 +1928,23 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "W deklaracji instancji brakuje atrybutu src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "A declaração de instância está sem o atributo src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "Plik writerside.cfg nie rejestruje instancji.",
+  "diagnosticWritersideConfigMissingInstance": "O arquivo writerside.cfg não registra uma instância.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": "Element główny pliku .tree musi być <instance-profile>.",
+  "diagnosticWritersideTreeInvalidRoot": "A raiz do arquivo .tree deve ser <instance-profile>.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "W profilu instancji brakuje identyfikatora.",
+  "diagnosticWritersideTreeMissingId": "O perfil da instância está sem o atributo id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "Nazwa pliku drzewa bez rozszerzenia nie pasuje do identyfikatora instancji „{id}”.",
+  "diagnosticWritersideTreeIdMismatch": "O nome-base do arquivo .tree não corresponde ao ID da instância \"{id}\".",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1953,11 +1953,11 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "Instancji niebędącej biblioteką brakuje atrybutu start-page.",
+  "diagnosticWritersideTreeMissingStartPage": "A instância que não é de biblioteca não tem start-page.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
-  "diagnosticWritersideStartPageMissing": "Strona początkowa „{startPage}” nie istnieje.",
+  "diagnosticWritersideStartPageMissing": "A página inicial \"{startPage}\" não existe.",
   "@diagnosticWritersideStartPageMissing": {
     "description": "Writerside diagnostic for a missing start page.",
     "placeholders": {
@@ -1966,7 +1966,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "Temat „{topic}” pojawia się więcej niż raz w spisie treści tej instancji.",
+  "diagnosticWritersideTreeDuplicateTopic": "O tópico \"{topic}\" aparece mais de uma vez no TOC desta instância.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1975,11 +1975,11 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "Deklaracja zmiennej musi zawierać nazwę i wartość.",
+  "diagnosticWritersideVariableMalformedDeclaration": "A declaração de variável deve ter nome e valor.",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "Zmienna „{name}” została zadeklarowana więcej niż raz.",
+  "diagnosticWritersideVariableDuplicateName": "A variável \"{name}\" é declarada mais de uma vez.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1988,11 +1988,11 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "Kategoria nie ma identyfikatora.",
+  "diagnosticWritersideCategoryMissingId": "A categoria está sem o atributo id.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "Kategoria „{id}” została zadeklarowana więcej niż raz.",
+  "diagnosticWritersideCategoryDuplicateId": "A categoria \"{id}\" é declarada mais de uma vez.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -2001,7 +2001,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "Wartość kolejności kategorii „{order}” zadeklarowano więcej niż raz.",
+  "diagnosticWritersideCategoryDuplicateOrder": "A ordem da categoria \"{order}\" foi declarada mais de uma vez.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -2010,15 +2010,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicInvalidRoot": "Element główny pliku .topic musi być <topic>.",
+  "diagnosticWritersideTopicInvalidRoot": "A raiz do arquivo .topic deve ser <topic>.",
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "W temacie XML brakuje identyfikatora elementu głównego.",
+  "diagnosticWritersideTopicMissingRootId": "A raiz do tópico XML está sem o atributo id.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "Identyfikator elementu głównego tematu XML „{id}” musi odpowiadać nazwie pliku „{expectedId}”.",
+  "diagnosticWritersideTopicRootIdMismatch": "O ID raiz do tópico XML \"{id}\" deve corresponder ao nome do arquivo \"{expectedId}\".",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -2030,7 +2030,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "Identyfikator elementu „{elementId}” pojawia się więcej niż raz.",
+  "diagnosticWritersideTopicDuplicateElementId": "O ID do elemento \"{elementId}\" aparece mais de uma vez.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -2039,15 +2039,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "Elementowi <a> brakuje atrybutu href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> está sem o atributo href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
-  "diagnosticWritersideConfigMissing": "Tryb Writerside wymaga pliku writerside.cfg.",
+  "diagnosticWritersideConfigMissing": "O modo Writerside requer o arquivo writerside.cfg.",
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Brak skonfigurowanego katalogu konfiguracji kompilacji: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "O diretório configurado para a compilação está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -2056,7 +2056,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Brak skonfigurowanego katalogu specyfikacji API: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "O diretório de especificações de API configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -2065,7 +2065,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "Brak skonfigurowanego katalogu fragmentów kodu: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "O diretório de snippets configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -2074,7 +2074,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "Brak skonfigurowanego pliku zmiennych: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "O arquivo de variáveis configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -2083,7 +2083,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "Brak skonfigurowanego pliku kategorii: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "O arquivo de categorias configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -2092,7 +2092,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Brak skonfigurowanego pliku grup instancji: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "O arquivo de grupos de instâncias configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -2101,7 +2101,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "Zarejestrowane drzewo instancji „{source}” nie istnieje.",
+  "diagnosticWritersideConfigMissingInstanceTree": "A árvore de instância registrada \"{source}\" não existe.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -2110,7 +2110,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicReadFailed": "Nie można odczytać pliku tematu: {error}",
+  "diagnosticWritersideTopicReadFailed": "Não foi possível ler o arquivo do tópico: {error}",
   "@diagnosticWritersideTopicReadFailed": {
     "description": "Writerside module diagnostic for a topic file read failure.",
     "placeholders": {
@@ -2119,7 +2119,7 @@
       }
     }
   },
-  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Brak domyślnego katalogu tematów: {relativePath}",
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "O diretório de tópicos padrão está ausente: {relativePath}",
   "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing default topics directory.",
     "placeholders": {
@@ -2128,7 +2128,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicsDirectoryMissing": "Brak skonfigurowanego katalogu tematów: {relativePath}",
+  "diagnosticWritersideTopicsDirectoryMissing": "O diretório de tópicos configurado está ausente: {relativePath}",
   "@diagnosticWritersideTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing topics directory.",
     "placeholders": {
@@ -2137,7 +2137,7 @@
       }
     }
   },
-  "diagnosticWritersideImagesDirectoryMissing": "Brak skonfigurowanego katalogu obrazów: {relativePath}",
+  "diagnosticWritersideImagesDirectoryMissing": "O diretório de imagens configurado está ausente: {relativePath}",
   "@diagnosticWritersideImagesDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing images directory.",
     "placeholders": {
@@ -2146,7 +2146,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "Identyfikator elementu „{id}” pojawia się więcej niż raz.",
+  "diagnosticWritersideTopicDuplicateId": "O ID do elemento \"{id}\" aparece mais de uma vez.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -2155,7 +2155,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "Spis treści odwołuje się do brakującego tematu „{topic}”.",
+  "diagnosticWritersideTreeMissingTopic": "O TOC faz referência ao tópico ausente \"{topic}\".",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -2164,7 +2164,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "Zewnętrzny adres href „{href}” jest nieprawidłowy.",
+  "diagnosticWritersideTreeInvalidHref": "O href externo \"{href}\" é inválido.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -2173,7 +2173,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableUnresolved": "Zmienna „%{name}%” nie została zadeklarowana.",
+  "diagnosticWritersideVariableUnresolved": "A variável \"%{name}%\" não foi declarada.",
   "@diagnosticWritersideVariableUnresolved": {
     "description": "Writerside module diagnostic for an undeclared variable.",
     "placeholders": {
@@ -2182,7 +2182,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "Łącze do tematu „{destination}” nie wskazuje prawidłowego celu.",
+  "diagnosticWritersideTopicLinkUnresolved": "O link para o tópico \"{destination}\" não pode ser resolvido.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -2191,7 +2191,7 @@
       }
     }
   },
-  "diagnosticWritersideAnchorUnresolved": "Kotwica „{anchor}” nie istnieje w „{targetName}”.",
+  "diagnosticWritersideAnchorUnresolved": "A âncora \"{anchor}\" não existe em \"{targetName}\".",
   "@diagnosticWritersideAnchorUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic anchor.",
     "placeholders": {
@@ -2203,11 +2203,11 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "Elementowi <include> brakuje atrybutu from.",
+  "diagnosticWritersideIncludeMissingFrom": "<include> está sem o atributo from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "Źródło elementu include „{from}” nie istnieje.",
+  "diagnosticWritersideIncludeSourceMissing": "A origem da inclusão \"{from}\" não existe.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -2216,7 +2216,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "Element include „{elementId}” nie istnieje w „{from}”.",
+  "diagnosticWritersideIncludeElementMissing": "O elemento incluído \"{elementId}\" não existe em \"{from}\".",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -2228,7 +2228,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "Kategoria seealso „{ref}” nie została zadeklarowana.",
+  "diagnosticWritersideCategoryUnresolved": "A categoria seealso \"{ref}\" não foi declarada.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -2237,7 +2237,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAmbiguousReference": "Odniesienie do tematu „{reference}” jest niejednoznaczne.",
+  "diagnosticWritersideTopicAmbiguousReference": "A referência de tópico \"{reference}\" é ambígua.",
   "@diagnosticWritersideTopicAmbiguousReference": {
     "description": "Writerside module diagnostic for an ambiguous topic reference.",
     "placeholders": {
@@ -2246,7 +2246,7 @@
       }
     }
   },
-  "diagnosticUnknown": "Nieznany komunikat diagnostyczny: {code}",
+  "diagnosticUnknown": "Diagnóstico desconhecido: {code}",
   "@diagnosticUnknown": {
     "description": "Fallback text for an unknown diagnostic code.",
     "placeholders": {
@@ -2255,296 +2255,270 @@
       }
     }
   },
-  "close": "Zamknij",
+  "close": "Fechar",
   "git": "Git",
-  "gitDiff": "Różnice Git",
-  "gitShowDiff": "Pokaż różnice",
-  "@gitShowDiff": {
-    "description": "Menu action that opens the diff for a file in Git history."
-  },
-  "gitDiffHunkRange": "stary zakres {oldRange} → nowy zakres {newRange}",
-  "@gitDiffHunkRange": {
-    "description": "Readable old-to-new line range shown for a Git diff hunk.",
-    "placeholders": {
-      "oldRange": {
-        "type": "String"
-      },
-      "newRange": {
-        "type": "String"
-      }
-    }
-  },
-  "gitDiffNoLines": "brak wierszy",
-  "@gitDiffNoLines": {
-    "description": "Line range text for an empty side of a Git diff hunk."
-  },
-  "gitUnavailableTitle": "Git jest niedostępny",
-  "gitUnavailableMessage": "{reason, select, other{Zainstaluj Git lub skonfiguruj BusyMark tak, aby używał dostępnego pliku wykonywalnego Git. {reason}}}",
-  "gitTrustRequiredTitle": "Zaufać temu obszarowi roboczemu na potrzeby Git?",
-  "@gitTrustRequiredTitle": {
-    "description": "Git empty state title shown before repository-controlled commands may run."
-  },
-  "gitTrustRequiredMessage": "Repozytoria Git mogą uruchamiać programy za pomocą hooków, filtrów i innych elementów konfiguracji. Zaufaj temu obszarowi roboczemu, zanim BusyMark odczyta dane repozytorium lub włączy działania Git.",
-  "@gitTrustRequiredMessage": {
-    "description": "Security warning shown before Git repository access is enabled for a workspace."
-  },
-  "gitTrustWorkspace": "Zaufaj obszarowi roboczemu",
-  "@gitTrustWorkspace": {
-    "description": "Action label for trusting a workspace before enabling Git."
-  },
-  "gitNotRepositoryTitle": "To nie jest repozytorium Git",
-  "gitNotRepositoryMessage": "Ten obszar roboczy nie znajduje się w repozytorium Git.",
-  "gitInitializeRepository": "Zainicjuj repozytorium",
-  "gitDetachedHead": "Odłączony HEAD",
-  "gitDetachedHeadAt": "Odłączony HEAD: {commit}",
-  "gitNoUpstream": "Brak gałęzi upstream",
-  "gitAheadCount": "{count, plural, one{{count} niewysłany commit} few{{count} niewysłane commity} many{{count} niewysłanych commitów} other{{count} niewysłanego commita}}",
-  "gitBehindCount": "{count, plural, one{{count} commit do pobrania} few{{count} commity do pobrania} many{{count} commitów do pobrania} other{{count} commita do pobrania}}",
-  "gitClean": "Bez zmian",
-  "gitConflicts": "Konflikty",
-  "gitChanges": "Zmiany",
-  "gitHistory": "Historia",
-  "gitBranches": "Gałęzie",
-  "gitActions": "Działania Git",
+  "gitDiff": "Diff do Git",
+  "gitShowDiff": "Mostrar diff",
+  "gitDiffHunkRange": "anterior {oldRange} → novo {newRange}",
+  "gitDiffNoLines": "sem linhas",
+  "gitUnavailableTitle": "Git não está disponível",
+  "gitUnavailableMessage": "{reason, select, other{Instale o Git ou configure o BusyMark para usar um executável do Git disponível. {reason}}}",
+  "gitTrustRequiredTitle": "Confiar neste espaço de trabalho para o Git?",
+  "gitTrustRequiredMessage": "Os repositórios Git podem executar programas por meio de hooks, filtros e outras configurações. Confie neste espaço de trabalho antes que o BusyMark leia os dados do repositório ou ative ações do Git.",
+  "gitTrustWorkspace": "Confiar no espaço de trabalho",
+  "gitNotRepositoryTitle": "Não é um repositório Git",
+  "gitNotRepositoryMessage": "Este espaço de trabalho não está em um repositório Git.",
+  "gitInitializeRepository": "Inicializar repositório",
+  "gitDetachedHead": "HEAD desanexado",
+  "gitDetachedHeadAt": "Desanexado em {commit}",
+  "gitNoUpstream": "Sem upstream",
+  "gitAheadCount": "{count, plural, =1{1 commit não enviado} other{{count} commits não enviados}}",
+  "gitBehindCount": "{count, plural, =1{1 commit para obter} other{{count} commits para obter}}",
+  "gitClean": "Limpo",
+  "gitConflicts": "Conflitos",
+  "gitChanges": "Alterações",
+  "gitHistory": "Histórico",
+  "gitBranches": "Branches",
+  "gitActions": "Ações do Git",
   "@gitActions": {
     "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Zatwierdź",
-  "gitSelectForCommit": "Dodaj plik do indeksu",
-  "gitRemoveFromCommit": "Usuń plik z indeksu",
-  "gitDiscard": "Odrzuć",
-  "gitOpenFile": "Otwórz plik",
-  "gitMarkResolved": "Oznacz jako rozwiązany",
-  "gitUntracked": "Pliki nieśledzone",
-  "gitCommitMessage": "Komunikat zatwierdzenia",
-  "gitCommitSelectedFiles": "Wybrane pliki",
-  "gitCommitNoSelectedFiles": "Przed utworzeniem commitu dodaj do indeksu co najmniej jeden plik.",
-  "gitCommitMessageRequired": "Wprowadź komunikat zatwierdzenia.",
-  "gitCreateBranch": "Utwórz gałąź",
-  "gitNewBranch": "Nowa gałąź",
-  "gitBranchName": "Nazwa gałęzi",
-  "gitSwitchBranch": "Przełącz",
-  "gitNoChanges": "Brak zmian",
-  "gitNoHistory": "Brak historii",
-  "gitNoBranches": "Brak gałęzi",
-  "gitNoDiff": "Brak różnic do pokazania",
-  "gitBinaryFile": "Plik binarny. BusyMark nie wyświetla binarnych poprawek.",
-  "gitUnsavedChangesBanner": "Niezapisane zmiany w edytorze nie zostaną uwzględnione, dopóki ich nie zapiszesz.",
-  "gitConfirmDiscardTitle": "Odrzucić zmiany Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Wszystkie oznaczone i nieoznaczone zmiany w wybranym śledzonym pliku zostaną przywrócone do HEAD.} other{Wszystkie oznaczone i nieoznaczone zmiany w wybranych śledzonych plikach zostaną przywrócone do HEAD.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, one{Wybrany nieśledzony plik zostanie usunięty.} few{Wybrane nieśledzone pliki zostaną usunięte.} many{Wybrane nieśledzone pliki zostaną usunięte.} other{Wybrane nieśledzone pliki zostaną usunięte.}}",
-  "gitConfirmDiscardMixed": "{count, plural, one{Wybrany plik zostanie przywrócony lub usunięty zależnie od jego stanu Git.} few{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.} many{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.} other{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.}}",
-  "gitConfirmSwitchBranchTitle": "Przełączyć na {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark ponownie wczyta obszar roboczy z dysku po przełączeniu gałęzi przez Git.",
-  "gitConfirmPushSetUpstreamTitle": "Ustawić gałąź upstream?",
-  "gitConfirmPushSetUpstreamMessage": "Ta gałąź nie ma gałęzi upstream. BusyMark może wypchnąć gałąź {branch} i ustawić ją jako upstream, jeśli skonfigurowano dokładnie jedno repozytorium zdalne.",
-  "gitProjectHistory": "Historia projektu",
-  "gitFileHistory": "Historia pliku",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Adicionar arquivo ao índice",
+  "gitRemoveFromCommit": "Remover arquivo do índice",
+  "gitDiscard": "Descartar",
+  "gitOpenFile": "Abrir arquivo",
+  "gitMarkResolved": "Marcar como resolvido",
+  "gitUntracked": "Arquivos não rastreados",
+  "gitCommitMessage": "Mensagem de commit",
+  "gitCommitSelectedFiles": "Arquivos selecionados",
+  "gitCommitNoSelectedFiles": "Adicione pelo menos um arquivo ao índice antes de criar o commit.",
+  "gitCommitMessageRequired": "Digite uma mensagem de commit.",
+  "gitCreateBranch": "Criar branch",
+  "gitNewBranch": "Nova branch",
+  "gitBranchName": "Nome da branch",
+  "gitSwitchBranch": "Trocar",
+  "gitNoChanges": "Nenhuma alteração",
+  "gitNoHistory": "Nenhum histórico",
+  "gitNoBranches": "Nenhuma branch",
+  "gitNoDiff": "Nenhum diff para exibir",
+  "gitBinaryFile": "Arquivo binário. O BusyMark não exibe patches binários.",
+  "gitUnsavedChangesBanner": "As alterações não salvas do editor não são incluídas até serem salvas.",
+  "gitConfirmDiscardTitle": "Descartar alterações do Git?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Todas as mudanças staged e unstaged no arquivo selecionado rastreado serão restauradas para HEAD.} other{Todas as mudanças staged e unstaged nos arquivos rastreados selecionados serão restauradas para HEAD.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{O arquivo não rastreado selecionado será excluído.} other{Os arquivos não rastreados selecionados serão excluídos.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{O arquivo selecionado será restaurado ou excluído de acordo com o status do Git.} other{Os arquivos selecionados serão restaurados ou excluídos de acordo com o status do Git.}}",
+  "gitConfirmSwitchBranchTitle": "Trocar para {branch}?",
+  "gitConfirmSwitchBranchMessage": "O BusyMark recarregará o espaço de trabalho do disco depois que o Git trocar de branch.",
+  "gitConfirmPushSetUpstreamTitle": "Definir branch upstream?",
+  "gitConfirmPushSetUpstreamMessage": "Esta branch não tem upstream. O BusyMark pode enviar {branch} e definir seu upstream quando houver exatamente um remoto configurado.",
+  "gitProjectHistory": "Histórico do projeto",
+  "gitFileHistory": "Histórico do arquivo",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "fileActions": "Działania na pliku",
-  "actions": "Działania",
-  "gitStatusAdded": "Dodany",
-  "gitStatusDeleted": "Usunięty",
-  "gitStatusRenamed": "Nazwa zmieniona",
-  "gitStatusCopied": "Skopiowany",
-  "gitStatusUntracked": "Nieśledzony",
-  "gitStatusConflicted": "W konflikcie",
-  "gitStatusIgnored": "Ignorowany",
-  "gitStatusTypeChanged": "Zmieniony typ",
-  "gitStatusModified": "Zmodyfikowany",
-  "gitStatusUnknown": "Nieznany",
-  "gitErrorUnavailable": "Git jest niedostępny.",
-  "gitErrorNotRepository": "Ten obszar roboczy nie jest repozytorium Git.",
-  "gitErrorUnsafePath": "BusyMark zablokował niebezpieczną ścieżkę Git.",
-  "gitErrorInvalidBranchName": "Wprowadź prawidłową nazwę gałęzi.",
-  "gitErrorNoRemote": "Nie skonfigurowano zdalnego repozytorium Git.",
-  "gitErrorNoUpstream": "Nie skonfigurowano gałęzi upstream.",
-  "gitErrorMultipleRemotes": "Skonfigurowano wiele repozytoriów zdalnych. Wybierz gałąź upstream poza tą wersją BusyMark.",
-  "gitErrorDirtyWorkspace": "Przed przełączeniem gałęzi zapisz lub odrzuć zmiany w edytorze BusyMark.",
-  "gitErrorDiverged": "Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.",
-  "gitErrorAuthorIdentity": "Git wymaga nazwy autora i adresu e-mail przed utworzeniem commita.",
-  "gitAuthorIdentityTitle": "Tożsamość autora Git",
-  "gitAuthorIdentityMessage": "Wprowadź tożsamość, którą Git ma zapisywać w commitach. BusyMark ją zapisze i ponowi ten commit.",
-  "gitAuthorName": "Nazwa",
+  "fileActions": "Ações do arquivo",
+  "actions": "Ações",
+  "gitStatusAdded": "Adicionado",
+  "gitStatusDeleted": "Excluído",
+  "gitStatusRenamed": "Renomeado",
+  "gitStatusCopied": "Copiado",
+  "gitStatusUntracked": "Não rastreado",
+  "gitStatusConflicted": "Em conflito",
+  "gitStatusIgnored": "Ignorado",
+  "gitStatusTypeChanged": "Tipo alterado",
+  "gitStatusModified": "Modificado",
+  "gitStatusUnknown": "Desconhecido",
+  "gitErrorUnavailable": "Git não está disponível.",
+  "gitErrorNotRepository": "Este espaço de trabalho não é um repositório Git.",
+  "gitErrorUnsafePath": "O BusyMark bloqueou um caminho Git inseguro.",
+  "gitErrorInvalidBranchName": "Digite um nome de branch válido.",
+  "gitErrorNoRemote": "Nenhum remoto Git está configurado.",
+  "gitErrorNoUpstream": "Nenhuma branch upstream está configurada.",
+  "gitErrorMultipleRemotes": "Há vários remotos configurados. Escolha um upstream fora desta versão do BusyMark.",
+  "gitErrorDirtyWorkspace": "Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.",
+  "gitErrorDiverged": "A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.",
+  "gitErrorAuthorIdentity": "O Git precisa do nome e do e-mail do autor antes de criar um commit.",
+  "gitAuthorIdentityTitle": "Identidade do autor do Git",
+  "gitAuthorIdentityMessage": "Informe a identidade que o Git deve registrar nos commits. O BusyMark irá salvá-la e tentar este commit novamente.",
+  "gitAuthorName": "Nome",
   "gitAuthorEmail": "E-mail",
-  "gitAuthorIdentityGlobal": "Używaj we wszystkich repozytoriach",
-  "gitAuthorIdentityGlobalDescription": "W instalacji Snap dotyczy to repozytoriów otwieranych w BusyMark.",
-  "gitSaveIdentityAndCommit": "Zapisz i utwórz commit",
-  "gitErrorAuthentication": "Uwierzytelnianie Git nie powiodło się.",
-  "gitErrorNetwork": "Operacja sieciowa Git nie powiodła się.",
-  "gitErrorConflict": "Git zgłosił nierozwiązane konflikty.",
-  "gitErrorCommandFailed": "Polecenie Git nie powiodło się.",
-  "markdownAndHtml": "Markdown i HTML",
+  "gitAuthorIdentityGlobal": "Usar em todos os repositórios",
+  "gitAuthorIdentityGlobalDescription": "Quando instalado como Snap, isto se aplica aos repositórios abertos no BusyMark.",
+  "gitSaveIdentityAndCommit": "Salvar e criar commit",
+  "gitErrorAuthentication": "A autenticação do Git falhou.",
+  "gitErrorNetwork": "A operação de rede do Git falhou.",
+  "gitErrorConflict": "O Git relatou conflitos não resolvidos.",
+  "gitErrorCommandFailed": "O comando Git falhou.",
+  "markdownAndHtml": "Markdown e HTML",
   "@markdownAndHtml": {
     "description": "Markdown and HTML reference dialog title and menu item."
   },
-  "markdownHtmlMarkdownBlocks": "Bloki Markdown",
+  "markdownHtmlMarkdownBlocks": "Blocos Markdown",
   "@markdownHtmlMarkdownBlocks": {
     "description": "Reference section title for Markdown block syntax."
   },
-  "markdownHtmlMarkdownBlocksDescription": "Struktury blokowe obsługiwane w źródle Markdown i podglądzie.",
+  "markdownHtmlMarkdownBlocksDescription": "Estruturas de bloco compatíveis no código Markdown e na pré-visualização.",
   "@markdownHtmlMarkdownBlocksDescription": {
     "description": "Reference section description for Markdown block syntax."
   },
-  "markdownHtmlInlineFormatting": "Markdown w tekście",
+  "markdownHtmlInlineFormatting": "Markdown em linha",
   "@markdownHtmlInlineFormatting": {
     "description": "Reference section title for Markdown inline syntax."
   },
-  "markdownHtmlInlineFormattingDescription": "Formatowanie w akapitach, elementach list i komórkach tabel.",
+  "markdownHtmlInlineFormattingDescription": "Formatação dentro de parágrafos, itens de lista e células de tabela.",
   "@markdownHtmlInlineFormattingDescription": {
     "description": "Reference section description for Markdown inline syntax."
   },
-  "markdownHtmlRawHtmlBlocks": "Surowe bloki HTML",
+  "markdownHtmlRawHtmlBlocks": "Blocos de HTML bruto",
   "@markdownHtmlRawHtmlBlocks": {
     "description": "Reference section title for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlBlocksDescription": "Bezpieczne blokowe tagi HTML renderowane przez widżety podglądu BusyMark.",
+  "markdownHtmlRawHtmlBlocksDescription": "Tags HTML de bloco seguras renderizadas pelos widgets de pré-visualização do BusyMark.",
   "@markdownHtmlRawHtmlBlocksDescription": {
     "description": "Reference section description for supported raw HTML block tags."
   },
-  "markdownHtmlRawHtmlInline": "Surowe tagi HTML w tekście",
+  "markdownHtmlRawHtmlInline": "Tags de HTML bruto em linha",
   "@markdownHtmlRawHtmlInline": {
     "description": "Reference section title for supported raw HTML inline tags."
   },
-  "markdownHtmlRawHtmlInlineDescription": "Bezpieczne tagi HTML w tekście renderowane bez pokazywania dosłownych tagów.",
+  "markdownHtmlRawHtmlInlineDescription": "Tags HTML em linha seguras renderizadas sem mostrar as tags literais.",
   "@markdownHtmlRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "markdownHtmlSafety": "Reguły bezpieczeństwa",
+  "markdownHtmlSafety": "Regras de segurança",
   "@markdownHtmlSafety": {
     "description": "Reference section title for raw HTML safety rules."
   },
-  "markdownHtmlSafetyDescription": "Surowy HTML jest analizowany i oczyszczany przed renderowaniem podglądu.",
+  "markdownHtmlSafetyDescription": "O HTML bruto é analisado e higienizado antes da pré-visualização.",
   "@markdownHtmlSafetyDescription": {
     "description": "Reference section description for raw HTML safety rules."
   },
-  "markdownHtmlHeadings": "Nagłówki",
+  "markdownHtmlHeadings": "Títulos",
   "@markdownHtmlHeadings": {
     "description": "Reference row label for Markdown headings."
   },
-  "markdownHtmlParagraphs": "Akapity",
+  "markdownHtmlParagraphs": "Parágrafos",
   "@markdownHtmlParagraphs": {
     "description": "Reference row label for Markdown paragraphs."
   },
-  "markdownHtmlLists": "Listy",
+  "markdownHtmlLists": "Listas",
   "@markdownHtmlLists": {
     "description": "Reference row label for list syntax."
   },
-  "markdownHtmlHtmlContainers": "Kontenery",
+  "markdownHtmlHtmlContainers": "Contêineres",
   "@markdownHtmlHtmlContainers": {
     "description": "Reference row label for HTML container tags."
   },
-  "markdownHtmlHtmlTextBlocks": "Bloki tekstowe",
+  "markdownHtmlHtmlTextBlocks": "Blocos de texto",
   "@markdownHtmlHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Figury i obrazy",
+  "markdownHtmlHtmlFigures": "Figuras e imagens",
   "@markdownHtmlHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
-  "markdownHtmlHtmlPreformatted": "Kod preformatowany",
+  "markdownHtmlHtmlPreformatted": "Código pré-formatado",
   "@markdownHtmlHtmlPreformatted": {
     "description": "Reference row label for HTML preformatted/code tags."
   },
-  "markdownHtmlHtmlDisclosure": "Bloki rozwijane",
+  "markdownHtmlHtmlDisclosure": "Blocos expansíveis",
   "@markdownHtmlHtmlDisclosure": {
     "description": "Reference row label for HTML details/summary tags."
   },
-  "markdownHtmlHtmlDescriptionLists": "Listy opisów",
+  "markdownHtmlHtmlDescriptionLists": "Listas de descrição",
   "@markdownHtmlHtmlDescriptionLists": {
     "description": "Reference row label for HTML description list tags."
   },
-  "markdownHtmlHtmlFormattingTags": "Tagi formatowania",
+  "markdownHtmlHtmlFormattingTags": "Tags de formatação",
   "@markdownHtmlHtmlFormattingTags": {
     "description": "Reference row label for HTML inline formatting tags."
   },
-  "markdownHtmlHtmlInlineCodeTags": "Tagi kodu w tekście",
+  "markdownHtmlHtmlInlineCodeTags": "Tags de código em linha",
   "@markdownHtmlHtmlInlineCodeTags": {
     "description": "Reference row label for HTML inline code-related tags."
   },
-  "markdownHtmlHtmlNeutralInlineTags": "Semantyczne tagi tekstu",
+  "markdownHtmlHtmlNeutralInlineTags": "Tags de texto semântico",
   "@markdownHtmlHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "markdownHtmlSanitizedPreview": "Oczyszczony podgląd",
+  "markdownHtmlSanitizedPreview": "Pré-visualização higienizada",
   "@markdownHtmlSanitizedPreview": {
     "description": "Reference row label for sanitized preview behavior."
   },
-  "markdownHtmlSanitizedPreviewDescription": "Dozwolony HTML jest konwertowany na bloki podglądu BusyMark, a nie renderowany w przeglądarce.",
+  "markdownHtmlSanitizedPreviewDescription": "O HTML permitido é convertido em blocos de pré-visualização do BusyMark e não é renderizado em um navegador.",
   "@markdownHtmlSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
   },
-  "markdownHtmlSourcePreserved": "Źródło jest zachowane",
+  "markdownHtmlSourcePreserved": "Código-fonte preservado",
   "@markdownHtmlSourcePreserved": {
     "description": "Reference row label for raw source preservation."
   },
-  "markdownHtmlSourcePreservedDescription": "Nieedytowany surowy HTML jest zapisywany dokładnie jako tekst źródłowy.",
+  "markdownHtmlSourcePreservedDescription": "HTML bruto não editado é salvo exatamente como texto fonte.",
   "@markdownHtmlSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "markdownHtmlMarkdownInsideHtml": "Markdown wewnątrz HTML",
+  "markdownHtmlMarkdownInsideHtml": "Markdown dentro de HTML",
   "@markdownHtmlMarkdownInsideHtml": {
     "description": "Reference row label for Markdown inside raw HTML."
   },
-  "markdownHtmlMarkdownInsideHtmlDescription": "Znaczniki Markdown wewnątrz surowego HTML są wyświetlane jako tekst dosłowny.",
+  "markdownHtmlMarkdownInsideHtmlDescription": "Marcadores Markdown dentro de HTML bruto são exibidos como texto literal.",
   "@markdownHtmlMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "markdownHtmlBlockedContent": "Zablokowana aktywna zawartość",
+  "markdownHtmlBlockedContent": "Conteúdo ativo bloqueado",
   "@markdownHtmlBlockedContent": {
     "description": "Reference row label for blocked HTML content."
   },
-  "markdownHtmlBlockedContentDescription": "Skrypty, style, ramki, formularze, SVG, MathML, zdarzenia i niebezpieczne atrybuty są blokowane.",
+  "markdownHtmlBlockedContentDescription": "Scripts, estilos, frames, formulários, SVG, MathML, eventos e atributos inseguros são bloqueados.",
   "@markdownHtmlBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
   },
-  "markdownHtmlSafeUrls": "Tylko bezpieczne adresy URL",
+  "markdownHtmlSafeUrls": "Somente URLs seguras",
   "@markdownHtmlSafeUrls": {
     "description": "Reference row label for safe URL policy."
   },
-  "markdownHtmlSafeUrlsDescription": "Łącza dopuszczają http, https, mailto, tel, względne adresy URL i fragmenty; niebezpieczne schematy są blokowane.",
+  "markdownHtmlSafeUrlsDescription": "Links permitem http, https, mailto, tel, URLs relativas e fragmentos; esquemas inseguros são bloqueados.",
   "@markdownHtmlSafeUrlsDescription": {
     "description": "Reference row description for safe URL policy."
   },
-  "addToGit": "Dodaj do Git",
-  "delete": "Usuń",
-  "newFile": "Nowy plik",
-  "rename": "Zmień nazwę",
-  "confirmDeleteFileTitle": "Usunąć plik?",
-  "confirmDeleteFolderTitle": "Usunąć folder?",
-  "confirmDeleteFileMessage": "Usunąć {name}? Tej operacji nie można cofnąć.",
-  "confirmDeleteFolderMessage": "Usunąć {name} i wszystkie pliki w środku? Tej operacji nie można cofnąć.",
-  "workspaceErrorFileOperationFailed": "Operacja na pliku nie powiodła się: {error}",
-  "errorDirectoryMissing": "Katalog nie istnieje: {path}",
-  "errorPathAlreadyExists": "Ścieżka już istnieje: {path}",
-  "errorFileNameRequired": "Nazwa pliku jest wymagana.",
-  "errorFileNameUnsafe": "Nazwa pliku musi być pojedynczym bezpiecznym segmentem ścieżki.",
-  "errorFileOperationInvalidTarget": "Nie można przenieść folderu do niego samego.",
-  "errorFileOperationOutsideRoot": "Operacja na pliku musi pozostać w obrębie obszaru roboczego.",
-  "errorFileOperationRoot": "Nie można zmienić katalogu głównego obszaru roboczego z poziomu drzewa plików.",
-  "safeDeleteTopicFile": "Bezpiecznie usuń plik tematu…",
+  "addToGit": "Adicionar ao Git",
+  "delete": "Excluir",
+  "newFile": "Novo arquivo",
+  "rename": "Renomear",
+  "confirmDeleteFileTitle": "Excluir arquivo?",
+  "confirmDeleteFolderTitle": "Excluir pasta?",
+  "confirmDeleteFileMessage": "Excluir {name}? Isso não pode ser desfeito.",
+  "confirmDeleteFolderMessage": "Excluir {name} e todos os arquivos dentro dela? Isso não pode ser desfeito.",
+  "workspaceErrorFileOperationFailed": "Falha na operação de arquivo: {error}",
+  "errorDirectoryMissing": "O diretório não existe: {path}",
+  "errorPathAlreadyExists": "O caminho já existe: {path}",
+  "errorFileNameRequired": "O nome do arquivo é obrigatório.",
+  "errorFileNameUnsafe": "O nome do arquivo deve ser um único segmento de caminho seguro.",
+  "errorFileOperationInvalidTarget": "Não é possível mover uma pasta para dentro dela mesma.",
+  "errorFileOperationOutsideRoot": "A operação de arquivo deve permanecer dentro do espaço de trabalho.",
+  "errorFileOperationRoot": "A raiz do espaço de trabalho não pode ser alterada pela árvore de arquivos.",
+  "safeDeleteTopicFile": "Excluir o arquivo do tópico com segurança…",
   "@safeDeleteTopicFile": {
     "description": "Action that safely deletes a Writerside topic file after finding usages."
   },
-  "removeTocElement": "Usuń element spisu treści",
+  "removeTocElement": "Remover elemento do TOC",
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
-  "reviewUsages": "Przejrzyj użycia",
+  "reviewUsages": "Revisar usos",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."
   },
-  "deleteTopicFile": "Usuń plik tematu",
+  "deleteTopicFile": "Excluir arquivo do tópico",
   "@deleteTopicFile": {
     "description": "Action that deletes a Writerside topic file."
   },
-  "removeAction": "Usuń",
+  "removeAction": "Remover",
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Usuń „{topic}” z wybranej instancji. Plik tematu zostanie zachowany.",
+  "topicRemovalSummary": "Remova “{topic}” da instância selecionada. O arquivo do tópico será mantido.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2553,7 +2527,7 @@
       }
     }
   },
-  "safeDeleteTopicSummary": "Usuń „{topic}” i bezpiecznie zaktualizuj odwołania do niego w całym tym projekcie Writerside.",
+  "safeDeleteTopicSummary": "Exclua “{topic}” e atualize com segurança as referências a ele em todo este projeto Writerside.",
   "@safeDeleteTopicSummary": {
     "description": "Summary of safely deleting a topic file.",
     "placeholders": {
@@ -2562,7 +2536,7 @@
       }
     }
   },
-  "childTopicsPromoted": "{count, plural, one{1 temat podrzędny zostanie przeniesiony o poziom wyżej.} few{{count} tematy podrzędne zostaną przeniesione o poziom wyżej.} many{{count} tematów podrzędnych zostanie przeniesionych o poziom wyżej.} other{{count} tematu podrzędnego zostanie przeniesione o poziom wyżej.}}",
+  "childTopicsPromoted": "{count, plural, =1{O tópico filho subirá um nível.} other{Os {count} tópicos filhos subirão um nível.}}",
   "@childTopicsPromoted": {
     "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
     "placeholders": {
@@ -2571,11 +2545,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Ten temat jest używany jako strona początkowa instancji. Przejrzyj jego użycia i przypisz inną stronę początkową przed kontynuowaniem.",
+  "topicIsStartPageRemovalWarning": "Este tópico é usado como página inicial de uma instância. Revise os usos dele e atribua outra página inicial antes de continuar.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Użycia ({count})",
+  "topicUsagesCount": "Usos ({count})",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2584,31 +2558,31 @@
       }
     }
   },
-  "noBreakingTopicUsages": "Nie znaleziono odwołań, które przestałyby działać.",
+  "noBreakingTopicUsages": "Não foram encontradas referências que deixariam de funcionar.",
   "@noBreakingTopicUsages": {
     "description": "Message shown when removal will not leave breaking topic usages."
   },
-  "topicUsagesFound": "BusyMark znalazł następujące odwołania do tego tematu.",
+  "topicUsagesFound": "O BusyMark encontrou as seguintes referências a este tópico.",
   "@topicUsagesFound": {
     "description": "Heading for topic usages found by safe delete."
   },
-  "topicUsageTocElements": "Elementy spisu treści",
+  "topicUsageTocElements": "Elementos do TOC",
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Strony początkowe",
+  "topicUsageStartPages": "Páginas iniciais",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
-  "topicUsageTopicLinks": "Linki do tematów",
+  "topicUsageTopicLinks": "Links para tópicos",
   "@topicUsageTopicLinks": {
     "description": "Usage group label for links to the topic."
   },
-  "topicUsageIncludes": "Dołączenia",
+  "topicUsageIncludes": "Inclusões",
   "@topicUsageIncludes": {
     "description": "Usage group label for topic includes."
   },
-  "usageCount": "{count, plural, one{1 użycie} few{{count} użycia} many{{count} użyć} other{{count} użycia}}",
+  "usageCount": "{count, plural, =1{1 uso} other{{count} usos}}",
   "@usageCount": {
     "description": "Compact topic usage count.",
     "placeholders": {
@@ -2617,39 +2591,39 @@
       }
     }
   },
-  "refactoringOptions": "Opcje refaktoryzacji",
+  "refactoringOptions": "Opções de refatoração",
   "@refactoringOptions": {
     "description": "Heading for safe-delete refactoring options."
   },
-  "updateUsagesAutomatically": "Aktualizuj użycia automatycznie",
+  "updateUsagesAutomatically": "Atualizar usos automaticamente",
   "@updateUsagesAutomatically": {
     "description": "Option to update supported topic usages automatically."
   },
-  "updateUsagesAutomaticallyDescription": "Usuń odwołania w spisie treści i dołączenia oraz zachowaj tekst linków.",
+  "updateUsagesAutomaticallyDescription": "Remova referências dos TOCs e inclusões e preserve o texto dos links.",
   "@updateUsagesAutomaticallyDescription": {
     "description": "Description of automatic topic usage updates."
   },
-  "manualUsageUpdatesRequired": "Niektóre użycia wymagają ręcznych zmian przed tą refaktoryzacją.",
+  "manualUsageUpdatesRequired": "Alguns usos exigem alterações manuais antes desta refatoração.",
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Ustaw przekierowanie do",
+  "setRedirectTo": "Redirecionar para",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },
-  "noRedirectDescription": "Nie przekierowuj starej opublikowanej strony.",
+  "noRedirectDescription": "Não redirecionar a página publicada antiga.",
   "@noRedirectDescription": {
     "description": "Description for choosing no redirect target."
   },
-  "redirectTarget": "Cel przekierowania",
+  "redirectTarget": "Destino do redirecionamento",
   "@redirectTarget": {
     "description": "Field label for selecting a redirect target."
   },
-  "remainingUsagesBlockRemoval": "Przejrzyj i zaktualizuj pozostałe użycia przed kontynuowaniem albo włącz automatyczne aktualizacje, jeśli są dostępne.",
+  "remainingUsagesBlockRemoval": "Revise e atualize os usos restantes antes de continuar ou ative as atualizações automáticas quando estiverem disponíveis.",
   "@remainingUsagesBlockRemoval": {
     "description": "Message explaining that unresolved usages block removal."
   },
-  "usagesOfTopic": "Użycia tematu {topic}",
+  "usagesOfTopic": "Usos de {topic}",
   "@usagesOfTopic": {
     "description": "Title for the usage review of a topic.",
     "placeholders": {
@@ -2658,27 +2632,27 @@
       }
     }
   },
-  "noUsagesFound": "Nie znaleziono użyć",
+  "noUsagesFound": "Nenhum uso encontrado.",
   "@noUsagesFound": {
     "description": "Empty state shown when no topic usages were found."
   },
-  "outsideSelectedInstance": "poza wybraną instancją",
+  "outsideSelectedInstance": "Fora da instância selecionada",
   "@outsideSelectedInstance": {
     "description": "Label for a usage outside the selected Writerside instance."
   },
-  "doRefactor": "Wykonaj refaktoryzację",
+  "doRefactor": "Refatorar",
   "@doRefactor": {
     "description": "Action that applies the selected safe-delete refactoring."
   },
-  "orphanTopicTitle": "Plik tematu nie jest już używany",
+  "orphanTopicTitle": "O arquivo do tópico não é mais usado",
   "@orphanTopicTitle": {
     "description": "Title shown when a removed topic file has become orphaned."
   },
-  "keepTopicFile": "Zachowaj plik tematu",
+  "keepTopicFile": "Manter o arquivo do tópico",
   "@keepTopicFile": {
     "description": "Action that keeps an orphaned topic file."
   },
-  "orphanTopicMessage": "„{topic}” nie jest już używany nigdzie w tym projekcie Writerside. Usuń plik albo zachowaj go do użycia w innej instancji.",
+  "orphanTopicMessage": "“{topic}” não é mais usado em nenhum lugar deste projeto Writerside. Exclua o arquivo ou mantenha-o para uso em outra instância.",
   "@orphanTopicMessage": {
     "description": "Prompt to safely delete a topic after its final TOC element is removed.",
     "placeholders": {
@@ -2687,23 +2661,23 @@
       }
     }
   },
-  "errorWritersideSafeDeleteRequired": "Użyj bezpiecznego usuwania dla plików tematów Writerside.",
+  "errorWritersideSafeDeleteRequired": "Use a exclusão segura para arquivos de tópicos do Writerside.",
   "@errorWritersideSafeDeleteRequired": {
     "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
   },
-  "errorWritersideTopicUsageScanFailed": "Nie udało się zakończyć wyszukiwania użyć tematu. Nie zmieniono żadnych plików.",
+  "errorWritersideTopicUsageScanFailed": "Não foi possível concluir a verificação dos usos do tópico. Nenhum arquivo foi alterado.",
   "@errorWritersideTopicUsageScanFailed": {
     "description": "Error shown when safe-delete usage analysis cannot complete reliably."
   },
-  "errorWritersideTopicUsagesRemain": "Niektóre użycia tematu nadal wymagają uwagi. Przejrzyj je przed kontynuowaniem.",
+  "errorWritersideTopicUsagesRemain": "Alguns usos do tópico ainda precisam de atenção. Revise-os antes de continuar.",
   "@errorWritersideTopicUsagesRemain": {
     "description": "Error shown when unresolved topic usages block removal."
   },
-  "errorWritersideRedirectInvalid": "Wybrany cel przekierowania nie jest już prawidłowy. Wybierz go ponownie.",
+  "errorWritersideRedirectInvalid": "O destino de redirecionamento selecionado não é mais válido. Selecione-o novamente.",
   "@errorWritersideRedirectInvalid": {
     "description": "Error shown when a safe-delete redirect target is stale or conflicts."
   },
-  "errorWritersideRollbackFailed": "Nie udało się całkowicie wycofać usunięcia tematu. Przed kontynuowaniem przejrzyj te ścieżki: {paths}",
+  "errorWritersideRollbackFailed": "Não foi possível reverter completamente a remoção do tópico. Revise estes caminhos antes de continuar: {paths}",
   "@errorWritersideRollbackFailed": {
     "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
     "placeholders": {
@@ -2712,19 +2686,19 @@
       }
     }
   },
-  "exportAsPdf": "Eksportuj jako PDF",
+  "exportAsPdf": "Exportar como PDF",
   "@exportAsPdf": {
     "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
   },
-  "pdfExportDescription": "Wybierz układ strony dla dopracowanego, samodzielnego pliku PDF.",
+  "pdfExportDescription": "Escolha o esquema da página para criar um PDF bem acabado e independente.",
   "@pdfExportDescription": {
     "description": "Introductory text in the PDF export options dialog."
   },
-  "pdfRemoteImagesNote": "Obrazy zdalne nie są pobierane podczas eksportu. Dostępne obrazy lokalne zostaną dołączone.",
+  "pdfRemoteImagesNote": "As imagens remotas não são transferidas durante a exportação. As imagens locais são incluídas quando disponíveis.",
   "@pdfRemoteImagesNote": {
     "description": "Privacy note explaining image handling during PDF export."
   },
-  "pdfPageSize": "Rozmiar strony",
+  "pdfPageSize": "Tamanho da página",
   "@pdfPageSize": {
     "description": "PDF export page-size setting."
   },
@@ -2732,55 +2706,55 @@
   "@pdfPageSizeA4": {
     "description": "A4 PDF page-size option."
   },
-  "pdfPageSizeLetter": "US Letter",
+  "pdfPageSizeLetter": "Carta",
   "@pdfPageSizeLetter": {
     "description": "US Letter PDF page-size option."
   },
-  "pdfOrientation": "Orientacja",
+  "pdfOrientation": "Orientação",
   "@pdfOrientation": {
     "description": "PDF export page-orientation setting."
   },
-  "pdfPortrait": "Pionowa",
+  "pdfPortrait": "Vertical",
   "@pdfPortrait": {
     "description": "Portrait PDF page-orientation option."
   },
-  "pdfLandscape": "Pozioma",
+  "pdfLandscape": "Horizontal",
   "@pdfLandscape": {
     "description": "Landscape PDF page-orientation option."
   },
-  "pdfMargins": "Marginesy",
+  "pdfMargins": "Margens",
   "@pdfMargins": {
     "description": "PDF export page-margin setting."
   },
-  "pdfMarginNarrow": "Wąskie",
+  "pdfMarginNarrow": "Estreitas",
   "@pdfMarginNarrow": {
     "description": "Narrow PDF page-margin option."
   },
-  "pdfMarginNormal": "Normalne",
+  "pdfMarginNormal": "Normais",
   "@pdfMarginNormal": {
     "description": "Normal PDF page-margin option."
   },
-  "pdfMarginWide": "Szerokie",
+  "pdfMarginWide": "Largas",
   "@pdfMarginWide": {
     "description": "Wide PDF page-margin option."
   },
-  "pdfIncludePageNumbers": "Dodaj numery stron",
+  "pdfIncludePageNumbers": "Incluir números de página",
   "@pdfIncludePageNumbers": {
     "description": "Toggle for page numbers in an exported PDF."
   },
-  "export": "Eksportuj",
+  "export": "Exportar",
   "@export": {
     "description": "Button label that starts an export."
   },
-  "exportingPdf": "Eksportowanie PDF…",
+  "exportingPdf": "A exportar PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
   },
-  "fileTypePdf": "Dokument PDF",
+  "fileTypePdf": "Documento PDF",
   "@fileTypePdf": {
     "description": "File picker label for PDF documents."
   },
-  "pdfExported": "Wyeksportowano {fileName}.",
+  "pdfExported": "{fileName} foi exportado.",
   "@pdfExported": {
     "description": "PDF export success message.",
     "placeholders": {
@@ -2789,7 +2763,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "{fileName} został wyeksportowany z {count, plural, =1{1 ostrzeżeniem} other{{count} ostrzeżeniami}}.",
+  "pdfExportedWithWarnings": "{fileName} foi exportado com {count, plural, =1{1 aviso} other{{count} avisos}}.",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some images were omitted.",
     "placeholders": {
@@ -2801,282 +2775,282 @@
       }
     }
   },
-  "pdfExportUnavailable": "Brakuje składnika eksportu PDF. Zainstaluj ponownie BusyMark i spróbuj jeszcze raz.",
+  "pdfExportUnavailable": "O componente de exportação para PDF está em falta. Reinstale o BusyMark e tente novamente.",
   "@pdfExportUnavailable": {
     "description": "Error shown when the bundled PDF compiler is unavailable."
   },
-  "pdfExportTimedOut": "Eksport PDF trwał zbyt długo i został zatrzymany.",
+  "pdfExportTimedOut": "A exportação para PDF demorou demasiado e foi interrompida.",
   "@pdfExportTimedOut": {
     "description": "Error shown when PDF compilation times out."
   },
-  "pdfExportFailed": "BusyMark nie mógł wyeksportować tego dokumentu jako PDF.",
+  "pdfExportFailed": "O BusyMark não conseguiu exportar este documento como PDF.",
   "@pdfExportFailed": {
     "description": "Generic PDF export failure message."
   },
-  "visualizationRendering": "Renderowanie…",
-  "visualizationStale": "Wyświetlanie ostatniego poprawnego renderingu",
-  "visualizationShowSource": "Pokaż źródło",
-  "visualizationShowRender": "Pokaż wynik",
-  "visualizationFitWidth": "Dopasuj do szerokości",
-  "visualizationSaveImage": "Zapisz obraz",
-  "visualizationCopyImage": "Kopiuj obraz",
-  "visualizationImageCopied": "Obraz skopiowany",
-  "visualizationOpenApiReference": "Otwórz dokumentację API",
-  "visualizationValid": "Prawidłowy",
-  "visualizationInvalid": "Nieprawidłowy",
-  "visualizationServers": "Serwery",
-  "visualizationPaths": "Ścieżki",
-  "visualizationOperations": "Operacje",
-  "visualizationTags": "Tagi",
-  "visualizationNoOperations": "Brak pasujących operacji",
-  "visualizationSearchOperations": "Szukaj operacji",
-  "visualizationRenderFailed": "Nie udało się wyrenderować tej wizualizacji.",
-  "visualizationRetry": "Spróbuj ponownie",
-  "visualizationSaved": "Zapisano {fileName}",
-  "shortcutExportPdfDescription": "Eksportuj aktywny dokument lub moduł Writerside jako PDF.",
+  "visualizationRendering": "A renderizar…",
+  "visualizationStale": "A mostrar a última renderização válida",
+  "visualizationShowSource": "Mostrar código-fonte",
+  "visualizationShowRender": "Mostrar renderização",
+  "visualizationFitWidth": "Ajustar à largura",
+  "visualizationSaveImage": "Salvar imagem",
+  "visualizationCopyImage": "Copiar imagem",
+  "visualizationImageCopied": "Imagem copiada",
+  "visualizationOpenApiReference": "Abrir referência da API",
+  "visualizationValid": "Válido",
+  "visualizationInvalid": "Inválido",
+  "visualizationServers": "Servidores",
+  "visualizationPaths": "Caminhos",
+  "visualizationOperations": "Operações",
+  "visualizationTags": "Etiquetas",
+  "visualizationNoOperations": "Nenhuma operação correspondente",
+  "visualizationSearchOperations": "Pesquisar operações",
+  "visualizationRenderFailed": "Não foi possível renderizar esta visualização.",
+  "visualizationRetry": "Tentar novamente",
+  "visualizationSaved": "{fileName} guardado",
+  "shortcutExportPdfDescription": "Exportar o documento ativo ou o módulo do Writerside como PDF.",
   "@shortcutExportPdfDescription": {
     "description": "Keyboard-shortcut description for PDF export."
   },
-  "gitStaged": "W indeksie",
-  "gitUnstaged": "Poza indeksem",
-  "gitFetch": "Pobierz",
-  "gitStagedFileCount": "{count, plural, =1{1 plik w indeksie} few{{count} pliki w indeksie} many{{count} plików w indeksie} other{{count} plików w indeksie}}",
-  "gitOutsideWorkspace": "Poza obszarem roboczym",
-  "gitFileHistoryRequiresOpenFile": "Historia pliku wymaga otwartego pliku Markdown.",
-  "gitLoadMore": "Wczytaj więcej",
-  "gitChangesInCommit": "Zmiany w tym commicie",
-  "gitCompareWithCurrent": "Porównaj z bieżącą wersją",
-  "gitRestoreVersion": "Przywróć tę wersję",
-  "gitConfirmRestoreTitle": "Przywrócić tę wersję pliku?",
-  "gitConfirmRestoreMessage": "BusyMark zastąpi bieżący plik w drzewie roboczym wybraną wersją z commita. Przywrócony plik pozostanie poza indeksem.",
-  "gitBinaryFileInfo": "Plik binarny ({size} bajtów). BusyMark nie wyświetla poprawek binarnych.",
-  "gitErrorRestoreStagedFile": "Usuń plik z indeksu przed przywróceniem wcześniejszej wersji.",
-  "gitCommitActions": "Operacje na commicie",
-  "gitResetCurrentBranchToHere": "Zresetuj bieżącą gałąź tutaj…",
-  "gitResetCurrentBranchTitle": "Zresetować {branch} do {commit}?",
-  "gitResetCurrentBranchMessage": "Ta operacja przenosi gałąź {branch} do commita {commit}. Wybierz sposób aktualizacji indeksu i drzewa roboczego przez Git.",
-  "gitReset": "Zresetuj",
+  "gitStaged": "Preparados",
+  "gitUnstaged": "Não preparados",
+  "gitFetch": "Buscar",
+  "gitStagedFileCount": "{count, plural, =1{1 arquivo preparado} other{{count} arquivos preparados}}",
+  "gitOutsideWorkspace": "Fora do espaço de trabalho",
+  "gitFileHistoryRequiresOpenFile": "O histórico do arquivo requer um arquivo Markdown aberto.",
+  "gitLoadMore": "Carregar mais",
+  "gitChangesInCommit": "Alterações neste commit",
+  "gitCompareWithCurrent": "Comparar com a versão atual",
+  "gitRestoreVersion": "Restaurar esta versão",
+  "gitConfirmRestoreTitle": "Restaurar esta versão do arquivo?",
+  "gitConfirmRestoreMessage": "O BusyMark substituirá o arquivo atual da árvore de trabalho pela versão selecionada do commit. O arquivo restaurado permanecerá não preparado.",
+  "gitBinaryFileInfo": "Arquivo binário ({size} bytes). O BusyMark não exibe patches binários.",
+  "gitErrorRestoreStagedFile": "Remova o arquivo do índice antes de restaurar uma versão anterior.",
+  "gitCommitActions": "Ações do commit",
+  "gitResetCurrentBranchToHere": "Redefinir a branch atual aqui…",
+  "gitResetCurrentBranchTitle": "Redefinir {branch} para {commit}?",
+  "gitResetCurrentBranchMessage": "Isto move a branch {branch} para o commit {commit}. Escolha como o Git deve atualizar o índice e a árvore de trabalho.",
+  "gitReset": "Redefinir",
   "gitResetModeSoft": "Soft",
-  "gitResetModeSoftDescription": "Przenieś tylko gałąź. Pozostaw indeks i drzewo robocze bez zmian; różnice względem wybranego commita pozostaną w indeksie.",
+  "gitResetModeSoftDescription": "Mover apenas a branch. Manter o índice e a árvore de trabalho inalterados; as diferenças em relação ao commit selecionado permanecem preparadas.",
   "gitResetModeMixed": "Mixed",
-  "gitResetModeMixedDescription": "Przenieś gałąź i zresetuj indeks. Pozostaw drzewo robocze bez zmian, a różnice poza indeksem.",
+  "gitResetModeMixedDescription": "Mover a branch e redefinir o índice. Manter a árvore de trabalho inalterada, deixando as diferenças não preparadas.",
   "gitResetModeHard": "Hard",
-  "gitResetModeHardDescription": "Przenieś gałąź oraz zresetuj indeks i drzewo robocze. Śledzone zmiany zostaną odrzucone; blokujące pliki nieśledzone mogą zostać usunięte.",
+  "gitResetModeHardDescription": "Mover a branch e redefinir o índice e a árvore de trabalho. As alterações monitorizadas são descartadas; os arquivos não monitorizados que bloqueiam a operação podem ser eliminados.",
   "gitResetModeKeep": "Keep",
-  "gitResetModeKeepDescription": "Przenieś gałąź i zresetuj śledzone pliki, zachowując zmiany lokalne. Git przerwie operację, jeśli zmiany kolidują z resetem.",
-  "gitErrorResetDirtyWorkspace": "Zapisz lub odrzuć zmiany w edytorze BusyMark przed zresetowaniem bieżącej gałęzi.",
-  "gitErrorResetDetachedHead": "Przełącz się na gałąź przed jej zresetowaniem.",
-  "instances": "Instancje",
-  "newInstance": "Nowa instancja",
-  "newTocLibrary": "Nowa biblioteka spisu treści",
-  "editInstance": "Edytuj instancję",
-  "openTocFile": "Otwórz plik spisu treści",
-  "createInstance": "Utwórz instancję",
-  "createTocLibrary": "Utwórz bibliotekę spisu treści",
-  "instanceContent": "Zawartość",
-  "instanceContentSource": "Utwórz z",
-  "emptyInstance": "Pusta instancja",
-  "markdownFiles": "Lokalne pliki Markdown",
-  "chooseMarkdownFolder": "Wybierz folder Markdown",
-  "errorWritersideInstanceImportSourceRequired": "Wybierz folder zawierający pliki Markdown.",
-  "instanceAppearance": "Wygląd",
-  "instanceColor": "Kolor ikony",
-  "instanceVersion": "Wersja",
-  "instanceVersionInherited": "Gdy to pole jest puste, wersja projektu to {version}.",
-  "instanceWebPath": "Ścieżka internetowa",
-  "instanceStatus": "Stan",
-  "instanceStatusRelease": "Wydanie",
-  "instanceStatusEap": "Wczesny dostęp",
-  "instanceStatusDeprecated": "Przestarzała",
-  "allowSearchEngineIndexing": "Zezwalaj na indeksowanie przez wyszukiwarki",
-  "allowSearchEngineIndexingDescription": "Zezwalaj zewnętrznym wyszukiwarkom na indeksowanie tego wyniku.",
-  "offlineArtifact": "Pakiet offline",
-  "offlineArtifactDescription": "Dołącz zasoby, aby zbudowana dokumentacja była samowystarczalna.",
-  "instanceOutputSettings": "Ustawienia wyniku",
-  "markdownImportSource": "Źródło Markdown",
-  "markdownImportFiles": "Pliki Markdown",
-  "selectNone": "Odznacz wszystko",
-  "markdownFilesFound": "Znaleziono pliki Markdown: {count}",
-  "noMarkdownFilesFound": "W tym katalogu nie znaleziono plików Markdown.",
-  "copyReferencedMedia": "Kopiuj używane multimedia",
-  "copyReferencedMediaDescription": "Skopiuj lokalne obrazy i filmy używane przez wybrane pliki, zachowując ścieżki względne.",
-  "instanceIdRenameWarningTitle": "Zmienić identyfikator instancji?",
-  "instanceIdRenameWarning": "BusyMark zmieni nazwę pliku .tree i zaktualizuje odwołania projektu Writerside z „{oldId}” na „{newId}”. Skrypty publikowania nie zostaną zmienione i trzeba je zaktualizować oddzielnie.",
-  "renameAndUpdateReferences": "Zmień nazwę i zaktualizuj odwołania",
-  "tocLibraryDescription": "Biblioteka spisu treści przechowuje sekcje wielokrotnego użytku i nie tworzy własnego wyniku.",
-  "defaultTocLibraryName": "Wspólny spis treści",
-  "instanceColorAutomatic": "Automatyczny",
-  "instanceColorBlue": "Niebieski",
-  "instanceColorGreen": "Zielony",
-  "instanceColorOrange": "Pomarańczowy",
-  "instanceColorPurple": "Fioletowy",
-  "instanceColorRed": "Czerwony",
-  "instanceColorTeal": "Morski",
-  "instanceColorYellow": "Żółty",
-  "errorWritersideInstanceNameRequired": "Wprowadź nazwę instancji.",
-  "errorWritersideInstanceIdExists": "Instancja o identyfikatorze „{id}” już istnieje.",
-  "errorWritersideInstanceTreeExists": "Drzewo instancji już istnieje: {path}",
-  "errorWritersideInstanceImportSourceMissing": "Katalog źródłowy Markdown nie istnieje: {path}",
-  "errorWritersideInstanceImportSelectionRequired": "Wybierz co najmniej jeden plik Markdown do zaimportowania.",
-  "errorWritersideInstanceImportFileInvalid": "To nie jest czytelny plik Markdown wewnątrz wybranego źródła: {path}",
-  "errorWritersideInstanceImportTargetExists": "Import nadpisałby istniejący plik projektu: {path}",
-  "errorWritersideInstanceFilesChanged": "Pliki instancji zmieniły się na dysku. Przejrzyj je i spróbuj ponownie.",
-  "errorWritersideInstanceRollbackFailed": "BusyMark nie mógł całkowicie wycofać zmiany instancji. Przed kontynuowaniem przejrzyj te pliki: {paths}",
-  "errorWritersideInstanceLibraryImport": "Biblioteka spisu treści nie może importować tematów Markdown.",
-  "errorWritersideInstanceWebPathInvalid": "Ścieżka internetowa musi mieścić się w jednym wierszu.",
-  "errorWritersideInstanceConfigurationInvalid": "Konfiguracja instancji Writerside jest nieprawidłowa. Popraw jej diagnostykę i spróbuj ponownie.",
-  "errorWritersideInstanceTemporaryFile": "BusyMark nie mógł bezpiecznie przygotować zmian instancji.",
-  "diagnosticWritersideTreeInvalidStatus": "Nieznany stan instancji „{status}”. Użyj release, eap lub deprecated.",
-  "diagnosticWritersideDuplicateInstanceId": "Identyfikator instancji „{id}” jest używany przez więcej niż jeden plik drzewa.",
-  "diagnosticWritersideBuildProfilesInvalidRoot": "Elementem głównym pliku buildprofiles.xml musi być <buildprofiles>.",
-  "diagnosticWritersideBuildProfilesInvalidBoolean": "Wartość {name} „{value}” musi być równa true lub false.",
-  "diagnosticWritersideBuildProfileMissingInstance": "Element <build-profile> musi określać identyfikator instancji.",
-  "diagnosticWritersideTreeInvalidInclude": "Element <include> drzewa musi określać zarówno from, jak i element-id.",
-  "diagnosticWritersideTreeMissingSnippetId": "Element <snippet> drzewa musi określać id.",
-  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Odwołanie spisu treści między instancjami musi określać zarówno ref, jak i in.",
-  "diagnosticWritersideTreeConflictingTargets": "Element spisu treści nie może wskazywać więcej niż jednego tematu, odwołania, łącza lub przekierowania.",
-  "diagnosticWritersideTreeDuplicateElementId": "Identyfikator elementu drzewa „{id}” zadeklarowano więcej niż raz.",
-  "diagnosticWritersideInstanceGroupsInvalidRoot": "Elementem głównym pliku grup instancji musi być <instance-groups>.",
-  "diagnosticWritersideInstanceGroupInvalid": "Grupa instancji musi określać niepusty identyfikator i listę instancji.",
-  "diagnosticWritersideInstanceGroupDuplicateId": "Identyfikator grupy instancji „{id}” zadeklarowano więcej niż raz.",
-  "diagnosticWritersideExternalTreeInclude": "Dołączenie spisu treści „{source}#{id}” należy do zewnętrznego modułu „{origin}” i nie może zostać rozwinięte w tym obszarze roboczym.",
-  "diagnosticWritersideTreeIncludeElementMissing": "Element drzewa „{id}” nie istnieje w zarejestrowanym drzewie „{source}”.",
-  "diagnosticWritersideTreeCircularInclude": "Dołączenie drzewa „{source}#{id}” tworzy cykl.",
-  "diagnosticWritersideUnknownInstanceGroup": "Warunek instancji odwołuje się do nieznanej grupy „@{group}”.",
-  "diagnosticWritersideReferenceInstanceMissing": "Odwołanie między instancjami wskazuje nieznaną instancję „{instance}”.",
-  "diagnosticWritersideReferenceTopicMissing": "Temat „{topic}” nie znajduje się we wskazanej instancji „{instance}”.",
-  "download": "Pobierz",
-  "exportWritersideAsPdf": "Eksportuj Writerside jako PDF",
-  "writersidePdfContent": "Zawartość eksportu",
-  "writersidePdfPage": "Strona",
-  "exportingWritersidePdf": "Eksportowanie PDF Writerside…",
-  "ai": "SI",
-  "aiLocalOllama": "Lokalny Ollama",
-  "aiDisabled": "Wyłączone",
-  "aiProvider": "Dostawca SI",
-  "aiDefaultProvider": "Domyślny dostawca",
-  "aiConfigureProvider": "Skonfiguruj dostawcę",
-  "aiChooseProvider": "Wybierz dostawcę SI",
-  "aiOllamaEndpoint": "Punkt końcowy Ollama",
-  "aiOllamaModel": "Model Ollama",
-  "aiTestConnection": "Testuj połączenie",
-  "aiTestingConnection": "Testowanie…",
-  "aiConnectionReady": "Połączono. Znaleziono zainstalowane modele: {count}.",
-  "aiNoModels": "Nie wybrano modelu.",
-  "aiConnectionFailed": "BusyMark nie mógł zweryfikować generowania tekstu przez SI.",
-  "aiConfigureFirst": "Najpierw włącz dostawcę SI i zweryfikuj model w Ustawienia → SI.",
-  "aiEditWithAi": "Edytuj za pomocą SI",
-  "aiRefineWithAi": "Ulepsz za pomocą SI",
-  "aiInstruction": "Polecenie",
-  "aiChangeTarget": "Co może się zmienić",
-  "aiSharedContext": "Kontekst udostępniany SI",
-  "aiTargetSelection": "Zaznaczona treść",
-  "aiTargetInsertAfterBlock": "Wstaw po bieżącym bloku",
-  "aiTargetCurrentBlock": "Bieżący blok",
-  "aiTargetCurrentSection": "Bieżąca sekcja",
-  "aiTargetCompleteDocument": "Cały dokument",
-  "aiContextNone": "Bez kontekstu dokumentu",
-  "aiContextSelection": "Zaznaczona treść",
-  "aiContextCurrentBlock": "Bieżący blok",
-  "aiContextCurrentSection": "Bieżąca sekcja",
-  "aiContextCompleteDocument": "Cały dokument",
-  "aiGenerating": "Generowanie propozycji…",
-  "aiProposal": "Propozycja SI",
-  "aiGenerateProposal": "Wygeneruj propozycję",
-  "aiContextDisclosure": "Wybrany dostawca otrzyma {count} znaków z pokazanego kontekstu.",
-  "aiOriginal": "Tekst oryginalny",
-  "aiSuggested": "Propozycja",
-  "aiApplyProposal": "Zastosuj propozycję",
-  "aiTokenUsage": "Tokeny wejściowe: {input} · tokeny wyjściowe: {output}",
-  "aiStaleProposal": "Dokument zmienił się podczas generowania propozycji. Uruchom operację ponownie.",
-  "gitAiStagedChangesChanged": "Zmiany w indeksie zmieniły się podczas generowania tego komunikatu commita. Uruchom operację ponownie.",
-  "aiViewContext": "Pokaż wysłany kontekst",
-  "aiReviewExactContent": "Przejrzyj dokładną treść",
-  "aiContentToChange": "Treść do zmiany",
-  "aiContentSentToAi": "Treść wysyłana do SI",
-  "aiApiKey": "Klucz API",
-  "aiApiKeyStoredHint": "Klucz jest zapisany w systemowym magazynie poświadczeń",
-  "aiApiKeyEnterHint": "Wprowadź klucz API dostawcy",
-  "aiReplaceApiKey": "Zastąp klucz API",
-  "aiSaveApiKey": "Zapisz bezpiecznie klucz API",
-  "aiRemoveApiKey": "Usuń zapisany klucz API",
-  "aiCredentialSaved": "Klucz API zapisano w systemowym magazynie poświadczeń.",
-  "aiCredentialRemoved": "Zapisany klucz API został usunięty.",
-  "aiModelRouting": "Wybór modelu",
-  "aiAutomaticRouting": "Automatycznie według zadania",
-  "aiFixedModelRouting": "Użyj wybranego modelu",
-  "aiPreferredModel": "Preferowany model",
-  "aiModel": "Model",
-  "aiUsageThisMonth": "{requests} żądań · {input} tokenów wejściowych · {output} tokenów wyjściowych",
-  "aiCloudConsentTitle": "Wysłać treść do {provider}?",
-  "aiCloudConsentEnable": "Włącz {provider}",
-  "aiCloudConsentMessage": "Wysyłana jest wyłącznie treść pokazana w każdym oknie przeglądu SI. Żądania są bezstanowe, propozycje wymagają sprawdzenia, a klucz API jest przechowywany w systemowym magazynie poświadczeń systemu Linux.",
-  "aiCloudConsentRequired": "Najpierw potwierdź udostępnianie danych usłudze {provider} w Ustawienia → SI.",
-  "aiGenerationVerified": "Generowanie zweryfikowano za pomocą {model}. Dostępnych zgodnych modeli: {count}.",
-  "aiColdStartObserved": "Wykryto zimny start modelu lokalnego.",
-  "aiNoCompatibleModels": "Brak zgodnego modelu generowania tekstu.",
-  "aiEnableProvider": "Najpierw włącz dostawcę SI.",
-  "aiDraftCommitMessage": "Utwórz wersję roboczą komunikatu commita",
-  "aiDrafting": "Tworzenie wersji roboczej…",
-  "aiDraftWithAi": "Utwórz wersję roboczą z SI",
-  "generateOrUpdateMarkdownToc": "Wygeneruj/zaktualizuj spis treści",
-  "markdownTocTitle": "Spis treści",
-  "markdownTocUpdated": "Zaktualizowano spis treści zawierający {count} pozycji.",
-  "markdownTocNoHeadings": "Przed wygenerowaniem spisu treści dodaj co najmniej jeden nagłówek sekcji.",
-  "markdownTocMalformedMarkers": "Znaczniki spisu treści BusyMark są nieobecne, powielone lub ułożone w niewłaściwej kolejności.",
-  "diagnosticMarkdownHeadingSkippedLevel": "Nagłówek poziomu {level} występuje po poziomie {previousLevel}; sprawdź zagnieżdżenie sekcji.",
-  "diagnosticMarkdownLinkEmptyText": "Tekst odnośnika jest pusty; podaj dostępną nazwę opisującą jego cel.",
-  "diagnosticMarkdownLinkReviewText": "Sprawdź, czy tekst odnośnika „{text}” opisuje jego cel w kontekście.",
-  "diagnosticMarkdownTableEmptyHeader": "Nagłówki tabeli muszą identyfikować kolumny; uzupełnij każdy pusty nagłówek.",
-  "commandPalette": "Paleta poleceń",
-  "commandPaletteHint": "Wpisz polecenie",
-  "commandPaletteEmpty": "Brak pasujących poleceń",
-  "tableAlignmentUnspecified": "Wyrównanie: nieokreślone",
-  "tableAlignmentLeft": "Wyrównanie: do lewej",
-  "tableAlignmentCenter": "Wyrównanie: do środka",
-  "tableAlignmentRight": "Wyrównanie: do prawej",
-  "sourceSearchReplacement": "Zamień na",
-  "sourceSearchReplaceCurrent": "Zamień bieżące dopasowanie",
-  "sourceSearchReplaceAndFindNext": "Zamień i znajdź następne",
-  "sourceSearchReplaceAll": "Zamień wszystko",
-  "workspaceReplace": "Zamień w obszarze roboczym",
-  "reviewReplacements": "Przejrzyj zamiany",
-  "applyReplacements": "Zastosuj zamiany",
-  "skippedFiles": "Pominięte pliki",
-  "workspaceReplaceDirtyBuffer": "Niezapisana zawartość edytora",
-  "workspaceReplaceDiskContent": "Zawartość zapisana na dysku",
-  "selectFileMatches": "Wybierz wszystkie dopasowania ({count})",
-  "workspaceReplaceApplied": "Zamieniono {matches} dopasowań w {files} plikach; pominięto {skipped}.",
-  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Końcowy znak nowego wiersza",
-  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Brak końcowego znaku nowego wiersza",
-  "normalizeLineEndings": "Normalizuj zakończenia wierszy",
-  "workspaceReplaceMixedLineEndings": "{fileName} używa mieszanych zakończeń wierszy. Wybierz format przed zamianą.",
-  "mixedLineEndingsSavePrompt": "Ten dokument zawiera mieszane zakończenia wierszy. Wybierz format.",
-  "workspaceReplaceIssueOversized": "Pominięto zbyt duży plik.",
-  "workspaceReplaceIssueUnreadable": "Pominięto plik, którego nie można odczytać.",
-  "workspaceReplaceIssueInvalidUtf8": "Pominięto plik z nieprawidłowym kodowaniem UTF-8.",
-  "workspaceReplaceIssueTruncated": "Podgląd zamian został skrócony.",
-  "workspaceReplaceIssueFileChanged": "Pominięto plik zmieniony po utworzeniu podglądu.",
-  "workspaceReplaceIssueBufferChanged": "Pominięto bufor edytora zmieniony po utworzeniu podglądu.",
-  "workspaceReplaceIssueNormalizationRequired": "Przed zamianą wybierz normalizację LF lub CRLF.",
-  "externalChangesTitle": "Zmiany zewnętrzne — {fileName}",
-  "externalFileDeleted": "Ten plik został usunięty z dysku.",
-  "externalFileChanged": "Ten plik zmienił się na dysku, gdy masz niezapisane zmiany.",
-  "compare": "Porównaj",
-  "reloadFromDisk": "Wczytaj ponownie z dysku",
-  "keepMine": "Zachowaj moją wersję",
-  "saveAs": "Zapisz jako",
-  "unsavedChangesMultipleMessage": "{count, plural, =1{1 dokument ma niezapisane zmiany. Zapisz go przed kontynuowaniem.} other{{count} dokumenty mają niezapisane zmiany. Zapisz każdy przed kontynuowaniem.}}",
-  "workspaceReplaceIssuePartialConflict": "Wycofywanie zatrzymano, ponieważ plik został jednocześnie zmieniony. Niektóre zamiany mogą pozostać; zastąpioną zawartość zachowano w poniższej ścieżce.",
-  "workspaceReplaceIssueApplyFailed": "Nie zastosowano żadnych zamian, ponieważ sprawdzonego zestawu nie można było bezpiecznie zapisać.",
-  "workspaceRecoveryRestored": "{count, plural, =1{Przywrócono 1 dokument bez zapisania. Przed zapisaniem lub usunięciem sprawdź go.} other{Przywrócono {count} dokumentów bez zapisania. Sprawdź każdy przed zapisaniem lub usunięciem.}}",
-  "workspaceRecoveryDamaged": "{count, plural, =1{Nie udało się przywrócić 1 uszkodzonego rekordu odzyskiwania. Oryginalny plik odzyskiwania zachowano do przeglądu.} other{Nie udało się przywrócić {count} uszkodzonych rekordów odzyskiwania. Prawidłowe rekordy odzyskiwania pozostają dostępne.}}",
-  "recoveredDocumentReview": "Odzyskano niezapisaną treść pliku {fileName}. Przejrzyj ją, a następnie zapisz, zapisz jako lub odrzuć.",
-  "commandUnavailableInContext": "To polecenie nie jest dostępne w bieżącym kontekście.",
-  "mathRenderFailed": "Nie udało się wyrenderować wyrażenia matematycznego.",
-  "inlineMath": "Matematyka w tekście",
-  "displayMath": "Matematyka blokowa",
-  "aiExplicitEditingDescription": "Edycja z użyciem SI jest uruchamiana wyłącznie jawnie. BusyMark wysyła do wybranego dostawcy tylko pokazany kontekst i nigdy nie stosuje propozycji bez jej sprawdzenia.",
+  "gitResetModeKeepDescription": "Mover a branch e redefinir os arquivos monitorizados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.",
+  "gitErrorResetDirtyWorkspace": "Guarde ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.",
+  "gitErrorResetDetachedHead": "Mude para uma branch antes de a redefinir.",
+  "instances": "Instâncias",
+  "newInstance": "Nova instância",
+  "newTocLibrary": "Nova biblioteca de sumário",
+  "editInstance": "Editar instância",
+  "openTocFile": "Abrir arquivo do índice",
+  "createInstance": "Criar instância",
+  "createTocLibrary": "Criar biblioteca de sumário",
+  "instanceContent": "Conteúdo",
+  "instanceContentSource": "Criar a partir de",
+  "emptyInstance": "Instância vazia",
+  "markdownFiles": "Ficheiros Markdown locais",
+  "chooseMarkdownFolder": "Escolher pasta de Markdown",
+  "errorWritersideInstanceImportSourceRequired": "Escolha uma pasta que contenha arquivos Markdown.",
+  "instanceAppearance": "Aspeto",
+  "instanceColor": "Cor do ícone",
+  "instanceVersion": "Versão",
+  "instanceVersionInherited": "Quando este campo está vazio, é usada a versão do projeto {version}.",
+  "instanceWebPath": "Caminho web",
+  "instanceStatus": "Estado",
+  "instanceStatusRelease": "Lançamento",
+  "instanceStatusEap": "Acesso antecipado",
+  "instanceStatusDeprecated": "Obsoleta",
+  "allowSearchEngineIndexing": "Permitir indexação por motores de pesquisa",
+  "allowSearchEngineIndexingDescription": "Permita que motores de pesquisa externos indexem esta saída.",
+  "offlineArtifact": "Artefacto offline",
+  "offlineArtifactDescription": "Inclua os recursos para que a documentação gerada seja autónoma.",
+  "instanceOutputSettings": "Definições de saída",
+  "markdownImportSource": "Origem Markdown",
+  "markdownImportFiles": "Ficheiros Markdown",
+  "selectNone": "Não selecionar nenhum",
+  "markdownFilesFound": "Foram encontrados {count} arquivo(s) Markdown",
+  "noMarkdownFilesFound": "Não foram encontrados arquivos Markdown neste diretório.",
+  "copyReferencedMedia": "Copiar multimédia referenciada",
+  "copyReferencedMediaDescription": "Copie imagens e vídeos locais referenciados pelos arquivos selecionados, preservando os caminhos relativos.",
+  "instanceIdRenameWarningTitle": "Mudar o nome do ID da instância?",
+  "instanceIdRenameWarning": "O BusyMark vai renomear o arquivo .tree e atualizar as referências do projeto Writerside de “{oldId}” para “{newId}”. Os scripts de publicação não são alterados e devem ser atualizados separadamente.",
+  "renameAndUpdateReferences": "Mudar o nome e atualizar referências",
+  "tocLibraryDescription": "Uma biblioteca de sumário armazena secções reutilizáveis e não produz uma saída própria.",
+  "defaultTocLibraryName": "Sumário partilhado",
+  "instanceColorAutomatic": "Automático",
+  "instanceColorBlue": "Azul",
+  "instanceColorGreen": "Verde",
+  "instanceColorOrange": "Laranja",
+  "instanceColorPurple": "Roxo",
+  "instanceColorRed": "Vermelho",
+  "instanceColorTeal": "Verde-azulado",
+  "instanceColorYellow": "Amarelo",
+  "errorWritersideInstanceNameRequired": "Introduza um nome para a instância.",
+  "errorWritersideInstanceIdExists": "Já existe uma instância com o ID “{id}”.",
+  "errorWritersideInstanceTreeExists": "A árvore da instância já existe: {path}",
+  "errorWritersideInstanceImportSourceMissing": "O diretório de origem Markdown não existe: {path}",
+  "errorWritersideInstanceImportSelectionRequired": "Selecione pelo menos um arquivo Markdown para importar.",
+  "errorWritersideInstanceImportFileInvalid": "Este não é um arquivo Markdown legível dentro da origem selecionada: {path}",
+  "errorWritersideInstanceImportTargetExists": "A importação substituiria um arquivo existente do projeto: {path}",
+  "errorWritersideInstanceFilesChanged": "Os arquivos da instância foram alterados no disco. Revise-os e tente novamente.",
+  "errorWritersideInstanceRollbackFailed": "O BusyMark não conseguiu reverter completamente a alteração da instância. Revise estes arquivos antes de continuar: {paths}",
+  "errorWritersideInstanceLibraryImport": "Uma biblioteca de sumário não pode importar tópicos Markdown.",
+  "errorWritersideInstanceWebPathInvalid": "O caminho web deve ter uma única linha.",
+  "errorWritersideInstanceConfigurationInvalid": "A configuração da instância do Writerside é inválida. Corrija os diagnósticos e tente novamente.",
+  "errorWritersideInstanceTemporaryFile": "O BusyMark não conseguiu preparar com segurança as alterações da instância.",
+  "diagnosticWritersideTreeInvalidStatus": "Estado de instância desconhecido “{status}”. Use release, eap ou deprecated.",
+  "diagnosticWritersideDuplicateInstanceId": "O ID de instância “{id}” é usado por mais de um ficheiro de árvore.",
+  "diagnosticWritersideBuildProfilesInvalidRoot": "buildprofiles.xml deve ter um elemento raiz <buildprofiles>.",
+  "diagnosticWritersideBuildProfilesInvalidBoolean": "O valor {name} “{value}” deve ser true ou false.",
+  "diagnosticWritersideBuildProfileMissingInstance": "Um elemento <build-profile> deve especificar um ID de instância.",
+  "diagnosticWritersideTreeInvalidInclude": "Um <include> da árvore deve especificar from e element-id.",
+  "diagnosticWritersideTreeMissingSnippetId": "Um <snippet> da árvore deve especificar um id.",
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Uma referência de sumário entre instâncias deve especificar ref e in.",
+  "diagnosticWritersideTreeConflictingTargets": "Um elemento do sumário não pode apontar para mais do que um tópico, referência, link ou redirecionamento.",
+  "diagnosticWritersideTreeDuplicateElementId": "O ID de elemento da árvore “{id}” foi declarado mais de uma vez.",
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "O ficheiro de grupos de instâncias deve ter um elemento raiz <instance-groups>.",
+  "diagnosticWritersideInstanceGroupInvalid": "Um grupo de instâncias deve especificar um id e uma lista de instâncias não vazios.",
+  "diagnosticWritersideInstanceGroupDuplicateId": "O ID do grupo de instâncias “{id}” foi declarado mais de uma vez.",
+  "diagnosticWritersideExternalTreeInclude": "A inclusão de sumário “{source}#{id}” pertence ao módulo externo “{origin}” e não pode ser expandida neste espaço de trabalho.",
+  "diagnosticWritersideTreeIncludeElementMissing": "O elemento de árvore “{id}” não existe na árvore registada “{source}”.",
+  "diagnosticWritersideTreeCircularInclude": "A inclusão de árvore “{source}#{id}” cria um ciclo.",
+  "diagnosticWritersideUnknownInstanceGroup": "A condição de instância referencia o grupo desconhecido “@{group}”.",
+  "diagnosticWritersideReferenceInstanceMissing": "A referência entre instâncias aponta para a instância desconhecida “{instance}”.",
+  "diagnosticWritersideReferenceTopicMissing": "O tópico “{topic}” não está na instância referenciada “{instance}”.",
+  "download": "Baixar",
+  "exportWritersideAsPdf": "Exportar Writerside como PDF",
+  "writersidePdfContent": "Conteúdo da exportação",
+  "writersidePdfPage": "Página",
+  "exportingWritersidePdf": "Exportando PDF do Writerside…",
+  "ai": "IA",
+  "aiLocalOllama": "Ollama local",
+  "aiDisabled": "Desativado",
+  "aiProvider": "Provedor de IA",
+  "aiDefaultProvider": "Provedor predefinido",
+  "aiConfigureProvider": "Configurar provedor",
+  "aiChooseProvider": "Escolher provedor de IA",
+  "aiOllamaEndpoint": "Endpoint do Ollama",
+  "aiOllamaModel": "Modelo do Ollama",
+  "aiTestConnection": "Testar conexão",
+  "aiTestingConnection": "Testando…",
+  "aiConnectionReady": "Conectado. {count} modelo(s) instalado(s) encontrado(s).",
+  "aiNoModels": "Nenhum modelo selecionado.",
+  "aiConnectionFailed": "O BusyMark não conseguiu verificar a geração de texto por IA.",
+  "aiConfigureFirst": "Ative um provedor de IA e verifique um modelo em Configurações → IA.",
+  "aiEditWithAi": "Editar com IA",
+  "aiRefineWithAi": "Melhorar com IA",
+  "aiInstruction": "Instrução",
+  "aiChangeTarget": "O que pode ser alterado",
+  "aiSharedContext": "Contexto compartilhado com a IA",
+  "aiTargetSelection": "Conteúdo selecionado",
+  "aiTargetInsertAfterBlock": "Inserir após o bloco atual",
+  "aiTargetCurrentBlock": "Bloco atual",
+  "aiTargetCurrentSection": "Seção atual",
+  "aiTargetCompleteDocument": "Documento completo",
+  "aiContextNone": "Sem contexto do documento",
+  "aiContextSelection": "Conteúdo selecionado",
+  "aiContextCurrentBlock": "Bloco atual",
+  "aiContextCurrentSection": "Seção atual",
+  "aiContextCompleteDocument": "Documento completo",
+  "aiGenerating": "Gerando proposta…",
+  "aiProposal": "Proposta de IA",
+  "aiGenerateProposal": "Gerar proposta",
+  "aiContextDisclosure": "O provedor selecionado receberá {count} caracteres do contexto exibido.",
+  "aiOriginal": "Texto original",
+  "aiSuggested": "Sugestão",
+  "aiApplyProposal": "Aplicar proposta",
+  "aiTokenUsage": "{input} tokens de entrada · {output} tokens de saída",
+  "aiStaleProposal": "O documento foi alterado enquanto esta proposta era gerada. Execute a ação novamente.",
+  "gitAiStagedChangesChanged": "As alterações preparadas mudaram enquanto esta mensagem de commit era gerada. Execute a ação novamente.",
+  "aiViewContext": "Ver contexto enviado",
+  "aiReviewExactContent": "Revisar conteúdo exato",
+  "aiContentToChange": "Conteúdo a alterar",
+  "aiContentSentToAi": "Conteúdo enviado à IA",
+  "aiApiKey": "Chave de API",
+  "aiApiKeyStoredHint": "Uma chave está armazenada no cofre de credenciais do sistema",
+  "aiApiKeyEnterHint": "Insira uma chave de API do provedor",
+  "aiReplaceApiKey": "Substituir chave de API",
+  "aiSaveApiKey": "Salvar chave de API com segurança",
+  "aiRemoveApiKey": "Remover chave de API salva",
+  "aiCredentialSaved": "A chave de API foi salva no cofre de credenciais do sistema.",
+  "aiCredentialRemoved": "A chave de API salva foi removida.",
+  "aiModelRouting": "Seleção de modelo",
+  "aiAutomaticRouting": "Automática conforme a tarefa",
+  "aiFixedModelRouting": "Usar o modelo selecionado",
+  "aiPreferredModel": "Modelo preferido",
+  "aiModel": "Modelo",
+  "aiUsageThisMonth": "{requests} solicitações · {input} tokens de entrada · {output} tokens de saída",
+  "aiCloudConsentTitle": "Enviar conteúdo para {provider}?",
+  "aiCloudConsentEnable": "Ativar {provider}",
+  "aiCloudConsentMessage": "Somente o conteúdo exibido em cada caixa de diálogo de revisão de IA é enviado. As solicitações não mantêm estado, as propostas exigem revisão e a chave de API é armazenada no cofre de credenciais do sistema Linux.",
+  "aiCloudConsentRequired": "Primeiro, confirme o compartilhamento de dados com {provider} em Configurações → IA.",
+  "aiGenerationVerified": "Geração verificada com {model}. Há {count} modelos compatíveis disponíveis.",
+  "aiColdStartObserved": "Foi detetado um arranque a frio do modelo local.",
+  "aiNoCompatibleModels": "Não há nenhum modelo compatível de geração de texto disponível.",
+  "aiEnableProvider": "Primeiro, ative um provedor de IA.",
+  "aiDraftCommitMessage": "Criar rascunho da mensagem de commit",
+  "aiDrafting": "Criando rascunho…",
+  "aiDraftWithAi": "Criar rascunho com IA",
+  "generateOrUpdateMarkdownToc": "Gerar/atualizar sumário",
+  "markdownTocTitle": "Sumário",
+  "markdownTocUpdated": "Sumário atualizado com {count} entradas.",
+  "markdownTocNoHeadings": "Adicione pelo menos um título de seção antes de gerar um sumário.",
+  "markdownTocMalformedMarkers": "Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.",
+  "diagnosticMarkdownHeadingSkippedLevel": "O título de nível {level} vem após o nível {previousLevel}; revise o aninhamento das seções.",
+  "diagnosticMarkdownLinkEmptyText": "O texto do link está vazio; forneça um nome acessível que descreva sua finalidade.",
+  "diagnosticMarkdownLinkReviewText": "Verifique se o texto do link “{text}” descreve sua finalidade no contexto.",
+  "diagnosticMarkdownTableEmptyHeader": "Os cabeçalhos da tabela devem identificar suas colunas; preencha cada cabeçalho vazio.",
+  "commandPalette": "Paleta de comandos",
+  "commandPaletteHint": "Digite um comando",
+  "commandPaletteEmpty": "Nenhum comando correspondente",
+  "tableAlignmentUnspecified": "Alinhamento: não especificado",
+  "tableAlignmentLeft": "Alinhamento: esquerda",
+  "tableAlignmentCenter": "Alinhamento: centro",
+  "tableAlignmentRight": "Alinhamento: direita",
+  "sourceSearchReplacement": "Substituir por",
+  "sourceSearchReplaceCurrent": "Substituir correspondência atual",
+  "sourceSearchReplaceAndFindNext": "Substituir e localizar próximo",
+  "sourceSearchReplaceAll": "Substituir tudo",
+  "workspaceReplace": "Substituir no espaço de trabalho",
+  "reviewReplacements": "Revisar substituições",
+  "applyReplacements": "Aplicar substituições",
+  "skippedFiles": "Arquivos ignorados",
+  "workspaceReplaceDirtyBuffer": "Conteúdo não salvo do editor",
+  "workspaceReplaceDiskContent": "Conteúdo salvo no disco",
+  "selectFileMatches": "Selecionar todas as {count} correspondências",
+  "workspaceReplaceApplied": "Foram substituídas {matches} correspondências em {files} arquivos; {skipped} ignoradas.",
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Quebra de linha final",
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Sem quebra de linha final",
+  "normalizeLineEndings": "Normalizar finais de linha",
+  "workspaceReplaceMixedLineEndings": "{fileName} usa finais de linha mistos. Escolha o formato antes de substituir.",
+  "mixedLineEndingsSavePrompt": "Este documento contém finais de linha mistos. Escolha um formato.",
+  "workspaceReplaceIssueOversized": "Um arquivo grande demais foi ignorado.",
+  "workspaceReplaceIssueUnreadable": "Um arquivo que não pôde ser lido foi ignorado.",
+  "workspaceReplaceIssueInvalidUtf8": "Um arquivo que não é UTF-8 válido foi ignorado.",
+  "workspaceReplaceIssueTruncated": "A prévia de substituições foi truncada.",
+  "workspaceReplaceIssueFileChanged": "Um arquivo alterado após a prévia foi ignorado.",
+  "workspaceReplaceIssueBufferChanged": "Um buffer do editor alterado após a prévia foi ignorado.",
+  "workspaceReplaceIssueNormalizationRequired": "Escolha a normalização LF ou CRLF antes de substituir.",
+  "externalChangesTitle": "Alterações externas — {fileName}",
+  "externalFileDeleted": "Este arquivo foi excluído do disco.",
+  "externalFileChanged": "Este arquivo mudou no disco enquanto você tem alterações não salvas.",
+  "compare": "Comparar",
+  "reloadFromDisk": "Recarregar do disco",
+  "keepMine": "Manter minha versão",
+  "saveAs": "Salvar como",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{Há 1 documento com alterações não salvas. Deseja salvá-lo antes de continuar?} other{{count} documentos com alterações não salvas. Deseja salvá-los antes de continuar?}}",
+  "workspaceReplaceIssuePartialConflict": "A reversão foi interrompida porque o ficheiro foi alterado em simultâneo. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.",
+  "workspaceReplaceIssueApplyFailed": "Nenhuma substituição foi aplicada porque o conjunto revisado não pôde ser salvo com segurança.",
+  "workspaceRecoveryRestored": "{count, plural, =1{1 documento sem salvamento recuperado. Revise antes de salvar ou descartar.} other{{count} documentos sem salvamento recuperados. Revise cada um antes de salvar ou descartar.}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{1 registro de recuperação danificado não pôde ser restaurado. O arquivo de recuperação original foi preservado para inspeção.} other{{count} registros de recuperação danificados não puderam ser restaurados. Os registros de recuperação válidos permanecem disponíveis.}}",
+  "recoveredDocumentReview": "O conteúdo não salvo de {fileName} foi recuperado. Revise-o e depois salve, salve como ou descarte-o.",
+  "commandUnavailableInContext": "Este comando não está disponível no contexto atual.",
+  "mathRenderFailed": "Não foi possível renderizar a expressão matemática.",
+  "inlineMath": "Matemática em linha",
+  "displayMath": "Matemática em bloco",
+  "aiExplicitEditingDescription": "A edição com IA é iniciada apenas de forma explícita. O BusyMark envia somente o contexto exibido ao provedor selecionado e nunca aplica uma proposta sem revisão.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
   }

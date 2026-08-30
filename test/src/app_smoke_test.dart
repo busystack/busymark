@@ -162,7 +162,10 @@ void main() {
     expect(app.supportedLocales, contains(const Locale('uk')));
     expect(app.supportedLocales, contains(const Locale('pl')));
     expect(app.supportedLocales, contains(const Locale('es')));
-    expect(app.supportedLocales, contains(const Locale('pt')));
+    expect(
+      app.supportedLocales,
+      contains(Locale.fromSubtags(languageCode: 'pt', countryCode: 'BR')),
+    );
     expect(app.supportedLocales, contains(const Locale('ar')));
     expect(app.supportedLocales, contains(const Locale('fa')));
     expect(app.supportedLocales, contains(const Locale('hi')));

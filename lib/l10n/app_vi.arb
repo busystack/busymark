@@ -72,7 +72,7 @@
   "@feedbackMessage": {
     "description": "Detailed feedback message field label."
   },
-  "feedbackReplyEmail": "Email nhận phản hồi (tùy chọn)",
+  "feedbackReplyEmail": "Email để trả lời (tùy chọn)",
   "@feedbackReplyEmail": {
     "description": "Optional reply email field label."
   },
@@ -406,7 +406,7 @@
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -459,9 +459,13 @@
     "description": "Language selector option for Vietnamese."
   },
   "languageJapanese": "日本語",
-  "@languageJapanese": {"description": "Language selector option for Japanese."},
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
   "languageKorean": "한국어",
-  "@languageKorean": {"description": "Language selector option for Korean."},
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
   "languageSimplifiedChinese": "简体中文",
   "@languageSimplifiedChinese": {
     "description": "Language selector option for Simplified Chinese."
@@ -486,7 +490,7 @@
   "@validate": {
     "description": "Validate action label."
   },
-  "validation": "Xác thực",
+  "validation": "Xác minh",
   "@validation": {
     "description": "Settings section title for validation options."
   },
@@ -794,11 +798,11 @@
   "@directoryName": {
     "description": "Create project dialog field label."
   },
-  "instanceName": "Tên phiên bản",
+  "instanceName": "Tên thực thể",
   "@instanceName": {
     "description": "Create project dialog field label."
   },
-  "instanceId": "ID phiên bản",
+  "instanceId": "ID thực thể",
   "@instanceId": {
     "description": "Create project dialog field label."
   },
@@ -1494,7 +1498,7 @@
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
   },
-  "reviewUsages": "Xem lại cách sử dụng",
+  "reviewUsages": "Xem lại các tham chiếu",
   "@reviewUsages": {
     "description": "Action that opens the Writerside topic usages review."
   },
@@ -1506,7 +1510,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Xóa “{topic}” khỏi phiên bản đã chọn. Tệp chủ đề sẽ được giữ lại.",
+  "topicRemovalSummary": "Xóa “{topic}” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1533,11 +1537,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Chủ đề này đang được dùng làm trang bắt đầu của một phiên bản. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.",
+  "topicIsStartPageRemovalWarning": "Chủ đề này đang được dùng làm trang bắt đầu của một thực thể. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Cách sử dụng ({count})",
+  "topicUsagesCount": "Các tham chiếu ({count})",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1566,7 +1570,7 @@
   "@topicUsageTopicLinks": {
     "description": "Usage group label for links to a Writerside topic."
   },
-  "topicUsageIncludes": "Nội dung bao gồm",
+  "topicUsageIncludes": "Các phần tử include",
   "@topicUsageIncludes": {
     "description": "Usage group label for Writerside include elements."
   },
@@ -1624,7 +1628,7 @@
   "@noUsagesFound": {
     "description": "Empty state in the Writerside usages review."
   },
-  "outsideSelectedInstance": "bên ngoài phiên bản đã chọn",
+  "outsideSelectedInstance": "bên ngoài thực thể đã chọn",
   "@outsideSelectedInstance": {
     "description": "Marker for a usage outside the selected Writerside instance."
   },
@@ -1640,7 +1644,7 @@
   "@keepTopicFile": {
     "description": "Action that keeps an orphaned Writerside topic file."
   },
-  "orphanTopicMessage": "“{topic}” không còn được sử dụng ở đâu trong dự án Writerside này. Xóa tệp hoặc giữ lại để dùng trong phiên bản khác.",
+  "orphanTopicMessage": "“{topic}” không còn được sử dụng ở đâu trong dự án Writerside này. Xóa tệp hoặc giữ lại để dùng trong thực thể khác.",
   "@orphanTopicMessage": {
     "description": "Prompt to delete or keep an orphaned Writerside topic file.",
     "placeholders": {
@@ -2296,7 +2300,7 @@
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "ID phiên bản phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.",
+  "errorInstanceIdInvalid": "ID thực thể phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
@@ -2321,7 +2325,7 @@
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
-  "errorWritersideInstanceTreeMissing": "Mô-đun Writerside không có cây phiên bản.",
+  "errorWritersideInstanceTreeMissing": "Mô-đun Writerside không có cây thực thể.",
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
@@ -2580,7 +2584,7 @@
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "writerside.cfg không đăng ký phiên bản nào.",
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg không đăng ký thực thể nào.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
@@ -2588,11 +2592,11 @@
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "Hồ sơ phiên bản thiếu id.",
+  "diagnosticWritersideTreeMissingId": "Hồ sơ thực thể thiếu id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "Tên gốc của tệp cây không khớp với ID phiên bản \"{id}\".",
+  "diagnosticWritersideTreeIdMismatch": "Tên gốc của tệp cây không khớp với ID thực thể \"{id}\".",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -2614,7 +2618,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "Chủ đề \"{topic}\" xuất hiện nhiều hơn một lần trong mục lục của phiên bản này.",
+  "diagnosticWritersideTreeDuplicateTopic": "Chủ đề \"{topic}\" xuất hiện nhiều hơn một lần trong mục lục của thực thể này.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -2740,7 +2744,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Tệp nhóm phiên bản đã định không tồn tại: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Tệp nhóm thực thể đã định không tồn tại: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -2749,7 +2753,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "Cây phiên bản đã đăng ký \"{source}\" không tồn tại.",
+  "diagnosticWritersideConfigMissingInstanceTree": "Cây thực thể đã đăng ký \"{source}\" không tồn tại.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -3007,7 +3011,7 @@
       }
     }
   },
-  "gitClean": "Sạch",
+  "gitClean": "Không có thay đổi",
   "@gitClean": {
     "description": "Git clean state label."
   },
@@ -3402,7 +3406,7 @@
   "@gitErrorNoUpstream": {
     "description": "Git error message."
   },
-  "gitErrorMultipleRemotes": "Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài phiên bản BusyMark này.",
+  "gitErrorMultipleRemotes": "Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài thực thể BusyMark này.",
   "@gitErrorMultipleRemotes": {
     "description": "Git error message."
   },
@@ -3422,7 +3426,7 @@
   "@gitErrorResetDetachedHead": {
     "description": "Git reset error shown while HEAD is detached."
   },
-  "gitErrorDiverged": "Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài phiên bản BusyMark này.",
+  "gitErrorDiverged": "Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài thực thể BusyMark này.",
   "@gitErrorDiverged": {
     "description": "Git error message."
   },
@@ -3538,7 +3542,7 @@
   "@markdownHtmlHtmlTextBlocks": {
     "description": "Reference row label for HTML text block tags."
   },
-  "markdownHtmlHtmlFigures": "Hình và hình ảnh",
+  "markdownHtmlHtmlFigures": "Figure và hình ảnh",
   "@markdownHtmlHtmlFigures": {
     "description": "Reference row label for HTML figure and image tags."
   },
@@ -3683,7 +3687,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "Đã xuất {fileName} với {count} cảnh báo.",
+  "pdfExportedWithWarnings": "Đã xuất {fileName} với {count, plural, =1{1 cảnh báo} other{{count} cảnh báo}}.",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some content fell back or was omitted.",
     "placeholders": {
@@ -3796,11 +3800,11 @@
   "@shortcutExportPdfDescription": {
     "description": "Keyboard-shortcut description for PDF export."
   },
-  "instances": "Các phiên bản",
+  "instances": "Các thực thể",
   "@instances": {
     "description": "Heading for the Writerside instances shown in the TOC sidebar."
   },
-  "newInstance": "Phiên bản mới",
+  "newInstance": "Thực thể mới",
   "@newInstance": {
     "description": "Action that creates a Writerside instance."
   },
@@ -3808,7 +3812,7 @@
   "@newTocLibrary": {
     "description": "Action that creates a Writerside library instance for reusable TOC sections."
   },
-  "editInstance": "Chỉnh sửa phiên bản",
+  "editInstance": "Chỉnh sửa thực thể",
   "@editInstance": {
     "description": "Action and dialog title for editing a Writerside instance."
   },
@@ -3816,7 +3820,7 @@
   "@openTocFile": {
     "description": "Action that opens the selected Writerside instance tree file."
   },
-  "createInstance": "Tạo phiên bản",
+  "createInstance": "Tạo thực thể",
   "@createInstance": {
     "description": "Dialog title for creating a Writerside instance."
   },
@@ -3942,7 +3946,7 @@
   "@copyReferencedMediaDescription": {
     "description": "Description of the Writerside Markdown media import option."
   },
-  "instanceIdRenameWarningTitle": "Đổi tên ID phiên bản?",
+  "instanceIdRenameWarningTitle": "Đổi tên ID thực thể?",
   "@instanceIdRenameWarningTitle": {
     "description": "Confirmation title before refactoring a Writerside instance ID."
   },
@@ -4002,11 +4006,11 @@
   "@instanceColorYellow": {
     "description": "Yellow Writerside instance icon color option."
   },
-  "errorWritersideInstanceNameRequired": "Nhập tên phiên bản.",
+  "errorWritersideInstanceNameRequired": "Nhập tên thực thể.",
   "@errorWritersideInstanceNameRequired": {
     "description": "Validation error for an empty Writerside instance name."
   },
-  "errorWritersideInstanceIdExists": "Đã có phiên bản với ID “{id}”.",
+  "errorWritersideInstanceIdExists": "Đã có thực thể với ID “{id}”.",
   "@errorWritersideInstanceIdExists": {
     "description": "Error for a duplicate Writerside instance ID.",
     "placeholders": {
@@ -4015,7 +4019,7 @@
       }
     }
   },
-  "errorWritersideInstanceTreeExists": "Cây phiên bản đã tồn tại: {path}",
+  "errorWritersideInstanceTreeExists": "Cây thực thể đã tồn tại: {path}",
   "@errorWritersideInstanceTreeExists": {
     "description": "Error for an existing Writerside instance tree path.",
     "placeholders": {
@@ -4055,11 +4059,11 @@
       }
     }
   },
-  "errorWritersideInstanceFilesChanged": "Các tệp phiên bản đã thay đổi trên đĩa. Hãy xem lại và thử lại.",
+  "errorWritersideInstanceFilesChanged": "Các tệp thực thể đã thay đổi trên đĩa. Hãy xem lại và thử lại.",
   "@errorWritersideInstanceFilesChanged": {
     "description": "Concurrent-change error for a Writerside instance mutation."
   },
-  "errorWritersideInstanceRollbackFailed": "BusyMark không thể khôi phục hoàn toàn thay đổi phiên bản. Hãy xem lại các tệp này trước khi tiếp tục: {paths}",
+  "errorWritersideInstanceRollbackFailed": "BusyMark không thể khôi phục hoàn toàn thay đổi của thực thể. Hãy xem lại các tệp này trước khi tiếp tục: {paths}",
   "@errorWritersideInstanceRollbackFailed": {
     "description": "Error when a Writerside instance mutation rollback is incomplete.",
     "placeholders": {
@@ -4076,15 +4080,15 @@
   "@errorWritersideInstanceWebPathInvalid": {
     "description": "Validation error for an invalid Writerside instance web path."
   },
-  "errorWritersideInstanceConfigurationInvalid": "Cấu hình phiên bản Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.",
+  "errorWritersideInstanceConfigurationInvalid": "Cấu hình thực thể Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.",
   "@errorWritersideInstanceConfigurationInvalid": {
     "description": "Error when an instance tree, project config, or build profiles file cannot be safely edited."
   },
-  "errorWritersideInstanceTemporaryFile": "BusyMark không thể đưa các thay đổi phiên bản vào stage một cách an toàn.",
+  "errorWritersideInstanceTemporaryFile": "BusyMark không thể đưa các thay đổi của thực thể vào stage một cách an toàn.",
   "@errorWritersideInstanceTemporaryFile": {
     "description": "Error when a temporary file for an instance mutation cannot be created."
   },
-  "diagnosticWritersideTreeInvalidStatus": "Trạng thái phiên bản không xác định “{status}”. Sử dụng release, eap hoặc deprecated.",
+  "diagnosticWritersideTreeInvalidStatus": "Trạng thái thực thể không xác định “{status}”. Sử dụng release, eap hoặc deprecated.",
   "@diagnosticWritersideTreeInvalidStatus": {
     "description": "Diagnostic for an unsupported Writerside instance status.",
     "placeholders": {
@@ -4093,7 +4097,7 @@
       }
     }
   },
-  "diagnosticWritersideDuplicateInstanceId": "ID phiên bản “{id}” được nhiều tệp cây sử dụng.",
+  "diagnosticWritersideDuplicateInstanceId": "ID thực thể “{id}” được nhiều tệp cây sử dụng.",
   "@diagnosticWritersideDuplicateInstanceId": {
     "description": "Diagnostic for a duplicate Writerside instance ID.",
     "placeholders": {
@@ -4118,7 +4122,7 @@
       }
     }
   },
-  "diagnosticWritersideBuildProfileMissingInstance": "Phần tử <build-profile> phải chỉ định ID phiên bản.",
+  "diagnosticWritersideBuildProfileMissingInstance": "Phần tử <build-profile> phải chỉ định ID thực thể.",
   "@diagnosticWritersideBuildProfileMissingInstance": {
     "description": "Diagnostic for a Writerside build profile without an instance attribute."
   },
@@ -4130,7 +4134,7 @@
   "@diagnosticWritersideTreeMissingSnippetId": {
     "description": "Diagnostic for a Writerside tree snippet without an ID."
   },
-  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Tham chiếu mục lục giữa các phiên bản phải chỉ định cả ref và in.",
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Tham chiếu mục lục giữa các thực thể phải chỉ định cả ref và in.",
   "@diagnosticWritersideTreeInvalidCrossInstanceReference": {
     "description": "Diagnostic for an incomplete Writerside ref/in pair."
   },
@@ -4147,15 +4151,15 @@
       }
     }
   },
-  "diagnosticWritersideInstanceGroupsInvalidRoot": "Tệp nhóm phiên bản phải có phần tử gốc <instance-groups>.",
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "Tệp nhóm thực thể phải có phần tử gốc <instance-groups>.",
   "@diagnosticWritersideInstanceGroupsInvalidRoot": {
     "description": "Diagnostic for an invalid Writerside instance groups root."
   },
-  "diagnosticWritersideInstanceGroupInvalid": "Một nhóm phiên bản phải chỉ định id không trống và danh sách phiên bản.",
+  "diagnosticWritersideInstanceGroupInvalid": "Một nhóm thực thể phải chỉ định id không trống và danh sách thực thể.",
   "@diagnosticWritersideInstanceGroupInvalid": {
     "description": "Diagnostic for an invalid Writerside instance group."
   },
-  "diagnosticWritersideInstanceGroupDuplicateId": "ID nhóm phiên bản “{id}” được khai báo nhiều hơn một lần.",
+  "diagnosticWritersideInstanceGroupDuplicateId": "ID nhóm thực thể “{id}” được khai báo nhiều hơn một lần.",
   "@diagnosticWritersideInstanceGroupDuplicateId": {
     "description": "Diagnostic for a duplicate Writerside instance group ID.",
     "placeholders": {
@@ -4203,7 +4207,7 @@
       }
     }
   },
-  "diagnosticWritersideUnknownInstanceGroup": "Điều kiện phiên bản tham chiếu đến nhóm không xác định “@{group}”.",
+  "diagnosticWritersideUnknownInstanceGroup": "Điều kiện thực thể tham chiếu đến nhóm không xác định “@{group}”.",
   "@diagnosticWritersideUnknownInstanceGroup": {
     "description": "Diagnostic for an unknown Writerside instance group.",
     "placeholders": {
@@ -4212,7 +4216,7 @@
       }
     }
   },
-  "diagnosticWritersideReferenceInstanceMissing": "Tham chiếu giữa các phiên bản nhắm đến phiên bản không xác định “{instance}”.",
+  "diagnosticWritersideReferenceInstanceMissing": "Tham chiếu giữa các thực thể nhắm đến thực thể không xác định “{instance}”.",
   "@diagnosticWritersideReferenceInstanceMissing": {
     "description": "Diagnostic for a missing Writerside reference instance.",
     "placeholders": {
@@ -4221,7 +4225,7 @@
       }
     }
   },
-  "diagnosticWritersideReferenceTopicMissing": "Chủ đề “{topic}” không nằm trong phiên bản được tham chiếu “{instance}”.",
+  "diagnosticWritersideReferenceTopicMissing": "Chủ đề “{topic}” không nằm trong thực thể được tham chiếu “{instance}”.",
   "@diagnosticWritersideReferenceTopicMissing": {
     "description": "Diagnostic for a missing topic in a cross-instance Writerside reference.",
     "placeholders": {
@@ -4264,10 +4268,6 @@
   "aiDisabled": "Đã tắt",
   "@aiDisabled": {
     "description": "AI provider option that disables AI features."
-  },
-  "aiLocalOnlyDescription": "Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.",
-  "@aiLocalOnlyDescription": {
-    "description": "Privacy description for BusyMark local AI."
   },
   "aiProvider": "Nhà cung cấp AI",
   "@aiProvider": {
@@ -4608,5 +4608,9 @@
   "displayMath": "Toán hiển thị",
   "@displayMath": {
     "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
   }
 }

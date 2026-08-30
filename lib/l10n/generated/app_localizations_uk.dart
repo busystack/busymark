@@ -323,7 +323,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -816,7 +816,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'У документах ($count) є незбережені зміни. Зберегти їх перед продовженням?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count документів мають незбережені зміни. Збережіть кожен перед продовженням.',
+      one:
+          '1 документ має незбережені зміни. Збережіть його перед продовженням.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1441,7 +1449,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchReplacement => 'Замінити на';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Замінити поточне';
+  String get sourceSearchReplaceCurrent => 'Замінити поточний збіг';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Замінити й знайти наступне';
@@ -1708,12 +1716,28 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Відновлено незбережених документів: $count. Перегляньте кожен відновлений документ перед продовженням.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Відновлено $count незбережених документів. Перегляньте кожен перед збереженням або відхиленням.',
+      one:
+          'Відновлено 1 незбережений документ. Перегляньте його перед збереженням або відхиленням.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'Не вдалося відновити пошкоджені записи ($count). Коректні відновлені документи залишаються доступними.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count пошкоджених записів відновлення не вдалося відновити. Дійсні записи відновлення залишаються доступними.',
+      one:
+          'Не вдалося відновити 1 пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перегляду.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2355,8 +2379,10 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count індексованих файлів',
-      one: '1 індексований файл',
+      other: '$count проіндексованих файлів',
+      many: '$count проіндексованих файлів',
+      few: '$count проіндексовані файли',
+      one: '1 проіндексований файл',
     );
     return '$_temp0';
   }
@@ -2412,10 +2438,10 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Вибрані відстежувані файли буде відновлено з Git.',
-      many: 'Вибрані відстежувані файли буде відновлено з Git.',
-      few: 'Вибрані відстежувані файли буде відновлено з Git.',
-      one: 'Вибраний відстежуваний файл буде відновлено з Git.',
+      other:
+          'Усі індексовані та неіндексовані зміни в обраних файлах з відстеженням будуть відновлені в HEAD.',
+      one:
+          'Усі індексовані та неіндексовані зміни у вибраному файлі з відстеженням будуть відновлені в HEAD.',
     );
     return '$_temp0';
   }
@@ -2468,10 +2494,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Проєкт';
+  String get gitProjectHistory => 'Історія проєкту';
 
   @override
-  String get gitFileHistory => 'Поточний файл';
+  String get gitFileHistory => 'Історія файлу';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2835,7 +2861,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'Файл $fileName експортовано. Не вдалося додати зображень: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count попередженнями',
+      one: '1 попередженням',
+    );
+    return '$fileName експортовано з $_temp0.';
   }
 
   @override
@@ -3255,7 +3287,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiDisabled => 'Вимкнено';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.';
 
   @override

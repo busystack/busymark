@@ -67,7 +67,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get feedbackMessage => 'Подробное сообщение';
 
   @override
-  String get feedbackReplyEmail => 'Эл. почта для ответа (необязательно)';
+  String get feedbackReplyEmail => 'Эл. адрес для ответа (необязательно)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Включить технические сведения';
@@ -324,7 +324,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -811,7 +811,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'В документах ($count) есть несохранённые изменения. Сохранить их перед продолжением?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count документа содержат несохранённые изменения. Сохраните каждое перед продолжением.',
+      one:
+          '1 документ содержит несохранённые изменения. Сохраните его перед продолжением.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1433,7 +1441,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sourceSearchReplacement => 'Заменить на';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Заменить текущее';
+  String get sourceSearchReplaceCurrent => 'Заменить текущее совпадение';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Заменить и найти следующее';
@@ -1700,12 +1708,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Восстановлено несохранённых документов: $count. Проверьте каждый восстановленный документ перед продолжением.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Восстановлено $count несохранённых документов. Проверьте каждый перед сохранением или отменой.',
+      one:
+          'Восстановлен 1 несохранённый документ. Проверьте его перед сохранением или отменой.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'Не удалось восстановить повреждённые записи ($count). Корректные восстановленные документы остаются доступными.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count повреждённых записей восстановления не удалось восстановить. Корректные записи восстановления остаются доступны.',
+      one:
+          'Не удалось восстановить 1 повреждённую запись восстановления. Оригинальный файл восстановления сохранён для проверки.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2346,8 +2370,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count индексированных файлов',
-      one: '1 индексированный файл',
+      other: '$count файлов в индексе',
+      many: '$count файлов в индексе',
+      few: '$count файла в индексе',
+      one: '1 файл в индексе',
     );
     return '$_temp0';
   }
@@ -2403,10 +2429,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Выбранные отслеживаемые файлы будут восстановлены из Git.',
-      many: 'Выбранные отслеживаемые файлы будут восстановлены из Git.',
-      few: 'Выбранные отслеживаемые файлы будут восстановлены из Git.',
-      one: 'Выбранный отслеживаемый файл будет восстановлен из Git.',
+      other:
+          'Во все выбранные отслеживаемые файлы и обратно в HEAD будут восстановлены все проиндексированные и не проиндексированные изменения.',
+      one:
+          'В выбранный отслеживаемый файл и обратно в HEAD будут восстановлены все проиндексированные и не проиндексированные изменения.',
     );
     return '$_temp0';
   }
@@ -2459,10 +2485,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Проект';
+  String get gitProjectHistory => 'История проекта';
 
   @override
-  String get gitFileHistory => 'Текущий файл';
+  String get gitFileHistory => 'История файла';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2829,7 +2855,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'Файл $fileName экспортирован. Не удалось добавить изображений: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count предупреждениями',
+      one: '1 предупреждением',
+    );
+    return '$fileName экспортирован с $_temp0.';
   }
 
   @override
@@ -3247,7 +3279,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiDisabled => 'Отключено';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.';
 
   @override

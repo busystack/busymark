@@ -26,10 +26,13 @@ const busyMarkLocaleOptions = <BusyMarkLocaleOption>[
   BusyMarkLocaleOption(locale: Locale('it'), endonym: 'Italiano'),
   BusyMarkLocaleOption(locale: Locale('ja'), endonym: '日本語'),
   BusyMarkLocaleOption(locale: Locale('ko'), endonym: '한국어'),
-  BusyMarkLocaleOption(locale: Locale('nb'), endonym: 'Norsk'),
+  BusyMarkLocaleOption(locale: Locale('nb'), endonym: 'Norsk bokmål'),
   BusyMarkLocaleOption(locale: Locale('nl'), endonym: 'Nederlands'),
   BusyMarkLocaleOption(locale: Locale('pl'), endonym: 'Polski'),
-  BusyMarkLocaleOption(locale: Locale('pt'), endonym: 'Português'),
+  BusyMarkLocaleOption(
+    locale: Locale.fromSubtags(languageCode: 'pt', countryCode: 'BR'),
+    endonym: 'Português',
+  ),
   BusyMarkLocaleOption(locale: Locale('ru'), endonym: 'Русский'),
   BusyMarkLocaleOption(locale: Locale('tr'), endonym: 'Türkçe'),
   BusyMarkLocaleOption(locale: Locale('uk'), endonym: 'Українська'),
@@ -66,9 +69,21 @@ String? normalizeBusyMarkLocaleTag(String? tag) {
     return null;
   }
 
+  if (parsed.languageCode == 'zh') {
+    final isTraditional = parsed.scriptCode == 'Hant' ||
+        parsed.countryCode == 'TW' ||
+        parsed.countryCode == 'HK' ||
+        parsed.countryCode == 'MO';
+    if (isTraditional ||
+        (parsed.countryCode != null && parsed.countryCode != 'CN')) {
+      return null;
+    }
+    return const Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN')
+        .toLanguageTag();
+  }
+
   for (final option in busyMarkLocaleOptions) {
-    if (option.locale == parsed ||
-        option.locale.languageCode == parsed.languageCode) {
+    if (option.locale == parsed || option.locale.languageCode == parsed.languageCode) {
       return option.tag;
     }
   }

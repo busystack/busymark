@@ -139,7 +139,7 @@ void main() {
       'pl':
           'Edytor plików Markdown i projektów dokumentacji zgodnych z '
           'Writerside',
-      'pt':
+      'pt_BR':
           'Editor de arquivos Markdown e projetos de documentação compatíveis '
           'com o Writerside',
       'ru':
@@ -151,7 +151,6 @@ void main() {
       'vi':
           'Trình biên tập tệp Markdown và các dự án tài liệu tương thích với '
           'Writerside',
-      'zh': 'Markdown 文件和兼容 Writerside 的文档项目编辑器',
       'zh-CN': 'Markdown 文件和兼容 Writerside 的文档项目编辑器',
     };
 
@@ -413,10 +412,17 @@ Iterable<File> _productionDartFiles() sync* {
 
 Iterable<File> _arbFiles() sync* {
   for (final entity in Directory('lib/l10n').listSync()) {
-    if (entity is File && entity.path.endsWith('.arb')) {
+    if (entity is File &&
+        entity.path.endsWith('.arb') &&
+        !_isFlutterFallbackArb(entity)) {
       yield entity;
     }
   }
+}
+
+bool _isFlutterFallbackArb(File file) {
+  final name = file.uri.pathSegments.last;
+  return name == 'app_pt.arb' || name == 'app_zh.arb';
 }
 
 Map<String, Object?> _arbMessages(File file) {
@@ -555,7 +561,7 @@ List<String> _targetArbLocales() {
       continue;
     }
     final locale = match.group(1)!;
-    if (locale != 'en') {
+    if (locale != 'en' && locale != 'pt' && locale != 'zh') {
       locales.add(locale);
     }
   }
@@ -702,7 +708,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   },
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
   'pl': {'folder', 'foldKindTag', 'aiModel'},
-  'pt': {
+  'pt_BR': {
     'editor',
     'link',
     'toc',
@@ -764,6 +770,5 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'aiModel',
   },
   'vi': {'tab', 'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
-  'zh': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
   'zh_CN': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
 };

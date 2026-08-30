@@ -67,7 +67,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedbackMessage => 'Ayrıntılı mesaj';
 
   @override
-  String get feedbackReplyEmail => 'E-postayı yanıtla (isteğe bağlı)';
+  String get feedbackReplyEmail => 'Yanıt e-postası adresi (isteğe bağlı)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Teknik ayrıntıları ekleyin';
@@ -273,7 +273,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get removeFromRecent => 'Son kullanılanlardan kaldır';
 
   @override
-  String get recent => 'Son';
+  String get recent => 'Son öğeler';
 
   @override
   String get redo => 'Yinele';
@@ -324,7 +324,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -432,7 +432,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortcutGroupGeneral => 'Genel';
 
   @override
-  String get shortcutNewDocument => 'Yeni belge';
+  String get shortcutNewDocument => 'Oluştur';
 
   @override
   String get shortcutNewDocumentDescription =>
@@ -501,7 +501,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortcutPastePlainTextDescription =>
-      'Pano metnini biçimlendirmeden yapıştırma';
+      'Panodan biçimlendirme olmadan yapıştır';
 
   @override
   String get shortcutUndoDescription => 'Son düzenlemeyi geri al';
@@ -701,14 +701,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clearRecentWorkspaces => 'Son çalışma alanlarını temizle';
 
   @override
-  String get editingButtonsPosition => 'Düğmelerin konumunu düzenleme';
+  String get editingButtonsPosition => 'Düzenleme düğmelerinin konumu';
 
   @override
   String get editingButtonsPositionDescription =>
       'Kayan WYSIWYG düzenleme düğmelerinin nerede görüneceğini seçin.';
 
   @override
-  String get editingButtonsDirection => 'Düğmelerin yönünü düzenleme';
+  String get editingButtonsDirection => 'Düzenleme düğmelerinin yönü';
 
   @override
   String get editingButtonsDirectionDescription =>
@@ -786,10 +786,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get closeUnsavedChangesCancel => 'İptal etmek';
+  String get closeUnsavedChangesCancel => 'İptal';
 
   @override
-  String get closeUnsavedChangesDiscard => 'At';
+  String get closeUnsavedChangesDiscard => 'Değişiklikleri yok say';
 
   @override
   String get closeUnsavedChangesSave => 'Kaydet';
@@ -838,7 +838,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get taskList => 'Görev listesi';
 
   @override
-  String get toggleTaskChecked => 'Görevi değiştir işaretlendi';
+  String get toggleTaskChecked => 'Görevi işaretle veya işaretini kaldır';
 
   @override
   String get indentListItem => 'Liste öğesine girinti ekle';
@@ -1172,7 +1172,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocRoot => 'TOC kökünde';
 
   @override
-  String get afterSelectedTopic => 'Konu seçildikten sonra';
+  String get afterSelectedTopic => 'Seçili konunun ardından';
 
   @override
   String get insideSelectedTopic => 'Seçilen konunun içinde';
@@ -1285,7 +1285,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get updateUsagesAutomaticallyDescription =>
-      'İçindekiler referanslarını ve içeriklerini kaldırın ve bağlantı metnini koruyun.';
+      'TOC başvurularını ve include öğelerini kaldırın, bağlantı metnini koruyun.';
 
   @override
   String get manualUsageUpdatesRequired =>
@@ -1413,7 +1413,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchNextMatch => 'Sonraki eşleşme';
 
   @override
-  String get sourceSearchCaseSensitive => 'Harfe duyarlı';
+  String get sourceSearchCaseSensitive => 'Büyük-küçük harf duyarlı';
 
   @override
   String get sourceSearchWholeWord => 'Tam sözcük';
@@ -1425,7 +1425,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchReplacement => 'Şununla değiştir:';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Geçerli olanı değiştir';
+  String get sourceSearchReplaceCurrent => 'Mevcut eşleşmeyi değiştir';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Değiştir ve sonrakini bul';
@@ -1531,7 +1531,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return '$fileName için kaydedilmemiş içerik kurtarıldı. İnceleyin, ardından kaydedin, farklı kaydedin veya atın.';
+    return '$fileName için kurtarılan kaydedilmemiş içerik. İnceleyin, sonra kaydedin, farklı kaydedin veya vazgeçin.';
   }
 
   @override
@@ -1605,7 +1605,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String anchorNotFound(String anchor) {
-    return 'Bağlantı bulunamadı: $anchor';
+    return 'Bağlantı noktası bulunamadı: $anchor';
   }
 
   @override
@@ -2004,7 +2004,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Kitaplık olmayan instance\'ın başlangıç sayfası eksik.';
+      'Kütüphane olmayan örnek start-page içermiyor.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2164,11 +2164,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> öğesi eksik.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include> öğesinde from niteliği eksik.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'Kaynak ekle \"$from\" mevcut değil.';
+    return 'Include kaynağı \"$from\" mevcut değil.';
   }
 
   @override
@@ -2181,7 +2182,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Ayrıca bkz. \"$ref\" kategorisi bildirilmedi.';
+    return 'seealso kategorisi \"$ref\" bildirilmemiş.';
   }
 
   @override
@@ -2281,7 +2282,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gitClean => 'Temiz';
+  String get gitClean => 'Değişiklik yok';
 
   @override
   String get gitConflicts => 'Çatışmalar';
@@ -2338,7 +2339,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gitCommitMessage => 'Commit mesajı';
 
   @override
-  String get gitCommitSelectedFiles => 'Seçili dosyaları commit et';
+  String get gitCommitSelectedFiles => 'Seçili dosyalar';
 
   @override
   String get gitCommitNoSelectedFiles =>
@@ -2595,7 +2596,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Dal değiştirmeden önce BusyMark düzenleyici değişikliklerini kaydedin veya yok sayın.';
+      'Dal değiştirmeden önce BusyMark düzenleyici değişikliklerini kaydedin veya göz ardı edin.';
 
   @override
   String get gitErrorResetDirtyWorkspace =>
@@ -2820,7 +2821,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName, $count uyarı(lar)ıyla birlikte dışa aktarıldı.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count uyarıyla',
+      one: '1 uyarıyla',
+    );
+    return '$fileName, $_temp0 birlikte dışa aktarıldı.';
   }
 
   @override
@@ -2881,10 +2888,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get visualizationTags => 'Etiketler';
 
   @override
-  String get visualizationNoOperations => 'Eşleştirme işlemi yok';
+  String get visualizationNoOperations => 'Eşleşen işlem bulunamadı';
 
   @override
-  String get visualizationSearchOperations => 'Arama işlemleri';
+  String get visualizationSearchOperations => 'İşlemleri ara';
 
   @override
   String get visualizationRenderFailed => 'Bu görselleştirme oluşturulamadı.';
@@ -3115,7 +3122,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
-    return 'Bilinmeyen instance durumu \"$status\". release, eap veya deprecated kullanın.';
+    return 'Bilinmeyen örnek durumu \"$status\". Release, eap veya deprecated kullanın.';
   }
 
   @override
@@ -3132,7 +3139,7 @@ class AppLocalizationsTr extends AppLocalizations {
     String name,
     String value,
   ) {
-    return '$name değeri “$value” doğru veya yanlış olmalıdır.';
+    return '$name değeri “$value” true veya false olmalıdır.';
   }
 
   @override
@@ -3141,7 +3148,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidInclude =>
-      'Bir ağaç <include> hem from hem de element kimliğini belirtmelidir.';
+      'Bir ağaç <include>, hem from hem de element-id belirtmelidir.';
 
   @override
   String get diagnosticWritersideTreeMissingSnippetId =>
@@ -3179,7 +3186,7 @@ class AppLocalizationsTr extends AppLocalizations {
     String id,
     String origin,
   ) {
-    return 'TOC şunları içerir: “$source#$id”, “$origin” harici modülüne aittir ve bu çalışma alanında genişletilemez.';
+    return 'TOC include “$source#$id”, harici “$origin” modülüne aittir ve bu çalışma alanında genişletilemez.';
   }
 
   @override
@@ -3214,7 +3221,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get download => 'İndirmek';
+  String get download => 'İndir';
 
   @override
   String get exportWritersideAsPdf => 'Writerside\'ı PDF olarak dışa aktar';
@@ -3238,8 +3245,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiDisabled => 'Devre dışı';
 
   @override
-  String get aiLocalOnlyDescription =>
-      'AI düzenlemesi yalnızca yereldir. BusyMark yalnızca seçili sağlayıcıya gösterilen bağlamı gönderir ve hiçbir öneriyi incelemeden uygulamaz.';
+  String get aiExplicitEditingDescription =>
+      'AI düzenleme açıkça kullanıcının isteğiyle başlatılır. BusyMark yalnızca seçili sağlayıcı için gösterilen bağlamı gönderir ve bir öneriyi hiçbiri onaylama olmadan uygulamaz.';
 
   @override
   String get aiProvider => 'AI sağlayıcısı';
@@ -3337,7 +3344,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Seçilen sağlayıcı, görüntülenen bağlamdan $count karakterlerini alacaktır.';
+    return 'Seçilen sağlayıcı $count karakterlik gösterilen bağlam alacaktır.';
   }
 
   @override

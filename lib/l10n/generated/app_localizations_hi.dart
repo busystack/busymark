@@ -323,7 +323,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -797,7 +797,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count दस्तावेज़ों में सहेजे नहीं गए बदलाव हैं। जारी रखने से पहले इन्हें सहेजें?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count दस्तावेज़ों में असुरक्षित बदलाव हैं। इन्हें जारी रखने से पहले सहेजें।',
+      one: '1 दस्तावेज़ में असुरक्षित बदलाव हैं। इसे जारी रखने से पहले सहेजें।',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1677,12 +1684,28 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return '$count सहेजे नहीं गए दस्तावेज़ पुनर्प्राप्त किए गए। जारी रखने से पहले प्रत्येक पुनर्प्राप्त दस्तावेज़ की समीक्षा करें।';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count बिना सहेजे दस्तावेज़ पुनर्प्राप्त किए गए। प्रत्येक की समीक्षा करके सहेजें या हटाएँ।',
+      one:
+          '1 बिना सहेजा दस्तावेज़ पुनर्प्राप्त किया गया। इसे सहेजने या हटाने से पहले समीक्षा करें।',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड बहाल नहीं किए जा सके। मान्य पुनर्प्राप्त दस्तावेज़ उपलब्ध हैं।';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड पुनर्स्थापित नहीं किए जा सके। वैध पुनर्प्राप्ति रिकॉर्ड अभी भी उपलब्ध हैं।',
+      one:
+          'एक क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड पुनर्स्थापित नहीं किया जा सका। मूल पुनर्प्राप्ति फ़ाइल निरीक्षण के लिए सुरक्षित रखी गई।',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2374,8 +2397,10 @@ class AppLocalizationsHi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'चयनित ट्रैक की गई फ़ाइलें Git से पुनर्स्थापित की जाएँगी।',
-      one: 'चयनित ट्रैक की गई फ़ाइल Git से पुनर्स्थापित की जाएगी।',
+      other:
+          'चयनित ट्रैक की गई फ़ाइलों के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
+      one:
+          'चयनित ट्रैक की गई फ़ाइल के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
     );
     return '$_temp0';
   }
@@ -2422,10 +2447,10 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'प्रोजेक्ट';
+  String get gitProjectHistory => 'परियोजना इतिहास';
 
   @override
-  String get gitFileHistory => 'मौजूदा फ़ाइल';
+  String get gitFileHistory => 'फ़ाइल इतिहास';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2789,7 +2814,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName निर्यात किया गया। शामिल न हो सकने वाले चित्र: $count।';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count चेतावनियों',
+      one: '1 चेतावनी',
+    );
+    return '$fileName को $_temp0 के साथ निर्यात किया गया.';
   }
 
   @override
@@ -3208,7 +3239,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiDisabled => 'अक्षम';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'AI संपादन केवल स्पष्ट कार्रवाई से शुरू होता है। BusyMark चयनित प्रदाता को केवल दिखाया गया संदर्भ भेजता है और समीक्षा के बिना किसी प्रस्ताव को लागू नहीं करता।';
 
   @override

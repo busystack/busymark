@@ -21,7 +21,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get aboutBusyMark => 'Tentang BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown dan Editor Writerside';
+  String get aboutTagline =>
+      'Editor untuk file Markdown dan proyek dokumentasi yang kompatibel dengan Writerside';
 
   @override
   String get aboutLicenseLabel => 'Lisensi';
@@ -66,7 +67,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get feedbackMessage => 'Pesan terperinci';
 
   @override
-  String get feedbackReplyEmail => 'Balasan email (opsional)';
+  String get feedbackReplyEmail => 'Alamat email balasan (opsional)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Sertakan detail teknis';
@@ -172,10 +173,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get cut => 'Potong';
 
   @override
-  String get promoteSection => 'Bagian promosi';
+  String get promoteSection => 'Naikkan bagian';
 
   @override
-  String get demoteSection => 'Bagian demosi';
+  String get demoteSection => 'Turunkan bagian';
 
   @override
   String get moveSectionUp => 'Pindahkan bagian ke atas';
@@ -198,7 +199,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get delete => 'Hapus';
 
   @override
-  String get discard => 'Membuang';
+  String get discard => 'Buang';
 
   @override
   String get editor => 'Editor';
@@ -322,7 +323,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -506,8 +507,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get shortcutUndoDescription => 'Urungkan pengeditan terakhir';
 
   @override
-  String get shortcutRedoDescription =>
-      'Ulangi pengeditan terakhir yang belum selesai';
+  String get shortcutRedoDescription => 'Ulangi tindakan terakhir';
 
   @override
   String get shortcutInsertIndentation => 'Masukkan lekukan';
@@ -652,7 +652,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get instanceId => 'ID instance';
 
   @override
-  String get startTopicTitle => 'Mulai judul topik';
+  String get startTopicTitle => 'Topik awal';
 
   @override
   String get location => 'Lokasi';
@@ -787,7 +787,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get closeUnsavedChangesCancel => 'Batal';
 
   @override
-  String get closeUnsavedChangesDiscard => 'Membuang';
+  String get closeUnsavedChangesDiscard => 'Buang';
 
   @override
   String get closeUnsavedChangesSave => 'Simpan';
@@ -1263,7 +1263,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get topicUsageTopicLinks => 'Tautan topik';
 
   @override
-  String get topicUsageIncludes => 'Termasuk';
+  String get topicUsageIncludes => 'Elemen include';
 
   @override
   String usageCount(int count) {
@@ -1326,7 +1326,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String orphanTopicMessage(String topic) {
-    return '“$topic” tidak lagi digunakan di mana pun dalam proyek Writerside ini. Hapus file, atau simpan untuk digunakan di tempat lain.';
+    return '“$topic” tidak lagi digunakan di mana pun dalam proyek Writerside ini. Hapus file, atau simpan agar dapat digunakan pada instance lain.';
   }
 
   @override
@@ -1426,7 +1426,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sourceSearchReplacement => 'Ganti dengan';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Ganti arus';
+  String get sourceSearchReplaceCurrent => 'Ganti kecocokan saat ini';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Ganti dan temukan selanjutnya';
@@ -1438,10 +1438,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get workspaceReplace => 'Ganti di Ruang Kerja';
 
   @override
-  String get reviewReplacements => 'Tinjau penggantinya';
+  String get reviewReplacements => 'Tinjau penggantian';
 
   @override
-  String get applyReplacements => 'Terapkan penggantinya';
+  String get applyReplacements => 'Terapkan penggantian';
 
   @override
   String get skippedFiles => 'File yang dilewati';
@@ -1459,7 +1459,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workspaceReplaceApplied(int matches, int files, int skipped) {
-    return 'Mengganti $matches kecocokan dalam file $files; dilewati $skipped.';
+    return 'Mengganti $matches kecocokan di $files file; melewati $skipped.';
   }
 
   @override
@@ -1533,7 +1533,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return 'Memulihkan konten yang belum disimpan untuk $fileName. Periksa, lalu simpan, simpan sebagai, atau buang.';
+    return 'Konten belum disimpan yang dipulihkan untuk $fileName. Tinjau, kemudian simpan, simpan sebagai, atau buang.';
   }
 
   @override
@@ -1559,7 +1559,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get nothingToRead => 'Tidak ada yang perlu dibaca';
 
   @override
-  String get admonition => 'Peringatan';
+  String get admonition => 'Kotak keterangan';
 
   @override
   String get quote => 'Kutipan';
@@ -1724,12 +1724,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'Direktori target sudah ada dan tidak kosong: $path';
+    return 'Direktori tujuan sudah ada dan berisi file: $path';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'Jalur target sudah ada dan bukan merupakan direktori: $path';
+    return 'Jalur tujuan sudah ada tetapi bukan direktori: $path';
   }
 
   @override
@@ -1786,7 +1786,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get errorInstanceIdInvalid =>
-      'ID Instance harus dimulai dengan huruf kecil dan hanya berisi huruf kecil, angka, garis bawah, dan tanda hubung.';
+      'ID instance harus diawali huruf kecil dan hanya boleh berisi huruf kecil, angka, garis bawah, dan tanda hubung.';
 
   @override
   String get errorTopicFileInvalid =>
@@ -1922,7 +1922,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Topik Markdown Writerside tidak memiliki judul H1 atau materi depan.';
+      'Topik Markdown Writerside tidak memiliki judul H1 atau front matter.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1935,7 +1935,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'Materi depan tidak tertutup.';
+      'Front matter tidak tertutup.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Elemen HTML tidak aman.';
@@ -1967,11 +1967,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'Root writerside.cfg harus <ihp>.';
+      'Elemen akar writerside.cfg harus berupa <ihp>.';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'deklarasi cuplikan tidak ada src.';
+      'Deklarasi snippets tidak memiliki atribut src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
@@ -2005,7 +2005,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Instance non-pustaka tidak memiliki halaman awal.';
+      'Instance non-library tidak memiliki start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2064,7 +2064,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'Mode Writerside memerlukan Writerside.cfg.';
+      'Mode Writerside memerlukan writerside.cfg.';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
@@ -2118,7 +2118,7 @@ class AppLocalizationsId extends AppLocalizations {
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'Direktori topik default tidak ada: $relativePath';
+    return 'Direktori topik default tidak ada: $relativePath.';
   }
 
   @override
@@ -2197,7 +2197,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get close => 'Menutup';
+  String get close => 'Tutup';
 
   @override
   String get git => 'Git';
@@ -2282,7 +2282,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get gitClean => 'Bersih';
+  String get gitClean => 'Tidak ada perubahan';
 
   @override
   String get gitConflicts => 'Konflik';
@@ -2318,7 +2318,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Stage file';
+  String get gitSelectForCommit => 'Siapkan file untuk commit';
 
   @override
   String get gitRemoveFromCommit => 'Batalkan stage file';
@@ -2378,7 +2378,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitNoChanges => 'Tidak ada perubahan';
 
   @override
-  String get gitNoHistory => 'Tidak ada sejarah';
+  String get gitNoHistory => 'Tidak ada riwayat';
 
   @override
   String get gitNoBranches => 'Tidak ada cabang';
@@ -2449,7 +2449,7 @@ class AppLocalizationsId extends AppLocalizations {
       'BusyMark akan memuat ulang ruang kerja dari disk setelah Git berpindah cabang.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Siapkan upstream cabang?';
+  String get gitConfirmPushSetUpstreamTitle => 'Siapkan upstream branch?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
@@ -2473,7 +2473,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get gitChangesInCommit => 'Perubahan dalam commit ini';
 
   @override
-  String get gitCompareWithCurrent => 'Bandingkan dengan saat ini';
+  String get gitCompareWithCurrent => 'Bandingkan dengan versi saat ini';
 
   @override
   String get gitRestoreVersion => 'Pulihkan versi ini';
@@ -2499,7 +2499,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String gitResetCurrentBranchMessage(String branch, String commit) {
-    return 'Ini memindahkan cabang $branch untuk melakukan $commit. Pilih bagaimana Git memperbarui indeks dan pohon kerja.';
+    return 'Ini memindahkan branch $branch ke commit $commit. Pilih cara Git memperbarui index dan working tree.';
   }
 
   @override
@@ -2612,7 +2612,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get gitErrorResetDetachedHead =>
-      'Periksa cabang sebelum mengatur ulangnya.';
+      'Checkout branch terlebih dahulu sebelum melakukan reset.';
 
   @override
   String get gitErrorDiverged =>
@@ -2712,20 +2712,20 @@ class AppLocalizationsId extends AppLocalizations {
   String get markdownHtmlHtmlTextBlocks => 'Blok teks';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Gambar dan gambar';
+  String get markdownHtmlHtmlFigures => 'Gambar dan ilustrasi';
 
   @override
   String get markdownHtmlHtmlPreformatted =>
       'Kode yang telah diformat sebelumnya';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Blok pengungkapan';
+  String get markdownHtmlHtmlDisclosure => 'Blok detail yang dapat dibuka';
 
   @override
   String get markdownHtmlHtmlDescriptionLists => 'Daftar deskripsi';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Memformat tag';
+  String get markdownHtmlHtmlFormattingTags => 'Tag pemformatan';
 
   @override
   String get markdownHtmlHtmlInlineCodeTags => 'Tag kode sebaris';
@@ -2828,7 +2828,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName diekspor dengan peringatan $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count peringatan',
+      one: '1 peringatan',
+    );
+    return '$fileName diekspor dengan $_temp0.';
   }
 
   @override
@@ -2856,7 +2862,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get visualizationShowRender => 'Tampilkan render';
 
   @override
-  String get visualizationFitWidth => 'Sesuai dengan lebarnya';
+  String get visualizationFitWidth => 'Sesuaikan dengan lebar tampilan';
 
   @override
   String get visualizationSaveImage => 'Simpan gambar';
@@ -2880,7 +2886,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get visualizationServers => 'Server';
 
   @override
-  String get visualizationPaths => 'Path';
+  String get visualizationPaths => 'Jalur';
 
   @override
   String get visualizationOperations => 'Operasi';
@@ -2920,7 +2926,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get newTocLibrary => 'Pustaka TOC baru';
 
   @override
-  String get editInstance => 'Edit instance';
+  String get editInstance => 'Ubah instance';
 
   @override
   String get openTocFile => 'Buka file TOC';
@@ -3122,7 +3128,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
-    return 'Status instance “$status” tidak diketahui. Gunakan rilis, eap, atau usang.';
+    return 'Status instance “$status” tidak dikenal. Gunakan release, eap, atau deprecated.';
   }
 
   @override
@@ -3139,7 +3145,7 @@ class AppLocalizationsId extends AppLocalizations {
     String name,
     String value,
   ) {
-    return 'Nilai $name “$value” harus benar atau salah.';
+    return 'Nilai $name “$value” harus true atau false.';
   }
 
   @override
@@ -3148,7 +3154,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidInclude =>
-      'Pohon <include> harus menentukan atribut from dan id elemen.';
+      'Pohon <include> harus menentukan atribut from dan element-id.';
 
   @override
   String get diagnosticWritersideTreeMissingSnippetId =>
@@ -3217,7 +3223,7 @@ class AppLocalizationsId extends AppLocalizations {
     String topic,
     String instance,
   ) {
-    return 'Topik “$topic” tidak ada dalam contoh referensi “$instance”.';
+    return 'Topik “$topic” tidak ada dalam instance yang dirujuk “$instance”.';
   }
 
   @override
@@ -3245,7 +3251,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get aiDisabled => 'Dinonaktifkan';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'Pengeditan AI bersifat eksplisit. BusyMark hanya mengirimkan konteks yang ditampilkan untuk penyedia yang dipilih dan tidak pernah menerapkan proposal tanpa peninjauan.';
 
   @override
@@ -3488,7 +3494,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get markdownTocMalformedMarkers =>
-      'Penanda daftar isi BusyMark hilang, terduplikasi, atau rusak.';
+      'Penanda daftar isi BusyMark hilang, duplikat, atau tidak berurutan.';
 
   @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {

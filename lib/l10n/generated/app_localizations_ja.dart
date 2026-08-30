@@ -317,7 +317,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -2743,7 +2743,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName を $count 件の警告付きでエクスポートしました。';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 件の警告',
+      one: '1 件の警告',
+    );
+    return '$fileName は $_temp0 とともにエクスポートされました。';
   }
 
   @override
@@ -3154,7 +3160,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiDisabled => '無効';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。';
 
   @override
