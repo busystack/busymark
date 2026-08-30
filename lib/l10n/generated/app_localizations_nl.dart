@@ -1456,7 +1456,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String selectFileMatches(int count) {
-    return 'Selecteer alle $count overeenkomsten';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Alle $count overeenkomsten selecteren',
+      one: 'Alle 1 overeenkomst selecteren',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2008,7 +2014,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Niet-bibliotheekinstantie mist startpagina.';
+      'Bij de niet-bibliotheekinstantie ontbreekt het attribuut start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -2167,7 +2173,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> ontbreekt in het from-attribuut.';
+      'Het attribuut from ontbreekt in <include>.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -3012,7 +3018,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String markdownFilesFound(int count) {
-    return '$count Markdown-bestand(en) gevonden';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Markdown-bestanden gevonden',
+      one: '1 Markdown-bestand gevonden',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3280,7 +3292,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String aiConnectionReady(int count) {
-    return 'Verbonden. $count geïnstalleerde modellen gevonden.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count geïnstalleerde modellen gevonden',
+      one: '1 geïnstalleerd model gevonden',
+    );
+    return 'Verbonden. $_temp0.';
   }
 
   @override
@@ -3350,7 +3368,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'De geselecteerde provider ontvangt $count tekens uit de weergegeven context.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tekens',
+      one: '1 teken',
+    );
+    return 'De geselecteerde provider ontvangt $_temp0 uit de weergegeven context.';
   }
 
   @override
@@ -3454,7 +3478,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String aiGenerationVerified(String model, int count) {
-    return 'Generatie geverifieerd met $model. $count compatibele model(len) beschikbaar.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count compatibele modellen zijn',
+      one: '1 compatibel model is',
+    );
+    return 'Generatie geverifieerd met $model. $_temp0 beschikbaar.';
   }
 
   @override
@@ -3485,7 +3515,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String markdownTocUpdated(int count) {
-    return 'Inhoudsopgave bijgewerkt met $count vermeldingen.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vermeldingen',
+      one: '1 vermelding',
+    );
+    return 'Inhoudsopgave bijgewerkt met $_temp0.';
   }
 
   @override

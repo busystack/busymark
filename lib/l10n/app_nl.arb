@@ -1826,7 +1826,7 @@
   "@workspaceReplaceDiskContent": {
     "description": "Source label for a workspace replacement preview using disk content."
   },
-  "selectFileMatches": "Selecteer alle {count} overeenkomsten",
+  "selectFileMatches": "{count, plural, =1{Alle 1 overeenkomst selecteren} other{Alle {count} overeenkomsten selecteren}}",
   "@selectFileMatches": {
     "description": "Checkbox label for selecting every replacement match in a file.",
     "placeholders": {
@@ -2605,7 +2605,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "Niet-bibliotheekinstantie mist startpagina.",
+  "diagnosticWritersideTreeMissingStartPage": "Bij de niet-bibliotheekinstantie ontbreekt het attribuut start-page.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -2855,7 +2855,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<include> ontbreekt in het from-attribuut.",
+  "diagnosticWritersideIncludeMissingFrom": "Het attribuut from ontbreekt in <include>.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
@@ -3925,7 +3925,7 @@
   "@selectNone": {
     "description": "Action that clears all items in a multiple selection."
   },
-  "markdownFilesFound": "{count} Markdown-bestand(en) gevonden",
+  "markdownFilesFound": "{count, plural, =1{1 Markdown-bestand gevonden} other{{count} Markdown-bestanden gevonden}}",
   "@markdownFilesFound": {
     "description": "Count of discovered Markdown import files.",
     "placeholders": {
@@ -4301,7 +4301,7 @@
   "@aiTestingConnection": {
     "description": "Status while BusyMark verifies the configured AI provider and model."
   },
-  "aiConnectionReady": "Verbonden. {count} geïnstalleerde modellen gevonden.",
+  "aiConnectionReady": "Verbonden. {count, plural, =1{1 geïnstalleerd model gevonden} other{{count} geïnstalleerde modellen gevonden}}.",
   "@aiConnectionReady": {
     "description": "Successful Ollama connection status.",
     "placeholders": {
@@ -4352,7 +4352,7 @@
   "@aiGenerateProposal": {
     "description": "Button that starts generation after the user reviews the AI instruction, change target, and shared context."
   },
-  "aiContextDisclosure": "De geselecteerde provider ontvangt {count} tekens uit de weergegeven context.",
+  "aiContextDisclosure": "De geselecteerde provider ontvangt {count, plural, =1{1 teken} other{{count} tekens}} uit de weergegeven context.",
   "@aiContextDisclosure": {
     "description": "Disclosure of AI context size.",
     "placeholders": {
@@ -4507,7 +4507,7 @@
       }
     }
   },
-  "aiGenerationVerified": "Generatie geverifieerd met {model}. {count} compatibele model(len) beschikbaar.",
+  "aiGenerationVerified": "Generatie geverifieerd met {model}. {count, plural, =1{1 compatibel model is} other{{count} compatibele modellen zijn}} beschikbaar.",
   "@aiGenerationVerified": {
     "description": "Successful AI model generation qualification.",
     "placeholders": {
@@ -4551,7 +4551,7 @@
   "@markdownTocTitle": {
     "description": "Heading inserted above a generated Markdown table of contents."
   },
-  "markdownTocUpdated": "Inhoudsopgave bijgewerkt met {count} vermeldingen.",
+  "markdownTocUpdated": "Inhoudsopgave bijgewerkt met {count, plural, =1{1 vermelding} other{{count} vermeldingen}}.",
   "@markdownTocUpdated": {
     "description": "Confirmation after generating a Markdown table of contents.",
     "placeholders": {

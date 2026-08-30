@@ -820,7 +820,11 @@ class AppLocalizationsPl extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count dokumenty mają niezapisane zmiany. Zapisz każdy przed kontynuowaniem.',
+          '$count dokumentu ma niezapisane zmiany. Zapisz je przed kontynuowaniem.',
+      many:
+          '$count dokumentów ma niezapisane zmiany. Zapisz je przed kontynuowaniem.',
+      few:
+          '$count dokumenty mają niezapisane zmiany. Zapisz je przed kontynuowaniem.',
       one: '1 dokument ma niezapisane zmiany. Zapisz go przed kontynuowaniem.',
     );
     return '$_temp0';
@@ -1718,9 +1722,13 @@ class AppLocalizationsPl extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Przywrócono $count dokumentów bez zapisania. Sprawdź każdy przed zapisaniem lub usunięciem.',
+          'Odzyskano $count niezapisanego dokumentu. Przejrzyj go przed zapisaniem lub odrzuceniem.',
+      many:
+          'Odzyskano $count niezapisanych dokumentów. Przejrzyj każdy przed zapisaniem lub odrzuceniem.',
+      few:
+          'Odzyskano $count niezapisane dokumenty. Przejrzyj każdy przed zapisaniem lub odrzuceniem.',
       one:
-          'Przywrócono 1 dokument bez zapisania. Przed zapisaniem lub usunięciem sprawdź go.',
+          'Odzyskano 1 niezapisany dokument. Przejrzyj go przed zapisaniem lub odrzuceniem.',
     );
     return '$_temp0';
   }
@@ -1731,6 +1739,10 @@ class AppLocalizationsPl extends AppLocalizations {
       count,
       locale: localeName,
       other:
+          'Nie udało się przywrócić $count uszkodzonego rekordu odzyskiwania. Prawidłowe rekordy odzyskiwania pozostają dostępne.',
+      many:
+          'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe rekordy odzyskiwania pozostają dostępne.',
+      few:
           'Nie udało się przywrócić $count uszkodzonych rekordów odzyskiwania. Prawidłowe rekordy odzyskiwania pozostają dostępne.',
       one:
           'Nie udało się przywrócić 1 uszkodzonego rekordu odzyskiwania. Oryginalny plik odzyskiwania zachowano do przeglądu.',

@@ -738,8 +738,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '미저장 문서가 $count개 있습니다. 계속하기 전에 저장하시겠습니까?',
-      one: '미저장 문서가 1개 있습니다. 계속하기 전에 저장하시겠습니까?',
+      other: '미저장 문서가 $count개 있습니다. BusyMark를 닫기 전에 저장하시겠습니까?',
+      one: '미저장 문서가 1개 있습니다. BusyMark를 닫기 전에 저장하시겠습니까?',
       zero: 'BusyMark를 닫기 전에 변경 사항을 저장하시겠습니까?',
     );
     return '$_temp0';
@@ -1237,7 +1237,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get refactoringOptions => '리팩토링 옵션';
 
   @override
-  String get updateUsagesAutomatically => '참조 사용량을 자동으로 업데이트';
+  String get updateUsagesAutomatically => '참조 위치를 자동으로 업데이트';
 
   @override
   String get updateUsagesAutomaticallyDescription =>

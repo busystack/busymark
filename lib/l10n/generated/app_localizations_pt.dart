@@ -3621,7 +3621,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get feedbackSubmit => 'Enviar';
 
   @override
-  String get feedbackSubmitting => 'A enviar…';
+  String get feedbackSubmitting => 'Enviando…';
 
   @override
   String get feedbackCategoryRequired => 'Escolha uma categoria.';
@@ -5065,7 +5065,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get workspaceReplaceIssuePartialConflict =>
-      'A reversão foi interrompida porque o ficheiro foi alterado em simultâneo. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.';
+      'A reversão foi interrompida porque o arquivo foi alterado simultaneamente. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.';
 
   @override
   String get workspaceReplaceIssueApplyFailed =>
@@ -5111,7 +5111,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get nothingToRead => 'Nenhum conteúdo para ler';
 
   @override
-  String get admonition => 'Aviso';
+  String get admonition => 'Observação';
 
   @override
   String get quote => 'Citação';
@@ -6401,7 +6401,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'O BusyMark não conseguiu exportar este documento como PDF.';
 
   @override
-  String get visualizationRendering => 'A renderizar…';
+  String get visualizationRendering => 'Renderizando…';
 
   @override
   String get visualizationStale => 'A mostrar a última renderização válida';
@@ -6549,7 +6549,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get offlineArtifactDescription =>
-      'Inclua os recursos para que a documentação gerada seja autónoma.';
+      'Inclua os recursos para que a documentação gerada funcione de forma autônoma.';
 
   @override
   String get instanceOutputSettings => 'Definições de saída';
@@ -6565,7 +6565,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String markdownFilesFound(int count) {
-    return 'Foram encontrados $count arquivo(s) Markdown';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Foram encontrados $count arquivos Markdown',
+      one: 'Foi encontrado 1 arquivo Markdown',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -6573,7 +6579,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Não foram encontrados arquivos Markdown neste diretório.';
 
   @override
-  String get copyReferencedMedia => 'Copiar multimédia referenciada';
+  String get copyReferencedMedia => 'Copiar mídia referenciada';
 
   @override
   String get copyReferencedMediaDescription =>
@@ -6687,7 +6693,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String diagnosticWritersideDuplicateInstanceId(String id) {
-    return 'O ID de instância “$id” é usado por mais de um ficheiro de árvore.';
+    return 'O ID de instância “$id” é usado por mais de um arquivo de árvore.';
   }
 
   @override
@@ -6729,7 +6735,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'O ficheiro de grupos de instâncias deve ter um elemento raiz <instance-groups>.';
+      'O arquivo de grupos de instâncias deve ter um elemento raiz <instance-groups>.';
 
   @override
   String get diagnosticWritersideInstanceGroupInvalid =>
@@ -6834,7 +6840,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String aiConnectionReady(int count) {
-    return 'Conectado. $count modelo(s) instalado(s) encontrado(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Foram encontrados $count modelos instalados',
+      one: 'Foi encontrado 1 modelo instalado',
+    );
+    return 'Conectado. $_temp0.';
   }
 
   @override
