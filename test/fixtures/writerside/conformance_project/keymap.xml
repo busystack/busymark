@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keymap id="conformance-keymap">
+  <layouts>
+    <layout name="Linux" platform="PC"/>
+  </layouts>
+  <actions>
+    <action id="$Save">
+      <description>Save</description>
+      <shortcut layout="Linux">Ctrl+S</shortcut>
+    </action>
+  </actions>
+</keymap>

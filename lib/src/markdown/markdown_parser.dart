@@ -15,6 +15,7 @@ import 'markdown_fence.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
 import 'raw_html_policy.dart';
+import '../writerside/writerside_schema.dart';
 
 // Cross-file diagnostics are intentionally scoped to Markdown files that
 // resolve inside the opened workspace. Targets outside that root, unsupported
@@ -1402,8 +1403,8 @@ class MarkdownParser {
     }
     final name = match.group(1)!;
     final normalizedName = name.toLowerCase();
-    if (!_writersideXmlTag(normalizedName) &&
-        (isSafeHtmlTag(normalizedName) || isUnsafeHtmlTag(normalizedName))) {
+    if ((isSafeHtmlTag(normalizedName) || isUnsafeHtmlTag(normalizedName)) &&
+        !WritersideSchema.isMarkdownSemanticBlock(normalizedName)) {
       return;
     }
     xmlBlocks.add(
@@ -1457,22 +1458,6 @@ class MarkdownParser {
         ),
       ),
     );
-  }
-
-  bool _writersideXmlTag(String tag) {
-    return {
-      'var',
-      'tabs',
-      'tab',
-      'code-block',
-      'chapter',
-      'procedure',
-      'note',
-      'tip',
-      'warning',
-      'quote',
-      'video',
-    }.contains(tag);
   }
 
   List<Diagnostic> _validateLocalReferences({

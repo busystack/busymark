@@ -6,6 +6,7 @@ import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/writerside_pdf_export_service.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -22,6 +23,7 @@ void main() {
       final result = await service.export(
         WritersidePdfExportRequest(
           moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
           instanceId: 'guide',
           destinationPath: destination,
           overwrite: false,
@@ -39,15 +41,26 @@ void main() {
       expect(request.workspaceRoot, fixture.module.path);
       expect(request.options.pageSize, MarkdownPdfPageSize.letter);
       expect(request.options.orientation, MarkdownPdfOrientation.landscape);
-      expect(request.source, contains('# BusyMark Guide'));
-      expect(request.source, contains('# Advanced'));
-      expect(request.source, contains('XML topic content.'));
-      expect(request.source, contains(r'$$'));
-      expect(request.source, contains('x < y'));
-      expect(request.source, contains('file://'));
+      expect(request.source, isEmpty);
+      expect(request.document, isNotNull);
+      final blocks = _allBlocks(request.document!.blocks).toList();
+      final text = blocks.map((block) => block.plainText).join('\n');
+      final headings = blocks
+          .where((block) => block.kind == BusyBlockKind.heading)
+          .map((block) => block.plainText)
+          .toList();
+      expect(headings, containsAllInOrder(['BusyMark Guide', 'Advanced']));
+      expect(text, contains('XML topic content.'));
+      expect(text, contains('Resolved include content.'));
+      expect(text, contains('Cross-module include content.'));
+      expect(text, isNot(contains('Included content:')));
+      expect(text, contains('x < y'));
+      expect(blocks.map((block) => block.kind), contains(BusyBlockKind.math));
       expect(
-        request.source.indexOf('# BusyMark Guide'),
-        lessThan(request.source.indexOf('# Advanced')),
+        blocks
+            .expand((block) => _allInlines(block.inlines))
+            .map((inline) => inline.destination),
+        contains(startsWith('file://')),
       );
     },
   );
@@ -169,6 +182,20 @@ void main() {
   );
 }
 
+Iterable<BusyBlock> _allBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _allBlocks(block.children);
+  }
+}
+
+Iterable<BusyInline> _allInlines(Iterable<BusyInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _allInlines(inline.children);
+  }
+}
+
 class _WritersideFixture {
   const _WritersideFixture({required this.root, required this.module});
 
@@ -211,13 +238,36 @@ Inline math: \$x^2\$.
       '''
 <topic id="advanced" title="Advanced">
   <p>XML topic content.</p>
+  <include from="shared.topic" element-id="pdf-snippet"/>
+  <include origin="shared-pdf" from="library.topic"
+           element-id="cross-module-snippet"/>
   <math>x &lt; y</math>
 </topic>
 ''',
     );
+    await File(p.join(module.path, 'topics', 'shared.topic')).writeAsString('''
+<topic id="shared" title="Shared">
+  <snippet id="pdf-snippet"><p>Resolved include content.</p></snippet>
+</topic>
+''');
     await File(
       p.join(module.path, 'images', 'logo.png'),
     ).writeAsBytes(const [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    final shared = await Directory(p.join(root.path, 'Shared')).create();
+    await Directory(p.join(shared.path, 'topics')).create();
+    await File(p.join(shared.path, 'writerside.cfg')).writeAsString('''
+<ihp version="2026.2">
+  <module name="shared-pdf"/>
+  <topics dir="topics"/>
+</ihp>
+''');
+    await File(p.join(shared.path, 'topics', 'library.topic')).writeAsString('''
+<topic id="library" title="Library">
+  <snippet id="cross-module-snippet">
+    <p>Cross-module include content.</p>
+  </snippet>
+</topic>
+''');
     return _WritersideFixture(root: root, module: module);
   }
 

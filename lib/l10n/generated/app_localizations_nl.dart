@@ -1460,7 +1460,7 @@ class AppLocalizationsNl extends AppLocalizations {
       count,
       locale: localeName,
       other: 'Alle $count overeenkomsten selecteren',
-      one: 'Alle 1 overeenkomst selecteren',
+      one: '1 overeenkomst selecteren',
     );
     return '$_temp0';
   }

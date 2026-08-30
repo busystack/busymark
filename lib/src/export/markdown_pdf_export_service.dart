@@ -71,15 +71,17 @@ class MarkdownPdfExportService {
               'untitled.md',
             )
           : request.filePath;
-      final parsed = await parser.parseAsync(
-        filePath: effectiveFilePath,
-        source: request.source,
-        mode: request.mode,
-        workspaceRoot: request.workspaceRoot.isEmpty
-            ? null
-            : request.workspaceRoot,
-        validateLocalReferences: false,
-      );
+      final busyDocument =
+          request.document ??
+          (await parser.parseAsync(
+            filePath: effectiveFilePath,
+            source: request.source,
+            mode: request.mode,
+            workspaceRoot: request.workspaceRoot.isEmpty
+                ? null
+                : request.workspaceRoot,
+            validateLocalReferences: false,
+          )).busyDocument;
       token.throwIfCancelled();
       final visualizationPreparation = visualizationRenderer == null
           ? const MarkdownVisualizationExportPreparation(
@@ -87,7 +89,7 @@ class MarkdownPdfExportService {
               warnings: [],
             )
           : await visualizationRenderer!.prepare(
-              document: parsed.busyDocument,
+              document: busyDocument,
               exportRoot: exportRoot,
               documentPath: effectiveFilePath,
               workspaceRoot: request.workspaceRoot,
@@ -95,7 +97,7 @@ class MarkdownPdfExportService {
             );
       token.throwIfCancelled();
       final mappedDocument = mapper.map(
-        parsed.busyDocument,
+        busyDocument,
         blockOverrides: visualizationPreparation.blockOverrides,
       );
       final mathPreparation = mathRenderer == null

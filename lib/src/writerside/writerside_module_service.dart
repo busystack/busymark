@@ -1206,10 +1206,13 @@ class WritersideModuleService {
         }
       }
       if (validateCategories) {
-        for (final categoryRef in RegExp(
-          r'<category\b[^>]*ref="([^"]+)"',
-        ).allMatches(topic.markdown?.source ?? '')) {
-          final ref = categoryRef.group(1)!;
+        for (final category in topic.document.elements.where(
+          (element) => element.name == 'category',
+        )) {
+          final ref = category.attributes['ref'];
+          if (ref == null || ref.isEmpty) {
+            continue;
+          }
           if (!categoryIds.contains(ref)) {
             diagnostics.add(
               Diagnostic(
@@ -1217,12 +1220,7 @@ class WritersideModuleService {
                 severity: DiagnosticSeverity.warning,
                 filePath: topic.filePath,
                 args: {'ref': ref},
-                sourceSpan: SourceSpan.fromOffsets(
-                  filePath: topic.filePath,
-                  source: topic.markdown!.source,
-                  startOffset: categoryRef.start,
-                  endOffset: categoryRef.end,
-                ),
+                sourceSpan: category.attributeSpans['ref'] ?? category.span,
               ),
             );
           }

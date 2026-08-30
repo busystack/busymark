@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../markdown/markdown_model.dart';
+import '../markdown/busymark_document.dart';
 
 enum MarkdownPdfPageSize { a4, letter }
 
@@ -83,6 +84,7 @@ class MarkdownPdfExportRequest {
     required this.options,
     required this.overwrite,
     this.mode = MarkdownMode.commonMark,
+    this.document,
   });
 
   final String source;
@@ -92,6 +94,10 @@ class MarkdownPdfExportRequest {
   final MarkdownPdfOptions options;
   final bool overwrite;
   final MarkdownMode mode;
+
+  /// A pre-parsed semantic document. When present, PDF export consumes this
+  /// tree directly and [source] is not reparsed.
+  final BusyDocument? document;
 }
 
 @immutable

@@ -8,6 +8,9 @@ import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import 'writerside_model.dart';
+import 'writerside_document.dart';
+import 'writerside_document_parser.dart';
+import 'writerside_schema.dart';
 
 class WritersideConfigParser {
   const WritersideConfigParser();
@@ -965,9 +968,13 @@ class WritersideCategoriesParser {
 }
 
 class WritersideTopicParser {
-  const WritersideTopicParser({this.markdownParser = const MarkdownParser()});
+  const WritersideTopicParser({
+    this.markdownParser = const MarkdownParser(),
+    this.documentParser = const WritersideDocumentParser(),
+  });
 
   final MarkdownParser markdownParser;
+  final WritersideDocumentParser documentParser;
 
   WritersideTopic parseMarkdown({
     required String filePath,
@@ -981,29 +988,29 @@ class WritersideTopicParser {
       workspaceRoot: topicsRoot,
       validateLocalReferences: false,
     );
-    final ids = parsed.headings
-        .map(
-          (heading) => WritersideElementId(id: heading.id, span: heading.span),
-        )
-        .toList();
-    final includes = _includeRegex
-        .allMatches(source)
-        .map(
-          (match) => WritersideInclude(
-            from: _writersideAttributeValue(match.group(0)!, 'from'),
-            elementId: _writersideAttributeValue(match.group(0)!, 'element-id'),
-            nullable:
-                _writersideAttributeValue(match.group(0)!, 'nullable') ==
-                'true',
-            span: SourceSpan.fromOffsets(
-              filePath: filePath,
-              source: source,
-              startOffset: match.start,
-              endOffset: match.end,
-            ),
+    final document = documentParser.parseMarkdown(
+      filePath: filePath,
+      source: source,
+      markdown: parsed.busyDocument,
+    );
+    final ids = <WritersideElementId>[
+      ...parsed.headings.map(
+        (heading) => WritersideElementId(id: heading.id, span: heading.span),
+      ),
+      for (final element in document.elements)
+        if (element.attributes['id'] case final id?)
+          WritersideElementId(id: id, span: element.span),
+    ];
+    final includes = [
+      for (final element in document.elements)
+        if (element.semanticKind == WritersideSemanticKind.include)
+          WritersideInclude(
+            from: element.attributes['from'],
+            elementId: element.attributes['element-id'],
+            nullable: element.attributes['nullable'] == 'true',
+            span: element.span,
           ),
-        )
-        .toList();
+    ];
     final titleOverrides = _topicTitleOverrides(source);
     final videos = <WritersideVideo>[];
     void collectVideos(Iterable<BusyBlock> blocks) {
@@ -1051,12 +1058,13 @@ class WritersideTopicParser {
       videos: videos,
       variables: parsed.variables,
       includes: includes,
+      document: document,
       diagnostics: sortDiagnostics(topicDiagnostics),
       webFileName: _webFileName(source),
       markdown: parsed,
       titleOverrides: titleOverrides,
-      semanticElementNames: parsed.xmlBlocks
-          .map((block) => block.elementName)
+      semanticElementNames: document.elements
+          .map((element) => element.name)
           .toList(),
     );
   }
@@ -1066,6 +1074,10 @@ class WritersideTopicParser {
     required String source,
     String? topicsRoot,
   }) {
+    final semanticDocument = documentParser.parseXml(
+      filePath: filePath,
+      source: source,
+    );
     final diagnostics = <Diagnostic>[];
     final ids = <WritersideElementId>[];
     final links = <MarkdownLink>[];
@@ -1089,13 +1101,28 @@ class WritersideTopicParser {
     var id = expectedId;
     if (document != null) {
       final root = document.rootElement;
+      final semanticElements = semanticDocument.elements.toList();
+      var semanticIndex = 0;
+      WritersideElementNode? nextSemanticElement(XmlElement element) {
+        while (semanticIndex < semanticElements.length) {
+          final candidate = semanticElements[semanticIndex++];
+          if (candidate.name == element.name.local.toLowerCase()) {
+            return candidate;
+          }
+        }
+        return null;
+      }
+
+      final semanticRoot = semanticElements.firstOrNull;
       if (root.name.local != 'topic') {
         diagnostics.add(
           Diagnostic(
             code: 'writerside.topic.invalid-root',
             severity: DiagnosticSeverity.error,
             filePath: filePath,
-            sourceSpan: _elementSpan(filePath, source, root.name.local),
+            sourceSpan:
+                semanticRoot?.span ??
+                _elementSpan(filePath, source, root.name.local),
           ),
         );
       }
@@ -1107,7 +1134,9 @@ class WritersideTopicParser {
             code: 'writerside.topic.missing-root-id',
             severity: DiagnosticSeverity.error,
             filePath: filePath,
-            sourceSpan: _elementSpan(filePath, source, root.name.local),
+            sourceSpan:
+                semanticRoot?.span ??
+                _elementSpan(filePath, source, root.name.local),
           ),
         );
         id = expectedId;
@@ -1118,7 +1147,9 @@ class WritersideTopicParser {
             severity: DiagnosticSeverity.error,
             filePath: filePath,
             args: {'id': id, 'expectedId': expectedId},
-            sourceSpan: _elementSpan(filePath, source, root.name.local, id),
+            sourceSpan:
+                semanticRoot?.span ??
+                _elementSpan(filePath, source, root.name.local, id),
           ),
         );
       }
@@ -1128,21 +1159,21 @@ class WritersideTopicParser {
             code: 'writerside.topic.missing-title',
             severity: DiagnosticSeverity.warning,
             filePath: filePath,
-            sourceSpan: _elementSpan(filePath, source, root.name.local),
+            sourceSpan:
+                semanticRoot?.span ??
+                _elementSpan(filePath, source, root.name.local),
           ),
         );
       }
       final seenIds = <String, SourceSpan>{};
       for (final element in document.descendants.whereType<XmlElement>()) {
+        final semanticElement = nextSemanticElement(element);
         semanticNames.add(element.name.local);
         final elementId = element.getAttribute('id');
         if (elementId != null) {
-          final span = _elementSpan(
-            filePath,
-            source,
-            element.name.local,
-            elementId,
-          );
+          final span =
+              semanticElement?.span ??
+              _elementSpan(filePath, source, element.name.local, elementId);
           ids.add(WritersideElementId(id: elementId, span: span));
           if (seenIds.containsKey(elementId)) {
             diagnostics.add(
@@ -1179,7 +1210,9 @@ class WritersideTopicParser {
                   code: 'writerside.topic.missing-required-attribute',
                   severity: DiagnosticSeverity.warning,
                   filePath: filePath,
-                  sourceSpan: _elementSpan(filePath, source, 'a'),
+                  sourceSpan:
+                      semanticElement?.span ??
+                      _elementSpan(filePath, source, 'a'),
                 ),
               );
             } else {
@@ -1187,7 +1220,10 @@ class WritersideTopicParser {
                 MarkdownLink(
                   text: element.innerText.trim(),
                   destination: href,
-                  span: _elementSpan(filePath, source, 'a', href),
+                  span:
+                      semanticElement?.attributeSpans['href'] ??
+                      semanticElement?.span ??
+                      _elementSpan(filePath, source, 'a', href),
                 ),
               );
             }
@@ -1197,12 +1233,17 @@ class WritersideTopicParser {
               MarkdownImage(
                 alt: element.getAttribute('alt') ?? '',
                 destination: src,
-                span: _elementSpan(filePath, source, 'img', src),
+                span:
+                    semanticElement?.attributeSpans['src'] ??
+                    semanticElement?.span ??
+                    _elementSpan(filePath, source, 'img', src),
               ),
             );
           case 'video':
             final src = element.getAttribute('src')?.trim() ?? '';
-            final span = _elementSpan(filePath, source, 'video', src);
+            final span =
+                semanticElement?.span ??
+                _elementSpan(filePath, source, 'video', src);
             videos.add(
               WritersideVideo(
                 source: src,
@@ -1232,12 +1273,14 @@ class WritersideTopicParser {
                 from: element.getAttribute('from'),
                 elementId: element.getAttribute('element-id'),
                 nullable: element.getAttribute('nullable') == 'true',
-                span: _elementSpan(
-                  filePath,
-                  source,
-                  'include',
-                  element.getAttribute('from'),
-                ),
+                span:
+                    semanticElement?.span ??
+                    _elementSpan(
+                      filePath,
+                      source,
+                      'include',
+                      element.getAttribute('from'),
+                    ),
               ),
             );
         }
@@ -1274,27 +1317,13 @@ class WritersideTopicParser {
       videos: videos,
       variables: variables,
       includes: includes,
+      document: semanticDocument,
       diagnostics: sortDiagnostics(diagnostics),
       webFileName: webFileName,
       titleOverrides: titleOverrides,
       semanticElementNames: semanticNames,
     );
   }
-}
-
-final _includeRegex = RegExp(
-  r'<include\b[^>]*>',
-  caseSensitive: false,
-  dotAll: true,
-);
-
-String? _writersideAttributeValue(String element, String attribute) {
-  final match = RegExp(
-    '${RegExp.escape(attribute)}\\s*=\\s*(["\\\'])(.*?)\\1',
-    caseSensitive: false,
-    dotAll: true,
-  ).firstMatch(element);
-  return match?.group(2);
 }
 
 List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {

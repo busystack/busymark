@@ -1,6 +1,8 @@
 import 'package:path/path.dart' as p;
 
 import 'source_document.dart';
+import '../../writerside/writerside_schema.dart';
+import '../../writerside/writerside_project.dart';
 
 enum SourceAutocompleteKind {
   topic,
@@ -34,12 +36,20 @@ class SourceAutocompleteContext {
     this.variables = const [],
     this.categories = const [],
     this.topicIds = const [],
+    this.parentElement,
+    this.currentElement,
+    this.projectIndex,
+    this.moduleId,
   });
 
   final List<String> projectFiles;
   final List<String> variables;
   final List<String> categories;
   final List<String> topicIds;
+  final String? parentElement;
+  final String? currentElement;
+  final WritersideProjectIndex? projectIndex;
+  final String? moduleId;
 }
 
 class SourceAutocompleteProvider {
@@ -53,13 +63,18 @@ class SourceAutocompleteProvider {
   }) {
     final prefix = _prefixBefore(document.fullText, fullOffset).toLowerCase();
     final suggestions = <SourceAutocompleteSuggestion>[
-      for (final tag in _xmlTags)
+      for (final tag in WritersideSchema.childElementNames(
+        context.parentElement,
+      ).take(context.parentElement == null ? 15 : 60))
         SourceAutocompleteSuggestion(
           label: tag,
           insertText: tag,
           kind: SourceAutocompleteKind.xmlTag,
         ),
-      for (final attr in _xmlAttributes)
+      for (final attr
+          in context.currentElement == null
+              ? WritersideSchema.commonConditionalAttributes
+              : WritersideSchema.attributesFor(context.currentElement!))
         SourceAutocompleteSuggestion(
           label: attr,
           insertText: attr,
@@ -91,13 +106,46 @@ class SourceAutocompleteProvider {
           insertText: topic,
           kind: SourceAutocompleteKind.topic,
         ),
+      for (final topic
+          in context.projectIndex?.names(
+                WritersideSymbolKind.topic,
+                moduleId: context.moduleId,
+              ) ??
+              const <String>[])
+        SourceAutocompleteSuggestion(
+          label: topic,
+          insertText: topic,
+          kind: SourceAutocompleteKind.topic,
+        ),
       for (final variable in context.variables)
         SourceAutocompleteSuggestion(
           label: variable,
           insertText: variable,
           kind: SourceAutocompleteKind.variable,
         ),
+      for (final variable
+          in context.projectIndex?.names(
+                WritersideSymbolKind.variable,
+                moduleId: context.moduleId,
+              ) ??
+              const <String>[])
+        SourceAutocompleteSuggestion(
+          label: variable,
+          insertText: variable,
+          kind: SourceAutocompleteKind.variable,
+        ),
       for (final category in context.categories)
+        SourceAutocompleteSuggestion(
+          label: category,
+          insertText: category,
+          kind: SourceAutocompleteKind.category,
+        ),
+      for (final category
+          in context.projectIndex?.names(
+                WritersideSymbolKind.category,
+                moduleId: context.moduleId,
+              ) ??
+              const <String>[])
         SourceAutocompleteSuggestion(
           label: category,
           insertText: category,
@@ -176,34 +224,6 @@ String _anchorForHeading(String heading) {
       .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
       .replaceAll(RegExp(r'\s+'), '-');
 }
-
-const _xmlTags = [
-  'topic',
-  'chapter',
-  'toc-element',
-  'include',
-  'snippet',
-  'var',
-  'procedure',
-  'step',
-  'tabs',
-  'tab',
-  'note',
-  'warning',
-  'tip',
-];
-
-const _xmlAttributes = [
-  'id',
-  'title',
-  'file',
-  'src',
-  'href',
-  'toc-title',
-  'instance',
-  'filter',
-  'var',
-];
 
 const _codeLanguages = [
   'xml',

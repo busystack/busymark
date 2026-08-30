@@ -3,6 +3,7 @@ import '../markdown/document_outline.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
+import '../writerside/writerside_project.dart';
 import 'document_buffer.dart';
 import 'workspace_message.dart';
 import 'workspace_file_snapshot.dart';
@@ -104,6 +105,7 @@ class Workspace {
     this.activeFileSnapshot,
     this.markdown,
     this.writersideModule,
+    this.writersideProject,
   }) : openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath),
        activeFileModifiedAt =
            activeFileModifiedAt ?? activeFileSnapshot?.modifiedAt;
@@ -124,6 +126,7 @@ class Workspace {
       sortDiagnostics([...diagnostics, ...runtimeDiagnostics]);
   final ParsedMarkdownDocument? markdown;
   final WritersideModule? writersideModule;
+  final WritersideProject? writersideProject;
 
   Workspace copyWith({
     Object? activeFilePath = _copyWithUnset,
@@ -136,6 +139,7 @@ class Workspace {
     List<Diagnostic>? runtimeDiagnostics,
     Object? markdown = _copyWithUnset,
     Object? writersideModule = _copyWithUnset,
+    Object? writersideProject = _copyWithUnset,
   }) {
     final nextActiveFilePath = identical(activeFilePath, _copyWithUnset)
         ? this.activeFilePath
@@ -154,6 +158,9 @@ class Workspace {
     final nextWritersideModule = identical(writersideModule, _copyWithUnset)
         ? this.writersideModule
         : writersideModule as WritersideModule?;
+    final nextWritersideProject = identical(writersideProject, _copyWithUnset)
+        ? this.writersideProject
+        : writersideProject as WritersideProject?;
     return Workspace(
       id: id,
       rootPath: rootPath,
@@ -169,6 +176,7 @@ class Workspace {
       runtimeDiagnostics: runtimeDiagnostics ?? this.runtimeDiagnostics,
       markdown: nextMarkdown,
       writersideModule: nextWritersideModule,
+      writersideProject: nextWritersideProject,
     );
   }
 }

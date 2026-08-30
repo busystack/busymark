@@ -1,6 +1,7 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
+import 'writerside_document.dart';
 import 'package:path/path.dart' as p;
 
 class WritersideTopicRoot {
@@ -456,6 +457,7 @@ class WritersideTopic {
     required this.videos,
     required this.variables,
     required this.includes,
+    required this.document,
     required this.diagnostics,
     this.webFileName,
     this.markdown,
@@ -475,6 +477,7 @@ class WritersideTopic {
   final List<WritersideVideo> videos;
   final List<MarkdownVariableToken> variables;
   final List<WritersideInclude> includes;
+  final WritersideDocument document;
   final List<Diagnostic> diagnostics;
   final String? webFileName;
   final ParsedMarkdownDocument? markdown;

@@ -1,11 +1,13 @@
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import '../visualization/visualization_models.dart';
-import 'package:xml/xml.dart';
 import 'busymark_document.dart';
 import 'document_outline.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
+import '../writerside/writerside_document_parser.dart';
+import '../writerside/writerside_document_renderer.dart';
+import '../writerside/writerside_schema.dart';
 
 enum PreviewBlockKind {
   heading,
@@ -142,6 +144,18 @@ class MarkdownPreviewBuilder {
   const MarkdownPreviewBuilder();
 
   PreviewDocument build(ParsedMarkdownDocument document) {
+    if (document.mode == MarkdownMode.writersideMarkdown) {
+      final semantic = const WritersideDocumentParser().parseMarkdown(
+        filePath: document.filePath,
+        source: document.source,
+        markdown: document.busyDocument,
+      );
+      final rendered = const WritersideDocumentRenderer().toBusyDocument(
+        semantic,
+        title: document.title,
+      );
+      return const BusyMarkPreviewBuilder().build(rendered);
+    }
     return PreviewDocument(
       title: document.title ?? '',
       modeLabel: '',
@@ -181,6 +195,10 @@ class BusyMarkPreviewBuilder {
         text: _plainText(block.inlines),
         level: int.tryParse(block.attributes['level'] ?? ''),
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: {
           ...block.attributes,
           if (block.attributes['id'] case final id?) 'id': id,
@@ -257,6 +275,10 @@ class BusyMarkPreviewBuilder {
       BusyBlockKind.writersideTabs => PreviewBlock(
         kind: PreviewBlockKind.tabs,
         text: _plainText(block.inlines),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.writersideProcedure =>
@@ -266,6 +288,10 @@ class BusyMarkPreviewBuilder {
               text: _plainText(block.inlines).isEmpty
                   ? block.attributes['title'] ?? ''
                   : _plainText(block.inlines),
+              children: [
+                for (final (index, child) in block.children.indexed)
+                  _block(child, '$path.b$index'),
+              ],
               attributes: block.attributes,
             ),
       BusyBlockKind.htmlBlock when block.children.isNotEmpty => PreviewBlock(
@@ -354,232 +380,95 @@ class BusyMarkPreviewBuilder {
   PreviewBlock? _writersideSemanticBlock(BusyBlock block, String path) {
     final source = block.rawSource;
     if (source == null || source.trim().isEmpty) {
-      return null;
+      return _writersideRenderedSemanticBlock(block, path);
     }
     try {
-      final fragment = XmlDocumentFragment.parse(source.trim());
-      final elements = fragment.children.whereType<XmlElement>().toList();
-      if (elements.length != 1) {
+      final semantic = const WritersideDocumentParser().parseXml(
+        filePath: block.sourceSpan?.filePath ?? '',
+        source: source,
+      );
+      if (!semantic.isWellFormed) {
         return null;
       }
-      return _writersideSemanticElement(
-        elements.single,
-        '$path.xml',
-        editorBlockId: block.id,
+      final rendered = const WritersideDocumentRenderer().toBusyDocument(
+        semantic,
       );
+      final children = [
+        for (final (index, child) in rendered.blocks.indexed)
+          _block(child, '$path.semantic$index'),
+      ];
+      if (children.length == 1) {
+        return _withPreviewAttributes(children.single, {
+          ...children.single.attributes,
+          'editorBlockId': block.id,
+        });
+      }
+      if (children.isNotEmpty) {
+        return PreviewBlock(
+          kind: PreviewBlockKind.container,
+          text: children.map((child) => child.text).join('\n'),
+          children: children,
+          attributes: {...block.attributes, 'editorBlockId': block.id},
+        );
+      }
+      return null;
     } on Object {
       return null;
     }
   }
 
-  PreviewBlock _writersideSemanticElement(
-    XmlElement element,
-    String path, {
-    String? editorBlockId,
-    Map<String, String> inheritedAttributes = const {},
-  }) {
-    final name = element.name.local.toLowerCase();
-    final attributes = <String, String>{
-      ...inheritedAttributes,
-      'element': name,
-      for (final attribute in element.attributes)
-        attribute.name.local: attribute.value,
-      if (editorBlockId != null) 'editorBlockId': editorBlockId,
-    };
-    final title = element.getAttribute('title')?.trim() ?? '';
-    final children = <PreviewBlock>[];
-    var childIndex = 0;
-    for (final child in element.children.whereType<XmlElement>()) {
-      final childName = child.name.local.toLowerCase();
-      if (childName == 'math') {
-        continue;
-      }
-      if (name == 'step' && childName == 'p') {
-        continue;
-      }
-      children.add(
-        _writersideSemanticElement(
-          child,
-          '$path.c${childIndex++}',
-          inheritedAttributes: name == 'deflist' && childName == 'def'
-              ? {
-                  if (busyMarkWritersideIsCollapsible(attributes))
-                    busyMarkWritersideCollapsibleAttribute: 'true',
-                }
-              : const {},
-        ),
-      );
-    }
-    final inlines = _writersideXmlInlines(element.children, path);
-    final text = inlines.map((inline) => inline.text).join().trim();
-    return switch (name) {
-      'chapter' => PreviewBlock(
-        kind: PreviewBlockKind.heading,
-        text: title,
-        level: 2,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
-        children: children,
-        attributes: attributes,
-      ),
-      'procedure' => PreviewBlock(
-        kind: PreviewBlockKind.procedure,
-        text: title,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
-        children: children,
-        attributes: attributes,
-      ),
-      'step' => PreviewBlock(
-        kind: PreviewBlockKind.list,
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: {...attributes, 'ordered': 'true'},
-      ),
-      'code-block' => _writersideCodeBlockPreview(
-        element,
-        attributes,
-        expressionId: '$path.math',
-      ),
-      'deflist' => PreviewBlock(
+  PreviewBlock? _writersideRenderedSemanticBlock(BusyBlock block, String path) {
+    final semanticKind = WritersideSchema.capabilityFor(
+      block.attributes['element'] ?? '',
+    )?.kind;
+    final children = [
+      for (final (index, child) in block.children.indexed)
+        _block(child, '$path.b$index'),
+    ];
+    return switch (semanticKind) {
+      WritersideSemanticKind.definitionList => PreviewBlock(
         kind: PreviewBlockKind.definitionList,
         text: '',
         children: children,
-        attributes: attributes,
+        attributes: block.attributes,
       ),
-      'def' => PreviewBlock(
+      WritersideSemanticKind.definition => PreviewBlock(
         kind: PreviewBlockKind.definition,
-        text: title,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
+        text: _plainText(block.inlines),
+        inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         children: children,
-        attributes: attributes,
+        attributes: block.attributes,
       ),
-      'note' || 'tip' || 'warning' || 'quote' => PreviewBlock(
-        kind: name == 'quote'
-            ? PreviewBlockKind.quote
-            : PreviewBlockKind.admonition,
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: {...attributes, 'style': name},
-      ),
-      'tabs' || 'tab' => PreviewBlock(
-        kind: PreviewBlockKind.tabs,
-        text: title,
-        children: children,
-        attributes: attributes,
-      ),
-      _ => PreviewBlock(
-        kind: PreviewBlockKind.paragraph,
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: attributes,
-      ),
+      _
+          when block.kind == BusyBlockKind.writersideRawXml &&
+              children.isNotEmpty =>
+        PreviewBlock(
+          kind: PreviewBlockKind.container,
+          text: children.map((child) => child.text).join('\n'),
+          children: children,
+          attributes: block.attributes,
+        ),
+      _ => null,
     };
   }
 
-  PreviewBlock _writersideCodeBlockPreview(
-    XmlElement element,
-    Map<String, String> attributes, {
-    required String expressionId,
-  }) {
-    final language = element.getAttribute('lang');
-    final text = element.innerText
-        .replaceFirst(RegExp(r'^\n'), '')
-        .replaceFirst(RegExp(r'\n\s*$'), '');
-    if (language?.trim().toLowerCase() == 'tex') {
-      return PreviewBlock(
-        kind: PreviewBlockKind.math,
-        text: text,
-        attributes: {
-          ...attributes,
-          if (language != null) 'language': language,
-          busyMarkMathExpressionAttribute: text,
-          busyMarkMathDisplayAttribute: 'true',
-          busyMarkMathSourceFormAttribute:
-              BusyMathSourceForm.writersideTexElement.name,
-          'expressionId': expressionId,
-        },
-      );
-    }
-    return PreviewBlock(
-      kind: PreviewBlockKind.code,
-      text: text,
-      language: language,
-      visualization: VisualizationDescriptor.maybeForFenceLanguage(language),
-      attributes: attributes,
-    );
-  }
-
-  List<PreviewInline> _writersideXmlInlines(
-    Iterable<XmlNode> nodes,
-    String path,
-  ) {
-    final result = <PreviewInline>[];
-    var index = 0;
-    for (final node in nodes) {
-      if (node is XmlText) {
-        final text = node.value.replaceAll(RegExp(r'\s+'), ' ');
-        if (text.trim().isNotEmpty) {
-          result.add(PreviewInline(kind: PreviewInlineKind.text, text: text));
-        }
-        continue;
-      }
-      if (node is! XmlElement) {
-        continue;
-      }
-      final name = node.name.local.toLowerCase();
-      if ({
-        'chapter',
-        'procedure',
-        'step',
-        'code-block',
-        'deflist',
-        'def',
-        'p',
-        'note',
-        'tip',
-        'warning',
-        'quote',
-        'tabs',
-        'tab',
-      }.contains(name)) {
-        continue;
-      }
-      if (name == 'math') {
-        result.add(
-          PreviewInline(
-            kind: PreviewInlineKind.math,
-            text: node.innerText,
-            attributes: {
-              busyMarkMathSourceFormAttribute:
-                  BusyMathSourceForm.writersideElement.name,
-              'expressionId': '$path.math${index++}',
-            },
-          ),
-        );
-        continue;
-      }
-      final nested = _writersideXmlInlines(node.children, '$path.i${index++}');
-      final kind = switch (name) {
-        'strong' || 'b' => PreviewInlineKind.strong,
-        'em' || 'i' => PreviewInlineKind.emphasis,
-        'code' => PreviewInlineKind.code,
-        'a' => PreviewInlineKind.link,
-        _ => PreviewInlineKind.text,
-      };
-      final nestedText = nested.map((inline) => inline.text).join();
-      result.add(
-        PreviewInline(
-          kind: kind,
-          text: nestedText,
-          destination: name == 'a' ? node.getAttribute('href') : null,
-          children: nested,
-        ),
-      );
-    }
-    return result;
-  }
+  PreviewBlock _withPreviewAttributes(
+    PreviewBlock block,
+    Map<String, String> attributes,
+  ) => PreviewBlock(
+    kind: block.kind,
+    text: block.text,
+    level: block.level,
+    language: block.language,
+    visualization: block.visualization,
+    inlines: block.inlines,
+    children: block.children,
+    attributes: attributes,
+    sourceStartLine: block.sourceStartLine,
+    sourceEndLine: block.sourceEndLine,
+    sourceStartOffset: block.sourceStartOffset,
+    sourceEndOffset: block.sourceEndOffset,
+  );
 
   PreviewBlock _blockquote(BusyBlock block, String path) {
     final style = busyAdmonitionStyleFromName(block.attributes['style']);

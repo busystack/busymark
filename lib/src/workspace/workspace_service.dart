@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
-import 'package:xml/xml.dart';
 
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
@@ -11,16 +10,16 @@ import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
-import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
-import '../markdown/math_syntax.dart';
 import '../markdown/preview_model.dart';
-import '../visualization/visualization_models.dart';
 import '../writerside/writerside_module_service.dart';
+import '../writerside/writerside_document_renderer.dart';
+import '../writerside/writerside_document_resolver.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_project.dart';
 import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_topic_creator.dart';
 import '../writerside/writerside_topic_file_editor.dart';
@@ -81,6 +80,8 @@ class WorkspaceService {
     this.writersideTocEditor = const WritersideTocEditor(),
     this.writersideTopicFileEditor = const WritersideTopicFileEditor(),
     this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
+    this.writersideDocumentResolver = const WritersideDocumentResolver(),
+    this.writersideDocumentRenderer = const WritersideDocumentRenderer(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
     Future<void> Function(String targetPath, int committedCount)?
@@ -99,6 +100,8 @@ class WorkspaceService {
   final WritersideTocEditor writersideTocEditor;
   final WritersideTopicFileEditor writersideTopicFileEditor;
   final WritersideTopicRemovalService writersideTopicRemovalService;
+  final WritersideDocumentResolver writersideDocumentResolver;
+  final WritersideDocumentRenderer writersideDocumentRenderer;
   final WorkspaceScanOptions scanOptions;
   final bool _useWorkspaceScanOptionsForWriterside;
   final Future<void> Function(String targetPath)? _beforeNewFilePublish;
@@ -141,7 +144,16 @@ class WorkspaceService {
     );
     if (File(p.join(canonicalPath, 'writerside.cfg')).existsSync() ||
         File(p.join(canonicalPath, 'project.ihp')).existsSync()) {
-      return _openWriterside(canonicalPath);
+      return _openWriterside(canonicalPath, preferredModuleRoot: canonicalPath);
+    }
+    final moduleRoots = await _writersideProjectService.discoverModuleRoots(
+      canonicalPath,
+    );
+    if (moduleRoots.isNotEmpty) {
+      return _openWriterside(
+        canonicalPath,
+        preferredModuleRoot: moduleRoots.first,
+      );
     }
     return _openMarkdownFolder(canonicalPath);
   }
@@ -369,6 +381,47 @@ class WorkspaceService {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
     return workspace.writersideModule!;
+  }
+
+  Future<Workspace> selectWritersideContext(
+    Workspace workspace, {
+    required String moduleId,
+    String? instanceId,
+  }) async {
+    final project = workspace.writersideProject;
+    if (project == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    final selectedProject = project.withSelection(
+      moduleId: moduleId,
+      instanceId: instanceId,
+    );
+    final module = selectedProject.activeModule;
+    if (module == null ||
+        (instanceId != null &&
+            !module.instances.any((instance) => instance.id == instanceId))) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    final activeFile =
+        _startTopicPath(module) ??
+        (module.topics.isEmpty ? null : module.topics.first.filePath);
+    return workspace.copyWith(
+      activeFilePath: activeFile,
+      activeFileSnapshot: activeFile == null
+          ? null
+          : await fileSnapshot(activeFile),
+      openFilePaths: activeFile == null
+          ? workspace.openFilePaths
+          : [...workspace.openFilePaths, activeFile],
+      diagnostics: selectedProject.diagnostics,
+      markdown: module.topics
+          .where((topic) => topic.filePath == activeFile)
+          .map((topic) => topic.markdown)
+          .whereType<ParsedMarkdownDocument>()
+          .firstOrNull,
+      writersideModule: module,
+      writersideProject: selectedProject,
+    );
   }
 
   Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
@@ -1266,44 +1319,14 @@ class WorkspaceService {
     if (active == null) {
       return null;
     }
+    if (workspace.kind == WorkspaceKind.writersideModule) {
+      return _buildWritersidePreview(workspace, active, source);
+    }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
         p.equals(currentMarkdown.filePath, active) &&
         currentMarkdown.source == source) {
       return previewBuilder.build(currentMarkdown);
-    }
-    if (workspace.kind == WorkspaceKind.writersideModule) {
-      final module = workspace.writersideModule;
-      if (module == null) {
-        return null;
-      }
-      final topic = module.topics
-          .where((item) => item.filePath == active)
-          .firstOrNull;
-      if (topic == null) {
-        return PreviewDocument(
-          title: p.basename(active),
-          modeLabel: '',
-          compatibility: '',
-          blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
-        );
-      }
-      if (topic.format == WritersideTopicFormat.markdown) {
-        final parsed = markdownParser.parse(
-          filePath: active,
-          source: source,
-          mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: topic.topicRoot,
-          validateLocalReferences: false,
-        );
-        return previewBuilder.build(parsed);
-      }
-      return PreviewDocument(
-        title: topic.title ?? topic.fileName,
-        modeLabel: '',
-        compatibility: '',
-        blocks: _xmlPreviewBlocks(source, topic.title),
-      );
     }
     final parsed = markdownParser.parse(
       filePath: active,
@@ -1325,44 +1348,14 @@ class WorkspaceService {
     if (active == null) {
       return null;
     }
+    if (workspace.kind == WorkspaceKind.writersideModule) {
+      return _buildWritersidePreview(workspace, active, source);
+    }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
         p.equals(currentMarkdown.filePath, active) &&
         currentMarkdown.source == source) {
       return previewBuilder.build(currentMarkdown);
-    }
-    if (workspace.kind == WorkspaceKind.writersideModule) {
-      final module = workspace.writersideModule;
-      if (module == null) {
-        return null;
-      }
-      final topic = module.topics
-          .where((item) => item.filePath == active)
-          .firstOrNull;
-      if (topic == null) {
-        return PreviewDocument(
-          title: p.basename(active),
-          modeLabel: '',
-          compatibility: '',
-          blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
-        );
-      }
-      if (topic.format == WritersideTopicFormat.markdown) {
-        final parsed = await markdownParser.parseAsync(
-          filePath: active,
-          source: source,
-          mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: topic.topicRoot,
-          validateLocalReferences: false,
-        );
-        return previewBuilder.build(parsed);
-      }
-      return PreviewDocument(
-        title: topic.title ?? topic.fileName,
-        modeLabel: '',
-        compatibility: '',
-        blocks: _xmlPreviewBlocks(source, topic.title),
-      );
     }
     final parsed = await markdownParser.parseAsync(
       filePath: active,
@@ -1372,6 +1365,69 @@ class WorkspaceService {
       validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);
+  }
+
+  PreviewDocument? _buildWritersidePreview(
+    Workspace workspace,
+    String active,
+    String source,
+  ) {
+    final module = workspace.writersideModule;
+    if (module == null) {
+      return null;
+    }
+    final originalTopic = module.topics
+        .where((item) => item.filePath == active)
+        .firstOrNull;
+    if (originalTopic == null) {
+      return PreviewDocument(
+        title: p.basename(active),
+        modeLabel: '',
+        compatibility: '',
+        blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
+      );
+    }
+    final topic = originalTopic.format == WritersideTopicFormat.markdown
+        ? writersideService.topicParser.parseMarkdown(
+            filePath: active,
+            source: source,
+            topicsRoot: originalTopic.topicRoot,
+          )
+        : writersideService.topicParser.parseXml(
+            filePath: active,
+            source: source,
+            topicsRoot: originalTopic.topicRoot,
+          );
+    final instance =
+        workspace.writersideProject?.activeInstance ??
+        module.instances
+            .where(
+              (candidate) =>
+                  !candidate.isLibrary &&
+                  candidate.topicFileSet.any(
+                    (reference) =>
+                        module.topicByReference(reference)?.filePath == active,
+                  ),
+            )
+            .firstOrNull ??
+        module.instances.where((candidate) => !candidate.isLibrary).firstOrNull;
+    final resolved = writersideDocumentResolver.resolve(
+      topic.document,
+      WritersideResolveContext(
+        module: module,
+        topic: topic,
+        instance: instance,
+        modulesByOrigin:
+            workspace.writersideProject?.modulesByOrigin ??
+            {if (module.config.moduleName case final name?) name: module},
+      ),
+    );
+    return const BusyMarkPreviewBuilder().build(
+      writersideDocumentRenderer.toBusyDocument(
+        resolved.document,
+        title: resolved.title ?? topic.title ?? topic.fileName,
+      ),
+    );
   }
 
   Future<Workspace> _openSingleMarkdown(String filePath) async {
@@ -1454,8 +1510,14 @@ class WorkspaceService {
   Future<Workspace> _openWriterside(
     String rootPath, {
     String? activeFilePath,
+    String? preferredModuleRoot,
   }) async {
-    final module = await _loadWritersideModule(rootPath);
+    final project = await _writersideProjectService.load(
+      rootPath,
+      preferredModuleRoot: preferredModuleRoot ?? rootPath,
+    );
+    final module =
+        project.activeModule ?? await _loadWritersideModule(rootPath);
     final scan = await scanWorkspaceEntities(
       rootPath,
       options: _workspaceDisplayScanOptions,
@@ -1464,7 +1526,7 @@ class WorkspaceService {
     final files = <DocumentFile>[];
     final directories = _workspaceDirectories(entities, rootPath);
     final diagnostics = <Diagnostic>[
-      ...module.diagnostics,
+      ...project.diagnostics,
       ...scan.diagnostics,
     ];
     for (final entity in entities.whereType<File>()) {
@@ -1491,6 +1553,7 @@ class WorkspaceService {
       directories: directories,
       diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,
+      writersideProject: project,
       markdown: module.topics
           .where((topic) => topic.filePath == firstTopic)
           .map((topic) => topic.markdown)
@@ -1498,6 +1561,14 @@ class WorkspaceService {
           .firstOrNull,
     );
   }
+
+  WritersideProjectService get _writersideProjectService =>
+      WritersideProjectService(
+        moduleService: writersideService,
+        scanOptions: _useWorkspaceScanOptionsForWriterside
+            ? scanOptions
+            : writersideService.scanOptions,
+      );
 
   String? _startTopicPath(WritersideModule module) {
     for (final instance in module.instances) {
@@ -1651,456 +1722,6 @@ class WorkspaceService {
           relativePath: normalizedRelative(rootPath, entity.path),
         ),
     ];
-  }
-
-  bool _visibleSemanticElement(String name) {
-    return {
-      'topic',
-      'chapter',
-      'p',
-      'procedure',
-      'step',
-      'note',
-      'tip',
-      'warning',
-      'quote',
-      'tabs',
-      'tab',
-      'code-block',
-      'deflist',
-      'def',
-      'img',
-      'video',
-      'a',
-      'math',
-    }.contains(name);
-  }
-
-  PreviewBlockKind _semanticKind(String name) {
-    return switch (name) {
-      'chapter' => PreviewBlockKind.heading,
-      'procedure' => PreviewBlockKind.procedure,
-      'note' || 'tip' || 'warning' => PreviewBlockKind.admonition,
-      'quote' => PreviewBlockKind.quote,
-      'tabs' || 'tab' => PreviewBlockKind.tabs,
-      'code-block' => PreviewBlockKind.code,
-      'deflist' => PreviewBlockKind.definitionList,
-      'def' => PreviewBlockKind.definition,
-      'img' => PreviewBlockKind.image,
-      'video' => PreviewBlockKind.video,
-      _ => PreviewBlockKind.paragraph,
-    };
-  }
-
-  String _semanticText(String name, String? title) {
-    return switch (name) {
-      'topic' => title ?? '',
-      'chapter' ||
-      'procedure' ||
-      'step' ||
-      'note' ||
-      'tip' ||
-      'warning' ||
-      'quote' ||
-      'tabs' ||
-      'tab' ||
-      'code-block' ||
-      'deflist' ||
-      'def' ||
-      'img' ||
-      'video' ||
-      'a' => '',
-      _ => name,
-    };
-  }
-
-  List<PreviewBlock> _xmlPreviewBlocks(String source, String? title) {
-    try {
-      final document = XmlDocument.parse(source);
-      final blocks = <PreviewBlock>[];
-      var mathIndex = 0;
-      for (final element in document.descendants.whereType<XmlElement>()) {
-        final name = element.name.local;
-        if (!_visibleSemanticElement(name)) {
-          continue;
-        }
-        if (_insideXmlAdmonition(element)) {
-          continue;
-        }
-        if (_insideOwnedXmlCollapsible(element)) {
-          continue;
-        }
-        final attributes = {
-          'element': name,
-          for (final attribute in element.attributes)
-            attribute.name.local: attribute.value,
-        };
-        if (name == 'math') {
-          final expression = element.innerText;
-          blocks.add(
-            PreviewBlock(
-              kind: PreviewBlockKind.paragraph,
-              text: expression,
-              inlines: [
-                PreviewInline(
-                  kind: PreviewInlineKind.math,
-                  text: expression,
-                  attributes: {
-                    busyMarkMathSourceFormAttribute:
-                        BusyMathSourceForm.writersideElement.name,
-                    'expressionId': 'topic-math-${mathIndex++}',
-                  },
-                ),
-              ],
-              attributes: attributes,
-            ),
-          );
-          continue;
-        }
-        if (name == 'code-block') {
-          blocks.add(
-            _xmlCodeBlockPreview(
-              element,
-              attributes,
-              nextMathId: () => 'topic-math-${mathIndex++}',
-            ),
-          );
-          continue;
-        }
-        if ((name == 'chapter' || name == 'procedure' || name == 'deflist') &&
-            busyMarkWritersideIsCollapsible(attributes)) {
-          blocks.add(
-            _xmlSemanticPreviewBlock(
-              element,
-              nextMathId: () => 'topic-math-${mathIndex++}',
-            ),
-          );
-          continue;
-        }
-        final admonitionStyle = busyAdmonitionStyleFromName(name);
-        if (admonitionStyle != null) {
-          final text = element.innerText.trim();
-          final inlines = _xmlPreviewInlines(
-            element.children,
-            nextMathId: () => 'topic-math-${mathIndex++}',
-          );
-          blocks.add(
-            PreviewBlock(
-              kind: admonitionStyle == BusyAdmonitionStyle.quote
-                  ? PreviewBlockKind.quote
-                  : PreviewBlockKind.admonition,
-              text: text,
-              inlines: inlines.isEmpty && text.isNotEmpty
-                  ? [PreviewInline(kind: PreviewInlineKind.text, text: text)]
-                  : inlines,
-              attributes: {...attributes, 'style': admonitionStyle.name},
-            ),
-          );
-          continue;
-        }
-        blocks.add(
-          PreviewBlock(
-            kind: _semanticKind(name),
-            text: switch (name) {
-              'video' => element.getAttribute('src') ?? '',
-              'chapter' ||
-              'procedure' ||
-              'def' => element.getAttribute('title') ?? '',
-              'code-block' =>
-                element.innerText
-                    .replaceFirst(RegExp(r'^\n'), '')
-                    .replaceFirst(RegExp(r'\n\s*$'), ''),
-              _ => _semanticText(name, title),
-            },
-            language: name == 'code-block'
-                ? element.getAttribute('lang')
-                : null,
-            attributes: attributes,
-          ),
-        );
-      }
-      if (blocks.isNotEmpty) {
-        return blocks;
-      }
-    } on Object {
-      // The ordinary semantic-element fallback below still provides a useful
-      // preview while the user repairs malformed topic XML.
-    }
-    final names = RegExp(
-      r'<\s*([A-Za-z][A-Za-z0-9_-]*)\b',
-    ).allMatches(source).map((match) => match.group(1)!).toList();
-    if (names.isEmpty) {
-      return [PreviewBlock(kind: PreviewBlockKind.code, text: source)];
-    }
-    return [
-      for (final name in names)
-        if (_visibleSemanticElement(name))
-          PreviewBlock(
-            kind: _semanticKind(name),
-            text: _semanticText(name, title),
-            attributes: {'element': name},
-          ),
-    ];
-  }
-
-  bool _insideXmlAdmonition(XmlElement element) {
-    XmlNode? parent = element.parent;
-    while (parent != null) {
-      if (parent is XmlElement &&
-          busyAdmonitionStyleFromName(parent.name.local) != null) {
-        return true;
-      }
-      parent = parent.parent;
-    }
-    return false;
-  }
-
-  bool _insideOwnedXmlCollapsible(XmlElement element) {
-    XmlNode? parent = element.parent;
-    while (parent != null) {
-      if (parent is XmlElement) {
-        final name = parent.name.local.toLowerCase();
-        if ({'chapter', 'procedure', 'deflist'}.contains(name) &&
-            busyMarkWritersideIsCollapsible({
-              for (final attribute in parent.attributes)
-                attribute.name.local: attribute.value,
-            })) {
-          return true;
-        }
-      }
-      parent = parent.parent;
-    }
-    return false;
-  }
-
-  PreviewBlock _xmlSemanticPreviewBlock(
-    XmlElement element, {
-    required String Function() nextMathId,
-    Map<String, String> inheritedAttributes = const {},
-  }) {
-    final name = element.name.local.toLowerCase();
-    final attributes = <String, String>{
-      ...inheritedAttributes,
-      'element': name,
-      for (final attribute in element.attributes)
-        attribute.name.local: attribute.value,
-    };
-    final title = element.getAttribute('title')?.trim() ?? '';
-    final children = <PreviewBlock>[];
-    for (final child in element.children.whereType<XmlElement>()) {
-      final childName = child.name.local.toLowerCase();
-      if (!_visibleSemanticElement(childName) || childName == 'math') {
-        continue;
-      }
-      if (name == 'step' && childName == 'p') {
-        continue;
-      }
-      children.add(
-        _xmlSemanticPreviewBlock(
-          child,
-          nextMathId: nextMathId,
-          inheritedAttributes: name == 'deflist' && childName == 'def'
-              ? {
-                  if (busyMarkWritersideIsCollapsible(attributes))
-                    busyMarkWritersideCollapsibleAttribute: 'true',
-                }
-              : const {},
-        ),
-      );
-    }
-    final inlines = _xmlPreviewInlines(
-      element.children,
-      nextMathId: nextMathId,
-    );
-    final text = inlines.map((inline) => inline.text).join().trim();
-    return switch (name) {
-      'chapter' => PreviewBlock(
-        kind: PreviewBlockKind.heading,
-        text: title,
-        level: 2,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
-        children: children,
-        attributes: attributes,
-      ),
-      'procedure' => PreviewBlock(
-        kind: PreviewBlockKind.procedure,
-        text: title,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
-        children: children,
-        attributes: attributes,
-      ),
-      'step' => PreviewBlock(
-        kind: PreviewBlockKind.list,
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: {...attributes, 'ordered': 'true'},
-      ),
-      'code-block' => _xmlCodeBlockPreview(
-        element,
-        attributes,
-        nextMathId: nextMathId,
-      ),
-      'deflist' => PreviewBlock(
-        kind: PreviewBlockKind.definitionList,
-        text: '',
-        children: children,
-        attributes: attributes,
-      ),
-      'def' => PreviewBlock(
-        kind: PreviewBlockKind.definition,
-        text: title,
-        inlines: title.isEmpty ? const [] : parseInlineMarkdown(title),
-        children: children,
-        attributes: attributes,
-      ),
-      'note' || 'tip' || 'warning' || 'quote' => PreviewBlock(
-        kind: name == 'quote'
-            ? PreviewBlockKind.quote
-            : PreviewBlockKind.admonition,
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: {...attributes, 'style': name},
-      ),
-      _ => PreviewBlock(
-        kind: _semanticKind(name),
-        text: text,
-        inlines: inlines,
-        children: children,
-        attributes: attributes,
-      ),
-    };
-  }
-
-  PreviewBlock _xmlCodeBlockPreview(
-    XmlElement element,
-    Map<String, String> attributes, {
-    required String Function() nextMathId,
-  }) {
-    final language = element.getAttribute('lang');
-    final text = element.innerText
-        .replaceFirst(RegExp(r'^\n'), '')
-        .replaceFirst(RegExp(r'\n\s*$'), '');
-    if (language?.trim().toLowerCase() == 'tex') {
-      return PreviewBlock(
-        kind: PreviewBlockKind.math,
-        text: text,
-        attributes: {
-          ...attributes,
-          if (language != null) 'language': language,
-          busyMarkMathExpressionAttribute: text,
-          busyMarkMathDisplayAttribute: 'true',
-          busyMarkMathSourceFormAttribute:
-              BusyMathSourceForm.writersideTexElement.name,
-          'expressionId': nextMathId(),
-        },
-      );
-    }
-    return PreviewBlock(
-      kind: PreviewBlockKind.code,
-      text: text,
-      language: language,
-      visualization: VisualizationDescriptor.maybeForFenceLanguage(language),
-      attributes: attributes,
-    );
-  }
-
-  List<PreviewInline> _xmlPreviewInlines(
-    Iterable<XmlNode> nodes, {
-    required String Function() nextMathId,
-  }) {
-    final result = <PreviewInline>[];
-    for (final node in nodes) {
-      if (node is XmlText) {
-        final text = node.value.replaceAll(RegExp(r'\s+'), ' ');
-        if (text.trim().isNotEmpty) {
-          result.add(PreviewInline(kind: PreviewInlineKind.text, text: text));
-        }
-        continue;
-      }
-      if (node is! XmlElement) {
-        continue;
-      }
-      final name = node.name.local.toLowerCase();
-      if (name == 'math') {
-        final expression = node.innerText;
-        result.add(
-          PreviewInline(
-            kind: PreviewInlineKind.math,
-            text: expression,
-            attributes: {
-              busyMarkMathSourceFormAttribute:
-                  BusyMathSourceForm.writersideElement.name,
-              'expressionId': nextMathId(),
-            },
-          ),
-        );
-        continue;
-      }
-      if (name == 'img') {
-        result.add(
-          PreviewInline(
-            kind: PreviewInlineKind.image,
-            text: node.getAttribute('alt') ?? '',
-            destination: node.getAttribute('src'),
-          ),
-        );
-        continue;
-      }
-      final children = _xmlPreviewInlines(
-        node.children,
-        nextMathId: nextMathId,
-      );
-      final text = node.innerText;
-      switch (name) {
-        case 'b' || 'strong':
-          result.add(
-            PreviewInline(
-              kind: PreviewInlineKind.strong,
-              text: text,
-              children: children,
-            ),
-          );
-          break;
-        case 'i' || 'emphasis':
-          result.add(
-            PreviewInline(
-              kind: PreviewInlineKind.emphasis,
-              text: text,
-              children: children,
-            ),
-          );
-          break;
-        case 'code' || 'control' || 'path' || 'shortcut':
-          result.add(PreviewInline(kind: PreviewInlineKind.code, text: text));
-          break;
-        case 'a':
-          result.add(
-            PreviewInline(
-              kind: PreviewInlineKind.link,
-              text: text,
-              destination:
-                  node.getAttribute('href') ?? node.getAttribute('anchor'),
-              children: children,
-            ),
-          );
-          break;
-        default:
-          result.addAll(children);
-          break;
-      }
-      if (name == 'p' && result.isNotEmpty) {
-        result.add(
-          const PreviewInline(kind: PreviewInlineKind.text, text: '\n'),
-        );
-      }
-    }
-    while (result.lastOrNull?.kind == PreviewInlineKind.text &&
-        result.lastOrNull?.text.trim().isEmpty == true) {
-      result.removeLast();
-    }
-    return result;
   }
 }
 

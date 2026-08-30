@@ -1826,7 +1826,7 @@
   "@workspaceReplaceDiskContent": {
     "description": "Source label for a workspace replacement preview using disk content."
   },
-  "selectFileMatches": "{count, plural, =1{Alle 1 overeenkomst selecteren} other{Alle {count} overeenkomsten selecteren}}",
+  "selectFileMatches": "{count, plural, =1{1 overeenkomst selecteren} other{Alle {count} overeenkomsten selecteren}}",
   "@selectFileMatches": {
     "description": "Checkbox label for selecting every replacement match in a file.",
     "placeholders": {

@@ -8,6 +8,7 @@ import 'markdown_model.dart';
 import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
+import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
 
@@ -1162,21 +1163,7 @@ class MarkdownAstAdapter {
   }
 
   bool _writersideBlockTag(String tag) {
-    return {
-      'note',
-      'tip',
-      'warning',
-      'quote',
-      'tabs',
-      'tab',
-      'procedure',
-      'step',
-      'chapter',
-      'code-block',
-      'deflist',
-      'def',
-      'video',
-    }.contains(tag);
+    return WritersideSchema.isMarkdownSemanticBlock(tag);
   }
 
   bool _editableWritersideTag(String tag) {
