@@ -41,8 +41,13 @@ class WritersideModuleService {
   Future<WritersideModule> load(
     String rootPath, {
     WorkspaceScanOptions? options,
+    Map<String, String> sourceOverrides = const {},
   }) async {
     final effectiveScanOptions = options ?? scanOptions;
+    final normalizedOverrides = Map<String, String>.unmodifiable({
+      for (final entry in sourceOverrides.entries)
+        normalizePath(entry.key): entry.value,
+    });
     var root = normalizePath(rootPath);
     final diagnostics = <Diagnostic>[];
     final CanonicalPathAnchor anchor;
@@ -59,7 +64,12 @@ class WritersideModuleService {
           args: {'error': '$error'},
         ),
       );
-      return _emptyModule(root, expectedPath, diagnostics);
+      return _emptyModule(
+        root,
+        expectedPath,
+        diagnostics,
+        sourceOverrides: normalizedOverrides,
+      );
     }
     final configCandidate = await _resolveConfigPath(root);
     if (configCandidate == null) {
@@ -70,7 +80,12 @@ class WritersideModuleService {
           filePath: p.join(root, 'writerside.cfg'),
         ),
       );
-      return _emptyModule(root, p.join(root, 'writerside.cfg'), diagnostics);
+      return _emptyModule(
+        root,
+        p.join(root, 'writerside.cfg'),
+        diagnostics,
+        sourceOverrides: normalizedOverrides,
+      );
     }
     final AnchoredPathResolution configResolution;
     try {
@@ -88,7 +103,12 @@ class WritersideModuleService {
           error: error,
         ),
       );
-      return _emptyModule(root, configCandidate, diagnostics);
+      return _emptyModule(
+        root,
+        configCandidate,
+        diagnostics,
+        sourceOverrides: normalizedOverrides,
+      );
     }
     if (configResolution.type != FileSystemEntityType.file) {
       diagnostics.add(
@@ -98,7 +118,12 @@ class WritersideModuleService {
           filePath: configResolution.path,
         ),
       );
-      return _emptyModule(root, configResolution.path, diagnostics);
+      return _emptyModule(
+        root,
+        configResolution.path,
+        diagnostics,
+        sourceOverrides: normalizedOverrides,
+      );
     }
     final configPath = configResolution.path;
     final configSource = await _readFileForParsing(
@@ -106,9 +131,15 @@ class WritersideModuleService {
       diagnostics,
       effectiveScanOptions,
       readFailureCode: 'workspace.file.read-failed',
+      sourceOverrides: normalizedOverrides,
     );
     if (configSource == null) {
-      return _emptyModule(root, configPath, diagnostics);
+      return _emptyModule(
+        root,
+        configPath,
+        diagnostics,
+        sourceOverrides: normalizedOverrides,
+      );
     }
     final config = configParser.parse(configPath, configSource);
     diagnostics.addAll(config.diagnostics);
@@ -221,6 +252,7 @@ class WritersideModuleService {
         diagnostics,
         effectiveScanOptions,
         readFailureCode: 'workspace.file.read-failed',
+        sourceOverrides: normalizedOverrides,
       );
       if (buildProfilesSource != null) {
         buildProfiles = buildProfilesParser.parse(
@@ -238,6 +270,7 @@ class WritersideModuleService {
         diagnostics,
         effectiveScanOptions,
         readFailureCode: 'workspace.file.read-failed',
+        sourceOverrides: normalizedOverrides,
       );
       if (groupsSource != null) {
         instanceGroups = instanceGroupsParser.parse(
@@ -281,6 +314,7 @@ class WritersideModuleService {
         diagnostics,
         effectiveScanOptions,
         readFailureCode: 'workspace.file.read-failed',
+        sourceOverrides: normalizedOverrides,
       );
       if (treeSource == null) {
         continue;
@@ -351,6 +385,7 @@ class WritersideModuleService {
           diagnostics,
           effectiveScanOptions,
           readFailureCode: 'writerside.topic.read-failed',
+          sourceOverrides: normalizedOverrides,
         );
         if (source == null) {
           unparsedTopics.add(topicFileName);
@@ -399,6 +434,7 @@ class WritersideModuleService {
           diagnostics,
           effectiveScanOptions,
           readFailureCode: 'workspace.file.read-failed',
+          sourceOverrides: normalizedOverrides,
         );
         if (source == null) {
           validateVariables = false;
@@ -419,6 +455,7 @@ class WritersideModuleService {
           diagnostics,
           effectiveScanOptions,
           readFailureCode: 'workspace.file.read-failed',
+          sourceOverrides: normalizedOverrides,
         );
         if (source == null) {
           validateCategories = false;
@@ -441,6 +478,7 @@ class WritersideModuleService {
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
+      sourceOverrides: normalizedOverrides,
     );
     diagnostics.addAll(
       _resolve(
@@ -462,6 +500,7 @@ class WritersideModuleService {
       validatedImageDirs: module.validatedImageDirs,
       buildProfiles: module.buildProfiles,
       instanceGroups: module.instanceGroups,
+      sourceOverrides: normalizedOverrides,
     );
   }
 
@@ -490,8 +529,9 @@ class WritersideModuleService {
   WritersideModule _emptyModule(
     String root,
     String configPath,
-    List<Diagnostic> diagnostics,
-  ) {
+    List<Diagnostic> diagnostics, {
+    Map<String, String> sourceOverrides = const {},
+  }) {
     final emptyConfig = WritersideConfig(
       filePath: configPath,
       version: null,
@@ -521,6 +561,7 @@ class WritersideModuleService {
       categories: const [],
       diagnostics: sortDiagnostics(diagnostics),
       validatedImageDirs: const ['images'],
+      sourceOverrides: sourceOverrides,
     );
   }
 
@@ -529,11 +570,20 @@ class WritersideModuleService {
     List<Diagnostic> diagnostics,
     WorkspaceScanOptions options, {
     required String readFailureCode,
+    Map<String, String> sourceOverrides = const {},
   }) async {
     final maxBytes = options.maxParsedFileBytes;
     if (maxBytes < 0) {
       diagnostics.add(_fileTooLargeDiagnostic(file.path));
       return null;
+    }
+    final override = sourceOverrides[normalizePath(file.path)];
+    if (override != null) {
+      if (utf8.encode(override).length > maxBytes) {
+        diagnostics.add(_fileTooLargeDiagnostic(file.path));
+        return null;
+      }
+      return override;
     }
     try {
       final bytes = BytesBuilder(copy: false);

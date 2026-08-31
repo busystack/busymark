@@ -574,6 +574,7 @@ class WritersideProject {
   /// Replaces an in-memory module and rebuilds every topic-derived symbol and
   /// reference while retaining discovered file/resource symbols.
   WritersideProject withModule(WritersideModule module) {
+    final previousActiveModule = activeModule;
     final replaced = modules.any(
       (candidate) => p.equals(candidate.rootPath, module.rootPath),
     );
@@ -596,11 +597,29 @@ class WritersideProject {
             symbol.kind == WritersideSymbolKind.apiSpecification,
       ),
     );
+    final replacedActiveModule =
+        previousActiveModule != null &&
+        p.equals(previousActiveModule.rootPath, module.rootPath);
+    final nextActiveModuleId = replacedActiveModule
+        ? _moduleId(module)
+        : activeModuleId;
+    var nextActiveInstanceId = activeInstanceId;
+    if (replacedActiveModule &&
+        !module.instances.any(
+          (instance) => instance.id == nextActiveInstanceId,
+        )) {
+      nextActiveInstanceId =
+          module.instances
+              .where((instance) => !instance.isLibrary)
+              .firstOrNull
+              ?.id ??
+          module.instances.firstOrNull?.id;
+    }
     return WritersideProject(
       rootPath: rootPath,
       modules: List.unmodifiable(nextModules),
-      activeModuleId: activeModuleId,
-      activeInstanceId: activeInstanceId,
+      activeModuleId: nextActiveModuleId,
+      activeInstanceId: nextActiveInstanceId,
       index: nextIndex,
       diagnostics: sortDiagnostics([
         for (final candidate in nextModules) ...candidate.diagnostics,
@@ -678,6 +697,35 @@ class WritersideProjectService {
       index: index,
       diagnostics: sortDiagnostics([
         for (final module in modules) ...module.diagnostics,
+        ...index.diagnostics,
+      ]),
+    );
+  }
+
+  /// Replaces one already-discovered module. Configuration reparses can ask
+  /// for file symbols to be rediscovered because image/resource/specification
+  /// roots may have changed in the unsaved configuration.
+  Future<WritersideProject> replaceModule(
+    WritersideProject project,
+    WritersideModule module, {
+    bool rediscoverFileSymbols = false,
+  }) async {
+    final replaced = project.withModule(module);
+    if (!rediscoverFileSymbols || identical(replaced, project)) {
+      return replaced;
+    }
+    final index = WritersideProjectIndex.build(
+      replaced.modules,
+      fileSymbols: await _discoverFileSymbols(replaced.modules),
+    );
+    return WritersideProject(
+      rootPath: replaced.rootPath,
+      modules: replaced.modules,
+      activeModuleId: replaced.activeModuleId,
+      activeInstanceId: replaced.activeInstanceId,
+      index: index,
+      diagnostics: sortDiagnostics([
+        for (final candidate in replaced.modules) ...candidate.diagnostics,
         ...index.diagnostics,
       ]),
     );

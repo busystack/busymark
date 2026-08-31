@@ -201,6 +201,161 @@ void main() {
     },
   );
 
+  test(
+    'reparse of variables updates completion and resolution without reopening',
+    () async {
+      final fixture = await _ProjectFixture.create();
+      addTearDown(fixture.dispose);
+      final mainRoot = p.join(fixture.path, 'main');
+      final configPath = p.join(mainRoot, 'writerside.cfg');
+      final variablesPath = p.join(mainRoot, 'v.list');
+      final topicPath = p.join(mainRoot, 'topics', 'main.topic');
+      await File(configPath).writeAsString('''
+<ihp version="2026.2">
+  <module name="main-docs"/>
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <vars src="v.list"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+      await File(
+        variablesPath,
+      ).writeAsString('<vars><var name="old-name" value="Old"/></vars>');
+      await File(topicPath).writeAsString('''
+<topic id="main" title="Main"><p>%live-name%</p></topic>
+''');
+
+      const service = WorkspaceService();
+      final workspace = await service.openPath(fixture.path);
+      final scanDiagnostic = Diagnostic(
+        code: 'workspace.scan.skipped',
+        severity: DiagnosticSeverity.warning,
+        filePath: fixture.path,
+      );
+      final variableWorkspace = workspace.copyWith(
+        activeFilePath: variablesPath,
+        markdown: null,
+        diagnostics: [...workspace.diagnostics, scanDiagnostic],
+      );
+      final reparsed = await service.reparseActive(
+        variableWorkspace,
+        '<vars><var name="live-name" value="Live value"/></vars>',
+      );
+      final project = reparsed.writersideProject!;
+      final module = reparsed.writersideModule!;
+      final suggestions = const SourceAutocompleteProvider().suggestions(
+        document: SourceDocument(fullText: 'live'),
+        fullOffset: 'live'.length,
+        context: SourceAutocompleteContext(
+          projectIndex: project.index,
+          moduleId: project.activeModuleId,
+        ),
+      );
+      final topic = module.topicByReference('main.topic')!;
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: project.activeInstance,
+          modulesByOrigin: project.modulesByOrigin,
+        ),
+      );
+      final rendered = const WritersideDocumentRenderer().toBusyDocument(
+        resolved.document,
+        title: resolved.title,
+      );
+
+      expect(module.variables.map((variable) => variable.name), ['live-name']);
+      expect(
+        project.index.names(
+          WritersideSymbolKind.variable,
+          moduleId: project.activeModuleId,
+        ),
+        contains('live-name'),
+      );
+      expect(
+        project.index.names(
+          WritersideSymbolKind.variable,
+          moduleId: project.activeModuleId,
+        ),
+        isNot(contains('old-name')),
+      );
+      expect(
+        suggestions
+            .where(
+              (suggestion) =>
+                  suggestion.kind == SourceAutocompleteKind.variable,
+            )
+            .map((suggestion) => suggestion.insertText),
+        contains('live-name'),
+      );
+      expect(
+        resolved.diagnostics.map((diagnostic) => diagnostic.code),
+        isNot(contains('writerside.variable.unresolved')),
+      );
+      expect(
+        _walkBlocks(rendered.blocks).map((block) => block.plainText).join('\n'),
+        contains('Live value'),
+      );
+      expect(reparsed.diagnostics, contains(scanDiagnostic));
+    },
+  );
+
+  test('reparse of an instance tree updates active project context', () async {
+    final fixture = await _ProjectFixture.create();
+    addTearDown(fixture.dispose);
+    const service = WorkspaceService();
+    final workspace = await service.openPath(fixture.path);
+    final treePath = p.join(fixture.path, 'main', 'guide.tree');
+    final unrelatedPath = p.join(
+      fixture.path,
+      'shared',
+      'topics',
+      'shared.topic',
+    );
+    final treeWorkspace = workspace.copyWith(
+      activeFilePath: treePath,
+      markdown: null,
+    );
+
+    final reparsed = await service.reparseActive(treeWorkspace, '''
+<instance-profile id="live-guide" name="Live Guide"
+                  start-page="main.topic">
+  <toc-element topic="main.topic"/>
+</instance-profile>
+''');
+    final project = reparsed.writersideProject!;
+
+    expect(reparsed.writersideModule?.instances.single.id, 'live-guide');
+    expect(reparsed.writersideModule?.instances.single.name, 'Live Guide');
+    expect(project.activeInstanceId, 'live-guide');
+    expect(project.activeInstance?.id, 'live-guide');
+    expect(
+      project.index.names(
+        WritersideSymbolKind.instance,
+        moduleId: project.activeModuleId,
+      ),
+      contains('live-guide'),
+    );
+    expect(
+      project.index.names(
+        WritersideSymbolKind.instance,
+        moduleId: project.activeModuleId,
+      ),
+      isNot(contains('guide')),
+    );
+    expect(
+      reparsed.diagnostics.where(
+        (diagnostic) =>
+            diagnostic.code == 'writerside.index.unresolved-reference' &&
+            p.equals(diagnostic.filePath, unrelatedPath),
+      ),
+      isNotEmpty,
+    );
+  });
+
   test('BusyMark processes the same fixture as the official builder', () async {
     final root = p.join(
       Directory.current.path,

@@ -525,6 +525,7 @@ class WritersideModule {
     required this.validatedImageDirs,
     this.buildProfiles,
     this.instanceGroups,
+    this.sourceOverrides = const {},
   });
 
   final String rootPath;
@@ -538,9 +539,14 @@ class WritersideModule {
   final WritersideBuildProfilesConfig? buildProfiles;
   final WritersideInstanceGroupsConfig? instanceGroups;
 
+  /// Unsaved project sources that must win over their on-disk counterparts
+  /// when the module is recomputed after another project-file edit.
+  final Map<String, String> sourceOverrides;
+
   WritersideModule copyWith({
     List<WritersideTopic>? topics,
     List<Diagnostic>? diagnostics,
+    Map<String, String>? sourceOverrides,
   }) {
     return WritersideModule(
       rootPath: rootPath,
@@ -553,6 +559,7 @@ class WritersideModule {
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
+      sourceOverrides: sourceOverrides ?? this.sourceOverrides,
     );
   }
 

@@ -1308,7 +1308,23 @@ class WorkspaceService {
           parsed,
         );
       }
-      return workspace.copyWith(diagnostics: module?.diagnostics);
+      if (module != null && _isWritersideProjectFile(module, active)) {
+        final updatedModule = await writersideService.load(
+          module.rootPath,
+          options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+          sourceOverrides: {
+            ...module.sourceOverrides,
+            normalizePath(active): source,
+          },
+        );
+        return _workspaceWithReparsedWritersideModule(
+          workspace,
+          module,
+          updatedModule,
+          rediscoverFileSymbols: p.equals(active, module.config.filePath),
+        );
+      }
+      return workspace;
     }
     final markdown = await markdownParser.parseAsync(
       filePath: active,
@@ -1339,6 +1355,10 @@ class WorkspaceService {
           if (!p.equals(diagnostic.filePath, activePath)) diagnostic,
         ...parsedTopic.diagnostics,
       ]),
+      sourceOverrides: {
+        ...module.sourceOverrides,
+        normalizePath(activePath): parsedTopic.document.source,
+      },
     );
     final previousProject = workspace.writersideProject;
     final updatedProject = previousProject?.withModule(updatedModule);
@@ -1373,6 +1393,76 @@ class WorkspaceService {
         ...preservedWorkspaceDiagnostics,
         ...resolutionDiagnostics,
       ]),
+    );
+  }
+
+  Future<Workspace> _workspaceWithReparsedWritersideModule(
+    Workspace workspace,
+    WritersideModule previousModule,
+    WritersideModule updatedModule, {
+    required bool rediscoverFileSymbols,
+  }) async {
+    final previousProject = workspace.writersideProject;
+    final updatedProject = previousProject == null
+        ? null
+        : await _writersideProjectService.replaceModule(
+            previousProject,
+            updatedModule,
+            rediscoverFileSymbols: rediscoverFileSymbols,
+          );
+    final previousResolutionDiagnostics = [
+      for (final topic in previousModule.topics)
+        ..._writersideResolutionDiagnostics(workspace, previousModule, topic),
+    ];
+    final preservedWorkspaceDiagnostics = [
+      for (final diagnostic in workspace.diagnostics)
+        if (!_isProjectDiagnostic(previousProject, diagnostic) &&
+            !previousModule.diagnostics.any(
+              (candidate) => identical(candidate, diagnostic),
+            ) &&
+            !previousResolutionDiagnostics.any(
+              (previous) => _sameDiagnostic(previous, diagnostic),
+            ))
+          diagnostic,
+    ];
+    return workspace.copyWith(
+      markdown: null,
+      writersideModule: updatedProject?.activeModule ?? updatedModule,
+      writersideProject: updatedProject,
+      diagnostics: sortDiagnostics([
+        ...?updatedProject?.diagnostics,
+        if (updatedProject == null) ...updatedModule.diagnostics,
+        ...preservedWorkspaceDiagnostics,
+      ]),
+    );
+  }
+
+  bool _isWritersideProjectFile(WritersideModule module, String filePath) {
+    final config = module.config;
+    final candidates = <String>{
+      config.filePath,
+      for (final instance in module.instances) instance.sourceTreePath,
+      for (final instance in config.instances)
+        _moduleConfiguredPath(module.rootPath, instance.src),
+      if (config.varsFile case final path?)
+        _moduleConfiguredPath(module.rootPath, path),
+      if (config.categoriesFile case final path?)
+        _moduleConfiguredPath(module.rootPath, path),
+      if (config.instanceGroupsFile case final path?)
+        _moduleConfiguredPath(module.rootPath, path),
+      _moduleConfiguredPath(
+        module.rootPath,
+        p.join(config.buildConfigDir, 'buildprofiles.xml'),
+      ),
+    };
+    return candidates.any((candidate) => p.equals(candidate, filePath));
+  }
+
+  String _moduleConfiguredPath(String rootPath, String configuredPath) {
+    return normalizePath(
+      p.isAbsolute(configuredPath)
+          ? configuredPath
+          : p.join(rootPath, configuredPath),
     );
   }
 
