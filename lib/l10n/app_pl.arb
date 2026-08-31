@@ -2412,14 +2412,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Reguły bezpieczeństwa",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Surowy HTML jest analizowany i oczyszczany przed renderowaniem podglądu.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Nagłówki",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -2468,41 +2460,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Oczyszczony podgląd",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "Dozwolony HTML jest konwertowany na bloki podglądu BusyMark, a nie renderowany w przeglądarce.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Źródło jest zachowane",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Nieedytowany surowy HTML jest zapisywany dokładnie jako tekst źródłowy.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown wewnątrz HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Znaczniki Markdown wewnątrz surowego HTML są wyświetlane jako tekst dosłowny.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Zablokowana aktywna zawartość",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Skrypty, style, ramki, formularze, SVG, MathML, zdarzenia i niebezpieczne atrybuty są blokowane.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Tylko bezpieczne adresy URL",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Łącza dopuszczają http, https, mailto, tel, względne adresy URL i fragmenty; niebezpieczne schematy są blokowane.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -2725,7 +2697,6 @@
   "syntaxReferenceScope": "Zakres",
   "syntaxReferenceLimitation": "Ograniczenie BusyMark",
   "syntaxReferenceOfficialDocumentation": "Oficjalna dokumentacja",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Zwykły Markdown i Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdown": "Tylko Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Tylko Markdown Writerside i XML Writerside",
   "syntaxReferenceMarkdownDescription": "Podstawowe formy Markdown, które BusyMark umożliwia tworzyć i wyświetlać.",

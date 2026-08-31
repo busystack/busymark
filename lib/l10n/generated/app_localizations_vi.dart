@@ -2678,13 +2678,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.';
 
   @override
-  String get syntaxReferenceSafety => 'Quy tắc an toàn';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'HTML thô được phân tích cú pháp và làm sạch trước khi kết xuất bản xem trước.';
-
-  @override
   String get syntaxReferenceHeadings => 'Tiêu đề';
 
   @override
@@ -2721,35 +2714,20 @@ class AppLocalizationsVi extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Thẻ văn bản ngữ nghĩa';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Bản xem trước đã làm sạch';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Giữ nguyên mã nguồn';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown bên trong HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Nội dung hoạt động bị chặn';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Chỉ URL an toàn';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2781,10 +2759,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Tài liệu chính thức';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown thông thường và Markdown Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

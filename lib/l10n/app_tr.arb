@@ -3514,14 +3514,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Güvenlik Kuralları",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Ham HTML, önizleme oluşturmadan önce ayrıştırılır ve arındırılır.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Başlıklar",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3570,41 +3562,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Temizlenmiş önizleme",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Kaynak korunur",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "HTML içindeki Markdown",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Engellenen etkin içerik",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Yalnızca güvenli URL'ler",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Bağlantılar http, https, mailto, tel, göreli ve parça URL'lerine izin verir; güvenli olmayan şemalar engellenir.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3623,7 +3595,6 @@
   "syntaxReferenceScope": "Kapsam",
   "syntaxReferenceLimitation": "BusyMark sınırlaması",
   "syntaxReferenceOfficialDocumentation": "Resmî belgeler",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Normal Markdown ve Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "Yalnızca Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Yalnızca Writerside Markdown ve Writerside XML",
   "syntaxReferenceMarkdownDescription": "BusyMark'ın yazabildiği ve önizleyebildiği temel Markdown biçimleri.",

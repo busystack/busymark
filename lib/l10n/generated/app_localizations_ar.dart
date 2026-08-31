@@ -2718,13 +2718,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
 
   @override
-  String get syntaxReferenceSafety => 'قواعد الأمان';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.';
-
-  @override
   String get syntaxReferenceHeadings => 'العناوين';
 
   @override
@@ -2761,35 +2754,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'وسوم نصية دلالية';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'معاينة منظفة';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'يتم حفظ المصدر';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown داخل HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'المحتوى النشط محظور';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'عناوين URL آمنة فقط';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2821,10 +2799,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'الوثائق الرسمية';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown العادي وMarkdown في Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

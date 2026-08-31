@@ -2676,13 +2676,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।';
 
   @override
-  String get syntaxReferenceSafety => 'सुरक्षा नियम';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।';
-
-  @override
   String get syntaxReferenceHeadings => 'शीर्षक';
 
   @override
@@ -2719,35 +2712,20 @@ class AppLocalizationsHi extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'अर्थपूर्ण टेक्स्ट टैग';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'साफ़ किया गया प्रीव्यू';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'स्रोत सुरक्षित रहता है';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML के अंदर Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।';
 
   @override
-  String get syntaxReferenceBlockedContent => 'सक्रिय सामग्री अवरुद्ध';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'केवल सुरक्षित URL';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2779,10 +2757,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'आधिकारिक दस्तावेज़';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'सामान्य Markdown और Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

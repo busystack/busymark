@@ -11,6 +11,7 @@ class BusyMarkInformationalDialog extends StatelessWidget {
     required this.closeLabel,
     required this.maxWidth,
     required this.child,
+    this.title,
     this.maxHeight,
     this.scrollable = true,
     super.key,
@@ -20,6 +21,7 @@ class BusyMarkInformationalDialog extends StatelessWidget {
   final double maxWidth;
   final double? maxHeight;
   final Widget child;
+  final Widget? title;
   final bool scrollable;
 
   @override
@@ -41,7 +43,10 @@ class BusyMarkInformationalDialog extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  BusyMarkDialogTitleBar(closeSemanticLabel: closeLabel),
+                  BusyMarkDialogTitleBar(
+                    title: title,
+                    closeSemanticLabel: closeLabel,
+                  ),
                   Flexible(
                     child: scrollable
                         ? SingleChildScrollView(

@@ -1101,22 +1101,82 @@ void main() {
       find.byKey(const ValueKey('syntax-reference-category-selector')),
       findsOneWidget,
     );
+    final sidebarSurface = tester.widget<Material>(
+      find.byKey(const ValueKey('syntax-reference-sidebar-surface')),
+    );
+    final referenceDialog = tester.widget<Dialog>(
+      find.descendant(
+        of: find.byKey(const ValueKey('syntax-reference-dialog')),
+        matching: find.byType(Dialog),
+      ),
+    );
+    expect(sidebarSurface.color, referenceDialog.backgroundColor);
+    Finder scopeHeading(String scope) =>
+        find.byKey(ValueKey('syntax-reference-scope-heading-$scope'));
+    Finder topicNavigation(String category, int index) => find.byKey(
+      ValueKey('syntax-reference-topic-navigation-$category-$index'),
+    );
+    Finder categoryText(String categoryName, String text) => find.descendant(
+      of: find.byKey(ValueKey('syntax-reference-category-$categoryName')),
+      matching: find.text(text),
+    );
     expect(find.text(l10n.markdown), findsWidgets);
-    expect(find.text(l10n.syntaxReferenceInlineFormatting), findsOneWidget);
+    expect(
+      categoryText('markdown', l10n.syntaxReferenceInlineFormatting),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('markdown', l10n.syntaxReferenceMarkdownBlocks),
+      findsOneWidget,
+    );
+    expect(categoryText('markdown', l10n.bold), findsOneWidget);
+    expect(categoryText('markdown', l10n.italic), findsOneWidget);
+    expect(categoryText('markdown', l10n.underline), findsOneWidget);
+    expect(find.text('<u>underlined</u>'), findsOneWidget);
+    expect(categoryText('markdown', l10n.strikethrough), findsOneWidget);
+    expect(categoryText('markdown', l10n.inlineCode), findsOneWidget);
+    expect(topicNavigation('markdown', 0), findsOneWidget);
+    expect(topicNavigation('markdown', 1), findsOneWidget);
+    expect(topicNavigation('markdown', 2), findsNothing);
+    expect(find.text(l10n.syntaxReferenceScope), findsNothing);
+    expect(scopeHeading(l10n.markdown), findsNothing);
 
-    Future<void> selectCategory(String label) async {
-      await tester.tap(
-        find.byKey(const ValueKey('syntax-reference-category-selector')),
+    Future<void> selectCategory(
+      String categoryName,
+      String fallbackLabel,
+    ) async {
+      final navigationTile = find.byKey(
+        ValueKey('syntax-reference-category-navigation-$categoryName'),
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(label).last);
+      if (navigationTile.evaluate().isNotEmpty) {
+        await tester.tap(navigationTile);
+      } else {
+        await tester.tap(
+          find.byKey(const ValueKey('syntax-reference-category-selector')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(fallbackLabel).last);
+      }
       await tester.pumpAndSettle();
     }
 
-    await tester.tap(
-      find.byKey(const ValueKey('syntax-reference-category-selector')),
-    );
-    await tester.pumpAndSettle();
+    Future<List<BusyMarkPopupMenuItem<Uri>>> openDocumentationMenu(
+      String featureTitle,
+    ) async {
+      final documentationAction = find.byKey(
+        ValueKey('syntax-reference-documentation-$featureTitle'),
+      );
+      await tester.ensureVisible(documentationAction);
+      await tester.pumpAndSettle();
+      await tester.tap(documentationAction);
+      await tester.pumpAndSettle();
+      return tester
+          .widgetList<BusyMarkPopupMenuItem<Uri>>(
+            find.byType(BusyMarkPopupMenuItem<Uri>),
+          )
+          .toList();
+    }
+
     expect(find.text(l10n.markdown), findsWidgets);
     expect(find.text(l10n.syntaxReferenceCategoryHtml), findsOneWidget);
     expect(
@@ -1125,10 +1185,10 @@ void main() {
     );
     expect(find.text(l10n.syntaxReferenceCategoryMathematics), findsOneWidget);
     expect(find.text(l10n.writerside), findsOneWidget);
-    await tester.tap(
-      find.text(l10n.syntaxReferenceCategoryDiagramsAndApi).last,
+    await selectCategory(
+      'diagramsAndApi',
+      l10n.syntaxReferenceCategoryDiagramsAndApi,
     );
-    await tester.pumpAndSettle();
     expect(find.text('mermaid'), findsOneWidget);
     expect(find.text('plantuml, puml'), findsOneWidget);
     expect(find.text('d2'), findsOneWidget);
@@ -1143,19 +1203,48 @@ void main() {
       find.text(l10n.syntaxReferenceReferencedDiagramLimitation),
       findsOneWidget,
     );
-
-    await selectCategory(l10n.syntaxReferenceCategoryMathematics);
-    expect(
-      find.text(l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown),
-      findsNWidgets(4),
+    final diagramDocumentation = await openDocumentationMenu(
+      l10n.syntaxReferenceSemanticDiagramBlocks,
     );
+    expect(diagramDocumentation.map((item) => item.label), [
+      l10n.syntaxReferenceMermaid,
+      l10n.syntaxReferencePlantUml,
+      l10n.syntaxReferenceD2,
+    ]);
+    expect(diagramDocumentation.map((item) => item.menuValue.toString()), [
+      'https://www.jetbrains.com/help/writerside/mermaid-diagrams.html',
+      'https://www.jetbrains.com/help/writerside/plantuml-diagrams.html',
+      'https://www.jetbrains.com/help/writerside/d2-diagrams.html',
+    ]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    final writersideDiagramsTopic = find.byKey(
+      const ValueKey('syntax-reference-topic-navigation-diagramsAndApi-1'),
+    );
+    expect(writersideDiagramsTopic, findsOneWidget);
+    await tester.tap(writersideDiagramsTopic);
+    await tester.pumpAndSettle();
     expect(
-      find.text(l10n.syntaxReferenceScopeWritersideMarkdown),
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(writersideDiagramsTopic)
+          .selected,
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+    expect(topicNavigation('diagramsAndApi', 2), findsNothing);
+
+    await selectCategory(
+      'mathematics',
+      l10n.syntaxReferenceCategoryMathematics,
+    );
+    expect(scopeHeading(l10n.markdown), findsNothing);
+    expect(
+      scopeHeading(l10n.syntaxReferenceScopeWritersideMarkdown),
       findsOneWidget,
     );
     expect(
-      find.text(l10n.syntaxReferenceScopeWritersideMarkdownAndXml),
-      findsNWidgets(2),
+      scopeHeading(l10n.syntaxReferenceScopeWritersideMarkdownAndXml),
+      findsOneWidget,
     );
     expect(find.text(l10n.syntaxReferenceTexFenceLimitation), findsOneWidget);
     expect(
@@ -1166,29 +1255,124 @@ void main() {
       find.text(l10n.syntaxReferenceWritersideMathElementLimitation),
       findsOneWidget,
     );
+    expect(topicNavigation('mathematics', 2), findsOneWidget);
+    expect(topicNavigation('mathematics', 3), findsNothing);
 
-    await selectCategory(l10n.writerside);
+    await selectCategory('writerside', l10n.writerside);
     expect(
       find.text(l10n.syntaxReferenceSemanticMarkupLimitation),
       findsOneWidget,
     );
-    expect(find.text(l10n.syntaxReferenceSemanticCodeBlocks), findsOneWidget);
-    expect(find.text(l10n.syntaxReferenceVideo), findsOneWidget);
+    expect(
+      categoryText('writerside', l10n.syntaxReferenceSemanticCodeBlocks),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('writerside', l10n.syntaxReferenceVideo),
+      findsOneWidget,
+    );
+    final semanticCodeDocumentation = await openDocumentationMenu(
+      l10n.syntaxReferenceSemanticCodeBlocks,
+    );
+    expect(semanticCodeDocumentation.map((item) => item.label), [
+      l10n.syntaxReferenceCategoryMathematics,
+      l10n.syntaxReferenceMermaid,
+      l10n.syntaxReferencePlantUml,
+      l10n.syntaxReferenceD2,
+    ]);
+    expect(semanticCodeDocumentation.map((item) => item.menuValue.toString()), [
+      'https://www.jetbrains.com/help/writerside/math-support.html',
+      'https://www.jetbrains.com/help/writerside/mermaid-diagrams.html',
+      'https://www.jetbrains.com/help/writerside/plantuml-diagrams.html',
+      'https://www.jetbrains.com/help/writerside/d2-diagrams.html',
+    ]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    final referencedDiagramDocumentation = await openDocumentationMenu(
+      l10n.syntaxReferenceReferencedDiagramSource,
+    );
+    expect(
+      referencedDiagramDocumentation.map((item) => item.menuValue.toString()),
+      [
+        'https://www.jetbrains.com/help/writerside/mermaid-diagrams.html',
+        'https://www.jetbrains.com/help/writerside/plantuml-diagrams.html',
+        'https://www.jetbrains.com/help/writerside/d2-diagrams.html',
+      ],
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(topicNavigation('writerside', 3), findsOneWidget);
+    expect(topicNavigation('writerside', 4), findsNothing);
 
-    await selectCategory(l10n.syntaxReferenceCategoryHtml);
-    expect(find.text(l10n.syntaxReferenceRawHtmlBlocks), findsOneWidget);
-    expect(find.text(l10n.syntaxReferenceRawHtmlInline), findsOneWidget);
-    expect(find.text(l10n.syntaxReferenceSafety), findsOneWidget);
+    await selectCategory('html', l10n.syntaxReferenceCategoryHtml);
+    expect(
+      categoryText('html', l10n.syntaxReferenceRawHtmlBlocks),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceRawHtmlInline),
+      findsOneWidget,
+    );
+    expect(find.text('Safety Rules'), findsNothing);
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlContainers),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlTextBlocks),
+      findsOneWidget,
+    );
+    expect(categoryText('html', l10n.syntaxReferenceLists), findsOneWidget);
+    expect(categoryText('html', l10n.table), findsOneWidget);
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlFigures),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlPreformatted),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlDisclosure),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlDescriptionLists),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlFormattingTags),
+      findsOneWidget,
+    );
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlInlineCodeTags),
+      findsOneWidget,
+    );
+    expect(categoryText('html', l10n.link), findsOneWidget);
+    expect(categoryText('html', l10n.inlineImage), findsOneWidget);
+    expect(
+      categoryText('html', l10n.syntaxReferenceHtmlNeutralInlineTags),
+      findsOneWidget,
+    );
+    expect(categoryText('html', l10n.hardLineBreak), findsOneWidget);
+    expect(topicNavigation('html', 1), findsOneWidget);
+    expect(topicNavigation('html', 2), findsNothing);
     expect(find.textContaining('article, aside, div, section'), findsOneWidget);
-    expect(find.textContaining('span, strong, em, b'), findsOneWidget);
+    expect(find.textContaining('strong, em, b, i, u'), findsOneWidget);
+    expect(find.textContaining('span, abbr, cite, q'), findsOneWidget);
     expect(
       find.text(l10n.syntaxReferenceMarkdownInsideHtmlDescription),
       findsWidgets,
     );
     expect(
-      find.text(l10n.syntaxReferenceBlockedContentDescription),
+      find.textContaining(l10n.syntaxReferenceBlockedContentDescription),
       findsOneWidget,
     );
+    expect(
+      find.textContaining(l10n.syntaxReferenceSourcePreservedDescription),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.syntaxReferenceSafeUrlsDescription), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -1270,6 +1454,16 @@ void main() {
     await tester.tap(find.text(ar.syntaxReferenceCategoryMathematics).last);
     await tester.pumpAndSettle();
     expect(find.text(ar.syntaxReferenceMathematicsDescription), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('syntax-reference-topic-selector')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('syntax-reference-topic-selector')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(ar.syntaxReferenceTexFence).last);
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
     await tester.drag(
@@ -1597,6 +1791,23 @@ void main() {
       p.join(root.path, 'topics', 'target.md'),
     ).writeAsStringSync('# Target\n');
     File(p.join(root.path, 'topics', 'api.md')).writeAsStringSync('# API\n');
+    final sharedModule = Directory(p.join(root.path, 'shared'))..createSync();
+    Directory(p.join(sharedModule.path, 'topics')).createSync();
+    File(p.join(sharedModule.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <module name="shared-docs"/>
+  <topics dir="topics"/>
+  <instance src="shared.tree"/>
+</ihp>
+''');
+    File(p.join(sharedModule.path, 'shared.tree')).writeAsStringSync('''
+<instance-profile id="shared" name="Shared" start-page="shared.md">
+  <toc-element topic="shared.md"/>
+</instance-profile>
+''');
+    File(
+      p.join(sharedModule.path, 'topics', 'shared.md'),
+    ).writeAsStringSync('# Shared\n');
     final workspace = (await tester.runAsync(
       () => const WorkspaceService().openPath(root.path),
     ))!;
@@ -1667,6 +1878,19 @@ void main() {
     final apiInstance = find.byKey(const ValueKey('writerside-instance-api'));
     expect(guideInstance, findsOneWidget);
     expect(apiInstance, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('writerside-module-selector')),
+      findsOneWidget,
+    );
+    await openPopup(find.byKey(const ValueKey('writerside-module-selector')));
+    await tester.tap(find.text('shared-docs'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.selectedWritersideModuleId, 'shared-docs');
+    await tester.tap(apiInstance);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.selectedWritersideInstanceId, 'api');
+    await tester.tap(guideInstance);
+    await tester.pump(const Duration(milliseconds: 200));
     final guideIcon = tester.widget<Icon>(
       find.descendant(
         of: guideInstance,
@@ -7962,12 +8186,24 @@ class _MutableWorkspaceController extends WorkspaceController {
   List<int>? movedTopicSourcePath;
   List<int>? movedTopicReferencePath;
   WritersideTopicRemovalMode? analyzedRemovalMode;
+  String? selectedWritersideModuleId;
+  String? selectedWritersideInstanceId;
 
   @override
   WorkspaceState build() => initialState;
 
   @override
   Future<void> validateActive() async {}
+
+  @override
+  Future<bool> selectWritersideContext({
+    required String moduleId,
+    String? instanceId,
+  }) async {
+    selectedWritersideModuleId = moduleId;
+    selectedWritersideInstanceId = instanceId;
+    return true;
+  }
 
   @override
   Future<bool> createWritersideTopic(

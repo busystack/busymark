@@ -2684,13 +2684,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Safe inline HTML tags rendered without showing literal tags.';
 
   @override
-  String get syntaxReferenceSafety => 'Safety Rules';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Raw HTML is parsed and sanitized before preview rendering.';
-
-  @override
   String get syntaxReferenceHeadings => 'Headings';
 
   @override
@@ -2727,35 +2720,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Semantic text tags';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Sanitized preview';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Source is preserved';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Unedited raw HTML is saved back exactly as source text.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown inside HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown markers inside raw HTML render as literal text.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Blocked active content';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Safe URLs only';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2787,10 +2765,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Official documentation';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Ordinary Markdown and Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

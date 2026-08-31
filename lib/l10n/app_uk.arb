@@ -2412,14 +2412,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Правила безпеки",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Необроблений HTML аналізується й очищується перед попереднім переглядом.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Заголовки",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -2468,41 +2460,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Очищений перегляд",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Вихідний текст зберігається",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Незмінений необроблений HTML зберігається точно як вихідний текст.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown всередині HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Активний вміст заблоковано",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Лише безпечні URL",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -2725,7 +2697,6 @@
   "syntaxReferenceScope": "Область застосування",
   "syntaxReferenceLimitation": "Обмеження BusyMark",
   "syntaxReferenceOfficialDocumentation": "Офіційна документація",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Звичайний Markdown і Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdown": "Лише Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Лише Markdown Writerside і XML Writerside",
   "syntaxReferenceMarkdownDescription": "Основні форми Markdown, які BusyMark дає змогу створювати й переглядати.",

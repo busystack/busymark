@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/uri_utils.dart';
+import '../core/diagnostic.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../writerside/writerside_document_renderer.dart';
 import '../writerside/writerside_document_resolver.dart';
+import '../writerside/writerside_document.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_project.dart';
@@ -85,12 +87,24 @@ class WritersidePdfExportService {
         detail: 'Unknown or non-exportable instance: ${request.instanceId}',
       );
     }
-    final document = await _composeInstanceDocument(
+    final composition = await _composeInstanceDocument(
       module,
       instance,
       modulesByOrigin,
       token,
     );
+    final resolutionErrors = composition.diagnostics.where(
+      (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
+    );
+    if (resolutionErrors.isNotEmpty) {
+      throw WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail:
+            'Writerside resolution failed: '
+            '${resolutionErrors.map((diagnostic) => diagnostic.code).join(', ')}',
+      );
+    }
+    final document = composition.document;
     if (document.blocks.isEmpty) {
       throw const WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
@@ -116,7 +130,15 @@ class WritersidePdfExportService {
       return WritersidePdfExportResult(
         destinationPath: result.destinationPath,
         pageCount: result.pageCount,
-        warnings: result.warnings,
+        warnings: [
+          ...composition.diagnostics.map(
+            (diagnostic) => MarkdownPdfWarning(
+              MarkdownPdfWarningCode.writersideResolution,
+              diagnostic.code,
+            ),
+          ),
+          ...result.warnings,
+        ],
       );
     } on MarkdownPdfExportException catch (error) {
       throw WritersidePdfExportException(
@@ -163,7 +185,7 @@ class WritersidePdfExportService {
     return root;
   }
 
-  Future<BusyDocument> _composeInstanceDocument(
+  Future<_ComposedWritersideDocument> _composeInstanceDocument(
     WritersideModule module,
     WritersideInstance instance,
     Map<String, WritersideModule> modulesByOrigin,
@@ -208,6 +230,7 @@ class WritersidePdfExportService {
     }
 
     final output = <BusyBlock>[];
+    final resolutionDiagnostics = <Diagnostic>[];
     var combinedSourceBytes = 0;
     for (var index = 0; index < selected.length; index++) {
       token.throwIfCancelled();
@@ -251,6 +274,7 @@ class WritersidePdfExportService {
           modulesByOrigin: modulesByOrigin,
         ),
       );
+      resolutionDiagnostics.addAll(resolved.diagnostics);
       if (index > 0) {
         output.add(
           BusyBlock(
@@ -268,14 +292,22 @@ class WritersidePdfExportService {
             _topicTitle(parsedTopic, instance.id),
         includeTitleHeading: true,
       );
-      final assets = await _resolveBusyAssets(module, parsedTopic, rendered);
+      final assets = await _resolveBusyAssets(
+        module,
+        parsedTopic,
+        rendered,
+        modulesByOrigin,
+      );
       output.addAll(assets.blocks);
     }
-    return BusyDocument(
-      filePath: p.join(module.rootPath, '.busymark-writerside-export'),
-      mode: MarkdownMode.writersideMarkdown,
-      title: instance.name,
-      blocks: List.unmodifiable(output),
+    return _ComposedWritersideDocument(
+      document: BusyDocument(
+        filePath: p.join(module.rootPath, '.busymark-writerside-export'),
+        mode: MarkdownMode.writersideMarkdown,
+        title: instance.name,
+        blocks: List.unmodifiable(output),
+      ),
+      diagnostics: sortDiagnostics(resolutionDiagnostics),
     );
   }
 
@@ -291,28 +323,72 @@ class WritersidePdfExportService {
     WritersideModule module,
     WritersideTopic topic,
     BusyDocument document,
+    Map<String, WritersideModule> modulesByOrigin,
   ) async {
+    final modules = {module, ...modulesByOrigin.values};
+
+    ({WritersideModule module, WritersideTopic topic}) sourceContext(
+      Map<String, String> attributes,
+    ) {
+      final moduleRoot = attributes[writersideSourceModuleRootAttribute];
+      final topicPath = attributes[writersideSourceTopicPathAttribute];
+      final sourceModule =
+          modules
+              .where(
+                (candidate) =>
+                    moduleRoot != null &&
+                    p.equals(candidate.rootPath, moduleRoot),
+              )
+              .firstOrNull ??
+          module;
+      final sourceTopic =
+          sourceModule.topics
+              .where(
+                (candidate) =>
+                    topicPath != null &&
+                    p.equals(candidate.filePath, topicPath),
+              )
+              .firstOrNull ??
+          topic;
+      return (module: sourceModule, topic: sourceTopic);
+    }
+
     Future<BusyInline> resolveInline(BusyInline inline) async {
+      final source = sourceContext(inline.attributes);
       var destination = inline.destination;
       if (inline.kind == BusyInlineKind.image && destination != null) {
         destination =
-            await _resolvedAssetUri(module, topic, destination) ?? destination;
+            await _resolvedAssetUri(source.module, source.topic, destination) ??
+            destination;
       }
-      return inline.copyWith(
-        destination: destination,
-        children: await Future.wait(inline.children.map(resolveInline)),
-      );
-    }
-
-    Future<BusyBlock> resolveBlock(BusyBlock block) async {
-      final attributes = {...block.attributes};
+      final attributes = {...inline.attributes};
       for (final name in ['src', 'preview-src']) {
         final value = attributes[name];
         if (value == null || value.trim().isEmpty) {
           continue;
         }
         attributes[name] =
-            await _resolvedAssetUri(module, topic, value) ?? value;
+            await _resolvedAssetUri(source.module, source.topic, value) ??
+            value;
+      }
+      return inline.copyWith(
+        destination: destination,
+        attributes: attributes,
+        children: await Future.wait(inline.children.map(resolveInline)),
+      );
+    }
+
+    Future<BusyBlock> resolveBlock(BusyBlock block) async {
+      final attributes = {...block.attributes};
+      final source = sourceContext(attributes);
+      for (final name in ['src', 'preview-src']) {
+        final value = attributes[name];
+        if (value == null || value.trim().isEmpty) {
+          continue;
+        }
+        attributes[name] =
+            await _resolvedAssetUri(source.module, source.topic, value) ??
+            value;
       }
       return block.copyWith(
         inlines: await Future.wait(block.inlines.map(resolveInline)),
@@ -343,6 +419,8 @@ class WritersidePdfExportService {
       p.join(p.dirname(topic.filePath), relative),
       p.join(module.rootPath, relative),
       p.join(module.rootPath, module.effectiveImagesDir, relative),
+      if (module.config.resourcesDir case final resourcesDir?)
+        p.join(module.rootPath, resourcesDir, relative),
     ];
     for (final candidate in candidates) {
       try {
@@ -377,6 +455,16 @@ class WritersidePdfExportService {
       MarkdownPdfFailureCode.fileSystem => WritersidePdfFailureCode.fileSystem,
     };
   }
+}
+
+class _ComposedWritersideDocument {
+  const _ComposedWritersideDocument({
+    required this.document,
+    required this.diagnostics,
+  });
+
+  final BusyDocument document;
+  final List<Diagnostic> diagnostics;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

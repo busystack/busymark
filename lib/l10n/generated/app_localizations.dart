@@ -4494,18 +4494,6 @@ abstract class AppLocalizations {
   /// **'Safe inline HTML tags rendered without showing literal tags.'**
   String get syntaxReferenceRawHtmlInlineDescription;
 
-  /// Reference section title for raw HTML safety rules.
-  ///
-  /// In en, this message translates to:
-  /// **'Safety Rules'**
-  String get syntaxReferenceSafety;
-
-  /// Reference section description for raw HTML safety rules.
-  ///
-  /// In en, this message translates to:
-  /// **'Raw HTML is parsed and sanitized before preview rendering.'**
-  String get syntaxReferenceSafetyDescription;
-
   /// Reference row label for Markdown headings.
   ///
   /// In en, this message translates to:
@@ -4578,61 +4566,31 @@ abstract class AppLocalizations {
   /// **'Semantic text tags'**
   String get syntaxReferenceHtmlNeutralInlineTags;
 
-  /// Reference row label for sanitized preview behavior.
-  ///
-  /// In en, this message translates to:
-  /// **'Sanitized preview'**
-  String get syntaxReferenceSanitizedPreview;
-
-  /// Reference row description for sanitized preview behavior.
+  /// Description of how BusyMark previews allowed raw HTML.
   ///
   /// In en, this message translates to:
   /// **'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.'**
   String get syntaxReferenceSanitizedPreviewDescription;
 
-  /// Reference row label for raw source preservation.
-  ///
-  /// In en, this message translates to:
-  /// **'Source is preserved'**
-  String get syntaxReferenceSourcePreserved;
-
-  /// Reference row description for raw source preservation.
+  /// Description of raw HTML source preservation.
   ///
   /// In en, this message translates to:
   /// **'Unedited raw HTML is saved back exactly as source text.'**
   String get syntaxReferenceSourcePreservedDescription;
 
-  /// Reference row label for Markdown inside raw HTML.
-  ///
-  /// In en, this message translates to:
-  /// **'Markdown inside HTML'**
-  String get syntaxReferenceMarkdownInsideHtml;
-
-  /// Reference row description for Markdown inside raw HTML.
+  /// Limitation for Markdown markers inside raw HTML.
   ///
   /// In en, this message translates to:
   /// **'Markdown markers inside raw HTML render as literal text.'**
   String get syntaxReferenceMarkdownInsideHtmlDescription;
 
-  /// Reference row label for blocked HTML content.
-  ///
-  /// In en, this message translates to:
-  /// **'Blocked active content'**
-  String get syntaxReferenceBlockedContent;
-
-  /// Reference row description for blocked HTML content.
+  /// Description of raw HTML content blocked from preview.
   ///
   /// In en, this message translates to:
   /// **'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.'**
   String get syntaxReferenceBlockedContentDescription;
 
-  /// Reference row label for safe URL policy.
-  ///
-  /// In en, this message translates to:
-  /// **'Safe URLs only'**
-  String get syntaxReferenceSafeUrls;
-
-  /// Reference row description for safe URL policy.
+  /// Limitation describing URL schemes accepted in raw HTML.
   ///
   /// In en, this message translates to:
   /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
@@ -4691,12 +4649,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Official documentation'**
   String get syntaxReferenceOfficialDocumentation;
-
-  /// Scope label for syntax recognized in ordinary and Writerside Markdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Ordinary Markdown and Writerside Markdown'**
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown;
 
   /// Scope label for syntax recognized only in Writerside Markdown.
   ///

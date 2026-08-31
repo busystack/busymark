@@ -49,7 +49,7 @@ class WritersideDocumentRenderer {
       if (node is WritersideMarkdownBlockNode) {
         if (node.block.kind != BusyBlockKind.frontMatter &&
             !node.block.isSourceOnly) {
-          result.add(node.block);
+          result.add(_withProvenance(node.block, node.provenance));
         }
         continue;
       }
@@ -148,32 +148,14 @@ class WritersideDocumentRenderer {
             ),
           );
         case WritersideSemanticKind.list:
-          result.addAll(_blocks(element.children, headingLevel: headingLevel));
+          result.addAll(_listBlocks(element, headingLevel: headingLevel));
         case WritersideSemanticKind.listItem:
-          final checked = element.attributes['checked'];
-          final ordered =
-              element.attributes['type'] == 'decimal' ||
-              (element.attributes['ordered'] == 'true');
           result.add(
-            BusyBlock(
-              id: _nodeId(element),
-              kind: checked == null
-                  ? ordered
-                        ? BusyBlockKind.orderedListItem
-                        : BusyBlockKind.unorderedListItem
-                  : BusyBlockKind.taskListItem,
-              inlines: _inlines(element.children, element),
-              children: _nestedBlocks(
-                element.children,
-                headingLevel: headingLevel,
-              ),
-              attributes: {
-                ...attributes,
-                'ordered': '$ordered',
-                'marker': ordered ? '1.' : '-',
-                if (checked != null) 'task': checked,
-              },
-              sourceSpan: element.span,
+            _listItemBlock(
+              element,
+              listType: 'bullet',
+              itemNumber: 1,
+              headingLevel: headingLevel,
             ),
           );
         case WritersideSemanticKind.table:
@@ -430,6 +412,67 @@ class WritersideDocumentRenderer {
     );
   }
 
+  List<BusyBlock> _listBlocks(
+    WritersideElementNode list, {
+    required int headingLevel,
+  }) {
+    final type = list.attributes['type']?.trim().toLowerCase() ?? 'bullet';
+    final start = int.tryParse(list.attributes['start'] ?? '') ?? 1;
+    var itemNumber = start;
+    final result = <BusyBlock>[];
+    for (final child in list.children) {
+      if (child is WritersideElementNode &&
+          child.semanticKind == WritersideSemanticKind.listItem) {
+        result.add(
+          _listItemBlock(
+            child,
+            listType: type,
+            itemNumber: itemNumber++,
+            headingLevel: headingLevel,
+          ),
+        );
+      } else {
+        result.addAll(_blocks([child], headingLevel: headingLevel));
+      }
+    }
+    return result;
+  }
+
+  BusyBlock _listItemBlock(
+    WritersideElementNode item, {
+    required String listType,
+    required int itemNumber,
+    required int headingLevel,
+  }) {
+    final ordered = listType == 'decimal' || listType == 'alpha-lower';
+    final checkbox = listType == 'checkbox';
+    final marker = switch (listType) {
+      'decimal' => '$itemNumber.',
+      'alpha-lower' => '${_alphaMarker(itemNumber)}.',
+      'none' => '',
+      _ => '-',
+    };
+    return BusyBlock(
+      id: _nodeId(item),
+      kind: checkbox
+          ? BusyBlockKind.taskListItem
+          : ordered
+          ? BusyBlockKind.orderedListItem
+          : BusyBlockKind.unorderedListItem,
+      inlines: _inlines(item.children, item),
+      children: _nestedBlocks(item.children, headingLevel: headingLevel),
+      attributes: {
+        ..._attributes(item),
+        'ordered': '$ordered',
+        'marker': marker,
+        'listType': listType,
+        if (listType == 'none') 'markerHidden': 'true',
+        if (checkbox) 'task': item.attributes['checked'] ?? 'false',
+      },
+      sourceSpan: item.span,
+    );
+  }
+
   BusyBlock _imageBlock(WritersideElementNode image) {
     final inline = _imageInline(image);
     return BusyBlock(
@@ -587,6 +630,10 @@ class WritersideDocumentRenderer {
   Map<String, String> _attributes(WritersideElementNode element) => {
     'element': element.name,
     ...element.attributes,
+    if (element.provenance case final provenance?) ...{
+      writersideSourceModuleRootAttribute: provenance.moduleRoot,
+      writersideSourceTopicPathAttribute: provenance.topicPath,
+    },
     if (element is WritersideGenericElementNode)
       'schemaKnown': '${element.schemaKnown}',
   };
@@ -605,4 +652,44 @@ class WritersideDocumentRenderer {
   String _trimCode(String value) => value
       .replaceFirst(RegExp(r'^\r?\n'), '')
       .replaceFirst(RegExp(r'\r?\n\s*$'), '');
+
+  BusyBlock _withProvenance(
+    BusyBlock block,
+    WritersideSourceProvenance? provenance,
+  ) {
+    if (provenance == null) {
+      return block;
+    }
+    BusyInline annotateInline(BusyInline inline) => inline.copyWith(
+      attributes: {
+        ...inline.attributes,
+        writersideSourceModuleRootAttribute: provenance.moduleRoot,
+        writersideSourceTopicPathAttribute: provenance.topicPath,
+      },
+      children: inline.children.map(annotateInline).toList(growable: false),
+    );
+
+    return block.copyWith(
+      attributes: {
+        ...block.attributes,
+        writersideSourceModuleRootAttribute: provenance.moduleRoot,
+        writersideSourceTopicPathAttribute: provenance.topicPath,
+      },
+      inlines: block.inlines.map(annotateInline).toList(growable: false),
+      children: block.children
+          .map((child) => _withProvenance(child, provenance))
+          .toList(growable: false),
+    );
+  }
+
+  String _alphaMarker(int value) {
+    var number = value < 1 ? 1 : value;
+    final result = StringBuffer();
+    while (number > 0) {
+      number--;
+      result.writeCharCode(97 + (number % 26));
+      number ~/= 26;
+    }
+    return result.toString().split('').reversed.join();
+  }
 }

@@ -3514,14 +3514,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Aturan Keamanan",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "HTML mentah diurai dan dibersihkan sebelum rendering pratinjau.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Judul",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3570,41 +3562,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Pratinjau yang sudah disanitasi",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "HTML yang diizinkan diubah menjadi blok pratinjau BusyMark, tidak dirender di browser.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Sumber dipertahankan",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "HTML mentah yang belum diedit disimpan kembali persis seperti teks sumber.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown di dalam HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Penanda Markdown di dalam HTML mentah dirender sebagai teks literal.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Konten aktif yang diblokir",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Skrip, gaya, bingkai, formulir, SVG, MathML, peristiwa, dan atribut tidak aman diblokir.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Hanya URL aman",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Tautan mengizinkan URL http, https, mailto, tel, relatif, dan fragmen; skema yang tidak aman diblokir.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3623,7 +3595,6 @@
   "syntaxReferenceScope": "Cakupan",
   "syntaxReferenceLimitation": "Batasan BusyMark",
   "syntaxReferenceOfficialDocumentation": "Dokumentasi resmi",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown biasa dan Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdown": "Hanya Markdown Writerside",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Hanya Markdown Writerside dan XML Writerside",
   "syntaxReferenceMarkdownDescription": "Bentuk Markdown utama yang dapat ditulis dan dipratinjau BusyMark.",

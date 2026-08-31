@@ -2386,14 +2386,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "قواعد الأمان",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "العناوين",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -2442,41 +2434,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "معاينة منظفة",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "يتم حفظ المصدر",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown داخل HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "تعرض علامات Markdown داخل HTML الخام كنص حرفي.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "المحتوى النشط محظور",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "عناوين URL آمنة فقط",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -2699,7 +2671,6 @@
   "syntaxReferenceScope": "النطاق",
   "syntaxReferenceLimitation": "قيد في BusyMark",
   "syntaxReferenceOfficialDocumentation": "الوثائق الرسمية",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown العادي وMarkdown في Writerside",
   "syntaxReferenceScopeWritersideMarkdown": "Markdown في Writerside فقط",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Markdown وXML في Writerside فقط",
   "syntaxReferenceMarkdownDescription": "أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.",

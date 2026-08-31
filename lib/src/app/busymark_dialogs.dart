@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
 import 'busymark_dialog_identity.dart';
@@ -33,18 +34,13 @@ const _writersideMathDocumentationUrl =
     'https://www.jetbrains.com/help/writerside/math-support.html';
 const _writersideMermaidDocumentationUrl =
     'https://www.jetbrains.com/help/writerside/mermaid-diagrams.html';
+const _writersidePlantUmlDocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/plantuml-diagrams.html';
+const _writersideD2DocumentationUrl =
+    'https://www.jetbrains.com/help/writerside/d2-diagrams.html';
 const _writersideVideoDocumentationUrl =
     'https://www.jetbrains.com/help/writerside/videos.html';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
-const _supportedRawHtmlBlockTags =
-    'article, aside, div, section, header, footer, main, nav, h1-h6, p, '
-    'blockquote, address, hr, ul, ol, li, dl, dt, dd, table, caption, '
-    'colgroup, col, thead, tbody, tfoot, tr, th, td, pre, details, summary, '
-    'figure, figcaption';
-const _supportedRawHtmlInlineTags =
-    'span, strong, em, b, i, u, s, small, mark, sub, sup, code, kbd, samp, '
-    'var, abbr, cite, q, dfn, time, data, bdi, bdo, wbr, ins, del, ruby, '
-    'rt, rp, a, img, br';
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
@@ -69,6 +65,10 @@ final _writersideMathDocumentationUri = Uri.parse(
 final _writersideMermaidDocumentationUri = Uri.parse(
   _writersideMermaidDocumentationUrl,
 );
+final _writersidePlantUmlDocumentationUri = Uri.parse(
+  _writersidePlantUmlDocumentationUrl,
+);
+final _writersideD2DocumentationUri = Uri.parse(_writersideD2DocumentationUrl);
 final _writersideVideoDocumentationUri = Uri.parse(
   _writersideVideoDocumentationUrl,
 );
@@ -348,7 +348,7 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final editorSurface = Theme.of(context).scaffoldBackgroundColor;
+    final dialogSurface = busyMarkDialogSurfaceColor(context);
     final effectiveMaxWidth = maxWidth.isFinite
         ? maxWidth.clamp(0.0, double.infinity).toDouble()
         : maxWidth;
@@ -363,10 +363,10 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
         : maxHeight!.clamp(0.0, double.infinity).toDouble();
 
     return BusyMarkSurfaceScope(
-      role: BusyMarkSurfaceRole.window,
+      role: BusyMarkSurfaceRole.dialog,
       child: Dialog(
-        backgroundColor: editorSurface,
-        surfaceTintColor: editorSurface,
+        backgroundColor: dialogSurface,
+        surfaceTintColor: dialogSurface,
         insetPadding: insetPadding,
         insetAnimationDuration: MediaQuery.disableAnimationsOf(context)
             ? Duration.zero
@@ -1000,6 +1000,47 @@ enum _SyntaxReferenceCategory {
   writerside,
 }
 
+class _SyntaxReferenceTopic {
+  const _SyntaxReferenceTopic({required this.label, required this.targetTitle});
+
+  final String label;
+  final String targetTitle;
+}
+
+class _SyntaxReferenceDocumentationLink {
+  const _SyntaxReferenceDocumentationLink({
+    required this.label,
+    required this.uri,
+  });
+
+  final String label;
+  final Uri uri;
+}
+
+List<_SyntaxReferenceDocumentationLink> _writersideDiagramDocumentationLinks(
+  AppLocalizations l10n,
+) => [
+  _SyntaxReferenceDocumentationLink(
+    label: l10n.syntaxReferenceMermaid,
+    uri: _writersideMermaidDocumentationUri,
+  ),
+  _SyntaxReferenceDocumentationLink(
+    label: l10n.syntaxReferencePlantUml,
+    uri: _writersidePlantUmlDocumentationUri,
+  ),
+  _SyntaxReferenceDocumentationLink(
+    label: l10n.syntaxReferenceD2,
+    uri: _writersideD2DocumentationUri,
+  ),
+];
+
+GlobalKey<State<StatefulWidget>> _syntaxReferenceEntryKey(
+  _SyntaxReferenceCategory category,
+  String title,
+) => GlobalObjectKey<State<StatefulWidget>>(
+  'syntax-reference-entry-${category.name}-$title',
+);
+
 class _SyntaxReferenceDialog extends StatefulWidget {
   const _SyntaxReferenceDialog();
 
@@ -1008,8 +1049,12 @@ class _SyntaxReferenceDialog extends StatefulWidget {
 }
 
 class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
+  static const _sidebarBreakpoint = 700.0;
+  static const _sidebarWidth = 200.0;
+
   final _scrollController = ScrollController();
   var _category = _SyntaxReferenceCategory.markdown;
+  String? _selectedTopic;
 
   @override
   void dispose() {
@@ -1023,85 +1068,143 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
     return BusyMarkInformationalDialog(
       key: const ValueKey('syntax-reference-dialog'),
       closeLabel: context.l10n.close,
-      maxWidth: BusyMarkSizes.dialogWide,
-      maxHeight: 680,
+      title: Text(context.l10n.syntaxReference),
+      maxWidth: BusyMarkSizes.modalMaxWidth,
+      maxHeight:
+          (MediaQuery.sizeOf(context).height *
+                  BusyMarkSizes.modalMaxHeightFraction)
+              .clamp(0, 720),
       scrollable: false,
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(
-          BusyMarkSpacing.lg,
-          BusyMarkSpacing.md,
-          BusyMarkSpacing.lg,
-          BusyMarkSpacing.lg,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  BusyMarkGlyphs.markdownFile,
-                  size: BusyMarkSizes.iconButton,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Text(
-                    context.l10n.syntaxReference,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: BusyMarkSpacing.md),
-            InputDecorator(
-              decoration: InputDecoration(
-                labelText: context.l10n.syntaxReferenceCategory,
-                prefixIcon: const Icon(BusyMarkGlyphs.category),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<_SyntaxReferenceCategory>(
-                  key: const ValueKey('syntax-reference-category-selector'),
-                  value: _category,
-                  isExpanded: true,
-                  isDense: true,
-                  items: [
-                    for (final category in _SyntaxReferenceCategory.values)
-                      DropdownMenuItem(
-                        value: category,
-                        child: Text(_categoryLabel(context, category)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final topics = _categoryTopics(context, _category);
+                if (constraints.maxWidth >= _sidebarBreakpoint) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: _sidebarWidth,
+                        child: _SyntaxReferenceSidebar(
+                          selected: _category,
+                          labelFor: (category) =>
+                              _categoryLabel(context, category),
+                          iconFor: _categoryIcon,
+                          topics: topics,
+                          selectedTopic: _selectedTopic,
+                          onSelected: _selectCategory,
+                          onTopicSelected: _selectTopic,
+                        ),
                       ),
+                      Expanded(child: _referenceViewport(context)),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        BusyMarkSpacing.lg,
+                        BusyMarkSpacing.md,
+                        BusyMarkSpacing.lg,
+                        BusyMarkSpacing.md,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _SyntaxReferenceCategoryMenu(
+                            selected: _category,
+                            labelFor: (category) =>
+                                _categoryLabel(context, category),
+                            iconFor: _categoryIcon,
+                            onSelected: _selectCategory,
+                          ),
+                          const SizedBox(height: BusyMarkSpacing.sm),
+                          _SyntaxReferenceTopicMenu(
+                            topics: topics,
+                            selected: _selectedTopic,
+                            onSelected: _selectTopic,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
+                    Expanded(child: _referenceViewport(context)),
                   ],
-                  onChanged: (category) {
-                    if (category == null || category == _category) {
-                      return;
-                    }
-                    setState(() => _category = category);
-                    if (_scrollController.hasClients) {
-                      _scrollController.jumpTo(0);
-                    }
-                  },
-                ),
-              ),
+                );
+              },
             ),
-            const SizedBox(height: BusyMarkSpacing.md),
-            Expanded(
-              child: Scrollbar(
-                controller: _scrollController,
-                child: SingleChildScrollView(
-                  key: ValueKey('syntax-reference-category-${_category.name}'),
-                  controller: _scrollController,
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: _categoryContent(context, _category),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _referenceViewport(BuildContext context) {
+    return Scrollbar(
+      controller: _scrollController,
+      child: SingleChildScrollView(
+        key: ValueKey('syntax-reference-category-${_category.name}'),
+        controller: _scrollController,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          BusyMarkSpacing.xl,
+          BusyMarkSpacing.lg,
+          BusyMarkSpacing.xl,
+          BusyMarkSpacing.xxl,
+        ),
+        child: _categoryContent(context, _category),
+      ),
+    );
+  }
+
+  void _selectCategory(_SyntaxReferenceCategory category) {
+    if (category == _category) {
+      setState(() => _selectedTopic = null);
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: BusyMarkMotion.scroll,
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
+    setState(() {
+      _category = category;
+      _selectedTopic = null;
+    });
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  void _selectTopic(String topic) {
+    setState(() => _selectedTopic = topic);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final targetContext = _syntaxReferenceEntryKey(
+        _category,
+        topic,
+      ).currentContext;
+      if (targetContext == null) {
+        return;
+      }
+      unawaited(
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: BusyMarkMotion.scroll,
+          curve: Curves.easeOutCubic,
+          alignment: 0.08,
+        ),
+      );
+    });
   }
 
   String _categoryLabel(
@@ -1116,6 +1219,86 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
       context.l10n.syntaxReferenceCategoryMathematics,
     _SyntaxReferenceCategory.writerside => context.l10n.writerside,
   };
+
+  IconData _categoryIcon(_SyntaxReferenceCategory category) =>
+      switch (category) {
+        _SyntaxReferenceCategory.markdown => BusyMarkGlyphs.markdownFile,
+        _SyntaxReferenceCategory.html => BusyMarkGlyphs.htmlBlock,
+        _SyntaxReferenceCategory.diagramsAndApi => BusyMarkGlyphs.symbols,
+        _SyntaxReferenceCategory.mathematics => BusyMarkGlyphs.math,
+        _SyntaxReferenceCategory.writerside => BusyMarkGlyphs.writersideProject,
+      };
+
+  List<_SyntaxReferenceTopic> _categoryTopics(
+    BuildContext context,
+    _SyntaxReferenceCategory category,
+  ) {
+    final l10n = context.l10n;
+    return switch (category) {
+      _SyntaxReferenceCategory.markdown => [
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceMarkdownBlocks,
+          targetTitle: l10n.syntaxReferenceHeadings,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceInlineFormatting,
+          targetTitle: l10n.bold,
+        ),
+      ],
+      _SyntaxReferenceCategory.html => [
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceRawHtmlBlocks,
+          targetTitle: l10n.syntaxReferenceHtmlContainers,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceRawHtmlInline,
+          targetTitle: l10n.syntaxReferenceHtmlFormattingTags,
+        ),
+      ],
+      _SyntaxReferenceCategory.diagramsAndApi => [
+        _SyntaxReferenceTopic(
+          label: l10n.codeBlock,
+          targetTitle: l10n.syntaxReferenceMermaid,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceSemanticDiagramBlocks,
+          targetTitle: l10n.syntaxReferenceSemanticDiagramBlocks,
+        ),
+      ],
+      _SyntaxReferenceCategory.mathematics => [
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceInlineMath,
+          targetTitle: l10n.syntaxReferenceInlineMath,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceDisplayMath,
+          targetTitle: l10n.syntaxReferenceDisplayMath,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceTexFence,
+          targetTitle: l10n.syntaxReferenceTexFence,
+        ),
+      ],
+      _SyntaxReferenceCategory.writerside => [
+        _SyntaxReferenceTopic(
+          label: l10n.admonition,
+          targetTitle: l10n.syntaxReferenceAdmonitionBlockquote,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceSemanticCollapsibles,
+          targetTitle: l10n.syntaxReferenceCollapsibleHeading,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceSemanticCodeBlocks,
+          targetTitle: l10n.syntaxReferenceSemanticCodeBlocks,
+        ),
+        _SyntaxReferenceTopic(
+          label: l10n.syntaxReferenceVideo,
+          targetTitle: l10n.syntaxReferenceVideo,
+        ),
+      ],
+    };
+  }
 
   Widget _categoryContent(
     BuildContext context,
@@ -1132,11 +1315,15 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
 
   Widget _markdownReference(BuildContext context) {
     final l10n = context.l10n;
-    final scope = l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    final scope = l10n.markdown;
     return _SyntaxReferenceCategoryContent(
+      category: _SyntaxReferenceCategory.markdown,
+      title: l10n.markdown,
       description: l10n.syntaxReferenceMarkdownDescription,
       entries: [
         _SyntaxReferenceEntry(
+          sectionTitle: l10n.syntaxReferenceMarkdownBlocks,
+          sectionDescription: l10n.syntaxReferenceMarkdownBlocksDescription,
           title: l10n.syntaxReferenceHeadings,
           example: '# Heading',
           identifiers: '#, ##, ###, ####, #####, ######',
@@ -1186,13 +1373,6 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           documentationUri: _githubMarkdownDocumentationUri,
         ),
         _SyntaxReferenceEntry(
-          title: l10n.link,
-          example: '[BusyMark](https://busystack.org)',
-          identifiers: '[text](url), [text][label]',
-          scope: scope,
-          documentationUri: _commonMarkDocumentationUri,
-        ),
-        _SyntaxReferenceEntry(
           title: l10n.image,
           example: '![Alternative text](image.png)',
           identifiers: '![alt](src), ![alt][label]',
@@ -1200,16 +1380,53 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           documentationUri: _commonMarkDocumentationUri,
         ),
         _SyntaxReferenceEntry(
-          title: l10n.syntaxReferenceInlineFormatting,
-          example: '**bold** *italic* ~~removed~~ `code`',
-          identifiers: '**, __, *, _, ~~, `',
+          title: l10n.thematicBreak,
+          example: '---',
+          identifiers: '---, ***, ___',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          sectionTitle: l10n.syntaxReferenceInlineFormatting,
+          sectionDescription: l10n.syntaxReferenceInlineFormattingDescription,
+          title: l10n.bold,
+          example: '**bold**',
+          identifiers: '**...**, __...__',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.italic,
+          example: '*italic*',
+          identifiers: '*...*, _..._',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.underline,
+          example: '<u>underlined</u>',
+          identifiers: '<u>...</u>',
+          scope: scope,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.strikethrough,
+          example: '~~removed~~',
+          identifiers: '~~...~~',
           scope: scope,
           documentationUri: _githubMarkdownDocumentationUri,
         ),
         _SyntaxReferenceEntry(
-          title: l10n.thematicBreak,
-          example: '---',
-          identifiers: '---, ***, ___',
+          title: l10n.inlineCode,
+          example: '`code`',
+          identifiers: '`...`',
+          scope: scope,
+          documentationUri: _commonMarkDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.link,
+          example: '[BusyMark](https://busystack.org)',
+          identifiers: '[text](url), [text][label]',
           scope: scope,
           documentationUri: _commonMarkDocumentationUri,
         ),
@@ -1227,54 +1444,129 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
   Widget _htmlReference(BuildContext context) {
     final l10n = context.l10n;
     return _SyntaxReferenceCategoryContent(
+      category: _SyntaxReferenceCategory.html,
+      title: l10n.syntaxReferenceCategoryHtml,
       description: l10n.syntaxReferenceHtmlDescription,
       entries: [
         _SyntaxReferenceEntry(
-          title: l10n.syntaxReferenceRawHtmlBlocks,
+          sectionTitle: l10n.syntaxReferenceRawHtmlBlocks,
+          sectionDescription: l10n.syntaxReferenceRawHtmlBlocksDescription,
+          title: l10n.syntaxReferenceHtmlContainers,
           example: '<section>\n  <p>Text</p>\n</section>',
-          identifiers: _supportedRawHtmlBlockTags,
-          scope: l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown,
-          limitation: l10n.syntaxReferenceMarkdownInsideHtmlDescription,
+          identifiers:
+              'article, aside, div, section, header, footer, main, nav',
+          scope: l10n.markdown,
           documentationUri: _htmlDocumentationUri,
         ),
         _SyntaxReferenceEntry(
-          title: l10n.syntaxReferenceRawHtmlInline,
-          example: '<strong>Important</strong>',
-          identifiers: _supportedRawHtmlInlineTags,
-          scope: l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown,
+          title: l10n.syntaxReferenceHtmlTextBlocks,
+          example: '<h2>Heading</h2>\n<p>Text</p>',
+          identifiers: 'h1-h6, p, blockquote, address, hr',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceLists,
+          example: '<ul>\n  <li>One</li>\n  <li>Two</li>\n</ul>',
+          identifiers: 'ul, ol, li',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.table,
+          example:
+              '<table>\n  <tr><th>Name</th></tr>\n'
+              '  <tr><td>BusyMark</td></tr>\n</table>',
+          identifiers:
+              'table, caption, colgroup, col, thead, tbody, tfoot, tr, th, td',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlFigures,
+          example:
+              '<figure>\n  <img src="image.png" alt="Diagram">\n'
+              '  <figcaption>Diagram</figcaption>\n</figure>',
+          identifiers: 'figure, figcaption, img',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlPreformatted,
+          example: '<pre><code>const answer = 42;</code></pre>',
+          identifiers: 'pre, code',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlDisclosure,
+          example:
+              '<details>\n  <summary>Details</summary>\n  Text\n</details>',
+          identifiers: 'details, summary',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlDescriptionLists,
+          example: '<dl>\n  <dt>Term</dt>\n  <dd>Meaning</dd>\n</dl>',
+          identifiers: 'dl, dt, dd',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          sectionTitle: l10n.syntaxReferenceRawHtmlInline,
+          sectionDescription: l10n.syntaxReferenceRawHtmlInlineDescription,
+          title: l10n.syntaxReferenceHtmlFormattingTags,
+          example: '<strong>Important</strong> and <u>underlined</u>',
+          identifiers:
+              'strong, em, b, i, u, s, small, mark, sub, sup, ins, del',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlInlineCodeTags,
+          example: '<kbd>Ctrl</kbd> + <code>M</code>',
+          identifiers: 'code, kbd, samp, var',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.link,
+          example: '<a href="https://busystack.org">BusyMark</a>',
+          identifiers: 'a, href',
+          scope: l10n.markdown,
+          limitation: l10n.syntaxReferenceSafeUrlsDescription,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.inlineImage,
+          example: '<img src="image.png" alt="Diagram">',
+          identifiers: 'img, src, alt',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceHtmlNeutralInlineTags,
+          example: '<abbr title="Application Programming Interface">API</abbr>',
+          identifiers:
+              'span, abbr, cite, q, dfn, time, data, bdi, bdo, ruby, rt, rp',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.hardLineBreak,
+          example: 'First line<br>\nSecond line',
+          identifiers: 'br, wbr',
+          scope: l10n.markdown,
           documentationUri: _htmlDocumentationUri,
         ),
       ],
-      footer: BusyMarkGroupedList(
-        title: l10n.syntaxReferenceSafety,
-        description: l10n.syntaxReferenceSafetyDescription,
-        filled: true,
-        children: [
-          BusyMarkActionRow(
-            title: l10n.syntaxReferenceSanitizedPreview,
-            subtitle: l10n.syntaxReferenceSanitizedPreviewDescription,
-            leading: const Icon(BusyMarkGlyphs.check),
-          ),
-          BusyMarkActionRow(
-            title: l10n.syntaxReferenceSourcePreserved,
-            subtitle: l10n.syntaxReferenceSourcePreservedDescription,
-            leading: const Icon(BusyMarkGlyphs.document),
-          ),
-          BusyMarkActionRow(
-            title: l10n.syntaxReferenceMarkdownInsideHtml,
-            subtitle: l10n.syntaxReferenceMarkdownInsideHtmlDescription,
-            leading: const Icon(BusyMarkGlyphs.markdownFile),
-          ),
-          BusyMarkActionRow(
-            title: l10n.syntaxReferenceBlockedContent,
-            subtitle: l10n.syntaxReferenceBlockedContentDescription,
-            leading: const Icon(BusyMarkGlyphs.warning),
-          ),
-          BusyMarkActionRow(
-            title: l10n.syntaxReferenceSafeUrls,
-            subtitle: l10n.syntaxReferenceSafeUrlsDescription,
-            leading: const Icon(BusyMarkGlyphs.link),
-          ),
+      footer: _SyntaxReferenceNote(
+        items: [
+          l10n.syntaxReferenceSanitizedPreviewDescription,
+          l10n.syntaxReferenceSourcePreservedDescription,
+          l10n.syntaxReferenceMarkdownInsideHtmlDescription,
+          l10n.syntaxReferenceBlockedContentDescription,
         ],
       ),
     );
@@ -1282,8 +1574,10 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
 
   Widget _diagramsAndApiReference(BuildContext context) {
     final l10n = context.l10n;
-    final scope = l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    final scope = l10n.markdown;
     return _SyntaxReferenceCategoryContent(
+      category: _SyntaxReferenceCategory.diagramsAndApi,
+      title: l10n.syntaxReferenceCategoryDiagramsAndApi,
       description: l10n.syntaxReferenceDiagramsDescription,
       entries: [
         _SyntaxReferenceEntry(
@@ -1325,7 +1619,7 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           identifiers: 'mermaid, plantuml, puml, d2',
           scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
           limitation: l10n.syntaxReferenceSemanticDiagramLimitation,
-          documentationUri: _writersideMermaidDocumentationUri,
+          documentationLinks: _writersideDiagramDocumentationLinks(l10n),
         ),
         _SyntaxReferenceEntry(
           title: l10n.syntaxReferenceReferencedDiagramSource,
@@ -1335,7 +1629,7 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           identifiers: 'src',
           scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
           limitation: l10n.syntaxReferenceReferencedDiagramLimitation,
-          documentationUri: _writersideMermaidDocumentationUri,
+          documentationLinks: _writersideDiagramDocumentationLinks(l10n),
         ),
       ],
     );
@@ -1343,9 +1637,10 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
 
   Widget _mathematicsReference(BuildContext context) {
     final l10n = context.l10n;
-    final markdownScope =
-        l10n.syntaxReferenceScopeMarkdownAndWritersideMarkdown;
+    final markdownScope = l10n.markdown;
     return _SyntaxReferenceCategoryContent(
+      category: _SyntaxReferenceCategory.mathematics,
+      title: l10n.syntaxReferenceCategoryMathematics,
       description: l10n.syntaxReferenceMathematicsDescription,
       entries: [
         _SyntaxReferenceEntry(
@@ -1412,6 +1707,8 @@ $$''',
   Widget _writersideReference(BuildContext context) {
     final l10n = context.l10n;
     return _SyntaxReferenceCategoryContent(
+      category: _SyntaxReferenceCategory.writerside,
+      title: l10n.writerside,
       description: l10n.syntaxReferenceWritersideDescription,
       entries: [
         _SyntaxReferenceEntry(
@@ -1420,18 +1717,6 @@ $$''',
           identifiers: '>, style="note", style="warning", style="quote"',
           scope: l10n.syntaxReferenceScopeWritersideMarkdown,
           limitation: l10n.syntaxReferenceAdmonitionLimitation,
-          documentationUri: _writersideAdmonitionDocumentationUri,
-        ),
-        _SyntaxReferenceEntry(
-          title: l10n.syntaxReferenceSemanticAdmonitions,
-          example:
-              '<tip>Try this first.</tip>\n'
-              '<note>Remember this.</note>\n'
-              '<warning>Use care.</warning>\n'
-              '<quote>Quoted text.</quote>',
-          identifiers: 'tip, note, warning, quote',
-          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
-          limitation: l10n.syntaxReferenceSemanticMarkupLimitation,
           documentationUri: _writersideAdmonitionDocumentationUri,
         ),
         _SyntaxReferenceEntry(
@@ -1452,6 +1737,18 @@ $$''',
           documentationUri: _writersideCollapsibleDocumentationUri,
         ),
         _SyntaxReferenceEntry(
+          title: l10n.syntaxReferenceSemanticAdmonitions,
+          example:
+              '<tip>Try this first.</tip>\n'
+              '<note>Remember this.</note>\n'
+              '<warning>Use care.</warning>\n'
+              '<quote>Quoted text.</quote>',
+          identifiers: 'tip, note, warning, quote',
+          scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
+          limitation: l10n.syntaxReferenceSemanticMarkupLimitation,
+          documentationUri: _writersideAdmonitionDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
           title: l10n.syntaxReferenceSemanticCollapsibles,
           example:
               '<chapter title="Details" collapsible="true">\n'
@@ -1470,7 +1767,13 @@ $$''',
           identifiers: 'tex, mermaid, plantuml, puml, d2',
           scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
           limitation: l10n.syntaxReferenceSemanticDiagramLimitation,
-          documentationUri: _writersideMathDocumentationUri,
+          documentationLinks: [
+            _SyntaxReferenceDocumentationLink(
+              label: l10n.syntaxReferenceCategoryMathematics,
+              uri: _writersideMathDocumentationUri,
+            ),
+            ..._writersideDiagramDocumentationLinks(l10n),
+          ],
         ),
         _SyntaxReferenceEntry(
           title: l10n.syntaxReferenceReferencedDiagramSource,
@@ -1478,7 +1781,7 @@ $$''',
           identifiers: 'src',
           scope: l10n.syntaxReferenceScopeWritersideMarkdownAndXml,
           limitation: l10n.syntaxReferenceReferencedDiagramLimitation,
-          documentationUri: _writersideMermaidDocumentationUri,
+          documentationLinks: _writersideDiagramDocumentationLinks(l10n),
         ),
         _SyntaxReferenceEntry(
           title: l10n.syntaxReferenceVideo,
@@ -1498,116 +1801,630 @@ $$''',
   }
 }
 
+class _SyntaxReferenceSidebar extends StatelessWidget {
+  const _SyntaxReferenceSidebar({
+    required this.selected,
+    required this.labelFor,
+    required this.iconFor,
+    required this.topics,
+    required this.selectedTopic,
+    required this.onSelected,
+    required this.onTopicSelected,
+  });
+
+  final _SyntaxReferenceCategory selected;
+  final String Function(_SyntaxReferenceCategory category) labelFor;
+  final IconData Function(_SyntaxReferenceCategory category) iconFor;
+  final List<_SyntaxReferenceTopic> topics;
+  final String? selectedTopic;
+  final ValueChanged<_SyntaxReferenceCategory> onSelected;
+  final ValueChanged<String> onTopicSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final dialogSurface = busyMarkDialogSurfaceColor(context);
+    return KeyedSubtree(
+      key: const ValueKey('syntax-reference-category-selector'),
+      child: Material(
+        key: const ValueKey('syntax-reference-sidebar-surface'),
+        color: dialogSurface,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: BorderDirectional(
+              end: BorderSide(
+                color: colors.divider,
+                width: BusyMarkStroke.hairline,
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 216,
+                child: BusyMarkSidebarNavigation(
+                  surfaceColor: dialogSurface,
+                  children: [
+                    for (final category in _SyntaxReferenceCategory.values)
+                      BusyMarkSidebarNavigationTile(
+                        key: ValueKey(
+                          'syntax-reference-category-navigation-${category.name}',
+                        ),
+                        selected: category == selected,
+                        leading: Icon(iconFor(category)),
+                        title: Text(
+                          labelFor(category),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () => onSelected(category),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: BusyMarkSidebarNavigation(
+                  surfaceColor: dialogSurface,
+                  children: [
+                    for (var index = 0; index < topics.length; index++)
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: BusyMarkSpacing.md,
+                        ),
+                        child: BusyMarkSidebarNavigationTile(
+                          key: ValueKey(
+                            'syntax-reference-topic-navigation-'
+                            '${selected.name}-$index',
+                          ),
+                          selected: topics[index].targetTitle == selectedTopic,
+                          leading: const Icon(BusyMarkGlyphs.tag),
+                          title: Text(
+                            topics[index].label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () =>
+                              onTopicSelected(topics[index].targetTitle),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SyntaxReferenceCategoryMenu extends StatelessWidget {
+  const _SyntaxReferenceCategoryMenu({
+    required this.selected,
+    required this.labelFor,
+    required this.iconFor,
+    required this.onSelected,
+  });
+
+  final _SyntaxReferenceCategory selected;
+  final String Function(_SyntaxReferenceCategory category) labelFor;
+  final IconData Function(_SyntaxReferenceCategory category) iconFor;
+  final ValueChanged<_SyntaxReferenceCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkMenuButton<_SyntaxReferenceCategory>(
+      key: const ValueKey('syntax-reference-category-selector'),
+      tooltip: context.l10n.syntaxReferenceCategory,
+      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+      items: [
+        for (final category in _SyntaxReferenceCategory.values)
+          BusyMarkPopupMenuItem<_SyntaxReferenceCategory>(
+            value: category,
+            label: labelFor(category),
+            icon: iconFor(category),
+            checked: category == selected,
+            trailingCheck: true,
+          ),
+      ],
+      onSelected: onSelected,
+      triggerBuilder: (context, trigger) {
+        return trigger.anchor(
+          child: Tooltip(
+            message: context.l10n.syntaxReferenceCategory,
+            child: Semantics(
+              expanded: trigger.isOpen,
+              child: BusyMarkPushButton.standard(
+                onPressed: trigger.onPressed,
+                focusNode: trigger.focusNode,
+                child: Row(
+                  children: [
+                    Icon(iconFor(selected)),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        labelFor(selected),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(BusyMarkGlyphs.downArrow),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SyntaxReferenceTopicMenu extends StatelessWidget {
+  const _SyntaxReferenceTopicMenu({
+    required this.topics,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<_SyntaxReferenceTopic> topics;
+  final String? selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveSelection = topics.firstWhere(
+      (topic) => topic.targetTitle == selected,
+      orElse: () => topics.first,
+    );
+    return BusyMarkMenuButton<String>(
+      key: const ValueKey('syntax-reference-topic-selector'),
+      tooltip: effectiveSelection.label,
+      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+      items: [
+        for (final topic in topics)
+          BusyMarkPopupMenuItem<String>(
+            value: topic.targetTitle,
+            label: topic.label,
+            icon: BusyMarkGlyphs.tag,
+            checked: topic.targetTitle == effectiveSelection.targetTitle,
+            trailingCheck: true,
+          ),
+      ],
+      onSelected: onSelected,
+      triggerBuilder: (context, trigger) {
+        return trigger.anchor(
+          child: Tooltip(
+            message: effectiveSelection.label,
+            child: Semantics(
+              expanded: trigger.isOpen,
+              child: BusyMarkPushButton.standard(
+                onPressed: trigger.onPressed,
+                focusNode: trigger.focusNode,
+                child: Row(
+                  children: [
+                    const Icon(BusyMarkGlyphs.tag),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        effectiveSelection.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(BusyMarkGlyphs.downArrow),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SyntaxReferenceNote extends StatelessWidget {
+  const _SyntaxReferenceNote({required this.items});
+
+  final List<String> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: BusyMarkSpacing.lg),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.control,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var index = 0; index < items.length; index++) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: BusyMarkSpacing.xxs),
+                      child: Icon(
+                        BusyMarkGlyphs.info,
+                        size: BusyMarkSizes.iconSm,
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        items[index],
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                          height: BusyMarkTypography.bodyLineHeight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (index != items.length - 1)
+                  const SizedBox(height: BusyMarkSpacing.sm),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SyntaxReferenceSectionHeading extends StatelessWidget {
+  const _SyntaxReferenceSectionHeading({
+    required this.title,
+    required this.description,
+  });
+
+  final String title;
+  final String? description;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        if (description case final description?) ...[
+          const SizedBox(height: BusyMarkSpacing.xxs),
+          Text(
+            description,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: BusyMarkTypography.bodyLineHeight,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _SyntaxReferenceCategoryContent extends StatelessWidget {
   const _SyntaxReferenceCategoryContent({
+    required this.category,
+    required this.title,
     required this.description,
     required this.entries,
     this.footer,
   });
 
+  final _SyntaxReferenceCategory category;
+  final String title;
   final String description;
-  final List<Widget> entries;
+  final List<_SyntaxReferenceEntry> entries;
   final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
+    final dividerColor = BusyMarkSurfaceColors.of(context).divider;
+    final groupedEntries = <Widget>[];
+    final showScopeHeadings =
+        entries.map((entry) => entry.scope).toSet().length > 1;
+    String? currentScope;
+    for (final entry in entries) {
+      if (entry.sectionTitle case final sectionTitle?) {
+        if (groupedEntries.isNotEmpty) {
+          groupedEntries.add(const SizedBox(height: BusyMarkSpacing.xxl));
+        }
+        groupedEntries.add(
+          _SyntaxReferenceSectionHeading(
+            title: sectionTitle,
+            description: entry.sectionDescription,
+          ),
+        );
+        groupedEntries.add(const SizedBox(height: BusyMarkSpacing.xs));
+        currentScope = null;
+      }
+      if (entry.scope != currentScope) {
+        final isFirstGroup = currentScope == null;
+        if (showScopeHeadings && !isFirstGroup) {
+          groupedEntries.add(const SizedBox(height: BusyMarkSpacing.lg));
+        }
+        currentScope = entry.scope;
+        if (showScopeHeadings && !isFirstGroup) {
+          groupedEntries.add(_SyntaxReferenceScopeHeading(value: entry.scope));
+          groupedEntries.add(const SizedBox(height: BusyMarkSpacing.xs));
+        }
+      } else {
+        groupedEntries.add(Divider(height: 1, color: dividerColor));
+      }
+      groupedEntries.add(
+        KeyedSubtree(
+          key: _syntaxReferenceEntryKey(category, entry.title),
+          child: entry,
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
         Text(
           description,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        for (final (index, entry) in entries.indexed) ...[
-          entry,
-          if (index < entries.length - 1)
-            const SizedBox(height: BusyMarkSpacing.sm),
-        ],
+        const SizedBox(height: BusyMarkSpacing.lg),
+        ...groupedEntries,
         if (footer case final footer?) footer,
       ],
     );
   }
 }
 
-class _SyntaxReferenceEntry extends StatelessWidget {
-  const _SyntaxReferenceEntry({
-    required this.title,
-    required this.example,
-    required this.scope,
-    required this.documentationUri,
-    this.identifiers,
-    this.limitation,
-  });
+class _SyntaxReferenceScopeHeading extends StatelessWidget {
+  const _SyntaxReferenceScopeHeading({required this.value});
 
-  final String title;
-  final String example;
-  final String? identifiers;
-  final String scope;
-  final String? limitation;
-  final Uri documentationUri;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final textTheme = Theme.of(context).textTheme;
-    return BusyMarkGroupedSurface(
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final colorScheme = Theme.of(context).colorScheme;
+    return KeyedSubtree(
+      key: ValueKey('syntax-reference-scope-heading-$value'),
+      child: Semantics(
+        label: '${context.l10n.syntaxReferenceScope}: $value',
+        excludeSemantics: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            Padding(
+              padding: const EdgeInsets.only(top: BusyMarkSpacing.xxs),
+              child: Icon(
+                BusyMarkGlyphs.document,
+                size: BusyMarkSizes.iconSm,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SyntaxReferenceCode(
-              label: l10n.syntaxReferenceExample,
-              value: example,
-            ),
-            if (identifiers case final identifiers?) ...[
-              const SizedBox(height: BusyMarkSpacing.sm),
-              _SyntaxReferenceValue(
-                label: l10n.syntaxReferenceIdentifiers,
-                value: identifiers,
-                monospace: true,
-              ),
-            ],
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SyntaxReferenceValue(
-              label: l10n.syntaxReferenceScope,
-              value: scope,
-            ),
-            if (limitation case final limitation?) ...[
-              const SizedBox(height: BusyMarkSpacing.sm),
-              _SyntaxReferenceValue(
-                label: l10n.syntaxReferenceLimitation,
-                value: limitation,
-              ),
-            ],
-            const SizedBox(height: BusyMarkSpacing.xs),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton.icon(
-                onPressed: () => unawaited(
-                  launchUrl(
-                    documentationUri,
-                    mode: LaunchMode.externalApplication,
-                  ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: Text(
+                value,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
-                icon: const Icon(BusyMarkGlyphs.externalLink),
-                label: Text(l10n.syntaxReferenceOfficialDocumentation),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _SyntaxReferenceEntry extends StatelessWidget {
+  _SyntaxReferenceEntry({
+    required this.title,
+    required this.example,
+    required this.scope,
+    this.documentationUri,
+    this.documentationLinks = const [],
+    this.sectionTitle,
+    this.sectionDescription,
+    this.identifiers,
+    this.limitation,
+  }) : assert(
+         (documentationUri != null) != documentationLinks.isNotEmpty,
+         'Provide either documentationUri or documentationLinks.',
+       );
+
+  final String? sectionTitle;
+  final String? sectionDescription;
+  final String title;
+  final String example;
+  final String? identifiers;
+  final String scope;
+  final String? limitation;
+  final Uri? documentationUri;
+  final List<_SyntaxReferenceDocumentationLink> documentationLinks;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.md),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final details = _SyntaxReferenceEntryDetails(
+            title: title,
+            identifiers: identifiers,
+            limitation: limitation,
+            documentationUri: documentationUri,
+            documentationLinks: documentationLinks,
+          );
+          final exampleWidget = _SyntaxReferenceCode(
+            label: context.l10n.syntaxReferenceExample,
+            value: example,
+          );
+          if (constraints.maxWidth < 620) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                details,
+                const SizedBox(height: BusyMarkSpacing.sm),
+                exampleWidget,
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 4, child: details),
+              const SizedBox(width: BusyMarkSpacing.lg),
+              Expanded(flex: 5, child: exampleWidget),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SyntaxReferenceEntryDetails extends StatelessWidget {
+  const _SyntaxReferenceEntryDetails({
+    required this.title,
+    required this.identifiers,
+    required this.limitation,
+    required this.documentationUri,
+    required this.documentationLinks,
+  });
+
+  final String title;
+  final String? identifiers;
+  final String? limitation;
+  final Uri? documentationUri;
+  final List<_SyntaxReferenceDocumentationLink> documentationLinks;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: BusyMarkSpacing.xs),
+                child: Text(
+                  title,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            _SyntaxReferenceDocumentationAction(
+              featureTitle: title,
+              documentationUri: documentationUri,
+              documentationLinks: documentationLinks,
+            ),
+          ],
+        ),
+        if (identifiers case final identifiers?) ...[
+          const SizedBox(height: BusyMarkSpacing.xs),
+          _SyntaxReferenceValue(
+            label: l10n.syntaxReferenceIdentifiers,
+            value: identifiers,
+            icon: BusyMarkGlyphs.tag,
+            monospace: true,
+          ),
+        ],
+        if (limitation case final limitation?) ...[
+          const SizedBox(height: BusyMarkSpacing.xs),
+          _SyntaxReferenceValue(
+            label: l10n.syntaxReferenceLimitation,
+            value: limitation,
+            icon: BusyMarkGlyphs.info,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SyntaxReferenceDocumentationAction extends StatelessWidget {
+  const _SyntaxReferenceDocumentationAction({
+    required this.featureTitle,
+    required this.documentationUri,
+    required this.documentationLinks,
+  });
+
+  final String featureTitle;
+  final Uri? documentationUri;
+  final List<_SyntaxReferenceDocumentationLink> documentationLinks;
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = context.l10n.syntaxReferenceOfficialDocumentation;
+    final key = ValueKey('syntax-reference-documentation-$featureTitle');
+    if (documentationLinks.isEmpty) {
+      return IconButton(
+        key: key,
+        onPressed: () => _openDocumentation(documentationUri!),
+        tooltip: tooltip,
+        visualDensity: VisualDensity.compact,
+        iconSize: BusyMarkSizes.iconSm,
+        icon: const Icon(BusyMarkGlyphs.externalLink),
+      );
+    }
+    return BusyMarkMenuButton<Uri>(
+      key: key,
+      tooltip: tooltip,
+      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+      items: [
+        for (final link in documentationLinks)
+          BusyMarkPopupMenuItem<Uri>(
+            value: link.uri,
+            label: link.label,
+            icon: BusyMarkGlyphs.externalLink,
+          ),
+      ],
+      onSelected: _openDocumentation,
+      triggerBuilder: (context, trigger) {
+        return trigger.anchor(
+          child: IconButton(
+            onPressed: trigger.onPressed,
+            focusNode: trigger.focusNode,
+            tooltip: tooltip,
+            visualDensity: VisualDensity.compact,
+            iconSize: BusyMarkSizes.iconSm,
+            icon: const Icon(BusyMarkGlyphs.externalLink),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDocumentation(Uri uri) {
+    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
   }
 }
 
@@ -1620,33 +2437,33 @@ class _SyntaxReferenceCode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: BusyMarkSpacing.xxs),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.control,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-            border: Border.all(color: colors.subtleBorder),
-          ),
+    return Semantics(
+      label: label,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.control,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: SelectableText(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: BusyMarkTypography.monoFontFamily,
-                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-                ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.md,
+              vertical: BusyMarkSpacing.xs,
+            ),
+            child: SelectableText(
+              value,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                height: BusyMarkTypography.codeLineHeight,
+                fontFamily: BusyMarkTypography.monoFontFamily,
+                fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
               ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -1655,35 +2472,57 @@ class _SyntaxReferenceValue extends StatelessWidget {
   const _SyntaxReferenceValue({
     required this.label,
     required this.value,
+    required this.icon,
     this.monospace = false,
   });
 
   final String label;
   final String value;
+  final IconData icon;
   final bool monospace;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final valueWidget = SelectableText(
       value,
       style: textTheme.bodySmall?.copyWith(
+        height: BusyMarkTypography.bodyLineHeight,
         fontFamily: monospace ? BusyMarkTypography.monoFontFamily : null,
         fontFamilyFallback: monospace
             ? BusyMarkTypography.monoFontFamilyFallback
             : null,
       ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(label, style: textTheme.labelMedium),
-        const SizedBox(height: BusyMarkSpacing.xxs),
-        if (monospace)
-          Directionality(textDirection: TextDirection.ltr, child: valueWidget)
-        else
-          valueWidget,
-      ],
+    return Semantics(
+      label: '$label: $value',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Tooltip(
+            message: label,
+            child: Padding(
+              padding: const EdgeInsets.only(top: BusyMarkSpacing.xxs),
+              child: Icon(
+                icon,
+                size: BusyMarkSizes.iconSm,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(
+            child: monospace
+                ? Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: valueWidget,
+                  )
+                : valueWidget,
+          ),
+        ],
+      ),
     );
   }
 }

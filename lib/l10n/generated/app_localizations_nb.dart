@@ -2683,13 +2683,6 @@ class AppLocalizationsNb extends AppLocalizations {
       'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
 
   @override
-  String get syntaxReferenceSafety => 'Sikkerhetsregler';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Rå HTML analyseres og renses før forhåndsvisning.';
-
-  @override
   String get syntaxReferenceHeadings => 'Overskrifter';
 
   @override
@@ -2726,35 +2719,20 @@ class AppLocalizationsNb extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Semantiske teksttagger';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Renset forhåndsvisning';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Kilden bevares';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Uendret rå HTML lagres nøyaktig som kildetekst.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown inni HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Blokkert aktivt innhold';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Bare trygge URL-er';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2786,10 +2764,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Offisiell dokumentasjon';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Vanlig Markdown og Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

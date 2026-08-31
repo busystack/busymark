@@ -10,11 +10,13 @@ import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/source/source_autocomplete.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
     show sourceTextHeightBehavior;
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -642,6 +644,82 @@ void main() {
       expect(selectionBox.bottom - caret.bottom, greaterThan(1));
     },
   );
+
+  testWidgets('Ctrl+Space opens project-aware source completion', (
+    tester,
+  ) async {
+    const source = '<topic><p>fea';
+    String? changedText;
+    const index = WritersideProjectIndex(
+      symbols: [
+        WritersideSymbol(
+          name: 'features',
+          qualifiedName: 'docs:features',
+          kind: WritersideSymbolKind.topic,
+          moduleId: 'docs',
+          filePath: '/project/topics/features.topic',
+        ),
+      ],
+      references: [],
+      diagnostics: [],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.xml,
+              filePath: '/project/topics/current.topic',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (text, _) => changedText = text,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              initialSelection: const TextSelection.collapsed(
+                offset: source.length,
+              ),
+              autocompleteContext: const SourceAutocompleteContext(
+                projectIndex: index,
+                moduleId: 'docs',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(TextField));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('source-autocomplete-popup')), findsOne);
+    final suggestion = find.byKey(
+      const ValueKey('source-autocomplete-topic-features'),
+    );
+    expect(suggestion, findsOne);
+    await tester.tap(suggestion);
+    await tester.pump();
+
+    expect(changedText, '<topic><p>features');
+    expect(
+      find.byKey(const ValueKey('source-autocomplete-popup')),
+      findsNothing,
+    );
+  });
 }
 
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {

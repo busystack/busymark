@@ -2607,13 +2607,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'リテラルタグを表示せずにレンダリングされる安全なインライン HTML タグ';
 
   @override
-  String get syntaxReferenceSafety => '安全性のルール';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      '生 HTML はプレビューのレンダリング前に解析およびサニタイズされます。';
-
-  @override
   String get syntaxReferenceHeadings => '見出し';
 
   @override
@@ -2650,35 +2643,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'セマンティックテキストタグ';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'サニタイズ済みプレビュー';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       '許可された HTML はブラウザーでレンダリングされず、BusyMark のプレビューブロックに変換されます。';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'ソースを保持';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       '編集されていない生 HTML はソーステキストのまま正確に保存されます。';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML 内の Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '生 HTML 内の Markdown マーカーはリテラルテキストとしてレンダリングされます。';
 
   @override
-  String get syntaxReferenceBlockedContent => 'ブロックされたアクティブコンテンツ';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'スクリプト、スタイル、フレーム、フォーム、SVG、MathML、イベント、安全でない属性はブロックされます。';
-
-  @override
-  String get syntaxReferenceSafeUrls => '安全な URL のみ';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2710,10 +2688,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => '公式ドキュメント';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      '通常の Markdown と Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown => 'Writerside Markdown のみ';

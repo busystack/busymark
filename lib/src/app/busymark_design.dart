@@ -2301,9 +2301,14 @@ class BusyMarkSidebarSurface extends StatelessWidget {
 
 /// A GTK-style navigation list for a persistent desktop sidebar.
 class BusyMarkSidebarNavigation extends StatelessWidget {
-  const BusyMarkSidebarNavigation({super.key, required this.children});
+  const BusyMarkSidebarNavigation({
+    super.key,
+    required this.children,
+    this.surfaceColor,
+  });
 
   final List<Widget> children;
+  final Color? surfaceColor;
 
   @override
   Widget build(BuildContext context) {
@@ -2315,7 +2320,10 @@ class BusyMarkSidebarNavigation extends StatelessWidget {
       data: theme.copyWith(
         listTileTheme: theme.listTileTheme.copyWith(
           selectedColor: colors.foreground,
-          selectedTileColor: Color.alphaBlend(colors.control, colors.sidebar),
+          selectedTileColor: Color.alphaBlend(
+            colors.control,
+            surfaceColor ?? colors.sidebar,
+          ),
           tileColor: Colors.transparent,
           iconColor: colors.mutedForeground,
           textColor: colors.foreground,

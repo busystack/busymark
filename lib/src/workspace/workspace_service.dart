@@ -14,6 +14,7 @@ import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
+import '../writerside/writerside_parsers.dart';
 import '../writerside/writerside_document_renderer.dart';
 import '../writerside/writerside_document_resolver.dart';
 import '../writerside/writerside_instance_service.dart';
@@ -402,7 +403,13 @@ class WorkspaceService {
             !module.instances.any((instance) => instance.id == instanceId))) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
+    final selectedInstance = selectedProject.activeInstance;
     final activeFile =
+        (selectedInstance?.startPage == null
+            ? null
+            : module
+                  .topicByReference(selectedInstance!.startPage!)
+                  ?.filePath) ??
         _startTopicPath(module) ??
         (module.topics.isEmpty ? null : module.topics.first.filePath);
     return workspace.copyWith(
@@ -1272,18 +1279,26 @@ class WorkspaceService {
           .where((item) => item.filePath == active)
           .firstOrNull;
       if (topic?.format == WritersideTopicFormat.markdown) {
-        final markdown = await markdownParser.parseAsync(
-          filePath: active,
-          source: source,
-          mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: topic!.topicRoot,
-          validateLocalReferences: false,
+        final parsed =
+            WritersideTopicParser(
+              markdownParser: markdownParser,
+              documentParser: writersideService.topicParser.documentParser,
+            ).parseMarkdown(
+              filePath: active,
+              source: source,
+              topicsRoot: topic!.topicRoot,
+            );
+        final resolutionDiagnostics = _writersideResolutionDiagnostics(
+          workspace,
+          module!,
+          parsed,
         );
         return workspace.copyWith(
-          markdown: markdown,
+          markdown: parsed.markdown,
           diagnostics: sortDiagnostics([
-            ...module!.diagnostics,
-            ...markdown.diagnostics,
+            ...module.diagnostics,
+            ...parsed.diagnostics,
+            ...resolutionDiagnostics,
           ]),
         );
       }
@@ -1293,10 +1308,16 @@ class WorkspaceService {
           source: source,
           topicsRoot: topic!.topicRoot,
         );
+        final resolutionDiagnostics = _writersideResolutionDiagnostics(
+          workspace,
+          module!,
+          parsed,
+        );
         return workspace.copyWith(
           diagnostics: sortDiagnostics([
-            ...module!.diagnostics,
+            ...module.diagnostics,
             ...parsed.diagnostics,
+            ...resolutionDiagnostics,
           ]),
         );
       }
@@ -1430,6 +1451,40 @@ class WorkspaceService {
     );
   }
 
+  List<Diagnostic> _writersideResolutionDiagnostics(
+    Workspace workspace,
+    WritersideModule module,
+    WritersideTopic topic,
+  ) {
+    final instance =
+        workspace.writersideProject?.activeInstance ??
+        module.instances
+            .where(
+              (candidate) =>
+                  !candidate.isLibrary &&
+                  candidate.topicFileSet.any(
+                    (reference) =>
+                        module.topicByReference(reference)?.filePath ==
+                        topic.filePath,
+                  ),
+            )
+            .firstOrNull ??
+        module.instances.where((candidate) => !candidate.isLibrary).firstOrNull;
+    return writersideDocumentResolver
+        .resolve(
+          topic.document,
+          WritersideResolveContext(
+            module: module,
+            topic: topic,
+            instance: instance,
+            modulesByOrigin:
+                workspace.writersideProject?.modulesByOrigin ??
+                {if (module.config.moduleName case final name?) name: module},
+          ),
+        )
+        .diagnostics;
+  }
+
   Future<Workspace> _openSingleMarkdown(String filePath) async {
     final load = await loadTextWithSnapshot(filePath);
     final rootPath = p.dirname(filePath);
@@ -1539,7 +1594,7 @@ class WorkspaceService {
         activeFilePath ??
         _startTopicPath(module) ??
         (module.topics.isEmpty ? null : module.topics.first.filePath);
-    return Workspace(
+    final workspace = Workspace(
       id: rootPath,
       rootPath: rootPath,
       kind: WorkspaceKind.writersideModule,
@@ -1559,6 +1614,18 @@ class WorkspaceService {
           .map((topic) => topic.markdown)
           .whereType<ParsedMarkdownDocument>()
           .firstOrNull,
+    );
+    final activeTopic = module.topics
+        .where((topic) => topic.filePath == firstTopic)
+        .firstOrNull;
+    if (activeTopic == null) {
+      return workspace;
+    }
+    return workspace.copyWith(
+      diagnostics: sortDiagnostics([
+        ...workspace.diagnostics,
+        ..._writersideResolutionDiagnostics(workspace, module, activeTopic),
+      ]),
     );
   }
 

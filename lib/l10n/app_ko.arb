@@ -3514,14 +3514,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "안전 규칙",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "원시 HTML은 미리 보기 렌더링 전에 구문 분석되고 정리됩니다.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "제목",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3570,41 +3562,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "정리된 미리 보기",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "허용된 HTML은 브라우저에서 렌더링되지 않고 BusyMark 미리보기 블록으로 변환됩니다.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "소스 보존",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "편집되지 않은 원시 HTML은 소스 텍스트와 동일하게 다시 저장됩니다.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "HTML 내부의 Markdown",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "원시 HTML 내부의 마크다운 마커는 리터럴 텍스트로 렌더링됩니다.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "차단된 활성 콘텐츠",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "스크립트, 스타일, 프레임, 양식, SVG, MathML, 이벤트 및 안전하지 않은 속성이 차단됩니다.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "안전한 URL만 허용",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "링크에는 http, https, mailto, tel, 상대 URL 및 프래그먼트 URL만 허용됩니다. 안전하지 않은 스킴은 차단됩니다.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3623,7 +3595,6 @@
   "syntaxReferenceScope": "적용 범위",
   "syntaxReferenceLimitation": "BusyMark 제한 사항",
   "syntaxReferenceOfficialDocumentation": "공식 문서",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "일반 Markdown 및 Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "Writerside Markdown 전용",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Writerside Markdown 및 Writerside XML 전용",
   "syntaxReferenceMarkdownDescription": "BusyMark에서 작성하고 미리 볼 수 있는 핵심 Markdown 형식입니다.",

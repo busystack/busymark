@@ -2425,14 +2425,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "قوانین امنیتی",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "عنوان‌ها",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -2481,41 +2473,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "پیش‌نمایش پاک‌سازی‌شده",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "منبع حفظ می‌شود",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown داخل HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "محتوای فعال مسدود است",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "فقط URLهای امن",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -2741,7 +2713,6 @@
   "syntaxReferenceScope": "دامنه",
   "syntaxReferenceLimitation": "محدودیت BusyMark",
   "syntaxReferenceOfficialDocumentation": "مستندات رسمی",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Markdown معمولی و Markdown در Writerside",
   "syntaxReferenceScopeWritersideMarkdown": "فقط Markdown در Writerside",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "فقط Markdown و XML در Writerside",
   "syntaxReferenceMarkdownDescription": "شکل‌های اصلی Markdown که BusyMark می‌تواند بنویسد و پیش‌نمایش کند.",

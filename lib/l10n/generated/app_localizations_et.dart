@@ -2682,13 +2682,6 @@ class AppLocalizationsEt extends AppLocalizations {
       'Turvalised reasisesed HTML-märgendid, mis kuvatakse märgendeid endid näitamata.';
 
   @override
-  String get syntaxReferenceSafety => 'Ohutusreeglid';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Töötlemata HTML parsitakse ja puhastatakse enne eelvaates kuvamist.';
-
-  @override
   String get syntaxReferenceHeadings => 'Pealkirjad';
 
   @override
@@ -2726,35 +2719,20 @@ class AppLocalizationsEt extends AppLocalizations {
       'Semantilised tekstimärgendid';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Puhastatud eelvaade';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Lähtekood säilitatakse';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown HTML-is';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Blokeeritud aktiivsisu';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Ainult turvalised URL-id';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2786,10 +2764,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Ametlik dokumentatsioon';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Tavaline Markdown ja Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

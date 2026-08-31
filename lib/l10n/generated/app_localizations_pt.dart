@@ -2685,13 +2685,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Tags HTML em linha seguras renderizadas sem mostrar as tags literais.';
 
   @override
-  String get syntaxReferenceSafety => 'Regras de segurança';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'O HTML bruto é analisado e higienizado antes da pré-visualização.';
-
-  @override
   String get syntaxReferenceHeadings => 'Títulos';
 
   @override
@@ -2728,35 +2721,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Tags de texto semântico';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Pré-visualização higienizada';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'O HTML permitido é convertido em blocos de pré-visualização do BusyMark e não é renderizado em um navegador.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Código-fonte preservado';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'HTML bruto não editado é salvo exatamente como texto fonte.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown dentro de HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Marcadores Markdown dentro de HTML bruto são exibidos como texto literal.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Conteúdo ativo bloqueado';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Scripts, estilos, frames, formulários, SVG, MathML, eventos e atributos inseguros são bloqueados.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Somente URLs seguras';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2788,10 +2766,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Documentação oficial';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown comum e Markdown do Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>
@@ -6418,13 +6392,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Tags HTML em linha seguras renderizadas sem mostrar as tags literais.';
 
   @override
-  String get syntaxReferenceSafety => 'Regras de segurança';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'O HTML bruto é analisado e higienizado antes da pré-visualização.';
-
-  @override
   String get syntaxReferenceHeadings => 'Títulos';
 
   @override
@@ -6461,35 +6428,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Tags de texto semântico';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Pré-visualização higienizada';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'O HTML permitido é convertido em blocos de pré-visualização do BusyMark e não é renderizado em um navegador.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Código-fonte preservado';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'HTML bruto não editado é salvo exatamente como texto fonte.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown dentro de HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Marcadores Markdown dentro de HTML bruto são exibidos como texto literal.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Conteúdo ativo bloqueado';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Scripts, estilos, frames, formulários, SVG, MathML, eventos e atributos inseguros são bloqueados.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Somente URLs seguras';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -6521,10 +6473,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Documentação oficial';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown comum e Markdown do Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

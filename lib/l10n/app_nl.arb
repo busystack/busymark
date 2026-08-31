@@ -3514,14 +3514,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Veiligheidsregels",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Onbewerkte HTML wordt geparseerd en opgeschoond voordat de preview wordt weergegeven.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Koppen",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3570,41 +3562,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Opgeschoond voorbeeld",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "Toegestane HTML wordt geconverteerd naar BusyMark-voorbeeldblokken en niet weergegeven in een browser.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Bron behouden",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Ruwe HTML wordt exact als brontekst opgeslagen.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown binnen HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markeringen in onbewerkte HTML worden weergegeven als letterlijke tekst.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Actieve inhoud geblokkeerd",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Scripts, stijlen, frames, formulieren, SVG, MathML, gebeurtenissen en onveilige attributen worden geblokkeerd.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Alleen veilige URL's",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Links staan http-, https-, mailto-, tel-, relatieve en fragment-URL's toe; onveilige schema's worden geblokkeerd.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3623,7 +3595,6 @@
   "syntaxReferenceScope": "Bereik",
   "syntaxReferenceLimitation": "BusyMark-beperking",
   "syntaxReferenceOfficialDocumentation": "Officiële documentatie",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Gewone Markdown en Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "Alleen Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Alleen Writerside Markdown en Writerside XML",
   "syntaxReferenceMarkdownDescription": "De belangrijkste Markdown-vormen die BusyMark kan schrijven en weergeven.",

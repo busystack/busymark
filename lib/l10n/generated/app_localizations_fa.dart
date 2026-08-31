@@ -2736,13 +2736,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.';
 
   @override
-  String get syntaxReferenceSafety => 'قوانین امنیتی';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.';
-
-  @override
   String get syntaxReferenceHeadings => 'عنوان‌ها';
 
   @override
@@ -2779,35 +2772,20 @@ class AppLocalizationsFa extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'تگ‌های متنی معنایی';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'پیش‌نمایش پاک‌سازی‌شده';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'منبع حفظ می‌شود';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown داخل HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'محتوای فعال مسدود است';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'فقط URLهای امن';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2839,10 +2817,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'مستندات رسمی';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown معمولی و Markdown در Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

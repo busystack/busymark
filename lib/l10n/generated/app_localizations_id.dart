@@ -2689,13 +2689,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tag HTML sebaris aman dirender tanpa menampilkan tag literal.';
 
   @override
-  String get syntaxReferenceSafety => 'Aturan Keamanan';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'HTML mentah diurai dan dibersihkan sebelum rendering pratinjau.';
-
-  @override
   String get syntaxReferenceHeadings => 'Judul';
 
   @override
@@ -2733,36 +2726,20 @@ class AppLocalizationsId extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Tag teks semantik';
 
   @override
-  String get syntaxReferenceSanitizedPreview =>
-      'Pratinjau yang sudah disanitasi';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML yang diizinkan diubah menjadi blok pratinjau BusyMark, tidak dirender di browser.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Sumber dipertahankan';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'HTML mentah yang belum diedit disimpan kembali persis seperti teks sumber.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown di dalam HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Penanda Markdown di dalam HTML mentah dirender sebagai teks literal.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Konten aktif yang diblokir';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Skrip, gaya, bingkai, formulir, SVG, MathML, peristiwa, dan atribut tidak aman diblokir.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Hanya URL aman';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2794,10 +2771,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Dokumentasi resmi';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Markdown biasa dan Markdown Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

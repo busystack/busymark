@@ -3514,14 +3514,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "安全规则",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "原始 HTML 会在预览前进行解析和清理。",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "标题",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3570,41 +3562,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "已清理的预览",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "保留源代码",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "未经编辑的原始 HTML 会按源文本原样保存。",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "HTML 内的 Markdown",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "原始 HTML 内的 Markdown 标记会按字面文本渲染。",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "被阻止的活动内容",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "仅允许安全 URL",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3623,7 +3595,6 @@
   "syntaxReferenceScope": "适用范围",
   "syntaxReferenceLimitation": "BusyMark 限制",
   "syntaxReferenceOfficialDocumentation": "官方文档",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "普通 Markdown 和 Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "仅 Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "仅 Writerside Markdown 和 Writerside XML",
   "syntaxReferenceMarkdownDescription": "BusyMark 可以编写和预览的核心 Markdown 形式。",

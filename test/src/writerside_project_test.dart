@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/core/diagnostic.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/writerside/writerside_document_renderer.dart';
 import 'package:busymark/src/writerside/writerside_document_resolver.dart';
+import 'package:busymark/src/writerside/writerside_document_serializer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -84,6 +87,83 @@ void main() {
       expect(workspace.writersideModule, isNotNull);
     },
   );
+
+  test(
+    'workspace module and instance selection changes active context',
+    () async {
+      final fixture = await _ProjectFixture.create();
+      addTearDown(fixture.dispose);
+      const service = WorkspaceService();
+      final workspace = await service.openPath(fixture.path);
+
+      final selected = await service.selectWritersideContext(
+        workspace,
+        moduleId: 'shared-docs',
+        instanceId: 'guide',
+      );
+
+      expect(selected.writersideProject?.activeModuleId, 'shared-docs');
+      expect(selected.writersideProject?.activeInstanceId, 'guide');
+      expect(selected.writersideModule?.config.moduleName, 'shared-docs');
+      expect(selected.activeFilePath, endsWith('shared.topic'));
+    },
+  );
+
+  test('BusyMark processes the same fixture as the official builder', () async {
+    final root = p.join(
+      Directory.current.path,
+      'test',
+      'fixtures',
+      'writerside',
+      'conformance_project',
+    );
+    final project = await const WritersideProjectService().load(root);
+    final module = project.activeModule!;
+    final instance = project.activeInstance!;
+    final renderedText = StringBuffer();
+    final diagnostics = <Diagnostic>[];
+
+    for (final topic in module.topics) {
+      expect(
+        const WritersideDocumentSerializer().serialize(topic.document),
+        topic.document.source,
+      );
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: instance,
+          modulesByOrigin: project.modulesByOrigin,
+        ),
+      );
+      diagnostics.addAll(resolved.diagnostics);
+      final rendered = const WritersideDocumentRenderer().toBusyDocument(
+        resolved.document,
+        title: resolved.title,
+      );
+      for (final block in _walkBlocks(rendered.blocks)) {
+        renderedText.writeln(block.plainText);
+      }
+    }
+
+    expect(
+      diagnostics.where(
+        (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
+      ),
+      isEmpty,
+    );
+    expect(renderedText.toString(), contains('Lossless semantic quote'));
+    expect(renderedText.toString(), contains('Reusable semantic content'));
+    expect(renderedText.toString(), contains('BusyMark'));
+  });
+}
+
+Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _walkBlocks(block.children);
+  }
 }
 
 class _ProjectFixture {

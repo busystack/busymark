@@ -2684,12 +2684,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
-  String get syntaxReferenceSafety => '安全规则';
-
-  @override
-  String get syntaxReferenceSafetyDescription => '原始 HTML 会在预览前进行解析和清理。';
-
-  @override
   String get syntaxReferenceHeadings => '标题';
 
   @override
@@ -2726,35 +2720,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get syntaxReferenceSanitizedPreview => '已清理的预览';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
-
-  @override
-  String get syntaxReferenceSourcePreserved => '保留源代码';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML 内的 Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get syntaxReferenceBlockedContent => '被阻止的活动内容';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
-
-  @override
-  String get syntaxReferenceSafeUrls => '仅允许安全 URL';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2786,10 +2765,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => '官方文档';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      '普通 Markdown 和 Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';
@@ -6266,12 +6241,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
       '安全的行内 HTML 标签，渲染时不会显示字面标签。';
 
   @override
-  String get syntaxReferenceSafety => '安全规则';
-
-  @override
-  String get syntaxReferenceSafetyDescription => '原始 HTML 会在预览前进行解析和清理。';
-
-  @override
   String get syntaxReferenceHeadings => '标题';
 
   @override
@@ -6308,35 +6277,20 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get syntaxReferenceHtmlNeutralInlineTags => '语义文本标签';
 
   @override
-  String get syntaxReferenceSanitizedPreview => '已清理的预览';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       '允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。';
-
-  @override
-  String get syntaxReferenceSourcePreserved => '保留源代码';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       '未经编辑的原始 HTML 会按源文本原样保存。';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML 内的 Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '原始 HTML 内的 Markdown 标记会按字面文本渲染。';
 
   @override
-  String get syntaxReferenceBlockedContent => '被阻止的活动内容';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       '脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。';
-
-  @override
-  String get syntaxReferenceSafeUrls => '仅允许安全 URL';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -6368,10 +6322,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get syntaxReferenceOfficialDocumentation => '官方文档';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      '普通 Markdown 和 Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown => '仅 Writerside Markdown';

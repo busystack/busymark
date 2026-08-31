@@ -4,6 +4,21 @@ import 'writerside_schema.dart';
 
 enum WritersideDocumentFormat { xmlTopic, markdown }
 
+const writersideSourceModuleRootAttribute =
+    'busymark-writerside-source-module-root';
+const writersideSourceTopicPathAttribute =
+    'busymark-writerside-source-topic-path';
+
+class WritersideSourceProvenance {
+  const WritersideSourceProvenance({
+    required this.moduleRoot,
+    required this.topicPath,
+  });
+
+  final String moduleRoot;
+  final String topicPath;
+}
+
 class WritersideDocument {
   const WritersideDocument({
     required this.filePath,
@@ -55,10 +70,17 @@ class WritersideDocument {
 }
 
 sealed class WritersideDocumentNode {
-  const WritersideDocumentNode({required this.span, required this.rawSource});
+  const WritersideDocumentNode({
+    required this.span,
+    required this.rawSource,
+    this.provenance,
+    this.isModified = false,
+  });
 
   final SourceSpan span;
   final String rawSource;
+  final WritersideSourceProvenance? provenance;
+  final bool isModified;
 
   Iterable<WritersideDocumentNode> walk() sync* {
     yield this;
@@ -72,6 +94,8 @@ class WritersideTextNode extends WritersideDocumentNode {
     required this.text,
     required super.span,
     required super.rawSource,
+    super.provenance,
+    super.isModified,
   });
 
   final String text;
@@ -79,18 +103,39 @@ class WritersideTextNode extends WritersideDocumentNode {
   @override
   String get plainText => text;
 
-  WritersideTextNode copyWith({String? text}) => WritersideTextNode(
-    text: text ?? this.text,
-    span: span,
-    rawSource: rawSource,
-  );
+  WritersideTextNode copyWith({
+    String? text,
+    WritersideSourceProvenance? provenance,
+  }) {
+    final nextText = text ?? this.text;
+    return WritersideTextNode(
+      text: nextText,
+      span: span,
+      rawSource: rawSource,
+      provenance: provenance ?? this.provenance,
+      isModified: isModified || nextText != this.text,
+    );
+  }
 }
 
 class WritersideRawNode extends WritersideDocumentNode {
-  const WritersideRawNode({required super.span, required super.rawSource});
+  const WritersideRawNode({
+    required super.span,
+    required super.rawSource,
+    super.provenance,
+    super.isModified,
+  });
 
   @override
   String get plainText => '';
+
+  WritersideRawNode copyWith({WritersideSourceProvenance? provenance}) =>
+      WritersideRawNode(
+        span: span,
+        rawSource: rawSource,
+        provenance: provenance ?? this.provenance,
+        isModified: isModified,
+      );
 }
 
 sealed class WritersideElementNode extends WritersideDocumentNode {
@@ -101,6 +146,8 @@ sealed class WritersideElementNode extends WritersideDocumentNode {
     required this.children,
     required super.span,
     required super.rawSource,
+    super.provenance,
+    super.isModified,
   });
 
   final String name;
@@ -125,6 +172,7 @@ sealed class WritersideElementNode extends WritersideDocumentNode {
   WritersideElementNode copyWith({
     Map<String, String>? attributes,
     List<WritersideDocumentNode>? children,
+    WritersideSourceProvenance? provenance,
   });
 }
 
@@ -138,6 +186,8 @@ class WritersideSemanticElementNode extends WritersideElementNode {
     required super.children,
     required super.span,
     required super.rawSource,
+    super.provenance,
+    super.isModified,
   });
 
   final WritersideSemanticKind kind;
@@ -152,15 +202,23 @@ class WritersideSemanticElementNode extends WritersideElementNode {
   WritersideSemanticElementNode copyWith({
     Map<String, String>? attributes,
     List<WritersideDocumentNode>? children,
+    WritersideSourceProvenance? provenance,
   }) {
+    final nextAttributes = attributes ?? this.attributes;
+    final nextChildren = children ?? this.children;
     return WritersideSemanticElementNode(
       kind: kind,
       name: name,
-      attributes: attributes ?? this.attributes,
+      attributes: nextAttributes,
       attributeSpans: attributeSpans,
-      children: children ?? this.children,
+      children: nextChildren,
       span: span,
       rawSource: rawSource,
+      provenance: provenance ?? this.provenance,
+      isModified:
+          isModified ||
+          !_sameStringMap(nextAttributes, this.attributes) ||
+          !_sameNodeList(nextChildren, this.children),
     );
   }
 }
@@ -176,6 +234,8 @@ class WritersideGenericElementNode extends WritersideElementNode {
     required super.children,
     required super.span,
     required super.rawSource,
+    super.provenance,
+    super.isModified,
   });
 
   @override
@@ -188,15 +248,23 @@ class WritersideGenericElementNode extends WritersideElementNode {
   WritersideGenericElementNode copyWith({
     Map<String, String>? attributes,
     List<WritersideDocumentNode>? children,
+    WritersideSourceProvenance? provenance,
   }) {
+    final nextAttributes = attributes ?? this.attributes;
+    final nextChildren = children ?? this.children;
     return WritersideGenericElementNode(
       schemaKnown: schemaKnown,
       name: name,
-      attributes: attributes ?? this.attributes,
+      attributes: nextAttributes,
       attributeSpans: attributeSpans,
-      children: children ?? this.children,
+      children: nextChildren,
       span: span,
       rawSource: rawSource,
+      provenance: provenance ?? this.provenance,
+      isModified:
+          isModified ||
+          !_sameStringMap(nextAttributes, this.attributes) ||
+          !_sameNodeList(nextChildren, this.children),
     );
   }
 }
@@ -208,6 +276,8 @@ class WritersideMarkdownBlockNode extends WritersideDocumentNode {
     required this.block,
     required super.span,
     required super.rawSource,
+    super.provenance,
+    super.isModified,
   });
 
   final BusyBlock block;
@@ -215,13 +285,46 @@ class WritersideMarkdownBlockNode extends WritersideDocumentNode {
   @override
   String get plainText => block.plainText;
 
-  WritersideMarkdownBlockNode copyWith({BusyBlock? block}) {
+  WritersideMarkdownBlockNode copyWith({
+    BusyBlock? block,
+    WritersideSourceProvenance? provenance,
+  }) {
+    final nextBlock = block ?? this.block;
     return WritersideMarkdownBlockNode(
-      block: block ?? this.block,
+      block: nextBlock,
       span: span,
       rawSource: rawSource,
+      provenance: provenance ?? this.provenance,
+      isModified: isModified || !identical(nextBlock, this.block),
     );
   }
+}
+
+bool _sameStringMap(Map<String, String> first, Map<String, String> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (final entry in first.entries) {
+    if (second[entry.key] != entry.value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool _sameNodeList(
+  List<WritersideDocumentNode> first,
+  List<WritersideDocumentNode> second,
+) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (var index = 0; index < first.length; index++) {
+    if (!identical(first[index], second[index])) {
+      return false;
+    }
+  }
+  return true;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

@@ -2386,14 +2386,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Sikkerhetsregler",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Rå HTML analyseres og renses før forhåndsvisning.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Overskrifter",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -2442,41 +2434,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Renset forhåndsvisning",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Kilden bevares",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Uendret rå HTML lagres nøyaktig som kildetekst.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown inni HTML",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Blokkert aktivt innhold",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Bare trygge URL-er",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -2699,7 +2671,6 @@
   "syntaxReferenceScope": "Omfang",
   "syntaxReferenceLimitation": "BusyMark-begrensning",
   "syntaxReferenceOfficialDocumentation": "Offisiell dokumentasjon",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Vanlig Markdown og Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "Bare Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Bare Writerside Markdown og Writerside XML",
   "syntaxReferenceMarkdownDescription": "De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.",

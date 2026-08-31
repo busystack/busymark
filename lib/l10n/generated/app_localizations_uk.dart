@@ -2740,13 +2740,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Безпечні вбудовані HTML-теги відображаються без показу самих тегів.';
 
   @override
-  String get syntaxReferenceSafety => 'Правила безпеки';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Необроблений HTML аналізується й очищується перед попереднім переглядом.';
-
-  @override
   String get syntaxReferenceHeadings => 'Заголовки';
 
   @override
@@ -2783,35 +2776,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Семантичні текстові теги';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Очищений перегляд';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Вихідний текст зберігається';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Незмінений необроблений HTML зберігається точно як вихідний текст.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown всередині HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Активний вміст заблоковано';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Лише безпечні URL';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2843,10 +2821,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Офіційна документація';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Звичайний Markdown і Markdown Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

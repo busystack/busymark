@@ -62,6 +62,17 @@ void main() {
             .map((inline) => inline.destination),
         contains(startsWith('file://')),
       );
+      final imageDestinations = blocks
+          .expand((block) => _allInlines(block.inlines))
+          .where((inline) => inline.kind == BusyInlineKind.image)
+          .map((inline) => inline.destination)
+          .whereType<String>();
+      expect(
+        imageDestinations,
+        contains(
+          allOf(startsWith('file://'), contains('/Shared/images/shared.png')),
+        ),
+      );
     },
   );
 
@@ -76,6 +87,7 @@ void main() {
       service.export(
         WritersidePdfExportRequest(
           moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
           instanceId: 'guide',
           destinationPath: p.join(fixture.root.path, 'cancelled.pdf'),
           overwrite: false,
@@ -119,6 +131,94 @@ void main() {
     expect(exporter.request, isNull);
   });
 
+  test('resolution errors prevent PDF compilation', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    final advanced = File(
+      p.join(fixture.module.path, 'topics', 'advanced.topic'),
+    );
+    await advanced.writeAsString(
+      (await advanced.readAsString()).replaceFirst(
+        '</topic>',
+        '<include from="missing.topic"/></topic>',
+      ),
+    );
+    final exporter = _RecordingMarkdownExporter();
+    final service = WritersidePdfExportService(markdownExporter: exporter);
+
+    await expectLater(
+      service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'failed.pdf'),
+          overwrite: false,
+        ),
+      ),
+      throwsA(
+        isA<WritersidePdfExportException>()
+            .having(
+              (error) => error.code,
+              'code',
+              WritersidePdfFailureCode.invalidRequest,
+            )
+            .having(
+              (error) => error.detail,
+              'detail',
+              contains('writerside.include.unresolved-source'),
+            ),
+      ),
+    );
+    expect(exporter.request, isNull);
+  });
+
+  test(
+    'nonfatal resolution diagnostics are returned as PDF warnings',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      final advanced = File(
+        p.join(fixture.module.path, 'topics', 'advanced.topic'),
+      );
+      await advanced.writeAsString(
+        (await advanced.readAsString()).replaceFirst(
+          '</topic>',
+          '<p>%missing-variable%</p></topic>',
+        ),
+      );
+      final exporter = _RecordingMarkdownExporter();
+      final service = WritersidePdfExportService(markdownExporter: exporter);
+
+      final result = await service.export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'warning.pdf'),
+          overwrite: false,
+        ),
+      );
+
+      expect(
+        result.warnings,
+        contains(
+          isA<MarkdownPdfWarning>()
+              .having(
+                (warning) => warning.code,
+                'code',
+                MarkdownPdfWarningCode.writersideResolution,
+              )
+              .having(
+                (warning) => warning.destination,
+                'diagnostic',
+                'writerside.variable.unresolved',
+              ),
+        ),
+      );
+    },
+  );
+
   test('native exporter failures use Writerside failure codes', () async {
     final fixture = await _WritersideFixture.create();
     addTearDown(fixture.dispose);
@@ -134,6 +234,7 @@ void main() {
       service.export(
         WritersidePdfExportRequest(
           moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
           instanceId: 'guide',
           destinationPath: p.join(fixture.root.path, 'unavailable.pdf'),
           overwrite: false,
@@ -255,19 +356,25 @@ Inline math: \$x^2\$.
     ).writeAsBytes(const [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     final shared = await Directory(p.join(root.path, 'Shared')).create();
     await Directory(p.join(shared.path, 'topics')).create();
+    await Directory(p.join(shared.path, 'images')).create();
     await File(p.join(shared.path, 'writerside.cfg')).writeAsString('''
 <ihp version="2026.2">
   <module name="shared-pdf"/>
   <topics dir="topics"/>
+  <images dir="images"/>
 </ihp>
 ''');
     await File(p.join(shared.path, 'topics', 'library.topic')).writeAsString('''
 <topic id="library" title="Library">
   <snippet id="cross-module-snippet">
     <p>Cross-module include content.</p>
+    <img src="shared.png" alt="Shared image"/>
   </snippet>
 </topic>
 ''');
+    await File(
+      p.join(shared.path, 'images', 'shared.png'),
+    ).writeAsBytes(const [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     return _WritersideFixture(root: root, module: module);
   }
 

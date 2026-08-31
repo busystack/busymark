@@ -1856,6 +1856,87 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _requestDerivedRefresh(rebuildPreview: true);
   }
 
+  Future<bool> selectWritersideContext({
+    required String moduleId,
+    String? instanceId,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null || workspace.kind != WorkspaceKind.writersideModule) {
+      return false;
+    }
+    _cancelPendingDerivedRefresh();
+    final operationRevision = _invalidateActiveDocumentOperations();
+    try {
+      final selected = await _service.selectWritersideContext(
+        workspace,
+        moduleId: moduleId,
+        instanceId: instanceId,
+      );
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+        return false;
+      }
+      final path = selected.activeFilePath;
+      if (path == null) {
+        state = state.copyWith(
+          workspace: selected,
+          preview: null,
+          activeBufferId: null,
+          clearMessage: true,
+        );
+        return true;
+      }
+      final existing = state.documentBuffers
+          .where((buffer) => buffer.filePath == path)
+          .firstOrNull;
+      if (existing != null) {
+        return _activateBuffer(
+          selected,
+          existing,
+          documentBuffers: state.documentBuffers,
+          openFilePaths: _openFileTabPaths(selected, path),
+        );
+      }
+      final load = await _service.loadTextWithSnapshot(path);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+        return false;
+      }
+      final nextWorkspace = selected.copyWith(
+        activeFileSnapshot: load.snapshot,
+        openFilePaths: _openFileTabPaths(selected, path),
+      );
+      final reparsed = await _service.reparseActive(nextWorkspace, load.text);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+        return false;
+      }
+      final buffer = _fileBuffer(
+        path,
+        load,
+        mode: _settingsController.state.documentViewMode,
+      );
+      final buffers = [...state.documentBuffers, buffer];
+      state = state.copyWith(
+        workspace: reparsed,
+        preview: _safePreview(reparsed, load.text),
+        documentBuffers: buffers,
+        activeBufferId: buffer.id,
+        clearMessage: true,
+      );
+      _fileMonitor.updateOpenFilePaths(
+        buffers.map((candidate) => candidate.filePath).whereType<String>(),
+      );
+      _schedulePersistence();
+      return true;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Could not select Writerside context',
+        error,
+        stackTrace,
+        context: {'module': moduleId, 'instance': instanceId ?? ''},
+      );
+      return false;
+    }
+  }
+
   void _updateActiveText(
     String text, {
     required bool rebuildPreview,
@@ -1954,7 +2035,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final editRevision = state.activeBuffer?.revision ?? _editRevision;
     final operationRevision = _activeDocumentRevision;
     try {
-      final preview = await _service.buildPreviewAsync(workspace, text);
+      final reparsed = await _service.reparseActive(workspace, text);
+      final preview = await _service.buildPreviewAsync(reparsed, text);
       if (!_isCurrentActiveDocument(
             operationRevision,
             workspaceId: workspaceId,
@@ -1964,6 +2046,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           state.activeBuffer?.revision != editRevision) {
         return;
       }
+      // Preview remains live when validate-on-edit is disabled, but the parsed
+      // workspace (including its diagnostics and persisted document model)
+      // must only advance through explicit validation.
       state = state.copyWith(preview: preview);
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(

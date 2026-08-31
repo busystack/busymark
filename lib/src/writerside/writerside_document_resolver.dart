@@ -47,9 +47,9 @@ class WritersideDocumentResolver {
       if (context.instance case final instance?) ...{
         'instance': instance.name,
         'instance-lowercase': instance.name.toLowerCase(),
+        'currentId': instance.id,
       },
-      'currentId': context.topic.id,
-      'thisTopic': context.topic.title ?? context.topic.id,
+      'thisTopic': context.topic.id,
     };
     final nodes = state.resolveNodes(
       document.nodes,
@@ -104,24 +104,24 @@ class _ResolveState {
     }
 
     final result = <WritersideDocumentNode>[];
+    final provenance = WritersideSourceProvenance(
+      moduleRoot: module.rootPath,
+      topicPath: topic.filePath,
+    );
     for (final node in nodes) {
       if (node is WritersideTextNode) {
         result.add(
-          inheritedIgnoreVariables
-              ? node
-              : node.copyWith(
-                  text: _interpolate(
-                    node.text,
-                    scopedVariables,
-                    node,
-                    ignore: false,
-                  ),
-                ),
+          node.copyWith(
+            text: inheritedIgnoreVariables
+                ? node.text
+                : _interpolate(node.text, scopedVariables, node, ignore: false),
+            provenance: provenance,
+          ),
         );
         continue;
       }
       if (node is WritersideRawNode) {
-        result.add(node);
+        result.add(node.copyWith(provenance: provenance));
         continue;
       }
       if (node is WritersideMarkdownBlockNode) {
@@ -136,6 +136,7 @@ class _ResolveState {
               ignoreVariables: inheritedIgnoreVariables,
               sourceNode: node,
             ),
+            provenance: provenance,
           ),
         );
         continue;
@@ -192,6 +193,7 @@ class _ResolveState {
           element.copyWith(
             attributes: Map.unmodifiable(attributes),
             children: List.unmodifiable(children),
+            provenance: provenance,
           ),
         );
       }
@@ -343,25 +345,27 @@ class _ResolveState {
       return false;
     }
     final filters = _tokens(attributes['filter']);
-    if (filters.isEmpty || activeFilters == null || filters.contains('empty')) {
+    if (activeFilters == null) {
       return true;
+    }
+    if (filters.isEmpty) {
+      return activeFilters.contains('empty');
     }
     return filters.any(activeFilters.contains);
   }
 
   bool _matchesInstance(String? condition, WritersideModule module) {
-    final tokens = _tokens(condition);
+    final normalized = condition?.trim() ?? '';
+    final negated = normalized.startsWith('!');
+    final tokens = _tokens(negated ? normalized.substring(1) : normalized);
     if (tokens.isEmpty) {
       return true;
     }
-    final positives = tokens.where((token) => !token.startsWith('!')).toList();
-    for (final token in tokens.where((token) => token.startsWith('!'))) {
-      if (_instanceTokenMatches(token.substring(1), module)) {
-        return false;
-      }
+    final matches = tokens.any((token) => _instanceTokenMatches(token, module));
+    if (negated) {
+      return !matches;
     }
-    return positives.isEmpty ||
-        positives.any((token) => _instanceTokenMatches(token, module));
+    return matches;
   }
 
   bool _instanceTokenMatches(String token, WritersideModule module) {
@@ -458,33 +462,32 @@ class _ResolveState {
     if (ignore || !value.contains('%')) {
       return value;
     }
-    var result = value.replaceAllMapped(
-      RegExp(r'%\\([A-Za-z_][A-Za-z0-9_.-]*)%'),
-      (match) => '%${match.group(1)}%',
+    return value.replaceAllMapped(
+      RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%'),
+      (match) {
+        final name = match.group(2)!;
+        if (match.group(1) != null) {
+          return '%$name%';
+        }
+        final replacement = variables[name];
+        if (replacement != null) {
+          return replacement;
+        }
+        final key = '${node.span.filePath}:${node.span.startOffset}:$name';
+        if (_unresolvedVariables.add(key)) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.variable.unresolved',
+              severity: DiagnosticSeverity.warning,
+              filePath: node.span.filePath,
+              args: {'name': name},
+              sourceSpan: node.span,
+            ),
+          );
+        }
+        return match.group(0)!;
+      },
     );
-    result = result.replaceAllMapped(RegExp(r'%([A-Za-z_][A-Za-z0-9_.-]*)%'), (
-      match,
-    ) {
-      final name = match.group(1)!;
-      final replacement = variables[name];
-      if (replacement != null) {
-        return replacement;
-      }
-      final key = '${node.span.filePath}:${node.span.startOffset}:$name';
-      if (_unresolvedVariables.add(key)) {
-        diagnostics.add(
-          Diagnostic(
-            code: 'writerside.variable.unresolved',
-            severity: DiagnosticSeverity.warning,
-            filePath: node.span.filePath,
-            args: {'name': name},
-            sourceSpan: node.span,
-          ),
-        );
-      }
-      return match.group(0)!;
-    });
-    return result;
   }
 
   String? titleFor(WritersideDocument document) {
@@ -507,7 +510,7 @@ class _ResolveState {
     required String code,
     required WritersideDocumentNode node,
     Map<String, Object?> args = const {},
-    DiagnosticSeverity severity = DiagnosticSeverity.warning,
+    DiagnosticSeverity severity = DiagnosticSeverity.error,
   }) {
     diagnostics.add(
       Diagnostic(

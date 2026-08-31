@@ -2602,13 +2602,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '리터럴 태그를 표시하지 않고 렌더링되는 안전한 인라인 HTML 태그입니다.';
 
   @override
-  String get syntaxReferenceSafety => '안전 규칙';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      '원시 HTML은 미리 보기 렌더링 전에 구문 분석되고 정리됩니다.';
-
-  @override
   String get syntaxReferenceHeadings => '제목';
 
   @override
@@ -2645,35 +2638,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => '의미 있는 텍스트 태그';
 
   @override
-  String get syntaxReferenceSanitizedPreview => '정리된 미리 보기';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       '허용된 HTML은 브라우저에서 렌더링되지 않고 BusyMark 미리보기 블록으로 변환됩니다.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => '소스 보존';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       '편집되지 않은 원시 HTML은 소스 텍스트와 동일하게 다시 저장됩니다.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML 내부의 Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       '원시 HTML 내부의 마크다운 마커는 리터럴 텍스트로 렌더링됩니다.';
 
   @override
-  String get syntaxReferenceBlockedContent => '차단된 활성 콘텐츠';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       '스크립트, 스타일, 프레임, 양식, SVG, MathML, 이벤트 및 안전하지 않은 속성이 차단됩니다.';
-
-  @override
-  String get syntaxReferenceSafeUrls => '안전한 URL만 허용';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2705,10 +2683,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => '공식 문서';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      '일반 Markdown 및 Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown => 'Writerside Markdown 전용';

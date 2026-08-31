@@ -2695,13 +2695,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Veilige inline HTML-tags weergegeven zonder letterlijke tags weer te geven.';
 
   @override
-  String get syntaxReferenceSafety => 'Veiligheidsregels';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Onbewerkte HTML wordt geparseerd en opgeschoond voordat de preview wordt weergegeven.';
-
-  @override
   String get syntaxReferenceHeadings => 'Koppen';
 
   @override
@@ -2738,35 +2731,20 @@ class AppLocalizationsNl extends AppLocalizations {
   String get syntaxReferenceHtmlNeutralInlineTags => 'Semantische inline-tags';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Opgeschoond voorbeeld';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'Toegestane HTML wordt geconverteerd naar BusyMark-voorbeeldblokken en niet weergegeven in een browser.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Bron behouden';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Ruwe HTML wordt exact als brontekst opgeslagen.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'Markdown binnen HTML';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-markeringen in onbewerkte HTML worden weergegeven als letterlijke tekst.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Actieve inhoud geblokkeerd';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Scripts, stijlen, frames, formulieren, SVG, MathML, gebeurtenissen en onveilige attributen worden geblokkeerd.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Alleen veilige URL\'s';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2798,10 +2776,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Officiële documentatie';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Gewone Markdown en Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>

@@ -3050,14 +3050,6 @@
   "@syntaxReferenceRawHtmlInlineDescription": {
     "description": "Reference section description for supported raw HTML inline tags."
   },
-  "syntaxReferenceSafety": "Ohutusreeglid",
-  "@syntaxReferenceSafety": {
-    "description": "Reference section title for raw HTML safety rules."
-  },
-  "syntaxReferenceSafetyDescription": "Töötlemata HTML parsitakse ja puhastatakse enne eelvaates kuvamist.",
-  "@syntaxReferenceSafetyDescription": {
-    "description": "Reference section description for raw HTML safety rules."
-  },
   "syntaxReferenceHeadings": "Pealkirjad",
   "@syntaxReferenceHeadings": {
     "description": "Reference row label for Markdown headings."
@@ -3106,41 +3098,21 @@
   "@syntaxReferenceHtmlNeutralInlineTags": {
     "description": "Reference row label for HTML inline semantic tags that render as text."
   },
-  "syntaxReferenceSanitizedPreview": "Puhastatud eelvaade",
-  "@syntaxReferenceSanitizedPreview": {
-    "description": "Reference row label for sanitized preview behavior."
-  },
   "syntaxReferenceSanitizedPreviewDescription": "Lubatud HTML teisendatakse BusyMarki eelvaateplokkideks; seda ei kuvata brauseris.",
   "@syntaxReferenceSanitizedPreviewDescription": {
     "description": "Reference row description for sanitized preview behavior."
-  },
-  "syntaxReferenceSourcePreserved": "Lähtekood säilitatakse",
-  "@syntaxReferenceSourcePreserved": {
-    "description": "Reference row label for raw source preservation."
   },
   "syntaxReferenceSourcePreservedDescription": "Redigeerimata töötlemata HTML salvestatakse lähdetekstina täpselt algsel kujul.",
   "@syntaxReferenceSourcePreservedDescription": {
     "description": "Reference row description for raw source preservation."
   },
-  "syntaxReferenceMarkdownInsideHtml": "Markdown HTML-is",
-  "@syntaxReferenceMarkdownInsideHtml": {
-    "description": "Reference row label for Markdown inside raw HTML."
-  },
   "syntaxReferenceMarkdownInsideHtmlDescription": "Töötlemata HTML-is olevad Markdowni vormindusmärgid kuvatakse lihttekstina.",
   "@syntaxReferenceMarkdownInsideHtmlDescription": {
     "description": "Reference row description for Markdown inside raw HTML."
   },
-  "syntaxReferenceBlockedContent": "Blokeeritud aktiivsisu",
-  "@syntaxReferenceBlockedContent": {
-    "description": "Reference row label for blocked HTML content."
-  },
   "syntaxReferenceBlockedContentDescription": "Skriptid, stiilid, raamid, vormid, SVG, MathML, sündmused ja ebaturvalised atribuudid blokeeritakse.",
   "@syntaxReferenceBlockedContentDescription": {
     "description": "Reference row description for blocked HTML content."
-  },
-  "syntaxReferenceSafeUrls": "Ainult turvalised URL-id",
-  "@syntaxReferenceSafeUrls": {
-    "description": "Reference row label for safe URL policy."
   },
   "syntaxReferenceSafeUrlsDescription": "Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.",
   "@syntaxReferenceSafeUrlsDescription": {
@@ -3159,7 +3131,6 @@
   "syntaxReferenceScope": "Ulatus",
   "syntaxReferenceLimitation": "BusyMarki piirang",
   "syntaxReferenceOfficialDocumentation": "Ametlik dokumentatsioon",
-  "syntaxReferenceScopeMarkdownAndWritersideMarkdown": "Tavaline Markdown ja Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdown": "Ainult Writerside Markdown",
   "syntaxReferenceScopeWritersideMarkdownAndXml": "Ainult Writerside Markdown ja Writerside XML",
   "syntaxReferenceMarkdownDescription": "Põhilised Markdowni vormid, mida BusyMark võimaldab kirjutada ja eelvaadata.",

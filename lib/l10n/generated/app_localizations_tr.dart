@@ -2683,13 +2683,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Gerçek etiketler gösterilmeden oluşturulan güvenli satır içi HTML etiketleri.';
 
   @override
-  String get syntaxReferenceSafety => 'Güvenlik Kuralları';
-
-  @override
-  String get syntaxReferenceSafetyDescription =>
-      'Ham HTML, önizleme oluşturmadan önce ayrıştırılır ve arındırılır.';
-
-  @override
   String get syntaxReferenceHeadings => 'Başlıklar';
 
   @override
@@ -2727,35 +2720,20 @@ class AppLocalizationsTr extends AppLocalizations {
       'Anlamsal metin etiketleri';
 
   @override
-  String get syntaxReferenceSanitizedPreview => 'Temizlenmiş önizleme';
-
-  @override
   String get syntaxReferenceSanitizedPreviewDescription =>
       'İzin verilen HTML, tarayıcıda oluşturulmaz, BusyMark önizleme bloklarına dönüştürülür.';
-
-  @override
-  String get syntaxReferenceSourcePreserved => 'Kaynak korunur';
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
       'Düzenlenmemiş ham HTML, tam olarak kaynak metin olarak kaydedilir.';
 
   @override
-  String get syntaxReferenceMarkdownInsideHtml => 'HTML içindeki Markdown';
-
-  @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Ham HTML içindeki Markdown işaretleri düz metin olarak görüntülenir.';
 
   @override
-  String get syntaxReferenceBlockedContent => 'Engellenen etkin içerik';
-
-  @override
   String get syntaxReferenceBlockedContentDescription =>
       'Komut dosyaları, stiller, çerçeveler, formlar, SVG, MathML, olaylar ve güvenli olmayan özellikler engellenir.';
-
-  @override
-  String get syntaxReferenceSafeUrls => 'Yalnızca güvenli URL\'ler';
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
@@ -2787,10 +2765,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syntaxReferenceOfficialDocumentation => 'Resmî belgeler';
-
-  @override
-  String get syntaxReferenceScopeMarkdownAndWritersideMarkdown =>
-      'Normal Markdown ve Writerside Markdown';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>
