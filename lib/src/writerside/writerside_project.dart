@@ -570,6 +570,44 @@ class WritersideProject {
       diagnostics: diagnostics,
     );
   }
+
+  /// Replaces an in-memory module and rebuilds every topic-derived symbol and
+  /// reference while retaining discovered file/resource symbols.
+  WritersideProject withModule(WritersideModule module) {
+    final replaced = modules.any(
+      (candidate) => p.equals(candidate.rootPath, module.rootPath),
+    );
+    if (!replaced) {
+      return this;
+    }
+    final nextModules = [
+      for (final candidate in modules)
+        if (p.equals(candidate.rootPath, module.rootPath))
+          module
+        else
+          candidate,
+    ];
+    final nextIndex = WritersideProjectIndex.build(
+      nextModules,
+      fileSymbols: index.symbols.where(
+        (symbol) =>
+            symbol.kind == WritersideSymbolKind.image ||
+            symbol.kind == WritersideSymbolKind.resource ||
+            symbol.kind == WritersideSymbolKind.apiSpecification,
+      ),
+    );
+    return WritersideProject(
+      rootPath: rootPath,
+      modules: List.unmodifiable(nextModules),
+      activeModuleId: activeModuleId,
+      activeInstanceId: activeInstanceId,
+      index: nextIndex,
+      diagnostics: sortDiagnostics([
+        for (final candidate in nextModules) ...candidate.diagnostics,
+        ...nextIndex.diagnostics,
+      ]),
+    );
+  }
 }
 
 class WritersideProjectService {

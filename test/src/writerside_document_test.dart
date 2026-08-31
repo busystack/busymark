@@ -15,6 +15,7 @@ import 'package:busymark/src/writerside/writerside_schema.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   test(
@@ -109,6 +110,70 @@ void main() {
     expect(serialized, contains('data-added="A &amp; B"'));
     expect(reparsed.isWellFormed, isTrue);
     expect(reparsed.rootElement!.plainText, 'After & <safe>');
+  });
+
+  test('modified conformance topic retains qualified namespace names', () async {
+    final fixture = File(
+      p.join(
+        Directory.current.path,
+        'test',
+        'fixtures',
+        'writerside',
+        'conformance_project',
+        'topics',
+        'features.topic',
+      ),
+    );
+    final expected = await fixture.readAsString();
+    final source = expected.replaceFirst(
+      'Lossless semantic quote.',
+      'Before namespace-safe edit.',
+    );
+    final document = const WritersideDocumentParser().parseXml(
+      filePath: fixture.path,
+      source: source,
+    );
+    final root = document.rootElement!;
+    final quote = root.children.whereType<WritersideElementNode>().singleWhere(
+      (element) => element.name == 'quote',
+    );
+    final quoteText = quote.children.whereType<WritersideTextNode>().single;
+    final changedQuote = quote.copyWith(
+      children: [quoteText.copyWith(text: 'Lossless semantic quote.')],
+    );
+    final changedRoot = root.copyWith(
+      children: [
+        for (final child in root.children)
+          if (identical(child, quote)) changedQuote else child,
+      ],
+    );
+    final changed = document.copyWith(
+      nodes: [
+        for (final node in document.nodes)
+          if (identical(node, root)) changedRoot else node,
+      ],
+    );
+
+    final serialized = const WritersideDocumentSerializer().serialize(changed);
+    final parsed = XmlDocument.parse(serialized);
+
+    expect(root.qualifiedName, 'topic');
+    expect(
+      root.qualifiedAttributes.map((attribute) => attribute.qualifiedName),
+      containsAll(['xmlns:xsi', 'xsi:noNamespaceSchemaLocation']),
+    );
+    expect(
+      serialized,
+      contains('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'),
+    );
+    expect(
+      serialized,
+      contains(
+        'xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"',
+      ),
+    );
+    expect(parsed.rootElement.name.local, 'topic');
+    expect(serialized, expected);
   });
 
   test(

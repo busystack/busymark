@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
+import 'package:busymark/src/editor/source/source_autocomplete.dart';
+import 'package:busymark/src/editor/source/source_document.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/writerside/writerside_document_renderer.dart';
 import 'package:busymark/src/writerside/writerside_document_resolver.dart';
@@ -109,6 +111,96 @@ void main() {
     },
   );
 
+  test(
+    'reparse overlays indexed symbols and preserves unrelated diagnostics',
+    () async {
+      final fixture = await _ProjectFixture.create();
+      addTearDown(fixture.dispose);
+      const service = WorkspaceService();
+      final workspace = await service.openPath(fixture.path);
+      final activePath = workspace.activeFilePath!;
+      final unrelatedPath = p.join(
+        fixture.path,
+        'shared',
+        'topics',
+        'shared.topic',
+      );
+
+      expect(
+        workspace.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.index.unresolved-reference' &&
+              p.equals(diagnostic.filePath, unrelatedPath),
+        ),
+        isNotEmpty,
+      );
+      expect(
+        workspace.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code ==
+                  'writerside.schema.missing-required-attribute' &&
+              p.equals(diagnostic.filePath, activePath),
+        ),
+        isNotEmpty,
+      );
+
+      final reparsed = await service.reparseActive(workspace, '''
+<topic id="renamed-main" title="Main">
+  <include origin="shared-docs" from="shared.topic"
+           element-id="shared-note"/>
+  <snippet id="active-fixed"><p>Indexed while unsaved.</p></snippet>
+</topic>
+''');
+      final project = reparsed.writersideProject!;
+      final moduleId = project.activeModuleId;
+      final topicNames = project.index.names(
+        WritersideSymbolKind.topic,
+        moduleId: moduleId,
+      );
+      final snippetNames = project.index.names(
+        WritersideSymbolKind.snippet,
+        moduleId: moduleId,
+      );
+      final completion = const SourceAutocompleteProvider().suggestions(
+        document: SourceDocument(fullText: '<topic><renamed-'),
+        fullOffset: '<topic><renamed-'.length,
+        context: SourceAutocompleteContext(
+          projectIndex: project.index,
+          moduleId: moduleId,
+        ),
+      );
+
+      expect(
+        reparsed.writersideModule?.topicByReference('main.topic')?.id,
+        'renamed-main',
+      );
+      expect(topicNames, contains('renamed-main'));
+      expect(topicNames, isNot(contains('main')));
+      expect(snippetNames, contains('active-fixed'));
+      expect(
+        completion.map((suggestion) => suggestion.insertText),
+        contains('renamed-main'),
+      );
+      expect(
+        reparsed.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.index.unresolved-reference' &&
+              p.equals(diagnostic.filePath, unrelatedPath),
+        ),
+        isNotEmpty,
+      );
+      expect(
+        reparsed.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code ==
+                  'writerside.schema.missing-required-attribute' &&
+              p.equals(diagnostic.filePath, activePath),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   test('BusyMark processes the same fixture as the official builder', () async {
     final root = p.join(
       Directory.current.path,
@@ -185,6 +277,7 @@ class _ProjectFixture {
 <topic id="main" title="Main">
   <include origin="shared-docs" from="shared.topic"
            element-id="shared-note"/>
+  <snippet><p>Missing ID before reparse.</p></snippet>
 </topic>
 ''',
     );
@@ -196,6 +289,9 @@ class _ProjectFixture {
       topic: '''
 <topic id="shared" title="Shared">
   <snippet id="shared-note"><note>Shared module content</note></snippet>
+  <snippet id="unrelated-diagnostic">
+    <include from="missing.topic" element-id="missing-snippet"/>
+  </snippet>
 </topic>
 ''',
     );

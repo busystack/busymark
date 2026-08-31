@@ -60,15 +60,54 @@ class WritersideDocumentSerializer {
   }
 
   String _serializeElement(WritersideElementNode element) {
-    final attributes = element.attributes.entries
-        .map((entry) => ' ${entry.key}="${_escapeAttribute(entry.value)}"')
-        .join();
+    final attributes = _serializeAttributes(element);
     if (element.children.isEmpty &&
         RegExp(r'/\s*>$').hasMatch(element.rawSource.trim())) {
-      return '<${element.name}$attributes/>';
+      return '<${element.qualifiedName}$attributes/>';
     }
     final children = element.children.map(_serializeNode).join();
-    return '<${element.name}$attributes>$children</${element.name}>';
+    return '<${element.qualifiedName}$attributes>'
+        '$children</${element.qualifiedName}>';
+  }
+
+  String _serializeAttributes(WritersideElementNode element) {
+    final originalValues = <String, String>{
+      for (final attribute in element.qualifiedAttributes)
+        attribute.name: attribute.value,
+    };
+    final attributesModified = !_sameStringMap(
+      element.attributes,
+      originalValues,
+    );
+    final emitted = <String>{};
+    final result = StringBuffer();
+    for (final attribute in element.qualifiedAttributes) {
+      if (!element.attributes.containsKey(attribute.name)) {
+        continue;
+      }
+      final value = attributesModified
+          ? element.attributes[attribute.name]!
+          : attribute.value;
+      result
+        ..write(' ')
+        ..write(attribute.qualifiedName)
+        ..write('="')
+        ..write(_escapeAttribute(value))
+        ..write('"');
+      emitted.add(attribute.name);
+    }
+    for (final entry in element.attributes.entries) {
+      if (!emitted.add(entry.key)) {
+        continue;
+      }
+      result
+        ..write(' ')
+        ..write(entry.key)
+        ..write('="')
+        ..write(_escapeAttribute(entry.value))
+        ..write('"');
+    }
+    return result.toString();
   }
 
   String _escapeText(String value) => value
@@ -78,4 +117,16 @@ class WritersideDocumentSerializer {
 
   String _escapeAttribute(String value) =>
       _escapeText(value).replaceAll('"', '&quot;');
+}
+
+bool _sameStringMap(Map<String, String> first, Map<String, String> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (final entry in first.entries) {
+    if (second[entry.key] != entry.value) {
+      return false;
+    }
+  }
+  return true;
 }

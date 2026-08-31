@@ -1288,18 +1288,11 @@ class WorkspaceService {
               source: source,
               topicsRoot: topic!.topicRoot,
             );
-        final resolutionDiagnostics = _writersideResolutionDiagnostics(
+        return _workspaceWithReparsedWritersideTopic(
           workspace,
           module!,
+          topic,
           parsed,
-        );
-        return workspace.copyWith(
-          markdown: parsed.markdown,
-          diagnostics: sortDiagnostics([
-            ...module.diagnostics,
-            ...parsed.diagnostics,
-            ...resolutionDiagnostics,
-          ]),
         );
       }
       if (topic?.format == WritersideTopicFormat.xml) {
@@ -1308,17 +1301,11 @@ class WorkspaceService {
           source: source,
           topicsRoot: topic!.topicRoot,
         );
-        final resolutionDiagnostics = _writersideResolutionDiagnostics(
+        return _workspaceWithReparsedWritersideTopic(
           workspace,
           module!,
+          topic,
           parsed,
-        );
-        return workspace.copyWith(
-          diagnostics: sortDiagnostics([
-            ...module.diagnostics,
-            ...parsed.diagnostics,
-            ...resolutionDiagnostics,
-          ]),
         );
       }
       return workspace.copyWith(diagnostics: module?.diagnostics);
@@ -1333,6 +1320,77 @@ class WorkspaceService {
       markdown: markdown,
       diagnostics: markdown.diagnostics,
     );
+  }
+
+  Workspace _workspaceWithReparsedWritersideTopic(
+    Workspace workspace,
+    WritersideModule module,
+    WritersideTopic previousTopic,
+    WritersideTopic parsedTopic,
+  ) {
+    final activePath = parsedTopic.filePath;
+    final updatedModule = module.copyWith(
+      topics: List.unmodifiable([
+        for (final topic in module.topics)
+          if (p.equals(topic.filePath, activePath)) parsedTopic else topic,
+      ]),
+      diagnostics: sortDiagnostics([
+        for (final diagnostic in module.diagnostics)
+          if (!p.equals(diagnostic.filePath, activePath)) diagnostic,
+        ...parsedTopic.diagnostics,
+      ]),
+    );
+    final previousProject = workspace.writersideProject;
+    final updatedProject = previousProject?.withModule(updatedModule);
+    final indexedWorkspace = workspace.copyWith(
+      markdown: parsedTopic.markdown,
+      writersideModule: updatedProject?.activeModule ?? updatedModule,
+      writersideProject: updatedProject,
+    );
+    final resolutionDiagnostics = _writersideResolutionDiagnostics(
+      indexedWorkspace,
+      indexedWorkspace.writersideModule!,
+      parsedTopic,
+    );
+    final previousResolutionDiagnostics = _writersideResolutionDiagnostics(
+      workspace,
+      module,
+      previousTopic,
+    );
+    final preservedWorkspaceDiagnostics = [
+      for (final diagnostic in workspace.diagnostics)
+        if (!_isProjectDiagnostic(previousProject, diagnostic) &&
+            !p.equals(diagnostic.filePath, activePath) &&
+            !previousResolutionDiagnostics.any(
+              (previous) => _sameDiagnostic(previous, diagnostic),
+            ))
+          diagnostic,
+    ];
+    return indexedWorkspace.copyWith(
+      diagnostics: sortDiagnostics([
+        ...?updatedProject?.diagnostics,
+        if (updatedProject == null) ...updatedModule.diagnostics,
+        ...preservedWorkspaceDiagnostics,
+        ...resolutionDiagnostics,
+      ]),
+    );
+  }
+
+  bool _isProjectDiagnostic(
+    WritersideProject? project,
+    Diagnostic diagnostic,
+  ) =>
+      project?.diagnostics.any(
+        (candidate) => identical(candidate, diagnostic),
+      ) ??
+      false;
+
+  bool _sameDiagnostic(Diagnostic first, Diagnostic second) {
+    return first.code == second.code &&
+        first.severity == second.severity &&
+        p.equals(first.filePath, second.filePath) &&
+        first.sourceSpan?.startOffset == second.sourceSpan?.startOffset &&
+        first.sourceSpan?.endOffset == second.sourceSpan?.endOffset;
   }
 
   PreviewDocument? buildPreview(Workspace workspace, String source) {

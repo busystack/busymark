@@ -19,6 +19,21 @@ class WritersideSourceProvenance {
   final String topicPath;
 }
 
+/// The source spelling of an XML attribute alongside its normalized semantic
+/// lookup name. Writerside semantics use [name], while lossless serialization
+/// must retain namespace prefixes and original casing from [qualifiedName].
+class WritersideQualifiedAttribute {
+  const WritersideQualifiedAttribute({
+    required this.name,
+    required this.qualifiedName,
+    required this.value,
+  });
+
+  final String name;
+  final String qualifiedName;
+  final String value;
+}
+
 class WritersideDocument {
   const WritersideDocument({
     required this.filePath,
@@ -141,7 +156,9 @@ class WritersideRawNode extends WritersideDocumentNode {
 sealed class WritersideElementNode extends WritersideDocumentNode {
   const WritersideElementNode({
     required this.name,
+    required this.qualifiedName,
     required this.attributes,
+    required this.qualifiedAttributes,
     required this.attributeSpans,
     required this.children,
     required super.span,
@@ -151,7 +168,9 @@ sealed class WritersideElementNode extends WritersideDocumentNode {
   });
 
   final String name;
+  final String qualifiedName;
   final Map<String, String> attributes;
+  final List<WritersideQualifiedAttribute> qualifiedAttributes;
   final Map<String, SourceSpan> attributeSpans;
   final List<WritersideDocumentNode> children;
 
@@ -181,7 +200,9 @@ class WritersideSemanticElementNode extends WritersideElementNode {
   const WritersideSemanticElementNode({
     required this.kind,
     required super.name,
+    required super.qualifiedName,
     required super.attributes,
+    required super.qualifiedAttributes,
     required super.attributeSpans,
     required super.children,
     required super.span,
@@ -209,7 +230,9 @@ class WritersideSemanticElementNode extends WritersideElementNode {
     return WritersideSemanticElementNode(
       kind: kind,
       name: name,
+      qualifiedName: qualifiedName,
       attributes: nextAttributes,
+      qualifiedAttributes: qualifiedAttributes,
       attributeSpans: attributeSpans,
       children: nextChildren,
       span: span,
@@ -229,7 +252,9 @@ class WritersideGenericElementNode extends WritersideElementNode {
   const WritersideGenericElementNode({
     required this.schemaKnown,
     required super.name,
+    required super.qualifiedName,
     required super.attributes,
+    required super.qualifiedAttributes,
     required super.attributeSpans,
     required super.children,
     required super.span,
@@ -255,7 +280,9 @@ class WritersideGenericElementNode extends WritersideElementNode {
     return WritersideGenericElementNode(
       schemaKnown: schemaKnown,
       name: name,
+      qualifiedName: qualifiedName,
       attributes: nextAttributes,
+      qualifiedAttributes: qualifiedAttributes,
       attributeSpans: attributeSpans,
       children: nextChildren,
       span: span,

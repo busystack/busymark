@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
-       id="features" title="BusyMark Writerside conformance">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd" id="features" title="BusyMark Writerside conformance">
   <p>Use <control>Settings</control>, <path>docs/index.md</path>,
     <shortcut key="$Save"/>, <code>busymark</code>,
     <resource src="sample-resource.txt"/>, and

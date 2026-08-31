@@ -538,6 +538,24 @@ class WritersideModule {
   final WritersideBuildProfilesConfig? buildProfiles;
   final WritersideInstanceGroupsConfig? instanceGroups;
 
+  WritersideModule copyWith({
+    List<WritersideTopic>? topics,
+    List<Diagnostic>? diagnostics,
+  }) {
+    return WritersideModule(
+      rootPath: rootPath,
+      config: config,
+      instances: instances,
+      topics: topics ?? this.topics,
+      variables: variables,
+      categories: categories,
+      diagnostics: diagnostics ?? this.diagnostics,
+      validatedImageDirs: validatedImageDirs,
+      buildProfiles: buildProfiles,
+      instanceGroups: instanceGroups,
+    );
+  }
+
   String get effectiveImagesDir => validatedImageDirs.firstOrNull ?? 'images';
 
   Map<String, WritersideTopic> get topicsByFileName {

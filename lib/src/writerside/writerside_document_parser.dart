@@ -108,10 +108,19 @@ class WritersideDocumentParser {
         final opening = source.substring(localStart, localEnd);
         final frame = _ElementFrame(
           name: _localName(event.name),
+          qualifiedName: event.name,
           attributes: {
             for (final attribute in event.attributes)
               _localName(attribute.name): attribute.value,
           },
+          qualifiedAttributes: [
+            for (final attribute in event.attributes)
+              WritersideQualifiedAttribute(
+                name: _localName(attribute.name),
+                qualifiedName: attribute.name,
+                value: attribute.value,
+              ),
+          ],
           attributeSpans: _attributeSpans(
             filePath: filePath,
             fullSource: fullSource,
@@ -203,14 +212,18 @@ class WritersideDocumentParser {
 class _ElementFrame {
   _ElementFrame({
     required this.name,
+    required this.qualifiedName,
     required this.attributes,
+    required this.qualifiedAttributes,
     required this.attributeSpans,
     required this.startOffset,
     required this.openingEndOffset,
   });
 
   final String name;
+  final String qualifiedName;
   final Map<String, String> attributes;
+  final List<WritersideQualifiedAttribute> qualifiedAttributes;
   final Map<String, SourceSpan> attributeSpans;
   final int startOffset;
   final int openingEndOffset;
@@ -236,7 +249,9 @@ class _ElementFrame {
       return WritersideSemanticElementNode(
         kind: capability.kind,
         name: name,
+        qualifiedName: qualifiedName,
         attributes: Map.unmodifiable(attributes),
+        qualifiedAttributes: List.unmodifiable(qualifiedAttributes),
         attributeSpans: Map.unmodifiable(attributeSpans),
         children: List.unmodifiable(children),
         span: span,
@@ -246,7 +261,9 @@ class _ElementFrame {
     return WritersideGenericElementNode(
       schemaKnown: WritersideSchema.isKnownElement(name),
       name: name,
+      qualifiedName: qualifiedName,
       attributes: Map.unmodifiable(attributes),
+      qualifiedAttributes: List.unmodifiable(qualifiedAttributes),
       attributeSpans: Map.unmodifiable(attributeSpans),
       children: List.unmodifiable(children),
       span: span,
