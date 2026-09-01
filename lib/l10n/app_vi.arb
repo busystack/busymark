@@ -1,0 +1,4637 @@
+{
+  "@@locale": "vi",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Trình biên tập tệp Markdown và các dự án tài liệu tương thích với Writerside.",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "Giới thiệu BusyMark",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutTagline": "Trình biên tập Markdown và Writerside",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Giấy phép",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Trang web",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutSourceCode": "Mã nguồn",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
+  },
+  "reportIssue": "Báo cáo sự cố",
+  "@reportIssue": {
+    "description": "Menu action and dialog title for reporting an issue."
+  },
+  "feedbackCategory": "Danh mục",
+  "@feedbackCategory": {
+    "description": "Feedback category field label."
+  },
+  "feedbackChooseCategory": "Chọn một danh mục",
+  "@feedbackChooseCategory": {
+    "description": "Placeholder for the feedback category selector."
+  },
+  "feedbackCategoryProblem": "Vấn đề hoặc lỗi",
+  "@feedbackCategoryProblem": {
+    "description": "Feedback category for a problem or bug."
+  },
+  "feedbackCategoryFeature": "Đề xuất tính năng",
+  "@feedbackCategoryFeature": {
+    "description": "Feedback category for a feature request."
+  },
+  "feedbackCategoryPrivacySecurity": "Mối lo ngại về quyền riêng tư hoặc bảo mật",
+  "@feedbackCategoryPrivacySecurity": {
+    "description": "Feedback category for a privacy or security concern."
+  },
+  "feedbackCategoryUsability": "Mối lo ngại về khả năng sử dụng",
+  "@feedbackCategoryUsability": {
+    "description": "Feedback category for a usability concern."
+  },
+  "feedbackCategoryOther": "Khác",
+  "@feedbackCategoryOther": {
+    "description": "Feedback category for other concerns."
+  },
+  "feedbackSubject": "Chủ đề",
+  "@feedbackSubject": {
+    "description": "Feedback subject field label."
+  },
+  "feedbackMessage": "Nội dung chi tiết",
+  "@feedbackMessage": {
+    "description": "Detailed feedback message field label."
+  },
+  "feedbackReplyEmail": "Email để trả lời (tùy chọn)",
+  "@feedbackReplyEmail": {
+    "description": "Optional reply email field label."
+  },
+  "feedbackIncludeTechnicalDetails": "Bao gồm thông tin kỹ thuật",
+  "@feedbackIncludeTechnicalDetails": {
+    "description": "Checkbox label for optional technical details."
+  },
+  "feedbackTechnicalDetailsDisclosure": "Khi bật, tùy chọn này chỉ thêm phiên bản hệ điều hành Linux và ngôn ngữ của ứng dụng BusyMark. Không có nhật ký, tệp, dữ liệu tài khoản hoặc thông tin chẩn đoán nào khác được đính kèm.",
+  "@feedbackTechnicalDetailsDisclosure": {
+    "description": "Disclosure explaining exactly which optional technical details are submitted."
+  },
+  "feedbackSubmit": "Gửi",
+  "@feedbackSubmit": {
+    "description": "Button that submits feedback."
+  },
+  "feedbackSubmitting": "Đang gửi…",
+  "@feedbackSubmitting": {
+    "description": "Button label while feedback is being submitted."
+  },
+  "feedbackCategoryRequired": "Hãy chọn một danh mục.",
+  "@feedbackCategoryRequired": {
+    "description": "Validation error for a missing feedback category."
+  },
+  "feedbackSubjectLength": "Chủ đề phải có từ 3 đến 120 ký tự.",
+  "@feedbackSubjectLength": {
+    "description": "Validation error for feedback subject length."
+  },
+  "feedbackMessageLength": "Nội dung phải có từ 10 đến 5.000 ký tự.",
+  "@feedbackMessageLength": {
+    "description": "Validation error for feedback message length."
+  },
+  "feedbackReplyEmailInvalid": "Nhập địa chỉ email hợp lệ hoặc để trống trường này.",
+  "@feedbackReplyEmailInvalid": {
+    "description": "Validation error for an invalid optional reply email."
+  },
+  "feedbackConnectionFailure": "BusyMark không thể kết nối. Hãy kiểm tra kết nối Internet rồi thử lại.",
+  "@feedbackConnectionFailure": {
+    "description": "Feedback submission error for a connection failure."
+  },
+  "feedbackTimeoutFailure": "Yêu cầu đã hết thời gian chờ. Hãy thử lại.",
+  "@feedbackTimeoutFailure": {
+    "description": "Feedback submission error for a timeout."
+  },
+  "feedbackRateLimitedFailure": "Quá nhiều báo cáo đã được gửi từ kết nối này. Hãy chờ rồi thử lại.",
+  "@feedbackRateLimitedFailure": {
+    "description": "Feedback submission error when the server rate limit is reached."
+  },
+  "feedbackRejectedFailure": "Máy chủ đã từ chối báo cáo này. Hãy kiểm tra các trường trong biểu mẫu rồi thử lại.",
+  "@feedbackRejectedFailure": {
+    "description": "Feedback submission error when the server rejects invalid request data."
+  },
+  "feedbackServerFailure": "Máy chủ không thể tiếp nhận báo cáo. Hãy thử lại sau.",
+  "@feedbackServerFailure": {
+    "description": "Generic feedback submission server error."
+  },
+  "feedbackSuccess": "Đã gửi phản hồi. Mã tham chiếu: {id}",
+  "@feedbackSuccess": {
+    "description": "Success message containing the server reference ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "advanced": "Nâng cao",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "addToGit": "Thêm vào Git",
+  "@addToGit": {
+    "description": "Menu action that stages the selected file or folder in Git."
+  },
+  "appearance": "Giao diện",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "Áp dụng",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "Quay lại",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "Dưới cùng bên trái",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "Dưới cùng bên phải",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "Hủy",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "Chọn",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "Chọn vị trí",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "Sao chép",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "copyName": "Sao chép tên",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyFileName": "Sao chép tên tệp",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
+  "copyPath": "Sao chép đường dẫn",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
+  "create": "Tạo",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "Đang tạo…",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "Cắt",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "promoteSection": "Đưa phần lên một cấp",
+  "@promoteSection": {
+    "description": "Outline action that raises a heading section, including descendant headings, by one rank."
+  },
+  "demoteSection": "Đưa phần xuống một cấp",
+  "@demoteSection": {
+    "description": "Outline action that lowers a heading section, including descendant headings, by one rank."
+  },
+  "moveSectionUp": "Di chuyển phần lên trên",
+  "@moveSectionUp": {
+    "description": "Outline action that swaps a heading section with its previous sibling section."
+  },
+  "moveSectionDown": "Di chuyển phần xuống dưới",
+  "@moveSectionDown": {
+    "description": "Outline action that swaps a heading section with its next sibling section."
+  },
+  "confirmDeleteSectionTitle": "Xóa phần này?",
+  "@confirmDeleteSectionTitle": {
+    "description": "Confirmation title before deleting a Markdown heading section."
+  },
+  "confirmDeleteSectionMessage": "Xóa “{name}” và toàn bộ nội dung trong phần này? Không thể hoàn tác.",
+  "@confirmDeleteSectionMessage": {
+    "description": "Confirmation message before deleting a Markdown heading section.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "darkTheme": "Tối",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "delete": "Xóa",
+  "@delete": {
+    "description": "Delete command label."
+  },
+  "discard": "Loại bỏ",
+  "@discard": {
+    "description": "Destructive button that throws away unsaved editor changes. Translate it distinctly from Cancel."
+  },
+  "editor": "Trình biên tập",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "Tệp",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "fileHistory": "Lịch sử tệp",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
+  },
+  "folder": "Thư mục",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "Chèn",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "Phím tắt",
+  "commandPalette": "Bảng lệnh",
+  "@commandPalette": {
+    "description": "Title and command label for the searchable command palette."
+  },
+  "commandPaletteHint": "Nhập lệnh",
+  "@commandPaletteHint": {
+    "description": "Search hint in the command palette."
+  },
+  "commandPaletteEmpty": "Không có lệnh phù hợp",
+  "@commandPaletteEmpty": {
+    "description": "Empty state in the command palette."
+  },
+  "commandUnavailableInContext": "Lệnh không khả dụng trong ngữ cảnh trình biên tập hiện tại",
+  "@commandUnavailableInContext": {
+    "description": "Reason shown for a disabled contextual command."
+  },
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "lightTheme": "Sáng",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "Menu chính",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "Toàn màn hình",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "Mở",
+  "@open": {
+    "description": "Open action label."
+  },
+  "openInFiles": "Mở trong Tệp",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "Thao tác với đường dẫn",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
+  },
+  "outline": "Đề cương",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "Ghi đè",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "Dán",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "Dán không định dạng",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "reading": "Đọc",
+  "@reading": {
+    "description": "Reading view label."
+  },
+  "removeFromRecent": "Xóa khỏi mục Gần đây",
+  "@removeFromRecent": {
+    "description": "Action that removes a workspace from the Recent list without deleting its files."
+  },
+  "recent": "Gần đây",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "Làm lại",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "Lưu",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "Tìm kiếm",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "Chọn tất cả",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "Cài đặt",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "Mã nguồn",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "Chia đôi",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "Hệ thống",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "Chủ đề",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "Ngôn ngữ",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "Hệ thống",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk bokmål",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
+  },
+  "toggleSidebar": "Bảng điều khiển thanh bên",
+  "@toggleSidebar": {
+    "description": "Keyboard shortcuts label for the sidebar panel toggle."
+  },
+  "topLeft": "Trên cùng bên trái",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "Trên cùng bên phải",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "Hoàn tác",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "Kiểm tra",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "Xác minh",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "Chế độ xem",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "Chào mừng",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "Hình ảnh",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "Mở tệp Markdown",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md hoặc .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "Mở thư mục hoặc dự án Writerside",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Thư mục Markdown hoặc dự án tương thích với Writerside",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "noOpenFile": "Không có tệp nào đang mở",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
+  "shortcutDeleteTreeItemDescription": "Xóa mục Tệp đã chọn hoặc xóa chủ đề đã chọn khỏi mục lục",
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
+  "shortcutGroupGeneral": "Chung",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
+  },
+  "shortcutNewDocument": "Tạo",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for opening the content creation chooser."
+  },
+  "shortcutNewDocumentDescription": "Tạo tệp Markdown hoặc dự án Writerside",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
+  },
+  "shortcutOpenDescription": "Mở tệp Markdown, thư mục hoặc dự án Writerside",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "Lưu tài liệu hiện tại",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutSearchDescription": "Tìm kiếm trong không gian làm việc hiện tại",
+  "@shortcutSearchDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "Hiển thị tham chiếu phím tắt này",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutSyntaxReferenceDescription": "Mở tham chiếu cú pháp",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
+  },
+  "shortcutSettingsDescription": "Mở cài đặt BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
+  "shortcutNextTab": "Tab tiếp theo",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next tab."
+  },
+  "shortcutNextTabDescription": "Chuyển đến tab đang mở tiếp theo",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next tab."
+  },
+  "shortcutPreviousTab": "Tab trước",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous tab."
+  },
+  "shortcutPreviousTabDescription": "Chuyển đến tab đang mở trước đó",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous tab."
+  },
+  "shortcutCloseTab": "Đóng tab",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active tab."
+  },
+  "shortcutCloseTabDescription": "Đóng tab đang hoạt động",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active tab."
+  },
+  "shortcutCloseAllTabs": "Đóng tất cả tab",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all tabs."
+  },
+  "shortcutCloseAllTabsDescription": "Đóng tất cả các tab đang mở",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all tabs."
+  },
+  "shortcutGroupTextEditing": "Chỉnh sửa văn bản",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "Trong chế độ Mã nguồn, chọn toàn bộ văn bản; trong chế độ Trình biên tập, nhấn hai lần để chọn mọi khối",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
+  },
+  "shortcutCutDescription": "Cắt văn bản đã chọn",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "Sao chép văn bản đã chọn",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "Dán từ bảng nhớ tạm",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "Dán văn bản trong bảng nhớ tạm không định dạng",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "Hoàn tác chỉnh sửa gần nhất",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "Làm lại chỉnh sửa vừa hoàn tác",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "shortcutInsertIndentation": "Chèn thụt lề",
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
+  "shortcutInsertIndentationDescription": "Chèn thụt lề tại vị trí con trỏ",
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
+  "shortcutOutdentSource": "Bỏ thụt lề mã nguồn",
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
+  "shortcutOutdentSourceDescription": "Xóa một cấp thụt lề trong chế độ Mã nguồn",
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
+  "shortcutEscape": "Đóng tìm kiếm hoặc xóa lựa chọn khối",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
+  },
+  "shortcutEscapeDescription": "Đóng tìm kiếm trong không gian làm việc hoặc xóa lựa chọn khối trong chế độ Trình biên tập",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
+  },
+  "shortcutGroupFormatting": "Định dạng",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "Bật hoặc tắt chữ đậm cho văn bản đã chọn",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "Bật hoặc tắt chữ nghiêng cho văn bản đã chọn",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "Bật hoặc tắt gạch chân cho văn bản đã chọn",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "Chèn hoặc chỉnh sửa liên kết",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "Bật hoặc tắt mã nội tuyến cho văn bản đã chọn",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "Bật hoặc tắt gạch ngang cho văn bản đã chọn",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "Khối",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "Đặt khối hiện tại thành đoạn văn",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "Đặt khối hiện tại thành Tiêu đề 1",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "Đặt khối hiện tại thành Tiêu đề 2",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "Đặt khối hiện tại thành Tiêu đề 3",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "Đặt khối hiện tại thành Tiêu đề 4",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "Đặt khối hiện tại thành Tiêu đề 5",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "Đặt khối hiện tại thành Tiêu đề 6",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "Danh sách",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "Danh sách đánh số",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "Bật hoặc tắt định dạng danh sách đánh số",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "Danh sách dấu đầu dòng",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "Bật hoặc tắt định dạng danh sách dấu đầu dòng",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "Danh sách kiểm tra",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "Bật hoặc tắt định dạng danh sách kiểm tra",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "Thanh bên",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "Chế độ xem thanh bên",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
+  },
+  "createMarkdownFile": "Tạo tệp Markdown",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "Bắt đầu một tài liệu Markdown cục bộ chưa lưu",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "Tạo dự án Writerside",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "Bắt đầu một dự án tương thích với Writerside trên máy",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "Tài liệu",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "Hướng dẫn sử dụng",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "Bắt đầu",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "Tên dự án",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "Tên thư mục",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "Tên thực thể",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "ID thực thể",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "Tiêu đề chủ đề bắt đầu",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "Vị trí",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "Tên dự án là bắt buộc.",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "Tên thư mục là bắt buộc.",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "Sử dụng một tên thư mục an toàn duy nhất.",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "Sử dụng mã định danh viết thường, chỉ gồm chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối.",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "Tiêu đề chủ đề bắt đầu là bắt buộc.",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "Không thể tạo dự án Writerside.",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "Cài đặt BusyMark",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "autoSave": "Tự động lưu",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "Tự động lưu các thay đổi của tệp sau một khoảng thời gian ngắn không hoạt động.",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
+  "wordWrap": "Tự động xuống dòng",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "Cỡ chữ trình biên tập",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "Kiểm tra khi chỉnh sửa",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "Xóa không gian làm việc gần đây",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtonsPosition": "Vị trí các nút chỉnh sửa",
+  "@editingButtonsPosition": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsPositionDescription": "Chọn nơi hiển thị các nút chỉnh sửa WYSIWYG nổi.",
+  "@editingButtonsPositionDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Hướng của các nút chỉnh sửa",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Chọn sắp xếp các nút chỉnh sửa WYSIWYG nổi theo chiều ngang hay chiều dọc.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Ngang",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Dọc",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "Quyền riêng tư",
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
+  "allowRemoteImages": "Tải hình ảnh từ xa",
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
+  "allowRemoteImagesDescription": "Cho phép hình ảnh trong phần xem trước và trình biên tập Markdown được tải từ các URL http và https.",
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
+  "clearRemoteImagePermissions": "Xóa quyền hình ảnh từ xa",
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
+  "clearRemoteImagePermissionsDescription": "Quên các không gian làm việc đã được cho phép tải hình ảnh từ xa.",
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
+  "clearGitWorkspaceTrust": "Xóa các không gian làm việc Git đáng tin cậy",
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
+  "clearGitWorkspaceTrustDescription": "Hỏi trước khi bật các tính năng Git cho những không gian làm việc đã từng được tin cậy.",
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
+  "settingsWindowSectionTitle": "Cửa sổ",
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
+  "settingsReopenWorkspaceOnStartupTitle": "Mở lại không gian làm việc trước đó khi khởi động",
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
+  "settingsReopenWorkspaceOnStartupDescription": "Mở không gian làm việc và các tab từ phiên trước khi BusyMark khởi động.",
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Xác nhận trước khi đóng khi có thay đổi chưa lưu",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Hỏi trước khi đóng BusyMark nếu tài liệu có thay đổi chưa lưu.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
+  "closeUnsavedChangesTitle": "Thay đổi chưa lưu",
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
+  "closeUnsavedChangesSingleMessage": "Tài liệu này có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?",
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Lưu thay đổi trước khi đóng BusyMark?} =1{1 tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?} other{{count} tài liệu có thay đổi chưa lưu. Lưu thay đổi trước khi đóng BusyMark?}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "closeUnsavedChangesCancel": "Hủy",
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "Loại bỏ",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Destructive button that closes BusyMark without saving editor changes. Translate it distinctly from Cancel."
+  },
+  "closeUnsavedChangesSave": "Lưu",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "currentFile": "tệp hiện tại",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "Thay đổi chưa lưu",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "Bạn có thay đổi chưa lưu trong {fileName}. Lưu trước khi tiếp tục?",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 tài liệu có thay đổi chưa lưu. Lưu tài liệu trước khi tiếp tục?} other{{count} tài liệu có thay đổi chưa lưu. Lưu các tài liệu trước khi tiếp tục?}}",
+  "@unsavedChangesMultipleMessage": {
+    "description": "Confirmation message before replacing workspace state when several documents are dirty.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileChangedOnDisk": "Tệp đã thay đổi trên đĩa",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "Tệp này đã thay đổi trên đĩa kể từ khi bạn mở. Ghi đè tệp?",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "Chưa có tên.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "Danh sách không có thứ tự",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "Danh sách có thứ tự",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "Danh sách nhiệm vụ",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "Đánh dấu hoặc bỏ đánh dấu nhiệm vụ",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "Thụt lề mục danh sách",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "Bỏ thụt lề mục danh sách",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "Trích dẫn",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "Khối mã",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "Ngôn ngữ khối mã",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "Hình ảnh",
+  "video": "Video",
+  "openVideo": "Phát video",
+  "pauseVideo": "Tạm dừng video",
+  "videoUnavailable": "Video không khả dụng",
+  "videoPreview": "Xem trước video",
+  "diagnosticWritersideVideoMissingSource": "Video thiếu thuộc tính src.",
+  "diagnosticWritersideVideoUnsupportedSource": "Nguồn video không được hỗ trợ: {source}",
+  "@diagnosticWritersideVideoUnsupportedSource": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingFile": "Tệp video không tồn tại: {source}",
+  "@diagnosticWritersideVideoMissingFile": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingPreview": "Hình ảnh xem trước video không tồn tại: {preview}",
+  "@diagnosticWritersideVideoMissingPreview": {
+    "placeholders": {
+      "preview": {
+        "type": "String"
+      }
+    }
+  },
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "inlineImage": "Hình ảnh nội tuyến",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "Bảng",
+  "@table": {
+    "description": "Table command label."
+  },
+  "htmlBlock": "Khối HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "htmlContentDefault": "Nội dung HTML",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
+  "shortcutHtmlBlockDescription": "Chèn hoặc chỉnh sửa khối HTML",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "HTML đã kết xuất",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "Chỉnh sửa HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "Mã nguồn HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
+  "thematicBreak": "Đường phân cách",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "Đậm",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "Nghiêng",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "Gạch chân",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "Gạch ngang",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "Mã nội tuyến",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "Liên kết",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "Ngắt dòng cứng",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "Kiểu văn bản",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "Đoạn văn",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "Tiêu đề 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "Tiêu đề 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "Tiêu đề 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "Tiêu đề 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "Tiêu đề 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "Tiêu đề 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "Xóa bảng",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "Cột {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "Chèn cột bên trái",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "Chèn cột bên phải",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "Xóa cột",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableAlignmentUnspecified": "Căn chỉnh: Chưa chỉ định",
+  "@tableAlignmentUnspecified": {
+    "description": "Menu item for using unspecified Markdown table-column alignment."
+  },
+  "tableAlignmentLeft": "Căn chỉnh: Trái",
+  "@tableAlignmentLeft": {
+    "description": "Menu item for left-aligning a Markdown table column."
+  },
+  "tableAlignmentCenter": "Căn chỉnh: Giữa",
+  "@tableAlignmentCenter": {
+    "description": "Menu item for centering a Markdown table column."
+  },
+  "tableAlignmentRight": "Căn chỉnh: Phải",
+  "@tableAlignmentRight": {
+    "description": "Menu item for right-aligning a Markdown table column."
+  },
+  "tableRowNumber": "Hàng {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "Chèn hàng phía trên",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "Chèn hàng phía dưới",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "Xóa hàng",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "Tiêu đề",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "Ô",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "Ngôn ngữ",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "Ẩn các nút chỉnh sửa",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "Hiện các nút chỉnh sửa",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "Văn bản thay thế",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "editorPlaceholderText": "văn bản",
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
+  "editorPlaceholderCode": "mã",
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
+  "editorPlaceholderAltText": "văn bản thay thế",
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
+  "describeTheImage": "Mô tả hình ảnh",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "Cột",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "Hàng",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "Tiêu đề {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "Ô",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "Không có nguồn hình ảnh",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "remoteImageBlocked": "Hình ảnh từ xa bị chặn",
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
+  "remoteImageBlockedTooltip": "Chọn xem BusyMark có thể tải hình ảnh từ xa hay không.",
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
+  "remoteImagesBlockedTitle": "Hình ảnh từ xa bị chặn",
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
+  "remoteImagesBlockedMessage": "Tài liệu này tham chiếu đến hình ảnh trên Internet. Việc tải chúng có thể tiết lộ thông tin mạng cho máy chủ lưu trữ hình ảnh.",
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
+  "loadRemoteImagesForWorkspace": "Tải cho không gian làm việc này",
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
+  "alwaysLoadRemoteImages": "Luôn tải hình ảnh từ xa",
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
+  "hideSidebar": "Ẩn bảng điều khiển thanh bên",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar panel."
+  },
+  "showSidebar": "Hiện bảng điều khiển thanh bên",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar panel."
+  },
+  "showPreview": "Hiện bản xem trước",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "Ẩn bản xem trước",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "Tệp Markdown chưa lưu",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "Tệp Markdown đơn",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Thư mục Markdown",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Mô-đun Writerside",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "Vấn đề",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{Không có chẩn đoán} =1{1 chẩn đoán} other{{count} chẩn đoán}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "Tệp",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "Mục lục",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "tocActions": "Thao tác với mục lục",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
+  "markdownUnsaved": "Markdown - chưa lưu",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} - {count, plural, =1{1 tệp} other{{count} tệp}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "Không có tệp",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "newFile": "Tệp mới",
+  "@newFile": {
+    "description": "Menu action and dialog title for creating a new file."
+  },
+  "noWritersideToc": "Không có mục lục Writerside",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "Phần mục lục",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "Chủ đề mới",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "Chủ đề con mới",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "Chủ đề cùng cấp mới",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Đổi tên tệp chủ đề",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "Vị trí trong mục lục",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "Tại gốc mục lục",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Sau chủ đề đã chọn",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "Bên trong chủ đề đã chọn",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Dán sau chủ đề",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Dán làm chủ đề con",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Xóa khỏi mục lục",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Xóa khỏi mục lục?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "Xóa {name} khỏi mục lục này? Tệp chủ đề sẽ được giữ lại.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Xóa tệp chủ đề?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "Xóa {name} và xóa tệp đó khỏi mọi mục lục? Không thể hoàn tác.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicFile": "Xóa an toàn tệp chủ đề…",
+  "@safeDeleteTopicFile": {
+    "description": "Writerside action that safely deletes a topic after checking usages."
+  },
+  "removeTocElement": "Xóa phần tử mục lục",
+  "@removeTocElement": {
+    "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "reviewUsages": "Xem lại các tham chiếu",
+  "@reviewUsages": {
+    "description": "Action that opens the Writerside topic usages review."
+  },
+  "deleteTopicFile": "Xóa tệp chủ đề",
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic source file."
+  },
+  "removeAction": "Xóa",
+  "@removeAction": {
+    "description": "Short action label for removing an item without deleting its source file."
+  },
+  "topicRemovalSummary": "Xóa “{topic}” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.",
+  "@topicRemovalSummary": {
+    "description": "Summary in the dialog for removing a topic from one Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicSummary": "Xóa “{topic}” và cập nhật an toàn các tham chiếu đến tệp đó trong toàn bộ dự án Writerside này.",
+  "@safeDeleteTopicSummary": {
+    "description": "Summary in the Writerside safe-delete dialog.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "childTopicsPromoted": "{count, plural, =1{1 chủ đề con sẽ được đưa lên một cấp.} other{{count} chủ đề con sẽ được đưa lên một cấp.}}",
+  "@childTopicsPromoted": {
+    "description": "Disclosure that children of a removed TOC element are promoted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "topicIsStartPageRemovalWarning": "Chủ đề này đang được dùng làm trang bắt đầu của một thực thể. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.",
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning that blocks deletion of a Writerside start-page topic."
+  },
+  "topicUsagesCount": "Các tham chiếu ({count})",
+  "@topicUsagesCount": {
+    "description": "Heading with the number of Writerside topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noBreakingTopicUsages": "Không tìm thấy tham chiếu nào có thể bị hỏng.",
+  "@noBreakingTopicUsages": {
+    "description": "Safe-delete message when no breaking references were found."
+  },
+  "topicUsagesFound": "BusyMark đã tìm thấy các tham chiếu sau đến chủ đề này.",
+  "@topicUsagesFound": {
+    "description": "Description above Writerside topic usage groups."
+  },
+  "topicUsageTocElements": "Phần tử mục lục",
+  "@topicUsageTocElements": {
+    "description": "Usage group label for Writerside TOC elements."
+  },
+  "topicUsageStartPages": "Trang bắt đầu",
+  "@topicUsageStartPages": {
+    "description": "Usage group label for Writerside instance start pages."
+  },
+  "topicUsageTopicLinks": "Liên kết chủ đề",
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to a Writerside topic."
+  },
+  "topicUsageIncludes": "Các phần tử include",
+  "@topicUsageIncludes": {
+    "description": "Usage group label for Writerside include elements."
+  },
+  "usageCount": "{count, plural, =1{1 lượt sử dụng} other{{count} lượt sử dụng}}",
+  "@usageCount": {
+    "description": "Number of references that use a Writerside topic.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refactoringOptions": "Tùy chọn tái cấu trúc",
+  "@refactoringOptions": {
+    "description": "Heading for Writerside topic removal options."
+  },
+  "updateUsagesAutomatically": "Tự động cập nhật cách sử dụng",
+  "@updateUsagesAutomatically": {
+    "description": "Option to rewrite Writerside topic usages during removal."
+  },
+  "updateUsagesAutomaticallyDescription": "Xóa các tham chiếu mục lục và nội dung bao gồm, đồng thời giữ nguyên văn bản liên kết.",
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic Writerside usage updates."
+  },
+  "manualUsageUpdatesRequired": "Một số cách sử dụng cần được thay đổi thủ công trước khi thực hiện tái cấu trúc này.",
+  "@manualUsageUpdatesRequired": {
+    "description": "Message when some Writerside usages cannot be updated automatically."
+  },
+  "setRedirectTo": "Đặt chuyển hướng đến",
+  "@setRedirectTo": {
+    "description": "Option to redirect an old Writerside page to another topic."
+  },
+  "noRedirectDescription": "Không chuyển hướng trang đã xuất bản cũ.",
+  "@noRedirectDescription": {
+    "description": "Description when no Writerside page redirect is selected."
+  },
+  "redirectTarget": "Đích chuyển hướng",
+  "@redirectTarget": {
+    "description": "Field label for a Writerside redirect destination."
+  },
+  "remainingUsagesBlockRemoval": "Xem lại và cập nhật các cách sử dụng còn lại trước khi tiếp tục hoặc bật cập nhật tự động nếu có.",
+  "@remainingUsagesBlockRemoval": {
+    "description": "Instruction shown when unresolved usages block topic removal."
+  },
+  "usagesOfTopic": "Cách sử dụng {topic}",
+  "@usagesOfTopic": {
+    "description": "Writerside usages sidebar title.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "noUsagesFound": "Không tìm thấy cách sử dụng nào",
+  "@noUsagesFound": {
+    "description": "Empty state in the Writerside usages review."
+  },
+  "outsideSelectedInstance": "bên ngoài thực thể đã chọn",
+  "@outsideSelectedInstance": {
+    "description": "Marker for a usage outside the selected Writerside instance."
+  },
+  "doRefactor": "Tái cấu trúc",
+  "@doRefactor": {
+    "description": "Action to return from usage review and continue the topic refactoring."
+  },
+  "orphanTopicTitle": "Tệp chủ đề không còn được sử dụng",
+  "@orphanTopicTitle": {
+    "description": "Dialog title after a topic is removed from its last table of contents."
+  },
+  "keepTopicFile": "Giữ tệp chủ đề",
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned Writerside topic file."
+  },
+  "orphanTopicMessage": "“{topic}” không còn được sử dụng ở đâu trong dự án Writerside này. Xóa tệp hoặc giữ lại để dùng trong thực thể khác.",
+  "@orphanTopicMessage": {
+    "description": "Prompt to delete or keep an orphaned Writerside topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultNewTopicTitle": "Chủ đề mới",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "Tiêu đề chủ đề",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "Tên tệp",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "Tiêu đề chủ đề là bắt buộc.",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "Tên tệp là bắt buộc.",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "rename": "Đổi tên",
+  "@rename": {
+    "description": "Rename command label."
+  },
+  "confirmDeleteFileTitle": "Xóa tệp?",
+  "@confirmDeleteFileTitle": {
+    "description": "Confirmation dialog title before deleting a file."
+  },
+  "confirmDeleteFolderTitle": "Xóa thư mục?",
+  "@confirmDeleteFolderTitle": {
+    "description": "Confirmation dialog title before deleting a folder."
+  },
+  "confirmDeleteFileMessage": "Xóa {name}? Không thể hoàn tác.",
+  "@confirmDeleteFileMessage": {
+    "description": "Confirmation dialog message before deleting a file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteFolderMessage": "Xóa {name} và tất cả tệp bên trong? Không thể hoàn tác.",
+  "@confirmDeleteFolderMessage": {
+    "description": "Confirmation dialog message before deleting a folder.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "useSingleSafeFileName": "Sử dụng một tên tệp an toàn duy nhất.",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "Sử dụng phần mở rộng {extension} cho định dạng đã chọn.",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "Sử dụng chữ cái, chữ số, dấu gạch dưới hoặc dấu gạch nối trước phần mở rộng.",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "ID chủ đề đã tồn tại.",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "Không thể tạo chủ đề Writerside.",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "Không có đề cương",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "Mở rộng {kind}",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "Thu gọn {kind}",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "phần",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "danh sách",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "trích dẫn",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "thẻ",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "sourceSearchPreviousMatch": "Kết quả khớp trước",
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
+  "sourceSearchNextMatch": "Kết quả khớp tiếp theo",
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
+  "sourceSearchCaseSensitive": "Phân biệt chữ hoa, chữ thường",
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
+  "sourceSearchWholeWord": "Toàn bộ từ",
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
+  "sourceSearchRegex": "Biểu thức chính quy",
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
+  "sourceSearchReplacement": "Thay thế bằng",
+  "@sourceSearchReplacement": {
+    "description": "Placeholder for the active-document replacement field."
+  },
+  "sourceSearchReplaceCurrent": "Thay thế kết quả hiện tại",
+  "@sourceSearchReplaceCurrent": {
+    "description": "Tooltip for replacing the current search match."
+  },
+  "sourceSearchReplaceAndFindNext": "Thay thế và tìm tiếp",
+  "@sourceSearchReplaceAndFindNext": {
+    "description": "Tooltip for replacing the current match and moving to the next."
+  },
+  "sourceSearchReplaceAll": "Thay thế tất cả",
+  "@sourceSearchReplaceAll": {
+    "description": "Tooltip for replacing every active-document search match."
+  },
+  "workspaceReplace": "Thay thế trong không gian làm việc",
+  "@workspaceReplace": {
+    "description": "Action that previews replacements across the workspace."
+  },
+  "reviewReplacements": "Xem lại các thay thế",
+  "@reviewReplacements": {
+    "description": "Action and dialog title for reviewing workspace replacements."
+  },
+  "applyReplacements": "Áp dụng các thay thế",
+  "@applyReplacements": {
+    "description": "Action that applies selected workspace replacements."
+  },
+  "skippedFiles": "Tệp bị bỏ qua",
+  "@skippedFiles": {
+    "description": "Heading for files excluded from a workspace replacement."
+  },
+  "workspaceReplaceDirtyBuffer": "Nội dung trình biên tập chưa lưu",
+  "@workspaceReplaceDirtyBuffer": {
+    "description": "Source label for a workspace replacement preview using a dirty document buffer."
+  },
+  "workspaceReplaceDiskContent": "Nội dung đã lưu trên đĩa",
+  "@workspaceReplaceDiskContent": {
+    "description": "Source label for a workspace replacement preview using disk content."
+  },
+  "selectFileMatches": "Chọn tất cả {count} kết quả khớp",
+  "@selectFileMatches": {
+    "description": "Checkbox label for selecting every replacement match in a file.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceReplaceApplied": "Đã thay thế {matches} kết quả khớp trong {files} tệp; bỏ qua {skipped}.",
+  "@workspaceReplaceApplied": {
+    "description": "Summary shown after applying workspace replacements.",
+    "placeholders": {
+      "matches": {
+        "type": "int"
+      },
+      "files": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Có ký tự xuống dòng ở cuối",
+  "@documentFormatWithFinalNewline": {
+    "description": "Document format tooltip when the file ends with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Không có ký tự xuống dòng ở cuối",
+  "@documentFormatWithoutFinalNewline": {
+    "description": "Document format tooltip when the file does not end with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "normalizeLineEndings": "Chuẩn hóa kết thúc dòng",
+  "@normalizeLineEndings": {
+    "description": "Dialog title for selecting a line-ending style."
+  },
+  "mixedLineEndingsSavePrompt": "Tài liệu này chứa các kiểu kết thúc dòng khác nhau. Hãy chọn một định dạng.",
+  "@mixedLineEndingsSavePrompt": {
+    "description": "Prompt shown before saving a document with mixed line endings."
+  },
+  "workspaceReplaceMixedLineEndings": "{fileName} sử dụng các kiểu kết thúc dòng khác nhau. Hãy chọn định dạng sẽ dùng trước khi thay thế.",
+  "@workspaceReplaceMixedLineEndings": {
+    "description": "Prompt shown before replacing content in a mixed-line-ending file.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReplaceIssueOversized": "Đã bỏ qua một tệp quá lớn.",
+  "@workspaceReplaceIssueOversized": {
+    "description": "Workspace replacement issue for a file above the size limit."
+  },
+  "workspaceReplaceIssueUnreadable": "Đã bỏ qua một tệp không thể đọc.",
+  "@workspaceReplaceIssueUnreadable": {
+    "description": "Workspace replacement issue for an unreadable file."
+  },
+  "workspaceReplaceIssueInvalidUtf8": "Đã bỏ qua một tệp không phải UTF-8 hợp lệ.",
+  "@workspaceReplaceIssueInvalidUtf8": {
+    "description": "Workspace replacement issue for invalid UTF-8 content."
+  },
+  "workspaceReplaceIssueTruncated": "Bản xem trước thay thế đã bị cắt bớt.",
+  "@workspaceReplaceIssueTruncated": {
+    "description": "Workspace replacement issue when the match limit is reached."
+  },
+  "workspaceReplaceIssueFileChanged": "Đã bỏ qua một tệp đã thay đổi sau khi xem trước.",
+  "@workspaceReplaceIssueFileChanged": {
+    "description": "Workspace replacement issue for stale disk content."
+  },
+  "workspaceReplaceIssueBufferChanged": "Đã bỏ qua một bộ đệm trình biên tập đã thay đổi sau khi xem trước.",
+  "@workspaceReplaceIssueBufferChanged": {
+    "description": "Workspace replacement issue for stale in-memory content."
+  },
+  "workspaceReplaceIssueNormalizationRequired": "Chọn chuẩn hóa LF hoặc CRLF trước khi thay thế.",
+  "@workspaceReplaceIssueNormalizationRequired": {
+    "description": "Workspace replacement issue for mixed line endings without a selected format."
+  },
+  "workspaceReplaceIssuePartialConflict": "Đã dừng khôi phục vì tệp bị thay đổi đồng thời. Một số thay thế có thể vẫn còn; nội dung bị di dời đã được giữ lại tại đường dẫn bên dưới.",
+  "@workspaceReplaceIssuePartialConflict": {
+    "description": "Workspace replacement issue when a concurrent edit prevents safe transactional rollback."
+  },
+  "workspaceReplaceIssueApplyFailed": "Không thể ghi nhận thay thế đã xem lại; không có tệp nào bị thay đổi.",
+  "@workspaceReplaceIssueApplyFailed": {
+    "description": "Workspace replacement issue when the transactional file commit fails."
+  },
+  "externalChangesTitle": "Thay đổi bên ngoài — {fileName}",
+  "@externalChangesTitle": {
+    "description": "Title of the external-file comparison dialog.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "externalFileDeleted": "Tệp này đã bị xóa trên đĩa.",
+  "@externalFileDeleted": {
+    "description": "Persistent banner shown when an open file is deleted externally."
+  },
+  "externalFileChanged": "Tệp này đã thay đổi trên đĩa trong khi bạn có các chỉnh sửa chưa lưu.",
+  "@externalFileChanged": {
+    "description": "Persistent banner shown when a dirty file changes externally."
+  },
+  "recoveredDocumentReview": "Đã khôi phục nội dung chưa lưu cho {fileName}. Hãy kiểm tra, sau đó lưu, lưu thành hoặc loại bỏ nội dung đó.",
+  "@recoveredDocumentReview": {
+    "description": "Persistent recovery review banner.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "compare": "So sánh",
+  "@compare": {
+    "description": "Action that compares the editor buffer with the disk version."
+  },
+  "reloadFromDisk": "Tải lại từ đĩa",
+  "@reloadFromDisk": {
+    "description": "Action that replaces the editor buffer with the disk version."
+  },
+  "keepMine": "Giữ phiên bản của tôi",
+  "@keepMine": {
+    "description": "Action that keeps the editor buffer after an external change."
+  },
+  "saveAs": "Lưu thành",
+  "@saveAs": {
+    "description": "Action that saves the current document to another path."
+  },
+  "sourceSearchInvalidRegex": "Biểu thức chính quy không hợp lệ",
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
+  "sourceLargeFileFeaturesPaused": "Tệp lớn: đã tạm dừng tô sáng và thu gọn",
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
+  "nothingToRead": "Không có nội dung để đọc",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
+  },
+  "admonition": "Khối lưu ý",
+  "@admonition": {
+    "description": "Tooltip for the Writerside admonition editing menu."
+  },
+  "quote": "Trích dẫn",
+  "@quote": {
+    "description": "Label for a neutral Writerside quote block."
+  },
+  "note": "Ghi chú",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "Mẹo",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "Cảnh báo",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "Tab",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "Tab",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "Quy trình",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "Bước",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "Chủ đề",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "Chương",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "Không thể mở {target}",
+  "@couldNotOpenTarget": {
+    "description": "Toast shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "Không tìm thấy đích liên kết: {targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Toast shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "Không thể mở loại tệp này trong trình biên tập",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Toast shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "Không tìm thấy neo: {anchor}",
+  "@anchorNotFound": {
+    "description": "Toast shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "Không tìm thấy vấn đề",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "Không có kết quả",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} - Dòng {lineNumber}",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "Kết quả chưa có tên",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Tệp Markdown",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Chủ đề Markdown Writerside",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "Chủ đề XML Writerside",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Cây Writerside",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "Tệp cấu hình",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "Tệp biến",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "Tệp danh mục",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "Tệp tài nguyên",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "Mở không thành công: {error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "Không thể tạo dự án Writerside: {error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "Không thể tạo chủ đề Writerside: {error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "Không thể mở tệp: {error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "Chọn nơi lưu tệp Markdown này.",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Đã chặn lưu: tệp đã thay đổi trên đĩa.",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "Lưu không thành công: {error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorFileOperationFailed": "Thao tác với tệp không thành công: {error}",
+  "@workspaceErrorFileOperationFailed": {
+    "description": "Workspace error message shown when creating, renaming, moving, or deleting a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "Kiểm tra không thành công: {error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRecoveryRestored": "{count, plural, =1{Đã khôi phục 1 tài liệu chưa lưu. Hãy xem lại trước khi lưu hoặc loại bỏ.} other{Đã khôi phục {count} tài liệu chưa lưu. Hãy xem lại từng tài liệu trước khi lưu hoặc loại bỏ.}}",
+  "@workspaceRecoveryRestored": {
+    "description": "Notice shown after crash recovery restores documents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceRecoveryDamaged": "{count, plural, =1{Không thể khôi phục một bản ghi khôi phục bị hỏng. Tệp khôi phục gốc đã được giữ lại để kiểm tra.} other{Không thể khôi phục {count} bản ghi khôi phục bị hỏng. Các bản ghi khôi phục hợp lệ vẫn còn khả dụng.}}",
+  "@workspaceRecoveryDamaged": {
+    "description": "Notice shown when recovery data is partly or wholly malformed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "Đường dẫn không tồn tại: {path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "Thư mục đích đã tồn tại và không trống: {path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "Đường dẫn đích đã tồn tại nhưng không phải là thư mục: {path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "Tệp được tạo đã tồn tại: {path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "Cần có thư mục cha.",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "Thư mục cha không tồn tại: {path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDirectoryMissing": "Thư mục không tồn tại: {path}",
+  "@errorDirectoryMissing": {
+    "description": "Detail for a missing directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathAlreadyExists": "Đường dẫn đã tồn tại: {path}",
+  "@errorPathAlreadyExists": {
+    "description": "Detail for a file operation target that already exists.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNameRequired": "Tên tệp là bắt buộc.",
+  "@errorFileNameRequired": {
+    "description": "Detail for a missing file name in a file operation."
+  },
+  "errorFileNameUnsafe": "Tên tệp phải là một phần đường dẫn an toàn duy nhất.",
+  "@errorFileNameUnsafe": {
+    "description": "Detail for an unsafe file name in a file operation."
+  },
+  "errorFileOperationInvalidTarget": "Không thể di chuyển thư mục vào chính nó.",
+  "@errorFileOperationInvalidTarget": {
+    "description": "Detail for an invalid file operation target."
+  },
+  "errorFileOperationOutsideRoot": "Thao tác với tệp phải nằm trong không gian làm việc.",
+  "@errorFileOperationOutsideRoot": {
+    "description": "Detail for a file operation outside the workspace root."
+  },
+  "errorFileOperationRoot": "Không thể thay đổi thư mục gốc của không gian làm việc từ cây tệp.",
+  "@errorFileOperationRoot": {
+    "description": "Detail for a file operation attempted on the workspace root."
+  },
+  "errorProjectNameRequired": "Tên dự án là bắt buộc.",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "Tên thư mục là bắt buộc.",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "Tên thư mục phải là một phần đường dẫn an toàn duy nhất.",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "ID thực thể phải bắt đầu bằng chữ thường và chỉ gồm chữ thường, chữ số, dấu gạch dưới và dấu gạch nối.",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "Tên tệp chủ đề phải là tên tệp Markdown không có dấu phân cách đường dẫn.",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "Tiêu đề chủ đề là bắt buộc.",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "Gốc mô-đun Writerside không tồn tại: {path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "Phải mở một mô-đun Writerside để tạo chủ đề.",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "Mô-đun Writerside không có cây thực thể.",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Tệp cây Writerside không tồn tại: {path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "ID chủ đề \"{topicId}\" đã tồn tại trong mô-đun trợ giúp này.",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "Tệp chủ đề đã tồn tại: {path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "Chủ đề tham chiếu không có trong cây đã chọn: {topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "Mục nhập mục lục đã chọn không còn tồn tại.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "Không thể di chuyển mục nhập mục lục vào chính nó hoặc một mục con của nó.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "Không thể xóa chủ đề bắt đầu {topic}. Hãy chọn một trang bắt đầu khác trước.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideSafeDeleteRequired": "Sử dụng Xóa an toàn cho các tệp chủ đề Writerside.",
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Error shown when generic file deletion is attempted for a Writerside topic."
+  },
+  "errorWritersideTopicUsageScanFailed": "Không thể hoàn tất quá trình quét cách sử dụng chủ đề. Không có tệp nào bị thay đổi.",
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
+  "errorWritersideTopicUsagesRemain": "Một số cách sử dụng chủ đề vẫn cần được xử lý. Hãy xem lại trước khi tiếp tục.",
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
+  "errorWritersideRedirectInvalid": "Đích chuyển hướng đã chọn không còn hợp lệ. Hãy chọn lại.",
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
+  "errorWritersideRollbackFailed": "Không thể khôi phục hoàn toàn việc xóa chủ đề. Hãy xem lại các đường dẫn này trước khi tiếp tục: {paths}",
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "Gốc chủ đề phải là một thư mục tương đối an toàn.",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "Tên tệp chủ đề phải là một phần đường dẫn an toàn duy nhất.",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "Phần mở rộng tệp chủ đề phải khớp với định dạng đã chọn ({extension}).",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "Tên tệp chủ đề chỉ được chứa chữ cái, chữ số, dấu gạch dưới và dấu gạch nối.",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "Lỗi không xác định: {code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "Không thể đọc siêu dữ liệu tệp: {error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "Đã phát hiện không gian làm việc lớn. Một số tệp đã được bỏ qua để ứng dụng vẫn phản hồi nhanh.",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "Không thể kiểm tra mục trong không gian làm việc: {error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "Tệp vượt quá giới hạn phân tích tự động beta.",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "Không thể đọc tệp Markdown: {error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Khối thuộc tính tiêu đề Writerside không đúng định dạng.",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "ID tiêu đề bị trùng \"{id}\".",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Các tiêu đề H1 cấp cao nhất bổ sung được xử lý như các chương.",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Chủ đề Markdown Writerside không có H1 hoặc tiêu đề trong front matter.",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "Chủ đề XML thiếu tiêu đề.",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "Chủ đề \"{fileName}\" thiếu tiêu đề.",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "Front matter chưa được đóng.",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "Phần tử HTML không an toàn.",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "Đích liên kết không tồn tại: {targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Neo \"{anchor}\" không tồn tại.",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "Hình ảnh \"{destination}\" thiếu văn bản thay thế.",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "Hình ảnh không tồn tại: {destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "XML không hợp lệ: {message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "Gốc writerside.cfg phải là <ihp>.",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "Khai báo snippets thiếu src.",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "Khai báo instance-groups thiếu src.",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Chế độ keymaps không được hỗ trợ: {mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "Khai báo instance thiếu src.",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg không đăng ký thực thể nào.",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": "Gốc .tree phải là <instance-profile>.",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "Hồ sơ thực thể thiếu id.",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "Tên gốc của tệp cây không khớp với ID thực thể \"{id}\".",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "Phiên bản không phải thư viện thiếu start-page.",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "Trang bắt đầu \"{startPage}\" không tồn tại.",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "Chủ đề \"{topic}\" xuất hiện nhiều hơn một lần trong mục lục của thực thể này.",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "Khai báo biến phải có tên và giá trị.",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "Biến \"{name}\" được khai báo nhiều hơn một lần.",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "Danh mục thiếu id.",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "Danh mục \"{id}\" được khai báo nhiều hơn một lần.",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "Thứ tự danh mục \"{order}\" được khai báo nhiều hơn một lần.",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": "Gốc .topic phải là <topic>.",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "Chủ đề XML thiếu id ở gốc.",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "ID gốc của chủ đề XML \"{id}\" phải khớp với tên tệp \"{expectedId}\".",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "ID phần tử \"{elementId}\" xuất hiện nhiều hơn một lần.",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> thiếu href.",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Chế độ Writerside yêu cầu writerside.cfg.",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Thư mục cấu hình build đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Thư mục đặc tả API đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "Thư mục snippets đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "Tệp biến đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "Tệp danh mục đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Tệp nhóm thực thể đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "Cây thực thể đã đăng ký \"{source}\" không tồn tại.",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "Không thể đọc tệp chủ đề: {error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Thư mục chủ đề mặc định không tồn tại: {relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "Thư mục chủ đề đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "Thư mục hình ảnh đã định không tồn tại: {relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "ID phần tử \"{id}\" xuất hiện nhiều hơn một lần.",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "Mục lục tham chiếu đến chủ đề còn thiếu \"{topic}\".",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "href bên ngoài \"{href}\" không hợp lệ.",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "Biến \"%{name}%\" chưa được khai báo.",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "Liên kết chủ đề \"{destination}\" không thể phân giải.",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "Neo \"{anchor}\" không tồn tại trong \"{targetName}\".",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "<include> thiếu from.",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "Nguồn include \"{from}\" không tồn tại.",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "Phần tử include \"{elementId}\" không tồn tại trong \"{from}\".",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "Danh mục seealso \"{ref}\" chưa được khai báo.",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "Tham chiếu chủ đề \"{reference}\" không rõ ràng.",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "Chẩn đoán không xác định: {code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "close": "Đóng",
+  "@close": {
+    "description": "Close action label."
+  },
+  "git": "Git",
+  "@git": {
+    "description": "Git sidebar tab label."
+  },
+  "gitDiff": "Khác biệt Git",
+  "@gitDiff": {
+    "description": "Title for the Git diff viewer."
+  },
+  "gitShowDiff": "Hiện khác biệt",
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
+  "gitDiffHunkRange": "cũ {oldRange} → mới {newRange}",
+  "@gitDiffHunkRange": {
+    "description": "Readable old-to-new line range shown for a Git diff hunk.",
+    "placeholders": {
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
+    }
+  },
+  "gitDiffNoLines": "không có dòng",
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
+  "gitUnavailableTitle": "Git không khả dụng",
+  "@gitUnavailableTitle": {
+    "description": "Git empty state title when Git cannot be used."
+  },
+  "gitUnavailableMessage": "{reason, select, other{Cài đặt Git hoặc cấu hình BusyMark để sử dụng một tệp thực thi Git khả dụng. {reason}}}",
+  "@gitUnavailableMessage": {
+    "description": "Git empty state message when Git cannot be used.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "gitTrustRequiredTitle": "Tin cậy không gian làm việc này cho Git?",
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
+  "gitTrustRequiredMessage": "Kho Git có thể chạy chương trình thông qua hook, bộ lọc và các cấu hình khác. Hãy tin cậy không gian làm việc này trước khi BusyMark đọc dữ liệu kho hoặc bật các thao tác Git.",
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
+  "gitTrustWorkspace": "Tin cậy không gian làm việc",
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
+  "gitNotRepositoryTitle": "Không phải kho Git",
+  "@gitNotRepositoryTitle": {
+    "description": "Git empty state title for non-repository workspaces."
+  },
+  "gitNotRepositoryMessage": "Không gian làm việc này không nằm trong kho Git.",
+  "@gitNotRepositoryMessage": {
+    "description": "Git empty state message for non-repository workspaces."
+  },
+  "gitInitializeRepository": "Khởi tạo kho",
+  "@gitInitializeRepository": {
+    "description": "Action label for git init."
+  },
+  "gitDetachedHead": "HEAD tách rời",
+  "@gitDetachedHead": {
+    "description": "Detached HEAD label."
+  },
+  "gitDetachedHeadAt": "Đang tách rời tại {commit}",
+  "@gitDetachedHeadAt": {
+    "description": "Detached HEAD label with short commit.",
+    "placeholders": {
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitNoUpstream": "Không có nhánh upstream",
+  "@gitNoUpstream": {
+    "description": "Repository label when no upstream branch is configured."
+  },
+  "gitAheadCount": "{count, plural, =1{1 commit chưa đẩy} other{{count} commit chưa đẩy}}",
+  "@gitAheadCount": {
+    "description": "Count of local commits not pushed to the upstream branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitBehindCount": "{count, plural, =1{1 commit cần kéo về} other{{count} commit cần kéo về}}",
+  "@gitBehindCount": {
+    "description": "Count of upstream commits not pulled into the local branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitClean": "Không có thay đổi",
+  "@gitClean": {
+    "description": "Git clean state label."
+  },
+  "gitConflicts": "Xung đột",
+  "@gitConflicts": {
+    "description": "Git conflicts group label."
+  },
+  "gitChanges": "Thay đổi",
+  "@gitChanges": {
+    "description": "Git changes view label."
+  },
+  "gitStaged": "Đã đưa vào stage",
+  "@gitStaged": {
+    "description": "Git staged changes group label."
+  },
+  "gitUnstaged": "Chưa đưa vào stage",
+  "@gitUnstaged": {
+    "description": "Git unstaged changes group label."
+  },
+  "gitHistory": "Lịch sử",
+  "@gitHistory": {
+    "description": "Git history view label."
+  },
+  "gitBranches": "Nhánh",
+  "@gitBranches": {
+    "description": "Git branch menu label."
+  },
+  "gitActions": "Thao tác Git",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
+  },
+  "gitPull": "Pull",
+  "@gitPull": {
+    "description": "Git pull action label."
+  },
+  "gitFetch": "Fetch",
+  "@gitFetch": {
+    "description": "Git fetch action label."
+  },
+  "gitPush": "Push",
+  "@gitPush": {
+    "description": "Git push action label."
+  },
+  "gitCommit": "Commit",
+  "@gitCommit": {
+    "description": "Git commit action label."
+  },
+  "gitSelectForCommit": "Đưa tệp vào stage",
+  "@gitSelectForCommit": {
+    "description": "Tooltip for staging a Git file."
+  },
+  "gitRemoveFromCommit": "Bỏ tệp khỏi stage",
+  "@gitRemoveFromCommit": {
+    "description": "Tooltip for unstaging a Git file."
+  },
+  "gitDiscard": "Hoàn nguyên",
+  "@gitDiscard": {
+    "description": "Action that rolls a tracked file back to HEAD."
+  },
+  "gitOpenFile": "Mở tệp",
+  "@gitOpenFile": {
+    "description": "Action label for opening a file from a Git row or diff."
+  },
+  "gitMarkResolved": "Đánh dấu đã giải quyết",
+  "@gitMarkResolved": {
+    "description": "Tooltip for marking a conflicted Git file as resolved."
+  },
+  "gitUntracked": "Chưa được theo dõi",
+  "@gitUntracked": {
+    "description": "Git untracked files group label."
+  },
+  "gitCommitMessage": "Thông điệp commit",
+  "@gitCommitMessage": {
+    "description": "Commit message field label."
+  },
+  "gitCommitSelectedFiles": "Tệp đã chọn",
+  "@gitCommitSelectedFiles": {
+    "description": "Commit panel selected files section label."
+  },
+  "gitCommitNoSelectedFiles": "Đưa ít nhất một tệp vào stage trước khi commit.",
+  "@gitCommitNoSelectedFiles": {
+    "description": "Commit validation error when the repository index is empty."
+  },
+  "gitStagedFileCount": "{count, plural, =1{1 tệp đã đưa vào stage} other{{count} tệp đã đưa vào stage}}",
+  "@gitStagedFileCount": {
+    "description": "Number of repository files currently staged for commit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitOutsideWorkspace": "Bên ngoài không gian làm việc",
+  "@gitOutsideWorkspace": {
+    "description": "Marker for a staged repository file outside the opened workspace."
+  },
+  "gitCommitMessageRequired": "Nhập thông điệp commit.",
+  "@gitCommitMessageRequired": {
+    "description": "Commit validation error when the message is empty."
+  },
+  "gitCreateBranch": "Tạo nhánh",
+  "@gitCreateBranch": {
+    "description": "Git create branch action label."
+  },
+  "gitNewBranch": "Nhánh mới",
+  "@gitNewBranch": {
+    "description": "Git branch dropdown action for creating a new branch."
+  },
+  "gitBranchName": "Tên nhánh",
+  "@gitBranchName": {
+    "description": "Branch name field label."
+  },
+  "gitSwitchBranch": "Chuyển nhánh",
+  "@gitSwitchBranch": {
+    "description": "Git switch branch action label."
+  },
+  "gitNoChanges": "Không có thay đổi",
+  "@gitNoChanges": {
+    "description": "Git empty state when there are no changes."
+  },
+  "gitNoHistory": "Không có lịch sử",
+  "@gitNoHistory": {
+    "description": "Git empty state when history is empty."
+  },
+  "gitNoBranches": "Không có nhánh",
+  "@gitNoBranches": {
+    "description": "Git empty state when branch list is empty."
+  },
+  "gitNoDiff": "Không có khác biệt để hiển thị",
+  "@gitNoDiff": {
+    "description": "Git diff empty state."
+  },
+  "gitBinaryFile": "Tệp nhị phân. BusyMark không kết xuất bản vá nhị phân.",
+  "@gitBinaryFile": {
+    "description": "Git diff binary file message."
+  },
+  "gitBinaryFileInfo": "Tệp nhị phân ({size} byte). BusyMark không kết xuất bản vá nhị phân.",
+  "@gitBinaryFileInfo": {
+    "description": "Git diff binary file message with file size.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "gitUnsavedChangesBanner": "Các thay đổi trong trình biên tập chưa lưu sẽ không được đưa vào cho đến khi lưu.",
+  "@gitUnsavedChangesBanner": {
+    "description": "Git diff banner for unsaved editor changes."
+  },
+  "gitConfirmDiscardTitle": "Loại bỏ các thay đổi Git?",
+  "@gitConfirmDiscardTitle": {
+    "description": "Confirmation title for discarding Git changes."
+  },
+  "gitConfirmDiscardTracked": "{count, plural, =1{Tất cả thay đổi đã đưa và chưa đưa vào stage trong tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.} other{Tất cả thay đổi đã đưa và chưa đưa vào stage trong các tệp được theo dõi đã chọn sẽ được khôi phục về HEAD.}}",
+  "@gitConfirmDiscardTracked": {
+    "description": "Confirmation body for discarding tracked changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardUntracked": "{count, plural, =1{Tệp chưa được theo dõi đã chọn sẽ bị xóa.} other{Các tệp chưa được theo dõi đã chọn sẽ bị xóa.}}",
+  "@gitConfirmDiscardUntracked": {
+    "description": "Confirmation body for deleting untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardMixed": "{count, plural, =1{Tệp đã chọn sẽ được khôi phục hoặc xóa tùy theo trạng thái Git.} other{Các tệp đã chọn sẽ được khôi phục hoặc xóa tùy theo trạng thái Git.}}",
+  "@gitConfirmDiscardMixed": {
+    "description": "Confirmation body for discarding mixed tracked and untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchTitle": "Chuyển sang {branch}?",
+  "@gitConfirmSwitchBranchTitle": {
+    "description": "Confirmation title for switching branches.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchMessage": "BusyMark sẽ tải lại không gian làm việc từ đĩa sau khi Git chuyển nhánh.",
+  "@gitConfirmSwitchBranchMessage": {
+    "description": "Confirmation body for switching branches."
+  },
+  "gitConfirmPushSetUpstreamTitle": "Đặt nhánh upstream?",
+  "@gitConfirmPushSetUpstreamTitle": {
+    "description": "Confirmation title for pushing with set-upstream."
+  },
+  "gitConfirmPushSetUpstreamMessage": "Nhánh này không có upstream. BusyMark có thể push {branch} và đặt upstream cho nhánh đó khi chỉ có một remote được cấu hình.",
+  "@gitConfirmPushSetUpstreamMessage": {
+    "description": "Confirmation body for pushing with set-upstream.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitProjectHistory": "Lịch sử dự án",
+  "@gitProjectHistory": {
+    "description": "Project history action label."
+  },
+  "gitFileHistory": "Lịch sử tệp",
+  "@gitFileHistory": {
+    "description": "Current file history action label."
+  },
+  "gitFileHistoryRequiresOpenFile": "Lịch sử tệp yêu cầu một tệp Markdown đang mở.",
+  "@gitFileHistoryRequiresOpenFile": {
+    "description": "File History empty state when no Markdown file is active."
+  },
+  "gitLoadMore": "Tải thêm",
+  "@gitLoadMore": {
+    "description": "Action to load another page of Git history."
+  },
+  "gitChangesInCommit": "Thay đổi trong commit này",
+  "@gitChangesInCommit": {
+    "description": "Historical comparison between a commit and its parent."
+  },
+  "gitCompareWithCurrent": "So sánh với hiện tại",
+  "@gitCompareWithCurrent": {
+    "description": "Historical comparison between a commit and the working-tree file."
+  },
+  "gitRestoreVersion": "Khôi phục phiên bản này",
+  "@gitRestoreVersion": {
+    "description": "Action to restore one file from a selected commit."
+  },
+  "gitConfirmRestoreTitle": "Khôi phục phiên bản tệp này?",
+  "@gitConfirmRestoreTitle": {
+    "description": "Confirmation title for restoring a historical file version."
+  },
+  "gitConfirmRestoreMessage": "BusyMark sẽ thay thế tệp trong cây làm việc hiện tại bằng phiên bản đã commit được chọn. Tệp đã khôi phục sẽ vẫn ở trạng thái chưa đưa vào stage.",
+  "@gitConfirmRestoreMessage": {
+    "description": "Confirmation body for restoring a historical file version."
+  },
+  "gitCommitActions": "Thao tác commit",
+  "@gitCommitActions": {
+    "description": "Tooltip for actions on a selected Git commit."
+  },
+  "gitResetCurrentBranchToHere": "Đặt lại nhánh hiện tại về đây…",
+  "@gitResetCurrentBranchToHere": {
+    "description": "Project History action that moves the current branch to the selected commit."
+  },
+  "gitResetCurrentBranchTitle": "Đặt lại {branch} về {commit}?",
+  "@gitResetCurrentBranchTitle": {
+    "description": "Title for choosing how to reset the current branch to a selected commit.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitResetCurrentBranchMessage": "Thao tác này sẽ đưa nhánh {branch} về commit {commit}. Chọn cách Git cập nhật index và cây làm việc.",
+  "@gitResetCurrentBranchMessage": {
+    "description": "Explanation shown before resetting the current branch.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitReset": "Đặt lại",
+  "@gitReset": {
+    "description": "Action that confirms resetting the current Git branch."
+  },
+  "gitResetModeSoft": "Mềm",
+  "@gitResetModeSoft": {
+    "description": "Git soft reset mode label."
+  },
+  "gitResetModeSoftDescription": "Chỉ di chuyển nhánh. Giữ nguyên index và cây làm việc; các khác biệt so với commit đã chọn vẫn được đưa vào stage.",
+  "@gitResetModeSoftDescription": {
+    "description": "Git soft reset mode explanation."
+  },
+  "gitResetModeMixed": "Hỗn hợp",
+  "@gitResetModeMixed": {
+    "description": "Git mixed reset mode label."
+  },
+  "gitResetModeMixedDescription": "Di chuyển nhánh và đặt lại index. Giữ nguyên cây làm việc, để lại các khác biệt ở trạng thái chưa đưa vào stage.",
+  "@gitResetModeMixedDescription": {
+    "description": "Git mixed reset mode explanation."
+  },
+  "gitResetModeHard": "Cứng",
+  "@gitResetModeHard": {
+    "description": "Git hard reset mode label."
+  },
+  "gitResetModeHardDescription": "Di chuyển nhánh và đặt lại index cùng cây làm việc. Các thay đổi được theo dõi sẽ bị loại bỏ; các tệp chưa được theo dõi gây cản trở có thể bị xóa.",
+  "@gitResetModeHardDescription": {
+    "description": "Git hard reset mode explanation."
+  },
+  "gitResetModeKeep": "Giữ",
+  "@gitResetModeKeep": {
+    "description": "Git keep reset mode label."
+  },
+  "gitResetModeKeepDescription": "Di chuyển nhánh và đặt lại các tệp được theo dõi nhưng giữ lại các thay đổi cục bộ. Git sẽ hủy nếu các thay đổi đó xung đột với thao tác đặt lại.",
+  "@gitResetModeKeepDescription": {
+    "description": "Git keep reset mode explanation."
+  },
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "@gitAdditionsDeletions": {
+    "description": "Diff additions and deletions count.",
+    "placeholders": {
+      "additions": {
+        "type": "int"
+      },
+      "deletions": {
+        "type": "int"
+      }
+    }
+  },
+  "fileActions": "Thao tác với tệp",
+  "@fileActions": {
+    "description": "Tooltip for a file action menu."
+  },
+  "actions": "Thao tác",
+  "@actions": {
+    "description": "Tooltip for a general action menu."
+  },
+  "gitStatusAdded": "Đã thêm",
+  "@gitStatusAdded": {
+    "description": "Git file status label."
+  },
+  "gitStatusDeleted": "Đã xóa",
+  "@gitStatusDeleted": {
+    "description": "Git file status label."
+  },
+  "gitStatusRenamed": "Đã đổi tên",
+  "@gitStatusRenamed": {
+    "description": "Git file status label."
+  },
+  "gitStatusCopied": "Đã sao chép",
+  "@gitStatusCopied": {
+    "description": "Git file status label."
+  },
+  "gitStatusUntracked": "Chưa được theo dõi",
+  "@gitStatusUntracked": {
+    "description": "Git file status label."
+  },
+  "gitStatusConflicted": "Có xung đột",
+  "@gitStatusConflicted": {
+    "description": "Git file status label."
+  },
+  "gitStatusIgnored": "Bị bỏ qua",
+  "@gitStatusIgnored": {
+    "description": "Git file status label."
+  },
+  "gitStatusTypeChanged": "Đã thay đổi loại",
+  "@gitStatusTypeChanged": {
+    "description": "Git file status label."
+  },
+  "gitStatusModified": "Đã sửa đổi",
+  "@gitStatusModified": {
+    "description": "Git file status label."
+  },
+  "gitStatusUnknown": "Không xác định",
+  "@gitStatusUnknown": {
+    "description": "Git file status label."
+  },
+  "gitErrorUnavailable": "Git không khả dụng.",
+  "@gitErrorUnavailable": {
+    "description": "Git error message."
+  },
+  "gitErrorNotRepository": "Không gian làm việc này không phải là kho Git.",
+  "@gitErrorNotRepository": {
+    "description": "Git error message."
+  },
+  "gitErrorUnsafePath": "BusyMark đã chặn một đường dẫn Git không an toàn.",
+  "@gitErrorUnsafePath": {
+    "description": "Git error message."
+  },
+  "gitErrorInvalidBranchName": "Nhập tên nhánh hợp lệ.",
+  "@gitErrorInvalidBranchName": {
+    "description": "Git error message."
+  },
+  "gitErrorNoRemote": "Chưa cấu hình remote Git nào.",
+  "@gitErrorNoRemote": {
+    "description": "Git error message."
+  },
+  "gitErrorNoUpstream": "Chưa cấu hình nhánh upstream.",
+  "@gitErrorNoUpstream": {
+    "description": "Git error message."
+  },
+  "gitErrorMultipleRemotes": "Có nhiều remote được cấu hình. Hãy chọn upstream bên ngoài thực thể BusyMark này.",
+  "@gitErrorMultipleRemotes": {
+    "description": "Git error message."
+  },
+  "gitErrorDirtyWorkspace": "Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi chuyển nhánh.",
+  "@gitErrorDirtyWorkspace": {
+    "description": "Git error message."
+  },
+  "gitErrorResetDirtyWorkspace": "Lưu hoặc loại bỏ các thay đổi trong trình biên tập BusyMark trước khi đặt lại nhánh hiện tại.",
+  "@gitErrorResetDirtyWorkspace": {
+    "description": "Git reset error shown when the editor has unsaved content."
+  },
+  "gitErrorRestoreStagedFile": "Bỏ tệp khỏi stage trước khi khôi phục phiên bản trong lịch sử.",
+  "@gitErrorRestoreStagedFile": {
+    "description": "Git error shown when historical restoration is blocked because the current file is staged."
+  },
+  "gitErrorResetDetachedHead": "Chuyển sang một nhánh trước khi đặt lại.",
+  "@gitErrorResetDetachedHead": {
+    "description": "Git reset error shown while HEAD is detached."
+  },
+  "gitErrorDiverged": "Nhánh đã phân kỳ. Hãy giải quyết thao tác merge hoặc rebase bên ngoài thực thể BusyMark này.",
+  "@gitErrorDiverged": {
+    "description": "Git error message."
+  },
+  "gitErrorAuthorIdentity": "Git cần tên và địa chỉ email tác giả trước khi có thể commit.",
+  "@gitErrorAuthorIdentity": {
+    "description": "Git error shown when no commit author identity is configured."
+  },
+  "gitAuthorIdentityTitle": "Danh tính tác giả Git",
+  "@gitAuthorIdentityTitle": {
+    "description": "Title of the Git author identity recovery dialog."
+  },
+  "gitAuthorIdentityMessage": "Nhập danh tính Git sẽ ghi vào các commit. BusyMark sẽ lưu danh tính đó và thử lại commit này.",
+  "@gitAuthorIdentityMessage": {
+    "description": "Explanation in the Git author identity recovery dialog."
+  },
+  "gitAuthorName": "Tên",
+  "@gitAuthorName": {
+    "description": "Git commit author name field label."
+  },
+  "gitAuthorEmail": "Email",
+  "@gitAuthorEmail": {
+    "description": "Git commit author email field label."
+  },
+  "gitAuthorIdentityGlobal": "Dùng cho tất cả kho",
+  "@gitAuthorIdentityGlobal": {
+    "description": "Switch label for saving Git identity globally."
+  },
+  "gitAuthorIdentityGlobalDescription": "Khi được cài đặt dưới dạng Snap, tùy chọn này áp dụng cho các kho được mở trong BusyMark.",
+  "@gitAuthorIdentityGlobalDescription": {
+    "description": "Description of global Git identity scope in the Snap."
+  },
+  "gitSaveIdentityAndCommit": "Lưu và commit",
+  "@gitSaveIdentityAndCommit": {
+    "description": "Action that saves Git author identity and retries a commit."
+  },
+  "gitErrorAuthentication": "Xác thực Git không thành công.",
+  "@gitErrorAuthentication": {
+    "description": "Git error message."
+  },
+  "gitErrorNetwork": "Thao tác mạng Git không thành công.",
+  "@gitErrorNetwork": {
+    "description": "Git error message."
+  },
+  "gitErrorConflict": "Git báo cáo các xung đột chưa được giải quyết.",
+  "@gitErrorConflict": {
+    "description": "Git error message."
+  },
+  "gitErrorCommandFailed": "Lệnh Git không thành công.",
+  "@gitErrorCommandFailed": {
+    "description": "Git error message."
+  },
+  "syntaxReference": "Tham chiếu cú pháp",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Khối Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Các cấu trúc khối được hỗ trợ trong mã nguồn và bản xem trước Markdown.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "Định dạng Markdown nội tuyến",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "Định dạng có thể xuất hiện trong đoạn văn, mục danh sách và ô bảng.",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "Khối HTML thô",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "Các thẻ HTML cấp khối an toàn được kết xuất thông qua các tiện ích xem trước của BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "Thẻ HTML nội tuyến thô",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "Các thẻ HTML nội tuyến an toàn được kết xuất mà không hiển thị thẻ theo nghĩa đen.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "Tiêu đề",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "Đoạn văn",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "Danh sách",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "Vùng chứa",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "Khối văn bản",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "Figure và hình ảnh",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "Mã định dạng sẵn",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "Khối mở rộng",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "Danh sách mô tả",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "Thẻ định dạng",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "Thẻ mã nội tuyến",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "Thẻ văn bản ngữ nghĩa",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "HTML được cho phép được chuyển thành các khối xem trước của BusyMark, không được kết xuất trong trình duyệt.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "HTML thô chưa chỉnh sửa được lưu lại chính xác như văn bản mã nguồn.",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Các dấu Markdown bên trong HTML thô được kết xuất như văn bản theo nghĩa đen.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "Script, style, frame, form, SVG, MathML, sự kiện và các thuộc tính không an toàn bị chặn.",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "Liên kết cho phép URL http, https, mailto, tel, tương đối và fragment; các scheme không an toàn bị chặn.",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Danh mục",
+  "syntaxReferenceCategoryDiagramsAndApi": "Sơ đồ và API",
+  "syntaxReferenceCategoryMathematics": "Toán học",
+  "syntaxReferenceExample": "Ví dụ",
+  "syntaxReferenceIdentifiers": "Định danh và bí danh",
+  "syntaxReferenceScope": "Phạm vi",
+  "syntaxReferenceLimitation": "Giới hạn của BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Tài liệu chính thức",
+  "syntaxReferenceScopeWritersideMarkdown": "Chỉ Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Chỉ Markdown Writerside và XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Các dạng Markdown cốt lõi mà BusyMark có thể soạn và xem trước.",
+  "syntaxReferenceParagraphExample": "Một đoạn văn bản.",
+  "syntaxReferenceTableLimitation": "Bảng dùng cú pháp dấu gạch đứng của GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "hai dấu cách ở cuối dòng, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark chấp nhận một tập con HTML thô an toàn, có giới hạn trong mã nguồn Markdown.",
+  "syntaxReferenceDiagramsDescription": "Các khối có hàng rào Mermaid, PlantUML, D2 và OpenAPI hoạt động trong mã nguồn Markdown. Định danh hàng rào không phân biệt hoa thường và BusyMark giữ nguyên cách viết ban đầu.",
+  "syntaxReferenceOpenApiLimitation": "Dùng nội dung YAML hoặc JSON có hàng rào. BusyMark không coi một tài liệu YAML hoặc JSON toàn tệp bất kỳ là tham chiếu OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Khối mã ngữ nghĩa cho sơ đồ",
+  "syntaxReferenceSemanticDiagramLimitation": "Dạng ngữ nghĩa code-block và src hỗ trợ Mermaid, PlantUML và D2, không hỗ trợ OpenAPI, và chỉ dùng trong dự án Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Nguồn sơ đồ được tham chiếu",
+  "syntaxReferenceReferencedDiagramLimitation": "Đường dẫn phải tương đối và nằm trong dự án Writerside đang mở; dạng hàng rào kèm src chỉ dành cho Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark hỗ trợ biểu thức TeX, không hỗ trợ tài liệu TeX hoặc LaTeX hoàn chỉnh.",
+  "syntaxReferenceInlineMath": "Toán học nội dòng",
+  "syntaxReferenceGithubMath": "Toán học GitHub với dấu đô la và dấu huyền",
+  "syntaxReferenceDisplayMath": "Toán học dạng khối",
+  "syntaxReferenceMathFence": "Hàng rào math",
+  "syntaxReferenceTexFence": "Hàng rào tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark không nhận dạng \\(...\\) hoặc \\[...\\] là dấu phân cách toán học Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Ngoài chế độ Writerside, hàng rào tex vẫn là khối mã thông thường.",
+  "syntaxReferenceWritersideMathElement": "Phần tử math của Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "Phần tử math là cú pháp Writerside ngữ nghĩa, không phải HTML MathML thô được phép.",
+  "syntaxReferenceSemanticTexBlock": "Khối mã TeX ngữ nghĩa",
+  "syntaxReferenceWritersideDescription": "Các phần mở rộng trọng tâm này chỉ được diễn giải trong dự án Writerside đang mở.",
+  "syntaxReferenceAdmonitionBlockquote": "Trích dẫn khối lưu ý",
+  "syntaxReferenceAdmonitionLimitation": "Trích dẫn khối thuần là mẹo trong Markdown Writerside; trong Markdown thông thường, nó vẫn là trích dẫn thường.",
+  "syntaxReferenceSemanticAdmonitions": "Lưu ý ngữ nghĩa",
+  "syntaxReferenceSemanticMarkupLimitation": "Markdown thông thường không diễn giải các phần tử Writerside ngữ nghĩa này.",
+  "syntaxReferenceCollapsibleHeading": "Tiêu đề có thể thu gọn",
+  "syntaxReferenceCollapsibleCode": "Hàng rào mã có thể thu gọn",
+  "syntaxReferenceSemanticCollapsibles": "Nội dung ngữ nghĩa có thể thu gọn",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark hỗ trợ các dạng chapter, procedure, code-block và danh sách định nghĩa có thể thu gọn, không hỗ trợ toàn bộ danh mục Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Khối mã ngữ nghĩa cho toán học và sơ đồ",
+  "syntaxReferenceVideo": "Video Writerside",
+  "syntaxReferenceVideoLimitation": "Video cục bộ dùng ảnh preview-src cục bộ; nguồn lưu trữ phải là URL HTTPS YouTube hoặc Vimeo được hỗ trợ.",
+  "exportAsPdf": "Xuất dưới dạng PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."
+  },
+  "pdfExportDescription": "Chọn bố cục trang cho tệp PDF hoàn chỉnh, được trình bày chuyên nghiệp.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Hình ảnh từ xa không được tải xuống trong quá trình xuất. Hình ảnh cục bộ sẽ được đưa vào khi có thể.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Cỡ trang",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Hướng trang",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Dọc",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Ngang",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Lề",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Hẹp",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Bình thường",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Rộng",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Bao gồm số trang",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Xuất",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "Đang xuất PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "Tài liệu PDF",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "Đã xuất {fileName}.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "Đã xuất {fileName} với {count, plural, =1{1 cảnh báo} other{{count} cảnh báo}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some content fell back or was omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "Thiếu thành phần xuất PDF. Hãy cài đặt lại BusyMark và thử lại.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "Quá trình xuất PDF mất quá nhiều thời gian và đã bị dừng.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark không thể xuất tài liệu này dưới dạng PDF.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
+  "visualizationRendering": "Đang kết xuất…",
+  "@visualizationRendering": {
+    "description": "Status shown while a fenced visualization is rendering."
+  },
+  "visualizationStale": "Đang hiển thị bản kết xuất hợp lệ gần nhất",
+  "@visualizationStale": {
+    "description": "Status shown when a visualization displays its last valid result while newer source renders or is invalid."
+  },
+  "visualizationShowSource": "Hiện mã nguồn",
+  "@visualizationShowSource": {
+    "description": "Action that reveals the original source fence for a visualization."
+  },
+  "visualizationShowRender": "Hiện bản kết xuất",
+  "@visualizationShowRender": {
+    "description": "Action that returns from visualization source to its rendered output."
+  },
+  "visualizationFitWidth": "Vừa theo chiều rộng",
+  "@visualizationFitWidth": {
+    "description": "Action that resets diagram zoom to fit its card."
+  },
+  "visualizationSaveImage": "Lưu hình ảnh",
+  "@visualizationSaveImage": {
+    "description": "Action that saves a rendered diagram as an SVG or PNG file."
+  },
+  "visualizationCopyImage": "Sao chép hình ảnh",
+  "@visualizationCopyImage": {
+    "description": "Action that copies a rendered diagram to the image clipboard."
+  },
+  "visualizationImageCopied": "Đã sao chép hình ảnh",
+  "@visualizationImageCopied": {
+    "description": "Confirmation after copying a rendered diagram to the clipboard."
+  },
+  "visualizationOpenApiReference": "Mở tham chiếu API",
+  "@visualizationOpenApiReference": {
+    "description": "Action that opens the complete interactive OpenAPI reference window."
+  },
+  "visualizationValid": "Hợp lệ",
+  "@visualizationValid": {
+    "description": "OpenAPI validation success state."
+  },
+  "visualizationInvalid": "Không hợp lệ",
+  "@visualizationInvalid": {
+    "description": "OpenAPI validation failure state."
+  },
+  "visualizationServers": "Máy chủ",
+  "@visualizationServers": {
+    "description": "OpenAPI server count label."
+  },
+  "visualizationPaths": "Đường dẫn",
+  "@visualizationPaths": {
+    "description": "OpenAPI path count label."
+  },
+  "visualizationOperations": "Thao tác",
+  "@visualizationOperations": {
+    "description": "OpenAPI operation count label."
+  },
+  "visualizationTags": "Thẻ",
+  "@visualizationTags": {
+    "description": "OpenAPI tag summary label."
+  },
+  "visualizationNoOperations": "Không có thao tác phù hợp",
+  "@visualizationNoOperations": {
+    "description": "Empty state for the filtered OpenAPI operation list."
+  },
+  "visualizationSearchOperations": "Tìm kiếm thao tác",
+  "@visualizationSearchOperations": {
+    "description": "Hint for the OpenAPI operation search field."
+  },
+  "visualizationRenderFailed": "Không thể kết xuất hình minh họa này.",
+  "@visualizationRenderFailed": {
+    "description": "Fallback message for a failed visualization render."
+  },
+  "visualizationRetry": "Thử lại",
+  "@visualizationRetry": {
+    "description": "Action that retries a failed visualization render."
+  },
+  "visualizationSaved": "Đã lưu {fileName}",
+  "@visualizationSaved": {
+    "description": "Confirmation after saving a rendered diagram.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutExportPdfDescription": "Xuất tài liệu hiện tại hoặc mô-đun Writerside dưới dạng PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
+  "instances": "Các thực thể",
+  "@instances": {
+    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+  },
+  "newInstance": "Thực thể mới",
+  "@newInstance": {
+    "description": "Action that creates a Writerside instance."
+  },
+  "newTocLibrary": "Thư viện mục lục mới",
+  "@newTocLibrary": {
+    "description": "Action that creates a Writerside library instance for reusable TOC sections."
+  },
+  "editInstance": "Chỉnh sửa thực thể",
+  "@editInstance": {
+    "description": "Action and dialog title for editing a Writerside instance."
+  },
+  "openTocFile": "Mở tệp mục lục",
+  "@openTocFile": {
+    "description": "Action that opens the selected Writerside instance tree file."
+  },
+  "createInstance": "Tạo thực thể",
+  "@createInstance": {
+    "description": "Dialog title for creating a Writerside instance."
+  },
+  "createTocLibrary": "Tạo thư viện mục lục",
+  "@createTocLibrary": {
+    "description": "Dialog title for creating a Writerside TOC library instance."
+  },
+  "instanceContent": "Nội dung",
+  "@instanceContent": {
+    "description": "Group title for choosing the initial content of a Writerside instance."
+  },
+  "instanceContentSource": "Tạo từ",
+  "@instanceContentSource": {
+    "description": "Field for choosing how a Writerside instance is initialized."
+  },
+  "emptyInstance": "Phiên bản trống",
+  "@emptyInstance": {
+    "description": "Option to create a Writerside instance without imported topics."
+  },
+  "markdownFiles": "Tệp Markdown cục bộ",
+  "@markdownFiles": {
+    "description": "Option to initialize a Writerside instance from Markdown files."
+  },
+  "chooseMarkdownFolder": "Chọn thư mục Markdown",
+  "@chooseMarkdownFolder": {
+    "description": "Action to choose a folder containing Markdown files."
+  },
+  "errorWritersideInstanceImportSourceRequired": "Chọn một thư mục chứa các tệp Markdown.",
+  "@errorWritersideInstanceImportSourceRequired": {
+    "description": "Validation shown when an imported instance has no source folder."
+  },
+  "instanceAppearance": "Giao diện",
+  "@instanceAppearance": {
+    "description": "Group title for the local appearance of a Writerside instance."
+  },
+  "instanceColor": "Màu biểu tượng",
+  "@instanceColor": {
+    "description": "Writerside instance icon-color field."
+  },
+  "instanceVersion": "Phiên bản",
+  "@instanceVersion": {
+    "description": "Writerside instance version field."
+  },
+  "instanceVersionInherited": "Phiên bản dự án là {version} khi trường này để trống.",
+  "@instanceVersionInherited": {
+    "description": "Explanation of an inherited Writerside project version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "instanceWebPath": "Đường dẫn web",
+  "@instanceWebPath": {
+    "description": "Writerside instance publication web-path field."
+  },
+  "instanceStatus": "Trạng thái",
+  "@instanceStatus": {
+    "description": "Writerside instance status field."
+  },
+  "instanceStatusRelease": "Bản phát hành",
+  "@instanceStatusRelease": {
+    "description": "Regular Writerside instance status."
+  },
+  "instanceStatusEap": "Truy cập sớm",
+  "@instanceStatusEap": {
+    "description": "Writerside early-access instance status."
+  },
+  "instanceStatusDeprecated": "Không còn được dùng",
+  "@instanceStatusDeprecated": {
+    "description": "Writerside deprecated instance status."
+  },
+  "allowSearchEngineIndexing": "Cho phép công cụ tìm kiếm lập chỉ mục",
+  "@allowSearchEngineIndexing": {
+    "description": "Per-instance Writerside search-engine indexing setting."
+  },
+  "allowSearchEngineIndexingDescription": "Cho phép các công cụ tìm kiếm bên ngoài lập chỉ mục đầu ra này.",
+  "@allowSearchEngineIndexingDescription": {
+    "description": "Description of the Writerside indexing setting."
+  },
+  "offlineArtifact": "Gói ngoại tuyến",
+  "@offlineArtifact": {
+    "description": "Per-instance Writerside offline artifact setting."
+  },
+  "offlineArtifactDescription": "Đóng gói tài nguyên để tài liệu được xây dựng có thể hoạt động độc lập.",
+  "@offlineArtifactDescription": {
+    "description": "Description of the Writerside offline artifact setting."
+  },
+  "instanceOutputSettings": "Cài đặt đầu ra",
+  "@instanceOutputSettings": {
+    "description": "Group title for Writerside instance build and publication settings."
+  },
+  "markdownImportSource": "Nguồn Markdown",
+  "@markdownImportSource": {
+    "description": "Group title for the source directory of a Writerside Markdown import."
+  },
+  "markdownImportFiles": "Tệp Markdown",
+  "@markdownImportFiles": {
+    "description": "Group title for files selected for a Writerside Markdown import."
+  },
+  "selectNone": "Bỏ chọn tất cả",
+  "@selectNone": {
+    "description": "Action that clears all items in a multiple selection."
+  },
+  "markdownFilesFound": "Đã tìm thấy {count} tệp Markdown",
+  "@markdownFilesFound": {
+    "description": "Count of discovered Markdown import files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMarkdownFilesFound": "Không tìm thấy tệp Markdown nào trong thư mục này.",
+  "@noMarkdownFilesFound": {
+    "description": "Empty state for a Writerside Markdown import source."
+  },
+  "copyReferencedMedia": "Sao chép phương tiện được tham chiếu",
+  "@copyReferencedMedia": {
+    "description": "Option to copy media used by imported Markdown files."
+  },
+  "copyReferencedMediaDescription": "Sao chép hình ảnh và video cục bộ được các tệp đã chọn tham chiếu, đồng thời giữ nguyên đường dẫn tương đối.",
+  "@copyReferencedMediaDescription": {
+    "description": "Description of the Writerside Markdown media import option."
+  },
+  "instanceIdRenameWarningTitle": "Đổi tên ID thực thể?",
+  "@instanceIdRenameWarningTitle": {
+    "description": "Confirmation title before refactoring a Writerside instance ID."
+  },
+  "instanceIdRenameWarning": "BusyMark sẽ đổi tên tệp .tree và cập nhật các tham chiếu dự án Writerside từ “{oldId}” thành “{newId}”. Các script xuất bản không được thay đổi và phải cập nhật riêng.",
+  "@instanceIdRenameWarning": {
+    "description": "Warning shown before a Writerside instance ID refactor.",
+    "placeholders": {
+      "oldId": {
+        "type": "String"
+      },
+      "newId": {
+        "type": "String"
+      }
+    }
+  },
+  "renameAndUpdateReferences": "Đổi tên và cập nhật tham chiếu",
+  "@renameAndUpdateReferences": {
+    "description": "Confirmation action for a Writerside instance ID refactor."
+  },
+  "tocLibraryDescription": "Thư viện mục lục lưu trữ các phần có thể tái sử dụng và không tạo đầu ra riêng.",
+  "@tocLibraryDescription": {
+    "description": "Explanation shown while creating a Writerside TOC library."
+  },
+  "defaultTocLibraryName": "Mục lục dùng chung",
+  "@defaultTocLibraryName": {
+    "description": "Default name for a new Writerside TOC library instance."
+  },
+  "instanceColorAutomatic": "Tự động",
+  "@instanceColorAutomatic": {
+    "description": "Automatic Writerside instance icon color option."
+  },
+  "instanceColorBlue": "Xanh dương",
+  "@instanceColorBlue": {
+    "description": "Blue Writerside instance icon color option."
+  },
+  "instanceColorGreen": "Xanh lá",
+  "@instanceColorGreen": {
+    "description": "Green Writerside instance icon color option."
+  },
+  "instanceColorOrange": "Cam",
+  "@instanceColorOrange": {
+    "description": "Orange Writerside instance icon color option."
+  },
+  "instanceColorPurple": "Tím",
+  "@instanceColorPurple": {
+    "description": "Purple Writerside instance icon color option."
+  },
+  "instanceColorRed": "Đỏ",
+  "@instanceColorRed": {
+    "description": "Red Writerside instance icon color option."
+  },
+  "instanceColorTeal": "Xanh mòng két",
+  "@instanceColorTeal": {
+    "description": "Teal Writerside instance icon color option."
+  },
+  "instanceColorYellow": "Vàng",
+  "@instanceColorYellow": {
+    "description": "Yellow Writerside instance icon color option."
+  },
+  "errorWritersideInstanceNameRequired": "Nhập tên thực thể.",
+  "@errorWritersideInstanceNameRequired": {
+    "description": "Validation error for an empty Writerside instance name."
+  },
+  "errorWritersideInstanceIdExists": "Đã có thực thể với ID “{id}”.",
+  "@errorWritersideInstanceIdExists": {
+    "description": "Error for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceTreeExists": "Cây thực thể đã tồn tại: {path}",
+  "@errorWritersideInstanceTreeExists": {
+    "description": "Error for an existing Writerside instance tree path.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSourceMissing": "Thư mục nguồn Markdown không tồn tại: {path}",
+  "@errorWritersideInstanceImportSourceMissing": {
+    "description": "Error for a missing Writerside Markdown import source.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSelectionRequired": "Chọn ít nhất một tệp Markdown để nhập.",
+  "@errorWritersideInstanceImportSelectionRequired": {
+    "description": "Validation error when no Markdown import files are selected."
+  },
+  "errorWritersideInstanceImportFileInvalid": "Đây không phải là tệp Markdown có thể đọc bên trong nguồn đã chọn: {path}",
+  "@errorWritersideInstanceImportFileInvalid": {
+    "description": "Error for an invalid Writerside Markdown import file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportTargetExists": "Việc nhập sẽ ghi đè một tệp dự án hiện có: {path}",
+  "@errorWritersideInstanceImportTargetExists": {
+    "description": "Error for a colliding Writerside Markdown import target.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceFilesChanged": "Các tệp thực thể đã thay đổi trên đĩa. Hãy xem lại và thử lại.",
+  "@errorWritersideInstanceFilesChanged": {
+    "description": "Concurrent-change error for a Writerside instance mutation."
+  },
+  "errorWritersideInstanceRollbackFailed": "BusyMark không thể khôi phục hoàn toàn thay đổi của thực thể. Hãy xem lại các tệp này trước khi tiếp tục: {paths}",
+  "@errorWritersideInstanceRollbackFailed": {
+    "description": "Error when a Writerside instance mutation rollback is incomplete.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceLibraryImport": "Thư viện mục lục không thể nhập các chủ đề Markdown.",
+  "@errorWritersideInstanceLibraryImport": {
+    "description": "Error when Markdown import is requested for a TOC library."
+  },
+  "errorWritersideInstanceWebPathInvalid": "Đường dẫn web phải nằm trên một dòng duy nhất.",
+  "@errorWritersideInstanceWebPathInvalid": {
+    "description": "Validation error for an invalid Writerside instance web path."
+  },
+  "errorWritersideInstanceConfigurationInvalid": "Cấu hình thực thể Writerside không hợp lệ. Hãy sửa các chẩn đoán rồi thử lại.",
+  "@errorWritersideInstanceConfigurationInvalid": {
+    "description": "Error when an instance tree, project config, or build profiles file cannot be safely edited."
+  },
+  "errorWritersideInstanceTemporaryFile": "BusyMark không thể đưa các thay đổi của thực thể vào stage một cách an toàn.",
+  "@errorWritersideInstanceTemporaryFile": {
+    "description": "Error when a temporary file for an instance mutation cannot be created."
+  },
+  "diagnosticWritersideTreeInvalidStatus": "Trạng thái thực thể không xác định “{status}”. Sử dụng release, eap hoặc deprecated.",
+  "@diagnosticWritersideTreeInvalidStatus": {
+    "description": "Diagnostic for an unsupported Writerside instance status.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDuplicateInstanceId": "ID thực thể “{id}” được nhiều tệp cây sử dụng.",
+  "@diagnosticWritersideDuplicateInstanceId": {
+    "description": "Diagnostic for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfilesInvalidRoot": "buildprofiles.xml phải có phần tử gốc <buildprofiles>.",
+  "@diagnosticWritersideBuildProfilesInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside build profiles root."
+  },
+  "diagnosticWritersideBuildProfilesInvalidBoolean": "Giá trị {name} “{value}” phải là true hoặc false.",
+  "@diagnosticWritersideBuildProfilesInvalidBoolean": {
+    "description": "Diagnostic for an invalid Writerside build profile Boolean.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfileMissingInstance": "Phần tử <build-profile> phải chỉ định ID thực thể.",
+  "@diagnosticWritersideBuildProfileMissingInstance": {
+    "description": "Diagnostic for a Writerside build profile without an instance attribute."
+  },
+  "diagnosticWritersideTreeInvalidInclude": "<include> trong cây phải chỉ định cả from và element-id.",
+  "@diagnosticWritersideTreeInvalidInclude": {
+    "description": "Diagnostic for an incomplete Writerside tree include."
+  },
+  "diagnosticWritersideTreeMissingSnippetId": "<snippet> trong cây phải chỉ định id.",
+  "@diagnosticWritersideTreeMissingSnippetId": {
+    "description": "Diagnostic for a Writerside tree snippet without an ID."
+  },
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Tham chiếu mục lục giữa các thực thể phải chỉ định cả ref và in.",
+  "@diagnosticWritersideTreeInvalidCrossInstanceReference": {
+    "description": "Diagnostic for an incomplete Writerside ref/in pair."
+  },
+  "diagnosticWritersideTreeConflictingTargets": "Một phần tử mục lục không thể nhắm đến nhiều hơn một chủ đề, tham chiếu, liên kết hoặc chuyển hướng.",
+  "@diagnosticWritersideTreeConflictingTargets": {
+    "description": "Diagnostic for conflicting Writerside TOC targets."
+  },
+  "diagnosticWritersideTreeDuplicateElementId": "ID phần tử cây “{id}” được khai báo nhiều hơn một lần.",
+  "@diagnosticWritersideTreeDuplicateElementId": {
+    "description": "Diagnostic for a duplicate Writerside tree element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "Tệp nhóm thực thể phải có phần tử gốc <instance-groups>.",
+  "@diagnosticWritersideInstanceGroupsInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside instance groups root."
+  },
+  "diagnosticWritersideInstanceGroupInvalid": "Một nhóm thực thể phải chỉ định id không trống và danh sách thực thể.",
+  "@diagnosticWritersideInstanceGroupInvalid": {
+    "description": "Diagnostic for an invalid Writerside instance group."
+  },
+  "diagnosticWritersideInstanceGroupDuplicateId": "ID nhóm thực thể “{id}” được khai báo nhiều hơn một lần.",
+  "@diagnosticWritersideInstanceGroupDuplicateId": {
+    "description": "Diagnostic for a duplicate Writerside instance group ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideExternalTreeInclude": "Include mục lục “{source}#{id}” thuộc mô-đun bên ngoài “{origin}” và không thể mở rộng trong không gian làm việc này.",
+  "@diagnosticWritersideExternalTreeInclude": {
+    "description": "Diagnostic for a tree include from another Writerside module.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeIncludeElementMissing": "Phần tử cây “{id}” không tồn tại trong cây đã đăng ký “{source}”.",
+  "@diagnosticWritersideTreeIncludeElementMissing": {
+    "description": "Diagnostic for a missing reusable tree element.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeCircularInclude": "Include cây “{source}#{id}” tạo ra một vòng lặp.",
+  "@diagnosticWritersideTreeCircularInclude": {
+    "description": "Diagnostic for a circular Writerside tree include.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideUnknownInstanceGroup": "Điều kiện thực thể tham chiếu đến nhóm không xác định “@{group}”.",
+  "@diagnosticWritersideUnknownInstanceGroup": {
+    "description": "Diagnostic for an unknown Writerside instance group.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceInstanceMissing": "Tham chiếu giữa các thực thể nhắm đến thực thể không xác định “{instance}”.",
+  "@diagnosticWritersideReferenceInstanceMissing": {
+    "description": "Diagnostic for a missing Writerside reference instance.",
+    "placeholders": {
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceTopicMissing": "Chủ đề “{topic}” không nằm trong thực thể được tham chiếu “{instance}”.",
+  "@diagnosticWritersideReferenceTopicMissing": {
+    "description": "Diagnostic for a missing topic in a cross-instance Writerside reference.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "download": "Tải xuống",
+  "@download": {
+    "description": "Button label that downloads a required component."
+  },
+  "exportWritersideAsPdf": "Xuất Writerside dưới dạng PDF",
+  "@exportWritersideAsPdf": {
+    "description": "Menu action and dialog title for exporting a Writerside instance as PDF."
+  },
+  "writersidePdfContent": "Nội dung xuất",
+  "@writersidePdfContent": {
+    "description": "Group title for selecting Writerside PDF content."
+  },
+  "writersidePdfPage": "Trang",
+  "@writersidePdfPage": {
+    "description": "Writerside PDF page settings group title."
+  },
+  "exportingWritersidePdf": "Đang xuất PDF Writerside…",
+  "@exportingWritersidePdf": {
+    "description": "Progress title while building a Writerside PDF."
+  },
+  "ai": "AI",
+  "@ai": {
+    "description": "Settings section and editing menu label for artificial-intelligence features."
+  },
+  "aiLocalOllama": "Ollama cục bộ",
+  "@aiLocalOllama": {
+    "description": "AI provider option for a loopback Ollama service."
+  },
+  "aiDisabled": "Đã tắt",
+  "@aiDisabled": {
+    "description": "AI provider option that disables AI features."
+  },
+  "aiProvider": "Nhà cung cấp AI",
+  "@aiProvider": {
+    "description": "Label for an AI provider selection."
+  },
+  "aiDefaultProvider": "Nhà cung cấp mặc định",
+  "@aiDefaultProvider": {
+    "description": "Settings label for the provider selected by default for AI actions."
+  },
+  "aiConfigureProvider": "Cấu hình nhà cung cấp",
+  "@aiConfigureProvider": {
+    "description": "Settings label for choosing which AI provider configuration to edit."
+  },
+  "aiChooseProvider": "Chọn nhà cung cấp AI",
+  "@aiChooseProvider": {
+    "description": "Dialog title shown before selecting the AI provider for an action."
+  },
+  "aiOllamaEndpoint": "Điểm cuối Ollama",
+  "@aiOllamaEndpoint": {
+    "description": "Settings label for the local Ollama origin."
+  },
+  "aiOllamaModel": "Mô hình Ollama",
+  "@aiOllamaModel": {
+    "description": "Settings label for the installed Ollama model."
+  },
+  "aiTestConnection": "Kiểm tra kết nối",
+  "@aiTestConnection": {
+    "description": "Button that verifies generation with the configured AI provider and model."
+  },
+  "aiTestingConnection": "Đang kiểm tra…",
+  "@aiTestingConnection": {
+    "description": "Status while BusyMark verifies the configured AI provider and model."
+  },
+  "aiConnectionReady": "Đã kết nối. Tìm thấy {count} mô hình đã cài đặt.",
+  "@aiConnectionReady": {
+    "description": "Successful Ollama connection status.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiNoModels": "Chưa chọn mô hình nào.",
+  "@aiNoModels": {
+    "description": "AI model setting shown before a model has been selected or discovered."
+  },
+  "aiConnectionFailed": "BusyMark không thể xác minh việc tạo văn bản bằng AI.",
+  "@aiConnectionFailed": {
+    "description": "Generic failure shown while testing AI generation."
+  },
+  "aiConfigureFirst": "Bật một nhà cung cấp AI và xác minh mô hình trong Cài đặt → AI.",
+  "aiEditWithAi": "Chỉnh sửa bằng AI",
+  "aiRefineWithAi": "Tinh chỉnh bằng AI",
+  "@aiRefineWithAi": {
+    "description": "Selected-text context-menu action that opens AI refinement."
+  },
+  "aiInstruction": "Hướng dẫn",
+  "aiChangeTarget": "Có thể thay đổi gì",
+  "aiSharedContext": "Ngữ cảnh được chia sẻ với AI",
+  "aiTargetSelection": "Nội dung đã chọn",
+  "aiTargetInsertAfterBlock": "Chèn sau khối hiện tại",
+  "aiTargetCurrentBlock": "Khối hiện tại",
+  "aiTargetCurrentSection": "Phần hiện tại",
+  "aiTargetCompleteDocument": "Toàn bộ tài liệu",
+  "aiContextNone": "Không có ngữ cảnh tài liệu",
+  "aiContextSelection": "Nội dung đã chọn",
+  "aiContextCurrentBlock": "Khối hiện tại",
+  "aiContextCurrentSection": "Phần hiện tại",
+  "aiContextCompleteDocument": "Toàn bộ tài liệu",
+  "@aiConfigureFirst": {
+    "description": "Message shown when an AI action is unavailable."
+  },
+  "aiGenerating": "Đang tạo đề xuất…",
+  "@aiGenerating": {
+    "description": "Progress text while an AI proposal streams."
+  },
+  "aiProposal": "Đề xuất của AI",
+  "@aiProposal": {
+    "description": "Title of the AI proposal review dialog."
+  },
+  "aiGenerateProposal": "Tạo đề xuất",
+  "@aiGenerateProposal": {
+    "description": "Button that starts generation after the user reviews the AI instruction, change target, and shared context."
+  },
+  "aiContextDisclosure": "Nhà cung cấp đã chọn sẽ nhận {count} ký tự từ ngữ cảnh được hiển thị.",
+  "@aiContextDisclosure": {
+    "description": "Disclosure of AI context size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiOriginal": "Bản gốc",
+  "@aiOriginal": {
+    "description": "Label for original text in an AI proposal review."
+  },
+  "aiSuggested": "Đề xuất",
+  "@aiSuggested": {
+    "description": "Label for proposed text in an AI proposal review."
+  },
+  "aiApplyProposal": "Áp dụng đề xuất",
+  "@aiApplyProposal": {
+    "description": "Button that applies a reviewed AI proposal."
+  },
+  "aiTokenUsage": "{input} token đầu vào · {output} token đầu ra",
+  "@aiTokenUsage": {
+    "description": "Local Ollama token usage for one proposal.",
+    "placeholders": {
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiStaleProposal": "Tài liệu đã thay đổi trong khi đề xuất này được tạo. Hãy thực hiện lại thao tác.",
+  "gitAiStagedChangesChanged": "Các thay đổi trong stage đã thay đổi trong khi thông điệp commit này được tạo. Hãy thực hiện lại thao tác.",
+  "@gitAiStagedChangesChanged": {
+    "description": "Warning shown when an AI commit-message proposal was generated from an obsolete staged diff."
+  },
+  "@aiStaleProposal": {
+    "description": "Message for an AI result based on an old editor revision."
+  },
+  "aiViewContext": "Xem ngữ cảnh đã gửi",
+  "@aiViewContext": {
+    "description": "Action that reveals the exact AI input context."
+  },
+  "aiReviewExactContent": "Xem lại nội dung chính xác",
+  "@aiReviewExactContent": {
+    "description": "Action that reveals the exact content affected by and shared with an AI edit."
+  },
+  "aiContentToChange": "Nội dung cần thay đổi",
+  "@aiContentToChange": {
+    "description": "Label for the exact Markdown that an AI proposal may change."
+  },
+  "aiContentSentToAi": "Nội dung đã gửi cho AI",
+  "@aiContentSentToAi": {
+    "description": "Label for the exact document context that will be sent to the configured AI provider."
+  },
+  "aiApiKey": "Khóa API",
+  "@aiApiKey": {
+    "description": "Label for a cloud AI provider API key."
+  },
+  "aiApiKeyStoredHint": "Khóa đã được lưu trong kho thông tin xác thực của hệ thống",
+  "@aiApiKeyStoredHint": {
+    "description": "Hint when a cloud API key is already stored."
+  },
+  "aiApiKeyEnterHint": "Nhập khóa API của nhà cung cấp",
+  "@aiApiKeyEnterHint": {
+    "description": "Hint for entering a cloud provider API key."
+  },
+  "aiReplaceApiKey": "Thay thế khóa API",
+  "@aiReplaceApiKey": {
+    "description": "Action that replaces a stored cloud provider key."
+  },
+  "aiSaveApiKey": "Lưu an toàn khóa API",
+  "@aiSaveApiKey": {
+    "description": "Action that saves a cloud provider key to the system credential store."
+  },
+  "aiRemoveApiKey": "Xóa khóa API đã lưu",
+  "@aiRemoveApiKey": {
+    "description": "Action that removes a cloud provider key from the system credential store."
+  },
+  "aiCredentialSaved": "Đã lưu khóa API trong kho thông tin xác thực của hệ thống.",
+  "@aiCredentialSaved": {
+    "description": "Confirmation after saving an AI provider key."
+  },
+  "aiCredentialRemoved": "Đã xóa khóa API đã lưu.",
+  "@aiCredentialRemoved": {
+    "description": "Confirmation after removing an AI provider key."
+  },
+  "aiModelRouting": "Định tuyến mô hình",
+  "@aiModelRouting": {
+    "description": "Settings label for AI model routing."
+  },
+  "aiAutomaticRouting": "Tự động theo tác vụ",
+  "@aiAutomaticRouting": {
+    "description": "AI model routing option that chooses by task class."
+  },
+  "aiFixedModelRouting": "Sử dụng mô hình đã chọn",
+  "@aiFixedModelRouting": {
+    "description": "AI model routing option that always uses the preferred model."
+  },
+  "aiPreferredModel": "Mô hình ưu tiên",
+  "@aiPreferredModel": {
+    "description": "Settings label for a preferred cloud AI model."
+  },
+  "aiModel": "Mô hình",
+  "@aiModel": {
+    "description": "Label for selecting a model for one AI request."
+  },
+  "aiUsageThisMonth": "{requests} yêu cầu · {input} token đầu vào · {output} token đầu ra",
+  "@aiUsageThisMonth": {
+    "description": "Local monthly AI usage summary.",
+    "placeholders": {
+      "requests": {
+        "type": "int"
+      },
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiCloudConsentTitle": "Gửi nội dung đến {provider}?",
+  "@aiCloudConsentTitle": {
+    "description": "Cloud AI data-sharing confirmation title.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentEnable": "Bật {provider}",
+  "@aiCloudConsentEnable": {
+    "description": "Action that confirms use of a cloud AI provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentMessage": "Chỉ nội dung hiển thị trong mỗi hộp thoại xem lại AI được gửi đi. Yêu cầu không được lưu trạng thái, đề xuất cần được xem lại và khóa API được lưu trong kho thông tin xác thực hệ thống Linux.",
+  "@aiCloudConsentMessage": {
+    "description": "Cloud AI data-sharing and credential disclosure."
+  },
+  "aiCloudConsentRequired": "Trước tiên, hãy xác nhận việc chia sẻ dữ liệu với {provider} trong Cài đặt → AI.",
+  "@aiCloudConsentRequired": {
+    "description": "AI action error when cloud consent is missing.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiGenerationVerified": "Đã xác minh việc tạo bằng {model}. Có sẵn {count} mô hình tương thích.",
+  "@aiGenerationVerified": {
+    "description": "Successful AI model generation qualification.",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiColdStartObserved": "Đã phát hiện khởi động nguội của mô hình cục bộ.",
+  "@aiColdStartObserved": {
+    "description": "Additional model qualification status when local generation required a cold start."
+  },
+  "aiNoCompatibleModels": "Không có mô hình tạo văn bản tương thích nào khả dụng.",
+  "@aiNoCompatibleModels": {
+    "description": "AI connection status when no compatible generation model is available."
+  },
+  "aiEnableProvider": "Trước tiên, hãy bật một nhà cung cấp AI.",
+  "@aiEnableProvider": {
+    "description": "AI settings error when no provider is enabled."
+  },
+  "aiDraftCommitMessage": "Soạn thông điệp commit",
+  "@aiDraftCommitMessage": {
+    "description": "AI action that drafts a Git commit message."
+  },
+  "aiDrafting": "Đang soạn…",
+  "@aiDrafting": {
+    "description": "Progress label while AI drafts a commit message."
+  },
+  "aiDraftWithAi": "Soạn bằng AI",
+  "@aiDraftWithAi": {
+    "description": "Action that drafts a Git commit message with AI."
+  },
+  "generateOrUpdateMarkdownToc": "Tạo/cập nhật mục lục",
+  "@generateOrUpdateMarkdownToc": {
+    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
+  },
+  "markdownTocTitle": "Mục lục",
+  "@markdownTocTitle": {
+    "description": "Heading inserted above a generated Markdown table of contents."
+  },
+  "markdownTocUpdated": "Đã cập nhật mục lục với {count} mục.",
+  "@markdownTocUpdated": {
+    "description": "Confirmation after generating a Markdown table of contents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markdownTocNoHeadings": "Thêm ít nhất một tiêu đề phần trước khi tạo mục lục.",
+  "@markdownTocNoHeadings": {
+    "description": "Message when a Markdown document has no section headings for a generated table of contents."
+  },
+  "markdownTocMalformedMarkers": "Các dấu đánh dấu mục lục BusyMark bị thiếu, trùng lặp hoặc không đúng thứ tự.",
+  "@markdownTocMalformedMarkers": {
+    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
+  },
+  "diagnosticMarkdownHeadingSkippedLevel": "Tiêu đề cấp {level} theo sau cấp {previousLevel}; hãy xem lại cấu trúc lồng ghép của các phần.",
+  "@diagnosticMarkdownHeadingSkippedLevel": {
+    "description": "Accessibility diagnostic for a skipped Markdown heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "previousLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkEmptyText": "Văn bản liên kết trống; hãy cung cấp tên có khả năng truy cập mô tả mục đích của liên kết.",
+  "@diagnosticMarkdownLinkEmptyText": {
+    "description": "Accessibility diagnostic for a Markdown link without text."
+  },
+  "diagnosticMarkdownLinkReviewText": "Xem lại liệu văn bản liên kết “{text}” có mô tả mục đích của liên kết trong ngữ cảnh hay không.",
+  "@diagnosticMarkdownLinkReviewText": {
+    "description": "Accessibility hint for potentially non-descriptive Markdown link text.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownTableEmptyHeader": "Các ô tiêu đề bảng phải xác định cột của chúng; hãy hoàn thành từng tiêu đề trống.",
+  "@diagnosticMarkdownTableEmptyHeader": {
+    "description": "Accessibility diagnostic for an empty Markdown table header cell."
+  },
+  "mathRenderFailed": "Không thể kết xuất biểu thức toán học.",
+  "@mathRenderFailed": {
+    "description": "Tooltip and diagnostic text shown when a mathematical expression cannot be rendered."
+  },
+  "inlineMath": "Toán nội tuyến",
+  "@inlineMath": {
+    "description": "Editor action that inserts an inline mathematical expression."
+  },
+  "displayMath": "Toán hiển thị",
+  "@displayMath": {
+    "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
+}

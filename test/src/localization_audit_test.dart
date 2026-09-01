@@ -104,6 +104,12 @@ void main() {
       'de':
           'Editor für Markdown-Dateien und Writerside-kompatible '
           'Dokumentationsprojekte',
+      'nl':
+          'Editor voor Markdown-bestanden en Writerside-compatibele '
+          'documentatieprojecten',
+      'tr':
+          'Markdown dosyaları ve Writerside uyumlu dokümantasyon '
+          'projeleri için düzenleyici',
       'es':
           'Editor de archivos Markdown y proyectos de documentación '
           'compatibles con Writerside',
@@ -119,6 +125,11 @@ void main() {
       'hi':
           'Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का '
           'संपादक',
+      'id':
+          'Editor untuk file Markdown dan proyek dokumentasi yang kompatibel '
+          'dengan Writerside',
+      'ja': 'Markdown ファイルおよび Writerside 互換のドキュメントプロジェクト用エディター',
+      'ko': 'Markdown 파일 및 Writerside 호환 문서 프로젝트용 편집기',
       'it':
           'Editor per file Markdown e progetti di documentazione compatibili '
           'con Writerside',
@@ -128,7 +139,7 @@ void main() {
       'pl':
           'Edytor plików Markdown i projektów dokumentacji zgodnych z '
           'Writerside',
-      'pt':
+      'pt_BR':
           'Editor de arquivos Markdown e projetos de documentação compatíveis '
           'com o Writerside',
       'ru':
@@ -137,17 +148,23 @@ void main() {
       'uk':
           'Редактор файлів Markdown і проєктів документації, сумісних із '
           'Writerside',
+      'vi':
+          'Trình biên tập tệp Markdown và các dự án tài liệu tương thích với '
+          'Writerside',
+      'zh-CN': 'Markdown 文件和兼容 Writerside 的文档项目编辑器',
     };
 
     for (final entry in summaries.entries) {
+      final desktopLocale = entry.key.replaceAll('-', '_');
+      final xmlLocale = entry.key.replaceAll('_', '-');
       expect(
         desktop,
-        contains('Comment[${entry.key}]=${entry.value}'),
+        contains('Comment[$desktopLocale]=${entry.value}'),
         reason: 'desktop ${entry.key}',
       );
       expect(
         metainfo,
-        contains('<summary xml:lang="${entry.key}">${entry.value}</summary>'),
+        contains('<summary xml:lang="$xmlLocale">${entry.value}</summary>'),
         reason: 'AppStream ${entry.key}',
       );
     }
@@ -236,6 +253,37 @@ void main() {
     }
 
     expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('Syntax Reference is localized without legacy message keys', () {
+    final english = AppLocalizationsEn();
+    for (final locale in AppLocalizations.supportedLocales) {
+      if (locale.languageCode == 'en') {
+        continue;
+      }
+      final localizations = lookupAppLocalizations(locale);
+      expect(
+        localizations.syntaxReference,
+        isNot(english.syntaxReference),
+        reason: locale.toLanguageTag(),
+      );
+      expect(
+        localizations.syntaxReferenceDiagramsDescription,
+        isNot(english.syntaxReferenceDiagramsDescription),
+        reason: locale.toLanguageTag(),
+      );
+    }
+
+    for (final file in _arbFiles()) {
+      final messages = _arbMessageStrings(file);
+      expect(messages, contains('syntaxReference'), reason: file.path);
+      expect(messages, isNot(contains('markdownAndHtml')), reason: file.path);
+      expect(
+        messages,
+        isNot(contains('shortcutMarkdownAndHtmlDescription')),
+        reason: file.path,
+      );
+    }
   });
 
   test('RTL translations isolate technical interpolations', () {
@@ -335,8 +383,8 @@ void main() {
 
   test('every selectable locale has a generated catalog', () {
     expect(
-      busyMarkLocaleOptions.map((option) => option.locale).toSet(),
-      AppLocalizations.supportedLocales.toSet(),
+      AppLocalizations.supportedLocales,
+      containsAll(busyMarkLocaleOptions.map((option) => option.locale)),
     );
   });
 
@@ -395,10 +443,17 @@ Iterable<File> _productionDartFiles() sync* {
 
 Iterable<File> _arbFiles() sync* {
   for (final entity in Directory('lib/l10n').listSync()) {
-    if (entity is File && entity.path.endsWith('.arb')) {
+    if (entity is File &&
+        entity.path.endsWith('.arb') &&
+        !_isFlutterFallbackArb(entity)) {
       yield entity;
     }
   }
+}
+
+bool _isFlutterFallbackArb(File file) {
+  final name = file.uri.pathSegments.last;
+  return name == 'app_pt.arb' || name == 'app_zh.arb';
 }
 
 Map<String, Object?> _arbMessages(File file) {
@@ -537,7 +592,7 @@ List<String> _targetArbLocales() {
       continue;
     }
     final locale = match.group(1)!;
-    if (locale != 'en') {
+    if (locale != 'en' && locale != 'pt' && locale != 'zh') {
       locales.add(locale);
     }
   }
@@ -595,6 +650,8 @@ const _sharedEnglishMatches = <String>{
   'markdown',
   'languageEnglish',
   'languageGerman',
+  'languageDutch',
+  'languageTurkish',
   'languageItalian',
   'languageNorwegian',
   'languageFrench',
@@ -606,8 +663,18 @@ const _sharedEnglishMatches = <String>{
   'languageArabic',
   'languagePersian',
   'languageHindi',
+  'languageIndonesian',
   'languageEstonian',
+  'languageJapanese',
+  'languageKorean',
+  'languageVietnamese',
+  'languageSimplifiedChinese',
   'writerside',
+  'syntaxReferenceCategoryHtml',
+  'syntaxReferenceMermaid',
+  'syntaxReferencePlantUml',
+  'syntaxReferenceD2',
+  'syntaxReferenceOpenApi',
   'video',
   'xml',
   'fileTypeMarkdown',
@@ -621,6 +688,7 @@ const _sharedEnglishMatches = <String>{
   'gitResetModeMixed',
   'gitResetModeHard',
   'gitResetModeKeep',
+  'ai',
 };
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
@@ -676,7 +744,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   },
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
   'pl': {'folder', 'foldKindTag', 'aiModel'},
-  'pt': {
+  'pt_BR': {
     'editor',
     'link',
     'toc',
@@ -687,4 +755,56 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'vertical',
   },
   'hi': {'toc'},
+  'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
+  'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
+  'id': {
+    'editor',
+    'file',
+    'folder',
+    'link',
+    'sourceSearchRegex',
+    'tip',
+    'pdfMarginNormal',
+    'instanceStatus',
+    'aiModel',
+    'horizontal',
+    'editHtml',
+    'tableHeaderHint',
+    'tableHeaderNumber',
+    'foldKindTag',
+    'gitSelectForCommit',
+    'gitReset',
+    'visualizationValid',
+    'editInstance',
+    'instanceColorTeal',
+    'gitDiff',
+    'gitFetch',
+    'gitCommit',
+    'pdfPageSizeLetter',
+  },
+  'nl': {
+    'aboutWebsite',
+    'editor',
+    'recent',
+    'privacy',
+    'untitledMarkdownFileName',
+    'link',
+    'editorPlaceholderCode',
+    'toc',
+    'sourceSearchRegex',
+    'tip',
+    'tab',
+    'procedure',
+    'gitDiff',
+    'gitFetch',
+    'gitCommit',
+    'syntaxReferenceHtmlContainers',
+    'pdfPageSizeLetter',
+    'visualizationServers',
+    'instanceStatus',
+    'instanceStatusRelease',
+    'aiModel',
+  },
+  'vi': {'tab', 'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
+  'zh_CN': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
 };

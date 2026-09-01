@@ -264,11 +264,19 @@
   "@languageGerman": {
     "description": "Language selector option for German."
   },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
   "languageItalian": "Italiano",
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -308,9 +316,29 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
   "languageEstonian": "Eesti",
   "@languageEstonian": {
     "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
   },
   "toggleSidebar": "Бічна панель",
   "@toggleSidebar": {
@@ -381,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "Видалити вибраний елемент у розділі «Файли» або вилучити вибрану тему зі змісту",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "Загальні",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -410,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Відкрити довідку з Markdown і HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Відкрити довідник із синтаксису",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Відкрити налаштування BusyMark",
   "@shortcutSettingsDescription": {
@@ -483,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "Вставити відступ",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "Вставити відступ у позицію курсора",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "Зменшити відступ у вихідному тексті",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "Прибрати один рівень відступу в режимі вихідного тексту",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "Закрити пошук або зняти виділення блоків",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -723,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "Конфіденційність",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "Завантажувати віддалені зображення",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "Дозволяти завантаження зображень у попередньому перегляді Markdown і редакторі з URL-адрес http та https.",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "Очистити дозволи для віддалених зображень",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "Забути робочі області, яким було дозволено завантажувати віддалені зображення.",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "Очистити список довірених робочих областей Git",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "Вікно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "Відкривати попередній робочий простір під час запуску",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "Відкривати робочий простір і вкладки попереднього сеансу під час запуску BusyMark.",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Підтверджувати закриття за наявності незбережених змін",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -873,7 +928,9 @@
     "description": "HTML block command label."
   },
   "htmlContentDefault": "Вміст HTML",
-  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
   "shortcutHtmlBlockDescription": "Вставити або редагувати блок HTML",
   "@shortcutHtmlBlockDescription": {
     "description": "Keyboard shortcut description for inserting or editing an HTML block."
@@ -1075,18 +1132,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "Віддалене зображення заблоковано",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "Виберіть, чи може BusyMark завантажувати віддалені зображення.",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "Віддалені зображення заблоковано",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "Завантажити для цієї робочої області",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "Завжди завантажувати віддалені зображення",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "Приховати бічну панель",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1326,19 +1394,33 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "Попередній збіг",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "Наступний збіг",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "З урахуванням регістру",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "Ціле слово",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "Регулярний вираз",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "Некоректний регулярний вираз",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "Великий файл: підсвічування та згортання призупинено",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "Немає вмісту для читання",
   "admonition": "Блок-примітка",
   "quote": "Цитата",
@@ -2177,25 +2259,39 @@
   "git": "Git",
   "gitDiff": "Відмінності Git",
   "gitShowDiff": "Показати відмінності",
-  "@gitShowDiff": {"description": "Menu action that opens the diff for a file in Git history."},
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
   "gitDiffHunkRange": "старий діапазон {oldRange} → новий {newRange}",
   "@gitDiffHunkRange": {
     "description": "Readable old-to-new line range shown for a Git diff hunk.",
     "placeholders": {
-      "oldRange": {"type": "String"},
-      "newRange": {"type": "String"}
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
     }
   },
   "gitDiffNoLines": "немає рядків",
-  "@gitDiffNoLines": {"description": "Line range text for an empty side of a Git diff hunk."},
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
   "gitUnavailableTitle": "Git недоступний",
   "gitUnavailableMessage": "{reason, select, other{Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. {reason}}}",
   "gitTrustRequiredTitle": "Довіряти цій робочій області під час роботи з Git?",
-  "@gitTrustRequiredTitle": {"description": "Git empty state title shown before repository-controlled commands may run."},
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
   "gitTrustRequiredMessage": "Репозиторії Git можуть запускати програми за допомогою хуків, фільтрів та інших налаштувань. Позначте цю робочу область як довірену, перш ніж BusyMark прочитає дані репозиторію або ввімкне дії Git.",
-  "@gitTrustRequiredMessage": {"description": "Security warning shown before Git repository access is enabled for a workspace."},
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
   "gitTrustWorkspace": "Довіряти робочій області",
-  "@gitTrustWorkspace": {"description": "Action label for trusting a workspace before enabling Git."},
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
   "gitNotRepositoryTitle": "Це не репозиторій Git",
   "gitNotRepositoryMessage": "Ця робоча область не належить до репозиторію Git.",
   "gitInitializeRepository": "Ініціалізувати репозиторій",
@@ -2237,15 +2333,15 @@
   "gitBinaryFile": "Двійковий файл. BusyMark не відображає двійкові патчі.",
   "gitUnsavedChangesBanner": "Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.",
   "gitConfirmDiscardTitle": "Відкинути зміни Git?",
-  "gitConfirmDiscardTracked": "{count, plural, one{Вибраний відстежуваний файл буде відновлено з Git.} few{Вибрані відстежувані файли буде відновлено з Git.} many{Вибрані відстежувані файли буде відновлено з Git.} other{Вибрані відстежувані файли буде відновлено з Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, one{Усі індексовані та неіндексовані зміни у вибраному файлі з відстеженням буде скасовано, а файл буде відновлено до стану HEAD.} few{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} many{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} other{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, one{Вибраний невідстежуваний файл буде видалено.} few{Вибрані невідстежувані файли буде видалено.} many{Вибрані невідстежувані файли буде видалено.} other{Вибрані невідстежувані файли буде видалено.}}",
   "gitConfirmDiscardMixed": "{count, plural, one{Вибраний файл буде відновлено або видалено залежно від його стану Git.} few{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} many{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} other{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.}}",
   "gitConfirmSwitchBranchTitle": "Перемкнутися на {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.",
   "gitConfirmPushSetUpstreamTitle": "Налаштувати upstream-гілку?",
   "gitConfirmPushSetUpstreamMessage": "Ця гілка не має upstream-гілки. BusyMark може надіслати гілку {branch} і призначити її upstream-гілкою, якщо налаштовано рівно один віддалений репозиторій.",
-  "gitProjectHistory": "Проєкт",
-  "gitFileHistory": "Поточний файл",
+  "gitProjectHistory": "Історія проєкту",
+  "gitFileHistory": "Історія файлу",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Дії з файлом",
   "actions": "Дії",
@@ -2280,73 +2376,110 @@
   "gitErrorNetwork": "Не вдалося виконати мережеву операцію Git.",
   "gitErrorConflict": "Git повідомив про нерозв’язані конфлікти.",
   "gitErrorCommandFailed": "Не вдалося виконати команду Git.",
-
-  "markdownAndHtml": "Markdown і HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
-  "markdownHtmlMarkdownBlocks": "Блоки Markdown",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
-  "markdownHtmlMarkdownBlocksDescription": "Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
-  "markdownHtmlInlineFormatting": "Вбудований Markdown",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "Форматування всередині абзаців, елементів списків і комірок таблиць.",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Блоки необробленого HTML",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlBlocksDescription": "Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "Вбудовані HTML-теги",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
-  "markdownHtmlRawHtmlInlineDescription": "Безпечні вбудовані HTML-теги відображаються без показу самих тегів.",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
-  "markdownHtmlSafety": "Правила безпеки",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "Необроблений HTML аналізується й очищується перед попереднім переглядом.",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
-  "markdownHtmlHeadings": "Заголовки",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
-  "markdownHtmlParagraphs": "Абзаци",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
-  "markdownHtmlLists": "Списки",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
-  "markdownHtmlHtmlContainers": "Контейнери",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
-  "markdownHtmlHtmlTextBlocks": "Текстові блоки",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
-  "markdownHtmlHtmlFigures": "Фігури та зображення",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
-  "markdownHtmlHtmlPreformatted": "Попередньо форматований код",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
-  "markdownHtmlHtmlDisclosure": "Розкривні блоки",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
-  "markdownHtmlHtmlDescriptionLists": "Списки описів",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
-  "markdownHtmlHtmlFormattingTags": "Теги форматування",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
-  "markdownHtmlHtmlInlineCodeTags": "Вбудовані теги коду",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
-  "markdownHtmlHtmlNeutralInlineTags": "Семантичні текстові теги",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
-  "markdownHtmlSanitizedPreview": "Очищений перегляд",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Вихідний текст зберігається",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "Незмінений необроблений HTML зберігається точно як вихідний текст.",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
-  "markdownHtmlMarkdownInsideHtml": "Markdown всередині HTML",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "Активний вміст заблоковано",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
-  "markdownHtmlBlockedContentDescription": "Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
-  "markdownHtmlSafeUrls": "Лише безпечні URL",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "syntaxReference": "Довідник із синтаксису",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Блоки Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "Вбудований Markdown",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "Форматування всередині абзаців, елементів списків і комірок таблиць.",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "Блоки необробленого HTML",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "Вбудовані HTML-теги",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "Безпечні вбудовані HTML-теги відображаються без показу самих тегів.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "Заголовки",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "Абзаци",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "Списки",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "Контейнери",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "Текстові блоки",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "Фігури та зображення",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "Попередньо форматований код",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "Розкривні блоки",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "Списки описів",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "Теги форматування",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "Вбудовані теги коду",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "Семантичні текстові теги",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "Незмінений необроблений HTML зберігається точно як вихідний текст.",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "Додати до Git",
   "delete": "Видалити",
   "newFile": "Новий файл",
@@ -2364,101 +2497,343 @@
   "errorFileOperationOutsideRoot": "Файлова операція має виконуватися в межах робочої області.",
   "errorFileOperationRoot": "Корінь робочої області не можна змінити з дерева файлів.",
   "safeDeleteTopicFile": "Безпечно видалити файл теми…",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "Вилучити елемент змісту",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "Переглянути використання",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "Видалити файл теми",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "Вилучити",
-  "@removeAction": {"description": "Generic remove action label."},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
   "topicRemovalSummary": "Вилучити «{topic}» із вибраного екземпляра. Файл теми буде збережено.",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "safeDeleteTopicSummary": "Видалити «{topic}» і безпечно оновити посилання на неї в усьому цьому проєкті Writerside.",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, one{1 дочірню тему буде переміщено на рівень вище.} few{{count} дочірні теми буде переміщено на рівень вище.} many{{count} дочірніх тем буде переміщено на рівень вище.} other{{count} дочірньої теми буде переміщено на рівень вище.}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "Ця тема використовується як початкова сторінка екземпляра. Перегляньте її використання та призначте іншу початкову сторінку, перш ніж продовжити.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "Використання ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBreakingTopicUsages": "Посилань, які перестали б працювати, не знайдено.",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark знайшов наведені нижче посилання на цю тему.",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "Елементи змісту",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "Початкові сторінки",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "Посилання на теми",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "Включення",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, one{1 використання} few{{count} використання} many{{count} використань} other{{count} використання}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "refactoringOptions": "Параметри рефакторингу",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "Оновити використання автоматично",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "Вилучити посилання зі змісту й включення та зберегти текст посилань.",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "Деякі використання потрібно змінити вручну перед цим рефакторингом.",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "Переспрямувати на",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "Не переспрямовувати стару опубліковану сторінку.",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "Ціль переспрямування",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "Перегляньте й оновіть решту використань, перш ніж продовжити, або ввімкніть автоматичне оновлення, якщо воно доступне.",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
   "usagesOfTopic": "Використання теми {topic}",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "Використань не знайдено",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "поза вибраним екземпляром",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "Виконати рефакторинг",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "Файл теми більше не використовується",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "Зберегти файл теми",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
   "orphanTopicMessage": "«{topic}» більше ніде не використовується в цьому проєкті Writerside. Видаліть файл або збережіть його для використання в іншому екземплярі.",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "Використовуйте безпечне видалення для файлів тем Writerside.",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "Не вдалося завершити пошук використань теми. Жоден файл не змінено.",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "Деякі використання теми все ще потребують уваги. Перегляньте їх, перш ніж продовжити.",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "Вибрана ціль переспрямування більше не дійсна. Виберіть її знову.",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
   "errorWritersideRollbackFailed": "Не вдалося повністю відкотити видалення теми. Перш ніж продовжити, перевірте такі шляхи: {paths}",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "Експортувати як PDF", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "Виберіть макет сторінки для охайного автономного PDF-файлу.", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "Віддалені зображення під час експорту не завантажуються. Доступні локальні зображення буде додано.", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "Розмір сторінки", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "US Letter", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "Орієнтація", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "Книжкова", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "Альбомна", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "Поля", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "Вузькі", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "Звичайні", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "Широкі", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "Додати номери сторінок", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "Експортувати", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "Експорт PDF…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "Документ PDF", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "Файл {fileName} експортовано.", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "Файл {fileName} експортовано. Не вдалося додати зображень: {count}.", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "Компонент експорту PDF відсутній. Перевстановіть BusyMark і повторіть спробу.", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "Експорт PDF тривав надто довго й був зупинений.", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark не вдалося експортувати цей документ як PDF.", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Категорія",
+  "syntaxReferenceCategoryDiagramsAndApi": "Діаграми й API",
+  "syntaxReferenceCategoryMathematics": "Математика",
+  "syntaxReferenceExample": "Приклад",
+  "syntaxReferenceIdentifiers": "Ідентифікатори й псевдоніми",
+  "syntaxReferenceScope": "Область застосування",
+  "syntaxReferenceLimitation": "Обмеження BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Офіційна документація",
+  "syntaxReferenceScopeWritersideMarkdown": "Лише Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Лише Markdown Writerside і XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Основні форми Markdown, які BusyMark дає змогу створювати й переглядати.",
+  "syntaxReferenceParagraphExample": "Абзац тексту.",
+  "syntaxReferenceTableLimitation": "Таблиці використовують синтаксис із вертикальними рисками GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "два пробіли в кінці рядка, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark приймає обмежену безпечну підмножину необробленого HTML у вихідному тексті Markdown.",
+  "syntaxReferenceDiagramsDescription": "Огороджені блоки Mermaid, PlantUML, D2 й OpenAPI працюють у вихідному тексті Markdown. Регістр ідентифікаторів не враховується, а BusyMark зберігає початкове написання.",
+  "syntaxReferenceOpenApiLimitation": "Використовуйте огороджений вміст YAML або JSON. BusyMark не вважає довільний цілий документ YAML або JSON довідником OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Семантичні блоки коду діаграм",
+  "syntaxReferenceSemanticDiagramLimitation": "Семантичні форми code-block і src підтримують Mermaid, PlantUML і D2, але не OpenAPI, і лише в проєктах Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Посилання на джерело діаграми",
+  "syntaxReferenceReferencedDiagramLimitation": "Шляхи мають бути відносними й залишатися у відкритому проєкті Writerside; огороджена форма з src працює лише в Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark підтримує вирази TeX, але не повні документи TeX або LaTeX.",
+  "syntaxReferenceInlineMath": "Вбудована формула",
+  "syntaxReferenceGithubMath": "Формула GitHub із доларом і зворотною лапкою",
+  "syntaxReferenceDisplayMath": "Викладна формула",
+  "syntaxReferenceMathFence": "Огороджений блок math",
+  "syntaxReferenceTexFence": "Огороджений блок tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark не розпізнає \\(...\\) і \\[...\\] як математичні роздільники Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Поза режимом Writerside блок tex залишається звичайним блоком коду.",
+  "syntaxReferenceWritersideMathElement": "Елемент math Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "Елемент math — це семантичний синтаксис Writerside, а не дозволений необроблений HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Семантичний блок коду TeX",
+  "syntaxReferenceWritersideDescription": "Ці окремі розширення інтерпретуються лише у відкритих проєктах Writerside.",
+  "syntaxReferenceAdmonitionBlockquote": "Цитата-примітка",
+  "syntaxReferenceAdmonitionLimitation": "Звичайна блокова цитата стає порадою в Markdown Writerside, а у звичайному Markdown залишається цитатою.",
+  "syntaxReferenceSemanticAdmonitions": "Семантичні примітки",
+  "syntaxReferenceSemanticMarkupLimitation": "Звичайний Markdown не інтерпретує ці семантичні елементи Writerside.",
+  "syntaxReferenceCollapsibleHeading": "Згортаний заголовок",
+  "syntaxReferenceCollapsibleCode": "Згортаний блок коду",
+  "syntaxReferenceSemanticCollapsibles": "Семантичний згортаний вміст",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark підтримує згортані форми chapter, procedure, code-block і списку визначень, але не весь каталог Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Семантичні блоки коду для формул і діаграм",
+  "syntaxReferenceVideo": "Відео Writerside",
+  "syntaxReferenceVideoLimitation": "Локальне відео використовує локальне зображення preview-src; розміщені відео повинні мати підтримувані HTTPS-адреси YouTube або Vimeo.",
+  "exportAsPdf": "Експортувати як PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "Виберіть макет сторінки для охайного автономного PDF-файлу.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Віддалені зображення під час експорту не завантажуються. Доступні локальні зображення буде додано.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Розмір сторінки",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "US Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Орієнтація",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Книжкова",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Альбомна",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Поля",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Вузькі",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Звичайні",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Широкі",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Додати номери сторінок",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Експортувати",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "Експорт PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "Документ PDF",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "Файл {fileName} експортовано.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} експортовано з {count, plural, =1{1 попередженням} other{{count} попередженнями}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "Компонент експорту PDF відсутній. Перевстановіть BusyMark і повторіть спробу.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "Експорт PDF тривав надто довго й був зупинений.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark не вдалося експортувати цей документ як PDF.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "Візуалізація…",
   "visualizationStale": "Відображається останній коректний результат",
   "visualizationShowSource": "Показати вихідний код",
@@ -2479,11 +2854,14 @@
   "visualizationRenderFailed": "Не вдалося відобразити цю візуалізацію.",
   "visualizationRetry": "Повторити",
   "visualizationSaved": "Файл {fileName} збережено",
-  "shortcutExportPdfDescription": "Експортувати активний документ або модуль Writerside як PDF.", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "Експортувати активний документ або модуль Writerside як PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "Індексовані",
   "gitUnstaged": "Неіндексовані",
   "gitFetch": "Отримати",
-  "gitStagedFileCount": "{count, plural, =1{1 індексований файл} other{{count} індексованих файлів}}",
+  "gitStagedFileCount": "{count, plural, =1{1 проіндексований файл} few{{count} проіндексовані файли} many{{count} проіндексованих файлів} other{{count} проіндексованих файлів}}",
   "gitOutsideWorkspace": "Поза робочим простором",
   "gitFileHistoryRequiresOpenFile": "Для історії файлу потрібен відкритий файл Markdown.",
   "gitLoadMore": "Завантажити ще",
@@ -2596,7 +2974,6 @@
   "ai": "ШІ",
   "aiLocalOllama": "Локальний Ollama",
   "aiDisabled": "Вимкнено",
-  "aiLocalOnlyDescription": "Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.",
   "aiProvider": "Постачальник ШІ",
   "aiDefaultProvider": "Постачальник за замовчуванням",
   "aiConfigureProvider": "Налаштувати постачальника",
@@ -2680,7 +3057,7 @@
   "tableAlignmentCenter": "Вирівнювання: по центру",
   "tableAlignmentRight": "Вирівнювання: праворуч",
   "sourceSearchReplacement": "Замінити на",
-  "sourceSearchReplaceCurrent": "Замінити поточне",
+  "sourceSearchReplaceCurrent": "Замінити поточний збіг",
   "sourceSearchReplaceAndFindNext": "Замінити й знайти наступне",
   "sourceSearchReplaceAll": "Замінити все",
   "workspaceReplace": "Замінити в робочій області",
@@ -2710,14 +3087,18 @@
   "reloadFromDisk": "Перезавантажити з диска",
   "keepMine": "Залишити мою версію",
   "saveAs": "Зберегти як",
-  "unsavedChangesMultipleMessage": "У документах ({count}) є незбережені зміни. Зберегти їх перед продовженням?",
+  "unsavedChangesMultipleMessage": "{count, plural, one{1 документ має незбережені зміни. Збережіть його перед продовженням.} few{{count} документи мають незбережені зміни. Збережіть їх перед продовженням.} many{{count} документів мають незбережені зміни. Збережіть їх перед продовженням.} other{{count} документа має незбережені зміни. Збережіть їх перед продовженням.}}",
   "workspaceReplaceIssuePartialConflict": "Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.",
   "workspaceReplaceIssueApplyFailed": "Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.",
-  "workspaceRecoveryRestored": "Відновлено незбережених документів: {count}. Перегляньте кожен відновлений документ перед продовженням.",
-  "workspaceRecoveryDamaged": "Не вдалося відновити пошкоджені записи ({count}). Коректні відновлені документи залишаються доступними.",
+  "workspaceRecoveryRestored": "{count, plural, one{Відновлено 1 незбережений документ. Перегляньте його перед збереженням або відхиленням.} few{Відновлено {count} незбережені документи. Перегляньте кожен перед збереженням або відхиленням.} many{Відновлено {count} незбережених документів. Перегляньте кожен перед збереженням або відхиленням.} other{Відновлено {count} незбереженого документа. Перегляньте його перед збереженням або відхиленням.}}",
+  "workspaceRecoveryDamaged": "{count, plural, one{Не вдалося відновити 1 пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перегляду.} few{Не вдалося відновити {count} пошкоджені записи відновлення. Дійсні записи відновлення залишаються доступними.} many{Не вдалося відновити {count} пошкоджених записів відновлення. Дійсні записи відновлення залишаються доступними.} other{Не вдалося відновити {count} пошкодженого запису відновлення. Дійсні записи відновлення залишаються доступними.}}",
   "recoveredDocumentReview": "Відновлено незбережений вміст файлу {fileName}. Перегляньте його, потім збережіть, збережіть як новий файл або відкиньте.",
   "commandUnavailableInContext": "Ця команда недоступна в поточному контексті.",
   "mathRenderFailed": "Не вдалося відобразити математичний вираз.",
   "inlineMath": "Формула в рядку",
-  "displayMath": "Формула окремим блоком"
+  "displayMath": "Формула окремим блоком",
+  "aiExplicitEditingDescription": "Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

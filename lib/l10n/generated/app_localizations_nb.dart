@@ -315,10 +315,16 @@ class AppLocalizationsNb extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -348,7 +354,22 @@ class AppLocalizationsNb extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'Sidepanel';
@@ -432,8 +453,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Vis denne oversikten over tastatursnarveier';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Åpne Markdown- og HTML-referansen';
+  String get shortcutSyntaxReferenceDescription => 'Åpne syntaksreferansen';
 
   @override
   String get shortcutSettingsDescription => 'Åpne BusyMark-innstillinger';
@@ -783,7 +803,14 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumenter har ulagrede endringer. Lagre dem før du fortsetter.',
+      one: '1 dokument har ulagrede endringer. Lagre det før du fortsetter.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1666,12 +1693,28 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return '$count ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Gjenopprettet $count ulagrede dokumenter. Gå gjennom hvert ett før du lagrer eller forkaster det.',
+      one:
+          'Gjenopprettet 1 ulagret dokument. Gå gjennom det før du lagrer eller forkaster det.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return '$count skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count skadede gjenopprettingsposter kunne ikke gjenopprettes. Gyldige gjenopprettingsposter er fortsatt tilgjengelige.',
+      one:
+          'Kunne ikke gjenopprette 1 skadet gjenopprettingspost. Den opprinnelige gjenopprettingsfilen er bevart for gjennomgang.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2361,8 +2404,10 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'De valgte sporede filene gjenopprettes fra Git.',
-      one: 'Den valgte sporede filen gjenopprettes fra Git.',
+      other:
+          'Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
+      one:
+          'Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
     );
     return '$_temp0';
   }
@@ -2408,10 +2453,10 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Prosjekt';
+  String get gitProjectHistory => 'Prosjekthistorie';
 
   @override
-  String get gitFileHistory => 'Gjeldende fil';
+  String get gitFileHistory => 'Filhistorie';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2607,113 +2652,261 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git-kommandoen mislyktes.';
 
   @override
-  String get markdownAndHtml => 'Markdown og HTML';
+  String get syntaxReference => 'Syntaksreferanse';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown-blokker';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown-blokker';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Inline-Markdown';
+  String get syntaxReferenceInlineFormatting => 'Inline-Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Formatering i avsnitt, listeelementer og tabellceller.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Rå HTML-blokker';
+  String get syntaxReferenceRawHtmlBlocks => 'Rå HTML-blokker';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Rå HTML-inline-tagger';
+  String get syntaxReferenceRawHtmlInline => 'Rå HTML-inline-tagger';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
 
   @override
-  String get markdownHtmlSafety => 'Sikkerhetsregler';
+  String get syntaxReferenceHeadings => 'Overskrifter';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'Rå HTML analyseres og renses før forhåndsvisning.';
+  String get syntaxReferenceParagraphs => 'Avsnitt';
 
   @override
-  String get markdownHtmlHeadings => 'Overskrifter';
+  String get syntaxReferenceLists => 'Lister';
 
   @override
-  String get markdownHtmlParagraphs => 'Avsnitt';
+  String get syntaxReferenceHtmlContainers => 'Beholdere';
 
   @override
-  String get markdownHtmlLists => 'Lister';
+  String get syntaxReferenceHtmlTextBlocks => 'Tekstblokker';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Beholdere';
+  String get syntaxReferenceHtmlFigures => 'Figurer og bilder';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Tekstblokker';
+  String get syntaxReferenceHtmlPreformatted => 'Forhåndsformatert kode';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figurer og bilder';
+  String get syntaxReferenceHtmlDisclosure => 'Utvidbare blokker';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Forhåndsformatert kode';
+  String get syntaxReferenceHtmlDescriptionLists => 'Beskrivelseslister';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Utvidbare blokker';
+  String get syntaxReferenceHtmlFormattingTags => 'Formateringstagger';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Beskrivelseslister';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Inline-kodetagger';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Formateringstagger';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Semantiske teksttagger';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Inline-kodetagger';
-
-  @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Semantiske teksttagger';
-
-  @override
-  String get markdownHtmlSanitizedPreview => 'Renset forhåndsvisning';
-
-  @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Kilden bevares';
-
-  @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Uendret rå HTML lagres nøyaktig som kildetekst.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown inni HTML';
-
-  @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blokkert aktivt innhold';
-
-  @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Bare trygge URL-er';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
+  String get syntaxReferenceCategory => 'Kategori';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagrammer og API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matematikk';
+
+  @override
+  String get syntaxReferenceExample => 'Eksempel';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Identifikatorer og aliaser';
+
+  @override
+  String get syntaxReferenceScope => 'Omfang';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark-begrensning';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Offisiell dokumentasjon';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Bare Writerside Markdown';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Bare Writerside Markdown og Writerside XML';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Et tekstavsnitt.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'to mellomrom på slutten av linjen, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantiske kodeblokker for diagrammer';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => 'Referert diagramkilde';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Matematikk i linjen';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'GitHub-matematikk med dollartegn og grav aksent';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Matematikk som blokk';
+
+  @override
+  String get syntaxReferenceMathFence => 'math-blokk';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex-blokk';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside-math-element';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Semantisk TeX-kodeblokk';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Merknadssitat';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Semantiske merknader';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Sammenleggbar overskrift';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Sammenleggbar kodeblokk';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantisk sammenleggbart innhold';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantiske kodeblokker for matematikk og diagrammer';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside-video';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.';
 
   @override
   String get exportAsPdf => 'Eksporter som PDF';
@@ -2775,7 +2968,13 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName ble eksportert. Bilder som ikke kunne tas med: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count advarsler',
+      one: '1 advarsel',
+    );
+    return '$fileName ble eksportert med $_temp0.';
   }
 
   @override
@@ -3192,7 +3391,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiDisabled => 'Deaktivert';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
 
   @override

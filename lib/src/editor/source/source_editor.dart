@@ -19,6 +19,7 @@ import '../editor_text_context_menu.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
+import 'source_autocomplete.dart';
 import 'source_diagnostics.dart';
 import 'source_gutter.dart';
 import 'source_search.dart';
@@ -60,6 +61,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.initialScrollOffset = 0,
     this.initialFoldedRegionKeys = const {},
     this.onSessionChanged,
+    this.autocompleteContext = const SourceAutocompleteContext(),
   });
 
   final String text;
@@ -86,6 +88,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final double initialScrollOffset;
   final Set<String> initialFoldedRegionKeys;
   final BusyMarkSourceSessionChanged? onSessionChanged;
+  final SourceAutocompleteContext autocompleteContext;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -101,7 +104,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _searchController = SourceSearchController();
   final _replacementService = const SearchReplacementService();
   final _lineLayoutCache = SourceLineLayoutCache();
+  final _autocompleteProvider = const SourceAutocompleteProvider();
   List<SourceFoldRegion> _foldRegions = const [];
+  List<SourceAutocompleteSuggestion> _autocompleteSuggestions = const [];
+  var _autocompleteSelection = 0;
   String _lastPath = '';
 
   @override
@@ -213,6 +219,30 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    if (_autocompleteSuggestions.isNotEmpty) {
+      if (key == LogicalKeyboardKey.arrowDown) {
+        _moveAutocompleteSelection(1);
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.arrowUp) {
+        _moveAutocompleteSelection(-1);
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab) {
+        _applyAutocomplete(_autocompleteSuggestions[_autocompleteSelection]);
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.escape) {
+        _closeAutocomplete();
+        return KeyEventResult.handled;
+      }
+    }
+    if (key == LogicalKeyboardKey.space &&
+        keyboard.isControlPressed &&
+        !keyboard.isAltPressed) {
+      _showAutocomplete();
+      return KeyEventResult.handled;
+    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
@@ -460,6 +490,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                     _replaceCurrentSearchMatch(findNext: true),
                 onReplaceAll: _replaceAllSearchMatches,
                 onClose: widget.onCloseSearch,
+              ),
+            ),
+          if (_autocompleteSuggestions.isNotEmpty)
+            Positioned(
+              right: BusyMarkSpacing.sm,
+              bottom: BusyMarkSpacing.sm,
+              child: _SourceAutocompletePopup(
+                suggestions: _autocompleteSuggestions,
+                selectedIndex: _autocompleteSelection,
+                onSelected: _applyAutocomplete,
               ),
             ),
         ],
@@ -770,7 +810,75 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _refreshSearch(currentIndex: _searchController.result.currentMatchIndex);
     });
     widget.onChanged(_controller.fullText, widget.filePath);
+    if (_autocompleteSuggestions.isNotEmpty) {
+      _refreshAutocomplete();
+    }
     _publishSessionState();
+  }
+
+  void _showAutocomplete() {
+    final suggestions = _autocompleteProvider.suggestions(
+      document: _controller.document,
+      fullOffset: _controller.fullSelection.extentOffset,
+      context: widget.autocompleteContext,
+      limit: 12,
+    );
+    setState(() {
+      _autocompleteSuggestions = suggestions;
+      _autocompleteSelection = 0;
+    });
+  }
+
+  void _refreshAutocomplete() {
+    final suggestions = _autocompleteProvider.suggestions(
+      document: _controller.document,
+      fullOffset: _controller.fullSelection.extentOffset,
+      context: widget.autocompleteContext,
+      limit: 12,
+    );
+    setState(() {
+      _autocompleteSuggestions = suggestions;
+      _autocompleteSelection = suggestions.isEmpty
+          ? 0
+          : _autocompleteSelection.clamp(0, suggestions.length - 1);
+    });
+  }
+
+  void _moveAutocompleteSelection(int delta) {
+    setState(() {
+      _autocompleteSelection =
+          (_autocompleteSelection + delta) % _autocompleteSuggestions.length;
+    });
+  }
+
+  void _closeAutocomplete() {
+    if (_autocompleteSuggestions.isEmpty) {
+      return;
+    }
+    setState(() {
+      _autocompleteSuggestions = const [];
+      _autocompleteSelection = 0;
+    });
+  }
+
+  void _applyAutocomplete(SourceAutocompleteSuggestion suggestion) {
+    final value = _fullEditingValue();
+    final offset = value.selection.extentOffset.clamp(0, value.text.length);
+    final range = sourceAutocompleteReplacementRange(value.text, offset);
+    final nextText = value.text.replaceRange(
+      range.start,
+      range.end,
+      suggestion.insertText,
+    );
+    final nextOffset = range.start + suggestion.insertText.length;
+    _autocompleteSuggestions = const [];
+    _autocompleteSelection = 0;
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: nextText,
+        selection: TextSelection.collapsed(offset: nextOffset),
+      ),
+    );
   }
 
   void _restoreSessionState() {
@@ -1738,6 +1846,82 @@ class _SearchOptionButton extends StatelessWidget {
         onPressed: onPressed,
         icon: optionLabel(),
         selectedIcon: optionLabel(),
+      ),
+    );
+  }
+}
+
+class _SourceAutocompletePopup extends StatelessWidget {
+  const _SourceAutocompletePopup({
+    required this.suggestions,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<SourceAutocompleteSuggestion> suggestions;
+  final int selectedIndex;
+  final ValueChanged<SourceAutocompleteSuggestion> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Material(
+      key: const ValueKey('source-autocomplete-popup'),
+      color: colors.popover,
+      elevation: BusyMarkElevation.surface,
+      borderRadius: BorderRadius.circular(BusyMarkRadius.nativeHeaderButton),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: BusyMarkSizes.popupMenuMinWidth,
+          maxWidth: BusyMarkSizes.languagePopupMaxWidth,
+          maxHeight: 280,
+        ),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = suggestions[index];
+            final selected = index == selectedIndex;
+            return InkWell(
+              key: ValueKey(
+                'source-autocomplete-${suggestion.kind.name}-${suggestion.label}',
+              ),
+              onTap: () => onSelected(suggestion),
+              child: ColoredBox(
+                color: selected
+                    ? colors.controlActive
+                    : BusyMarkLinuxPalette.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BusyMarkSpacing.md,
+                    vertical: BusyMarkSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          suggestion.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textDirection: TextDirection.ltr,
+                        ),
+                      ),
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                      Text(
+                        suggestion.kind.name,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

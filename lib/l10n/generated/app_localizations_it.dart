@@ -314,10 +314,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -347,7 +353,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'Pannello laterale';
@@ -431,8 +452,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Mostra il riferimento alle scorciatoie da tastiera';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Apri il riferimento Markdown e HTML';
+  String get shortcutSyntaxReferenceDescription =>
+      'Apri il riferimento della sintassi';
 
   @override
   String get shortcutSettingsDescription => 'Apri le impostazioni di BusyMark';
@@ -791,7 +812,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return '$count documenti contengono modifiche non salvate. Salvarli prima di continuare?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documenti hanno modifiche non salvate. Salvali prima di continuare?',
+      one:
+          '1 documento ha modifiche non salvate. Salvarlo prima di continuare?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1408,7 +1437,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sourceSearchReplacement => 'Sostituisci con';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Sostituisci corrente';
+  String get sourceSearchReplaceCurrent =>
+      'Sostituisci la corrispondenza corrente';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Sostituisci e trova successivo';
@@ -1516,7 +1546,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return 'È stato recuperato il contenuto non salvato di $fileName. Controllarlo, quindi salvarlo, salvarlo con nome o eliminarlo.';
+    return 'Recuperato il contenuto non salvato di $fileName. Esaminalo, quindi salvalo, salvalo con un altro nome o scartalo.';
   }
 
   @override
@@ -1542,7 +1572,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get nothingToRead => 'Nessun contenuto da leggere';
 
   @override
-  String get admonition => 'Avviso';
+  String get admonition => 'Riquadro informativo';
 
   @override
   String get quote => 'Citazione';
@@ -1677,12 +1707,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'Sono stati recuperati $count documenti non salvati. Controllare ogni documento recuperato prima di continuare.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Sono stati recuperati $count documenti non salvati. Revisiona ciascuno prima di salvare o scartare.',
+      one:
+          'È stato recuperato 1 documento non salvato. Revisionalo prima di salvarlo o scartarlo.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'Non è stato possibile ripristinare $count record di recupero danneggiati. I documenti recuperati validi restano disponibili.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count record di ripristino danneggiati non sono stati ripristinati. I record di ripristino validi sono ancora disponibili.',
+      one:
+          'Un record di recupero danneggiato non può essere ripristinato. Il file di recupero originale è stato conservato per la revisione.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2379,8 +2425,10 @@ class AppLocalizationsIt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'I file tracciati selezionati verranno ripristinati da Git.',
-      one: 'Il file tracciato selezionato verrà ripristinato da Git.',
+      other:
+          'Tutte le modifiche staged e non staged nei file tracciati selezionati saranno ripristinate in HEAD.',
+      one:
+          'Tutte le modifiche staged e non staged nel file tracciato selezionato saranno ripristinate in HEAD.',
     );
     return '$_temp0';
   }
@@ -2427,10 +2475,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Progetto';
+  String get gitProjectHistory => 'Cronologia del progetto';
 
   @override
-  String get gitFileHistory => 'File corrente';
+  String get gitFileHistory => 'Cronologia del file';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2628,113 +2676,264 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitErrorCommandFailed => 'Comando Git non riuscito.';
 
   @override
-  String get markdownAndHtml => 'Markdown e HTML';
+  String get syntaxReference => 'Riferimento della sintassi';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Blocchi Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'Blocchi Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Strutture a blocchi supportate nel sorgente Markdown e nell’anteprima.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Markdown in linea';
+  String get syntaxReferenceInlineFormatting => 'Markdown in linea';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Formattazione dentro paragrafi, elementi di elenco e celle di tabella.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Blocchi HTML grezzi';
+  String get syntaxReferenceRawHtmlBlocks => 'Blocchi HTML grezzi';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Tag HTML di blocco sicuri renderizzati dai widget di anteprima BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Tag HTML grezzi in linea';
+  String get syntaxReferenceRawHtmlInline => 'Tag HTML grezzi in linea';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Tag HTML in linea sicuri renderizzati senza mostrare i tag letterali.';
 
   @override
-  String get markdownHtmlSafety => 'Regole di sicurezza';
+  String get syntaxReferenceHeadings => 'Titoli';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'L’HTML grezzo viene analizzato e sanificato prima dell’anteprima.';
+  String get syntaxReferenceParagraphs => 'Paragrafi';
 
   @override
-  String get markdownHtmlHeadings => 'Titoli';
+  String get syntaxReferenceLists => 'Elenchi';
 
   @override
-  String get markdownHtmlParagraphs => 'Paragrafi';
+  String get syntaxReferenceHtmlContainers => 'Contenitori';
 
   @override
-  String get markdownHtmlLists => 'Elenchi';
+  String get syntaxReferenceHtmlTextBlocks => 'Blocchi di testo';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Contenitori';
+  String get syntaxReferenceHtmlFigures => 'Figure e immagini';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Blocchi di testo';
+  String get syntaxReferenceHtmlPreformatted => 'Codice preformattato';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figure e immagini';
+  String get syntaxReferenceHtmlDisclosure => 'Blocchi espandibili';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Codice preformattato';
+  String get syntaxReferenceHtmlDescriptionLists => 'Elenchi descrittivi';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Blocchi espandibili';
+  String get syntaxReferenceHtmlFormattingTags => 'Tag di formattazione';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Elenchi descrittivi';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Tag di codice in linea';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Tag di formattazione';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Tag di testo semantico';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Tag di codice in linea';
-
-  @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Tag di testo semantico';
-
-  @override
-  String get markdownHtmlSanitizedPreview => 'Anteprima sanificata';
-
-  @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'L’HTML consentito viene convertito in blocchi di anteprima BusyMark e non viene renderizzato in un browser.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Codice sorgente conservato';
-
-  @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'L’HTML grezzo non modificato viene salvato esattamente come testo sorgente.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown dentro HTML';
-
-  @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'I marcatori Markdown dentro HTML grezzo vengono visualizzati come testo letterale.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Contenuto attivo bloccato';
-
-  @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Script, stili, frame, moduli, SVG, MathML, eventi e attributi non sicuri vengono bloccati.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Solo URL sicuri';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.';
+  String get syntaxReferenceCategory => 'Categoria';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagrammi e API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Matematica';
+
+  @override
+  String get syntaxReferenceExample => 'Esempio';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Identificatori e alias';
+
+  @override
+  String get syntaxReferenceScope => 'Ambito';
+
+  @override
+  String get syntaxReferenceLimitation => 'Limitazione di BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Documentazione ufficiale';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Solo Markdown Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Solo Markdown Writerside e XML Writerside';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'Le forme Markdown essenziali che BusyMark può creare e visualizzare in anteprima.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'Un paragrafo di testo.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Le tabelle usano la sintassi con barre verticali di GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'due spazi a fine riga, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark accetta un sottoinsieme sicuro e mirato di HTML grezzo nel sorgente Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'I blocchi delimitati Mermaid, PlantUML, D2 e OpenAPI funzionano nel sorgente Markdown. Gli identificatori non distinguono maiuscole e minuscole e BusyMark conserva la grafia originale.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Usare contenuto YAML o JSON in un blocco delimitato. BusyMark non considera un qualsiasi documento YAML o JSON completo come riferimento OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Blocchi di codice semantici per diagrammi';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Le forme semantiche code-block e src supportano Mermaid, PlantUML e D2, non OpenAPI, e solo nei progetti Writerside.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Sorgente di diagramma referenziato';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'I percorsi devono essere relativi e restare nel progetto Writerside aperto; la forma blocco delimitato con src è solo per Markdown Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark supporta espressioni TeX, non documenti TeX o LaTeX completi.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Formula in linea';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'Formula GitHub con dollaro e accento grave';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Formula visualizzata';
+
+  @override
+  String get syntaxReferenceMathFence => 'Blocco delimitato math';
+
+  @override
+  String get syntaxReferenceTexFence => 'Blocco delimitato tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark non riconosce \\(...\\) o \\[...\\] come delimitatori matematici Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Fuori dalla modalità Writerside, un blocco tex resta un normale blocco di codice.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement =>
+      'Elemento math di Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'L’elemento math è sintassi semantica Writerside, non MathML HTML grezzo consentito.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock =>
+      'Blocco di codice TeX semantico';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'Queste estensioni mirate sono interpretate solo nei progetti Writerside aperti.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Citazione di avviso';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'Una citazione semplice è un suggerimento in Markdown Writerside; resta una citazione normale nel Markdown comune.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Avvisi semantici';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Il Markdown comune non interpreta questi elementi semantici Writerside.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Titolo comprimibile';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Blocco di codice comprimibile';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Contenuto semantico comprimibile';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark supporta le forme comprimibili chapter, procedure, code-block ed elenco di definizioni, non l’intero catalogo Writerside.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Blocchi di codice semantici per formule e diagrammi';
+
+  @override
+  String get syntaxReferenceVideo => 'Video Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Il video locale usa un’immagine preview-src locale; le sorgenti ospitate devono essere URL HTTPS supportati di YouTube o Vimeo.';
 
   @override
   String get exportAsPdf => 'Esporta come PDF';
@@ -2796,7 +2995,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName è stato esportato. Immagini non incluse: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count avvisi',
+      one: '1 avviso',
+    );
+    return '$fileName è stato esportato con $_temp0.';
   }
 
   @override
@@ -3216,7 +3421,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiDisabled => 'Disabilitato';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.';
 
   @override

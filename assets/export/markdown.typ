@@ -196,6 +196,7 @@
 }
 
 #let render-list(block-data, render) = {
+  let list-type = value-or(block-data, "listType", "bullet")
   let items = value-or(block-data, "children", ()).map(item => {
     let task = value-or(item, "task", none)
     if task != none {
@@ -207,8 +208,18 @@
       for nested-block in nested { render(nested-block) }
     }
   })
-  if value-or(block-data, "ordered", false) {
-    enum(start: value-or(block-data, "start", 1), ..items)
+  if list-type == "none" {
+    for item in items { block(item) }
+  } else if value-or(block-data, "ordered", false) {
+    if list-type == "alpha-lower" {
+      enum(
+        start: value-or(block-data, "start", 1),
+        numbering: "a.",
+        ..items,
+      )
+    } else {
+      enum(start: value-or(block-data, "start", 1), ..items)
+    }
   } else {
     list(..items)
   }

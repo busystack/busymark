@@ -44,9 +44,9 @@ class HeaderBarLabels {
     required this.keyboardShortcuts,
     required this.keyboardShortcutsShortcut,
     required this.keyboardShortcutsGtkAccelerator,
-    required this.markdownAndHtml,
-    required this.markdownAndHtmlShortcut,
-    required this.markdownAndHtmlGtkAccelerator,
+    required this.syntaxReference,
+    required this.syntaxReferenceShortcut,
+    required this.syntaxReferenceGtkAccelerator,
     required this.reportIssue,
     required this.aboutBusyMark,
   });
@@ -85,9 +85,9 @@ class HeaderBarLabels {
   final String keyboardShortcuts;
   final String keyboardShortcutsShortcut;
   final String keyboardShortcutsGtkAccelerator;
-  final String markdownAndHtml;
-  final String markdownAndHtmlShortcut;
-  final String markdownAndHtmlGtkAccelerator;
+  final String syntaxReference;
+  final String syntaxReferenceShortcut;
+  final String syntaxReferenceGtkAccelerator;
   final String reportIssue;
   final String aboutBusyMark;
 
@@ -126,9 +126,9 @@ class HeaderBarLabels {
     'keyboardShortcuts': keyboardShortcuts,
     'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
     'keyboardShortcutsGtkAccelerator': keyboardShortcutsGtkAccelerator,
-    'markdownAndHtml': markdownAndHtml,
-    'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
-    'markdownAndHtmlGtkAccelerator': markdownAndHtmlGtkAccelerator,
+    'syntaxReference': syntaxReference,
+    'syntaxReferenceShortcut': syntaxReferenceShortcut,
+    'syntaxReferenceGtkAccelerator': syntaxReferenceGtkAccelerator,
     'reportIssue': reportIssue,
     'aboutBusyMark': aboutBusyMark,
   };

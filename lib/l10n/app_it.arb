@@ -264,11 +264,19 @@
   "@languageGerman": {
     "description": "Language selector option for German."
   },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
   "languageItalian": "Italiano",
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -308,9 +316,29 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
   "languageEstonian": "Eesti",
   "@languageEstonian": {
     "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
   },
   "toggleSidebar": "Pannello laterale",
   "@toggleSidebar": {
@@ -381,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "Elimina l'elemento selezionato in File oppure rimuovi l'argomento selezionato dal sommario",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "Generale",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -410,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Apri il riferimento Markdown e HTML",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Apri il riferimento della sintassi",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Apri le impostazioni di BusyMark",
   "@shortcutSettingsDescription": {
@@ -483,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "Inserisci rientro",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "Inserisci un rientro in corrispondenza del cursore",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "Riduci rientro del sorgente",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "Rimuovi un livello di rientro in modalità Sorgente",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "Chiudi la ricerca o annulla la selezione dei blocchi",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -723,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "Privacy",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "Carica immagini remote",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "Consenti all’anteprima Markdown e all’editor di caricare immagini da URL HTTP e HTTPS.",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "Cancella autorizzazioni per immagini remote",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "Dimentica le aree di lavoro autorizzate a caricare immagini remote.",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "Cancella aree di lavoro Git attendibili",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "Chiedi conferma prima di attivare le funzionalità Git per le aree di lavoro considerate attendibili in precedenza.",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "Finestra",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "Riapri l’area di lavoro precedente all’avvio",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "Apri l’area di lavoro e le schede della sessione precedente all’avvio di BusyMark.",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Conferma prima di chiudere con modifiche non salvate",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -889,7 +944,9 @@
     "description": "Text field label for raw HTML source."
   },
   "htmlContentDefault": "Contenuto HTML",
-  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
   "thematicBreak": "Separatore tematico",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -1034,11 +1091,17 @@
     "description": "Image alt text field label."
   },
   "editorPlaceholderText": "testo",
-  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
   "editorPlaceholderCode": "codice",
-  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
   "editorPlaceholderAltText": "testo alternativo",
-  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
   "describeTheImage": "Descrivi l'immagine",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -1069,18 +1132,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "Immagine remota bloccata",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "Scegli se BusyMark può caricare immagini remote.",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "Le immagini remote sono bloccate",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "Questo documento fa riferimento a immagini su Internet. Il caricamento può rivelare informazioni di rete all’host delle immagini.",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "Carica per quest’area di lavoro",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "Carica sempre le immagini remote",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "Nascondi il pannello laterale",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1320,21 +1394,35 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "Corrispondenza precedente",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "Corrispondenza successiva",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "Maiuscole/minuscole",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "Parola intera",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "Espressione regolare",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "Espressione regolare non valida",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "Nessun contenuto da leggere",
-  "admonition": "Avviso",
+  "admonition": "Riquadro informativo",
   "quote": "Citazione",
   "@nothingToRead": {
     "description": "Empty state shown when there is no content to read."
@@ -2219,15 +2307,15 @@
   "gitBinaryFile": "File binario. BusyMark non visualizza le patch binarie.",
   "gitUnsavedChangesBanner": "Le modifiche non salvate dell’editor non vengono incluse finché non vengono salvate.",
   "gitConfirmDiscardTitle": "Scartare le modifiche Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Il file tracciato selezionato verrà ripristinato da Git.} other{I file tracciati selezionati verranno ripristinati da Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Tutte le modifiche staged e non staged nel file tracciato selezionato saranno ripristinate in HEAD.} other{Tutte le modifiche staged e non staged nei file tracciati selezionati saranno ripristinate in HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Il file non tracciato selezionato verrà eliminato.} other{I file non tracciati selezionati verranno eliminati.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Il file selezionato verrà ripristinato o eliminato in base al suo stato Git.} other{I file selezionati verranno ripristinati o eliminati in base al loro stato Git.}}",
   "gitConfirmSwitchBranchTitle": "Passare a {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark ricaricherà l’area di lavoro dal disco dopo il cambio di ramo da parte di Git.",
   "gitConfirmPushSetUpstreamTitle": "Impostare il ramo upstream?",
   "gitConfirmPushSetUpstreamMessage": "Questo ramo non ha un upstream. BusyMark può inviare {branch} e impostarne l’upstream quando è configurato esattamente un repository remoto.",
-  "gitProjectHistory": "Progetto",
-  "gitFileHistory": "File corrente",
+  "gitProjectHistory": "Cronologia del progetto",
+  "gitFileHistory": "Cronologia del file",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Azioni sul file",
   "actions": "Azioni",
@@ -2262,73 +2350,110 @@
   "gitErrorNetwork": "Operazione di rete Git non riuscita.",
   "gitErrorConflict": "Git ha segnalato conflitti non risolti.",
   "gitErrorCommandFailed": "Comando Git non riuscito.",
-
-  "markdownAndHtml": "Markdown e HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
-  "markdownHtmlMarkdownBlocks": "Blocchi Markdown",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
-  "markdownHtmlMarkdownBlocksDescription": "Strutture a blocchi supportate nel sorgente Markdown e nell’anteprima.",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
-  "markdownHtmlInlineFormatting": "Markdown in linea",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "Formattazione dentro paragrafi, elementi di elenco e celle di tabella.",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Blocchi HTML grezzi",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlBlocksDescription": "Tag HTML di blocco sicuri renderizzati dai widget di anteprima BusyMark.",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "Tag HTML grezzi in linea",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
-  "markdownHtmlRawHtmlInlineDescription": "Tag HTML in linea sicuri renderizzati senza mostrare i tag letterali.",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
-  "markdownHtmlSafety": "Regole di sicurezza",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "L’HTML grezzo viene analizzato e sanificato prima dell’anteprima.",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
-  "markdownHtmlHeadings": "Titoli",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
-  "markdownHtmlParagraphs": "Paragrafi",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
-  "markdownHtmlLists": "Elenchi",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
-  "markdownHtmlHtmlContainers": "Contenitori",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
-  "markdownHtmlHtmlTextBlocks": "Blocchi di testo",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
-  "markdownHtmlHtmlFigures": "Figure e immagini",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
-  "markdownHtmlHtmlPreformatted": "Codice preformattato",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
-  "markdownHtmlHtmlDisclosure": "Blocchi espandibili",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
-  "markdownHtmlHtmlDescriptionLists": "Elenchi descrittivi",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
-  "markdownHtmlHtmlFormattingTags": "Tag di formattazione",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
-  "markdownHtmlHtmlInlineCodeTags": "Tag di codice in linea",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
-  "markdownHtmlHtmlNeutralInlineTags": "Tag di testo semantico",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
-  "markdownHtmlSanitizedPreview": "Anteprima sanificata",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "L’HTML consentito viene convertito in blocchi di anteprima BusyMark e non viene renderizzato in un browser.",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Codice sorgente conservato",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "L’HTML grezzo non modificato viene salvato esattamente come testo sorgente.",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
-  "markdownHtmlMarkdownInsideHtml": "Markdown dentro HTML",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
-  "markdownHtmlMarkdownInsideHtmlDescription": "I marcatori Markdown dentro HTML grezzo vengono visualizzati come testo letterale.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "Contenuto attivo bloccato",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
-  "markdownHtmlBlockedContentDescription": "Script, stili, frame, moduli, SVG, MathML, eventi e attributi non sicuri vengono bloccati.",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
-  "markdownHtmlSafeUrls": "Solo URL sicuri",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "syntaxReference": "Riferimento della sintassi",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Blocchi Markdown",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Strutture a blocchi supportate nel sorgente Markdown e nell’anteprima.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "Markdown in linea",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "Formattazione dentro paragrafi, elementi di elenco e celle di tabella.",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "Blocchi HTML grezzi",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "Tag HTML di blocco sicuri renderizzati dai widget di anteprima BusyMark.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "Tag HTML grezzi in linea",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "Tag HTML in linea sicuri renderizzati senza mostrare i tag letterali.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "Titoli",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "Paragrafi",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "Elenchi",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "Contenitori",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "Blocchi di testo",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "Figure e immagini",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "Codice preformattato",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "Blocchi espandibili",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "Elenchi descrittivi",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "Tag di formattazione",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "Tag di codice in linea",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "Tag di testo semantico",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "L’HTML consentito viene convertito in blocchi di anteprima BusyMark e non viene renderizzato in un browser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "L’HTML grezzo non modificato viene salvato esattamente come testo sorgente.",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "I marcatori Markdown dentro HTML grezzo vengono visualizzati come testo letterale.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "Script, stili, frame, moduli, SVG, MathML, eventi e attributi non sicuri vengono bloccati.",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "Aggiungi a Git",
   "delete": "Elimina",
   "newFile": "Nuovo file",
@@ -2346,101 +2471,343 @@
   "errorFileOperationOutsideRoot": "L’operazione sul file deve restare nell’area di lavoro.",
   "errorFileOperationRoot": "La radice dell’area di lavoro non può essere modificata dall’albero dei file.",
   "safeDeleteTopicFile": "Elimina in modo sicuro il file dell’argomento…",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "Rimuovi elemento dal TOC",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "Esamina utilizzi",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "Elimina file dell’argomento",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "Rimuovi",
-  "@removeAction": {"description": "Generic remove action label."},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
   "topicRemovalSummary": "Rimuovi «{topic}» dall’istanza selezionata. Il file dell’argomento verrà conservato.",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "safeDeleteTopicSummary": "Elimina «{topic}» e ne aggiorna in modo sicuro i riferimenti nell’intero progetto Writerside.",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, =1{1 argomento secondario verrà spostato un livello più in alto.} other{{count} argomenti secondari verranno spostati un livello più in alto.}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "Questo argomento è utilizzato come pagina iniziale di un’istanza. Esaminane gli utilizzi e assegna un’altra pagina iniziale prima di continuare.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "Utilizzi ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBreakingTopicUsages": "Non sono stati trovati riferimenti che smetterebbero di funzionare.",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark ha trovato i seguenti riferimenti a questo argomento.",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "Elementi del TOC",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "Pagine iniziali",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "Collegamenti agli argomenti",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "Inclusioni",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, =1{1 utilizzo} other{{count} utilizzi}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "refactoringOptions": "Opzioni di refactoring",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "Aggiorna automaticamente gli utilizzi",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "Rimuove i riferimenti dai TOC e le inclusioni, mantenendo il testo dei collegamenti.",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "Alcuni utilizzi richiedono modifiche manuali prima di questo refactoring.",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "Reindirizza a",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "Non reindirizzare la vecchia pagina pubblicata.",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "Destinazione del reindirizzamento",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "Esamina e aggiorna gli utilizzi rimanenti prima di continuare oppure abilita gli aggiornamenti automatici, se disponibili.",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
   "usagesOfTopic": "Utilizzi di {topic}",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "Nessun utilizzo trovato.",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "Fuori dall’istanza selezionata",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "Esegui refactoring",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "Il file dell’argomento non è più utilizzato",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "Conserva il file dell’argomento",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
   "orphanTopicMessage": "«{topic}» non è più utilizzato in alcun punto di questo progetto Writerside. Elimina il file oppure conservalo per utilizzarlo in un’altra istanza.",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "Usa l’eliminazione sicura per i file degli argomenti Writerside.",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "Non è stato possibile completare l’analisi degli utilizzi dell’argomento. Nessun file è stato modificato.",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "Alcuni utilizzi dell’argomento richiedono ancora attenzione. Esaminali prima di continuare.",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "La destinazione di reindirizzamento selezionata non è più valida. Selezionala di nuovo.",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
   "errorWritersideRollbackFailed": "Non è stato possibile annullare completamente la rimozione dell’argomento. Controlla questi percorsi prima di continuare: {paths}",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "Esporta come PDF", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "Scegli l’impaginazione per creare un PDF rifinito e autonomo.", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "Le immagini remote non vengono scaricate durante l’esportazione. Le immagini locali vengono incluse quando disponibili.", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "Formato pagina", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "Lettera", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "Orientamento", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "Verticale", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "Orizzontale", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "Margini", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "Stretti", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "Normali", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "Ampi", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "Includi numeri di pagina", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "Esporta", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "Esportazione PDF…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "Documento PDF", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "{fileName} è stato esportato.", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "{fileName} è stato esportato. Immagini non incluse: {count}.", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "Il componente di esportazione PDF non è disponibile. Reinstalla BusyMark e riprova.", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "L’esportazione PDF ha richiesto troppo tempo ed è stata interrotta.", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark non ha potuto esportare questo documento come PDF.", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Categoria",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammi e API",
+  "syntaxReferenceCategoryMathematics": "Matematica",
+  "syntaxReferenceExample": "Esempio",
+  "syntaxReferenceIdentifiers": "Identificatori e alias",
+  "syntaxReferenceScope": "Ambito",
+  "syntaxReferenceLimitation": "Limitazione di BusyMark",
+  "syntaxReferenceOfficialDocumentation": "Documentazione ufficiale",
+  "syntaxReferenceScopeWritersideMarkdown": "Solo Markdown Writerside",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Solo Markdown Writerside e XML Writerside",
+  "syntaxReferenceMarkdownDescription": "Le forme Markdown essenziali che BusyMark può creare e visualizzare in anteprima.",
+  "syntaxReferenceParagraphExample": "Un paragrafo di testo.",
+  "syntaxReferenceTableLimitation": "Le tabelle usano la sintassi con barre verticali di GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "due spazi a fine riga, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark accetta un sottoinsieme sicuro e mirato di HTML grezzo nel sorgente Markdown.",
+  "syntaxReferenceDiagramsDescription": "I blocchi delimitati Mermaid, PlantUML, D2 e OpenAPI funzionano nel sorgente Markdown. Gli identificatori non distinguono maiuscole e minuscole e BusyMark conserva la grafia originale.",
+  "syntaxReferenceOpenApiLimitation": "Usare contenuto YAML o JSON in un blocco delimitato. BusyMark non considera un qualsiasi documento YAML o JSON completo come riferimento OpenAPI.",
+  "syntaxReferenceSemanticDiagramBlocks": "Blocchi di codice semantici per diagrammi",
+  "syntaxReferenceSemanticDiagramLimitation": "Le forme semantiche code-block e src supportano Mermaid, PlantUML e D2, non OpenAPI, e solo nei progetti Writerside.",
+  "syntaxReferenceReferencedDiagramSource": "Sorgente di diagramma referenziato",
+  "syntaxReferenceReferencedDiagramLimitation": "I percorsi devono essere relativi e restare nel progetto Writerside aperto; la forma blocco delimitato con src è solo per Markdown Writerside.",
+  "syntaxReferenceMathematicsDescription": "BusyMark supporta espressioni TeX, non documenti TeX o LaTeX completi.",
+  "syntaxReferenceInlineMath": "Formula in linea",
+  "syntaxReferenceGithubMath": "Formula GitHub con dollaro e accento grave",
+  "syntaxReferenceDisplayMath": "Formula visualizzata",
+  "syntaxReferenceMathFence": "Blocco delimitato math",
+  "syntaxReferenceTexFence": "Blocco delimitato tex",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark non riconosce \\(...\\) o \\[...\\] come delimitatori matematici Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Fuori dalla modalità Writerside, un blocco tex resta un normale blocco di codice.",
+  "syntaxReferenceWritersideMathElement": "Elemento math di Writerside",
+  "syntaxReferenceWritersideMathElementLimitation": "L’elemento math è sintassi semantica Writerside, non MathML HTML grezzo consentito.",
+  "syntaxReferenceSemanticTexBlock": "Blocco di codice TeX semantico",
+  "syntaxReferenceWritersideDescription": "Queste estensioni mirate sono interpretate solo nei progetti Writerside aperti.",
+  "syntaxReferenceAdmonitionBlockquote": "Citazione di avviso",
+  "syntaxReferenceAdmonitionLimitation": "Una citazione semplice è un suggerimento in Markdown Writerside; resta una citazione normale nel Markdown comune.",
+  "syntaxReferenceSemanticAdmonitions": "Avvisi semantici",
+  "syntaxReferenceSemanticMarkupLimitation": "Il Markdown comune non interpreta questi elementi semantici Writerside.",
+  "syntaxReferenceCollapsibleHeading": "Titolo comprimibile",
+  "syntaxReferenceCollapsibleCode": "Blocco di codice comprimibile",
+  "syntaxReferenceSemanticCollapsibles": "Contenuto semantico comprimibile",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark supporta le forme comprimibili chapter, procedure, code-block ed elenco di definizioni, non l’intero catalogo Writerside.",
+  "syntaxReferenceSemanticCodeBlocks": "Blocchi di codice semantici per formule e diagrammi",
+  "syntaxReferenceVideo": "Video Writerside",
+  "syntaxReferenceVideoLimitation": "Il video locale usa un’immagine preview-src locale; le sorgenti ospitate devono essere URL HTTPS supportati di YouTube o Vimeo.",
+  "exportAsPdf": "Esporta come PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "Scegli l’impaginazione per creare un PDF rifinito e autonomo.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Le immagini remote non vengono scaricate durante l’esportazione. Le immagini locali vengono incluse quando disponibili.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Formato pagina",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Lettera",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Orientamento",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Verticale",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Orizzontale",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Margini",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Stretti",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Normali",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Ampi",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Includi numeri di pagina",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Esporta",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "Esportazione PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "Documento PDF",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} è stato esportato.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} è stato esportato con {count, plural, =1{1 avviso} other{{count} avvisi}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "Il componente di esportazione PDF non è disponibile. Reinstalla BusyMark e riprova.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "L’esportazione PDF ha richiesto troppo tempo ed è stata interrotta.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark non ha potuto esportare questo documento come PDF.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "Rendering in corso…",
   "visualizationStale": "Visualizzazione dell’ultimo rendering valido",
   "visualizationShowSource": "Mostra sorgente",
@@ -2461,7 +2828,10 @@
   "visualizationRenderFailed": "Impossibile eseguire il rendering di questa visualizzazione.",
   "visualizationRetry": "Riprova",
   "visualizationSaved": "Salvato {fileName}",
-  "shortcutExportPdfDescription": "Esporta il documento attivo o il modulo Writerside come PDF.", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "Esporta il documento attivo o il modulo Writerside come PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "In stage",
   "gitUnstaged": "Non in stage",
   "gitFetch": "Recupera",
@@ -2578,7 +2948,6 @@
   "ai": "IA",
   "aiLocalOllama": "Ollama locale",
   "aiDisabled": "Disabilitato",
-  "aiLocalOnlyDescription": "La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.",
   "aiProvider": "Provider IA",
   "aiDefaultProvider": "Provider predefinito",
   "aiConfigureProvider": "Configura provider",
@@ -2662,7 +3031,7 @@
   "tableAlignmentCenter": "Allineamento: centro",
   "tableAlignmentRight": "Allineamento: destra",
   "sourceSearchReplacement": "Sostituisci con",
-  "sourceSearchReplaceCurrent": "Sostituisci corrente",
+  "sourceSearchReplaceCurrent": "Sostituisci la corrispondenza corrente",
   "sourceSearchReplaceAndFindNext": "Sostituisci e trova successivo",
   "sourceSearchReplaceAll": "Sostituisci tutto",
   "workspaceReplace": "Sostituisci nell’area di lavoro",
@@ -2692,14 +3061,18 @@
   "reloadFromDisk": "Ricarica dal disco",
   "keepMine": "Mantieni la mia versione",
   "saveAs": "Salva con nome",
-  "unsavedChangesMultipleMessage": "{count} documenti contengono modifiche non salvate. Salvarli prima di continuare?",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 documento ha modifiche non salvate. Salvarlo prima di continuare?} other{{count} documenti hanno modifiche non salvate. Salvali prima di continuare?}}",
   "workspaceReplaceIssuePartialConflict": "Il rollback è stato interrotto perché il file è stato modificato contemporaneamente. Alcune sostituzioni potrebbero rimanere; il contenuto spostato è stato conservato nel percorso seguente.",
   "workspaceReplaceIssueApplyFailed": "Non è stata applicata alcuna sostituzione perché non è stato possibile salvare in sicurezza l’insieme verificato.",
-  "workspaceRecoveryRestored": "Sono stati recuperati {count} documenti non salvati. Controllare ogni documento recuperato prima di continuare.",
-  "workspaceRecoveryDamaged": "Non è stato possibile ripristinare {count} record di recupero danneggiati. I documenti recuperati validi restano disponibili.",
-  "recoveredDocumentReview": "È stato recuperato il contenuto non salvato di {fileName}. Controllarlo, quindi salvarlo, salvarlo con nome o eliminarlo.",
+  "workspaceRecoveryRestored": "{count, plural, =1{È stato recuperato 1 documento non salvato. Revisionalo prima di salvarlo o scartarlo.} other{Sono stati recuperati {count} documenti non salvati. Revisiona ciascuno prima di salvare o scartare.}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{Un record di recupero danneggiato non può essere ripristinato. Il file di recupero originale è stato conservato per la revisione.} other{{count} record di ripristino danneggiati non sono stati ripristinati. I record di ripristino validi sono ancora disponibili.}}",
+  "recoveredDocumentReview": "Recuperato il contenuto non salvato di {fileName}. Esaminalo, quindi salvalo, salvalo con un altro nome o scartalo.",
   "commandUnavailableInContext": "Questo comando non è disponibile nel contesto corrente.",
   "mathRenderFailed": "Impossibile visualizzare l’espressione matematica.",
   "inlineMath": "Formula in linea",
-  "displayMath": "Formula in blocco"
+  "displayMath": "Formula in blocco",
+  "aiExplicitEditingDescription": "La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

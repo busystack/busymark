@@ -312,10 +312,16 @@ class AppLocalizationsFa extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -345,7 +351,22 @@ class AppLocalizationsFa extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'پنل کناری';
@@ -429,8 +450,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'نمایش مرجع میانبرهای صفحه‌کلید';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'باز کردن مرجع Markdown و HTML';
+  String get shortcutSyntaxReferenceDescription => 'باز کردن راهنمای نحو';
 
   @override
   String get shortcutSettingsDescription => 'باز کردن تنظیمات BusyMark';
@@ -780,7 +800,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'تعداد $count سند تغییرات ذخیره‌نشده دارند. پیش از ادامه ذخیره شوند؟';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count سند دارای تغییرات ذخیره‌نشده هستند. قبل از ادامه ذخیره کنید.',
+      one: '۱ سند دارای تغییرات ذخیره‌نشده است. قبل از ادامه ذخیره کنید.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1433,7 +1460,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sourceSearchReplacement => 'جایگزینی با';
 
   @override
-  String get sourceSearchReplaceCurrent => 'جایگزینی مورد فعلی';
+  String get sourceSearchReplaceCurrent => 'جایگزینی تطابق فعلی';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'جایگزینی و یافتن بعدی';
@@ -1705,12 +1732,27 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'تعداد $count سند ذخیره‌نشده بازیابی شد. پیش از ادامه هر سند بازیابی‌شده را بررسی کنید.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count سند ذخیره‌نشده بازیابی شدند. هر کدام را قبل از ذخیره یا حذف بازبینی کنید.',
+      one: 'یک سند ذخیره‌نشده بازیابی شد. قبل از ذخیره یا حذف آن بازبینی کنید.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'تعداد $count رکورد بازیابی آسیب‌دیده قابل بازیابی نبود. سندهای معتبر بازیابی‌شده همچنان در دسترس‌اند.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count رکورد بازیابی آسیب‌دیده نتوانستیم بازیابی کنیم. رکوردهای بازیابی معتبر همچنان در دسترس هستند.',
+      one:
+          'یک رکورد بازیابی آسیب‌دیده را نتوانستیم بازیابی کنیم. فایل بازیابی اولیه برای بررسی حفظ شده است.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2309,10 +2351,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitActions => 'عملیات Git';
 
   @override
-  String get gitPull => 'دریافت';
+  String get gitPull => 'کشیدن';
 
   @override
-  String get gitFetch => 'دریافت';
+  String get gitFetch => 'واکشی';
 
   @override
   String get gitPush => 'ارسال';
@@ -2410,8 +2452,10 @@ class AppLocalizationsFa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'فایل‌های رهگیری‌شدهٔ انتخابی از Git بازیابی خواهند شد.',
-      one: 'فایل رهگیری‌شدهٔ انتخابی از Git بازیابی خواهد شد.',
+      other:
+          'تمام تغییرات مرحله‌بندی‌شده و مرحله‌نشده فایل‌های رهگیری‌شدهٔ انتخاب‌شده به HEAD بازگردانده می‌شود.',
+      one:
+          'تمام تغییرات مرحله‌بندی‌شده و مرحله‌نشده فایل رهگیری‌شدهٔ انتخاب‌شده به HEAD بازگردانده می‌شود.',
     );
     return '$_temp0';
   }
@@ -2457,10 +2501,10 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'پروژه';
+  String get gitProjectHistory => 'سابقه پروژه';
 
   @override
-  String get gitFileHistory => 'فایل فعلی';
+  String get gitFileHistory => 'سابقه فایل';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2661,113 +2705,259 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitErrorCommandFailed => 'فرمان Git ناموفق بود.';
 
   @override
-  String get markdownAndHtml => 'Markdown و HTML';
+  String get syntaxReference => 'راهنمای نحو';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'بلوک‌های Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'بلوک‌های Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Markdown درون‌خطی';
+  String get syntaxReferenceInlineFormatting => 'Markdown درون‌خطی';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'بلوک‌های HTML خام';
+  String get syntaxReferenceRawHtmlBlocks => 'بلوک‌های HTML خام';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'تگ‌های HTML درون‌خطی';
+  String get syntaxReferenceRawHtmlInline => 'تگ‌های HTML درون‌خطی';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.';
 
   @override
-  String get markdownHtmlSafety => 'قوانین امنیتی';
+  String get syntaxReferenceHeadings => 'عنوان‌ها';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.';
+  String get syntaxReferenceParagraphs => 'پاراگراف‌ها';
 
   @override
-  String get markdownHtmlHeadings => 'عنوان‌ها';
+  String get syntaxReferenceLists => 'فهرست‌ها';
 
   @override
-  String get markdownHtmlParagraphs => 'پاراگراف‌ها';
+  String get syntaxReferenceHtmlContainers => 'کانتینرها';
 
   @override
-  String get markdownHtmlLists => 'فهرست‌ها';
+  String get syntaxReferenceHtmlTextBlocks => 'بلوک‌های متن';
 
   @override
-  String get markdownHtmlHtmlContainers => 'کانتینرها';
+  String get syntaxReferenceHtmlFigures => 'شکل‌ها و تصاویر';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'بلوک‌های متن';
+  String get syntaxReferenceHtmlPreformatted => 'کد پیش‌قالب‌بندی‌شده';
 
   @override
-  String get markdownHtmlHtmlFigures => 'شکل‌ها و تصاویر';
+  String get syntaxReferenceHtmlDisclosure => 'بلوک‌های بازشونده';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'کد پیش‌قالب‌بندی‌شده';
+  String get syntaxReferenceHtmlDescriptionLists => 'فهرست‌های توصیفی';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'بلوک‌های بازشونده';
+  String get syntaxReferenceHtmlFormattingTags => 'تگ‌های قالب‌بندی';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'فهرست‌های توصیفی';
+  String get syntaxReferenceHtmlInlineCodeTags => 'تگ‌های کد درون‌خطی';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'تگ‌های قالب‌بندی';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'تگ‌های متنی معنایی';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'تگ‌های کد درون‌خطی';
-
-  @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'تگ‌های متنی معنایی';
-
-  @override
-  String get markdownHtmlSanitizedPreview => 'پیش‌نمایش پاک‌سازی‌شده';
-
-  @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'منبع حفظ می‌شود';
-
-  @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown داخل HTML';
-
-  @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.';
 
   @override
-  String get markdownHtmlBlockedContent => 'محتوای فعال مسدود است';
-
-  @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.';
 
   @override
-  String get markdownHtmlSafeUrls => 'فقط URLهای امن';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.';
+  String get syntaxReferenceCategory => 'دسته‌بندی';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'نمودارها و API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'ریاضیات';
+
+  @override
+  String get syntaxReferenceExample => 'نمونه';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'شناسه‌ها و نام‌های مستعار';
+
+  @override
+  String get syntaxReferenceScope => 'دامنه';
+
+  @override
+  String get syntaxReferenceLimitation => 'محدودیت BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'مستندات رسمی';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'فقط Markdown در Writerside';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'فقط Markdown و XML در Writerside';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'شکل‌های اصلی Markdown که BusyMark می‌تواند بنویسد و پیش‌نمایش کند.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'یک بند متنی.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'جدول‌ها از نحو خط عمودی GitHub Flavored Markdown استفاده می‌کنند.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'دو فاصله در پایان خط، \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark زیرمجموعه‌ای محدود و امن از HTML خام را در منبع Markdown می‌پذیرد.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'بلوک‌های حصاردار Mermaid، PlantUML، D2 و OpenAPI در منبع Markdown کار می‌کنند. شناسه‌های حصار به بزرگی و کوچکی حروف حساس نیستند و BusyMark املای اصلی را نگه می‌دارد.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'از محتوای YAML یا JSON حصاردار استفاده کنید. BusyMark هر سند کامل YAML یا JSON را مرجع OpenAPI در نظر نمی‌گیرد.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'بلوک‌های کد معنایی نمودار';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'شکل‌های معنایی code-block و src از Mermaid، PlantUML و D2 پشتیبانی می‌کنند، نه OpenAPI، و فقط در پروژه‌های Writerside کار می‌کنند.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => 'منبع ارجاع‌شدهٔ نمودار';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'مسیرها باید نسبی باشند و درون پروژهٔ بازشدهٔ Writerside بمانند؛ شکل حصار همراه src فقط ویژهٔ Markdown در Writerside است.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark از عبارت‌های TeX پشتیبانی می‌کند، نه اسناد کامل TeX یا LaTeX.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'ریاضی درون‌خطی';
+
+  @override
+  String get syntaxReferenceGithubMath => 'ریاضی GitHub با دلار و بک‌تیک';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'ریاضی نمایشی';
+
+  @override
+  String get syntaxReferenceMathFence => 'حصار math';
+
+  @override
+  String get syntaxReferenceTexFence => 'حصار tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark، ⁨\\(...\\)⁩ یا ⁨\\[...\\]⁩ را جداکنندهٔ ریاضی Markdown نمی‌شناسد.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'بیرون از حالت Writerside، حصار tex یک بلوک کد معمولی باقی می‌ماند.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'عنصر math در Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'عنصر math نحو معنایی Writerside است، نه HTML MathML خام مجاز.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'بلوک کد معنایی TeX';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'این افزونه‌های مشخص فقط در پروژه‌های بازشدهٔ Writerside تفسیر می‌شوند.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'نقل‌قول بلوکی هشدار';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'نقل‌قول بلوکی ساده در Markdown درون Writerside یک نکته است؛ در Markdown معمولی همان نقل‌قول عادی می‌ماند.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'هشدارهای معنایی';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Markdown معمولی این عناصر معنایی Writerside را تفسیر نمی‌کند.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'عنوان جمع‌شونده';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'حصار کد جمع‌شونده';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => 'محتوای معنایی جمع‌شونده';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark شکل‌های جمع‌شوندهٔ chapter، procedure، code-block و فهرست تعریف را پشتیبانی می‌کند، نه همهٔ فهرست Writerside را.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'بلوک‌های کد معنایی برای ریاضی و نمودارها';
+
+  @override
+  String get syntaxReferenceVideo => 'ویدیوی Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'ویدیوی محلی از تصویر محلی preview-src استفاده می‌کند؛ منابع میزبانی‌شده باید نشانی HTTPS پشتیبانی‌شدهٔ YouTube یا Vimeo باشند.';
 
   @override
   String get exportAsPdf => 'خروجی به‌صورت PDF';
@@ -2829,7 +3019,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName صادر شد. تصاویر افزوده‌نشده: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count هشدار',
+      one: '1 هشدار',
+    );
+    return '$fileName با $_temp0 صادر شد.';
   }
 
   @override
@@ -3243,7 +3439,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aiDisabled => 'غیرفعال';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.';
 
   @override

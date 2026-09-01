@@ -1,0 +1,4637 @@
+{
+  "@@locale": "nl",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Editor voor Markdown-bestanden en Writerside-compatibele documentatieprojecten.",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "Over BusyMark",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutTagline": "Markdown en Writerside-editor",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Licentie",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Website",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutSourceCode": "Broncode",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
+  },
+  "reportIssue": "Rapporteer een probleem",
+  "@reportIssue": {
+    "description": "Menu action and dialog title for reporting an issue."
+  },
+  "feedbackCategory": "Categorie",
+  "@feedbackCategory": {
+    "description": "Feedback category field label."
+  },
+  "feedbackChooseCategory": "Kies een categorie",
+  "@feedbackChooseCategory": {
+    "description": "Placeholder for the feedback category selector."
+  },
+  "feedbackCategoryProblem": "Probleem of bug",
+  "@feedbackCategoryProblem": {
+    "description": "Feedback category for a problem or bug."
+  },
+  "feedbackCategoryFeature": "Functieverzoek",
+  "@feedbackCategoryFeature": {
+    "description": "Feedback category for a feature request."
+  },
+  "feedbackCategoryPrivacySecurity": "Privacy- of beveiligingsproblemen",
+  "@feedbackCategoryPrivacySecurity": {
+    "description": "Feedback category for a privacy or security concern."
+  },
+  "feedbackCategoryUsability": "Bezorgdheid over bruikbaarheid",
+  "@feedbackCategoryUsability": {
+    "description": "Feedback category for a usability concern."
+  },
+  "feedbackCategoryOther": "Overig",
+  "@feedbackCategoryOther": {
+    "description": "Feedback category for other concerns."
+  },
+  "feedbackSubject": "Onderwerp",
+  "@feedbackSubject": {
+    "description": "Feedback subject field label."
+  },
+  "feedbackMessage": "Gedetailleerd bericht",
+  "@feedbackMessage": {
+    "description": "Detailed feedback message field label."
+  },
+  "feedbackReplyEmail": "E-mailadres voor antwoord (optioneel)",
+  "@feedbackReplyEmail": {
+    "description": "Optional reply email field label."
+  },
+  "feedbackIncludeTechnicalDetails": "Voeg technische details toe",
+  "@feedbackIncludeTechnicalDetails": {
+    "description": "Checkbox label for optional technical details."
+  },
+  "feedbackTechnicalDetailsDisclosure": "Indien ingeschakeld, voegt dit alleen uw Linux-besturingssysteemversie en de landinstelling van de BusyMark-toepassing toe. Er zijn geen logbestanden, bestanden, accountgegevens of andere diagnostische gegevens bijgevoegd.",
+  "@feedbackTechnicalDetailsDisclosure": {
+    "description": "Disclosure explaining exactly which optional technical details are submitted."
+  },
+  "feedbackSubmit": "Indienen",
+  "@feedbackSubmit": {
+    "description": "Button that submits feedback."
+  },
+  "feedbackSubmitting": "Verzenden…",
+  "@feedbackSubmitting": {
+    "description": "Button label while feedback is being submitted."
+  },
+  "feedbackCategoryRequired": "Kies een categorie.",
+  "@feedbackCategoryRequired": {
+    "description": "Validation error for a missing feedback category."
+  },
+  "feedbackSubjectLength": "Het onderwerp moet tussen 3 en 120 tekens lang zijn.",
+  "@feedbackSubjectLength": {
+    "description": "Validation error for feedback subject length."
+  },
+  "feedbackMessageLength": "Het bericht moet tussen de 10 en 5.000 tekens lang zijn.",
+  "@feedbackMessageLength": {
+    "description": "Validation error for feedback message length."
+  },
+  "feedbackReplyEmailInvalid": "Voer een geldig e-mailadres in of laat dit veld leeg.",
+  "@feedbackReplyEmailInvalid": {
+    "description": "Validation error for an invalid optional reply email."
+  },
+  "feedbackConnectionFailure": "BusyMark kan geen verbinding maken. Controleer uw internetverbinding en probeer het opnieuw.",
+  "@feedbackConnectionFailure": {
+    "description": "Feedback submission error for a connection failure."
+  },
+  "feedbackTimeoutFailure": "Er is een time-out opgetreden voor het verzoek. Probeer het opnieuw.",
+  "@feedbackTimeoutFailure": {
+    "description": "Feedback submission error for a timeout."
+  },
+  "feedbackRateLimitedFailure": "Er zijn te veel rapporten verzonden via deze verbinding. Wacht en probeer het opnieuw.",
+  "@feedbackRateLimitedFailure": {
+    "description": "Feedback submission error when the server rate limit is reached."
+  },
+  "feedbackRejectedFailure": "De server heeft dit rapport afgewezen. Controleer de formuliervelden en probeer het opnieuw.",
+  "@feedbackRejectedFailure": {
+    "description": "Feedback submission error when the server rejects invalid request data."
+  },
+  "feedbackServerFailure": "De server kon het rapport niet accepteren. Probeer het later opnieuw.",
+  "@feedbackServerFailure": {
+    "description": "Generic feedback submission server error."
+  },
+  "feedbackSuccess": "Feedback verzonden. Referentie-ID: {id}",
+  "@feedbackSuccess": {
+    "description": "Success message containing the server reference ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "advanced": "Geavanceerd",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "addToGit": "Toevoegen aan Git",
+  "@addToGit": {
+    "description": "Menu action that stages the selected file or folder in Git."
+  },
+  "appearance": "Uiterlijk",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "Toepassen",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "Terug",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "Linksonder",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "Rechtsonder",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "Annuleren",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "Kiezen",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "Kies locatie",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "Kopiëren",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "copyName": "Kopieer naam",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyFileName": "Bestandsnaam kopiëren",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
+  "copyPath": "Kopieer pad",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
+  "create": "Maken",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "Maken...",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "Knippen",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "promoteSection": "Sectie promoten",
+  "@promoteSection": {
+    "description": "Outline action that raises a heading section, including descendant headings, by one rank."
+  },
+  "demoteSection": "Sectie degraderen",
+  "@demoteSection": {
+    "description": "Outline action that lowers a heading section, including descendant headings, by one rank."
+  },
+  "moveSectionUp": "Verplaats sectie naar boven",
+  "@moveSectionUp": {
+    "description": "Outline action that swaps a heading section with its previous sibling section."
+  },
+  "moveSectionDown": "Verplaats sectie naar beneden",
+  "@moveSectionDown": {
+    "description": "Outline action that swaps a heading section with its next sibling section."
+  },
+  "confirmDeleteSectionTitle": "Sectie verwijderen?",
+  "@confirmDeleteSectionTitle": {
+    "description": "Confirmation title before deleting a Markdown heading section."
+  },
+  "confirmDeleteSectionMessage": "'{name}' en alle inhoud in de bijbehorende sectie verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "@confirmDeleteSectionMessage": {
+    "description": "Confirmation message before deleting a Markdown heading section.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "darkTheme": "Donker",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "delete": "Verwijderen",
+  "@delete": {
+    "description": "Delete command label."
+  },
+  "discard": "Weggooien",
+  "@discard": {
+    "description": "Destructive button that throws away unsaved editor changes. Translate it distinctly from Cancel."
+  },
+  "editor": "Editor",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "Bestand",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "fileHistory": "Bestandsgeschiedenis",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
+  },
+  "folder": "Map",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "Invoegen",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "Sneltoetsen op het toetsenbord",
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "commandPalette": "Commandopalet",
+  "@commandPalette": {
+    "description": "Title and command label for the searchable command palette."
+  },
+  "commandPaletteHint": "Typ een opdracht",
+  "@commandPaletteHint": {
+    "description": "Search hint in the command palette."
+  },
+  "commandPaletteEmpty": "Geen overeenkomende opdrachten",
+  "@commandPaletteEmpty": {
+    "description": "Empty state in the command palette."
+  },
+  "commandUnavailableInContext": "Niet beschikbaar in de huidige editorcontext",
+  "@commandUnavailableInContext": {
+    "description": "Reason shown for a disabled contextual command."
+  },
+  "lightTheme": "Licht",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "Hoofdmenu",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "Volledig scherm",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "Openen",
+  "@open": {
+    "description": "Open action label."
+  },
+  "openInFiles": "Openen in Bestandsbeheer",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "Padacties",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
+  },
+  "outline": "Overzicht",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "Overschrijven",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "Plakken",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "Plakken zonder opmaak",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "reading": "Lezen",
+  "@reading": {
+    "description": "Reading view label."
+  },
+  "removeFromRecent": "Verwijderen uit recent",
+  "@removeFromRecent": {
+    "description": "Action that removes a workspace from the Recent list without deleting its files."
+  },
+  "recent": "Recent",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "Opnieuw uitvoeren",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "Opslaan",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "Zoeken",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "Selecteer alles",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "Instellingen",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "Bron",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "Splitsen",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "Systeem",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "Thema",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "Taal",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "Systeem",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk bokmål",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
+  },
+  "toggleSidebar": "Zijbalk in-/uitschakelen",
+  "@toggleSidebar": {
+    "description": "Keyboard shortcuts label for the sidebar panel toggle."
+  },
+  "topLeft": "Linksboven",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "Rechtsboven",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "Ongedaan maken",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "Valideren",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "Validatie",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "Weergavemodus",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "Welkom",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "Afbeeldingen",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "Markdown-bestand openen",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md of .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "Open een map of Writerside-project",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Markdown-map of Writerside-compatibel project",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "noOpenFile": "Geen bestand geopend",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
+  "shortcutDeleteTreeItemDescription": "Verwijder het geselecteerde item uit Bestanden of verwijder het geselecteerde onderwerp uit de inhoudsopgave",
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
+  "shortcutGroupGeneral": "Algemeen",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
+  },
+  "shortcutNewDocument": "Maken",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for opening the content creation chooser."
+  },
+  "shortcutNewDocumentDescription": "Maak een Markdown-bestand of Writerside-project",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
+  },
+  "shortcutOpenDescription": "Open een Markdown-bestand, map of Writerside-project",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "Sla het huidige document op",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutSearchDescription": "Zoek in de huidige werkruimte",
+  "@shortcutSearchDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "Toon deze sneltoetsreferentie",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutSyntaxReferenceDescription": "Syntaxisreferentie openen",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
+  },
+  "shortcutSettingsDescription": "Open BusyMark-instellingen",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
+  "shortcutNextTab": "Volgende tabblad",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next tab."
+  },
+  "shortcutNextTabDescription": "Ga naar het volgende geopende tabblad",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next tab."
+  },
+  "shortcutPreviousTab": "Vorig tabblad",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous tab."
+  },
+  "shortcutPreviousTabDescription": "Ga naar het vorige geopende tabblad",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous tab."
+  },
+  "shortcutCloseTab": "Tabblad sluiten",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active tab."
+  },
+  "shortcutCloseTabDescription": "Sluit het actieve tabblad",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active tab."
+  },
+  "shortcutCloseAllTabs": "Sluit alle tabbladen",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all tabs."
+  },
+  "shortcutCloseAllTabsDescription": "Sluit alle geopende tabbladen",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all tabs."
+  },
+  "shortcutGroupTextEditing": "Tekstbewerking",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "Selecteer in de bronmodus alle tekst; druk in de Editor-modus tweemaal om elk blok te selecteren",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
+  },
+  "shortcutCutDescription": "Knip de geselecteerde tekst",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "Kopieer de geselecteerde tekst",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "Plakken vanaf het klembord",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "Klembordtekst plakken zonder opmaak",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "Maak de laatste bewerking ongedaan",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "Voer de laatste ongedaan gemaakte bewerking opnieuw uit",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "shortcutInsertIndentation": "Inspringing invoegen",
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
+  "shortcutInsertIndentationDescription": "Voeg een inspringing toe bij de cursor",
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
+  "shortcutOutdentSource": "Inspringing in bron verminderen",
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
+  "shortcutOutdentSourceDescription": "Verwijder één inspringingsniveau in de bronmodus",
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
+  "shortcutEscape": "Zoeken sluiten of blokselectie wissen",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
+  },
+  "shortcutEscapeDescription": "Sluit het zoeken in de werkruimte of wis een blokselectie in de Editor-modus",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
+  },
+  "shortcutGroupFormatting": "Opmaak",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "Vetgedrukt in- of uitschakelen voor geselecteerde tekst",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "Schakel cursief in op de geselecteerde tekst",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "Schakel het onderstrepen van de geselecteerde tekst in of uit",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "Een link invoegen of bewerken",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "Schakel inlinecode voor de geselecteerde tekst in of uit",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "Schakel doorhalen van de geselecteerde tekst in of uit",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "Blokken",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "Stel het huidige blok in op alinea",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "Stel het huidige blok in op Kop 1",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "Stel het huidige blok in op Kop 2",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "Stel het huidige blok in op Kop 3",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "Stel het huidige blok in op Kop 4",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "Stel het huidige blok in op Kop 5",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "Stel het huidige blok in op Kop 6",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "Lijsten",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "Genummerde lijst",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "Schakel genummerde lijstopmaak in of uit",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "Lijst met opsommingstekens",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "Schakel de opmaak van de lijst met opsommingstekens in of uit",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "Controlelijst",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "Schakel de opmaak van de checklist in of uit",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "Zijbalk",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "Zijbalkweergave",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
+  },
+  "createMarkdownFile": "Markdown-bestand maken",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "Start een niet-opgeslagen lokaal Markdown-document",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "Maak een Writerside-project",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "Start een lokaal Writerside-compatibel project",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "Documentatie",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "Gebruikershandleiding",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "Aan de slag",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "Projectnaam",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "Mapnaam",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "Instantienaam",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "Instantie-ID",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "Titel van startonderwerp",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "Locatie",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "Projectnaam is vereist.",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "Mapnaam is vereist.",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "Gebruik één veilige mapnaam.",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "Gebruik een identificatiecode in kleine letters met letters, cijfers, onderstrepingstekens of koppeltekens.",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "Titel van startonderwerp is vereist.",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "Kan Writerside-project niet maken.",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "BusyMark-instellingen",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "autoSave": "Automatisch opslaan",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "Sla bestandswijzigingen automatisch op na een korte periode van inactiviteit.",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
+  "wordWrap": "Regelterugloop",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "Lettergrootte van de editor",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "Valideren bij bewerken",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "Wis recente werkruimten",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtonsPosition": "Positie van knoppen bewerken",
+  "@editingButtonsPosition": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsPositionDescription": "Kies waar de zwevende WYSIWYG-bewerkingsknoppen verschijnen.",
+  "@editingButtonsPositionDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Richting van knoppen bewerken",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Kies of de zwevende WYSIWYG-bewerkingsknoppen horizontaal of verticaal zijn gerangschikt.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Horizontaal",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Verticaal",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "Privacy",
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
+  "allowRemoteImages": "Laad externe afbeeldingen",
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
+  "allowRemoteImagesDescription": "Sta toe dat Markdown-voorbeelden en editorafbeeldingen worden geladen vanaf http- en https-URL's.",
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
+  "clearRemoteImagePermissions": "Wis machtigingen voor externe afbeeldingen",
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
+  "clearRemoteImagePermissionsDescription": "Verwijder de opgeslagen rechten voor werkruimten die externe afbeeldingen mochten laden.",
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
+  "clearGitWorkspaceTrust": "Wis vertrouwde Git-werkruimten",
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
+  "clearGitWorkspaceTrustDescription": "Vraag dit voordat u Git-functies inschakelt voor eerder vertrouwde werkruimten.",
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
+  "settingsWindowSectionTitle": "Raam",
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
+  "settingsReopenWorkspaceOnStartupTitle": "Open de vorige werkruimte opnieuw bij het opstarten",
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
+  "settingsReopenWorkspaceOnStartupDescription": "Open de werkruimte en tabbladen van de vorige sessie wanneer BusyMark start.",
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Bevestig voordat u sluit met niet-opgeslagen wijzigingen",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Vraag dit voordat u BusyMark sluit als documenten niet-opgeslagen wijzigingen bevatten.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
+  "closeUnsavedChangesTitle": "Niet-opgeslagen wijzigingen",
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
+  "closeUnsavedChangesSingleMessage": "Dit document bevat niet-opgeslagen wijzigingen. Wijzigingen opslaan voordat u BusyMark sluit?",
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Wijzigingen opslaan voordat BusyMark wordt gesloten?} =1{1 document bevat niet-opgeslagen wijzigingen. Wijzigingen opslaan voordat BusyMark wordt gesloten?} other{{count} documenten bevatten niet-opgeslagen wijzigingen. Wijzigingen opslaan voordat BusyMark wordt gesloten?}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "closeUnsavedChangesCancel": "Annuleren",
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "Weggooien",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Destructive button that closes BusyMark without saving editor changes. Translate it distinctly from Cancel."
+  },
+  "closeUnsavedChangesSave": "Opslaan",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "currentFile": "huidig bestand",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "Niet-opgeslagen wijzigingen",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "Er zijn niet-opgeslagen wijzigingen in {fileName}. Sla ze op voordat je verdergaat?",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 document bevat niet-opgeslagen wijzigingen. Sla het op voordat u doorgaat?} other{{count} documenten bevatten niet-opgeslagen wijzigingen. Sla ze op voordat u doorgaat?}}",
+  "@unsavedChangesMultipleMessage": {
+    "description": "Confirmation message before replacing workspace state when several documents are dirty.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileChangedOnDisk": "Bestand gewijzigd op schijf",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "Dit bestand is op schijf gewijzigd sinds u het hebt geopend. Overschrijven?",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "Untitled.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "Ongenummerde lijst",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "Genummerde lijst",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "Takenlijst",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "Taak als voltooid markeren",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "Lijstitem inspringen",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "Lijstitem uitspringen",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "Blokcitaat",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "Codeblok",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "Codebloktaal",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "Afbeelding",
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "video": "Video",
+  "openVideo": "Video afspelen",
+  "pauseVideo": "Video pauzeren",
+  "videoUnavailable": "Video niet beschikbaar",
+  "videoPreview": "Videovoorbeeld",
+  "diagnosticWritersideVideoMissingSource": "Video mist het kenmerk src.",
+  "diagnosticWritersideVideoUnsupportedSource": "Niet-ondersteunde videobron: {source}",
+  "@diagnosticWritersideVideoUnsupportedSource": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingFile": "Videobestand bestaat niet: {source}",
+  "@diagnosticWritersideVideoMissingFile": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingPreview": "Videovoorbeeldafbeelding bestaat niet: {preview}",
+  "@diagnosticWritersideVideoMissingPreview": {
+    "placeholders": {
+      "preview": {
+        "type": "String"
+      }
+    }
+  },
+  "inlineImage": "Inline-afbeelding",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "Tabel",
+  "@table": {
+    "description": "Table command label."
+  },
+  "htmlBlock": "HTML-blok",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "htmlContentDefault": "HTML-inhoud",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
+  "shortcutHtmlBlockDescription": "Voeg een HTML-blok in of bewerk het",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "Weergegeven HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "HTML bewerken",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "HTML-bron",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
+  "thematicBreak": "Horizontale scheidingslijn",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "Vetgedrukt",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "Cursief",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "Onderstrepen",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "Doorhalen",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "Inline-code",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "Link",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "Hard regeleinde",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "Tekststijl",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "Alinea",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "Kop 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "Kop 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "Kop 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "Kop 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "Kop 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "Kop 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "Tabel verwijderen",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "Kolom {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "Kolom links invoegen",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "Kolom rechts invoegen",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "Kolom verwijderen",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableAlignmentUnspecified": "Uitlijning: niet gespecificeerd",
+  "@tableAlignmentUnspecified": {
+    "description": "Menu item for using unspecified Markdown table-column alignment."
+  },
+  "tableAlignmentLeft": "Uitlijning: links",
+  "@tableAlignmentLeft": {
+    "description": "Menu item for left-aligning a Markdown table column."
+  },
+  "tableAlignmentCenter": "Uitlijning: midden",
+  "@tableAlignmentCenter": {
+    "description": "Menu item for centering a Markdown table column."
+  },
+  "tableAlignmentRight": "Uitlijning: rechts",
+  "@tableAlignmentRight": {
+    "description": "Menu item for right-aligning a Markdown table column."
+  },
+  "tableRowNumber": "Rij {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "Rij erboven invoegen",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "Voeg rij hieronder in",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "Rij verwijderen",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "Kolomkop",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "Cel",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "Taal",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "Bewerkingsknoppen verbergen",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "Toon bewerkingsknoppen",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "Alt-tekst",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "editorPlaceholderText": "tekst",
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
+  "editorPlaceholderCode": "code",
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
+  "editorPlaceholderAltText": "alternatieve tekst",
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
+  "describeTheImage": "Beschrijf de afbeelding",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "Kolommen",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "Rijen",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "Kolomkop {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "Cel",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "Geen afbeeldingsbron",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "remoteImageBlocked": "Externe afbeelding geblokkeerd",
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
+  "remoteImageBlockedTooltip": "Kies of BusyMark externe afbeeldingen kan laden.",
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
+  "remoteImagesBlockedTitle": "Externe afbeeldingen worden geblokkeerd",
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
+  "remoteImagesBlockedMessage": "Dit document verwijst naar afbeeldingen van internet. Als u ze laadt, kan netwerkinformatie aan de afbeeldingshost worden onthuld.",
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
+  "loadRemoteImagesForWorkspace": "Voor deze werkruimte laden",
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
+  "alwaysLoadRemoteImages": "Externe afbeeldingen altijd laden",
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
+  "hideSidebar": "Zijbalkpaneel verbergen",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar panel."
+  },
+  "showSidebar": "Zijbalkpaneel tonen",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar panel."
+  },
+  "showPreview": "Voorbeeld weergeven",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "Voorbeeld verbergen",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "Niet-opgeslagen Markdown-bestand",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "Eén Markdown-bestand",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Markdown-map",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Writerside-module",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "Problemen",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{Geen diagnoses} =1{1 diagnose} other{{count} diagnoses}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "Bestanden",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "TOC",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "tocActions": "TOC-acties",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
+  "markdownUnsaved": "Niet-opgeslagen Markdown",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} - {count, plural, =1{1 bestand} other{{count} bestanden}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "Geen bestanden",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "newFile": "Nieuw bestand",
+  "@newFile": {
+    "description": "Menu action and dialog title for creating a new file."
+  },
+  "noWritersideToc": "Geen Writerside-inhoudsopgave",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "TOC-sectie",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "Nieuw onderwerp",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "Nieuw onderliggend onderwerp",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "Nieuw naastliggend onderwerp",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Onderwerpbestand hernoemen",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "TOC-plaatsing",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "Bij TOC-root",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Na geselecteerd onderwerp",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "Binnen geselecteerd onderwerp",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Na onderwerp plakken",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Als onderliggend onderwerp plakken",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Verwijderen uit inhoudsopgave",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Verwijderen uit inhoudsopgave?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "{name} verwijderen uit deze inhoudsopgave? Het onderwerpbestand wordt bewaard.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Onderwerpbestand verwijderen?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "{name} verwijderen en uit elke inhoudsopgave verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicFile": "Onderwerpbestand veilig verwijderen…",
+  "@safeDeleteTopicFile": {
+    "description": "Writerside action that safely deletes a topic after checking usages."
+  },
+  "removeTocElement": "TOC-element verwijderen",
+  "@removeTocElement": {
+    "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "reviewUsages": "Gebruik controleren",
+  "@reviewUsages": {
+    "description": "Action that opens the Writerside topic usages review."
+  },
+  "deleteTopicFile": "Onderwerpbestand verwijderen",
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic source file."
+  },
+  "removeAction": "Verwijderen",
+  "@removeAction": {
+    "description": "Short action label for removing an item without deleting its source file."
+  },
+  "topicRemovalSummary": "Verwijder “{topic}” uit de geselecteerde instantie. Het onderwerpbestand wordt bewaard.",
+  "@topicRemovalSummary": {
+    "description": "Summary in the dialog for removing a topic from one Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicSummary": "Verwijder “{topic}” en werk de referenties veilig bij in dit Writerside-project.",
+  "@safeDeleteTopicSummary": {
+    "description": "Summary in the Writerside safe-delete dialog.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "childTopicsPromoted": "{count, plural, =1{1 onderliggend onderwerp wordt één niveau hoger geplaatst.} other{{count} onderliggende onderwerpen worden één niveau hoger geplaatst.}}",
+  "@childTopicsPromoted": {
+    "description": "Disclosure that children of a removed TOC element are promoted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "topicIsStartPageRemovalWarning": "Dit onderwerp wordt gebruikt als startpagina van een instantie. Controleer het gebruik ervan en wijs een andere startpagina toe voordat u verdergaat.",
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning that blocks deletion of a Writerside start-page topic."
+  },
+  "topicUsagesCount": "Gebruik ({count})",
+  "@topicUsagesCount": {
+    "description": "Heading with the number of Writerside topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noBreakingTopicUsages": "Er zijn geen verwijzingen gevonden die kunnen worden verbroken.",
+  "@noBreakingTopicUsages": {
+    "description": "Safe-delete message when no breaking references were found."
+  },
+  "topicUsagesFound": "BusyMark heeft de volgende verwijzingen naar dit onderwerp gevonden.",
+  "@topicUsagesFound": {
+    "description": "Description above Writerside topic usage groups."
+  },
+  "topicUsageTocElements": "TOC-elementen",
+  "@topicUsageTocElements": {
+    "description": "Usage group label for Writerside TOC elements."
+  },
+  "topicUsageStartPages": "Startpagina's",
+  "@topicUsageStartPages": {
+    "description": "Usage group label for Writerside instance start pages."
+  },
+  "topicUsageTopicLinks": "Onderwerplinks",
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to a Writerside topic."
+  },
+  "topicUsageIncludes": "Include-elementen",
+  "@topicUsageIncludes": {
+    "description": "Usage group label for Writerside include elements."
+  },
+  "usageCount": "{count, plural, =1{1 gebruik} other{{count} keer gebruikt}}",
+  "@usageCount": {
+    "description": "Number of references that use a Writerside topic.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refactoringOptions": "Refactoring-opties",
+  "@refactoringOptions": {
+    "description": "Heading for Writerside topic removal options."
+  },
+  "updateUsagesAutomatically": "Gebruik automatisch bijwerken",
+  "@updateUsagesAutomatically": {
+    "description": "Option to rewrite Writerside topic usages during removal."
+  },
+  "updateUsagesAutomaticallyDescription": "Verwijder inhoudsopgavereferenties en -includes en behoud de linktekst.",
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic Writerside usage updates."
+  },
+  "manualUsageUpdatesRequired": "Voor sommige verwijzingen zijn handmatige wijzigingen vereist voordat deze refactoring plaatsvindt.",
+  "@manualUsageUpdatesRequired": {
+    "description": "Message when some Writerside usages cannot be updated automatically."
+  },
+  "setRedirectTo": "Omleiding instellen naar",
+  "@setRedirectTo": {
+    "description": "Option to redirect an old Writerside page to another topic."
+  },
+  "noRedirectDescription": "De oude, gepubliceerde pagina niet omleiden.",
+  "@noRedirectDescription": {
+    "description": "Description when no Writerside page redirect is selected."
+  },
+  "redirectTarget": "Omleidingsdoel",
+  "@redirectTarget": {
+    "description": "Field label for a Writerside redirect destination."
+  },
+  "remainingUsagesBlockRemoval": "Controleer en werk de resterende verwijzingen bij voordat u doorgaat, of schakel automatische updates in als die beschikbaar zijn.",
+  "@remainingUsagesBlockRemoval": {
+    "description": "Instruction shown when unresolved usages block topic removal."
+  },
+  "usagesOfTopic": "Gebruik van {topic}",
+  "@usagesOfTopic": {
+    "description": "Writerside usages sidebar title.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "noUsagesFound": "Geen gebruik gevonden",
+  "@noUsagesFound": {
+    "description": "Empty state in the Writerside usages review."
+  },
+  "outsideSelectedInstance": "buiten de geselecteerde instantie",
+  "@outsideSelectedInstance": {
+    "description": "Marker for a usage outside the selected Writerside instance."
+  },
+  "doRefactor": "Refactoring uitvoeren",
+  "@doRefactor": {
+    "description": "Action to return from usage review and continue the topic refactoring."
+  },
+  "orphanTopicTitle": "Onderwerpbestand wordt niet meer gebruikt",
+  "@orphanTopicTitle": {
+    "description": "Dialog title after a topic is removed from its last table of contents."
+  },
+  "keepTopicFile": "Onderwerpbestand behouden",
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned Writerside topic file."
+  },
+  "orphanTopicMessage": "“{topic}” wordt nergens meer gebruikt in dit Writerside-project. Verwijder het bestand of bewaar het voor gebruik in een andere instantie.",
+  "@orphanTopicMessage": {
+    "description": "Prompt to delete or keep an orphaned Writerside topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultNewTopicTitle": "Nieuw onderwerp",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "Onderwerptitel",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "Bestandsnaam",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "Onderwerptitel is vereist.",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "Bestandsnaam is vereist.",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "rename": "Hernoemen",
+  "@rename": {
+    "description": "Rename command label."
+  },
+  "confirmDeleteFileTitle": "Bestand verwijderen?",
+  "@confirmDeleteFileTitle": {
+    "description": "Confirmation dialog title before deleting a file."
+  },
+  "confirmDeleteFolderTitle": "Map verwijderen?",
+  "@confirmDeleteFolderTitle": {
+    "description": "Confirmation dialog title before deleting a folder."
+  },
+  "confirmDeleteFileMessage": "{name} verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "@confirmDeleteFileMessage": {
+    "description": "Confirmation dialog message before deleting a file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteFolderMessage": "{name} en alle bestanden daarin verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "@confirmDeleteFolderMessage": {
+    "description": "Confirmation dialog message before deleting a folder.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "useSingleSafeFileName": "Gebruik één veilige bestandsnaam.",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "Gebruik de extensie {extension} voor het geselecteerde formaat.",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "Gebruik letters, cijfers, onderstrepingstekens of koppeltekens vóór de extensie.",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "Onderwerp-ID bestaat al.",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "Kan Writerside-onderwerp niet maken.",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "Geen overzicht",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "Vouw {kind} uit",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "{kind} samenvouwen",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "sectie",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "lijst",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "citaat",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "label",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "sourceSearchPreviousMatch": "Vorige overeenkomst",
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
+  "sourceSearchNextMatch": "Volgende overeenkomst",
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
+  "sourceSearchCaseSensitive": "Hoofdlettergevoelig",
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
+  "sourceSearchWholeWord": "Heel woord",
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
+  "sourceSearchRegex": "Regex",
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
+  "sourceSearchReplacement": "Vervangen door",
+  "@sourceSearchReplacement": {
+    "description": "Placeholder for the active-document replacement field."
+  },
+  "sourceSearchReplaceCurrent": "Vervang huidige overeenkomst",
+  "@sourceSearchReplaceCurrent": {
+    "description": "Tooltip for replacing the current search match."
+  },
+  "sourceSearchReplaceAndFindNext": "Vervangen en volgende zoeken",
+  "@sourceSearchReplaceAndFindNext": {
+    "description": "Tooltip for replacing the current match and moving to the next."
+  },
+  "sourceSearchReplaceAll": "Vervang alles",
+  "@sourceSearchReplaceAll": {
+    "description": "Tooltip for replacing every active-document search match."
+  },
+  "workspaceReplace": "Vervangen in werkruimte",
+  "@workspaceReplace": {
+    "description": "Action that previews replacements across the workspace."
+  },
+  "reviewReplacements": "Vervangingen controleren",
+  "@reviewReplacements": {
+    "description": "Action and dialog title for reviewing workspace replacements."
+  },
+  "applyReplacements": "Vervangingen toepassen",
+  "@applyReplacements": {
+    "description": "Action that applies selected workspace replacements."
+  },
+  "skippedFiles": "Overgeslagen bestanden",
+  "@skippedFiles": {
+    "description": "Heading for files excluded from a workspace replacement."
+  },
+  "workspaceReplaceDirtyBuffer": "Niet-opgeslagen editorinhoud",
+  "@workspaceReplaceDirtyBuffer": {
+    "description": "Source label for a workspace replacement preview using a dirty document buffer."
+  },
+  "workspaceReplaceDiskContent": "Opgeslagen schijfinhoud",
+  "@workspaceReplaceDiskContent": {
+    "description": "Source label for a workspace replacement preview using disk content."
+  },
+  "selectFileMatches": "{count, plural, =1{1 overeenkomst selecteren} other{Alle {count} overeenkomsten selecteren}}",
+  "@selectFileMatches": {
+    "description": "Checkbox label for selecting every replacement match in a file.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceReplaceApplied": "{matches} overeenkomsten in {files} bestanden vervangen; {skipped} overgeslagen.",
+  "@workspaceReplaceApplied": {
+    "description": "Summary shown after applying workspace replacements.",
+    "placeholders": {
+      "matches": {
+        "type": "int"
+      },
+      "files": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · Met afsluitende nieuwe regel",
+  "@documentFormatWithFinalNewline": {
+    "description": "Document format tooltip when the file ends with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · Zonder afsluitende nieuwe regel",
+  "@documentFormatWithoutFinalNewline": {
+    "description": "Document format tooltip when the file does not end with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "normalizeLineEndings": "Normaliseer regeleinden",
+  "@normalizeLineEndings": {
+    "description": "Dialog title for selecting a line-ending style."
+  },
+  "mixedLineEndingsSavePrompt": "Dit document bevat gemengde regeleinden. Kies een formaat.",
+  "@mixedLineEndingsSavePrompt": {
+    "description": "Prompt shown before saving a document with mixed line endings."
+  },
+  "workspaceReplaceMixedLineEndings": "{fileName} gebruikt gemengde regeleinden. Kies het formaat dat u wilt gebruiken voordat u het vervangt.",
+  "@workspaceReplaceMixedLineEndings": {
+    "description": "Prompt shown before replacing content in a mixed-line-ending file.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReplaceIssueOversized": "Een te groot bestand overgeslagen.",
+  "@workspaceReplaceIssueOversized": {
+    "description": "Workspace replacement issue for a file above the size limit."
+  },
+  "workspaceReplaceIssueUnreadable": "Er is een bestand overgeslagen dat niet kon worden gelezen.",
+  "@workspaceReplaceIssueUnreadable": {
+    "description": "Workspace replacement issue for an unreadable file."
+  },
+  "workspaceReplaceIssueInvalidUtf8": "Er is een bestand overgeslagen dat geen geldige UTF-8 is.",
+  "@workspaceReplaceIssueInvalidUtf8": {
+    "description": "Workspace replacement issue for invalid UTF-8 content."
+  },
+  "workspaceReplaceIssueTruncated": "Het vervangende voorbeeld is ingekort.",
+  "@workspaceReplaceIssueTruncated": {
+    "description": "Workspace replacement issue when the match limit is reached."
+  },
+  "workspaceReplaceIssueFileChanged": "Een bestand overgeslagen dat na het voorbeeld is gewijzigd.",
+  "@workspaceReplaceIssueFileChanged": {
+    "description": "Workspace replacement issue for stale disk content."
+  },
+  "workspaceReplaceIssueBufferChanged": "Er is een editorbuffer overgeslagen die na het voorbeeld is gewijzigd.",
+  "@workspaceReplaceIssueBufferChanged": {
+    "description": "Workspace replacement issue for stale in-memory content."
+  },
+  "workspaceReplaceIssueNormalizationRequired": "Kies LF- of CRLF-normalisatie voordat u vervangt.",
+  "@workspaceReplaceIssueNormalizationRequired": {
+    "description": "Workspace replacement issue for mixed line endings without a selected format."
+  },
+  "workspaceReplaceIssuePartialConflict": "Het terugdraaien is gestopt omdat het bestand tegelijkertijd is gewijzigd. Er kunnen enkele vervangingen overblijven; verplaatste inhoud werd bewaard op het onderstaande pad.",
+  "@workspaceReplaceIssuePartialConflict": {
+    "description": "Workspace replacement issue when a concurrent edit prevents safe transactional rollback."
+  },
+  "workspaceReplaceIssueApplyFailed": "De herziene vervanging kon niet worden vastgelegd; er zijn geen bestanden gewijzigd.",
+  "@workspaceReplaceIssueApplyFailed": {
+    "description": "Workspace replacement issue when the transactional file commit fails."
+  },
+  "externalChangesTitle": "Externe wijzigingen — {fileName}",
+  "@externalChangesTitle": {
+    "description": "Title of the external-file comparison dialog.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "externalFileDeleted": "Dit bestand is van schijf verwijderd.",
+  "@externalFileDeleted": {
+    "description": "Persistent banner shown when an open file is deleted externally."
+  },
+  "externalFileChanged": "Dit bestand is op schijf gewijzigd terwijl er niet-opgeslagen bewerkingen waren.",
+  "@externalFileChanged": {
+    "description": "Persistent banner shown when a dirty file changes externally."
+  },
+  "recoveredDocumentReview": "Niet-opgeslagen inhoud hersteld voor {fileName}. Bekijk de inhoud en sla op, sla op als of verwerp.",
+  "@recoveredDocumentReview": {
+    "description": "Persistent recovery review banner.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "compare": "Vergelijken",
+  "@compare": {
+    "description": "Action that compares the editor buffer with the disk version."
+  },
+  "reloadFromDisk": "Herladen vanaf schijf",
+  "@reloadFromDisk": {
+    "description": "Action that replaces the editor buffer with the disk version."
+  },
+  "keepMine": "Mijn versie behouden",
+  "@keepMine": {
+    "description": "Action that keeps the editor buffer after an external change."
+  },
+  "saveAs": "Opslaan als",
+  "@saveAs": {
+    "description": "Action that saves the current document to another path."
+  },
+  "sourceSearchInvalidRegex": "Ongeldige reguliere expressie",
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
+  "sourceLargeFileFeaturesPaused": "Groot bestand: markeren en vouwen worden gepauzeerd",
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
+  "nothingToRead": "Niets te lezen",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
+  },
+  "admonition": "Aandachtspunt",
+  "@admonition": {
+    "description": "Tooltip for the Writerside admonition editing menu."
+  },
+  "quote": "Citaat",
+  "@quote": {
+    "description": "Label for a neutral Writerside quote block."
+  },
+  "note": "Opmerking",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "Tip",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "Waarschuwing",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "Tabbladen",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "Tab",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "Procedure",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "Stap",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "Onderwerp",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "Hoofdstuk",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "Kon {target} niet openen",
+  "@couldNotOpenTarget": {
+    "description": "Toast shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "Linkdoel niet gevonden: {targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Toast shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "Kan dit bestandstype niet openen in de editor",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Toast shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "Anker niet gevonden: {anchor}",
+  "@anchorNotFound": {
+    "description": "Toast shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "Geen problemen gevonden",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "Geen resultaten",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} - Regel {lineNumber}",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "Naamloos resultaat",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Markdown-bestand",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Writerside Markdown-onderwerp",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "Writerside XML-onderwerp",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Writerside-tree",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "Configuratiebestand",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "Variabelenbestand",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "Categoriebestand",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "Bronbestand",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "Openen mislukt: {error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "Kan Writerside-project niet maken: {error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "Kan Writerside-onderwerp niet maken: {error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "Kan bestand niet openen: {error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "Kies waar u dit Markdown-bestand wilt opslaan.",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Opslaan geblokkeerd: bestand gewijzigd op schijf.",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "Opslaan mislukt: {error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorFileOperationFailed": "Bestandsbewerking mislukt: {error}",
+  "@workspaceErrorFileOperationFailed": {
+    "description": "Workspace error message shown when creating, renaming, moving, or deleting a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "Validatie mislukt: {error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRecoveryRestored": "{count, plural, =1{1 niet-opgeslagen document is hersteld. Controleer het voordat u het opslaat of weggooit.} other{{count} niet-opgeslagen documenten zijn hersteld. Controleer elk document voordat u het opslaat of weggooit.}}",
+  "@workspaceRecoveryRestored": {
+    "description": "Notice shown after crash recovery restores documents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceRecoveryDamaged": "{count, plural, =1{1 beschadigd herstelrecord kon niet worden hersteld. Het oorspronkelijke herstelbestand is bewaard voor inspectie.} other{{count} beschadigde herstelrecords konden niet worden hersteld. Geldige herstelrecords blijven beschikbaar.}}",
+  "@workspaceRecoveryDamaged": {
+    "description": "Notice shown when recovery data is partly or wholly malformed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "Pad bestaat niet: {path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "Doelmap bestaat al en is niet leeg: {path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "Doelpad bestaat al en is geen map: {path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "Gegenereerd bestand bestaat al: {path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "Bovenliggende map is vereist.",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "Bovenliggende map bestaat niet: {path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDirectoryMissing": "Map bestaat niet: {path}",
+  "@errorDirectoryMissing": {
+    "description": "Detail for a missing directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathAlreadyExists": "Pad bestaat al: {path}",
+  "@errorPathAlreadyExists": {
+    "description": "Detail for a file operation target that already exists.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNameRequired": "Bestandsnaam is vereist.",
+  "@errorFileNameRequired": {
+    "description": "Detail for a missing file name in a file operation."
+  },
+  "errorFileNameUnsafe": "De bestandsnaam moet uit één veilig padsegment bestaan.",
+  "@errorFileNameUnsafe": {
+    "description": "Detail for an unsafe file name in a file operation."
+  },
+  "errorFileOperationInvalidTarget": "Kan een map niet naar zichzelf verplaatsen.",
+  "@errorFileOperationInvalidTarget": {
+    "description": "Detail for an invalid file operation target."
+  },
+  "errorFileOperationOutsideRoot": "Bestandsbewerkingen moeten binnen de werkruimte blijven.",
+  "@errorFileOperationOutsideRoot": {
+    "description": "Detail for a file operation outside the workspace root."
+  },
+  "errorFileOperationRoot": "De hoofdmap van de werkruimte kan niet worden gewijzigd vanuit de bestandsboom.",
+  "@errorFileOperationRoot": {
+    "description": "Detail for a file operation attempted on the workspace root."
+  },
+  "errorProjectNameRequired": "Projectnaam is vereist.",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "Mapnaam is vereist.",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "De mapnaam moet uit één veilig padsegment bestaan.",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "De instantie-ID moet beginnen met een kleine letter en mag alleen kleine letters, cijfers, onderstrepingstekens en koppeltekens bevatten.",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "De onderwerpbestandsnaam moet een Markdown-bestandsnaam zijn zonder padscheidingstekens.",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "Onderwerptitel is vereist.",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "De root van de Writerside-module bestaat niet: {path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "Er moet een Writerside-module geopend zijn om een onderwerp te kunnen maken.",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "De Writerside-module heeft geen instantieboom.",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Writerside-treebestand bestaat niet: {path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "Onderwerp-ID \"{topicId}\" bestaat al in deze helpmodule.",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "Onderwerpbestand bestaat al: {path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "Referentieonderwerp is niet aanwezig in de geselecteerde boom: {topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "Het geselecteerde TOC-item bestaat niet meer.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "Een TOC-item kan niet naar zichzelf of naar een van zijn onderliggende items worden verplaatst.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "Het startonderwerp {topic} kan niet worden verwijderd. Kies eerst een andere startpagina.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideSafeDeleteRequired": "Gebruik Veilig verwijderen voor Writerside-onderwerpbestanden.",
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Error shown when generic file deletion is attempted for a Writerside topic."
+  },
+  "errorWritersideTopicUsageScanFailed": "Kan de onderwerpgebruikscan niet voltooien. Er zijn geen bestanden gewijzigd.",
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
+  "errorWritersideTopicUsagesRemain": "Sommige verwijzingen naar onderwerpen vereisen nog aandacht. Controleer ze voordat u verdergaat.",
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
+  "errorWritersideRedirectInvalid": "Het geselecteerde omleidingsdoel is niet langer geldig. Kies het opnieuw.",
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
+  "errorWritersideRollbackFailed": "Het verwijderen van het onderwerp kan niet volledig worden teruggedraaid. Bekijk deze paden voordat u verdergaat: {paths}",
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "De hoofdmap van Onderwerpen moet een veilige relatieve map zijn.",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "De onderwerpbestandsnaam moet uit één veilig padsegment bestaan.",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "De onderwerpbestandsextensie moet overeenkomen met het geselecteerde formaat ({extension}).",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "De bestandsnaam van het onderwerp mag alleen letters, cijfers, onderstrepingstekens en koppeltekens bevatten.",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "Onbekende fout: {code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "Kan de metadata van het bestand niet lezen: {error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "Grote werkruimte gedetecteerd. Sommige bestanden zijn overgeslagen om de app responsief te houden.",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "Kan werkruimte-item niet inspecteren: {error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "Bestand is groter dan de limiet voor automatisch parseren van de bèta.",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "Kon het Markdown-bestand niet lezen: {error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Ongeldig opgemaakt kopattribuutblok in Writerside.",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "Dubbele kop-ID \"{id}\".",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Extra H1-koppen op het hoogste niveau worden behandeld als hoofdstukken.",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown-onderwerp heeft geen H1 of front matter-titel.",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "XML-onderwerp mist titel.",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "Onderwerp \"{fileName}\" mist een titel.",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "Frontmatter is niet afgesloten.",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "Onveilig HTML-element.",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "Linkdoel bestaat niet: {targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Anker \"{anchor}\" bestaat niet.",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "Afbeelding \"{destination}\" mist alt-tekst.",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "Afbeelding bestaat niet: {destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "Ongeldige XML: {message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "writerside.cfg root moet <ihp> zijn.",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets-declaratie ontbreekt src.",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups-declaratie ontbreekt src.",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Niet-ondersteunde toetsenbordmodus: {mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "Instance-declaratie ontbreekt src.",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg registreert geen instantie.",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": ".tree root moet <instance-profile> zijn.",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "Instantieprofiel mist ID.",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "Boombestandsstam komt niet overeen met instantie-ID '{id}'.",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "Bij de niet-bibliotheekinstantie ontbreekt het attribuut start-page.",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "Startpagina \"{startPage}\" bestaat niet.",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "Onderwerp \"{topic}\" komt meer dan één keer voor in de inhoudsopgave van deze instantie.",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "Variabeledeclaratie moet een naam en waarde hebben.",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "Variabele \"{name}\" wordt meer dan één keer gedeclareerd.",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "Categorie mist ID.",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "Categorie \"{id}\" wordt meer dan één keer gedeclareerd.",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "Categorievolgorde '{order}' wordt meer dan één keer gedeclareerd.",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": ".topic root moet <topic> zijn.",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "XML-onderwerp mist root-ID.",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "XML-onderwerphoofd-id \"{id}\" moet overeenkomen met de bestandsnaam \"{expectedId}\".",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "Element-ID \"{elementId}\" komt meerdere keren voor.",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> mist href.",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Voor de Writerside-modus is writerside.cfg vereist.",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "De geconfigureerde build-configuratiemap ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "De geconfigureerde map met API-specificaties ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "De map met geconfigureerde fragmenten ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "Het geconfigureerde variabelenbestand ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "Het geconfigureerde categorieënbestand ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Het geconfigureerde instantiegroepenbestand ontbreekt: {relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "Geregistreerde instantiestructuur \"{source}\" bestaat niet.",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "Kan onderwerpbestand niet lezen: {error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Standaard onderwerpenmap ontbreekt: {relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "De map met geconfigureerde onderwerpen ontbreekt: {relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "Geconfigureerde afbeeldingenmap ontbreekt: {relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "Element-ID \"{id}\" komt meerdere keren voor.",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "De inhoudsopgave verwijst naar het ontbrekende onderwerp \"{topic}\".",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "Externe href \"{href}\" is ongeldig.",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "Variabele \"%{name}%\" is niet gedeclareerd.",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "Onderwerplink \"{destination}\" werkt niet.",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "Anker \"{anchor}\" bestaat niet in \"{targetName}\".",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "Het attribuut from ontbreekt in <include>.",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "Includebron \"{from}\" bestaat niet.",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "Include-element \"{elementId}\" bestaat niet in \"{from}\".",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "seealso-categorie \"{ref}\" is niet gedeclareerd.",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "Onderwerpreferentie \"{reference}\" is dubbelzinnig.",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "Onbekende diagnose: {code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "close": "Sluiten",
+  "@close": {
+    "description": "Close action label."
+  },
+  "git": "Git",
+  "@git": {
+    "description": "Git sidebar tab label."
+  },
+  "gitDiff": "Git diff",
+  "@gitDiff": {
+    "description": "Title for the Git diff viewer."
+  },
+  "gitShowDiff": "Verschil tonen",
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
+  "gitDiffHunkRange": "oud {oldRange} → nieuw {newRange}",
+  "@gitDiffHunkRange": {
+    "description": "Readable old-to-new line range shown for a Git diff hunk.",
+    "placeholders": {
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
+    }
+  },
+  "gitDiffNoLines": "geen regels",
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
+  "gitUnavailableTitle": "Git is niet beschikbaar",
+  "@gitUnavailableTitle": {
+    "description": "Git empty state title when Git cannot be used."
+  },
+  "gitUnavailableMessage": "{reason, select, other{Installeer Git of configureer BusyMark om een beschikbaar Git-uitvoerbaar bestand te gebruiken. {reason}}}",
+  "@gitUnavailableMessage": {
+    "description": "Git empty state message when Git cannot be used.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "gitTrustRequiredTitle": "Deze werkruimte vertrouwen voor Git?",
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
+  "gitTrustRequiredMessage": "Git-repository's kunnen programma's uitvoeren via hooks, filters en andere configuraties. Vertrouw deze werkruimte voordat BusyMark repositorygegevens leest of Git-acties inschakelt.",
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
+  "gitTrustWorkspace": "Werkruimte vertrouwen",
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
+  "gitNotRepositoryTitle": "Geen Git-repository",
+  "@gitNotRepositoryTitle": {
+    "description": "Git empty state title for non-repository workspaces."
+  },
+  "gitNotRepositoryMessage": "Deze werkruimte bevindt zich niet in een Git-repository.",
+  "@gitNotRepositoryMessage": {
+    "description": "Git empty state message for non-repository workspaces."
+  },
+  "gitInitializeRepository": "Git-repository initialiseren",
+  "@gitInitializeRepository": {
+    "description": "Action label for git init."
+  },
+  "gitDetachedHead": "Losgekoppelde HEAD",
+  "@gitDetachedHead": {
+    "description": "Detached HEAD label."
+  },
+  "gitDetachedHeadAt": "Vrijstaand bij {commit}",
+  "@gitDetachedHeadAt": {
+    "description": "Detached HEAD label with short commit.",
+    "placeholders": {
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitNoUpstream": "Geen upstream",
+  "@gitNoUpstream": {
+    "description": "Repository label when no upstream branch is configured."
+  },
+  "gitAheadCount": "{count, plural, =1{1 niet-gepushte commit} other{{count} niet-gepushte commits}}",
+  "@gitAheadCount": {
+    "description": "Count of local commits not pushed to the upstream branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitBehindCount": "{count, plural, =1{1 commit om te pullen} other{{count} commits om te pullen}}",
+  "@gitBehindCount": {
+    "description": "Count of upstream commits not pulled into the local branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitClean": "Geen wijzigingen",
+  "@gitClean": {
+    "description": "Git clean state label."
+  },
+  "gitConflicts": "Conflicten",
+  "@gitConflicts": {
+    "description": "Git conflicts group label."
+  },
+  "gitChanges": "Wijzigingen",
+  "@gitChanges": {
+    "description": "Git changes view label."
+  },
+  "gitStaged": "Gestaged",
+  "@gitStaged": {
+    "description": "Git staged changes group label."
+  },
+  "gitUnstaged": "Niet-gestaged",
+  "@gitUnstaged": {
+    "description": "Git unstaged changes group label."
+  },
+  "gitHistory": "Geschiedenis",
+  "@gitHistory": {
+    "description": "Git history view label."
+  },
+  "gitBranches": "Takken",
+  "@gitBranches": {
+    "description": "Git branch menu label."
+  },
+  "gitActions": "Git-acties",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
+  },
+  "gitPull": "Git pull",
+  "@gitPull": {
+    "description": "Git pull action label."
+  },
+  "gitFetch": "Git fetch",
+  "@gitFetch": {
+    "description": "Git fetch action label."
+  },
+  "gitPush": "Push",
+  "@gitPush": {
+    "description": "Git push action label."
+  },
+  "gitCommit": "Commit",
+  "@gitCommit": {
+    "description": "Git commit action label."
+  },
+  "gitSelectForCommit": "Voor commit selecteren",
+  "@gitSelectForCommit": {
+    "description": "Tooltip for staging a Git file."
+  },
+  "gitRemoveFromCommit": "Bestand uit staging verwijderen",
+  "@gitRemoveFromCommit": {
+    "description": "Tooltip for unstaging a Git file."
+  },
+  "gitDiscard": "Wijzigingen verwerpen",
+  "@gitDiscard": {
+    "description": "Action that rolls a tracked file back to HEAD."
+  },
+  "gitOpenFile": "Bestand openen",
+  "@gitOpenFile": {
+    "description": "Action label for opening a file from a Git row or diff."
+  },
+  "gitMarkResolved": "Als opgelost markeren",
+  "@gitMarkResolved": {
+    "description": "Tooltip for marking a conflicted Git file as resolved."
+  },
+  "gitUntracked": "Niet-getrackt",
+  "@gitUntracked": {
+    "description": "Git untracked files group label."
+  },
+  "gitCommitMessage": "Commitbericht",
+  "@gitCommitMessage": {
+    "description": "Commit message field label."
+  },
+  "gitCommitSelectedFiles": "Geselecteerde bestanden",
+  "@gitCommitSelectedFiles": {
+    "description": "Commit panel selected files section label."
+  },
+  "gitCommitNoSelectedFiles": "Stage ten minste één bestand voordat u commit.",
+  "@gitCommitNoSelectedFiles": {
+    "description": "Commit validation error when the repository index is empty."
+  },
+  "gitStagedFileCount": "{count, plural, =1{1 gestaged bestand} other{{count} gestagede bestanden}}",
+  "@gitStagedFileCount": {
+    "description": "Number of repository files currently staged for commit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitOutsideWorkspace": "Buiten werkruimte",
+  "@gitOutsideWorkspace": {
+    "description": "Marker for a staged repository file outside the opened workspace."
+  },
+  "gitCommitMessageRequired": "Voer een commit-bericht in.",
+  "@gitCommitMessageRequired": {
+    "description": "Commit validation error when the message is empty."
+  },
+  "gitCreateBranch": "Branch maken",
+  "@gitCreateBranch": {
+    "description": "Git create branch action label."
+  },
+  "gitNewBranch": "Nieuwe branch",
+  "@gitNewBranch": {
+    "description": "Git branch dropdown action for creating a new branch."
+  },
+  "gitBranchName": "Branchnaam",
+  "@gitBranchName": {
+    "description": "Branch name field label."
+  },
+  "gitSwitchBranch": "Branch wisselen",
+  "@gitSwitchBranch": {
+    "description": "Git switch branch action label."
+  },
+  "gitNoChanges": "Geen wijzigingen",
+  "@gitNoChanges": {
+    "description": "Git empty state when there are no changes."
+  },
+  "gitNoHistory": "Geen geschiedenis",
+  "@gitNoHistory": {
+    "description": "Git empty state when history is empty."
+  },
+  "gitNoBranches": "Geen branches",
+  "@gitNoBranches": {
+    "description": "Git empty state when branch list is empty."
+  },
+  "gitNoDiff": "Geen verschil om te laten zien",
+  "@gitNoDiff": {
+    "description": "Git diff empty state."
+  },
+  "gitBinaryFile": "Binair bestand. BusyMark geeft geen binaire patches weer.",
+  "@gitBinaryFile": {
+    "description": "Git diff binary file message."
+  },
+  "gitBinaryFileInfo": "Binair bestand ({size} bytes). BusyMark geeft geen binaire patches weer.",
+  "@gitBinaryFileInfo": {
+    "description": "Git diff binary file message with file size.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "gitUnsavedChangesBanner": "Niet-opgeslagen editorwijzigingen worden pas opgenomen nadat ze zijn opgeslagen.",
+  "@gitUnsavedChangesBanner": {
+    "description": "Git diff banner for unsaved editor changes."
+  },
+  "gitConfirmDiscardTitle": "Git-wijzigingen verwerpen?",
+  "@gitConfirmDiscardTitle": {
+    "description": "Confirmation title for discarding Git changes."
+  },
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle gestagede en niet-gestagede wijzigingen in het geselecteerde getrackte bestand worden teruggezet naar HEAD.} other{Alle gestagede en niet-gestagede wijzigingen in de geselecteerde getrackte bestanden worden teruggezet naar HEAD.}}",
+  "@gitConfirmDiscardTracked": {
+    "description": "Confirmation body for discarding tracked changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardUntracked": "{count, plural, =1{Het geselecteerde niet-getrackte bestand wordt verwijderd.} other{De geselecteerde niet-getrackte bestanden worden verwijderd.}}",
+  "@gitConfirmDiscardUntracked": {
+    "description": "Confirmation body for deleting untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardMixed": "{count, plural, =1{Het geselecteerde bestand wordt teruggezet of verwijderd op basis van de Git-status.} other{De geselecteerde bestanden worden teruggezet of verwijderd op basis van hun Git-status.}}",
+  "@gitConfirmDiscardMixed": {
+    "description": "Confirmation body for discarding mixed tracked and untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchTitle": "Overstappen naar {branch}?",
+  "@gitConfirmSwitchBranchTitle": {
+    "description": "Confirmation title for switching branches.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchMessage": "BusyMark laadt de werkruimte opnieuw vanaf schijf nadat Git van branch is gewisseld.",
+  "@gitConfirmSwitchBranchMessage": {
+    "description": "Confirmation body for switching branches."
+  },
+  "gitConfirmPushSetUpstreamTitle": "Upstream-branch instellen?",
+  "@gitConfirmPushSetUpstreamTitle": {
+    "description": "Confirmation title for pushing with set-upstream."
+  },
+  "gitConfirmPushSetUpstreamMessage": "Deze branch heeft geen upstream. BusyMark kan {branch} pushen en de upstream instellen als er precies één remote is geconfigureerd.",
+  "@gitConfirmPushSetUpstreamMessage": {
+    "description": "Confirmation body for pushing with set-upstream.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitProjectHistory": "Projectgeschiedenis",
+  "@gitProjectHistory": {
+    "description": "Project history action label."
+  },
+  "gitFileHistory": "Bestandshistorie",
+  "@gitFileHistory": {
+    "description": "Current file history action label."
+  },
+  "gitFileHistoryRequiresOpenFile": "Bestandsgeschiedenis vereist een geopend Markdown-bestand.",
+  "@gitFileHistoryRequiresOpenFile": {
+    "description": "File History empty state when no Markdown file is active."
+  },
+  "gitLoadMore": "Meer laden",
+  "@gitLoadMore": {
+    "description": "Action to load another page of Git history."
+  },
+  "gitChangesInCommit": "Wijzigingen in deze commit",
+  "@gitChangesInCommit": {
+    "description": "Historical comparison between a commit and its parent."
+  },
+  "gitCompareWithCurrent": "Vergelijk met actueel",
+  "@gitCompareWithCurrent": {
+    "description": "Historical comparison between a commit and the working-tree file."
+  },
+  "gitRestoreVersion": "Herstel deze versie",
+  "@gitRestoreVersion": {
+    "description": "Action to restore one file from a selected commit."
+  },
+  "gitConfirmRestoreTitle": "Deze bestandsversie herstellen?",
+  "@gitConfirmRestoreTitle": {
+    "description": "Confirmation title for restoring a historical file version."
+  },
+  "gitConfirmRestoreMessage": "BusyMark vervangt het huidige werkboombestand door de geselecteerde vastgelegde versie. Het herstelde bestand blijft niet-gestaged.",
+  "@gitConfirmRestoreMessage": {
+    "description": "Confirmation body for restoring a historical file version."
+  },
+  "gitCommitActions": "Commitacties",
+  "@gitCommitActions": {
+    "description": "Tooltip for actions on a selected Git commit."
+  },
+  "gitResetCurrentBranchToHere": "Huidige branch resetten naar hier…",
+  "@gitResetCurrentBranchToHere": {
+    "description": "Project History action that moves the current branch to the selected commit."
+  },
+  "gitResetCurrentBranchTitle": "Branch {branch} resetten naar {commit}?",
+  "@gitResetCurrentBranchTitle": {
+    "description": "Title for choosing how to reset the current branch to a selected commit.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitResetCurrentBranchMessage": "Dit verplaatst branch {branch} naar commit {commit}. Kies hoe Git de index en werkboom bijwerkt.",
+  "@gitResetCurrentBranchMessage": {
+    "description": "Explanation shown before resetting the current branch.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitReset": "Resetten",
+  "@gitReset": {
+    "description": "Action that confirms resetting the current Git branch."
+  },
+  "gitResetModeSoft": "Soft",
+  "@gitResetModeSoft": {
+    "description": "Git soft reset mode label."
+  },
+  "gitResetModeSoftDescription": "Verplaats alleen de branch. Houd de index en werkboom ongewijzigd; verschillen met de geselecteerde commit blijven gestaged.",
+  "@gitResetModeSoftDescription": {
+    "description": "Git soft reset mode explanation."
+  },
+  "gitResetModeMixed": "Mixed",
+  "@gitResetModeMixed": {
+    "description": "Git mixed reset mode label."
+  },
+  "gitResetModeMixedDescription": "Verplaats de branch en reset de index. Houd de werkboom ongewijzigd; de verschillen worden niet-gestaged.",
+  "@gitResetModeMixedDescription": {
+    "description": "Git mixed reset mode explanation."
+  },
+  "gitResetModeHard": "Hard",
+  "@gitResetModeHard": {
+    "description": "Git hard reset mode label."
+  },
+  "gitResetModeHardDescription": "Verplaats de branch en reset de index en werkboom. Wijzigingen in getrackte bestanden worden genegeerd; niet-getrackte bestanden die in de weg staan kunnen worden verwijderd.",
+  "@gitResetModeHardDescription": {
+    "description": "Git hard reset mode explanation."
+  },
+  "gitResetModeKeep": "Keep",
+  "@gitResetModeKeep": {
+    "description": "Git keep reset mode label."
+  },
+  "gitResetModeKeepDescription": "Verplaats de branch en reset getrackte bestanden met behoud van lokale wijzigingen. Git wordt afgebroken als deze wijzigingen in conflict komen met de reset.",
+  "@gitResetModeKeepDescription": {
+    "description": "Git keep reset mode explanation."
+  },
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "@gitAdditionsDeletions": {
+    "description": "Diff additions and deletions count.",
+    "placeholders": {
+      "additions": {
+        "type": "int"
+      },
+      "deletions": {
+        "type": "int"
+      }
+    }
+  },
+  "fileActions": "Bestandsacties",
+  "@fileActions": {
+    "description": "Tooltip for a file action menu."
+  },
+  "actions": "Acties",
+  "@actions": {
+    "description": "Tooltip for a general action menu."
+  },
+  "gitStatusAdded": "Toegevoegd",
+  "@gitStatusAdded": {
+    "description": "Git file status label."
+  },
+  "gitStatusDeleted": "Verwijderd",
+  "@gitStatusDeleted": {
+    "description": "Git file status label."
+  },
+  "gitStatusRenamed": "Hernoemd",
+  "@gitStatusRenamed": {
+    "description": "Git file status label."
+  },
+  "gitStatusCopied": "Gekopieerd",
+  "@gitStatusCopied": {
+    "description": "Git file status label."
+  },
+  "gitStatusUntracked": "Niet-getrackt",
+  "@gitStatusUntracked": {
+    "description": "Git file status label."
+  },
+  "gitStatusConflicted": "In conflict",
+  "@gitStatusConflicted": {
+    "description": "Git file status label."
+  },
+  "gitStatusIgnored": "Genegeerd",
+  "@gitStatusIgnored": {
+    "description": "Git file status label."
+  },
+  "gitStatusTypeChanged": "Soort gewijzigd",
+  "@gitStatusTypeChanged": {
+    "description": "Git file status label."
+  },
+  "gitStatusModified": "Gewijzigd",
+  "@gitStatusModified": {
+    "description": "Git file status label."
+  },
+  "gitStatusUnknown": "Onbekend",
+  "@gitStatusUnknown": {
+    "description": "Git file status label."
+  },
+  "gitErrorUnavailable": "Git is niet beschikbaar.",
+  "@gitErrorUnavailable": {
+    "description": "Git error message."
+  },
+  "gitErrorNotRepository": "Deze werkruimte is geen Git-opslagplaats.",
+  "@gitErrorNotRepository": {
+    "description": "Git error message."
+  },
+  "gitErrorUnsafePath": "BusyMark heeft een onveilig Git-pad geblokkeerd.",
+  "@gitErrorUnsafePath": {
+    "description": "Git error message."
+  },
+  "gitErrorInvalidBranchName": "Voer een geldige branchnaam in.",
+  "@gitErrorInvalidBranchName": {
+    "description": "Git error message."
+  },
+  "gitErrorNoRemote": "Er is geen Git-remote geconfigureerd.",
+  "@gitErrorNoRemote": {
+    "description": "Git error message."
+  },
+  "gitErrorNoUpstream": "Er is geen upstream-branch geconfigureerd.",
+  "@gitErrorNoUpstream": {
+    "description": "Git error message."
+  },
+  "gitErrorMultipleRemotes": "Er zijn meerdere remotes geconfigureerd. Kies een upstream buiten deze versie van BusyMark.",
+  "@gitErrorMultipleRemotes": {
+    "description": "Git error message."
+  },
+  "gitErrorDirtyWorkspace": "Sla wijzigingen in de BusyMark-editor op of verwerp ze voordat u van branch wisselt.",
+  "@gitErrorDirtyWorkspace": {
+    "description": "Git error message."
+  },
+  "gitErrorResetDirtyWorkspace": "Sla wijzigingen in de BusyMark-editor op of verwerp ze voordat u de huidige branch reset.",
+  "@gitErrorResetDirtyWorkspace": {
+    "description": "Git reset error shown when the editor has unsaved content."
+  },
+  "gitErrorRestoreStagedFile": "Haal dit bestand eerst uit staging voordat u een historische versie herstelt.",
+  "@gitErrorRestoreStagedFile": {
+    "description": "Git error shown when historical restoration is blocked because the current file is staged."
+  },
+  "gitErrorResetDetachedHead": "Checkout eerst een branch voordat u deze reset.",
+  "@gitErrorResetDetachedHead": {
+    "description": "Git reset error shown while HEAD is detached."
+  },
+  "gitErrorDiverged": "De branches zijn uiteen gelopen. Los het samenvoegen of opnieuw baseren buiten deze versie van BusyMark op.",
+  "@gitErrorDiverged": {
+    "description": "Git error message."
+  },
+  "gitErrorAuthorIdentity": "Git heeft een auteursnaam en e-mailadres nodig voordat het kan committen.",
+  "@gitErrorAuthorIdentity": {
+    "description": "Git error shown when no commit author identity is configured."
+  },
+  "gitAuthorIdentityTitle": "Git-auteuridentiteit",
+  "@gitAuthorIdentityTitle": {
+    "description": "Title of the Git author identity recovery dialog."
+  },
+  "gitAuthorIdentityMessage": "Voer de identiteit in die Git moet vastleggen bij commits. BusyMark zal het opslaan en deze commit opnieuw proberen.",
+  "@gitAuthorIdentityMessage": {
+    "description": "Explanation in the Git author identity recovery dialog."
+  },
+  "gitAuthorName": "Naam",
+  "@gitAuthorName": {
+    "description": "Git commit author name field label."
+  },
+  "gitAuthorEmail": "E-mail",
+  "@gitAuthorEmail": {
+    "description": "Git commit author email field label."
+  },
+  "gitAuthorIdentityGlobal": "Gebruik voor alle opslagplaatsen",
+  "@gitAuthorIdentityGlobal": {
+    "description": "Switch label for saving Git identity globally."
+  },
+  "gitAuthorIdentityGlobalDescription": "Als BusyMark als Snap is geïnstalleerd, geldt dit voor alle opslagplaatsen die in BusyMark worden geopend.",
+  "@gitAuthorIdentityGlobalDescription": {
+    "description": "Description of global Git identity scope in the Snap."
+  },
+  "gitSaveIdentityAndCommit": "Identiteit opslaan en committen",
+  "@gitSaveIdentityAndCommit": {
+    "description": "Action that saves Git author identity and retries a commit."
+  },
+  "gitErrorAuthentication": "Git-authenticatie is mislukt.",
+  "@gitErrorAuthentication": {
+    "description": "Git error message."
+  },
+  "gitErrorNetwork": "Git-netwerkbewerking is mislukt.",
+  "@gitErrorNetwork": {
+    "description": "Git error message."
+  },
+  "gitErrorConflict": "Git rapporteerde onopgeloste conflicten.",
+  "@gitErrorConflict": {
+    "description": "Git error message."
+  },
+  "gitErrorCommandFailed": "Git-opdracht is mislukt.",
+  "@gitErrorCommandFailed": {
+    "description": "Git error message."
+  },
+  "syntaxReference": "Syntaxisreferentie",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Markdown-blokken",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Blokstructuren ondersteund in Markdown-bron en preview.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "Inline-opmaak",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "Opmaak die kan verschijnen in alinea's, lijstitems en tabelcellen.",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "Ruwe HTML-blokken",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "Veilige HTML-tags op blokniveau weergegeven via BusyMark-voorbeeldwidgets.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "Onbewerkte HTML-inlinetags",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "Veilige inline HTML-tags weergegeven zonder letterlijke tags weer te geven.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "Koppen",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "Paragrafen",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "Lijsten",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "Containers",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "Tekstblokken",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "Figuren en afbeeldingen",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "Voorgeformatteerde code",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "Openklapbare blokken",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "Beschrijvingslijsten",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "Opmaaktags",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "Inline codetags",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantische inline-tags",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "Toegestane HTML wordt geconverteerd naar BusyMark-voorbeeldblokken en niet weergegeven in een browser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "Ruwe HTML wordt exact als brontekst opgeslagen.",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markeringen in onbewerkte HTML worden weergegeven als letterlijke tekst.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "Scripts, stijlen, frames, formulieren, SVG, MathML, gebeurtenissen en onveilige attributen worden geblokkeerd.",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "Links staan http-, https-, mailto-, tel-, relatieve en fragment-URL's toe; onveilige schema's worden geblokkeerd.",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Categorie",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammen en API",
+  "syntaxReferenceCategoryMathematics": "Wiskunde",
+  "syntaxReferenceExample": "Voorbeeld",
+  "syntaxReferenceIdentifiers": "Identificatoren en aliassen",
+  "syntaxReferenceScope": "Bereik",
+  "syntaxReferenceLimitation": "BusyMark-beperking",
+  "syntaxReferenceOfficialDocumentation": "Officiële documentatie",
+  "syntaxReferenceScopeWritersideMarkdown": "Alleen Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Alleen Writerside Markdown en Writerside XML",
+  "syntaxReferenceMarkdownDescription": "De belangrijkste Markdown-vormen die BusyMark kan schrijven en weergeven.",
+  "syntaxReferenceParagraphExample": "Een alinea met tekst.",
+  "syntaxReferenceTableLimitation": "Tabellen gebruiken de pipe-syntaxis van GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "twee spaties aan het einde van de regel, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark accepteert een gerichte, veilige subset van ruwe HTML in Markdown-broncode.",
+  "syntaxReferenceDiagramsDescription": "Afgebakende Mermaid-, PlantUML-, D2- en OpenAPI-blokken werken in Markdown-broncode. Blokidentificatoren zijn niet hoofdlettergevoelig en BusyMark behoudt de oorspronkelijke spelling.",
+  "syntaxReferenceOpenApiLimitation": "Gebruik afgebakende YAML- of JSON-inhoud. BusyMark behandelt een willekeurig volledig YAML- of JSON-document niet als een OpenAPI-referentie.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantische codeblokken voor diagrammen",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantische code-block- en src-vormen ondersteunen Mermaid, PlantUML en D2, niet OpenAPI, en alleen binnen Writerside-projecten.",
+  "syntaxReferenceReferencedDiagramSource": "Diagrambron met verwijzing",
+  "syntaxReferenceReferencedDiagramLimitation": "Paden moeten relatief zijn en binnen het geopende Writerside-project blijven; de afgebakende vorm met src is alleen voor Writerside Markdown.",
+  "syntaxReferenceMathematicsDescription": "BusyMark ondersteunt TeX-expressies, geen volledige TeX- of LaTeX-documenten.",
+  "syntaxReferenceInlineMath": "Wiskunde in de regel",
+  "syntaxReferenceGithubMath": "GitHub-wiskunde met dollar en backtick",
+  "syntaxReferenceDisplayMath": "Wiskunde als blok",
+  "syntaxReferenceMathFence": "math-blok",
+  "syntaxReferenceTexFence": "tex-blok",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark herkent \\(...\\) en \\[...\\] niet als Markdown-wiskundescheidingstekens.",
+  "syntaxReferenceTexFenceLimitation": "Buiten de Writerside-modus blijft een tex-blok een gewoon codeblok.",
+  "syntaxReferenceWritersideMathElement": "Writerside-math-element",
+  "syntaxReferenceWritersideMathElementLimitation": "Het math-element is semantische Writerside-syntaxis, geen toegestane ruwe HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantisch TeX-codeblok",
+  "syntaxReferenceWritersideDescription": "Deze gerichte uitbreidingen worden alleen in geopende Writerside-projecten geïnterpreteerd.",
+  "syntaxReferenceAdmonitionBlockquote": "Waarschuwingscitaat",
+  "syntaxReferenceAdmonitionLimitation": "Een gewoon blokcitaat is een tip in Writerside Markdown; in gewone Markdown blijft het een normaal citaat.",
+  "syntaxReferenceSemanticAdmonitions": "Semantische waarschuwingen",
+  "syntaxReferenceSemanticMarkupLimitation": "Gewone Markdown interpreteert deze semantische Writerside-elementen niet.",
+  "syntaxReferenceCollapsibleHeading": "Inklapbare kop",
+  "syntaxReferenceCollapsibleCode": "Inklapbaar codeblok",
+  "syntaxReferenceSemanticCollapsibles": "Semantische inklapbare inhoud",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark ondersteunt inklapbare chapter-, procedure-, code-block- en definitielijstvormen, niet de volledige Writerside-catalogus.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantische codeblokken voor wiskunde en diagrammen",
+  "syntaxReferenceVideo": "Writerside-video",
+  "syntaxReferenceVideoLimitation": "Lokale video gebruikt een lokale preview-src-afbeelding; gehoste bronnen moeten ondersteunde HTTPS-URL's van YouTube of Vimeo zijn.",
+  "exportAsPdf": "Exporteren als PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."
+  },
+  "pdfExportDescription": "Kies de pagina-indeling voor een verzorgde, op zichzelf staande PDF.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Externe afbeeldingen worden tijdens het exporteren niet gedownload. Lokale afbeeldingen zijn inbegrepen indien beschikbaar.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Paginagrootte",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Oriëntatie",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Portret",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Landschap",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Marges",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Smal",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Normaal",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Breed",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Voeg paginanummers toe",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Exporteren",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "PDF exporteren…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "PDF-document",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} is geëxporteerd.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} is geëxporteerd met {count, plural, =1{1 waarschuwing} other{{count} waarschuwingen}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some content fell back or was omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "Het PDF-exportonderdeel ontbreekt. Installeer BusyMark opnieuw en probeer het opnieuw.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "De PDF-export duurde te lang en werd gestopt.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark kon dit document niet als PDF exporteren.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
+  "visualizationRendering": "Renderen…",
+  "@visualizationRendering": {
+    "description": "Status shown while a fenced visualization is rendering."
+  },
+  "visualizationStale": "Laatste geldige weergave wordt getoond",
+  "@visualizationStale": {
+    "description": "Status shown when a visualization displays its last valid result while newer source renders or is invalid."
+  },
+  "visualizationShowSource": "Bron tonen",
+  "@visualizationShowSource": {
+    "description": "Action that reveals the original source fence for a visualization."
+  },
+  "visualizationShowRender": "Render weergeven",
+  "@visualizationShowRender": {
+    "description": "Action that returns from visualization source to its rendered output."
+  },
+  "visualizationFitWidth": "Passend maken op breedte",
+  "@visualizationFitWidth": {
+    "description": "Action that resets diagram zoom to fit its card."
+  },
+  "visualizationSaveImage": "Afbeelding opslaan",
+  "@visualizationSaveImage": {
+    "description": "Action that saves a rendered diagram as an SVG or PNG file."
+  },
+  "visualizationCopyImage": "Afbeelding kopiëren",
+  "@visualizationCopyImage": {
+    "description": "Action that copies a rendered diagram to the image clipboard."
+  },
+  "visualizationImageCopied": "Afbeelding gekopieerd",
+  "@visualizationImageCopied": {
+    "description": "Confirmation after copying a rendered diagram to the clipboard."
+  },
+  "visualizationOpenApiReference": "Open API-referentie",
+  "@visualizationOpenApiReference": {
+    "description": "Action that opens the complete interactive OpenAPI reference window."
+  },
+  "visualizationValid": "Geldig",
+  "@visualizationValid": {
+    "description": "OpenAPI validation success state."
+  },
+  "visualizationInvalid": "Ongeldig",
+  "@visualizationInvalid": {
+    "description": "OpenAPI validation failure state."
+  },
+  "visualizationServers": "Servers",
+  "@visualizationServers": {
+    "description": "OpenAPI server count label."
+  },
+  "visualizationPaths": "Paden",
+  "@visualizationPaths": {
+    "description": "OpenAPI path count label."
+  },
+  "visualizationOperations": "Operaties",
+  "@visualizationOperations": {
+    "description": "OpenAPI operation count label."
+  },
+  "visualizationTags": "Labels",
+  "@visualizationTags": {
+    "description": "OpenAPI tag summary label."
+  },
+  "visualizationNoOperations": "Geen overeenkomende bewerkingen",
+  "@visualizationNoOperations": {
+    "description": "Empty state for the filtered OpenAPI operation list."
+  },
+  "visualizationSearchOperations": "Zoekbewerkingen",
+  "@visualizationSearchOperations": {
+    "description": "Hint for the OpenAPI operation search field."
+  },
+  "visualizationRenderFailed": "Deze visualisatie kon niet worden weergegeven.",
+  "@visualizationRenderFailed": {
+    "description": "Fallback message for a failed visualization render."
+  },
+  "visualizationRetry": "Opnieuw proberen",
+  "@visualizationRetry": {
+    "description": "Action that retries a failed visualization render."
+  },
+  "visualizationSaved": "{fileName} opgeslagen",
+  "@visualizationSaved": {
+    "description": "Confirmation after saving a rendered diagram.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutExportPdfDescription": "Exporteer het actieve document of de Writerside-module als PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
+  "instances": "Instanties",
+  "@instances": {
+    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+  },
+  "newInstance": "Nieuwe instantie",
+  "@newInstance": {
+    "description": "Action that creates a Writerside instance."
+  },
+  "newTocLibrary": "Nieuwe TOC-bibliotheek",
+  "@newTocLibrary": {
+    "description": "Action that creates a Writerside library instance for reusable TOC sections."
+  },
+  "editInstance": "Instantie bewerken",
+  "@editInstance": {
+    "description": "Action and dialog title for editing a Writerside instance."
+  },
+  "openTocFile": "TOC-bestand openen",
+  "@openTocFile": {
+    "description": "Action that opens the selected Writerside instance tree file."
+  },
+  "createInstance": "Instantie maken",
+  "@createInstance": {
+    "description": "Dialog title for creating a Writerside instance."
+  },
+  "createTocLibrary": "TOC-bibliotheek maken",
+  "@createTocLibrary": {
+    "description": "Dialog title for creating a Writerside TOC library instance."
+  },
+  "instanceContent": "Inhoud",
+  "@instanceContent": {
+    "description": "Group title for choosing the initial content of a Writerside instance."
+  },
+  "instanceContentSource": "Maken vanuit",
+  "@instanceContentSource": {
+    "description": "Field for choosing how a Writerside instance is initialized."
+  },
+  "emptyInstance": "Lege instantie",
+  "@emptyInstance": {
+    "description": "Option to create a Writerside instance without imported topics."
+  },
+  "markdownFiles": "Lokale Markdown-bestanden",
+  "@markdownFiles": {
+    "description": "Option to initialize a Writerside instance from Markdown files."
+  },
+  "chooseMarkdownFolder": "Kies de Markdown-map",
+  "@chooseMarkdownFolder": {
+    "description": "Action to choose a folder containing Markdown files."
+  },
+  "errorWritersideInstanceImportSourceRequired": "Kies een map met Markdown-bestanden.",
+  "@errorWritersideInstanceImportSourceRequired": {
+    "description": "Validation shown when an imported instance has no source folder."
+  },
+  "instanceAppearance": "Uiterlijk",
+  "@instanceAppearance": {
+    "description": "Group title for the local appearance of a Writerside instance."
+  },
+  "instanceColor": "Pictogramkleur",
+  "@instanceColor": {
+    "description": "Writerside instance icon-color field."
+  },
+  "instanceVersion": "Versie",
+  "@instanceVersion": {
+    "description": "Writerside instance version field."
+  },
+  "instanceVersionInherited": "De projectversie is {version} als dit veld leeg is.",
+  "@instanceVersionInherited": {
+    "description": "Explanation of an inherited Writerside project version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "instanceWebPath": "Webpad",
+  "@instanceWebPath": {
+    "description": "Writerside instance publication web-path field."
+  },
+  "instanceStatus": "Status",
+  "@instanceStatus": {
+    "description": "Writerside instance status field."
+  },
+  "instanceStatusRelease": "Release",
+  "@instanceStatusRelease": {
+    "description": "Regular Writerside instance status."
+  },
+  "instanceStatusEap": "EAP",
+  "@instanceStatusEap": {
+    "description": "Writerside early-access instance status."
+  },
+  "instanceStatusDeprecated": "Verouderd",
+  "@instanceStatusDeprecated": {
+    "description": "Writerside deprecated instance status."
+  },
+  "allowSearchEngineIndexing": "Sta zoekmachine-indexering toe",
+  "@allowSearchEngineIndexing": {
+    "description": "Per-instance Writerside search-engine indexing setting."
+  },
+  "allowSearchEngineIndexingDescription": "Laat externe zoekmachines deze uitvoer indexeren.",
+  "@allowSearchEngineIndexingDescription": {
+    "description": "Description of the Writerside indexing setting."
+  },
+  "offlineArtifact": "Offline artefact",
+  "@offlineArtifact": {
+    "description": "Per-instance Writerside offline artifact setting."
+  },
+  "offlineArtifactDescription": "Bundel bronnen zodat de gebouwde documentatie op zichzelf staat.",
+  "@offlineArtifactDescription": {
+    "description": "Description of the Writerside offline artifact setting."
+  },
+  "instanceOutputSettings": "Uitvoerinstellingen",
+  "@instanceOutputSettings": {
+    "description": "Group title for Writerside instance build and publication settings."
+  },
+  "markdownImportSource": "Markdown-bron",
+  "@markdownImportSource": {
+    "description": "Group title for the source directory of a Writerside Markdown import."
+  },
+  "markdownImportFiles": "Markdown-bestanden",
+  "@markdownImportFiles": {
+    "description": "Group title for files selected for a Writerside Markdown import."
+  },
+  "selectNone": "Selecteer geen",
+  "@selectNone": {
+    "description": "Action that clears all items in a multiple selection."
+  },
+  "markdownFilesFound": "{count, plural, =1{1 Markdown-bestand gevonden} other{{count} Markdown-bestanden gevonden}}",
+  "@markdownFilesFound": {
+    "description": "Count of discovered Markdown import files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMarkdownFilesFound": "Er zijn geen Markdown-bestanden gevonden in deze map.",
+  "@noMarkdownFilesFound": {
+    "description": "Empty state for a Writerside Markdown import source."
+  },
+  "copyReferencedMedia": "Kopieer de media waarnaar wordt verwezen",
+  "@copyReferencedMedia": {
+    "description": "Option to copy media used by imported Markdown files."
+  },
+  "copyReferencedMediaDescription": "Kopieer lokale afbeeldingen en video waarnaar door de geselecteerde bestanden wordt verwezen, terwijl de relatieve paden behouden blijven.",
+  "@copyReferencedMediaDescription": {
+    "description": "Description of the Writerside Markdown media import option."
+  },
+  "instanceIdRenameWarningTitle": "Naam van instantie-ID wijzigen?",
+  "@instanceIdRenameWarningTitle": {
+    "description": "Confirmation title before refactoring a Writerside instance ID."
+  },
+  "instanceIdRenameWarning": "BusyMark hernoemt het .tree-bestand en werkt de Writerside-projectreferenties bij van “{oldId}” naar “{newId}”. Publicatiescripts worden niet gewijzigd en moeten afzonderlijk worden bijgewerkt.",
+  "@instanceIdRenameWarning": {
+    "description": "Warning shown before a Writerside instance ID refactor.",
+    "placeholders": {
+      "oldId": {
+        "type": "String"
+      },
+      "newId": {
+        "type": "String"
+      }
+    }
+  },
+  "renameAndUpdateReferences": "Hernoem en update referenties",
+  "@renameAndUpdateReferences": {
+    "description": "Confirmation action for a Writerside instance ID refactor."
+  },
+  "tocLibraryDescription": "Een TOC-bibliotheek slaat herbruikbare secties op en produceert geen eigen uitvoer.",
+  "@tocLibraryDescription": {
+    "description": "Explanation shown while creating a Writerside TOC library."
+  },
+  "defaultTocLibraryName": "Gedeelde inhoudsopgave",
+  "@defaultTocLibraryName": {
+    "description": "Default name for a new Writerside TOC library instance."
+  },
+  "instanceColorAutomatic": "Automatisch",
+  "@instanceColorAutomatic": {
+    "description": "Automatic Writerside instance icon color option."
+  },
+  "instanceColorBlue": "Blauw",
+  "@instanceColorBlue": {
+    "description": "Blue Writerside instance icon color option."
+  },
+  "instanceColorGreen": "Groen",
+  "@instanceColorGreen": {
+    "description": "Green Writerside instance icon color option."
+  },
+  "instanceColorOrange": "Oranje",
+  "@instanceColorOrange": {
+    "description": "Orange Writerside instance icon color option."
+  },
+  "instanceColorPurple": "Paars",
+  "@instanceColorPurple": {
+    "description": "Purple Writerside instance icon color option."
+  },
+  "instanceColorRed": "Rood",
+  "@instanceColorRed": {
+    "description": "Red Writerside instance icon color option."
+  },
+  "instanceColorTeal": "Turkoois",
+  "@instanceColorTeal": {
+    "description": "Teal Writerside instance icon color option."
+  },
+  "instanceColorYellow": "Geel",
+  "@instanceColorYellow": {
+    "description": "Yellow Writerside instance icon color option."
+  },
+  "errorWritersideInstanceNameRequired": "Voer een instantienaam in.",
+  "@errorWritersideInstanceNameRequired": {
+    "description": "Validation error for an empty Writerside instance name."
+  },
+  "errorWritersideInstanceIdExists": "Er bestaat al een instantie met ID “{id}”.",
+  "@errorWritersideInstanceIdExists": {
+    "description": "Error for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceTreeExists": "De instantiestructuur bestaat al: {path}",
+  "@errorWritersideInstanceTreeExists": {
+    "description": "Error for an existing Writerside instance tree path.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSourceMissing": "De Markdown-bronmap bestaat niet: {path}",
+  "@errorWritersideInstanceImportSourceMissing": {
+    "description": "Error for a missing Writerside Markdown import source.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSelectionRequired": "Selecteer ten minste één Markdown-bestand om te importeren.",
+  "@errorWritersideInstanceImportSelectionRequired": {
+    "description": "Validation error when no Markdown import files are selected."
+  },
+  "errorWritersideInstanceImportFileInvalid": "Dit is geen leesbaar Markdown-bestand binnen de geselecteerde bron: {path}",
+  "@errorWritersideInstanceImportFileInvalid": {
+    "description": "Error for an invalid Writerside Markdown import file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportTargetExists": "Importeren zou een bestaand projectbestand overschrijven: {path}",
+  "@errorWritersideInstanceImportTargetExists": {
+    "description": "Error for a colliding Writerside Markdown import target.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceFilesChanged": "Instantiebestanden gewijzigd op schijf. Bekijk ze en probeer het opnieuw.",
+  "@errorWritersideInstanceFilesChanged": {
+    "description": "Concurrent-change error for a Writerside instance mutation."
+  },
+  "errorWritersideInstanceRollbackFailed": "BusyMark kon de wijziging aan de instantie niet volledig ongedaan maken. Controleer deze bestanden voordat u verdergaat: {paths}",
+  "@errorWritersideInstanceRollbackFailed": {
+    "description": "Error when a Writerside instance mutation rollback is incomplete.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceLibraryImport": "Een inhoudsopgavebibliotheek kan geen Markdown-onderwerpen importeren.",
+  "@errorWritersideInstanceLibraryImport": {
+    "description": "Error when Markdown import is requested for a TOC library."
+  },
+  "errorWritersideInstanceWebPathInvalid": "Het webpad moet uit één regel bestaan.",
+  "@errorWritersideInstanceWebPathInvalid": {
+    "description": "Validation error for an invalid Writerside instance web path."
+  },
+  "errorWritersideInstanceConfigurationInvalid": "De Writerside-instantieconfiguratie is ongeldig. Corrigeer de diagnose en probeer het opnieuw.",
+  "@errorWritersideInstanceConfigurationInvalid": {
+    "description": "Error when an instance tree, project config, or build profiles file cannot be safely edited."
+  },
+  "errorWritersideInstanceTemporaryFile": "BusyMark kon de wijzigingen aan de instantie niet veilig doorvoeren.",
+  "@errorWritersideInstanceTemporaryFile": {
+    "description": "Error when a temporary file for an instance mutation cannot be created."
+  },
+  "diagnosticWritersideTreeInvalidStatus": "Onbekende instantiestatus '{status}'. Gebruik release, eap of deprecated.",
+  "@diagnosticWritersideTreeInvalidStatus": {
+    "description": "Diagnostic for an unsupported Writerside instance status.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDuplicateInstanceId": "De instantie-ID “{id}” wordt door meer dan één boombestand gebruikt.",
+  "@diagnosticWritersideDuplicateInstanceId": {
+    "description": "Diagnostic for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfilesInvalidRoot": "buildprofiles.xml moet een <buildprofiles> hoofdelement hebben.",
+  "@diagnosticWritersideBuildProfilesInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside build profiles root."
+  },
+  "diagnosticWritersideBuildProfilesInvalidBoolean": "De waarde voor {name} “{value}” moet true of false zijn.",
+  "@diagnosticWritersideBuildProfilesInvalidBoolean": {
+    "description": "Diagnostic for an invalid Writerside build profile Boolean.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfileMissingInstance": "Een <build-profile>-element moet een instantie-ID specificeren.",
+  "@diagnosticWritersideBuildProfileMissingInstance": {
+    "description": "Diagnostic for a Writerside build profile without an instance attribute."
+  },
+  "diagnosticWritersideTreeInvalidInclude": "Een boom <include> moet zowel from als element-id specificeren.",
+  "@diagnosticWritersideTreeInvalidInclude": {
+    "description": "Diagnostic for an incomplete Writerside tree include."
+  },
+  "diagnosticWritersideTreeMissingSnippetId": "Een boom <snippet> moet een ID specificeren.",
+  "@diagnosticWritersideTreeMissingSnippetId": {
+    "description": "Diagnostic for a Writerside tree snippet without an ID."
+  },
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "Een TOC-referentie tussen meerdere instanties moet zowel ref als in specificeren.",
+  "@diagnosticWritersideTreeInvalidCrossInstanceReference": {
+    "description": "Diagnostic for an incomplete Writerside ref/in pair."
+  },
+  "diagnosticWritersideTreeConflictingTargets": "Een TOC-element kan niet meer dan één onderwerp, referentie, link of omleiding targeten.",
+  "@diagnosticWritersideTreeConflictingTargets": {
+    "description": "Diagnostic for conflicting Writerside TOC targets."
+  },
+  "diagnosticWritersideTreeDuplicateElementId": "Boomelement-ID “{id}” wordt meer dan één keer gedeclareerd.",
+  "@diagnosticWritersideTreeDuplicateElementId": {
+    "description": "Diagnostic for a duplicate Writerside tree element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "Het instantiegroepenbestand moet een hoofdelement <instance-groups> hebben.",
+  "@diagnosticWritersideInstanceGroupsInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside instance groups root."
+  },
+  "diagnosticWritersideInstanceGroupInvalid": "Een instantiegroep moet een niet-lege ID en lijst met instanties opgeven.",
+  "@diagnosticWritersideInstanceGroupInvalid": {
+    "description": "Diagnostic for an invalid Writerside instance group."
+  },
+  "diagnosticWritersideInstanceGroupDuplicateId": "Instantiegroep-ID '{id}' wordt meer dan één keer gedeclareerd.",
+  "@diagnosticWritersideInstanceGroupDuplicateId": {
+    "description": "Diagnostic for a duplicate Writerside instance group ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideExternalTreeInclude": "TOC include “{source}#{id}” behoort tot de externe module “{origin}” en kan niet worden uitgebreid in deze werkruimte.",
+  "@diagnosticWritersideExternalTreeInclude": {
+    "description": "Diagnostic for a tree include from another Writerside module.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeIncludeElementMissing": "Boomelement “{id}” bestaat niet in de geregistreerde boom “{source}”.",
+  "@diagnosticWritersideTreeIncludeElementMissing": {
+    "description": "Diagnostic for a missing reusable tree element.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeCircularInclude": "Boom include “{source}#{id}” creëert een cyclus.",
+  "@diagnosticWritersideTreeCircularInclude": {
+    "description": "Diagnostic for a circular Writerside tree include.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideUnknownInstanceGroup": "Instantievoorwaarde verwijst naar onbekende groep “@{group}”.",
+  "@diagnosticWritersideUnknownInstanceGroup": {
+    "description": "Diagnostic for an unknown Writerside instance group.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceInstanceMissing": "Referentie voor meerdere instanties is gericht op onbekende instantie '{instance}'.",
+  "@diagnosticWritersideReferenceInstanceMissing": {
+    "description": "Diagnostic for a missing Writerside reference instance.",
+    "placeholders": {
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceTopicMissing": "Onderwerp “{topic}” bevindt zich niet in de instantie waarnaar wordt verwezen “{instance}”.",
+  "@diagnosticWritersideReferenceTopicMissing": {
+    "description": "Diagnostic for a missing topic in a cross-instance Writerside reference.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "download": "Downloaden",
+  "@download": {
+    "description": "Button label that downloads a required component."
+  },
+  "exportWritersideAsPdf": "Exporteer Writerside als PDF",
+  "@exportWritersideAsPdf": {
+    "description": "Menu action and dialog title for exporting a Writerside instance as PDF."
+  },
+  "writersidePdfContent": "Inhoud exporteren",
+  "@writersidePdfContent": {
+    "description": "Group title for selecting Writerside PDF content."
+  },
+  "writersidePdfPage": "Pagina",
+  "@writersidePdfPage": {
+    "description": "Writerside PDF page settings group title."
+  },
+  "exportingWritersidePdf": "Writerside-PDF exporteren...",
+  "@exportingWritersidePdf": {
+    "description": "Progress title while building a Writerside PDF."
+  },
+  "ai": "AI",
+  "@ai": {
+    "description": "Settings section and editing menu label for artificial-intelligence features."
+  },
+  "aiLocalOllama": "Lokale Ollama",
+  "@aiLocalOllama": {
+    "description": "AI provider option for a loopback Ollama service."
+  },
+  "aiDisabled": "Uitgeschakeld",
+  "@aiDisabled": {
+    "description": "AI provider option that disables AI features."
+  },
+  "aiProvider": "AI-provider",
+  "@aiProvider": {
+    "description": "Label for an AI provider selection."
+  },
+  "aiDefaultProvider": "Standaardprovider",
+  "@aiDefaultProvider": {
+    "description": "Settings label for the provider selected by default for AI actions."
+  },
+  "aiConfigureProvider": "Provider configureren",
+  "@aiConfigureProvider": {
+    "description": "Settings label for choosing which AI provider configuration to edit."
+  },
+  "aiChooseProvider": "Kies een AI-provider",
+  "@aiChooseProvider": {
+    "description": "Dialog title shown before selecting the AI provider for an action."
+  },
+  "aiOllamaEndpoint": "Ollama-eindpunt",
+  "@aiOllamaEndpoint": {
+    "description": "Settings label for the local Ollama origin."
+  },
+  "aiOllamaModel": "Ollama-model",
+  "@aiOllamaModel": {
+    "description": "Settings label for the installed Ollama model."
+  },
+  "aiTestConnection": "Verbinding testen",
+  "@aiTestConnection": {
+    "description": "Button that verifies generation with the configured AI provider and model."
+  },
+  "aiTestingConnection": "Testen…",
+  "@aiTestingConnection": {
+    "description": "Status while BusyMark verifies the configured AI provider and model."
+  },
+  "aiConnectionReady": "Verbonden. {count, plural, =1{1 geïnstalleerd model gevonden} other{{count} geïnstalleerde modellen gevonden}}.",
+  "@aiConnectionReady": {
+    "description": "Successful Ollama connection status.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiNoModels": "Geen model geselecteerd.",
+  "@aiNoModels": {
+    "description": "AI model setting shown before a model has been selected or discovered."
+  },
+  "aiConnectionFailed": "BusyMark kon het genereren van AI-tekst niet verifiëren.",
+  "@aiConnectionFailed": {
+    "description": "Generic failure shown while testing AI generation."
+  },
+  "aiConfigureFirst": "Schakel een AI-provider in en verifieer een model in Instellingen → AI.",
+  "@aiConfigureFirst": {
+    "description": "Message shown when an AI action is unavailable."
+  },
+  "aiEditWithAi": "Bewerken met AI",
+  "aiRefineWithAi": "Verfijn met AI",
+  "@aiRefineWithAi": {
+    "description": "Selected-text context-menu action that opens AI refinement."
+  },
+  "aiInstruction": "Instructie",
+  "aiChangeTarget": "Wat kan er veranderen",
+  "aiSharedContext": "Context gedeeld met AI",
+  "aiTargetSelection": "Geselecteerde inhoud",
+  "aiTargetInsertAfterBlock": "Invoegen na huidig blok",
+  "aiTargetCurrentBlock": "Huidig blok",
+  "aiTargetCurrentSection": "Huidige sectie",
+  "aiTargetCompleteDocument": "Volledig document",
+  "aiContextNone": "Geen documentcontext",
+  "aiContextSelection": "Geselecteerde inhoud",
+  "aiContextCurrentBlock": "Huidig blok",
+  "aiContextCurrentSection": "Huidige sectie",
+  "aiContextCompleteDocument": "Volledig document",
+  "aiGenerating": "Voorstel genereren…",
+  "@aiGenerating": {
+    "description": "Progress text while an AI proposal streams."
+  },
+  "aiProposal": "AI-voorstel",
+  "@aiProposal": {
+    "description": "Title of the AI proposal review dialog."
+  },
+  "aiGenerateProposal": "Voorstel genereren",
+  "@aiGenerateProposal": {
+    "description": "Button that starts generation after the user reviews the AI instruction, change target, and shared context."
+  },
+  "aiContextDisclosure": "De geselecteerde provider ontvangt {count, plural, =1{1 teken} other{{count} tekens}} uit de weergegeven context.",
+  "@aiContextDisclosure": {
+    "description": "Disclosure of AI context size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiOriginal": "Origineel",
+  "@aiOriginal": {
+    "description": "Label for original text in an AI proposal review."
+  },
+  "aiSuggested": "Voorgesteld",
+  "@aiSuggested": {
+    "description": "Label for proposed text in an AI proposal review."
+  },
+  "aiApplyProposal": "Voorstel toepassen",
+  "@aiApplyProposal": {
+    "description": "Button that applies a reviewed AI proposal."
+  },
+  "aiTokenUsage": "{input} invoertokens · {output} uitvoertokens",
+  "@aiTokenUsage": {
+    "description": "Local Ollama token usage for one proposal.",
+    "placeholders": {
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiStaleProposal": "Het document is gewijzigd terwijl dit voorstel werd gegenereerd. Voer de actie opnieuw uit.",
+  "@aiStaleProposal": {
+    "description": "Message for an AI result based on an old editor revision."
+  },
+  "gitAiStagedChangesChanged": "De gestagede wijzigingen zijn gewijzigd terwijl dit commitbericht werd gegenereerd. Voer de actie opnieuw uit.",
+  "@gitAiStagedChangesChanged": {
+    "description": "Warning shown when an AI commit-message proposal was generated from an obsolete staged diff."
+  },
+  "aiViewContext": "Verzonden context bekijken",
+  "@aiViewContext": {
+    "description": "Action that reveals the exact AI input context."
+  },
+  "aiReviewExactContent": "Controleer de exacte inhoud",
+  "@aiReviewExactContent": {
+    "description": "Action that reveals the exact content affected by and shared with an AI edit."
+  },
+  "aiContentToChange": "Te wijzigen inhoud",
+  "@aiContentToChange": {
+    "description": "Label for the exact Markdown that an AI proposal may change."
+  },
+  "aiContentSentToAi": "Inhoud verzonden naar AI",
+  "@aiContentSentToAi": {
+    "description": "Label for the exact document context that will be sent to the configured AI provider."
+  },
+  "aiApiKey": "API-sleutel",
+  "@aiApiKey": {
+    "description": "Label for a cloud AI provider API key."
+  },
+  "aiApiKeyStoredHint": "Er wordt een sleutel opgeslagen in het systeemreferentiearchief",
+  "@aiApiKeyStoredHint": {
+    "description": "Hint when a cloud API key is already stored."
+  },
+  "aiApiKeyEnterHint": "Voer de API-sleutel van de provider in",
+  "@aiApiKeyEnterHint": {
+    "description": "Hint for entering a cloud provider API key."
+  },
+  "aiReplaceApiKey": "Vervang de API-sleutel",
+  "@aiReplaceApiKey": {
+    "description": "Action that replaces a stored cloud provider key."
+  },
+  "aiSaveApiKey": "API-sleutel veilig opslaan",
+  "@aiSaveApiKey": {
+    "description": "Action that saves a cloud provider key to the system credential store."
+  },
+  "aiRemoveApiKey": "Opgeslagen API-sleutel verwijderen",
+  "@aiRemoveApiKey": {
+    "description": "Action that removes a cloud provider key from the system credential store."
+  },
+  "aiCredentialSaved": "API-sleutel opgeslagen in het systeemreferentiesarchief.",
+  "@aiCredentialSaved": {
+    "description": "Confirmation after saving an AI provider key."
+  },
+  "aiCredentialRemoved": "De opgeslagen API-sleutel is verwijderd.",
+  "@aiCredentialRemoved": {
+    "description": "Confirmation after removing an AI provider key."
+  },
+  "aiModelRouting": "Modelroutering",
+  "@aiModelRouting": {
+    "description": "Settings label for AI model routing."
+  },
+  "aiAutomaticRouting": "Automatisch per taak",
+  "@aiAutomaticRouting": {
+    "description": "AI model routing option that chooses by task class."
+  },
+  "aiFixedModelRouting": "Gebruik het geselecteerde model",
+  "@aiFixedModelRouting": {
+    "description": "AI model routing option that always uses the preferred model."
+  },
+  "aiPreferredModel": "Voorkeursmodel",
+  "@aiPreferredModel": {
+    "description": "Settings label for a preferred cloud AI model."
+  },
+  "aiModel": "Model",
+  "@aiModel": {
+    "description": "Label for selecting a model for one AI request."
+  },
+  "aiUsageThisMonth": "{requests} verzoeken · {input} invoertokens · {output} uitvoertokens",
+  "@aiUsageThisMonth": {
+    "description": "Local monthly AI usage summary.",
+    "placeholders": {
+      "requests": {
+        "type": "int"
+      },
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiCloudConsentTitle": "Inhoud naar {provider} sturen?",
+  "@aiCloudConsentTitle": {
+    "description": "Cloud AI data-sharing confirmation title.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentEnable": "Schakel {provider} in",
+  "@aiCloudConsentEnable": {
+    "description": "Action that confirms use of a cloud AI provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentMessage": "Alleen de inhoud die in elk AI-beoordelingsdialoogvenster wordt weergegeven, wordt verzonden. Verzoeken zijn staatloos, voorstellen moeten worden beoordeeld en de API-sleutel wordt opgeslagen in het referentiearchief van het Linux-systeem.",
+  "@aiCloudConsentMessage": {
+    "description": "Cloud AI data-sharing and credential disclosure."
+  },
+  "aiCloudConsentRequired": "Bevestig eerst het delen van gegevens door {provider} in Instellingen → AI.",
+  "@aiCloudConsentRequired": {
+    "description": "AI action error when cloud consent is missing.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiGenerationVerified": "Generatie geverifieerd met {model}. {count, plural, =1{1 compatibel model is} other{{count} compatibele modellen zijn}} beschikbaar.",
+  "@aiGenerationVerified": {
+    "description": "Successful AI model generation qualification.",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiColdStartObserved": "Er werd een lokale koude start waargenomen.",
+  "@aiColdStartObserved": {
+    "description": "Additional model qualification status when local generation required a cold start."
+  },
+  "aiNoCompatibleModels": "Er is geen compatibel model voor tekstgeneratie beschikbaar.",
+  "@aiNoCompatibleModels": {
+    "description": "AI connection status when no compatible generation model is available."
+  },
+  "aiEnableProvider": "Schakel eerst een AI-provider in.",
+  "@aiEnableProvider": {
+    "description": "AI settings error when no provider is enabled."
+  },
+  "aiDraftCommitMessage": "Concept commit-bericht",
+  "@aiDraftCommitMessage": {
+    "description": "AI action that drafts a Git commit message."
+  },
+  "aiDrafting": "Opstellen…",
+  "@aiDrafting": {
+    "description": "Progress label while AI drafts a commit message."
+  },
+  "aiDraftWithAi": "Met AI opstellen",
+  "@aiDraftWithAi": {
+    "description": "Action that drafts a Git commit message with AI."
+  },
+  "generateOrUpdateMarkdownToc": "Inhoudsopgave genereren/bijwerken",
+  "@generateOrUpdateMarkdownToc": {
+    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
+  },
+  "markdownTocTitle": "Inhoudsopgave",
+  "@markdownTocTitle": {
+    "description": "Heading inserted above a generated Markdown table of contents."
+  },
+  "markdownTocUpdated": "Inhoudsopgave bijgewerkt met {count, plural, =1{1 vermelding} other{{count} vermeldingen}}.",
+  "@markdownTocUpdated": {
+    "description": "Confirmation after generating a Markdown table of contents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markdownTocNoHeadings": "Voeg ten minste één sectiekop toe voordat u een inhoudsopgave genereert.",
+  "@markdownTocNoHeadings": {
+    "description": "Message when a Markdown document has no section headings for a generated table of contents."
+  },
+  "markdownTocMalformedMarkers": "De BusyMark-inhoudsopgavemarkeringen ontbreken, zijn gedupliceerd of zijn niet in de juiste volgorde.",
+  "@markdownTocMalformedMarkers": {
+    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
+  },
+  "diagnosticMarkdownHeadingSkippedLevel": "Kopniveau {level} volgt niveau {previousLevel}; controleer de nesting van secties.",
+  "@diagnosticMarkdownHeadingSkippedLevel": {
+    "description": "Accessibility diagnostic for a skipped Markdown heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "previousLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkEmptyText": "Linktekst is leeg. Geef een toegankelijke naam op die het doel ervan beschrijft.",
+  "@diagnosticMarkdownLinkEmptyText": {
+    "description": "Accessibility diagnostic for a Markdown link without text."
+  },
+  "diagnosticMarkdownLinkReviewText": "Controleer of de linktekst “{text}” het doel ervan in de context beschrijft.",
+  "@diagnosticMarkdownLinkReviewText": {
+    "description": "Accessibility hint for potentially non-descriptive Markdown link text.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownTableEmptyHeader": "De cellen van de tabelkop moeten hun kolommen identificeren; voltooi elke lege kop.",
+  "@diagnosticMarkdownTableEmptyHeader": {
+    "description": "Accessibility diagnostic for an empty Markdown table header cell."
+  },
+  "mathRenderFailed": "De wiskundige uitdrukking kon niet worden weergegeven.",
+  "@mathRenderFailed": {
+    "description": "Tooltip and diagnostic text shown when a mathematical expression cannot be rendered."
+  },
+  "inlineMath": "Inline wiskunde",
+  "@inlineMath": {
+    "description": "Editor action that inserts an inline mathematical expression."
+  },
+  "displayMath": "Wiskunde weergeven",
+  "@displayMath": {
+    "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "AI-bewerking is expliciet. BusyMark stuurt alleen de weergegeven context naar de geselecteerde provider en past nooit een voorstel toe zonder beoordeling.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
+}

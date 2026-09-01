@@ -312,10 +312,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -345,7 +351,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'اللوحة الجانبية';
@@ -428,7 +449,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'إظهار مرجع اختصارات لوحة المفاتيح';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription => 'فتح مرجع Markdown وHTML';
+  String get shortcutSyntaxReferenceDescription => 'فتح مرجع بناء الجملة';
 
   @override
   String get shortcutSettingsDescription => 'فتح إعدادات BusyMark';
@@ -777,7 +798,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String unsavedChangesMultipleMessage(int count) {
-    return 'يحتوي $count من المستندات على تغييرات غير محفوظة. هل تريد حفظها قبل المتابعة؟';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'توجد تغييرات غير محفوظة في ⁨$count⁩ مستند. احفظها قبل المتابعة؟',
+      many: 'توجد تغييرات غير محفوظة في ⁨$count⁩ مستندًا. احفظها قبل المتابعة؟',
+      few: 'توجد تغييرات غير محفوظة في ⁨$count⁩ مستندات. احفظها قبل المتابعة؟',
+      two: 'يوجد مستندان يحتويان على تغييرات غير محفوظة. احفظهما قبل المتابعة؟',
+      one: 'يوجد مستند واحد يحتوي على تغييرات غير محفوظة. احفظه قبل المتابعة؟',
+      zero: 'لا توجد مستندات ذات تغييرات غير محفوظة.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1668,12 +1699,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceRecoveryRestored(int count) {
-    return 'تمت استعادة $count من المستندات غير المحفوظة. راجع كل مستند تمت استعادته قبل المتابعة.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'تمت استعادة ⁨$count⁩ مستند غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
+      many:
+          'تمت استعادة ⁨$count⁩ مستندًا غير محفوظ. راجع كل مستند قبل حفظه أو تجاهله.',
+      few:
+          'تمت استعادة ⁨$count⁩ مستندات غير محفوظة. راجع كل مستند قبل حفظه أو تجاهله.',
+      two: 'تمت استعادة مستندين غير محفوظين. راجعهما قبل حفظهما أو تجاهلهما.',
+      one: 'تمت استعادة مستند واحد غير محفوظ. راجعه قبل حفظه أو تجاهله.',
+      zero: 'لم تتم استعادة أي مستندات غير محفوظة.',
+    );
+    return '$_temp0';
   }
 
   @override
   String workspaceRecoveryDamaged(int count) {
-    return 'تعذرت استعادة $count من سجلات الاستعادة التالفة. تظل المستندات الصالحة التي تمت استعادتها متاحة.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'تعذر استعادة ⁨$count⁩ سجل استعادة تالف. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      many:
+          'تعذر استعادة ⁨$count⁩ سجل استعادة تالفًا. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      few:
+          'تعذر استعادة ⁨$count⁩ سجلات استعادة تالفة. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      two:
+          'تعذر استعادة سجلَّي استعادة تالفين. لا تزال سجلات الاسترداد الصالحة متاحة.',
+      one:
+          'تعذر استعادة سجل استعادة تالف واحد. تم الاحتفاظ بملف الاسترداد الأصلي للفحص.',
+      zero: 'لا توجد سجلات استعادة تالفة.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2315,7 +2374,10 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count ملفات مُرحَّلة',
+      other: '$count ملف مُرحّل',
+      many: '$count ملفًا مُرحّلًا',
+      few: '$count ملفات مرحّلة',
+      two: 'ملفان مرحّلان',
       one: 'ملف مُرحَّل واحد',
     );
     return '$_temp0';
@@ -2372,12 +2434,10 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      many: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      few: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
-      two: 'ستتم استعادة الملفين المتعقبين المحددين من Git.',
-      one: 'ستتم استعادة الملف المتعقب المحدد من Git.',
-      zero: 'لا توجد ملفات متعقبة محددة لاستعادتها من Git.',
+      other:
+          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملفات المتعقبة المحددة إلى HEAD.',
+      one:
+          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملف المتعقب المحدد إلى HEAD.',
     );
     return '$_temp0';
   }
@@ -2430,10 +2490,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'المشروع';
+  String get gitProjectHistory => 'تاريخ المشروع';
 
   @override
-  String get gitFileHistory => 'الملف الحالي';
+  String get gitFileHistory => 'تاريخ الملف';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
@@ -2627,113 +2687,260 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitErrorCommandFailed => 'فشل أمر Git.';
 
   @override
-  String get markdownAndHtml => 'Markdown و HTML';
+  String get syntaxReference => 'مرجع بناء الجملة';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'كتل Markdown';
+  String get syntaxReferenceMarkdownBlocks => 'كتل Markdown';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'بنى الكتل المدعومة في مصدر Markdown والمعاينة.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Markdown داخل السطر';
+  String get syntaxReferenceInlineFormatting => 'Markdown داخل السطر';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'كتل HTML الخام';
+  String get syntaxReferenceRawHtmlBlocks => 'كتل HTML الخام';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'وسوم HTML داخل السطر';
+  String get syntaxReferenceRawHtmlInline => 'وسوم HTML داخل السطر';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
 
   @override
-  String get markdownHtmlSafety => 'قواعد الأمان';
+  String get syntaxReferenceHeadings => 'العناوين';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.';
+  String get syntaxReferenceParagraphs => 'الفقرات';
 
   @override
-  String get markdownHtmlHeadings => 'العناوين';
+  String get syntaxReferenceLists => 'القوائم';
 
   @override
-  String get markdownHtmlParagraphs => 'الفقرات';
+  String get syntaxReferenceHtmlContainers => 'الحاويات';
 
   @override
-  String get markdownHtmlLists => 'القوائم';
+  String get syntaxReferenceHtmlTextBlocks => 'كتل النص';
 
   @override
-  String get markdownHtmlHtmlContainers => 'الحاويات';
+  String get syntaxReferenceHtmlFigures => 'الأشكال والصور';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'كتل النص';
+  String get syntaxReferenceHtmlPreformatted => 'كود منسق مسبقًا';
 
   @override
-  String get markdownHtmlHtmlFigures => 'الأشكال والصور';
+  String get syntaxReferenceHtmlDisclosure => 'كتل قابلة للفتح';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'كود منسق مسبقًا';
+  String get syntaxReferenceHtmlDescriptionLists => 'قوائم وصفية';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'كتل قابلة للفتح';
+  String get syntaxReferenceHtmlFormattingTags => 'وسوم التنسيق';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'قوائم وصفية';
+  String get syntaxReferenceHtmlInlineCodeTags => 'وسوم الكود داخل السطر';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'وسوم التنسيق';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'وسوم نصية دلالية';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'وسوم الكود داخل السطر';
-
-  @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'وسوم نصية دلالية';
-
-  @override
-  String get markdownHtmlSanitizedPreview => 'معاينة منظفة';
-
-  @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'يتم حفظ المصدر';
-
-  @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown داخل HTML';
-
-  @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
 
   @override
-  String get markdownHtmlBlockedContent => 'المحتوى النشط محظور';
-
-  @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
 
   @override
-  String get markdownHtmlSafeUrls => 'عناوين URL آمنة فقط';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
+  String get syntaxReferenceCategory => 'الفئة';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'المخططات وواجهات API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'الرياضيات';
+
+  @override
+  String get syntaxReferenceExample => 'مثال';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'المعرّفات والأسماء البديلة';
+
+  @override
+  String get syntaxReferenceScope => 'النطاق';
+
+  @override
+  String get syntaxReferenceLimitation => 'قيد في BusyMark';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'الوثائق الرسمية';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Markdown في Writerside فقط';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Markdown وXML في Writerside فقط';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'أشكال Markdown الأساسية التي يستطيع BusyMark كتابتها ومعاينتها.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'فقرة نصية.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'تستخدم الجداول صيغة الأنابيب في GitHub Flavored Markdown.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'مسافتان في نهاية السطر، \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'يقبل BusyMark مجموعة محدودة وآمنة من HTML الخام في مصدر Markdown.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'تعمل كتل Mermaid وPlantUML وD2 وOpenAPI المسيّجة في مصدر Markdown. لا تتأثر معرّفات السياج بحالة الأحرف، ويحافظ BusyMark على التهجئة الأصلية.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'استخدم محتوى YAML أو JSON داخل سياج. لا يعامل BusyMark مستند YAML أو JSON كاملاً عشوائياً على أنه مرجع OpenAPI.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'كتل شيفرة دلالية للمخططات';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'تدعم صيغتا code-block وsrc الدلاليتان Mermaid وPlantUML وD2، لا OpenAPI، وتعملان داخل مشاريع Writerside فقط.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource => 'مصدر مخطط مُشار إليه';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'يجب أن تكون المسارات نسبية وأن تبقى داخل مشروع Writerside المفتوح؛ صيغة السياج مع src خاصة بـMarkdown في Writerside.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'يدعم BusyMark تعبيرات TeX، وليس مستندات TeX أو LaTeX الكاملة.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'رياضيات مضمنة';
+
+  @override
+  String get syntaxReferenceGithubMath =>
+      'رياضيات GitHub بعلامة الدولار والفاصلة العليا المائلة';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'رياضيات معروضة';
+
+  @override
+  String get syntaxReferenceMathFence => 'سياج math';
+
+  @override
+  String get syntaxReferenceTexFence => 'سياج tex';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'لا يتعرّف BusyMark على ⁨\\(...\\)⁩ أو ⁨\\[...\\]⁩ كمحددات رياضيات في Markdown.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'خارج وضع Writerside، يبقى سياج tex كتلة شيفرة عادية.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'عنصر math في Writerside';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'عنصر math صيغة دلالية في Writerside، وليس HTML MathML خاماً مسموحاً به.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'كتلة شيفرة TeX دلالية';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'لا تُفسَّر هذه الامتدادات المحددة إلا داخل مشاريع Writerside المفتوحة.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'اقتباس كتلي للتنبيه';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'يكون الاقتباس الكتلي العادي تلميحاً في Markdown ضمن Writerside؛ ويبقى اقتباساً عادياً في Markdown العادي.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'تنبيهات دلالية';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'لا يفسر Markdown العادي عناصر Writerside الدلالية هذه.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'عنوان قابل للطي';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'سياج شيفرة قابل للطي';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles => 'محتوى دلالي قابل للطي';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'يدعم BusyMark صيغ chapter وprocedure وcode-block وقائمة التعريفات القابلة للطي، وليس فهرس Writerside كاملاً.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'كتل شيفرة دلالية للرياضيات والمخططات';
+
+  @override
+  String get syntaxReferenceVideo => 'فيديو Writerside';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'يستخدم الفيديو المحلي صورة preview-src محلية؛ ويجب أن تكون المصادر المستضافة عناوين HTTPS مدعومة من YouTube أو Vimeo.';
 
   @override
   String get exportAsPdf => 'تصدير بصيغة PDF';
@@ -2795,7 +3002,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return 'تم تصدير $fileName. صور تعذر تضمينها: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تحذيرات',
+      one: 'تحذير واحد',
+    );
+    return '$fileName تم تصديره مع $_temp0.';
   }
 
   @override
@@ -3212,7 +3425,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiDisabled => 'معطّل';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.';
 
   @override
@@ -3311,7 +3524,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'سيتلقى المزوّد المحدد ⁨$count⁩ حرفًا من السياق المعروض.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'سيتلقى المزوّد المحدد ⁨$count⁩ حرف من السياق المعروض.',
+      many: 'سيتلقى المزوّد المحدد ⁨$count⁩ حرفًا من السياق المعروض.',
+      few: 'سيتلقى المزوّد المحدد ⁨$count⁩ أحرف من السياق المعروض.',
+      two: 'سيتلقى المزوّد المحدد حرفين من السياق المعروض.',
+      one: 'سيتلقى المزوّد المحدد حرفًا واحدًا من السياق المعروض.',
+      zero: 'لن يتلقى المزوّد المحدد أي أحرف من السياق المعروض.',
+    );
+    return '$_temp0';
   }
 
   @override

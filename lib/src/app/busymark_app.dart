@@ -45,7 +45,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.search: const _OpenSearchIntent(),
     BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
     BusyMarkCommandIds.commandPalette: const _CommandPaletteIntent(),
-    BusyMarkCommandIds.markdownAndHtml: const _MarkdownAndHtmlIntent(),
+    BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
     BusyMarkCommandIds.settings: const _SettingsIntent(),
     BusyMarkCommandIds.nextTab: const _NextTabIntent(),
     BusyMarkCommandIds.previousTab: const _PreviousTabIntent(),
@@ -265,13 +265,13 @@ class BusyMarkApp extends ConsumerWidget {
                       return null;
                     },
                   ),
-                  _MarkdownAndHtmlIntent:
-                      CallbackAction<_MarkdownAndHtmlIntent>(
+                  _SyntaxReferenceIntent:
+                      CallbackAction<_SyntaxReferenceIntent>(
                         onInvoke: (intent) {
                           final navigatorContext =
                               rootNavigatorKey.currentContext;
                           if (navigatorContext != null) {
-                            showBusyMarkMarkdownHtmlDialog(navigatorContext);
+                            showBusyMarkSyntaxReferenceDialog(navigatorContext);
                           }
                           return null;
                         },
@@ -831,10 +831,10 @@ class BusyMarkApp extends ConsumerWidget {
       keyboardShortcutsGtkAccelerator: accelerator(
         BusyMarkCommandIds.keyboardShortcuts,
       ),
-      markdownAndHtml: label(BusyMarkCommandIds.markdownAndHtml),
-      markdownAndHtmlShortcut: shortcut(BusyMarkCommandIds.markdownAndHtml),
-      markdownAndHtmlGtkAccelerator: accelerator(
-        BusyMarkCommandIds.markdownAndHtml,
+      syntaxReference: label(BusyMarkCommandIds.syntaxReference),
+      syntaxReferenceShortcut: shortcut(BusyMarkCommandIds.syntaxReference),
+      syntaxReferenceGtkAccelerator: accelerator(
+        BusyMarkCommandIds.syntaxReference,
       ),
       reportIssue: l10n.reportIssue,
       aboutBusyMark: l10n.aboutBusyMark,
@@ -1124,8 +1124,8 @@ class _SettingsIntent extends Intent {
   const _SettingsIntent();
 }
 
-class _MarkdownAndHtmlIntent extends Intent {
-  const _MarkdownAndHtmlIntent();
+class _SyntaxReferenceIntent extends Intent {
+  const _SyntaxReferenceIntent();
 }
 
 class _NextTabIntent extends Intent {

@@ -628,7 +628,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   Widget? _prefix(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
-      BusyBlockKind.unorderedListItem => const BusyMarkDocumentListMarker(),
+      BusyBlockKind.unorderedListItem => BusyMarkDocumentListMarker(
+        hidden: block.attributes['markerHidden'] == 'true',
+      ),
       BusyBlockKind.orderedListItem => BusyMarkDocumentListMarker(
         ordered: true,
         marker: block.attributes['marker'],

@@ -264,11 +264,19 @@
   "@languageGerman": {
     "description": "Language selector option for German."
   },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
   "languageItalian": "Italiano",
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -308,9 +316,29 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
   "languageEstonian": "Eesti",
   "@languageEstonian": {
     "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
   },
   "toggleSidebar": "Sidepanel",
   "@toggleSidebar": {
@@ -381,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "Generelt",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -410,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Åpne Markdown- og HTML-referansen",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "Åpne syntaksreferansen",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "Åpne BusyMark-innstillinger",
   "@shortcutSettingsDescription": {
@@ -483,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "Sett inn innrykk",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "Sett inn innrykk ved markøren",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "Reduser innrykk i kilden",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "Fjern ett innrykksnivå i kildemodus",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "Lukk søk eller fjern blokkmarkering",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -723,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "Personvern",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "Last inn eksterne bilder",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "Tøm tillatelser for eksterne bilder",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "Tøm klarerte Git-arbeidsområder",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "Vindu",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "Åpne forrige arbeidsområde ved oppstart",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "Åpne arbeidsområdet og fanene fra forrige økt når BusyMark starter.",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Bekreft lukking ved ulagrede endringer",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -889,7 +944,9 @@
     "description": "Text field label for raw HTML source."
   },
   "htmlContentDefault": "HTML-innhold",
-  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
   "thematicBreak": "Tematisk skille",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -1034,11 +1091,17 @@
     "description": "Image alt text field label."
   },
   "editorPlaceholderText": "tekst",
-  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
   "editorPlaceholderCode": "kode",
-  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
   "editorPlaceholderAltText": "alternativ tekst",
-  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
   "describeTheImage": "Beskriv bildet",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -1069,18 +1132,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "Eksternt bilde blokkert",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "Velg om BusyMark kan laste inn eksterne bilder.",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "Eksterne bilder er blokkert",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "Last inn for dette arbeidsområdet",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "Last alltid inn eksterne bilder",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "Skjul sidepanel",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1320,19 +1394,33 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "Forrige treff",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "Neste treff",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "Skill mellom store og små bokstaver",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "Hele ord",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "Regulært uttrykk",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "Ugyldig regulært uttrykk",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "Ingenting å lese",
   "admonition": "Merknadsblokk",
   "quote": "Sitat",
@@ -2219,15 +2307,15 @@
   "gitBinaryFile": "Binærfil. BusyMark viser ikke binære patcher.",
   "gitUnsavedChangesBanner": "Ulagrede endringer i redigereren tas ikke med før de er lagret.",
   "gitConfirmDiscardTitle": "Forkaste Git-endringer?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Den valgte sporede filen gjenopprettes fra Git.} other{De valgte sporede filene gjenopprettes fra Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.} other{Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Den valgte usporede filen slettes.} other{De valgte usporede filene slettes.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.} other{De valgte filene gjenopprettes eller slettes ut fra Git-statusen.}}",
   "gitConfirmSwitchBranchTitle": "Bytt til {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.",
   "gitConfirmPushSetUpstreamTitle": "Angi upstream-gren?",
   "gitConfirmPushSetUpstreamMessage": "Denne grenen har ingen upstream. BusyMark kan pushe {branch} og angi upstream når nøyaktig én remote er konfigurert.",
-  "gitProjectHistory": "Prosjekt",
-  "gitFileHistory": "Gjeldende fil",
+  "gitProjectHistory": "Prosjekthistorie",
+  "gitFileHistory": "Filhistorie",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "Filhandlinger",
   "actions": "Handlinger",
@@ -2262,73 +2350,110 @@
   "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
   "gitErrorConflict": "Git rapporterte uløste konflikter.",
   "gitErrorCommandFailed": "Git-kommandoen mislyktes.",
-
-  "markdownAndHtml": "Markdown og HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
-  "markdownHtmlMarkdownBlocks": "Markdown-blokker",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
-  "markdownHtmlMarkdownBlocksDescription": "Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
-  "markdownHtmlInlineFormatting": "Inline-Markdown",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "Formatering i avsnitt, listeelementer og tabellceller.",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Rå HTML-blokker",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlBlocksDescription": "Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "Rå HTML-inline-tagger",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
-  "markdownHtmlRawHtmlInlineDescription": "Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
-  "markdownHtmlSafety": "Sikkerhetsregler",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "Rå HTML analyseres og renses før forhåndsvisning.",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
-  "markdownHtmlHeadings": "Overskrifter",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
-  "markdownHtmlParagraphs": "Avsnitt",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
-  "markdownHtmlLists": "Lister",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
-  "markdownHtmlHtmlContainers": "Beholdere",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
-  "markdownHtmlHtmlTextBlocks": "Tekstblokker",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
-  "markdownHtmlHtmlFigures": "Figurer og bilder",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
-  "markdownHtmlHtmlPreformatted": "Forhåndsformatert kode",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
-  "markdownHtmlHtmlDisclosure": "Utvidbare blokker",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
-  "markdownHtmlHtmlDescriptionLists": "Beskrivelseslister",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
-  "markdownHtmlHtmlFormattingTags": "Formateringstagger",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
-  "markdownHtmlHtmlInlineCodeTags": "Inline-kodetagger",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
-  "markdownHtmlHtmlNeutralInlineTags": "Semantiske teksttagger",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
-  "markdownHtmlSanitizedPreview": "Renset forhåndsvisning",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Kilden bevares",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "Uendret rå HTML lagres nøyaktig som kildetekst.",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
-  "markdownHtmlMarkdownInsideHtml": "Markdown inni HTML",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "Blokkert aktivt innhold",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
-  "markdownHtmlBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
-  "markdownHtmlSafeUrls": "Bare trygge URL-er",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "syntaxReference": "Syntaksreferanse",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Markdown-blokker",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "Inline-Markdown",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "Formatering i avsnitt, listeelementer og tabellceller.",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "Rå HTML-blokker",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "Rå HTML-inline-tagger",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "Overskrifter",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "Avsnitt",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "Lister",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "Beholdere",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "Tekstblokker",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "Figurer og bilder",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "Forhåndsformatert kode",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "Utvidbare blokker",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "Beskrivelseslister",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "Formateringstagger",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "Inline-kodetagger",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "Semantiske teksttagger",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "Uendret rå HTML lagres nøyaktig som kildetekst.",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "Legg til i Git",
   "delete": "Slett",
   "newFile": "Ny fil",
@@ -2346,101 +2471,343 @@
   "errorFileOperationOutsideRoot": "Filoperasjonen må holde seg i arbeidsområdet.",
   "errorFileOperationRoot": "Roten til arbeidsområdet kan ikke endres fra filtreet.",
   "safeDeleteTopicFile": "Slett emnefilen trygt …",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "Fjern element fra innholdsfortegnelsen",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "Se gjennom bruk",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "Slett emnefil",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "Fjern",
-  "@removeAction": {"description": "Generic remove action label."},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
   "topicRemovalSummary": "Fjern «{topic}» fra den valgte instansen. Emnefilen beholdes.",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "safeDeleteTopicSummary": "Slett «{topic}», og oppdater referansene til emnet trygt i hele dette Writerside-prosjektet.",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, =1{1 underemne flyttes ett nivå opp.} other{{count} underemner flyttes ett nivå opp.}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "Bruk ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBreakingTopicUsages": "Fant ingen referanser som ville slutte å fungere.",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark fant følgende referanser til dette emnet.",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "Elementer i innholdsfortegnelsen",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "Startsider",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "Emnelenker",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "Inkluderinger",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, =1{1 bruk} other{{count} bruk}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "refactoringOptions": "Refaktoreringsalternativer",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "Oppdater bruk automatisk",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "Noe bruk må endres manuelt før denne refaktoreringen.",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "Omdiriger til",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "Ikke omdiriger den gamle publiserte siden.",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "Mål for omdirigering",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
   "usagesOfTopic": "Bruk av «{topic}»",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "Fant ingen bruk.",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "utenfor den valgte instansen",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "Utfør refaktorering",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "Emnefilen brukes ikke lenger",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "Behold emnefilen",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
   "orphanTopicMessage": "«{topic}» brukes ikke lenger noe sted i dette Writerside-prosjektet. Slett filen, eller behold den for bruk i en annen instans.",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "Bruk trygg sletting for Writerside-emnefiler.",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
   "errorWritersideRollbackFailed": "Fjerningen av emnet kunne ikke angres fullstendig. Se gjennom disse banene før du fortsetter: {paths}",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "Eksporter som PDF", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "Velg sideoppsett for en gjennomarbeidet, selvstendig PDF.", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "Eksterne bilder lastes ikke ned under eksport. Lokale bilder tas med når de er tilgjengelige.", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "Sidestørrelse", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "US Letter", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "Retning", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "Stående", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "Liggende", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "Marger", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "Smale", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "Normale", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "Brede", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "Ta med sidetall", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "Eksporter", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "Eksporterer PDF…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "PDF-dokument", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "{fileName} ble eksportert.", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "{fileName} ble eksportert. Bilder som ikke kunne tas med: {count}.", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "PDF-eksportkomponenten mangler. Installer BusyMark på nytt og prøv igjen.", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "PDF-eksporten tok for lang tid og ble stoppet.", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark kunne ikke eksportere dette dokumentet som PDF.", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "Kategori",
+  "syntaxReferenceCategoryDiagramsAndApi": "Diagrammer og API",
+  "syntaxReferenceCategoryMathematics": "Matematikk",
+  "syntaxReferenceExample": "Eksempel",
+  "syntaxReferenceIdentifiers": "Identifikatorer og aliaser",
+  "syntaxReferenceScope": "Omfang",
+  "syntaxReferenceLimitation": "BusyMark-begrensning",
+  "syntaxReferenceOfficialDocumentation": "Offisiell dokumentasjon",
+  "syntaxReferenceScopeWritersideMarkdown": "Bare Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "Bare Writerside Markdown og Writerside XML",
+  "syntaxReferenceMarkdownDescription": "De viktigste Markdown-formene BusyMark kan skrive og forhåndsvise.",
+  "syntaxReferenceParagraphExample": "Et tekstavsnitt.",
+  "syntaxReferenceTableLimitation": "Tabeller bruker pipe-syntaksen fra GitHub Flavored Markdown.",
+  "syntaxReferenceHardBreakIdentifiers": "to mellomrom på slutten av linjen, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark godtar et avgrenset, trygt delsett av rå HTML i Markdown-kilden.",
+  "syntaxReferenceDiagramsDescription": "Inngjerdede Mermaid-, PlantUML-, D2- og OpenAPI-blokker fungerer i Markdown-kilde. Blokkidentifikatorer skiller ikke mellom store og små bokstaver, og BusyMark bevarer den opprinnelige skrivemåten.",
+  "syntaxReferenceOpenApiLimitation": "Bruk inngjerdet YAML- eller JSON-innhold. BusyMark behandler ikke et vilkårlig helt YAML- eller JSON-dokument som en OpenAPI-referanse.",
+  "syntaxReferenceSemanticDiagramBlocks": "Semantiske kodeblokker for diagrammer",
+  "syntaxReferenceSemanticDiagramLimitation": "Semantiske code-block- og src-former støtter Mermaid, PlantUML og D2, ikke OpenAPI, og bare i Writerside-prosjekter.",
+  "syntaxReferenceReferencedDiagramSource": "Referert diagramkilde",
+  "syntaxReferenceReferencedDiagramLimitation": "Stier må være relative og forbli i det åpne Writerside-prosjektet; inngjerdet form med src gjelder bare Writerside Markdown.",
+  "syntaxReferenceMathematicsDescription": "BusyMark støtter TeX-uttrykk, ikke komplette TeX- eller LaTeX-dokumenter.",
+  "syntaxReferenceInlineMath": "Matematikk i linjen",
+  "syntaxReferenceGithubMath": "GitHub-matematikk med dollartegn og grav aksent",
+  "syntaxReferenceDisplayMath": "Matematikk som blokk",
+  "syntaxReferenceMathFence": "math-blokk",
+  "syntaxReferenceTexFence": "tex-blokk",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark gjenkjenner ikke \\(...\\) eller \\[...\\] som matematikkskilletegn i Markdown.",
+  "syntaxReferenceTexFenceLimitation": "Utenfor Writerside-modus forblir en tex-blokk en vanlig kodeblokk.",
+  "syntaxReferenceWritersideMathElement": "Writerside-math-element",
+  "syntaxReferenceWritersideMathElementLimitation": "math-elementet er semantisk Writerside-syntaks, ikke tillatt rå HTML MathML.",
+  "syntaxReferenceSemanticTexBlock": "Semantisk TeX-kodeblokk",
+  "syntaxReferenceWritersideDescription": "Disse målrettede utvidelsene tolkes bare i åpne Writerside-prosjekter.",
+  "syntaxReferenceAdmonitionBlockquote": "Merknadssitat",
+  "syntaxReferenceAdmonitionLimitation": "Et vanlig blokksitat er et tips i Writerside Markdown; i vanlig Markdown forblir det et ordinært sitat.",
+  "syntaxReferenceSemanticAdmonitions": "Semantiske merknader",
+  "syntaxReferenceSemanticMarkupLimitation": "Vanlig Markdown tolker ikke disse semantiske Writerside-elementene.",
+  "syntaxReferenceCollapsibleHeading": "Sammenleggbar overskrift",
+  "syntaxReferenceCollapsibleCode": "Sammenleggbar kodeblokk",
+  "syntaxReferenceSemanticCollapsibles": "Semantisk sammenleggbart innhold",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark støtter sammenleggbare chapter-, procedure-, code-block- og definisjonslisteformer, ikke hele Writerside-katalogen.",
+  "syntaxReferenceSemanticCodeBlocks": "Semantiske kodeblokker for matematikk og diagrammer",
+  "syntaxReferenceVideo": "Writerside-video",
+  "syntaxReferenceVideoLimitation": "Lokal video bruker et lokalt preview-src-bilde; vertsbaserte kilder må være støttede HTTPS-adresser fra YouTube eller Vimeo.",
+  "exportAsPdf": "Eksporter som PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "Velg sideoppsett for en gjennomarbeidet, selvstendig PDF.",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "Eksterne bilder lastes ikke ned under eksport. Lokale bilder tas med når de er tilgjengelige.",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "Sidestørrelse",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "US Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "Retning",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "Stående",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "Liggende",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "Marger",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "Smale",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "Normale",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "Brede",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "Ta med sidetall",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "Eksporter",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "Eksporterer PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "PDF-dokument",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} ble eksportert.",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} ble eksportert med {count, plural, =1{1 advarsel} other{{count} advarsler}}.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "PDF-eksportkomponenten mangler. Installer BusyMark på nytt og prøv igjen.",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "PDF-eksporten tok for lang tid og ble stoppet.",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark kunne ikke eksportere dette dokumentet som PDF.",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "Gjengir…",
   "visualizationStale": "Viser siste gyldige gjengivelse",
   "visualizationShowSource": "Vis kilde",
@@ -2461,7 +2828,10 @@
   "visualizationRenderFailed": "Denne visualiseringen kunne ikke gjengis.",
   "visualizationRetry": "Prøv igjen",
   "visualizationSaved": "Lagret {fileName}",
-  "shortcutExportPdfDescription": "Eksporter det aktive dokumentet eller Writerside-modulen som PDF.", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "Eksporter det aktive dokumentet eller Writerside-modulen som PDF.",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "Indeksert",
   "gitUnstaged": "Ikke indeksert",
   "gitFetch": "Hent",
@@ -2578,7 +2948,6 @@
   "ai": "KI",
   "aiLocalOllama": "Lokal Ollama",
   "aiDisabled": "Deaktivert",
-  "aiLocalOnlyDescription": "KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.",
   "aiProvider": "KI-leverandør",
   "aiDefaultProvider": "Standardleverandør",
   "aiConfigureProvider": "Konfigurer leverandør",
@@ -2692,14 +3061,18 @@
   "reloadFromDisk": "Last inn fra disk på nytt",
   "keepMine": "Behold min versjon",
   "saveAs": "Lagre som",
-  "unsavedChangesMultipleMessage": "{count} dokumenter har ulagrede endringer. Lagre dem før du fortsetter?",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 dokument har ulagrede endringer. Lagre det før du fortsetter.} other{{count} dokumenter har ulagrede endringer. Lagre dem før du fortsetter.}}",
   "workspaceReplaceIssuePartialConflict": "Tilbakerullingen ble stoppet fordi filen ble endret samtidig. Noen erstatninger kan fortsatt være utført; forskjøvet innhold ble bevart på banen nedenfor.",
   "workspaceReplaceIssueApplyFailed": "Ingen erstatninger ble utført fordi det gjennomgåtte settet ikke kunne lagres på en trygg måte.",
-  "workspaceRecoveryRestored": "{count} ulagrede dokumenter ble gjenopprettet. Se gjennom hvert gjenopprettet dokument før du fortsetter.",
-  "workspaceRecoveryDamaged": "{count} skadede gjenopprettingsoppføringer kunne ikke gjenopprettes. Gyldige gjenopprettede dokumenter er fortsatt tilgjengelige.",
+  "workspaceRecoveryRestored": "{count, plural, =1{Gjenopprettet 1 ulagret dokument. Gå gjennom det før du lagrer eller forkaster det.} other{Gjenopprettet {count} ulagrede dokumenter. Gå gjennom hvert ett før du lagrer eller forkaster det.}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{Kunne ikke gjenopprette 1 skadet gjenopprettingspost. Den opprinnelige gjenopprettingsfilen er bevart for gjennomgang.} other{{count} skadede gjenopprettingsposter kunne ikke gjenopprettes. Gyldige gjenopprettingsposter er fortsatt tilgjengelige.}}",
   "recoveredDocumentReview": "Ulagret innhold for {fileName} ble gjenopprettet. Se gjennom det, og lagre, lagre som eller forkast det.",
   "commandUnavailableInContext": "Denne kommandoen er ikke tilgjengelig i gjeldende kontekst.",
   "mathRenderFailed": "Det matematiske uttrykket kunne ikke gjengis.",
   "inlineMath": "Integrert matematikk",
-  "displayMath": "Matematikkblokk"
+  "displayMath": "Matematikkblokk",
+  "aiExplicitEditingDescription": "KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

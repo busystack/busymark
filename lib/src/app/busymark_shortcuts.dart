@@ -28,7 +28,7 @@ enum BusyMarkAppShortcutAction {
   search,
   keyboardShortcuts,
   commandPalette,
-  markdownAndHtml,
+  syntaxReference,
   settings,
   nextTab,
   previousTab,
@@ -49,7 +49,7 @@ abstract final class BusyMarkAppShortcuts {
   static const searchLabel = 'Ctrl+F';
   static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
   static const commandPaletteLabel = 'Ctrl+Shift+P';
-  static const markdownAndHtmlLabel = 'Ctrl+Alt+M';
+  static const syntaxReferenceLabel = 'Ctrl+Alt+M';
   static const settingsLabel = 'Ctrl+Alt+S';
   static const nextTabLabel = 'Ctrl+Tab';
   static const previousTabLabel = 'Ctrl+Shift+Tab';
@@ -66,7 +66,7 @@ abstract final class BusyMarkAppShortcuts {
   static const searchGtkAccelerator = '<Primary>f';
   static const keyboardShortcutsGtkAccelerator = '<Primary><Alt>k';
   static const commandPaletteGtkAccelerator = '<Primary><Shift>p';
-  static const markdownAndHtmlGtkAccelerator = '<Primary><Alt>m';
+  static const syntaxReferenceGtkAccelerator = '<Primary><Alt>m';
   static const settingsGtkAccelerator = '<Primary><Alt>s';
   static const nextTabGtkAccelerator = '<Primary>Tab';
   static const previousTabGtkAccelerator = '<Primary><Shift>Tab';
@@ -135,14 +135,14 @@ abstract final class BusyMarkAppShortcuts {
     ),
     gtkAccelerator: commandPaletteGtkAccelerator,
   );
-  static const markdownAndHtml = BusyMarkShortcutDefinition(
-    label: markdownAndHtmlLabel,
+  static const syntaxReference = BusyMarkShortcutDefinition(
+    label: syntaxReferenceLabel,
     activator: SingleActivator(
       LogicalKeyboardKey.keyM,
       control: true,
       alt: true,
     ),
-    gtkAccelerator: markdownAndHtmlGtkAccelerator,
+    gtkAccelerator: syntaxReferenceGtkAccelerator,
   );
   static const settings = BusyMarkShortcutDefinition(
     label: settingsLabel,
@@ -198,7 +198,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
         BusyMarkAppShortcutAction.commandPalette: commandPalette,
-        BusyMarkAppShortcutAction.markdownAndHtml: markdownAndHtml,
+        BusyMarkAppShortcutAction.syntaxReference: syntaxReference,
         BusyMarkAppShortcutAction.settings: settings,
         BusyMarkAppShortcutAction.nextTab: nextTab,
         BusyMarkAppShortcutAction.previousTab: previousTab,
@@ -220,7 +220,7 @@ abstract final class BusyMarkAppShortcutLabels {
   static const search = BusyMarkAppShortcuts.searchLabel;
   static const keyboardShortcuts = BusyMarkAppShortcuts.keyboardShortcutsLabel;
   static const commandPalette = BusyMarkAppShortcuts.commandPaletteLabel;
-  static const markdownAndHtml = BusyMarkAppShortcuts.markdownAndHtmlLabel;
+  static const syntaxReference = BusyMarkAppShortcuts.syntaxReferenceLabel;
   static const settings = BusyMarkAppShortcuts.settingsLabel;
   static const nextTab = BusyMarkAppShortcuts.nextTabLabel;
   static const previousTab = BusyMarkAppShortcuts.previousTabLabel;
@@ -245,8 +245,8 @@ abstract final class BusyMarkAppShortcutActivators {
       BusyMarkAppShortcuts.keyboardShortcuts.activator;
   static ShortcutActivator get commandPalette =>
       BusyMarkAppShortcuts.commandPalette.activator;
-  static ShortcutActivator get markdownAndHtml =>
-      BusyMarkAppShortcuts.markdownAndHtml.activator;
+  static ShortcutActivator get syntaxReference =>
+      BusyMarkAppShortcuts.syntaxReference.activator;
   static ShortcutActivator get settings =>
       BusyMarkAppShortcuts.settings.activator;
   static ShortcutActivator get nextTab =>
@@ -270,8 +270,8 @@ abstract final class BusyMarkAppShortcutGtkAccelerators {
   static const back = BusyMarkAppShortcuts.backGtkAccelerator;
   static const keyboardShortcuts =
       BusyMarkAppShortcuts.keyboardShortcutsGtkAccelerator;
-  static const markdownAndHtml =
-      BusyMarkAppShortcuts.markdownAndHtmlGtkAccelerator;
+  static const syntaxReference =
+      BusyMarkAppShortcuts.syntaxReferenceGtkAccelerator;
   static const settings = BusyMarkAppShortcuts.settingsGtkAccelerator;
 }
 

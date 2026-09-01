@@ -43,6 +43,7 @@ import '../../editor/document_text_direction.dart';
 import '../../editor/document_thematic_break.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
+import '../../editor/source/source_autocomplete.dart';
 import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
@@ -907,8 +908,8 @@ class WorkspaceScreen extends ConsumerWidget {
         execute(BusyMarkCommandIds.settings);
       case HeaderBarAction.keyboardShortcuts:
         execute(BusyMarkCommandIds.keyboardShortcuts);
-      case HeaderBarAction.markdownAndHtml:
-        execute(BusyMarkCommandIds.markdownAndHtml);
+      case HeaderBarAction.syntaxReference:
+        execute(BusyMarkCommandIds.syntaxReference);
       case HeaderBarAction.reportIssue:
         final headerBar = ref.read(linuxHeaderBarServiceProvider);
         showBusyMarkFeedbackDialog(
@@ -958,8 +959,8 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.commandPalette:
         return;
-      case BusyMarkMainMenuAction.markdownAndHtml:
-        showBusyMarkMarkdownHtmlDialog(context);
+      case BusyMarkMainMenuAction.syntaxReference:
+        showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
         final headerBar = ref.read(linuxHeaderBarServiceProvider);
         showBusyMarkFeedbackDialog(
@@ -5008,9 +5009,26 @@ class _TocTabState extends ConsumerState<_TocTab> {
             itemBuilder: (context, index) {
               if (index == 0) {
                 return _TocHeader(
+                  modules: [
+                    for (final entry
+                        in widget
+                                .workspace
+                                .writersideProject
+                                ?.modulesByOrigin
+                                .entries ??
+                            const <MapEntry<String, WritersideModule>>[])
+                      (id: entry.key, label: entry.key),
+                  ],
+                  activeModuleId:
+                      widget.workspace.writersideProject?.activeModuleId,
                   instances: module.instances,
                   selectedInstance: instance,
                   instanceColors: instanceColors,
+                  onSelectModule: (moduleId) => unawaited(
+                    ref
+                        .read(workspaceControllerProvider.notifier)
+                        .selectWritersideContext(moduleId: moduleId),
+                  ),
                   onSelectInstance: (treePath) {
                     if (p.equals(treePath, instance.sourceTreePath)) {
                       return;
@@ -5031,6 +5049,18 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     });
                     final selected = _tocInstanceForTreePath(module, treePath);
                     if (selected != null) {
+                      final moduleId =
+                          widget.workspace.writersideProject?.activeModuleId;
+                      if (moduleId != null) {
+                        unawaited(
+                          ref
+                              .read(workspaceControllerProvider.notifier)
+                              .selectWritersideContext(
+                                moduleId: moduleId,
+                                instanceId: selected.id,
+                              ),
+                        );
+                      }
                       unawaited(
                         ref
                             .read(appSettingsControllerProvider.notifier)
@@ -6270,9 +6300,12 @@ enum _TocHeaderAction {
 
 class _TocHeader extends StatelessWidget {
   const _TocHeader({
+    required this.modules,
+    required this.activeModuleId,
     required this.instances,
     required this.selectedInstance,
     required this.instanceColors,
+    required this.onSelectModule,
     required this.onSelectInstance,
     required this.onCreateTopic,
     required this.onCreateInstance,
@@ -6281,9 +6314,12 @@ class _TocHeader extends StatelessWidget {
     required this.onOpenTocFile,
   });
 
+  final List<({String id, String label})> modules;
+  final String? activeModuleId;
   final List<WritersideInstance> instances;
   final WritersideInstance selectedInstance;
   final Map<String, WritersideInstanceIconColor> instanceColors;
+  final ValueChanged<String> onSelectModule;
   final ValueChanged<String> onSelectInstance;
   final VoidCallback onCreateTopic;
   final VoidCallback onCreateInstance;
@@ -6298,6 +6334,45 @@ class _TocHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (modules.length > 1) ...[
+            _SidebarHeaderRow(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      modules
+                              .where((module) => module.id == activeModuleId)
+                              .map((module) => module.label)
+                              .firstOrNull ??
+                          modules.first.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textDirection: TextDirection.ltr,
+                      style: busyMarkSectionHeaderStyle(context),
+                    ),
+                  ),
+                  BusyMarkHeaderPopupMenuButton<String>(
+                    key: const ValueKey('writerside-module-selector'),
+                    tooltip: context.l10n.workspaceKindWritersideModule,
+                    icon: BusyMarkGlyphs.menuVertical,
+                    transparent: true,
+                    borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    highlightWhenOpen: false,
+                    itemBuilder: (context) => [
+                      for (final module in modules)
+                        BusyMarkPopupMenuItem<String>(
+                          value: module.id,
+                          label: module.label,
+                          icon: BusyMarkGlyphs.folder,
+                        ),
+                    ],
+                    onSelected: onSelectModule,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+          ],
           _SidebarHeaderRow(
             key: const ValueKey('workspace-sidebar-first-content'),
             child: Row(
@@ -9784,6 +9859,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],
+                      autocompleteContext: _sourceAutocompleteContext(
+                        widget.state.workspace,
+                      ),
                       editorFontSize: widget.editorFontSize,
                       wordWrap: widget.wordWrap,
                       searchActive: searchState.active,
@@ -10093,6 +10171,18 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       DocumentKind.unknown ||
       null => SourceSyntaxLanguage.plain,
     };
+  }
+
+  SourceAutocompleteContext _sourceAutocompleteContext(Workspace? workspace) {
+    final project = workspace?.writersideProject;
+    if (workspace == null || project == null) {
+      return const SourceAutocompleteContext();
+    }
+    return SourceAutocompleteContext(
+      projectFiles: [for (final file in workspace.files) file.relativePath],
+      projectIndex: project.index,
+      moduleId: project.activeModuleId,
+    );
   }
 
   DocumentKind? _activeDocumentKind(Workspace? workspace) {
@@ -11040,6 +11130,7 @@ class _PreviewBlockView extends ConsumerWidget {
                 BusyMarkDocumentListMarker(
                   ordered: displayBlock.attributes['ordered'] == 'true',
                   marker: displayBlock.attributes['marker'],
+                  hidden: displayBlock.attributes['markerHidden'] == 'true',
                   task: switch (displayBlock.attributes['task']) {
                     'true' => true,
                     'false' => false,

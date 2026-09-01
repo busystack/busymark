@@ -1,12 +1,17 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:xml/xml.dart';
 
 import '../core/uri_utils.dart';
+import '../core/diagnostic.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
+import '../writerside/writerside_document_renderer.dart';
+import '../writerside/writerside_document_resolver.dart';
+import '../writerside/writerside_document.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_module_service.dart';
+import '../writerside/writerside_project.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
 import 'writerside_pdf_models.dart';
@@ -21,12 +26,16 @@ class WritersidePdfExportService {
   const WritersidePdfExportService({
     this.moduleService = const WritersideModuleService(),
     this.markdownExporter = const MarkdownPdfExportService(),
+    this.documentResolver = const WritersideDocumentResolver(),
+    this.documentRenderer = const WritersideDocumentRenderer(),
     this.maximumTopics = 2000,
     this.maximumCombinedSourceBytes = 64 * 1024 * 1024,
   });
 
   final WritersideModuleService moduleService;
   final MarkdownPdfExportService markdownExporter;
+  final WritersideDocumentResolver documentResolver;
+  final WritersideDocumentRenderer documentRenderer;
   final int maximumTopics;
   final int maximumCombinedSourceBytes;
 
@@ -37,7 +46,34 @@ class WritersidePdfExportService {
     final token = cancellationToken ?? WritersidePdfCancellationToken();
     token.throwIfCancelled();
     final moduleRoot = await _validatedModuleRoot(request.moduleRoot);
-    final module = await moduleService.load(moduleRoot);
+    WritersideModule module;
+    Map<String, WritersideModule> modulesByOrigin;
+    if (request.projectRoot case final requestedProjectRoot?) {
+      final projectRoot = await _validatedProjectRoot(
+        requestedProjectRoot,
+        moduleRoot,
+      );
+      final project = await WritersideProjectService(
+        moduleService: moduleService,
+        scanOptions: moduleService.scanOptions,
+      ).load(projectRoot, preferredModuleRoot: moduleRoot);
+      final selectedModule = project.modules
+          .where((candidate) => p.equals(candidate.rootPath, moduleRoot))
+          .firstOrNull;
+      if (selectedModule == null) {
+        throw const WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'The selected module is not part of the Writerside project.',
+        );
+      }
+      module = selectedModule;
+      modulesByOrigin = project.modulesByOrigin;
+    } else {
+      module = await moduleService.load(moduleRoot);
+      modulesByOrigin = {
+        if (module.config.moduleName case final name?) name: module,
+      };
+    }
     token.throwIfCancelled();
     final instance = module.instances
         .where(
@@ -51,39 +87,58 @@ class WritersidePdfExportService {
         detail: 'Unknown or non-exportable instance: ${request.instanceId}',
       );
     }
-    final source = await _composeInstanceSource(module, instance, token);
-    if (source.trim().isEmpty) {
+    final composition = await _composeInstanceDocument(
+      module,
+      instance,
+      modulesByOrigin,
+      token,
+    );
+    final resolutionErrors = composition.diagnostics.where(
+      (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
+    );
+    if (resolutionErrors.isNotEmpty) {
+      throw WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail:
+            'Writerside resolution failed: '
+            '${resolutionErrors.map((diagnostic) => diagnostic.code).join(', ')}',
+      );
+    }
+    final document = composition.document;
+    if (document.blocks.isEmpty) {
       throw const WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
         detail: 'The selected instance contains no exportable topics.',
       );
     }
-    if (source.length > maximumCombinedSourceBytes) {
-      throw const WritersidePdfExportException(
-        WritersidePdfFailureCode.invalidRequest,
-        detail: 'The selected instance is too large to export safely.',
-      );
-    }
-
     final markdownToken = MarkdownPdfCancellationToken();
     token.attach(markdownToken.cancel);
     try {
       final result = await markdownExporter.export(
         MarkdownPdfExportRequest(
-          source: source,
+          source: '',
           filePath: p.join(moduleRoot, '.busymark-writerside-export.md'),
           workspaceRoot: moduleRoot,
           destinationPath: request.destinationPath,
           options: request.options,
           overwrite: request.overwrite,
           mode: MarkdownMode.writersideMarkdown,
+          document: document,
         ),
         cancellationToken: markdownToken,
       );
       return WritersidePdfExportResult(
         destinationPath: result.destinationPath,
         pageCount: result.pageCount,
-        warnings: result.warnings,
+        warnings: [
+          ...composition.diagnostics.map(
+            (diagnostic) => MarkdownPdfWarning(
+              MarkdownPdfWarningCode.writersideResolution,
+              diagnostic.code,
+            ),
+          ),
+          ...result.warnings,
+        ],
       );
     } on MarkdownPdfExportException catch (error) {
       throw WritersidePdfExportException(
@@ -119,9 +174,21 @@ class WritersidePdfExportService {
     }
   }
 
-  Future<String> _composeInstanceSource(
+  Future<String> _validatedProjectRoot(String value, String moduleRoot) async {
+    final root = await _validatedModuleRoot(value);
+    if (!p.equals(root, moduleRoot) && !p.isWithin(root, moduleRoot)) {
+      throw const WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail: 'The Writerside project does not contain the selected module.',
+      );
+    }
+    return root;
+  }
+
+  Future<_ComposedWritersideDocument> _composeInstanceDocument(
     WritersideModule module,
     WritersideInstance instance,
+    Map<String, WritersideModule> modulesByOrigin,
     WritersidePdfCancellationToken token,
   ) async {
     final selected = <({WritersideTopic topic, String? title})>[];
@@ -162,10 +229,9 @@ class WritersidePdfExportService {
       );
     }
 
-    final variables = {
-      for (final variable in module.variables) variable.name: variable.value,
-    };
-    final output = StringBuffer();
+    final output = <BusyBlock>[];
+    final resolutionDiagnostics = <Diagnostic>[];
+    var combinedSourceBytes = 0;
     for (var index = 0; index < selected.length; index++) {
       token.throwIfCancelled();
       final selection = selected[index];
@@ -181,30 +247,68 @@ class WritersidePdfExportService {
           cause: error,
         );
       }
-      source = await _prepareTopicSource(
-        module: module,
-        topic: topic,
-        source: source,
-        variables: variables,
-      );
-      if (topic.format == WritersideTopicFormat.xml) {
-        source = _xmlTopicToMarkdown(
-          source,
-          fallbackTitle: selection.title ?? _topicTitle(topic, instance.id),
+      combinedSourceBytes += source.length;
+      if (combinedSourceBytes > maximumCombinedSourceBytes) {
+        throw const WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'The selected instance is too large to export safely.',
         );
-      } else if (selection.title case final title?
-          when title.trim().isNotEmpty) {
-        source = _replaceFirstHeading(source, title.trim());
       }
+      final parsedTopic = topic.format == WritersideTopicFormat.xml
+          ? moduleService.topicParser.parseXml(
+              filePath: topic.filePath,
+              source: source,
+              topicsRoot: topic.topicRoot,
+            )
+          : moduleService.topicParser.parseMarkdown(
+              filePath: topic.filePath,
+              source: source,
+              topicsRoot: topic.topicRoot,
+            );
+      final resolved = documentResolver.resolve(
+        parsedTopic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: parsedTopic,
+          instance: instance,
+          modulesByOrigin: modulesByOrigin,
+        ),
+      );
+      resolutionDiagnostics.addAll(resolved.diagnostics);
       if (index > 0) {
-        output.write('\n\n---\n\n');
+        output.add(
+          BusyBlock(
+            id: 'writerside-topic-break-$index',
+            kind: BusyBlockKind.thematicBreak,
+            isGenerated: true,
+          ),
+        );
       }
-      output.write(source.trim());
+      final rendered = documentRenderer.toBusyDocument(
+        resolved.document,
+        title:
+            selection.title ??
+            resolved.title ??
+            _topicTitle(parsedTopic, instance.id),
+        includeTitleHeading: true,
+      );
+      final assets = await _resolveBusyAssets(
+        module,
+        parsedTopic,
+        rendered,
+        modulesByOrigin,
+      );
+      output.addAll(assets.blocks);
     }
-    if (output.isNotEmpty) {
-      output.write('\n');
-    }
-    return output.toString();
+    return _ComposedWritersideDocument(
+      document: BusyDocument(
+        filePath: p.join(module.rootPath, '.busymark-writerside-export'),
+        mode: MarkdownMode.writersideMarkdown,
+        title: instance.name,
+        blocks: List.unmodifiable(output),
+      ),
+      diagnostics: sortDiagnostics(resolutionDiagnostics),
+    );
   }
 
   String? _topicTitle(WritersideTopic topic, String instanceId) {
@@ -215,118 +319,86 @@ class WritersidePdfExportService {
         topic.title;
   }
 
-  Future<String> _prepareTopicSource({
-    required WritersideModule module,
-    required WritersideTopic topic,
-    required String source,
-    required Map<String, String> variables,
-  }) async {
-    final replacements = <_SourceReplacement>[];
-    final occupied = <({int start, int end})>[];
+  Future<BusyDocument> _resolveBusyAssets(
+    WritersideModule module,
+    WritersideTopic topic,
+    BusyDocument document,
+    Map<String, WritersideModule> modulesByOrigin,
+  ) async {
+    final modules = {module, ...modulesByOrigin.values};
 
-    for (final image in topic.images) {
-      final replacement = await _assetReplacement(
-        module: module,
-        topic: topic,
-        source: source,
-        start: image.span.startOffset,
-        end: image.span.endOffset,
-        destination: image.destination,
-      );
-      if (replacement != null) {
-        replacements.add(replacement);
-        occupied.add((start: replacement.start, end: replacement.end));
-      }
+    ({WritersideModule module, WritersideTopic topic}) sourceContext(
+      Map<String, String> attributes,
+    ) {
+      final moduleRoot = attributes[writersideSourceModuleRootAttribute];
+      final topicPath = attributes[writersideSourceTopicPathAttribute];
+      final sourceModule =
+          modules
+              .where(
+                (candidate) =>
+                    moduleRoot != null &&
+                    p.equals(candidate.rootPath, moduleRoot),
+              )
+              .firstOrNull ??
+          module;
+      final sourceTopic =
+          sourceModule.topics
+              .where(
+                (candidate) =>
+                    topicPath != null &&
+                    p.equals(candidate.filePath, topicPath),
+              )
+              .firstOrNull ??
+          topic;
+      return (module: sourceModule, topic: sourceTopic);
     }
-    for (final video in topic.videos) {
-      final initialSegment = _safeSubstring(
-        source,
-        video.span.startOffset,
-        video.span.endOffset,
-      );
-      if (initialSegment == null) {
-        continue;
+
+    Future<BusyInline> resolveInline(BusyInline inline) async {
+      final source = sourceContext(inline.attributes);
+      var destination = inline.destination;
+      if (inline.kind == BusyInlineKind.image && destination != null) {
+        destination =
+            await _resolvedAssetUri(source.module, source.topic, destination) ??
+            destination;
       }
-      var segment = initialSegment;
-      var changed = false;
-      for (final destination in [video.previewSource, video.source]) {
-        if (destination == null || destination.trim().isEmpty) {
+      final attributes = {...inline.attributes};
+      for (final name in ['src', 'preview-src']) {
+        final value = attributes[name];
+        if (value == null || value.trim().isEmpty) {
           continue;
         }
-        final resolved = await _resolvedAssetUri(module, topic, destination);
-        if (resolved != null && segment.contains(destination)) {
-          segment = segment.replaceFirst(destination, resolved);
-          changed = true;
-        }
+        attributes[name] =
+            await _resolvedAssetUri(source.module, source.topic, value) ??
+            value;
       }
-      if (changed) {
-        replacements.add(
-          _SourceReplacement(
-            video.span.startOffset,
-            video.span.endOffset,
-            segment,
-          ),
-        );
-        occupied.add((
-          start: video.span.startOffset,
-          end: video.span.endOffset,
-        ));
-      }
-    }
-    for (final token in topic.variables) {
-      final value = variables[token.name];
-      if (token.escaped || value == null) {
-        continue;
-      }
-      final start = token.span.startOffset;
-      final end = token.span.endOffset;
-      if (start < 0 || end > source.length || start > end) {
-        continue;
-      }
-      if (occupied.any((range) => start < range.end && end > range.start)) {
-        continue;
-      }
-      replacements.add(_SourceReplacement(start, end, value));
-    }
-    replacements.sort((left, right) => right.start.compareTo(left.start));
-    var result = source;
-    var rightBoundary = source.length;
-    for (final replacement in replacements) {
-      if (replacement.end > rightBoundary ||
-          replacement.start < 0 ||
-          replacement.end > result.length) {
-        continue;
-      }
-      result = result.replaceRange(
-        replacement.start,
-        replacement.end,
-        replacement.value,
+      return inline.copyWith(
+        destination: destination,
+        attributes: attributes,
+        children: await Future.wait(inline.children.map(resolveInline)),
       );
-      rightBoundary = replacement.start;
     }
-    return result;
-  }
 
-  Future<_SourceReplacement?> _assetReplacement({
-    required WritersideModule module,
-    required WritersideTopic topic,
-    required String source,
-    required int start,
-    required int end,
-    required String destination,
-  }) async {
-    final segment = _safeSubstring(source, start, end);
-    if (segment == null || destination.trim().isEmpty) {
-      return null;
+    Future<BusyBlock> resolveBlock(BusyBlock block) async {
+      final attributes = {...block.attributes};
+      final source = sourceContext(attributes);
+      for (final name in ['src', 'preview-src']) {
+        final value = attributes[name];
+        if (value == null || value.trim().isEmpty) {
+          continue;
+        }
+        attributes[name] =
+            await _resolvedAssetUri(source.module, source.topic, value) ??
+            value;
+      }
+      return block.copyWith(
+        inlines: await Future.wait(block.inlines.map(resolveInline)),
+        children: await Future.wait(block.children.map(resolveBlock)),
+        attributes: attributes,
+      );
     }
-    final resolved = await _resolvedAssetUri(module, topic, destination);
-    if (resolved == null || !segment.contains(destination)) {
-      return null;
-    }
-    return _SourceReplacement(
-      start,
-      end,
-      segment.replaceFirst(destination, resolved),
+
+    return document.copyWith(
+      blocks: await Future.wait(document.blocks.map(resolveBlock)),
     );
   }
 
@@ -347,6 +419,8 @@ class WritersidePdfExportService {
       p.join(p.dirname(topic.filePath), relative),
       p.join(module.rootPath, relative),
       p.join(module.rootPath, module.effectiveImagesDir, relative),
+      if (module.config.resourcesDir case final resourcesDir?)
+        p.join(module.rootPath, resourcesDir, relative),
     ];
     for (final candidate in candidates) {
       try {
@@ -366,174 +440,6 @@ class WritersidePdfExportService {
     return null;
   }
 
-  String? _safeSubstring(String source, int start, int end) {
-    if (start < 0 || end < start || end > source.length) {
-      return null;
-    }
-    return source.substring(start, end);
-  }
-
-  String _replaceFirstHeading(String source, String title) {
-    final match = RegExp(
-      r'^ {0,3}#{1,6}[ \t]+.*$',
-      multiLine: true,
-    ).firstMatch(source);
-    if (match == null) {
-      return '# $title\n\n$source';
-    }
-    return source.replaceRange(match.start, match.end, '# $title');
-  }
-
-  String _xmlTopicToMarkdown(String source, {String? fallbackTitle}) {
-    try {
-      final document = XmlDocument.parse(source);
-      final root = document.rootElement;
-      final title = root.getAttribute('title')?.trim();
-      final output = StringBuffer();
-      if ((title ?? fallbackTitle)?.trim() case final effective?
-          when effective.isNotEmpty) {
-        output.writeln('# ${_plain(effective)}');
-        output.writeln();
-      }
-      for (final child in root.children) {
-        _writeXmlBlock(output, child, headingLevel: 2);
-      }
-      return output.toString();
-    } on XmlException {
-      return '```xml\n$source\n```';
-    }
-  }
-
-  void _writeXmlBlock(
-    StringBuffer output,
-    XmlNode node, {
-    required int headingLevel,
-  }) {
-    if (node is XmlText) {
-      final text = node.value.trim();
-      if (text.isNotEmpty) {
-        output.writeln(text);
-        output.writeln();
-      }
-      return;
-    }
-    if (node is! XmlElement) {
-      return;
-    }
-    final name = node.name.local.toLowerCase();
-    switch (name) {
-      case 'title' || 'web-file-name':
-        return;
-      case 'p':
-        final text = _xmlInlineChildren(node).trim();
-        if (text.isNotEmpty) {
-          output.writeln(text);
-          output.writeln();
-        }
-      case 'chapter' || 'procedure' || 'tab' || 'def':
-        final title =
-            node.getAttribute('title')?.trim() ??
-            (name == 'tab'
-                ? 'Tab'
-                : name == 'def'
-                ? 'Definition'
-                : '');
-        if (title.isNotEmpty) {
-          output.writeln('${'#' * headingLevel} ${_plain(title)}');
-          output.writeln();
-        }
-        for (final child in node.children) {
-          _writeXmlBlock(output, child, headingLevel: headingLevel + 1);
-        }
-      case 'step':
-        final text = _xmlInlineChildren(node).trim();
-        if (text.isNotEmpty) {
-          output.writeln('1. $text');
-          output.writeln();
-        }
-      case 'note' || 'tip' || 'warning' || 'quote':
-        final style = name == 'quote' ? 'NOTE' : name.toUpperCase();
-        final body = _xmlInlineChildren(node).trim();
-        output.writeln('> [!$style]');
-        for (final line in body.split('\n')) {
-          output.writeln('> $line');
-        }
-        output.writeln();
-      case 'code-block':
-        final language = node.getAttribute('lang')?.trim() ?? '';
-        output.writeln('~~~$language');
-        output.writeln(node.innerText.replaceFirst(RegExp(r'^\n'), ''));
-        output.writeln('~~~');
-        output.writeln();
-      case 'math':
-        output.writeln(r'$$');
-        output.writeln(node.innerText);
-        output.writeln(r'$$');
-        output.writeln();
-      case 'img':
-        final src = node.getAttribute('src') ?? '';
-        final alt = node.getAttribute('alt') ?? '';
-        output.writeln('![${_plain(alt)}]($src)');
-        output.writeln();
-      case 'video':
-        output.writeln(node.toXmlString());
-        output.writeln();
-      case 'list':
-        for (final item in node.childElements) {
-          final text = _xmlInlineChildren(item).trim();
-          if (text.isNotEmpty) {
-            output.writeln('- $text');
-          }
-        }
-        output.writeln();
-      case 'include':
-        final from = node.getAttribute('from') ?? '';
-        if (from.isNotEmpty) {
-          output.writeln('> Included content: `$from`');
-          output.writeln();
-        }
-      default:
-        for (final child in node.children) {
-          _writeXmlBlock(output, child, headingLevel: headingLevel);
-        }
-    }
-  }
-
-  String _xmlInlineChildren(XmlElement element) {
-    return element.children
-        .map(_xmlInline)
-        .join()
-        .replaceAll(RegExp(r'[ \t]+'), ' ');
-  }
-
-  String _xmlInline(XmlNode node) {
-    if (node is XmlText) {
-      return node.value;
-    }
-    if (node is! XmlElement) {
-      return '';
-    }
-    final body = node.children.map(_xmlInline).join();
-    return switch (node.name.local.toLowerCase()) {
-      'b' || 'strong' => '**$body**',
-      'i' || 'em' => '*$body*',
-      'code' => '`${body.replaceAll('`', r'\`')}`',
-      'a' => '[${body.trim()}](${node.getAttribute('href') ?? ''})',
-      'img' =>
-        '![${_plain(node.getAttribute('alt') ?? '')}]'
-            '(${node.getAttribute('src') ?? ''})',
-      'math' => '\$${body.trim()}\$',
-      'br' => '  \n',
-      'include' => '',
-      _ => body,
-    };
-  }
-
-  String _plain(String value) => value
-      .replaceAll('\\', r'\\')
-      .replaceAll('[', r'\[')
-      .replaceAll(']', r'\]');
-
   WritersidePdfFailureCode _failureCode(MarkdownPdfFailureCode code) {
     return switch (code) {
       MarkdownPdfFailureCode.compilerUnavailable =>
@@ -551,12 +457,14 @@ class WritersidePdfExportService {
   }
 }
 
-class _SourceReplacement {
-  const _SourceReplacement(this.start, this.end, this.value);
+class _ComposedWritersideDocument {
+  const _ComposedWritersideDocument({
+    required this.document,
+    required this.diagnostics,
+  });
 
-  final int start;
-  final int end;
-  final String value;
+  final BusyDocument document;
+  final List<Diagnostic> diagnostics;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

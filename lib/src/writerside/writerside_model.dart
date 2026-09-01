@@ -1,6 +1,7 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
+import 'writerside_document.dart';
 import 'package:path/path.dart' as p;
 
 class WritersideTopicRoot {
@@ -456,6 +457,7 @@ class WritersideTopic {
     required this.videos,
     required this.variables,
     required this.includes,
+    required this.document,
     required this.diagnostics,
     this.webFileName,
     this.markdown,
@@ -475,6 +477,7 @@ class WritersideTopic {
   final List<WritersideVideo> videos;
   final List<MarkdownVariableToken> variables;
   final List<WritersideInclude> includes;
+  final WritersideDocument document;
   final List<Diagnostic> diagnostics;
   final String? webFileName;
   final ParsedMarkdownDocument? markdown;
@@ -522,6 +525,7 @@ class WritersideModule {
     required this.validatedImageDirs,
     this.buildProfiles,
     this.instanceGroups,
+    this.sourceOverrides = const {},
   });
 
   final String rootPath;
@@ -534,6 +538,30 @@ class WritersideModule {
   final List<String> validatedImageDirs;
   final WritersideBuildProfilesConfig? buildProfiles;
   final WritersideInstanceGroupsConfig? instanceGroups;
+
+  /// Unsaved project sources that must win over their on-disk counterparts
+  /// when the module is recomputed after another project-file edit.
+  final Map<String, String> sourceOverrides;
+
+  WritersideModule copyWith({
+    List<WritersideTopic>? topics,
+    List<Diagnostic>? diagnostics,
+    Map<String, String>? sourceOverrides,
+  }) {
+    return WritersideModule(
+      rootPath: rootPath,
+      config: config,
+      instances: instances,
+      topics: topics ?? this.topics,
+      variables: variables,
+      categories: categories,
+      diagnostics: diagnostics ?? this.diagnostics,
+      validatedImageDirs: validatedImageDirs,
+      buildProfiles: buildProfiles,
+      instanceGroups: instanceGroups,
+      sourceOverrides: sourceOverrides ?? this.sourceOverrides,
+    );
+  }
 
   String get effectiveImagesDir => validatedImageDirs.firstOrNull ?? 'images';
 

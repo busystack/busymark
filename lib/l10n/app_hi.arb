@@ -264,11 +264,19 @@
   "@languageGerman": {
     "description": "Language selector option for German."
   },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
   "languageItalian": "Italiano",
   "@languageItalian": {
     "description": "Language selector option for Italian."
   },
-  "languageNorwegian": "Norsk",
+  "languageNorwegian": "Norsk bokmål",
   "@languageNorwegian": {
     "description": "Language selector option for Norwegian."
   },
@@ -308,9 +316,29 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
   "languageEstonian": "Eesti",
   "@languageEstonian": {
     "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
   },
   "toggleSidebar": "साइडबार पैनल",
   "@toggleSidebar": {
@@ -381,7 +409,9 @@
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutDeleteTreeItemDescription": "फ़ाइलों में चुना गया आइटम मिटाएँ या विषय-सूची से चुना गया विषय हटाएँ",
-  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
   "shortcutGroupGeneral": "सामान्य",
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
@@ -410,9 +440,9 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
-  "shortcutMarkdownAndHtmlDescription": "Markdown और HTML संदर्भ खोलें",
-  "@shortcutMarkdownAndHtmlDescription": {
-    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  "shortcutSyntaxReferenceDescription": "सिंटैक्स संदर्भ खोलें",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
   },
   "shortcutSettingsDescription": "BusyMark सेटिंग्स खोलें",
   "@shortcutSettingsDescription": {
@@ -483,13 +513,21 @@
     "description": "Keyboard shortcut description for redo."
   },
   "shortcutInsertIndentation": "इंडेंट डालें",
-  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
   "shortcutInsertIndentationDescription": "कर्सर पर इंडेंट डालें",
-  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
   "shortcutOutdentSource": "स्रोत का इंडेंट घटाएँ",
-  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
   "shortcutOutdentSourceDescription": "स्रोत मोड में इंडेंट का एक स्तर हटाएँ",
-  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
   "shortcutEscape": "खोज बंद करें या ब्लॉक चयन हटाएँ",
   "@shortcutEscape": {
     "description": "Keyboard shortcut label for closing search or clearing a block selection."
@@ -723,28 +761,45 @@
     "description": "Editing button direction option."
   },
   "privacy": "गोपनीयता",
-  "@privacy": {"description": "Settings section title for privacy options."},
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
   "allowRemoteImages": "दूरस्थ छवियाँ लोड करें",
-  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
   "allowRemoteImagesDescription": "Markdown पूर्वावलोकन और संपादक की छवियों को http और https URL से लोड होने दें।",
-  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
   "clearRemoteImagePermissions": "दूरस्थ छवि अनुमतियाँ साफ़ करें",
-  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
   "clearRemoteImagePermissionsDescription": "उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।",
-  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
   "clearGitWorkspaceTrust": "विश्वसनीय Git कार्यस्थान साफ़ करें",
-  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
   "clearGitWorkspaceTrustDescription": "पहले से विश्वसनीय कार्यस्थानों के लिए Git सुविधाएँ चालू करने से पहले पूछें।",
-  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
-
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
   "settingsWindowSectionTitle": "विंडो",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
   },
   "settingsReopenWorkspaceOnStartupTitle": "स्टार्टअप पर पिछला कार्यक्षेत्र फिर से खोलें",
-  "@settingsReopenWorkspaceOnStartupTitle": {"description":"Settings switch title for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
   "settingsReopenWorkspaceOnStartupDescription": "BusyMark शुरू होने पर पिछले सत्र का कार्यक्षेत्र और टैब खोलें।",
-  "@settingsReopenWorkspaceOnStartupDescription": {"description":"Settings switch description for reopening the previous workspace on a normal startup."},
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "न सहेजे गए बदलाव हों तो बंद करने से पहले पुष्टि करें",
   "@settingsConfirmCloseWithUnsavedChangesTitle": {
     "description": "Settings switch title for close confirmation when documents have unsaved changes."
@@ -1036,11 +1091,17 @@
     "description": "Image alt text field label."
   },
   "editorPlaceholderText": "टेक्स्ट",
-  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
   "editorPlaceholderCode": "कोड",
-  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
   "editorPlaceholderAltText": "वैकल्पिक टेक्स्ट",
-  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
   "describeTheImage": "छवि का वर्णन करें",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -1071,18 +1132,29 @@
     "description": "Placeholder shown when an image has no source."
   },
   "remoteImageBlocked": "दूरस्थ छवि अवरुद्ध",
-  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
   "remoteImageBlockedTooltip": "चुनें कि BusyMark दूरस्थ छवियाँ लोड कर सकता है या नहीं।",
-  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
   "remoteImagesBlockedTitle": "दूरस्थ छवियाँ अवरुद्ध हैं",
-  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
   "remoteImagesBlockedMessage": "यह दस्तावेज़ इंटरनेट की छवियों का संदर्भ देता है। उन्हें लोड करने पर छवि होस्ट को नेटवर्क की जानकारी मिल सकती है।",
-  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
   "loadRemoteImagesForWorkspace": "इस कार्यस्थान के लिए लोड करें",
-  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
   "alwaysLoadRemoteImages": "दूरस्थ छवियाँ हमेशा लोड करें",
-  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
-
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
   "hideSidebar": "साइडबार पैनल छिपाएँ",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1322,19 +1394,33 @@
     "description": "Fold kind label for an XML tag."
   },
   "sourceSearchPreviousMatch": "पिछला मिलान",
-  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
   "sourceSearchNextMatch": "अगला मिलान",
-  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
   "sourceSearchCaseSensitive": "बड़े-छोटे अक्षरों के प्रति संवेदनशील",
-  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
   "sourceSearchWholeWord": "पूरा शब्द",
-  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
   "sourceSearchRegex": "रेगुलर एक्सप्रेशन",
-  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
   "sourceSearchInvalidRegex": "अमान्य रेगुलर एक्सप्रेशन",
-  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
   "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
-  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
   "nothingToRead": "पढ़ने के लिए कोई सामग्री नहीं",
   "admonition": "सूचना ब्लॉक",
   "quote": "उद्धरण",
@@ -2221,15 +2307,15 @@
   "gitBinaryFile": "बाइनरी फ़ाइल। BusyMark बाइनरी पैच रेंडर नहीं करता है।",
   "gitUnsavedChangesBanner": "संपादक के न सहेजे गए बदलाव सहेजे जाने तक शामिल नहीं किए जाते।",
   "gitConfirmDiscardTitle": "Git बदलाव त्यागें?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{चयनित ट्रैक की गई फ़ाइल Git से पुनर्स्थापित की जाएगी।} other{चयनित ट्रैक की गई फ़ाइलें Git से पुनर्स्थापित की जाएँगी।}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{चयनित ट्रैक की गई फ़ाइल के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।} other{चयनित ट्रैक की गई फ़ाइलों के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{चयनित अनट्रैक की गई फ़ाइल हटा दी जाएगी।} other{चयनित अनट्रैक की गई फ़ाइलें हटा दी जाएँगी।}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{चयनित फ़ाइल को उसकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।} other{चयनित फ़ाइलों को उनकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।}}",
   "gitConfirmSwitchBranchTitle": "{branch} पर स्विच करें?",
   "gitConfirmSwitchBranchMessage": "Git के शाखा बदलने के बाद BusyMark कार्यस्थान को डिस्क से फिर लोड करेगा।",
   "gitConfirmPushSetUpstreamTitle": "अपस्ट्रीम शाखा सेट करें?",
   "gitConfirmPushSetUpstreamMessage": "इस शाखा का कोई अपस्ट्रीम नहीं है। ठीक एक रिमोट कॉन्फ़िगर होने पर BusyMark {branch} को पुश करके उसका अपस्ट्रीम सेट कर सकता है।",
-  "gitProjectHistory": "प्रोजेक्ट",
-  "gitFileHistory": "मौजूदा फ़ाइल",
+  "gitProjectHistory": "परियोजना इतिहास",
+  "gitFileHistory": "फ़ाइल इतिहास",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
   "fileActions": "फ़ाइल कार्रवाइयाँ",
   "actions": "कार्रवाइयाँ",
@@ -2264,73 +2350,110 @@
   "gitErrorNetwork": "Git नेटवर्क कार्रवाई विफल रही।",
   "gitErrorConflict": "Git ने अनसुलझे टकराव रिपोर्ट किए।",
   "gitErrorCommandFailed": "Git कमांड विफल रहा।",
-
-  "markdownAndHtml": "Markdown और HTML",
-  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
-  "markdownHtmlMarkdownBlocks": "Markdown ब्लॉक",
-  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
-  "markdownHtmlMarkdownBlocksDescription": "Markdown स्रोत और प्रीव्यू में समर्थित ब्लॉक संरचनाएँ।",
-  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
-  "markdownHtmlInlineFormatting": "इनलाइन Markdown",
-  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।",
-  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "कच्चे HTML ब्लॉक",
-  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlBlocksDescription": "सुरक्षित ब्लॉक-स्तर HTML टैग जिन्हें BusyMark प्रीव्यू विजेट से दिखाया जाता है।",
-  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "इनलाइन HTML टैग",
-  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
-  "markdownHtmlRawHtmlInlineDescription": "सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।",
-  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
-  "markdownHtmlSafety": "सुरक्षा नियम",
-  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।",
-  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
-  "markdownHtmlHeadings": "शीर्षक",
-  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
-  "markdownHtmlParagraphs": "पैराग्राफ",
-  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
-  "markdownHtmlLists": "सूचियाँ",
-  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
-  "markdownHtmlHtmlContainers": "कंटेनर",
-  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
-  "markdownHtmlHtmlTextBlocks": "टेक्स्ट ब्लॉक",
-  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
-  "markdownHtmlHtmlFigures": "फ़िगर और चित्र",
-  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
-  "markdownHtmlHtmlPreformatted": "पूर्व-स्वरूपित कोड",
-  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
-  "markdownHtmlHtmlDisclosure": "खुलने वाले ब्लॉक",
-  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
-  "markdownHtmlHtmlDescriptionLists": "विवरण सूचियाँ",
-  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
-  "markdownHtmlHtmlFormattingTags": "फ़ॉर्मैटिंग टैग",
-  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
-  "markdownHtmlHtmlInlineCodeTags": "इनलाइन कोड टैग",
-  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
-  "markdownHtmlHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
-  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
-  "markdownHtmlSanitizedPreview": "साफ़ किया गया प्रीव्यू",
-  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
-  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "स्रोत सुरक्षित रहता है",
-  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
-  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
-  "markdownHtmlMarkdownInsideHtml": "HTML के अंदर Markdown",
-  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
-  "markdownHtmlMarkdownInsideHtmlDescription": "कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।",
-  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "सक्रिय सामग्री अवरुद्ध",
-  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
-  "markdownHtmlBlockedContentDescription": "स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।",
-  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
-  "markdownHtmlSafeUrls": "केवल सुरक्षित URL",
-  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "syntaxReference": "सिंटैक्स संदर्भ",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Markdown ब्लॉक",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown स्रोत और प्रीव्यू में समर्थित ब्लॉक संरचनाएँ।",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "इनलाइन Markdown",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "कच्चे HTML ब्लॉक",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "सुरक्षित ब्लॉक-स्तर HTML टैग जिन्हें BusyMark प्रीव्यू विजेट से दिखाया जाता है।",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "इनलाइन HTML टैग",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "शीर्षक",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "पैराग्राफ",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "सूचियाँ",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "कंटेनर",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "टेक्स्ट ब्लॉक",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "फ़िगर और चित्र",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "पूर्व-स्वरूपित कोड",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "खुलने वाले ब्लॉक",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "विवरण सूचियाँ",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "फ़ॉर्मैटिंग टैग",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "इनलाइन कोड टैग",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
   "addToGit": "Git में जोड़ें",
   "delete": "हटाएँ",
   "newFile": "नई फ़ाइल",
@@ -2348,101 +2471,343 @@
   "errorFileOperationOutsideRoot": "फ़ाइल कार्रवाई कार्यस्थान के अंदर ही रहनी चाहिए।",
   "errorFileOperationRoot": "फ़ाइल ट्री से कार्यस्थान का रूट नहीं बदला जा सकता।",
   "safeDeleteTopicFile": "विषय फ़ाइल को सुरक्षित रूप से हटाएँ…",
-  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "@safeDeleteTopicFile": {
+    "description": "Action that safely deletes a Writerside topic file after finding usages."
+  },
   "removeTocElement": "TOC तत्व हटाएँ",
-  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "@removeTocElement": {
+    "description": "Action that removes a topic element from the selected table of contents."
+  },
   "reviewUsages": "उपयोगों की समीक्षा करें",
-  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "@reviewUsages": {
+    "description": "Action that opens the topic usage review."
+  },
   "deleteTopicFile": "विषय फ़ाइल हटाएँ",
-  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic file."
+  },
   "removeAction": "हटाएँ",
-  "@removeAction": {"description": "Generic remove action label."},
+  "@removeAction": {
+    "description": "Generic remove action label."
+  },
   "topicRemovalSummary": "“{topic}” को चुने गए इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।",
-  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "@topicRemovalSummary": {
+    "description": "Summary of removing a topic from one TOC while keeping its file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "safeDeleteTopicSummary": "“{topic}” को हटाएँ और इस पूरे Writerside प्रोजेक्ट में उसके संदर्भों को सुरक्षित रूप से अपडेट करें।",
-  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "@safeDeleteTopicSummary": {
+    "description": "Summary of safely deleting a topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "childTopicsPromoted": "{count, plural, =1{1 उप-विषय एक स्तर ऊपर चला जाएगा।} other{{count} उप-विषय एक स्तर ऊपर चले जाएँगे।}}",
-  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "@childTopicsPromoted": {
+    "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "topicIsStartPageRemovalWarning": "यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning shown when the topic is used as an instance start page."
+  },
   "topicUsagesCount": "उपयोग ({count})",
-  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "@topicUsagesCount": {
+    "description": "Number of discovered topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noBreakingTopicUsages": "कोई ऐसा संदर्भ नहीं मिला जो टूट सकता है।",
-  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "@noBreakingTopicUsages": {
+    "description": "Message shown when removal will not leave breaking topic usages."
+  },
   "topicUsagesFound": "BusyMark को इस विषय के निम्न संदर्भ मिले।",
-  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "@topicUsagesFound": {
+    "description": "Heading for topic usages found by safe delete."
+  },
   "topicUsageTocElements": "TOC तत्व",
-  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "@topicUsageTocElements": {
+    "description": "Usage group label for TOC elements."
+  },
   "topicUsageStartPages": "प्रारंभ पृष्ठ",
-  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "@topicUsageStartPages": {
+    "description": "Usage group label for instance start pages."
+  },
   "topicUsageTopicLinks": "विषय लिंक",
-  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to the topic."
+  },
   "topicUsageIncludes": "शामिल अंश",
-  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "@topicUsageIncludes": {
+    "description": "Usage group label for topic includes."
+  },
   "usageCount": "{count, plural, =1{1 उपयोग} other{{count} उपयोग}}",
-  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "@usageCount": {
+    "description": "Compact topic usage count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "refactoringOptions": "रीफ़ैक्टरिंग विकल्प",
-  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "@refactoringOptions": {
+    "description": "Heading for safe-delete refactoring options."
+  },
   "updateUsagesAutomatically": "उपयोगों को अपने आप अपडेट करें",
-  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "@updateUsagesAutomatically": {
+    "description": "Option to update supported topic usages automatically."
+  },
   "updateUsagesAutomaticallyDescription": "TOC संदर्भ और शामिल अंश हटाएँ, और लिंक का टेक्स्ट बनाए रखें।",
-  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic topic usage updates."
+  },
   "manualUsageUpdatesRequired": "इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।",
-  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "@manualUsageUpdatesRequired": {
+    "description": "Message shown when usages require manual updates."
+  },
   "setRedirectTo": "इस पर रीडायरेक्ट करें",
-  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "@setRedirectTo": {
+    "description": "Option to redirect the removed topic URL to another topic."
+  },
   "noRedirectDescription": "पुराने प्रकाशित पृष्ठ को रीडायरेक्ट न करें।",
-  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "@noRedirectDescription": {
+    "description": "Description for choosing no redirect target."
+  },
   "redirectTarget": "रीडायरेक्ट गंतव्य",
-  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "@redirectTarget": {
+    "description": "Field label for selecting a redirect target."
+  },
   "remainingUsagesBlockRemoval": "आगे बढ़ने से पहले शेष उपयोगों की समीक्षा करके उन्हें अपडेट करें, या उपलब्ध होने पर अपने आप अपडेट करने का विकल्प चालू करें।",
-  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "@remainingUsagesBlockRemoval": {
+    "description": "Message explaining that unresolved usages block removal."
+  },
   "usagesOfTopic": "{topic} के उपयोग",
-  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "@usagesOfTopic": {
+    "description": "Title for the usage review of a topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "noUsagesFound": "कोई उपयोग नहीं मिला",
-  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "@noUsagesFound": {
+    "description": "Empty state shown when no topic usages were found."
+  },
   "outsideSelectedInstance": "चुने गए इंस्टेंस के बाहर",
-  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "@outsideSelectedInstance": {
+    "description": "Label for a usage outside the selected Writerside instance."
+  },
   "doRefactor": "रीफ़ैक्टर करें",
-  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "@doRefactor": {
+    "description": "Action that applies the selected safe-delete refactoring."
+  },
   "orphanTopicTitle": "विषय फ़ाइल अब उपयोग में नहीं है",
-  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "@orphanTopicTitle": {
+    "description": "Title shown when a removed topic file has become orphaned."
+  },
   "keepTopicFile": "विषय फ़ाइल रखें",
-  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned topic file."
+  },
   "orphanTopicMessage": "“{topic}” अब इस Writerside प्रोजेक्ट में कहीं भी उपयोग नहीं होता। फ़ाइल हटाएँ या किसी दूसरे इंस्टेंस में उपयोग के लिए इसे रखें।",
-  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "@orphanTopicMessage": {
+    "description": "Prompt to safely delete a topic after its final TOC element is removed.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorWritersideSafeDeleteRequired": "Writerside विषय फ़ाइलों के लिए सुरक्षित रूप से हटाएँ सुविधा का उपयोग करें।",
-  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."
+  },
   "errorWritersideTopicUsageScanFailed": "विषय के उपयोगों की जाँच पूरी नहीं हो सकी। कोई फ़ाइल नहीं बदली गई।",
-  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
   "errorWritersideTopicUsagesRemain": "विषय के कुछ उपयोगों पर अभी ध्यान देना आवश्यक है। आगे बढ़ने से पहले उनकी समीक्षा करें।",
-  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
   "errorWritersideRedirectInvalid": "चुना गया रीडायरेक्ट लक्ष्य अब मान्य नहीं है। उसे फिर से चुनें।",
-  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
   "errorWritersideRollbackFailed": "विषय हटाने की कार्रवाई पूरी तरह वापस नहीं की जा सकी। आगे बढ़ने से पहले इन पथों की समीक्षा करें: {paths}",
-  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}},
-  "exportAsPdf": "PDF के रूप में निर्यात करें", "@exportAsPdf": {"description": "Menu action and dialog title for exporting the active Markdown document as PDF."},
-  "pdfExportDescription": "सुंदर और स्व-निहित PDF के लिए पृष्ठ लेआउट चुनें।", "@pdfExportDescription": {"description": "Introductory text in the PDF export options dialog."},
-  "pdfRemoteImagesNote": "निर्यात के दौरान दूरस्थ चित्र डाउनलोड नहीं किए जाते। उपलब्ध स्थानीय चित्र शामिल किए जाते हैं।", "@pdfRemoteImagesNote": {"description": "Privacy note explaining image handling during PDF export."},
-  "pdfPageSize": "पृष्ठ आकार", "@pdfPageSize": {"description": "PDF export page-size setting."},
-  "pdfPageSizeA4": "A4", "@pdfPageSizeA4": {"description": "A4 PDF page-size option."},
-  "pdfPageSizeLetter": "लेटर", "@pdfPageSizeLetter": {"description": "US Letter PDF page-size option."},
-  "pdfOrientation": "दिशा", "@pdfOrientation": {"description": "PDF export page-orientation setting."},
-  "pdfPortrait": "पोर्ट्रेट", "@pdfPortrait": {"description": "Portrait PDF page-orientation option."},
-  "pdfLandscape": "लैंडस्केप", "@pdfLandscape": {"description": "Landscape PDF page-orientation option."},
-  "pdfMargins": "हाशिए", "@pdfMargins": {"description": "PDF export page-margin setting."},
-  "pdfMarginNarrow": "संकीर्ण", "@pdfMarginNarrow": {"description": "Narrow PDF page-margin option."},
-  "pdfMarginNormal": "सामान्य", "@pdfMarginNormal": {"description": "Normal PDF page-margin option."},
-  "pdfMarginWide": "चौड़े", "@pdfMarginWide": {"description": "Wide PDF page-margin option."},
-  "pdfIncludePageNumbers": "पृष्ठ संख्याएँ शामिल करें", "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
-  "export": "निर्यात करें", "@export": {"description": "Button label that starts an export."},
-  "exportingPdf": "PDF निर्यात हो रहा है…", "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
-  "fileTypePdf": "PDF दस्तावेज़", "@fileTypePdf": {"description": "File picker label for PDF documents."},
-  "pdfExported": "{fileName} निर्यात किया गया।", "@pdfExported": {"description": "PDF export success message.", "placeholders": {"fileName": {"type": "String"}}},
-  "pdfExportedWithWarnings": "{fileName} निर्यात किया गया। शामिल न हो सकने वाले चित्र: {count}।", "@pdfExportedWithWarnings": {"description": "PDF export success message when some images were omitted.", "placeholders": {"fileName": {"type": "String"}, "count": {"type": "int"}}},
-  "pdfExportUnavailable": "PDF निर्यात घटक उपलब्ध नहीं है। BusyMark को फिर स्थापित करके दोबारा प्रयास करें।", "@pdfExportUnavailable": {"description": "Error shown when the bundled PDF compiler is unavailable."},
-  "pdfExportTimedOut": "PDF निर्यात में बहुत समय लगा और इसे रोक दिया गया।", "@pdfExportTimedOut": {"description": "Error shown when PDF compilation times out."},
-  "pdfExportFailed": "BusyMark इस दस्तावेज़ को PDF के रूप में निर्यात नहीं कर सका।", "@pdfExportFailed": {"description": "Generic PDF export failure message."},
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "श्रेणी",
+  "syntaxReferenceCategoryDiagramsAndApi": "आरेख और API",
+  "syntaxReferenceCategoryMathematics": "गणित",
+  "syntaxReferenceExample": "उदाहरण",
+  "syntaxReferenceIdentifiers": "पहचानकर्ता और उपनाम",
+  "syntaxReferenceScope": "दायरा",
+  "syntaxReferenceLimitation": "BusyMark की सीमा",
+  "syntaxReferenceOfficialDocumentation": "आधिकारिक दस्तावेज़",
+  "syntaxReferenceScopeWritersideMarkdown": "केवल Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "केवल Writerside Markdown और Writerside XML",
+  "syntaxReferenceMarkdownDescription": "मुख्य Markdown रूप जिन्हें BusyMark लिख और पूर्वावलोकित कर सकता है।",
+  "syntaxReferenceParagraphExample": "पाठ का एक अनुच्छेद।",
+  "syntaxReferenceTableLimitation": "तालिकाएँ GitHub Flavored Markdown की पाइप सिंटैक्स का उपयोग करती हैं।",
+  "syntaxReferenceHardBreakIdentifiers": "पंक्ति के अंत में दो रिक्तियाँ, \\, <br>",
+  "syntaxReferenceHtmlDescription": "BusyMark, Markdown स्रोत में कच्चे HTML का सीमित और सुरक्षित उपसमुच्चय स्वीकार करता है।",
+  "syntaxReferenceDiagramsDescription": "बाड़ वाले Mermaid, PlantUML, D2 और OpenAPI ब्लॉक Markdown स्रोत में काम करते हैं। बाड़ पहचानकर्ता अक्षर केस से स्वतंत्र हैं और BusyMark मूल वर्तनी सुरक्षित रखता है।",
+  "syntaxReferenceOpenApiLimitation": "बाड़ वाला YAML या JSON सामग्री उपयोग करें। BusyMark किसी भी पूरे YAML या JSON दस्तावेज़ को OpenAPI संदर्भ नहीं मानता।",
+  "syntaxReferenceSemanticDiagramBlocks": "आरेखों के लिए सिमैंटिक कोड ब्लॉक",
+  "syntaxReferenceSemanticDiagramLimitation": "सिमैंटिक code-block और src रूप Mermaid, PlantUML और D2 का समर्थन करते हैं, OpenAPI का नहीं, और केवल Writerside परियोजनाओं में काम करते हैं।",
+  "syntaxReferenceReferencedDiagramSource": "संदर्भित आरेख स्रोत",
+  "syntaxReferenceReferencedDiagramLimitation": "पथ सापेक्ष होने चाहिए और खुले Writerside प्रोजेक्ट के भीतर रहने चाहिए; बाड़ के साथ src वाला रूप केवल Writerside Markdown के लिए है।",
+  "syntaxReferenceMathematicsDescription": "BusyMark TeX व्यंजकों का समर्थन करता है, पूर्ण TeX या LaTeX दस्तावेज़ों का नहीं।",
+  "syntaxReferenceInlineMath": "इनलाइन गणित",
+  "syntaxReferenceGithubMath": "डॉलर और बैकटिक वाला GitHub गणित",
+  "syntaxReferenceDisplayMath": "प्रदर्शित गणित",
+  "syntaxReferenceMathFence": "math बाड़",
+  "syntaxReferenceTexFence": "tex बाड़",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark \\(...\\) या \\[...\\] को Markdown गणित सीमांकक नहीं मानता।",
+  "syntaxReferenceTexFenceLimitation": "Writerside मोड के बाहर tex बाड़ सामान्य कोड ब्लॉक ही रहता है।",
+  "syntaxReferenceWritersideMathElement": "Writerside math तत्व",
+  "syntaxReferenceWritersideMathElementLimitation": "math तत्व सिमैंटिक Writerside सिंटैक्स है, अनुमत कच्चा HTML MathML नहीं।",
+  "syntaxReferenceSemanticTexBlock": "सिमैंटिक TeX कोड ब्लॉक",
+  "syntaxReferenceWritersideDescription": "ये केंद्रित एक्सटेंशन केवल खुले Writerside प्रोजेक्ट में समझे जाते हैं।",
+  "syntaxReferenceAdmonitionBlockquote": "सूचना ब्लॉककोट",
+  "syntaxReferenceAdmonitionLimitation": "सादा ब्लॉककोट Writerside Markdown में सुझाव होता है; सामान्य Markdown में वह सामान्य उद्धरण ही रहता है।",
+  "syntaxReferenceSemanticAdmonitions": "सिमैंटिक सूचनाएँ",
+  "syntaxReferenceSemanticMarkupLimitation": "सामान्य Markdown इन सिमैंटिक Writerside तत्वों को नहीं समझता।",
+  "syntaxReferenceCollapsibleHeading": "सिकोड़ा जा सकने वाला शीर्षक",
+  "syntaxReferenceCollapsibleCode": "सिकोड़ा जा सकने वाला कोड बाड़",
+  "syntaxReferenceSemanticCollapsibles": "सिमैंटिक संकुचित सामग्री",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark सिकोड़े जा सकने वाले chapter, procedure, code-block और परिभाषा-सूची रूपों का समर्थन करता है, पूरे Writerside कैटलॉग का नहीं।",
+  "syntaxReferenceSemanticCodeBlocks": "गणित और आरेखों के लिए सिमैंटिक कोड ब्लॉक",
+  "syntaxReferenceVideo": "Writerside वीडियो",
+  "syntaxReferenceVideoLimitation": "स्थानीय वीडियो स्थानीय preview-src चित्र उपयोग करता है; होस्ट किए गए स्रोत समर्थित YouTube या Vimeo HTTPS URL होने चाहिए।",
+  "exportAsPdf": "PDF के रूप में निर्यात करें",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active Markdown document as PDF."
+  },
+  "pdfExportDescription": "सुंदर और स्व-निहित PDF के लिए पृष्ठ लेआउट चुनें।",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "निर्यात के दौरान दूरस्थ चित्र डाउनलोड नहीं किए जाते। उपलब्ध स्थानीय चित्र शामिल किए जाते हैं।",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "पृष्ठ आकार",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "लेटर",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "दिशा",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "पोर्ट्रेट",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "लैंडस्केप",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "हाशिए",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "संकीर्ण",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "सामान्य",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "चौड़े",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "पृष्ठ संख्याएँ शामिल करें",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "निर्यात करें",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "PDF निर्यात हो रहा है…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "PDF दस्तावेज़",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "{fileName} निर्यात किया गया।",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} को {count, plural, =1{1 चेतावनी} other{{count} चेतावनियों}} के साथ निर्यात किया गया.",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some images were omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "PDF निर्यात घटक उपलब्ध नहीं है। BusyMark को फिर स्थापित करके दोबारा प्रयास करें।",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "PDF निर्यात में बहुत समय लगा और इसे रोक दिया गया।",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark इस दस्तावेज़ को PDF के रूप में निर्यात नहीं कर सका।",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
   "visualizationRendering": "रेंडर हो रहा है…",
   "visualizationStale": "अंतिम मान्य रेंडर दिखाया जा रहा है",
   "visualizationShowSource": "स्रोत दिखाएँ",
@@ -2463,7 +2828,10 @@
   "visualizationRenderFailed": "इस विज़ुअलाइज़ेशन को रेंडर नहीं किया जा सका।",
   "visualizationRetry": "फिर प्रयास करें",
   "visualizationSaved": "{fileName} सहेजा गया",
-  "shortcutExportPdfDescription": "सक्रिय दस्तावेज़ या Writerside मॉड्यूल को PDF के रूप में निर्यात करें।", "@shortcutExportPdfDescription": {"description": "Keyboard-shortcut description for PDF export."},
+  "shortcutExportPdfDescription": "सक्रिय दस्तावेज़ या Writerside मॉड्यूल को PDF के रूप में निर्यात करें।",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
   "gitStaged": "स्टेज किए गए",
   "gitUnstaged": "स्टेज नहीं किए गए",
   "gitFetch": "प्राप्त करें",
@@ -2580,7 +2948,6 @@
   "ai": "एआई",
   "aiLocalOllama": "स्थानीय Ollama",
   "aiDisabled": "अक्षम",
-  "aiLocalOnlyDescription": "AI संपादन केवल स्पष्ट कार्रवाई से शुरू होता है। BusyMark चयनित प्रदाता को केवल दिखाया गया संदर्भ भेजता है और समीक्षा के बिना किसी प्रस्ताव को लागू नहीं करता।",
   "aiProvider": "एआई प्रदाता",
   "aiDefaultProvider": "डिफ़ॉल्ट प्रदाता",
   "aiConfigureProvider": "प्रदाता कॉन्फ़िगर करें",
@@ -2694,14 +3061,18 @@
   "reloadFromDisk": "डिस्क से फिर लोड करें",
   "keepMine": "मेरा संस्करण रखें",
   "saveAs": "इस रूप में सहेजें",
-  "unsavedChangesMultipleMessage": "{count} दस्तावेज़ों में सहेजे नहीं गए बदलाव हैं। जारी रखने से पहले इन्हें सहेजें?",
+  "unsavedChangesMultipleMessage": "{count, plural, =1{1 दस्तावेज़ में असुरक्षित बदलाव हैं। इसे जारी रखने से पहले सहेजें।} other{{count} दस्तावेज़ों में असुरक्षित बदलाव हैं। इन्हें जारी रखने से पहले सहेजें।}}",
   "workspaceReplaceIssuePartialConflict": "रोलबैक रोक दिया गया क्योंकि फ़ाइल उसी समय बदल गई थी। कुछ प्रतिस्थापन बने रह सकते हैं; हटाई गई सामग्री नीचे दिए गए पथ पर सुरक्षित रखी गई है।",
   "workspaceReplaceIssueApplyFailed": "कोई प्रतिस्थापन लागू नहीं किया गया क्योंकि समीक्षा किए गए समूह को सुरक्षित रूप से सहेजा नहीं जा सका।",
-  "workspaceRecoveryRestored": "{count} सहेजे नहीं गए दस्तावेज़ पुनर्प्राप्त किए गए। जारी रखने से पहले प्रत्येक पुनर्प्राप्त दस्तावेज़ की समीक्षा करें।",
-  "workspaceRecoveryDamaged": "{count} क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड बहाल नहीं किए जा सके। मान्य पुनर्प्राप्त दस्तावेज़ उपलब्ध हैं।",
+  "workspaceRecoveryRestored": "{count, plural, =1{1 बिना सहेजा दस्तावेज़ पुनर्प्राप्त किया गया। इसे सहेजने या हटाने से पहले समीक्षा करें।} other{{count} बिना सहेजे दस्तावेज़ पुनर्प्राप्त किए गए। प्रत्येक की समीक्षा करके सहेजें या हटाएँ।}}",
+  "workspaceRecoveryDamaged": "{count, plural, =1{एक क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड पुनर्स्थापित नहीं किया जा सका। मूल पुनर्प्राप्ति फ़ाइल निरीक्षण के लिए सुरक्षित रखी गई।} other{{count} क्षतिग्रस्त पुनर्प्राप्ति रिकॉर्ड पुनर्स्थापित नहीं किए जा सके। वैध पुनर्प्राप्ति रिकॉर्ड अभी भी उपलब्ध हैं।}}",
   "recoveredDocumentReview": "{fileName} की सहेजी नहीं गई सामग्री पुनर्प्राप्त हुई। इसकी समीक्षा करें, फिर सहेजें, इस रूप में सहेजें या छोड़ दें।",
   "commandUnavailableInContext": "यह आदेश वर्तमान संदर्भ में उपलब्ध नहीं है।",
   "mathRenderFailed": "गणितीय व्यंजक रेंडर नहीं किया जा सका।",
   "inlineMath": "इनलाइन गणित",
-  "displayMath": "डिस्प्ले गणित"
+  "displayMath": "डिस्प्ले गणित",
+  "aiExplicitEditingDescription": "AI संपादन केवल स्पष्ट कार्रवाई से शुरू होता है। BusyMark चयनित प्रदाता को केवल दिखाया गया संदर्भ भेजता है और समीक्षा के बिना किसी प्रस्ताव को लागू नहीं करता।",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd" id="features" title="BusyMark Writerside conformance">
+  <p>Use <control>Settings</control>, <path>docs/index.md</path>,
+    <shortcut key="$Save"/>, <code>busymark</code>,
+    <resource src="sample-resource.txt"/>, and
+    <tooltip term="semantic">semantic markup</tooltip>.</p>
+  <quote>Lossless semantic quote.</quote>
+  <list>
+    <li checked="true">Checked item</li>
+  </list>
+  <table sticky-header="true">
+    <tr><td>Feature</td><td>State</td></tr>
+    <tr><td>Semantic model</td><td>Enabled</td></tr>
+  </table>
+  <p><a href="https://www.jetbrains.com/writerside/" as="button">Writerside</a></p>
+  <code-block lang="dart" emphasize-lines="2">
+void main() {
+  print('BusyMark');
+}
+  </code-block>
+  <search-keyword>BusyMark</search-keyword>
+  <snippet id="shared-conformance"><p>Reusable semantic content.</p></snippet>
+</topic>

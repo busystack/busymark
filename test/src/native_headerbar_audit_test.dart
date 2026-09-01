@@ -182,6 +182,7 @@ void main() {
     expect(source, isNot(contains('"Settings"')));
     expect(source, isNot(contains('"Keyboard Shortcuts"')));
     expect(source, isNot(contains('"Markdown and HTML"')));
+    expect(source, isNot(contains('markdownAndHtml')));
     expect(source, isNot(contains('"About BusyMark"')));
   });
 
@@ -211,7 +212,7 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
-    expect(service, contains('markdownAndHtml'));
+    expect(service, contains('syntaxReference'));
     expect(service, contains('reportIssue'));
     expect(service, contains('fullScreen'));
     expect(app, contains('menu: l10n.mainMenu'));
@@ -224,13 +225,13 @@ void main() {
     );
     expect(
       app,
-      contains('markdownAndHtml: label(BusyMarkCommandIds.markdownAndHtml)'),
+      contains('syntaxReference: label(BusyMarkCommandIds.syntaxReference)'),
     );
     expect(app, contains('reportIssue: l10n.reportIssue'));
     expect(app, contains('fullScreen: label(BusyMarkCommandIds.fullScreen)'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
-    expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
+    expect(dialogs, contains('showBusyMarkSyntaxReferenceDialog'));
     expect(dialogs, contains('BusyMarkAppShortcutLabels.newDocument'));
     expect(dialogs, contains('BusyMarkAppShortcutLabels.save'));
     expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.undo'));
@@ -242,13 +243,13 @@ void main() {
     expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
     expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(workspace, contains('case HeaderBarAction.syntaxReference:'));
     expect(workspace, contains('case HeaderBarAction.reportIssue:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(settings, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(settings, contains('case HeaderBarAction.syntaxReference:'));
     expect(settings, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(welcome, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(welcome, contains('case HeaderBarAction.syntaxReference:'));
     expect(welcome, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('BusyMarkMainMenuButton('));
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
@@ -273,7 +274,8 @@ void main() {
     expect(native, contains('full_screen_gaction_activated_cb'));
     expect(native, contains('configuration.full_screen'));
     expect(native, contains('configuration.can_export_pdf'));
-    expect(native, contains('"header.markdown-and-html"'));
+    expect(native, contains('"header.syntax-reference"'));
+    expect(native, isNot(contains('"header.markdown-and-html"')));
     expect(native, contains('"header.report-issue"'));
     expect(native, contains('static const gchar* main_menu_icon_name'));
     expect(native, contains('"preferences-system-symbolic"'));

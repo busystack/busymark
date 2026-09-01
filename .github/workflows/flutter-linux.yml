@@ -7,6 +7,16 @@ on:
     branches: [main]
 
 jobs:
+  writerside-conformance:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Validate the pinned Writerside compatibility fixture
+        run: tools/validate_writerside_conformance.sh
+
   verify:
     runs-on: ubuntu-24.04
 

@@ -9,10 +9,12 @@ class WritersidePdfExportRequest {
     required this.instanceId,
     required this.destinationPath,
     required this.overwrite,
+    this.projectRoot,
     this.options = const MarkdownPdfOptions(),
   });
 
   final String moduleRoot;
+  final String? projectRoot;
   final String instanceId;
   final String destinationPath;
   final bool overwrite;

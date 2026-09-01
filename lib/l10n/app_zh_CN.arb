@@ -1,0 +1,4637 @@
+{
+  "@@locale": "zh_CN",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Markdown 文件和兼容 Writerside 的文档项目编辑器。",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "关于 BusyMark",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutTagline": "Markdown 和 Writerside 编辑器",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "许可证",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "网站",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutSourceCode": "源代码",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
+  },
+  "reportIssue": "报告问题",
+  "@reportIssue": {
+    "description": "Menu action and dialog title for reporting an issue."
+  },
+  "feedbackCategory": "类别",
+  "@feedbackCategory": {
+    "description": "Feedback category field label."
+  },
+  "feedbackChooseCategory": "选择类别",
+  "@feedbackChooseCategory": {
+    "description": "Placeholder for the feedback category selector."
+  },
+  "feedbackCategoryProblem": "问题或错误",
+  "@feedbackCategoryProblem": {
+    "description": "Feedback category for a problem or bug."
+  },
+  "feedbackCategoryFeature": "功能请求",
+  "@feedbackCategoryFeature": {
+    "description": "Feedback category for a feature request."
+  },
+  "feedbackCategoryPrivacySecurity": "隐私或安全问题",
+  "@feedbackCategoryPrivacySecurity": {
+    "description": "Feedback category for a privacy or security concern."
+  },
+  "feedbackCategoryUsability": "可用性问题",
+  "@feedbackCategoryUsability": {
+    "description": "Feedback category for a usability concern."
+  },
+  "feedbackCategoryOther": "其他",
+  "@feedbackCategoryOther": {
+    "description": "Feedback category for other concerns."
+  },
+  "feedbackSubject": "主题",
+  "@feedbackSubject": {
+    "description": "Feedback subject field label."
+  },
+  "feedbackMessage": "详细留言",
+  "@feedbackMessage": {
+    "description": "Detailed feedback message field label."
+  },
+  "feedbackReplyEmail": "回复邮箱（可选）",
+  "@feedbackReplyEmail": {
+    "description": "Optional reply email field label."
+  },
+  "feedbackIncludeTechnicalDetails": "包含技术详细信息",
+  "@feedbackIncludeTechnicalDetails": {
+    "description": "Checkbox label for optional technical details."
+  },
+  "feedbackTechnicalDetailsDisclosure": "启用后，此选项仅会添加您的 Linux 操作系统版本和 BusyMark 应用语言。不会附加日志、文件、账户数据或其他诊断信息。",
+  "@feedbackTechnicalDetailsDisclosure": {
+    "description": "Disclosure explaining exactly which optional technical details are submitted."
+  },
+  "feedbackSubmit": "提交",
+  "@feedbackSubmit": {
+    "description": "Button that submits feedback."
+  },
+  "feedbackSubmitting": "正在提交…",
+  "@feedbackSubmitting": {
+    "description": "Button label while feedback is being submitted."
+  },
+  "feedbackCategoryRequired": "请选择类别。",
+  "@feedbackCategoryRequired": {
+    "description": "Validation error for a missing feedback category."
+  },
+  "feedbackSubjectLength": "主题必须包含 3 到 120 个字符。",
+  "@feedbackSubjectLength": {
+    "description": "Validation error for feedback subject length."
+  },
+  "feedbackMessageLength": "信息必须包含 10 到 5,000 个字符。",
+  "@feedbackMessageLength": {
+    "description": "Validation error for feedback message length."
+  },
+  "feedbackReplyEmailInvalid": "请输入有效的邮箱地址，或将此字段留空。",
+  "@feedbackReplyEmailInvalid": {
+    "description": "Validation error for an invalid optional reply email."
+  },
+  "feedbackConnectionFailure": "BusyMark 无法连接。请检查网络连接后重试。",
+  "@feedbackConnectionFailure": {
+    "description": "Feedback submission error for a connection failure."
+  },
+  "feedbackTimeoutFailure": "请求超时。请重试。",
+  "@feedbackTimeoutFailure": {
+    "description": "Feedback submission error for a timeout."
+  },
+  "feedbackRateLimitedFailure": "此连接发送的报告过多。请稍候再试。",
+  "@feedbackRateLimitedFailure": {
+    "description": "Feedback submission error when the server rate limit is reached."
+  },
+  "feedbackRejectedFailure": "服务器拒绝了此报告。请检查表单字段后重试。",
+  "@feedbackRejectedFailure": {
+    "description": "Feedback submission error when the server rejects invalid request data."
+  },
+  "feedbackServerFailure": "服务器无法接收此报告。请稍后重试。",
+  "@feedbackServerFailure": {
+    "description": "Generic feedback submission server error."
+  },
+  "feedbackSuccess": "反馈已发送。参考 ID：{id}",
+  "@feedbackSuccess": {
+    "description": "Success message containing the server reference ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "advanced": "高级",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "addToGit": "添加到 Git",
+  "@addToGit": {
+    "description": "Menu action that stages the selected file or folder in Git."
+  },
+  "appearance": "外观",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "应用",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "返回",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "左下",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "右下",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "取消",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "选择",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "选择位置",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "复制",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "copyName": "复制名称",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyFileName": "复制文件名",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
+  "copyPath": "复制路径",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
+  "create": "创建",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "正在创建…",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "剪切",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "promoteSection": "提升节级别",
+  "@promoteSection": {
+    "description": "Outline action that raises a heading section, including descendant headings, by one rank."
+  },
+  "demoteSection": "降低节级别",
+  "@demoteSection": {
+    "description": "Outline action that lowers a heading section, including descendant headings, by one rank."
+  },
+  "moveSectionUp": "上移节",
+  "@moveSectionUp": {
+    "description": "Outline action that swaps a heading section with its previous sibling section."
+  },
+  "moveSectionDown": "下移节",
+  "@moveSectionDown": {
+    "description": "Outline action that swaps a heading section with its next sibling section."
+  },
+  "confirmDeleteSectionTitle": "删除此节？",
+  "@confirmDeleteSectionTitle": {
+    "description": "Confirmation title before deleting a Markdown heading section."
+  },
+  "confirmDeleteSectionMessage": "删除“{name}”及其节中的全部内容？此操作无法撤销。",
+  "@confirmDeleteSectionMessage": {
+    "description": "Confirmation message before deleting a Markdown heading section.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "darkTheme": "深色",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "delete": "删除",
+  "@delete": {
+    "description": "Delete command label."
+  },
+  "discard": "放弃",
+  "@discard": {
+    "description": "Destructive button that throws away unsaved editor changes. Translate it distinctly from Cancel."
+  },
+  "editor": "编辑器",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "文件",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "fileHistory": "文件历史记录",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
+  },
+  "folder": "文件夹",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "插入",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "键盘快捷键",
+  "commandPalette": "命令面板",
+  "@commandPalette": {
+    "description": "Title and command label for the searchable command palette."
+  },
+  "commandPaletteHint": "输入命令",
+  "@commandPaletteHint": {
+    "description": "Search hint in the command palette."
+  },
+  "commandPaletteEmpty": "没有匹配的命令",
+  "@commandPaletteEmpty": {
+    "description": "Empty state in the command palette."
+  },
+  "commandUnavailableInContext": "当前编辑器上下文中无法使用此命令",
+  "@commandUnavailableInContext": {
+    "description": "Reason shown for a disabled contextual command."
+  },
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "lightTheme": "浅色",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "主菜单",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "全屏",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "打开",
+  "@open": {
+    "description": "Open action label."
+  },
+  "openInFiles": "在文件中打开",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "路径操作",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
+  },
+  "outline": "大纲",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "覆盖",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "粘贴",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "粘贴为无格式文本",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "reading": "阅读",
+  "@reading": {
+    "description": "Reading view label."
+  },
+  "removeFromRecent": "从最近使用记录中移除",
+  "@removeFromRecent": {
+    "description": "Action that removes a workspace from the Recent list without deleting its files."
+  },
+  "recent": "最近使用",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "重做",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "保存",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "搜索",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "全选",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "源代码",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "拆分",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "系统",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "主题",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "语言",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "系统",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageDutch": "Nederlands",
+  "@languageDutch": {
+    "description": "Language selector option for Dutch."
+  },
+  "languageTurkish": "Türkçe",
+  "@languageTurkish": {
+    "description": "Language selector option for Turkish."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk bokmål",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Language selector option for Indonesian."
+  },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
+  "languageVietnamese": "Tiếng Việt",
+  "@languageVietnamese": {
+    "description": "Language selector option for Vietnamese."
+  },
+  "languageJapanese": "日本語",
+  "@languageJapanese": {
+    "description": "Language selector option for Japanese."
+  },
+  "languageKorean": "한국어",
+  "@languageKorean": {
+    "description": "Language selector option for Korean."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Language selector option for Simplified Chinese."
+  },
+  "toggleSidebar": "侧边栏面板",
+  "@toggleSidebar": {
+    "description": "Keyboard shortcuts label for the sidebar panel toggle."
+  },
+  "topLeft": "左上",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "右上",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "撤销",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "验证",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "验证",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "视图模式",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "欢迎",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "图像",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "打开 Markdown 文件",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md 或 .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "打开文件夹或 Writerside 项目",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Markdown 文件夹或兼容 Writerside 的项目",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "noOpenFile": "没有打开的文件",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
+  "shortcutDeleteTreeItemDescription": "删除选中的文件项，或从目录中移除选中的主题",
+  "@shortcutDeleteTreeItemDescription": {
+    "description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."
+  },
+  "shortcutGroupGeneral": "常规",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
+  },
+  "shortcutNewDocument": "创建",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for opening the content creation chooser."
+  },
+  "shortcutNewDocumentDescription": "创建 Markdown 文件或 Writerside 项目",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating Markdown files or Writerside projects."
+  },
+  "shortcutOpenDescription": "打开 Markdown 文件、文件夹或 Writerside 项目",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "保存当前文档",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutSearchDescription": "搜索当前工作区",
+  "@shortcutSearchDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "显示此键盘快捷键参考",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutSyntaxReferenceDescription": "打开语法参考",
+  "@shortcutSyntaxReferenceDescription": {
+    "description": "Keyboard shortcut description for opening the Syntax Reference."
+  },
+  "shortcutSettingsDescription": "打开 BusyMark 设置",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
+  "shortcutNextTab": "下一个标签页",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next tab."
+  },
+  "shortcutNextTabDescription": "移至下一个打开的标签页",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next tab."
+  },
+  "shortcutPreviousTab": "上一个标签页",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous tab."
+  },
+  "shortcutPreviousTabDescription": "移至上一个打开的标签页",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous tab."
+  },
+  "shortcutCloseTab": "关闭标签页",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active tab."
+  },
+  "shortcutCloseTabDescription": "关闭当前标签页",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active tab."
+  },
+  "shortcutCloseAllTabs": "关闭所有标签页",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all tabs."
+  },
+  "shortcutCloseAllTabsDescription": "关闭所有打开的标签页",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all tabs."
+  },
+  "shortcutGroupTextEditing": "文本编辑",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "在源代码模式下选择全部文本；在编辑器模式下按两次以选择所有块",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
+  },
+  "shortcutCutDescription": "剪切选中的文本",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "复制选中的文本",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "从剪贴板粘贴",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "粘贴剪贴板中的无格式文本",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "撤销上次编辑",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "重做上次撤销的编辑",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "shortcutInsertIndentation": "插入缩进",
+  "@shortcutInsertIndentation": {
+    "description": "Keyboard shortcut label for inserting indentation."
+  },
+  "shortcutInsertIndentationDescription": "在光标处插入缩进",
+  "@shortcutInsertIndentationDescription": {
+    "description": "Keyboard shortcut description for inserting indentation."
+  },
+  "shortcutOutdentSource": "减少源代码缩进",
+  "@shortcutOutdentSource": {
+    "description": "Keyboard shortcut label for outdenting in Source mode."
+  },
+  "shortcutOutdentSourceDescription": "在源代码模式下减少一级缩进",
+  "@shortcutOutdentSourceDescription": {
+    "description": "Keyboard shortcut description for outdenting in Source mode."
+  },
+  "shortcutEscape": "关闭搜索或清除块选择",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
+  },
+  "shortcutEscapeDescription": "关闭工作区搜索，或在编辑器模式下清除块选择",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
+  },
+  "shortcutGroupFormatting": "格式",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "切换选中文本的粗体",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "切换选中文本的斜体",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "切换选中文本的下划线",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "插入或编辑链接",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "切换选中文本的行内代码格式",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "切换选中文本的删除线",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "块",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "将当前块设为段落",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "将当前块设为标题 1",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "将当前块设为标题 2",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "将当前块设为标题 3",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "将当前块设为标题 4",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "将当前块设为标题 5",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "将当前块设为标题 6",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "列表",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "编号列表",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "切换编号列表格式",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "项目符号列表",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "切换项目符号列表格式",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "检查清单",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "切换检查清单格式",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "侧边栏",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "侧边栏视图",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
+  },
+  "createMarkdownFile": "创建 Markdown 文件",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "开始创建未保存的本地 Markdown 文档",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "创建 Writerside 项目",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "开始创建本地兼容 Writerside 的项目",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "文档",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "用户指南",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "开始使用",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "项目名称",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "目录名称",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "实例名称",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "实例 ID",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "起始主题标题",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "位置",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "项目名称为必填项。",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "目录名称为必填项。",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "使用单一且安全的目录名称。",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "使用仅包含小写字母、数字、下划线或连字符的小写标识符。",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "起始主题标题为必填项。",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "无法创建 Writerside 项目。",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "BusyMark 设置",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "autoSave": "自动保存",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "在短暂空闲后自动保存文件更改。",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
+  "wordWrap": "自动换行",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "编辑器字体大小",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "编辑时验证",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "清除最近使用的工作区",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtonsPosition": "编辑按钮位置",
+  "@editingButtonsPosition": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsPositionDescription": "选择浮动 WYSIWYG 编辑按钮的显示位置。",
+  "@editingButtonsPositionDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "编辑按钮方向",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "选择水平或垂直排列浮动 WYSIWYG 编辑按钮。",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "水平",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "垂直",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "隐私",
+  "@privacy": {
+    "description": "Settings section title for privacy options."
+  },
+  "allowRemoteImages": "加载远程图像",
+  "@allowRemoteImages": {
+    "description": "Settings switch title for loading remote images."
+  },
+  "allowRemoteImagesDescription": "允许 Markdown 预览和编辑器从 http 和 https URL 加载图像。",
+  "@allowRemoteImagesDescription": {
+    "description": "Settings switch description for loading remote images."
+  },
+  "clearRemoteImagePermissions": "清除远程图像权限",
+  "@clearRemoteImagePermissions": {
+    "description": "Settings action label for clearing per-workspace remote image permissions."
+  },
+  "clearRemoteImagePermissionsDescription": "忘记已获准加载远程图像的工作区。",
+  "@clearRemoteImagePermissionsDescription": {
+    "description": "Settings action description for clearing per-workspace remote image permissions."
+  },
+  "clearGitWorkspaceTrust": "清除受信任的 Git 工作区",
+  "@clearGitWorkspaceTrust": {
+    "description": "Settings action label for clearing trusted Git workspaces."
+  },
+  "clearGitWorkspaceTrustDescription": "为之前受信任的工作区启用 Git 功能前先进行询问。",
+  "@clearGitWorkspaceTrustDescription": {
+    "description": "Settings action description for clearing trusted Git workspaces."
+  },
+  "settingsWindowSectionTitle": "窗口",
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
+  "settingsReopenWorkspaceOnStartupTitle": "启动时重新打开上次的工作区",
+  "@settingsReopenWorkspaceOnStartupTitle": {
+    "description": "Settings switch title for reopening the previous workspace on a normal startup."
+  },
+  "settingsReopenWorkspaceOnStartupDescription": "BusyMark 启动时打开上次会话中的工作区和标签页。",
+  "@settingsReopenWorkspaceOnStartupDescription": {
+    "description": "Settings switch description for reopening the previous workspace on a normal startup."
+  },
+  "settingsConfirmCloseWithUnsavedChangesTitle": "有未保存更改时关闭前进行确认",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "文档有未保存更改时，关闭 BusyMark 前先进行询问。",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
+  "closeUnsavedChangesTitle": "未保存的更改",
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
+  "closeUnsavedChangesSingleMessage": "此文档有未保存的更改。关闭 BusyMark 前保存更改？",
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{关闭 BusyMark 前保存更改？} =1{有 1 个文档包含未保存的更改。关闭 BusyMark 前保存更改？} other{有 {count} 个文档包含未保存的更改。关闭 BusyMark 前保存更改？}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "closeUnsavedChangesCancel": "取消",
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "放弃",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Destructive button that closes BusyMark without saving editor changes. Translate it distinctly from Cancel."
+  },
+  "closeUnsavedChangesSave": "保存",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "currentFile": "当前文件",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "未保存的更改",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "{fileName} 中有未保存的更改。继续前保存这些更改？",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChangesMultipleMessage": "{count, plural, =1{有 1 个文档包含未保存的更改。继续前保存它？} other{有 {count} 个文档包含未保存的更改。继续前保存它们？}}",
+  "@unsavedChangesMultipleMessage": {
+    "description": "Confirmation message before replacing workspace state when several documents are dirty.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileChangedOnDisk": "文件已在磁盘上更改",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "自打开此文件后，它已在磁盘上发生更改。覆盖它？",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "未命名.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "无序列表",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "有序列表",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "任务列表",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "切换任务选中状态",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "增加列表项缩进",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "减少列表项缩进",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "引用块",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "代码块",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "代码块语言",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "图像",
+  "video": "视频",
+  "openVideo": "播放视频",
+  "pauseVideo": "暂停视频",
+  "videoUnavailable": "视频不可用",
+  "videoPreview": "视频预览",
+  "diagnosticWritersideVideoMissingSource": "视频缺少 src 属性。",
+  "diagnosticWritersideVideoUnsupportedSource": "不支持的视频源：{source}",
+  "@diagnosticWritersideVideoUnsupportedSource": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingFile": "视频文件不存在：{source}",
+  "@diagnosticWritersideVideoMissingFile": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVideoMissingPreview": "视频预览图像不存在：{preview}",
+  "@diagnosticWritersideVideoMissingPreview": {
+    "placeholders": {
+      "preview": {
+        "type": "String"
+      }
+    }
+  },
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "inlineImage": "行内图像",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "表格",
+  "@table": {
+    "description": "Table command label."
+  },
+  "htmlBlock": "HTML 块",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "htmlContentDefault": "HTML 内容",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
+  },
+  "shortcutHtmlBlockDescription": "插入或编辑 HTML 块",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "已渲染的 HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "编辑 HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "HTML 源代码",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
+  "thematicBreak": "分隔线",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "粗体",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "斜体",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "下划线",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "删除线",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "行内代码",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "链接",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "硬换行",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "文本样式",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "段落",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "标题 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "标题 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "标题 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "标题 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "标题 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "标题 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "删除表格",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "列 {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "在左侧插入列",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "在右侧插入列",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "删除列",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableAlignmentUnspecified": "对齐方式：未指定",
+  "@tableAlignmentUnspecified": {
+    "description": "Menu item for using unspecified Markdown table-column alignment."
+  },
+  "tableAlignmentLeft": "对齐方式：左对齐",
+  "@tableAlignmentLeft": {
+    "description": "Menu item for left-aligning a Markdown table column."
+  },
+  "tableAlignmentCenter": "对齐方式：居中",
+  "@tableAlignmentCenter": {
+    "description": "Menu item for centering a Markdown table column."
+  },
+  "tableAlignmentRight": "对齐方式：右对齐",
+  "@tableAlignmentRight": {
+    "description": "Menu item for right-aligning a Markdown table column."
+  },
+  "tableRowNumber": "行 {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "在上方插入行",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "在下方插入行",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "删除行",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "标题",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "单元格",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "语言",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "隐藏编辑按钮",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "显示编辑按钮",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "替代文本",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "editorPlaceholderText": "文本",
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
+  "editorPlaceholderCode": "代码",
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
+  "editorPlaceholderAltText": "替代文本",
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
+  "describeTheImage": "描述图像",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "列",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "行",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "标题 {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "单元格",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "没有图像源",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "remoteImageBlocked": "远程图像已阻止",
+  "@remoteImageBlocked": {
+    "description": "Placeholder label shown when a remote image is blocked."
+  },
+  "remoteImageBlockedTooltip": "选择是否允许 BusyMark 加载远程图像。",
+  "@remoteImageBlockedTooltip": {
+    "description": "Tooltip for a blocked remote image placeholder."
+  },
+  "remoteImagesBlockedTitle": "远程图像已阻止",
+  "@remoteImagesBlockedTitle": {
+    "description": "Dialog title for remote image loading permission."
+  },
+  "remoteImagesBlockedMessage": "本文档引用了来自互联网的图像。加载这些图像可能会向图像托管方泄露网络信息。",
+  "@remoteImagesBlockedMessage": {
+    "description": "Dialog message explaining the privacy risk of remote images."
+  },
+  "loadRemoteImagesForWorkspace": "为此工作区加载",
+  "@loadRemoteImagesForWorkspace": {
+    "description": "Dialog button that allows remote images for the current workspace."
+  },
+  "alwaysLoadRemoteImages": "始终加载远程图像",
+  "@alwaysLoadRemoteImages": {
+    "description": "Dialog button that enables remote images globally."
+  },
+  "hideSidebar": "隐藏侧边栏面板",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar panel."
+  },
+  "showSidebar": "显示侧边栏面板",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar panel."
+  },
+  "showPreview": "显示预览",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "隐藏预览",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "未保存的 Markdown 文件",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "单个 Markdown 文件",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Markdown 文件夹",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Writerside 模块",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "问题",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{没有诊断信息} =1{1 条诊断信息} other{{count} 条诊断信息}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "文件",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "目录",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "tocActions": "目录操作",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
+  "markdownUnsaved": "Markdown - 未保存",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} - {count, plural, =1{1 个文件} other{{count} 个文件}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "没有文件",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "newFile": "新建文件",
+  "@newFile": {
+    "description": "Menu action and dialog title for creating a new file."
+  },
+  "noWritersideToc": "没有 Writerside 目录",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "目录节",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "新建主题",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "新建子主题",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "新建同级主题",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "重命名主题文件",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "目录位置",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "位于目录根级别",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "位于选中主题之后",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "位于选中主题内",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "粘贴到主题之后",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "粘贴为子主题",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "从目录中移除",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "从目录中移除？",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "从此目录中移除 {name}？主题文件将被保留。",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "删除主题文件？",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "删除 {name} 并从每个目录中移除它？此操作无法撤销。",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicFile": "安全删除主题文件…",
+  "@safeDeleteTopicFile": {
+    "description": "Writerside action that safely deletes a topic after checking usages."
+  },
+  "removeTocElement": "移除目录元素",
+  "@removeTocElement": {
+    "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "reviewUsages": "查看使用情况",
+  "@reviewUsages": {
+    "description": "Action that opens the Writerside topic usages review."
+  },
+  "deleteTopicFile": "删除主题文件",
+  "@deleteTopicFile": {
+    "description": "Action that deletes a Writerside topic source file."
+  },
+  "removeAction": "移除",
+  "@removeAction": {
+    "description": "Short action label for removing an item without deleting its source file."
+  },
+  "topicRemovalSummary": "从选中的实例中移除“{topic}”。主题文件将被保留。",
+  "@topicRemovalSummary": {
+    "description": "Summary in the dialog for removing a topic from one Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDeleteTopicSummary": "删除“{topic}”，并在整个 Writerside 项目中安全更新其引用。",
+  "@safeDeleteTopicSummary": {
+    "description": "Summary in the Writerside safe-delete dialog.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "childTopicsPromoted": "{count, plural, =1{1 个子主题将上移一级。} other{{count} 个子主题将上移一级。}}",
+  "@childTopicsPromoted": {
+    "description": "Disclosure that children of a removed TOC element are promoted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "topicIsStartPageRemovalWarning": "此主题被用作实例的起始页。请查看其使用情况，并在继续前指定其他起始页。",
+  "@topicIsStartPageRemovalWarning": {
+    "description": "Warning that blocks deletion of a Writerside start-page topic."
+  },
+  "topicUsagesCount": "使用情况（{count}）",
+  "@topicUsagesCount": {
+    "description": "Heading with the number of Writerside topic usages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noBreakingTopicUsages": "未找到会导致引用失效的引用。",
+  "@noBreakingTopicUsages": {
+    "description": "Safe-delete message when no breaking references were found."
+  },
+  "topicUsagesFound": "BusyMark 找到了以下对该主题的引用。",
+  "@topicUsagesFound": {
+    "description": "Description above Writerside topic usage groups."
+  },
+  "topicUsageTocElements": "目录元素",
+  "@topicUsageTocElements": {
+    "description": "Usage group label for Writerside TOC elements."
+  },
+  "topicUsageStartPages": "起始页",
+  "@topicUsageStartPages": {
+    "description": "Usage group label for Writerside instance start pages."
+  },
+  "topicUsageTopicLinks": "主题链接",
+  "@topicUsageTopicLinks": {
+    "description": "Usage group label for links to a Writerside topic."
+  },
+  "topicUsageIncludes": "包含项",
+  "@topicUsageIncludes": {
+    "description": "Usage group label for Writerside include elements."
+  },
+  "usageCount": "{count, plural, =1{1 次使用} other{{count} 次使用}}",
+  "@usageCount": {
+    "description": "Number of references that use a Writerside topic.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refactoringOptions": "重构选项",
+  "@refactoringOptions": {
+    "description": "Heading for Writerside topic removal options."
+  },
+  "updateUsagesAutomatically": "自动更新使用情况",
+  "@updateUsagesAutomatically": {
+    "description": "Option to rewrite Writerside topic usages during removal."
+  },
+  "updateUsagesAutomaticallyDescription": "移除目录引用和包含项，同时保留链接文本。",
+  "@updateUsagesAutomaticallyDescription": {
+    "description": "Description of automatic Writerside usage updates."
+  },
+  "manualUsageUpdatesRequired": "执行此重构前，某些使用情况需要手动更改。",
+  "@manualUsageUpdatesRequired": {
+    "description": "Message when some Writerside usages cannot be updated automatically."
+  },
+  "setRedirectTo": "设置重定向到",
+  "@setRedirectTo": {
+    "description": "Option to redirect an old Writerside page to another topic."
+  },
+  "noRedirectDescription": "不重定向旧的已发布页面。",
+  "@noRedirectDescription": {
+    "description": "Description when no Writerside page redirect is selected."
+  },
+  "redirectTarget": "重定向目标",
+  "@redirectTarget": {
+    "description": "Field label for a Writerside redirect destination."
+  },
+  "remainingUsagesBlockRemoval": "请在继续前查看并更新剩余的使用情况，或在可用时启用自动更新。",
+  "@remainingUsagesBlockRemoval": {
+    "description": "Instruction shown when unresolved usages block topic removal."
+  },
+  "usagesOfTopic": "{topic} 的使用情况",
+  "@usagesOfTopic": {
+    "description": "Writerside usages sidebar title.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "noUsagesFound": "未找到使用情况",
+  "@noUsagesFound": {
+    "description": "Empty state in the Writerside usages review."
+  },
+  "outsideSelectedInstance": "在选中的实例之外",
+  "@outsideSelectedInstance": {
+    "description": "Marker for a usage outside the selected Writerside instance."
+  },
+  "doRefactor": "执行重构",
+  "@doRefactor": {
+    "description": "Action to return from usage review and continue the topic refactoring."
+  },
+  "orphanTopicTitle": "主题文件已不再使用",
+  "@orphanTopicTitle": {
+    "description": "Dialog title after a topic is removed from its last table of contents."
+  },
+  "keepTopicFile": "保留主题文件",
+  "@keepTopicFile": {
+    "description": "Action that keeps an orphaned Writerside topic file."
+  },
+  "orphanTopicMessage": "“{topic}”在此 Writerside 项目中已不再使用。删除该文件，或保留它以供其他实例使用。",
+  "@orphanTopicMessage": {
+    "description": "Prompt to delete or keep an orphaned Writerside topic file.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultNewTopicTitle": "新主题",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "主题标题",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "文件名",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "主题标题为必填项。",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "文件名为必填项。",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "rename": "重命名",
+  "@rename": {
+    "description": "Rename command label."
+  },
+  "confirmDeleteFileTitle": "删除文件？",
+  "@confirmDeleteFileTitle": {
+    "description": "Confirmation dialog title before deleting a file."
+  },
+  "confirmDeleteFolderTitle": "删除文件夹？",
+  "@confirmDeleteFolderTitle": {
+    "description": "Confirmation dialog title before deleting a folder."
+  },
+  "confirmDeleteFileMessage": "删除 {name}？此操作无法撤销。",
+  "@confirmDeleteFileMessage": {
+    "description": "Confirmation dialog message before deleting a file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteFolderMessage": "删除 {name} 及其中的所有文件？此操作无法撤销。",
+  "@confirmDeleteFolderMessage": {
+    "description": "Confirmation dialog message before deleting a folder.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "useSingleSafeFileName": "使用单一且安全的文件名。",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "为选中的格式使用 {extension} 扩展名。",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "在扩展名之前仅使用字母、数字、下划线或连字符。",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "主题 ID 已存在。",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "无法创建 Writerside 主题。",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "没有大纲",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "展开 {kind}",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "折叠 {kind}",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "节",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "列表",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "引用",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "标签",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "sourceSearchPreviousMatch": "上一个匹配项",
+  "@sourceSearchPreviousMatch": {
+    "description": "Tooltip for moving to the previous source search match."
+  },
+  "sourceSearchNextMatch": "下一个匹配项",
+  "@sourceSearchNextMatch": {
+    "description": "Tooltip for moving to the next source search match."
+  },
+  "sourceSearchCaseSensitive": "区分大小写",
+  "@sourceSearchCaseSensitive": {
+    "description": "Tooltip for toggling case-sensitive source search."
+  },
+  "sourceSearchWholeWord": "全字匹配",
+  "@sourceSearchWholeWord": {
+    "description": "Tooltip for toggling whole-word source search."
+  },
+  "sourceSearchRegex": "正则表达式",
+  "@sourceSearchRegex": {
+    "description": "Tooltip for toggling regular-expression source search."
+  },
+  "sourceSearchReplacement": "替换为",
+  "@sourceSearchReplacement": {
+    "description": "Placeholder for the active-document replacement field."
+  },
+  "sourceSearchReplaceCurrent": "替换当前匹配项",
+  "@sourceSearchReplaceCurrent": {
+    "description": "Tooltip for replacing the current search match."
+  },
+  "sourceSearchReplaceAndFindNext": "替换并查找下一个",
+  "@sourceSearchReplaceAndFindNext": {
+    "description": "Tooltip for replacing the current match and moving to the next."
+  },
+  "sourceSearchReplaceAll": "全部替换",
+  "@sourceSearchReplaceAll": {
+    "description": "Tooltip for replacing every active-document search match."
+  },
+  "workspaceReplace": "在工作区中替换",
+  "@workspaceReplace": {
+    "description": "Action that previews replacements across the workspace."
+  },
+  "reviewReplacements": "查看替换内容",
+  "@reviewReplacements": {
+    "description": "Action and dialog title for reviewing workspace replacements."
+  },
+  "applyReplacements": "应用替换",
+  "@applyReplacements": {
+    "description": "Action that applies selected workspace replacements."
+  },
+  "skippedFiles": "跳过的文件",
+  "@skippedFiles": {
+    "description": "Heading for files excluded from a workspace replacement."
+  },
+  "workspaceReplaceDirtyBuffer": "未保存的编辑器内容",
+  "@workspaceReplaceDirtyBuffer": {
+    "description": "Source label for a workspace replacement preview using a dirty document buffer."
+  },
+  "workspaceReplaceDiskContent": "磁盘上的已保存内容",
+  "@workspaceReplaceDiskContent": {
+    "description": "Source label for a workspace replacement preview using disk content."
+  },
+  "selectFileMatches": "选择全部 {count} 个匹配项",
+  "@selectFileMatches": {
+    "description": "Checkbox label for selecting every replacement match in a file.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceReplaceApplied": "已在 {files} 个文件中替换 {matches} 个匹配项；跳过 {skipped} 个。",
+  "@workspaceReplaceApplied": {
+    "description": "Summary shown after applying workspace replacements.",
+    "placeholders": {
+      "matches": {
+        "type": "int"
+      },
+      "files": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "documentFormatWithFinalNewline": "{encoding} · {lineEnding} · 末尾有换行符",
+  "@documentFormatWithFinalNewline": {
+    "description": "Document format tooltip when the file ends with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "documentFormatWithoutFinalNewline": "{encoding} · {lineEnding} · 末尾无换行符",
+  "@documentFormatWithoutFinalNewline": {
+    "description": "Document format tooltip when the file does not end with a newline.",
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      },
+      "lineEnding": {
+        "type": "String"
+      }
+    }
+  },
+  "normalizeLineEndings": "规范化行尾",
+  "@normalizeLineEndings": {
+    "description": "Dialog title for selecting a line-ending style."
+  },
+  "mixedLineEndingsSavePrompt": "此文档包含混合的行尾格式。请选择一种格式。",
+  "@mixedLineEndingsSavePrompt": {
+    "description": "Prompt shown before saving a document with mixed line endings."
+  },
+  "workspaceReplaceMixedLineEndings": "{fileName} 使用混合的行尾格式。请在替换前选择要使用的格式。",
+  "@workspaceReplaceMixedLineEndings": {
+    "description": "Prompt shown before replacing content in a mixed-line-ending file.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReplaceIssueOversized": "已跳过过大的文件。",
+  "@workspaceReplaceIssueOversized": {
+    "description": "Workspace replacement issue for a file above the size limit."
+  },
+  "workspaceReplaceIssueUnreadable": "已跳过无法读取的文件。",
+  "@workspaceReplaceIssueUnreadable": {
+    "description": "Workspace replacement issue for an unreadable file."
+  },
+  "workspaceReplaceIssueInvalidUtf8": "已跳过不是有效 UTF-8 的文件。",
+  "@workspaceReplaceIssueInvalidUtf8": {
+    "description": "Workspace replacement issue for invalid UTF-8 content."
+  },
+  "workspaceReplaceIssueTruncated": "替换预览已被截断。",
+  "@workspaceReplaceIssueTruncated": {
+    "description": "Workspace replacement issue when the match limit is reached."
+  },
+  "workspaceReplaceIssueFileChanged": "已跳过预览后发生变化的文件。",
+  "@workspaceReplaceIssueFileChanged": {
+    "description": "Workspace replacement issue for stale disk content."
+  },
+  "workspaceReplaceIssueBufferChanged": "已跳过预览后发生变化的编辑器缓冲区。",
+  "@workspaceReplaceIssueBufferChanged": {
+    "description": "Workspace replacement issue for stale in-memory content."
+  },
+  "workspaceReplaceIssueNormalizationRequired": "请在替换前选择 LF 或 CRLF 规范化。",
+  "@workspaceReplaceIssueNormalizationRequired": {
+    "description": "Workspace replacement issue for mixed line endings without a selected format."
+  },
+  "workspaceReplaceIssuePartialConflict": "由于文件同时发生了变化，回滚已停止。部分替换可能仍然存在；被移出的内容已保留在下方路径中。",
+  "@workspaceReplaceIssuePartialConflict": {
+    "description": "Workspace replacement issue when a concurrent edit prevents safe transactional rollback."
+  },
+  "workspaceReplaceIssueApplyFailed": "无法提交经过审查的替换；没有文件发生更改。",
+  "@workspaceReplaceIssueApplyFailed": {
+    "description": "Workspace replacement issue when the transactional file commit fails."
+  },
+  "externalChangesTitle": "外部更改 — {fileName}",
+  "@externalChangesTitle": {
+    "description": "Title of the external-file comparison dialog.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "externalFileDeleted": "此文件已从磁盘删除。",
+  "@externalFileDeleted": {
+    "description": "Persistent banner shown when an open file is deleted externally."
+  },
+  "externalFileChanged": "在您有未保存编辑时，此文件已在磁盘上发生变化。",
+  "@externalFileChanged": {
+    "description": "Persistent banner shown when a dirty file changes externally."
+  },
+  "recoveredDocumentReview": "已恢复 {fileName} 的未保存内容。请检查后保存、另存为或放弃。",
+  "@recoveredDocumentReview": {
+    "description": "Persistent recovery review banner.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "compare": "比较",
+  "@compare": {
+    "description": "Action that compares the editor buffer with the disk version."
+  },
+  "reloadFromDisk": "从磁盘重新加载",
+  "@reloadFromDisk": {
+    "description": "Action that replaces the editor buffer with the disk version."
+  },
+  "keepMine": "保留我的版本",
+  "@keepMine": {
+    "description": "Action that keeps the editor buffer after an external change."
+  },
+  "saveAs": "另存为",
+  "@saveAs": {
+    "description": "Action that saves the current document to another path."
+  },
+  "sourceSearchInvalidRegex": "无效的正则表达式",
+  "@sourceSearchInvalidRegex": {
+    "description": "Source search status shown when the regular expression is invalid."
+  },
+  "sourceLargeFileFeaturesPaused": "大文件：已暂停语法突出显示和折叠",
+  "@sourceLargeFileFeaturesPaused": {
+    "description": "Status banner shown when source highlighting and folding are disabled for a large file."
+  },
+  "nothingToRead": "没有可读取的内容",
+  "@nothingToRead": {
+    "description": "Empty state shown when there is no content to read."
+  },
+  "admonition": "提示块",
+  "@admonition": {
+    "description": "Tooltip for the Writerside admonition editing menu."
+  },
+  "quote": "引用",
+  "@quote": {
+    "description": "Label for a neutral Writerside quote block."
+  },
+  "note": "备注",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "提示",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "警告",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "标签页",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "标签页",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "操作步骤",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "步骤",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "主题",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "章节",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "无法打开 {target}",
+  "@couldNotOpenTarget": {
+    "description": "Toast shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "找不到链接目标：{targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Toast shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "无法在编辑器中打开此文件类型",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Toast shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "找不到锚点：{anchor}",
+  "@anchorNotFound": {
+    "description": "Toast shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "未发现问题",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "无结果",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} - 第 {lineNumber} 行",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "未命名结果",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Markdown 文件",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Writerside Markdown 主题",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "Writerside XML 主题",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Writerside 树",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "配置文件",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "变量文件",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "类别文件",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "资源文件",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "打开失败：{error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "无法创建 Writerside 项目：{error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "无法创建 Writerside 主题：{error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "无法打开文件：{error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "选择保存此 Markdown 文件的位置。",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "保存已阻止：文件已在磁盘上发生变化。",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "保存失败：{error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorFileOperationFailed": "文件操作失败：{error}",
+  "@workspaceErrorFileOperationFailed": {
+    "description": "Workspace error message shown when creating, renaming, moving, or deleting a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "验证失败：{error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRecoveryRestored": "{count, plural, =1{已恢复 1 个未保存的文档。请在保存或放弃前进行检查。} other{已恢复 {count} 个未保存的文档。请在保存或放弃前逐一检查。}}",
+  "@workspaceRecoveryRestored": {
+    "description": "Notice shown after crash recovery restores documents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceRecoveryDamaged": "{count, plural, =1{无法恢复一条损坏的恢复记录。原始恢复文件已保留以供检查。} other{无法恢复 {count} 条损坏的恢复记录。有效的恢复记录仍可用。}}",
+  "@workspaceRecoveryDamaged": {
+    "description": "Notice shown when recovery data is partly or wholly malformed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "路径不存在：{path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "目标目录已存在且不为空：{path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "目标路径已存在但不是目录：{path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "生成的文件已存在：{path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "必须指定父目录。",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "父目录不存在：{path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDirectoryMissing": "目录不存在：{path}",
+  "@errorDirectoryMissing": {
+    "description": "Detail for a missing directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathAlreadyExists": "路径已存在：{path}",
+  "@errorPathAlreadyExists": {
+    "description": "Detail for a file operation target that already exists.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNameRequired": "文件名为必填项。",
+  "@errorFileNameRequired": {
+    "description": "Detail for a missing file name in a file operation."
+  },
+  "errorFileNameUnsafe": "文件名必须是单一且安全的路径段。",
+  "@errorFileNameUnsafe": {
+    "description": "Detail for an unsafe file name in a file operation."
+  },
+  "errorFileOperationInvalidTarget": "无法将文件夹移动到其自身中。",
+  "@errorFileOperationInvalidTarget": {
+    "description": "Detail for an invalid file operation target."
+  },
+  "errorFileOperationOutsideRoot": "文件操作必须在工作区内进行。",
+  "@errorFileOperationOutsideRoot": {
+    "description": "Detail for a file operation outside the workspace root."
+  },
+  "errorFileOperationRoot": "无法从文件树更改工作区根目录。",
+  "@errorFileOperationRoot": {
+    "description": "Detail for a file operation attempted on the workspace root."
+  },
+  "errorProjectNameRequired": "项目名称为必填项。",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "目录名称为必填项。",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "目录名称必须是单一且安全的路径段。",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "实例 ID 必须以小写字母开头，且只能包含小写字母、数字、下划线和连字符。",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "主题文件名必须是没有路径分隔符的 Markdown 文件名。",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "主题标题为必填项。",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "Writerside 模块根目录不存在：{path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "必须打开 Writerside 模块才能创建主题。",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "Writerside 模块没有实例树。",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Writerside 树文件不存在：{path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "主题 ID \"{topicId}\" 已存在于此帮助模块中。",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "主题文件已存在：{path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "选中的树中不存在引用主题：{topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "选中的目录项已不存在。",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "目录项无法移动到自身或其子项中。",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "无法删除起始主题 {topic}。请先选择其他起始页。",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideSafeDeleteRequired": "请对 Writerside 主题文件使用安全删除。",
+  "@errorWritersideSafeDeleteRequired": {
+    "description": "Error shown when generic file deletion is attempted for a Writerside topic."
+  },
+  "errorWritersideTopicUsageScanFailed": "无法完成主题使用情况扫描。没有文件发生更改。",
+  "@errorWritersideTopicUsageScanFailed": {
+    "description": "Error shown when safe-delete usage analysis cannot complete reliably."
+  },
+  "errorWritersideTopicUsagesRemain": "某些主题使用情况仍需处理。请先查看后再继续。",
+  "@errorWritersideTopicUsagesRemain": {
+    "description": "Error shown when unresolved topic usages block removal."
+  },
+  "errorWritersideRedirectInvalid": "选中的重定向目标已无效。请重新选择。",
+  "@errorWritersideRedirectInvalid": {
+    "description": "Error shown when a safe-delete redirect target is stale or conflicts."
+  },
+  "errorWritersideRollbackFailed": "无法完全回滚主题移除。请在继续前查看这些路径：{paths}",
+  "@errorWritersideRollbackFailed": {
+    "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "主题根目录必须是安全的相对目录。",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "主题文件名必须是单一且安全的路径段。",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "主题文件扩展名必须与选中的格式匹配（{extension}）。",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "主题文件名只能包含字母、数字、下划线和连字符。",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "未知错误：{code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "无法读取文件元数据：{error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "检测到大型工作区。为保持应用响应速度，已跳过部分文件。",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "无法检查工作区项：{error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "文件超过 beta 自动解析限制。",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "无法读取 Markdown 文件：{error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Writerside 标题属性块格式错误。",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "标题 ID“{id}”重复。",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "额外的顶级 H1 标题将被视为章节。",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown 主题没有 H1 或 front matter 标题。",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "XML 主题缺少标题。",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "主题“{fileName}”缺少标题。",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "front matter 未闭合。",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "不安全的 HTML 元素。",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "链接目标不存在：{targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "锚点“{anchor}”不存在。",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "图像“{destination}”缺少替代文本。",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "图像不存在：{destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "无效的 XML：{message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "writerside.cfg 根元素必须是 <ihp>。",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets 声明缺少 src。",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups 声明缺少 src。",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "不支持的 keymaps 模式：{mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "instance 声明缺少 src。",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg 未注册实例。",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": ".tree 根元素必须是 <instance-profile>。",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "实例配置文件缺少 id。",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "树文件名（不含扩展名）与实例 ID“{id}”不匹配。",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "非库实例缺少 start-page。",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "起始页“{startPage}”不存在。",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "主题“{topic}”在此实例目录中出现多次。",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "变量声明必须包含名称和值。",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "变量“{name}”被声明了多次。",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "类别缺少 id。",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "类别“{id}”被声明了多次。",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "类别顺序“{order}”被声明了多次。",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": ".topic 根元素必须是 <topic>。",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "XML 主题缺少根 id。",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "XML 主题根 ID“{id}”必须与文件名“{expectedId}”匹配。",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "元素 ID“{elementId}”出现多次。",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> 缺少 href。",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Writerside 模式需要 writerside.cfg。",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "配置的构建配置目录不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "配置的 API 规范目录不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "配置的 snippets 目录不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "配置的变量文件不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "配置的类别文件不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "配置的实例组文件不存在：{relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "已注册的实例树“{source}”不存在。",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "无法读取主题文件：{error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "默认主题目录不存在：{relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "配置的主题目录不存在：{relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "配置的图像目录不存在：{relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "元素 ID“{id}”出现多次。",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "目录引用了缺失的主题“{topic}”。",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "外部 href“{href}”无效。",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "变量“%{name}%”未声明。",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "主题链接“{destination}”无法解析。",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "“{targetName}”中不存在锚点“{anchor}”。",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "<include> 缺少 from。",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "包含源“{from}”不存在。",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "“{from}”中不存在包含元素“{elementId}”。",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "seealso 类别“{ref}”未声明。",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "主题引用“{reference}”不明确。",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "未知诊断信息：{code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "close": "关闭",
+  "@close": {
+    "description": "Close action label."
+  },
+  "git": "Git",
+  "@git": {
+    "description": "Git sidebar tab label."
+  },
+  "gitDiff": "Git 差异",
+  "@gitDiff": {
+    "description": "Title for the Git diff viewer."
+  },
+  "gitShowDiff": "显示差异",
+  "@gitShowDiff": {
+    "description": "Menu action that opens the diff for a file in Git history."
+  },
+  "gitDiffHunkRange": "旧 {oldRange} → 新 {newRange}",
+  "@gitDiffHunkRange": {
+    "description": "Readable old-to-new line range shown for a Git diff hunk.",
+    "placeholders": {
+      "oldRange": {
+        "type": "String"
+      },
+      "newRange": {
+        "type": "String"
+      }
+    }
+  },
+  "gitDiffNoLines": "无行",
+  "@gitDiffNoLines": {
+    "description": "Line range text for an empty side of a Git diff hunk."
+  },
+  "gitUnavailableTitle": "Git 不可用",
+  "@gitUnavailableTitle": {
+    "description": "Git empty state title when Git cannot be used."
+  },
+  "gitUnavailableMessage": "{reason, select, other{安装 Git，或配置 BusyMark 以使用可用的 Git 可执行文件。{reason}}}",
+  "@gitUnavailableMessage": {
+    "description": "Git empty state message when Git cannot be used.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "gitTrustRequiredTitle": "信任此工作区以使用 Git？",
+  "@gitTrustRequiredTitle": {
+    "description": "Git empty state title shown before repository-controlled commands may run."
+  },
+  "gitTrustRequiredMessage": "Git 存储库可以通过 hook、过滤器和其他配置运行程序。在 BusyMark 读取存储库数据或启用 Git 操作前，请先信任此工作区。",
+  "@gitTrustRequiredMessage": {
+    "description": "Security warning shown before Git repository access is enabled for a workspace."
+  },
+  "gitTrustWorkspace": "信任工作区",
+  "@gitTrustWorkspace": {
+    "description": "Action label for trusting a workspace before enabling Git."
+  },
+  "gitNotRepositoryTitle": "不是 Git 存储库",
+  "@gitNotRepositoryTitle": {
+    "description": "Git empty state title for non-repository workspaces."
+  },
+  "gitNotRepositoryMessage": "此工作区不在 Git 存储库中。",
+  "@gitNotRepositoryMessage": {
+    "description": "Git empty state message for non-repository workspaces."
+  },
+  "gitInitializeRepository": "初始化存储库",
+  "@gitInitializeRepository": {
+    "description": "Action label for git init."
+  },
+  "gitDetachedHead": "分离的 HEAD",
+  "@gitDetachedHead": {
+    "description": "Detached HEAD label."
+  },
+  "gitDetachedHeadAt": "分离于 {commit}",
+  "@gitDetachedHeadAt": {
+    "description": "Detached HEAD label with short commit.",
+    "placeholders": {
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitNoUpstream": "没有上游分支",
+  "@gitNoUpstream": {
+    "description": "Repository label when no upstream branch is configured."
+  },
+  "gitAheadCount": "{count, plural, =1{1 个未推送的提交} other{{count} 个未推送的提交}}",
+  "@gitAheadCount": {
+    "description": "Count of local commits not pushed to the upstream branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitBehindCount": "{count, plural, =1{1 个待拉取的提交} other{{count} 个待拉取的提交}}",
+  "@gitBehindCount": {
+    "description": "Count of upstream commits not pulled into the local branch.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitClean": "干净",
+  "@gitClean": {
+    "description": "Git clean state label."
+  },
+  "gitConflicts": "冲突",
+  "@gitConflicts": {
+    "description": "Git conflicts group label."
+  },
+  "gitChanges": "更改",
+  "@gitChanges": {
+    "description": "Git changes view label."
+  },
+  "gitStaged": "已暂存",
+  "@gitStaged": {
+    "description": "Git staged changes group label."
+  },
+  "gitUnstaged": "未暂存",
+  "@gitUnstaged": {
+    "description": "Git unstaged changes group label."
+  },
+  "gitHistory": "历史记录",
+  "@gitHistory": {
+    "description": "Git history view label."
+  },
+  "gitBranches": "分支",
+  "@gitBranches": {
+    "description": "Git branch menu label."
+  },
+  "gitActions": "Git 操作",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
+  },
+  "gitPull": "Pull",
+  "@gitPull": {
+    "description": "Git pull action label."
+  },
+  "gitFetch": "Fetch",
+  "@gitFetch": {
+    "description": "Git fetch action label."
+  },
+  "gitPush": "Push",
+  "@gitPush": {
+    "description": "Git push action label."
+  },
+  "gitCommit": "Commit",
+  "@gitCommit": {
+    "description": "Git commit action label."
+  },
+  "gitSelectForCommit": "暂存文件",
+  "@gitSelectForCommit": {
+    "description": "Tooltip for staging a Git file."
+  },
+  "gitRemoveFromCommit": "取消暂存文件",
+  "@gitRemoveFromCommit": {
+    "description": "Tooltip for unstaging a Git file."
+  },
+  "gitDiscard": "还原",
+  "@gitDiscard": {
+    "description": "Action that rolls a tracked file back to HEAD."
+  },
+  "gitOpenFile": "打开文件",
+  "@gitOpenFile": {
+    "description": "Action label for opening a file from a Git row or diff."
+  },
+  "gitMarkResolved": "标记为已解决",
+  "@gitMarkResolved": {
+    "description": "Tooltip for marking a conflicted Git file as resolved."
+  },
+  "gitUntracked": "未跟踪",
+  "@gitUntracked": {
+    "description": "Git untracked files group label."
+  },
+  "gitCommitMessage": "提交消息",
+  "@gitCommitMessage": {
+    "description": "Commit message field label."
+  },
+  "gitCommitSelectedFiles": "选中的文件",
+  "@gitCommitSelectedFiles": {
+    "description": "Commit panel selected files section label."
+  },
+  "gitCommitNoSelectedFiles": "提交前至少暂存一个文件。",
+  "@gitCommitNoSelectedFiles": {
+    "description": "Commit validation error when the repository index is empty."
+  },
+  "gitStagedFileCount": "{count, plural, =1{1 个已暂存文件} other{{count} 个已暂存文件}}",
+  "@gitStagedFileCount": {
+    "description": "Number of repository files currently staged for commit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitOutsideWorkspace": "工作区之外",
+  "@gitOutsideWorkspace": {
+    "description": "Marker for a staged repository file outside the opened workspace."
+  },
+  "gitCommitMessageRequired": "请输入提交消息。",
+  "@gitCommitMessageRequired": {
+    "description": "Commit validation error when the message is empty."
+  },
+  "gitCreateBranch": "创建分支",
+  "@gitCreateBranch": {
+    "description": "Git create branch action label."
+  },
+  "gitNewBranch": "新分支",
+  "@gitNewBranch": {
+    "description": "Git branch dropdown action for creating a new branch."
+  },
+  "gitBranchName": "分支名称",
+  "@gitBranchName": {
+    "description": "Branch name field label."
+  },
+  "gitSwitchBranch": "切换",
+  "@gitSwitchBranch": {
+    "description": "Git switch branch action label."
+  },
+  "gitNoChanges": "没有更改",
+  "@gitNoChanges": {
+    "description": "Git empty state when there are no changes."
+  },
+  "gitNoHistory": "没有历史记录",
+  "@gitNoHistory": {
+    "description": "Git empty state when history is empty."
+  },
+  "gitNoBranches": "没有分支",
+  "@gitNoBranches": {
+    "description": "Git empty state when branch list is empty."
+  },
+  "gitNoDiff": "没有可显示的差异",
+  "@gitNoDiff": {
+    "description": "Git diff empty state."
+  },
+  "gitBinaryFile": "二进制文件。BusyMark 不渲染二进制补丁。",
+  "@gitBinaryFile": {
+    "description": "Git diff binary file message."
+  },
+  "gitBinaryFileInfo": "二进制文件（{size} 字节）。BusyMark 不渲染二进制补丁。",
+  "@gitBinaryFileInfo": {
+    "description": "Git diff binary file message with file size.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "gitUnsavedChangesBanner": "保存前不会包含未保存的编辑器更改。",
+  "@gitUnsavedChangesBanner": {
+    "description": "Git diff banner for unsaved editor changes."
+  },
+  "gitConfirmDiscardTitle": "放弃 Git 更改？",
+  "@gitConfirmDiscardTitle": {
+    "description": "Confirmation title for discarding Git changes."
+  },
+  "gitConfirmDiscardTracked": "{count, plural, =1{选中的已跟踪文件中的所有已暂存和未暂存更改都将还原到 HEAD。} other{选中的已跟踪文件中的所有已暂存和未暂存更改都将还原到 HEAD。}}",
+  "@gitConfirmDiscardTracked": {
+    "description": "Confirmation body for discarding tracked changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardUntracked": "{count, plural, =1{选中的未跟踪文件将被删除。} other{选中的未跟踪文件将被删除。}}",
+  "@gitConfirmDiscardUntracked": {
+    "description": "Confirmation body for deleting untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmDiscardMixed": "{count, plural, =1{将根据其 Git 状态还原或删除选中的文件。} other{将根据其 Git 状态还原或删除选中的文件。}}",
+  "@gitConfirmDiscardMixed": {
+    "description": "Confirmation body for discarding mixed tracked and untracked files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchTitle": "切换到 {branch}？",
+  "@gitConfirmSwitchBranchTitle": {
+    "description": "Confirmation title for switching branches.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitConfirmSwitchBranchMessage": "Git 切换分支后，BusyMark 将从磁盘重新加载工作区。",
+  "@gitConfirmSwitchBranchMessage": {
+    "description": "Confirmation body for switching branches."
+  },
+  "gitConfirmPushSetUpstreamTitle": "设置上游分支？",
+  "@gitConfirmPushSetUpstreamTitle": {
+    "description": "Confirmation title for pushing with set-upstream."
+  },
+  "gitConfirmPushSetUpstreamMessage": "此分支没有上游分支。当只配置了一个远程仓库时，BusyMark 可以推送 {branch} 并设置其上游分支。",
+  "@gitConfirmPushSetUpstreamMessage": {
+    "description": "Confirmation body for pushing with set-upstream.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "gitProjectHistory": "项目历史记录",
+  "@gitProjectHistory": {
+    "description": "Project history action label."
+  },
+  "gitFileHistory": "文件历史记录",
+  "@gitFileHistory": {
+    "description": "Current file history action label."
+  },
+  "gitFileHistoryRequiresOpenFile": "文件历史记录需要打开的 Markdown 文件。",
+  "@gitFileHistoryRequiresOpenFile": {
+    "description": "File History empty state when no Markdown file is active."
+  },
+  "gitLoadMore": "加载更多",
+  "@gitLoadMore": {
+    "description": "Action to load another page of Git history."
+  },
+  "gitChangesInCommit": "此提交中的更改",
+  "@gitChangesInCommit": {
+    "description": "Historical comparison between a commit and its parent."
+  },
+  "gitCompareWithCurrent": "与当前版本比较",
+  "@gitCompareWithCurrent": {
+    "description": "Historical comparison between a commit and the working-tree file."
+  },
+  "gitRestoreVersion": "还原此版本",
+  "@gitRestoreVersion": {
+    "description": "Action to restore one file from a selected commit."
+  },
+  "gitConfirmRestoreTitle": "还原此文件版本？",
+  "@gitConfirmRestoreTitle": {
+    "description": "Confirmation title for restoring a historical file version."
+  },
+  "gitConfirmRestoreMessage": "BusyMark 将使用选中的已提交版本替换当前工作树中的文件。还原后的文件将保持未暂存状态。",
+  "@gitConfirmRestoreMessage": {
+    "description": "Confirmation body for restoring a historical file version."
+  },
+  "gitCommitActions": "提交操作",
+  "@gitCommitActions": {
+    "description": "Tooltip for actions on a selected Git commit."
+  },
+  "gitResetCurrentBranchToHere": "将当前分支重置到此处…",
+  "@gitResetCurrentBranchToHere": {
+    "description": "Project History action that moves the current branch to the selected commit."
+  },
+  "gitResetCurrentBranchTitle": "将 {branch} 重置到 {commit}？",
+  "@gitResetCurrentBranchTitle": {
+    "description": "Title for choosing how to reset the current branch to a selected commit.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitResetCurrentBranchMessage": "这会将分支 {branch} 移动到提交 {commit}。请选择 Git 更新索引和工作树的方式。",
+  "@gitResetCurrentBranchMessage": {
+    "description": "Explanation shown before resetting the current branch.",
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
+    }
+  },
+  "gitReset": "重置",
+  "@gitReset": {
+    "description": "Action that confirms resetting the current Git branch."
+  },
+  "gitResetModeSoft": "软",
+  "@gitResetModeSoft": {
+    "description": "Git soft reset mode label."
+  },
+  "gitResetModeSoftDescription": "仅移动分支。保持索引和工作树不变；与选中提交之间的差异仍会保持暂存状态。",
+  "@gitResetModeSoftDescription": {
+    "description": "Git soft reset mode explanation."
+  },
+  "gitResetModeMixed": "混合",
+  "@gitResetModeMixed": {
+    "description": "Git mixed reset mode label."
+  },
+  "gitResetModeMixedDescription": "移动分支并重置索引。保持工作树不变，使差异处于未暂存状态。",
+  "@gitResetModeMixedDescription": {
+    "description": "Git mixed reset mode explanation."
+  },
+  "gitResetModeHard": "硬",
+  "@gitResetModeHard": {
+    "description": "Git hard reset mode label."
+  },
+  "gitResetModeHardDescription": "移动分支并重置索引和工作树。已跟踪的更改将被放弃；造成阻碍的未跟踪文件可能会被删除。",
+  "@gitResetModeHardDescription": {
+    "description": "Git hard reset mode explanation."
+  },
+  "gitResetModeKeep": "保留",
+  "@gitResetModeKeep": {
+    "description": "Git keep reset mode label."
+  },
+  "gitResetModeKeepDescription": "移动分支并重置已跟踪文件，同时保留本地更改。如果这些更改与重置冲突，Git 将中止操作。",
+  "@gitResetModeKeepDescription": {
+    "description": "Git keep reset mode explanation."
+  },
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "@gitAdditionsDeletions": {
+    "description": "Diff additions and deletions count.",
+    "placeholders": {
+      "additions": {
+        "type": "int"
+      },
+      "deletions": {
+        "type": "int"
+      }
+    }
+  },
+  "fileActions": "文件操作",
+  "@fileActions": {
+    "description": "Tooltip for a file action menu."
+  },
+  "actions": "操作",
+  "@actions": {
+    "description": "Tooltip for a general action menu."
+  },
+  "gitStatusAdded": "已添加",
+  "@gitStatusAdded": {
+    "description": "Git file status label."
+  },
+  "gitStatusDeleted": "已删除",
+  "@gitStatusDeleted": {
+    "description": "Git file status label."
+  },
+  "gitStatusRenamed": "已重命名",
+  "@gitStatusRenamed": {
+    "description": "Git file status label."
+  },
+  "gitStatusCopied": "已复制",
+  "@gitStatusCopied": {
+    "description": "Git file status label."
+  },
+  "gitStatusUntracked": "未跟踪",
+  "@gitStatusUntracked": {
+    "description": "Git file status label."
+  },
+  "gitStatusConflicted": "有冲突",
+  "@gitStatusConflicted": {
+    "description": "Git file status label."
+  },
+  "gitStatusIgnored": "已忽略",
+  "@gitStatusIgnored": {
+    "description": "Git file status label."
+  },
+  "gitStatusTypeChanged": "类型已更改",
+  "@gitStatusTypeChanged": {
+    "description": "Git file status label."
+  },
+  "gitStatusModified": "已修改",
+  "@gitStatusModified": {
+    "description": "Git file status label."
+  },
+  "gitStatusUnknown": "未知",
+  "@gitStatusUnknown": {
+    "description": "Git file status label."
+  },
+  "gitErrorUnavailable": "Git 不可用。",
+  "@gitErrorUnavailable": {
+    "description": "Git error message."
+  },
+  "gitErrorNotRepository": "此工作区不是 Git 存储库。",
+  "@gitErrorNotRepository": {
+    "description": "Git error message."
+  },
+  "gitErrorUnsafePath": "BusyMark 阻止了不安全的 Git 路径。",
+  "@gitErrorUnsafePath": {
+    "description": "Git error message."
+  },
+  "gitErrorInvalidBranchName": "请输入有效的分支名称。",
+  "@gitErrorInvalidBranchName": {
+    "description": "Git error message."
+  },
+  "gitErrorNoRemote": "未配置 Git 远程仓库。",
+  "@gitErrorNoRemote": {
+    "description": "Git error message."
+  },
+  "gitErrorNoUpstream": "未配置上游分支。",
+  "@gitErrorNoUpstream": {
+    "description": "Git error message."
+  },
+  "gitErrorMultipleRemotes": "配置了多个远程仓库。请在此 BusyMark 版本之外选择上游分支。",
+  "@gitErrorMultipleRemotes": {
+    "description": "Git error message."
+  },
+  "gitErrorDirtyWorkspace": "切换分支前，请保存或放弃 BusyMark 编辑器中的更改。",
+  "@gitErrorDirtyWorkspace": {
+    "description": "Git error message."
+  },
+  "gitErrorResetDirtyWorkspace": "重置当前分支前，请保存或放弃 BusyMark 编辑器中的更改。",
+  "@gitErrorResetDirtyWorkspace": {
+    "description": "Git reset error shown when the editor has unsaved content."
+  },
+  "gitErrorRestoreStagedFile": "还原历史版本前，请取消暂存此文件。",
+  "@gitErrorRestoreStagedFile": {
+    "description": "Git error shown when historical restoration is blocked because the current file is staged."
+  },
+  "gitErrorResetDetachedHead": "重置前请先检出一个分支。",
+  "@gitErrorResetDetachedHead": {
+    "description": "Git reset error shown while HEAD is detached."
+  },
+  "gitErrorDiverged": "分支已发生分歧。请在此 BusyMark 版本之外解决合并或变基问题。",
+  "@gitErrorDiverged": {
+    "description": "Git error message."
+  },
+  "gitErrorAuthorIdentity": "Git 需要作者姓名和邮箱地址才能提交。",
+  "@gitErrorAuthorIdentity": {
+    "description": "Git error shown when no commit author identity is configured."
+  },
+  "gitAuthorIdentityTitle": "Git 作者身份",
+  "@gitAuthorIdentityTitle": {
+    "description": "Title of the Git author identity recovery dialog."
+  },
+  "gitAuthorIdentityMessage": "请输入 Git 应记录在提交中的身份信息。BusyMark 将保存它并重试此次提交。",
+  "@gitAuthorIdentityMessage": {
+    "description": "Explanation in the Git author identity recovery dialog."
+  },
+  "gitAuthorName": "姓名",
+  "@gitAuthorName": {
+    "description": "Git commit author name field label."
+  },
+  "gitAuthorEmail": "Email",
+  "@gitAuthorEmail": {
+    "description": "Git commit author email field label."
+  },
+  "gitAuthorIdentityGlobal": "用于所有存储库",
+  "@gitAuthorIdentityGlobal": {
+    "description": "Switch label for saving Git identity globally."
+  },
+  "gitAuthorIdentityGlobalDescription": "作为 Snap 安装时，此设置适用于在 BusyMark 中打开的存储库。",
+  "@gitAuthorIdentityGlobalDescription": {
+    "description": "Description of global Git identity scope in the Snap."
+  },
+  "gitSaveIdentityAndCommit": "保存并提交",
+  "@gitSaveIdentityAndCommit": {
+    "description": "Action that saves Git author identity and retries a commit."
+  },
+  "gitErrorAuthentication": "Git 身份验证失败。",
+  "@gitErrorAuthentication": {
+    "description": "Git error message."
+  },
+  "gitErrorNetwork": "Git 网络操作失败。",
+  "@gitErrorNetwork": {
+    "description": "Git error message."
+  },
+  "gitErrorConflict": "Git 报告存在未解决的冲突。",
+  "@gitErrorConflict": {
+    "description": "Git error message."
+  },
+  "gitErrorCommandFailed": "Git 命令失败。",
+  "@gitErrorCommandFailed": {
+    "description": "Git error message."
+  },
+  "syntaxReference": "语法参考",
+  "@syntaxReference": {
+    "description": "Syntax Reference dialog title and menu item."
+  },
+  "syntaxReferenceMarkdownBlocks": "Markdown 块",
+  "@syntaxReferenceMarkdownBlocks": {
+    "description": "Reference section title for Markdown block syntax."
+  },
+  "syntaxReferenceMarkdownBlocksDescription": "Markdown 源代码和预览中支持的块结构。",
+  "@syntaxReferenceMarkdownBlocksDescription": {
+    "description": "Reference section description for Markdown block syntax."
+  },
+  "syntaxReferenceInlineFormatting": "行内 Markdown",
+  "@syntaxReferenceInlineFormatting": {
+    "description": "Reference section title for Markdown inline syntax."
+  },
+  "syntaxReferenceInlineFormattingDescription": "可出现在段落、列表项和表格单元格中的格式。",
+  "@syntaxReferenceInlineFormattingDescription": {
+    "description": "Reference section description for Markdown inline syntax."
+  },
+  "syntaxReferenceRawHtmlBlocks": "原始 HTML 块",
+  "@syntaxReferenceRawHtmlBlocks": {
+    "description": "Reference section title for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlBlocksDescription": "通过 BusyMark 预览组件渲染的安全块级 HTML 标签。",
+  "@syntaxReferenceRawHtmlBlocksDescription": {
+    "description": "Reference section description for supported raw HTML block tags."
+  },
+  "syntaxReferenceRawHtmlInline": "原始 HTML 行内标签",
+  "@syntaxReferenceRawHtmlInline": {
+    "description": "Reference section title for supported raw HTML inline tags."
+  },
+  "syntaxReferenceRawHtmlInlineDescription": "安全的行内 HTML 标签，渲染时不会显示字面标签。",
+  "@syntaxReferenceRawHtmlInlineDescription": {
+    "description": "Reference section description for supported raw HTML inline tags."
+  },
+  "syntaxReferenceHeadings": "标题",
+  "@syntaxReferenceHeadings": {
+    "description": "Reference row label for Markdown headings."
+  },
+  "syntaxReferenceParagraphs": "段落",
+  "@syntaxReferenceParagraphs": {
+    "description": "Reference row label for Markdown paragraphs."
+  },
+  "syntaxReferenceLists": "列表",
+  "@syntaxReferenceLists": {
+    "description": "Reference row label for list syntax."
+  },
+  "syntaxReferenceHtmlContainers": "容器",
+  "@syntaxReferenceHtmlContainers": {
+    "description": "Reference row label for HTML container tags."
+  },
+  "syntaxReferenceHtmlTextBlocks": "文本块",
+  "@syntaxReferenceHtmlTextBlocks": {
+    "description": "Reference row label for HTML text block tags."
+  },
+  "syntaxReferenceHtmlFigures": "图和图像",
+  "@syntaxReferenceHtmlFigures": {
+    "description": "Reference row label for HTML figure and image tags."
+  },
+  "syntaxReferenceHtmlPreformatted": "预格式化代码",
+  "@syntaxReferenceHtmlPreformatted": {
+    "description": "Reference row label for HTML preformatted/code tags."
+  },
+  "syntaxReferenceHtmlDisclosure": "折叠块",
+  "@syntaxReferenceHtmlDisclosure": {
+    "description": "Reference row label for HTML details/summary tags."
+  },
+  "syntaxReferenceHtmlDescriptionLists": "描述列表",
+  "@syntaxReferenceHtmlDescriptionLists": {
+    "description": "Reference row label for HTML description list tags."
+  },
+  "syntaxReferenceHtmlFormattingTags": "格式标签",
+  "@syntaxReferenceHtmlFormattingTags": {
+    "description": "Reference row label for HTML inline formatting tags."
+  },
+  "syntaxReferenceHtmlInlineCodeTags": "行内代码标签",
+  "@syntaxReferenceHtmlInlineCodeTags": {
+    "description": "Reference row label for HTML inline code-related tags."
+  },
+  "syntaxReferenceHtmlNeutralInlineTags": "语义文本标签",
+  "@syntaxReferenceHtmlNeutralInlineTags": {
+    "description": "Reference row label for HTML inline semantic tags that render as text."
+  },
+  "syntaxReferenceSanitizedPreviewDescription": "允许的 HTML 会转换为 BusyMark 预览块，而不是在浏览器中渲染。",
+  "@syntaxReferenceSanitizedPreviewDescription": {
+    "description": "Reference row description for sanitized preview behavior."
+  },
+  "syntaxReferenceSourcePreservedDescription": "未经编辑的原始 HTML 会按源文本原样保存。",
+  "@syntaxReferenceSourcePreservedDescription": {
+    "description": "Reference row description for raw source preservation."
+  },
+  "syntaxReferenceMarkdownInsideHtmlDescription": "原始 HTML 内的 Markdown 标记会按字面文本渲染。",
+  "@syntaxReferenceMarkdownInsideHtmlDescription": {
+    "description": "Reference row description for Markdown inside raw HTML."
+  },
+  "syntaxReferenceBlockedContentDescription": "脚本、样式、框架、表单、SVG、MathML、事件和不安全属性都会被阻止。",
+  "@syntaxReferenceBlockedContentDescription": {
+    "description": "Reference row description for blocked HTML content."
+  },
+  "syntaxReferenceSafeUrlsDescription": "链接允许 http、https、mailto、tel、相对路径和片段 URL；不安全的 scheme 会被阻止。",
+  "@syntaxReferenceSafeUrlsDescription": {
+    "description": "Reference row description for safe URL policy."
+  },
+  "syntaxReferenceCategoryHtml": "HTML",
+  "syntaxReferenceMermaid": "Mermaid",
+  "syntaxReferencePlantUml": "PlantUML",
+  "syntaxReferenceD2": "D2",
+  "syntaxReferenceOpenApi": "OpenAPI",
+  "syntaxReferenceCategory": "类别",
+  "syntaxReferenceCategoryDiagramsAndApi": "图表和 API",
+  "syntaxReferenceCategoryMathematics": "数学",
+  "syntaxReferenceExample": "示例",
+  "syntaxReferenceIdentifiers": "标识符和别名",
+  "syntaxReferenceScope": "适用范围",
+  "syntaxReferenceLimitation": "BusyMark 限制",
+  "syntaxReferenceOfficialDocumentation": "官方文档",
+  "syntaxReferenceScopeWritersideMarkdown": "仅 Writerside Markdown",
+  "syntaxReferenceScopeWritersideMarkdownAndXml": "仅 Writerside Markdown 和 Writerside XML",
+  "syntaxReferenceMarkdownDescription": "BusyMark 可以编写和预览的核心 Markdown 形式。",
+  "syntaxReferenceParagraphExample": "一段文本。",
+  "syntaxReferenceTableLimitation": "表格使用 GitHub Flavored Markdown 的竖线语法。",
+  "syntaxReferenceHardBreakIdentifiers": "行尾两个空格、\\、<br>",
+  "syntaxReferenceHtmlDescription": "BusyMark 在 Markdown 源码中仅接受有限且安全的原始 HTML 子集。",
+  "syntaxReferenceDiagramsDescription": "带围栏的 Mermaid、PlantUML、D2 和 OpenAPI 块可在 Markdown 源码中使用。围栏标识符不区分大小写，BusyMark 会保留原始拼写。",
+  "syntaxReferenceOpenApiLimitation": "请使用带围栏的 YAML 或 JSON 内容。BusyMark 不会将任意完整的 YAML 或 JSON 文档视为 OpenAPI 参考。",
+  "syntaxReferenceSemanticDiagramBlocks": "图表的语义代码块",
+  "syntaxReferenceSemanticDiagramLimitation": "语义 code-block 和 src 形式仅支持 Mermaid、PlantUML 和 D2，不支持 OpenAPI，且只能在 Writerside 项目中使用。",
+  "syntaxReferenceReferencedDiagramSource": "引用的图表源",
+  "syntaxReferenceReferencedDiagramLimitation": "路径必须是相对路径并位于已打开的 Writerside 项目内；围栏加 src 的形式仅适用于 Writerside Markdown。",
+  "syntaxReferenceMathematicsDescription": "BusyMark 支持 TeX 表达式，但不支持完整的 TeX 或 LaTeX 文档。",
+  "syntaxReferenceInlineMath": "行内数学公式",
+  "syntaxReferenceGithubMath": "使用美元符号和反引号的 GitHub 数学公式",
+  "syntaxReferenceDisplayMath": "显示数学公式",
+  "syntaxReferenceMathFence": "math 围栏",
+  "syntaxReferenceTexFence": "tex 围栏",
+  "syntaxReferenceMathDelimitersLimitation": "BusyMark 不会将 \\(...\\) 或 \\[...\\] 识别为 Markdown 数学分隔符。",
+  "syntaxReferenceTexFenceLimitation": "在 Writerside 模式之外，tex 围栏仍是普通代码块。",
+  "syntaxReferenceWritersideMathElement": "Writerside math 元素",
+  "syntaxReferenceWritersideMathElementLimitation": "math 元素是语义 Writerside 语法，不是允许的原始 HTML MathML。",
+  "syntaxReferenceSemanticTexBlock": "语义 TeX 代码块",
+  "syntaxReferenceWritersideDescription": "这些特定扩展仅在已打开的 Writerside 项目中解析。",
+  "syntaxReferenceAdmonitionBlockquote": "提示块引用",
+  "syntaxReferenceAdmonitionLimitation": "普通块引用在 Writerside Markdown 中是提示；在普通 Markdown 中仍是普通引用。",
+  "syntaxReferenceSemanticAdmonitions": "语义提示",
+  "syntaxReferenceSemanticMarkupLimitation": "普通 Markdown 不会解析这些 Writerside 语义元素。",
+  "syntaxReferenceCollapsibleHeading": "可折叠标题",
+  "syntaxReferenceCollapsibleCode": "可折叠代码围栏",
+  "syntaxReferenceSemanticCollapsibles": "语义可折叠内容",
+  "syntaxReferenceSemanticCollapsiblesLimitation": "BusyMark 支持可折叠的 chapter、procedure、code-block 和定义列表形式，但不支持完整的 Writerside 目录。",
+  "syntaxReferenceSemanticCodeBlocks": "数学和图表的语义代码块",
+  "syntaxReferenceVideo": "Writerside 视频",
+  "syntaxReferenceVideoLimitation": "本地视频使用本地 preview-src 图像；托管视频源必须是受支持的 YouTube 或 Vimeo HTTPS URL。",
+  "exportAsPdf": "导出为 PDF",
+  "@exportAsPdf": {
+    "description": "Menu action and dialog title for exporting the active document or Writerside module as PDF."
+  },
+  "pdfExportDescription": "选择页面布局，生成精美且自包含的 PDF。",
+  "@pdfExportDescription": {
+    "description": "Introductory text in the PDF export options dialog."
+  },
+  "pdfRemoteImagesNote": "导出过程中不会下载远程图像。有可用的本地图像时将包含它们。",
+  "@pdfRemoteImagesNote": {
+    "description": "Privacy note explaining image handling during PDF export."
+  },
+  "pdfPageSize": "页面大小",
+  "@pdfPageSize": {
+    "description": "PDF export page-size setting."
+  },
+  "pdfPageSizeA4": "A4",
+  "@pdfPageSizeA4": {
+    "description": "A4 PDF page-size option."
+  },
+  "pdfPageSizeLetter": "Letter",
+  "@pdfPageSizeLetter": {
+    "description": "US Letter PDF page-size option."
+  },
+  "pdfOrientation": "方向",
+  "@pdfOrientation": {
+    "description": "PDF export page-orientation setting."
+  },
+  "pdfPortrait": "纵向",
+  "@pdfPortrait": {
+    "description": "Portrait PDF page-orientation option."
+  },
+  "pdfLandscape": "横向",
+  "@pdfLandscape": {
+    "description": "Landscape PDF page-orientation option."
+  },
+  "pdfMargins": "页边距",
+  "@pdfMargins": {
+    "description": "PDF export page-margin setting."
+  },
+  "pdfMarginNarrow": "窄",
+  "@pdfMarginNarrow": {
+    "description": "Narrow PDF page-margin option."
+  },
+  "pdfMarginNormal": "普通",
+  "@pdfMarginNormal": {
+    "description": "Normal PDF page-margin option."
+  },
+  "pdfMarginWide": "宽",
+  "@pdfMarginWide": {
+    "description": "Wide PDF page-margin option."
+  },
+  "pdfIncludePageNumbers": "包含页码",
+  "@pdfIncludePageNumbers": {
+    "description": "Toggle for page numbers in an exported PDF."
+  },
+  "export": "导出",
+  "@export": {
+    "description": "Button label that starts an export."
+  },
+  "exportingPdf": "正在导出 PDF…",
+  "@exportingPdf": {
+    "description": "Progress dialog title while a PDF is being exported."
+  },
+  "fileTypePdf": "PDF 文档",
+  "@fileTypePdf": {
+    "description": "File picker label for PDF documents."
+  },
+  "pdfExported": "已导出 {fileName}。",
+  "@pdfExported": {
+    "description": "PDF export success message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfExportedWithWarnings": "{fileName} 已导出，包含 {count, plural, =1{1 条警告} other{{count} 条警告}}。",
+  "@pdfExportedWithWarnings": {
+    "description": "PDF export success message when some content fell back or was omitted.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfExportUnavailable": "缺少 PDF 导出组件。请重新安装 BusyMark 后重试。",
+  "@pdfExportUnavailable": {
+    "description": "Error shown when the bundled PDF compiler is unavailable."
+  },
+  "pdfExportTimedOut": "PDF 导出耗时过长，已停止。",
+  "@pdfExportTimedOut": {
+    "description": "Error shown when PDF compilation times out."
+  },
+  "pdfExportFailed": "BusyMark 无法将此文档导出为 PDF。",
+  "@pdfExportFailed": {
+    "description": "Generic PDF export failure message."
+  },
+  "visualizationRendering": "正在渲染…",
+  "@visualizationRendering": {
+    "description": "Status shown while a fenced visualization is rendering."
+  },
+  "visualizationStale": "正在显示上次有效的渲染结果",
+  "@visualizationStale": {
+    "description": "Status shown when a visualization displays its last valid result while newer source renders or is invalid."
+  },
+  "visualizationShowSource": "显示源代码",
+  "@visualizationShowSource": {
+    "description": "Action that reveals the original source fence for a visualization."
+  },
+  "visualizationShowRender": "显示渲染结果",
+  "@visualizationShowRender": {
+    "description": "Action that returns from visualization source to its rendered output."
+  },
+  "visualizationFitWidth": "适应宽度",
+  "@visualizationFitWidth": {
+    "description": "Action that resets diagram zoom to fit its card."
+  },
+  "visualizationSaveImage": "保存图像",
+  "@visualizationSaveImage": {
+    "description": "Action that saves a rendered diagram as an SVG or PNG file."
+  },
+  "visualizationCopyImage": "复制图像",
+  "@visualizationCopyImage": {
+    "description": "Action that copies a rendered diagram to the image clipboard."
+  },
+  "visualizationImageCopied": "图像已复制",
+  "@visualizationImageCopied": {
+    "description": "Confirmation after copying a rendered diagram to the clipboard."
+  },
+  "visualizationOpenApiReference": "打开 API 参考",
+  "@visualizationOpenApiReference": {
+    "description": "Action that opens the complete interactive OpenAPI reference window."
+  },
+  "visualizationValid": "有效",
+  "@visualizationValid": {
+    "description": "OpenAPI validation success state."
+  },
+  "visualizationInvalid": "无效",
+  "@visualizationInvalid": {
+    "description": "OpenAPI validation failure state."
+  },
+  "visualizationServers": "服务器",
+  "@visualizationServers": {
+    "description": "OpenAPI server count label."
+  },
+  "visualizationPaths": "路径",
+  "@visualizationPaths": {
+    "description": "OpenAPI path count label."
+  },
+  "visualizationOperations": "操作",
+  "@visualizationOperations": {
+    "description": "OpenAPI operation count label."
+  },
+  "visualizationTags": "标签",
+  "@visualizationTags": {
+    "description": "OpenAPI tag summary label."
+  },
+  "visualizationNoOperations": "没有匹配的操作",
+  "@visualizationNoOperations": {
+    "description": "Empty state for the filtered OpenAPI operation list."
+  },
+  "visualizationSearchOperations": "搜索操作",
+  "@visualizationSearchOperations": {
+    "description": "Hint for the OpenAPI operation search field."
+  },
+  "visualizationRenderFailed": "无法渲染此可视化内容。",
+  "@visualizationRenderFailed": {
+    "description": "Fallback message for a failed visualization render."
+  },
+  "visualizationRetry": "重试",
+  "@visualizationRetry": {
+    "description": "Action that retries a failed visualization render."
+  },
+  "visualizationSaved": "已保存 {fileName}",
+  "@visualizationSaved": {
+    "description": "Confirmation after saving a rendered diagram.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutExportPdfDescription": "将当前文档或 Writerside 模块导出为 PDF。",
+  "@shortcutExportPdfDescription": {
+    "description": "Keyboard-shortcut description for PDF export."
+  },
+  "instances": "实例",
+  "@instances": {
+    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+  },
+  "newInstance": "新建实例",
+  "@newInstance": {
+    "description": "Action that creates a Writerside instance."
+  },
+  "newTocLibrary": "新建目录库",
+  "@newTocLibrary": {
+    "description": "Action that creates a Writerside library instance for reusable TOC sections."
+  },
+  "editInstance": "编辑实例",
+  "@editInstance": {
+    "description": "Action and dialog title for editing a Writerside instance."
+  },
+  "openTocFile": "打开目录文件",
+  "@openTocFile": {
+    "description": "Action that opens the selected Writerside instance tree file."
+  },
+  "createInstance": "创建实例",
+  "@createInstance": {
+    "description": "Dialog title for creating a Writerside instance."
+  },
+  "createTocLibrary": "创建目录库",
+  "@createTocLibrary": {
+    "description": "Dialog title for creating a Writerside TOC library instance."
+  },
+  "instanceContent": "内容",
+  "@instanceContent": {
+    "description": "Group title for choosing the initial content of a Writerside instance."
+  },
+  "instanceContentSource": "创建来源",
+  "@instanceContentSource": {
+    "description": "Field for choosing how a Writerside instance is initialized."
+  },
+  "emptyInstance": "空实例",
+  "@emptyInstance": {
+    "description": "Option to create a Writerside instance without imported topics."
+  },
+  "markdownFiles": "本地 Markdown 文件",
+  "@markdownFiles": {
+    "description": "Option to initialize a Writerside instance from Markdown files."
+  },
+  "chooseMarkdownFolder": "选择 Markdown 文件夹",
+  "@chooseMarkdownFolder": {
+    "description": "Action to choose a folder containing Markdown files."
+  },
+  "errorWritersideInstanceImportSourceRequired": "选择包含 Markdown 文件的文件夹。",
+  "@errorWritersideInstanceImportSourceRequired": {
+    "description": "Validation shown when an imported instance has no source folder."
+  },
+  "instanceAppearance": "外观",
+  "@instanceAppearance": {
+    "description": "Group title for the local appearance of a Writerside instance."
+  },
+  "instanceColor": "图标颜色",
+  "@instanceColor": {
+    "description": "Writerside instance icon-color field."
+  },
+  "instanceVersion": "版本",
+  "@instanceVersion": {
+    "description": "Writerside instance version field."
+  },
+  "instanceVersionInherited": "此字段为空时，项目版本为 {version}。",
+  "@instanceVersionInherited": {
+    "description": "Explanation of an inherited Writerside project version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "instanceWebPath": "Web 路径",
+  "@instanceWebPath": {
+    "description": "Writerside instance publication web-path field."
+  },
+  "instanceStatus": "状态",
+  "@instanceStatus": {
+    "description": "Writerside instance status field."
+  },
+  "instanceStatusRelease": "发布",
+  "@instanceStatusRelease": {
+    "description": "Regular Writerside instance status."
+  },
+  "instanceStatusEap": "抢先体验",
+  "@instanceStatusEap": {
+    "description": "Writerside early-access instance status."
+  },
+  "instanceStatusDeprecated": "已弃用",
+  "@instanceStatusDeprecated": {
+    "description": "Writerside deprecated instance status."
+  },
+  "allowSearchEngineIndexing": "允许搜索引擎建立索引",
+  "@allowSearchEngineIndexing": {
+    "description": "Per-instance Writerside search-engine indexing setting."
+  },
+  "allowSearchEngineIndexingDescription": "允许外部搜索引擎为此输出建立索引。",
+  "@allowSearchEngineIndexingDescription": {
+    "description": "Description of the Writerside indexing setting."
+  },
+  "offlineArtifact": "离线构件",
+  "@offlineArtifact": {
+    "description": "Per-instance Writerside offline artifact setting."
+  },
+  "offlineArtifactDescription": "捆绑资源，使构建的文档可以自包含。",
+  "@offlineArtifactDescription": {
+    "description": "Description of the Writerside offline artifact setting."
+  },
+  "instanceOutputSettings": "输出设置",
+  "@instanceOutputSettings": {
+    "description": "Group title for Writerside instance build and publication settings."
+  },
+  "markdownImportSource": "Markdown 源",
+  "@markdownImportSource": {
+    "description": "Group title for the source directory of a Writerside Markdown import."
+  },
+  "markdownImportFiles": "Markdown 文件",
+  "@markdownImportFiles": {
+    "description": "Group title for files selected for a Writerside Markdown import."
+  },
+  "selectNone": "全部取消选择",
+  "@selectNone": {
+    "description": "Action that clears all items in a multiple selection."
+  },
+  "markdownFilesFound": "找到 {count} 个 Markdown 文件",
+  "@markdownFilesFound": {
+    "description": "Count of discovered Markdown import files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMarkdownFilesFound": "在此目录中未找到 Markdown 文件。",
+  "@noMarkdownFilesFound": {
+    "description": "Empty state for a Writerside Markdown import source."
+  },
+  "copyReferencedMedia": "复制引用的媒体",
+  "@copyReferencedMedia": {
+    "description": "Option to copy media used by imported Markdown files."
+  },
+  "copyReferencedMediaDescription": "复制选中文件引用的本地图像和视频，同时保留相对路径。",
+  "@copyReferencedMediaDescription": {
+    "description": "Description of the Writerside Markdown media import option."
+  },
+  "instanceIdRenameWarningTitle": "重命名实例 ID？",
+  "@instanceIdRenameWarningTitle": {
+    "description": "Confirmation title before refactoring a Writerside instance ID."
+  },
+  "instanceIdRenameWarning": "BusyMark 将重命名 .tree 文件，并将 Writerside 项目引用从“{oldId}”更新为“{newId}”。发布脚本不会更改，必须单独更新。",
+  "@instanceIdRenameWarning": {
+    "description": "Warning shown before a Writerside instance ID refactor.",
+    "placeholders": {
+      "oldId": {
+        "type": "String"
+      },
+      "newId": {
+        "type": "String"
+      }
+    }
+  },
+  "renameAndUpdateReferences": "重命名并更新引用",
+  "@renameAndUpdateReferences": {
+    "description": "Confirmation action for a Writerside instance ID refactor."
+  },
+  "tocLibraryDescription": "目录库用于存储可复用的节，不会生成自己的输出。",
+  "@tocLibraryDescription": {
+    "description": "Explanation shown while creating a Writerside TOC library."
+  },
+  "defaultTocLibraryName": "共享目录",
+  "@defaultTocLibraryName": {
+    "description": "Default name for a new Writerside TOC library instance."
+  },
+  "instanceColorAutomatic": "自动",
+  "@instanceColorAutomatic": {
+    "description": "Automatic Writerside instance icon color option."
+  },
+  "instanceColorBlue": "蓝色",
+  "@instanceColorBlue": {
+    "description": "Blue Writerside instance icon color option."
+  },
+  "instanceColorGreen": "绿色",
+  "@instanceColorGreen": {
+    "description": "Green Writerside instance icon color option."
+  },
+  "instanceColorOrange": "橙色",
+  "@instanceColorOrange": {
+    "description": "Orange Writerside instance icon color option."
+  },
+  "instanceColorPurple": "紫色",
+  "@instanceColorPurple": {
+    "description": "Purple Writerside instance icon color option."
+  },
+  "instanceColorRed": "红色",
+  "@instanceColorRed": {
+    "description": "Red Writerside instance icon color option."
+  },
+  "instanceColorTeal": "青绿色",
+  "@instanceColorTeal": {
+    "description": "Teal Writerside instance icon color option."
+  },
+  "instanceColorYellow": "黄色",
+  "@instanceColorYellow": {
+    "description": "Yellow Writerside instance icon color option."
+  },
+  "errorWritersideInstanceNameRequired": "请输入实例名称。",
+  "@errorWritersideInstanceNameRequired": {
+    "description": "Validation error for an empty Writerside instance name."
+  },
+  "errorWritersideInstanceIdExists": "已存在 ID 为“{id}”的实例。",
+  "@errorWritersideInstanceIdExists": {
+    "description": "Error for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceTreeExists": "实例树已存在：{path}",
+  "@errorWritersideInstanceTreeExists": {
+    "description": "Error for an existing Writerside instance tree path.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSourceMissing": "Markdown 源目录不存在：{path}",
+  "@errorWritersideInstanceImportSourceMissing": {
+    "description": "Error for a missing Writerside Markdown import source.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportSelectionRequired": "请选择至少一个 Markdown 文件进行导入。",
+  "@errorWritersideInstanceImportSelectionRequired": {
+    "description": "Validation error when no Markdown import files are selected."
+  },
+  "errorWritersideInstanceImportFileInvalid": "选中的源中有一个不是可读取的 Markdown 文件：{path}",
+  "@errorWritersideInstanceImportFileInvalid": {
+    "description": "Error for an invalid Writerside Markdown import file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceImportTargetExists": "导入将覆盖现有项目文件：{path}",
+  "@errorWritersideInstanceImportTargetExists": {
+    "description": "Error for a colliding Writerside Markdown import target.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceFilesChanged": "实例文件已在磁盘上发生变化。请查看后重试。",
+  "@errorWritersideInstanceFilesChanged": {
+    "description": "Concurrent-change error for a Writerside instance mutation."
+  },
+  "errorWritersideInstanceRollbackFailed": "BusyMark 无法完全回滚实例更改。请在继续前查看这些文件：{paths}",
+  "@errorWritersideInstanceRollbackFailed": {
+    "description": "Error when a Writerside instance mutation rollback is incomplete.",
+    "placeholders": {
+      "paths": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideInstanceLibraryImport": "目录库无法导入 Markdown 主题。",
+  "@errorWritersideInstanceLibraryImport": {
+    "description": "Error when Markdown import is requested for a TOC library."
+  },
+  "errorWritersideInstanceWebPathInvalid": "Web 路径必须为单行文本。",
+  "@errorWritersideInstanceWebPathInvalid": {
+    "description": "Validation error for an invalid Writerside instance web path."
+  },
+  "errorWritersideInstanceConfigurationInvalid": "Writerside 实例配置无效。请修正其诊断信息后重试。",
+  "@errorWritersideInstanceConfigurationInvalid": {
+    "description": "Error when an instance tree, project config, or build profiles file cannot be safely edited."
+  },
+  "errorWritersideInstanceTemporaryFile": "BusyMark 无法安全暂存实例更改。",
+  "@errorWritersideInstanceTemporaryFile": {
+    "description": "Error when a temporary file for an instance mutation cannot be created."
+  },
+  "diagnosticWritersideTreeInvalidStatus": "未知的实例状态“{status}”。请使用 release、eap 或 deprecated。",
+  "@diagnosticWritersideTreeInvalidStatus": {
+    "description": "Diagnostic for an unsupported Writerside instance status.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDuplicateInstanceId": "实例 ID“{id}”被多个树文件使用。",
+  "@diagnosticWritersideDuplicateInstanceId": {
+    "description": "Diagnostic for a duplicate Writerside instance ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfilesInvalidRoot": "buildprofiles.xml 必须包含 <buildprofiles> 根元素。",
+  "@diagnosticWritersideBuildProfilesInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside build profiles root."
+  },
+  "diagnosticWritersideBuildProfilesInvalidBoolean": "{name} 值“{value}”必须为 true 或 false。",
+  "@diagnosticWritersideBuildProfilesInvalidBoolean": {
+    "description": "Diagnostic for an invalid Writerside build profile Boolean.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideBuildProfileMissingInstance": "<build-profile> 元素必须指定实例 ID。",
+  "@diagnosticWritersideBuildProfileMissingInstance": {
+    "description": "Diagnostic for a Writerside build profile without an instance attribute."
+  },
+  "diagnosticWritersideTreeInvalidInclude": "树中的 <include> 必须同时指定 from 和 element-id。",
+  "@diagnosticWritersideTreeInvalidInclude": {
+    "description": "Diagnostic for an incomplete Writerside tree include."
+  },
+  "diagnosticWritersideTreeMissingSnippetId": "树中的 <snippet> 必须指定 id。",
+  "@diagnosticWritersideTreeMissingSnippetId": {
+    "description": "Diagnostic for a Writerside tree snippet without an ID."
+  },
+  "diagnosticWritersideTreeInvalidCrossInstanceReference": "跨实例目录引用必须同时指定 ref 和 in。",
+  "@diagnosticWritersideTreeInvalidCrossInstanceReference": {
+    "description": "Diagnostic for an incomplete Writerside ref/in pair."
+  },
+  "diagnosticWritersideTreeConflictingTargets": "目录元素不能同时指向多个主题、引用、链接或重定向。",
+  "@diagnosticWritersideTreeConflictingTargets": {
+    "description": "Diagnostic for conflicting Writerside TOC targets."
+  },
+  "diagnosticWritersideTreeDuplicateElementId": "树元素 ID“{id}”被声明了多次。",
+  "@diagnosticWritersideTreeDuplicateElementId": {
+    "description": "Diagnostic for a duplicate Writerside tree element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideInstanceGroupsInvalidRoot": "实例组文件必须包含 <instance-groups> 根元素。",
+  "@diagnosticWritersideInstanceGroupsInvalidRoot": {
+    "description": "Diagnostic for an invalid Writerside instance groups root."
+  },
+  "diagnosticWritersideInstanceGroupInvalid": "实例组必须指定非空 ID 和实例列表。",
+  "@diagnosticWritersideInstanceGroupInvalid": {
+    "description": "Diagnostic for an invalid Writerside instance group."
+  },
+  "diagnosticWritersideInstanceGroupDuplicateId": "实例组 ID“{id}”被声明了多次。",
+  "@diagnosticWritersideInstanceGroupDuplicateId": {
+    "description": "Diagnostic for a duplicate Writerside instance group ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideExternalTreeInclude": "目录包含项“{source}#{id}”属于外部模块“{origin}”，无法在此工作区中展开。",
+  "@diagnosticWritersideExternalTreeInclude": {
+    "description": "Diagnostic for a tree include from another Writerside module.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeIncludeElementMissing": "已注册树“{source}”中不存在树元素“{id}”。",
+  "@diagnosticWritersideTreeIncludeElementMissing": {
+    "description": "Diagnostic for a missing reusable tree element.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeCircularInclude": "树包含项“{source}#{id}”创建了循环。",
+  "@diagnosticWritersideTreeCircularInclude": {
+    "description": "Diagnostic for a circular Writerside tree include.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideUnknownInstanceGroup": "实例条件引用了未知组“@{group}”。",
+  "@diagnosticWritersideUnknownInstanceGroup": {
+    "description": "Diagnostic for an unknown Writerside instance group.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceInstanceMissing": "跨实例引用指向未知实例“{instance}”。",
+  "@diagnosticWritersideReferenceInstanceMissing": {
+    "description": "Diagnostic for a missing Writerside reference instance.",
+    "placeholders": {
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideReferenceTopicMissing": "主题“{topic}”不在被引用的实例“{instance}”中。",
+  "@diagnosticWritersideReferenceTopicMissing": {
+    "description": "Diagnostic for a missing topic in a cross-instance Writerside reference.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "instance": {
+        "type": "String"
+      }
+    }
+  },
+  "download": "下载",
+  "@download": {
+    "description": "Button label that downloads a required component."
+  },
+  "exportWritersideAsPdf": "将 Writerside 导出为 PDF",
+  "@exportWritersideAsPdf": {
+    "description": "Menu action and dialog title for exporting a Writerside instance as PDF."
+  },
+  "writersidePdfContent": "导出内容",
+  "@writersidePdfContent": {
+    "description": "Group title for selecting Writerside PDF content."
+  },
+  "writersidePdfPage": "页面",
+  "@writersidePdfPage": {
+    "description": "Writerside PDF page settings group title."
+  },
+  "exportingWritersidePdf": "正在导出 Writerside PDF…",
+  "@exportingWritersidePdf": {
+    "description": "Progress title while building a Writerside PDF."
+  },
+  "ai": "AI",
+  "@ai": {
+    "description": "Settings section and editing menu label for artificial-intelligence features."
+  },
+  "aiLocalOllama": "本地 Ollama",
+  "@aiLocalOllama": {
+    "description": "AI provider option for a loopback Ollama service."
+  },
+  "aiDisabled": "已禁用",
+  "@aiDisabled": {
+    "description": "AI provider option that disables AI features."
+  },
+  "aiProvider": "AI 提供商",
+  "@aiProvider": {
+    "description": "Label for an AI provider selection."
+  },
+  "aiDefaultProvider": "默认提供商",
+  "@aiDefaultProvider": {
+    "description": "Settings label for the provider selected by default for AI actions."
+  },
+  "aiConfigureProvider": "配置提供商",
+  "@aiConfigureProvider": {
+    "description": "Settings label for choosing which AI provider configuration to edit."
+  },
+  "aiChooseProvider": "选择 AI 提供商",
+  "@aiChooseProvider": {
+    "description": "Dialog title shown before selecting the AI provider for an action."
+  },
+  "aiOllamaEndpoint": "Ollama 端点",
+  "@aiOllamaEndpoint": {
+    "description": "Settings label for the local Ollama origin."
+  },
+  "aiOllamaModel": "Ollama 模型",
+  "@aiOllamaModel": {
+    "description": "Settings label for the installed Ollama model."
+  },
+  "aiTestConnection": "测试连接",
+  "@aiTestConnection": {
+    "description": "Button that verifies generation with the configured AI provider and model."
+  },
+  "aiTestingConnection": "正在测试…",
+  "@aiTestingConnection": {
+    "description": "Status while BusyMark verifies the configured AI provider and model."
+  },
+  "aiConnectionReady": "已连接。找到 {count} 个已安装模型。",
+  "@aiConnectionReady": {
+    "description": "Successful Ollama connection status.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiNoModels": "未选择模型。",
+  "@aiNoModels": {
+    "description": "AI model setting shown before a model has been selected or discovered."
+  },
+  "aiConnectionFailed": "BusyMark 无法验证 AI 文本生成。",
+  "@aiConnectionFailed": {
+    "description": "Generic failure shown while testing AI generation."
+  },
+  "aiConfigureFirst": "请先在设置 → AI 中启用 AI 提供商并验证模型。",
+  "aiEditWithAi": "使用 AI 编辑",
+  "aiRefineWithAi": "使用 AI 优化",
+  "@aiRefineWithAi": {
+    "description": "Selected-text context-menu action that opens AI refinement."
+  },
+  "aiInstruction": "指令",
+  "aiChangeTarget": "可更改内容",
+  "aiSharedContext": "与 AI 共享的上下文",
+  "aiTargetSelection": "选中的内容",
+  "aiTargetInsertAfterBlock": "插入到当前块之后",
+  "aiTargetCurrentBlock": "当前块",
+  "aiTargetCurrentSection": "当前节",
+  "aiTargetCompleteDocument": "完整文档",
+  "aiContextNone": "没有文档上下文",
+  "aiContextSelection": "选中的内容",
+  "aiContextCurrentBlock": "当前块",
+  "aiContextCurrentSection": "当前节",
+  "aiContextCompleteDocument": "完整文档",
+  "@aiConfigureFirst": {
+    "description": "Message shown when an AI action is unavailable."
+  },
+  "aiGenerating": "正在生成建议…",
+  "@aiGenerating": {
+    "description": "Progress text while an AI proposal streams."
+  },
+  "aiProposal": "AI 建议",
+  "@aiProposal": {
+    "description": "Title of the AI proposal review dialog."
+  },
+  "aiGenerateProposal": "生成建议",
+  "@aiGenerateProposal": {
+    "description": "Button that starts generation after the user reviews the AI instruction, change target, and shared context."
+  },
+  "aiContextDisclosure": "所选提供商将接收显示上下文中的 {count} 个字符。",
+  "@aiContextDisclosure": {
+    "description": "Disclosure of AI context size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiOriginal": "原始内容",
+  "@aiOriginal": {
+    "description": "Label for original text in an AI proposal review."
+  },
+  "aiSuggested": "建议内容",
+  "@aiSuggested": {
+    "description": "Label for proposed text in an AI proposal review."
+  },
+  "aiApplyProposal": "应用建议",
+  "@aiApplyProposal": {
+    "description": "Button that applies a reviewed AI proposal."
+  },
+  "aiTokenUsage": "输入 token：{input} · 输出 token：{output}",
+  "@aiTokenUsage": {
+    "description": "Local Ollama token usage for one proposal.",
+    "placeholders": {
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiStaleProposal": "生成此建议期间文档发生了变化。请重新执行操作。",
+  "gitAiStagedChangesChanged": "生成此提交消息期间，已暂存的更改发生了变化。请重新执行操作。",
+  "@gitAiStagedChangesChanged": {
+    "description": "Warning shown when an AI commit-message proposal was generated from an obsolete staged diff."
+  },
+  "@aiStaleProposal": {
+    "description": "Message for an AI result based on an old editor revision."
+  },
+  "aiViewContext": "查看已发送的上下文",
+  "@aiViewContext": {
+    "description": "Action that reveals the exact AI input context."
+  },
+  "aiReviewExactContent": "查看确切内容",
+  "@aiReviewExactContent": {
+    "description": "Action that reveals the exact content affected by and shared with an AI edit."
+  },
+  "aiContentToChange": "要更改的内容",
+  "@aiContentToChange": {
+    "description": "Label for the exact Markdown that an AI proposal may change."
+  },
+  "aiContentSentToAi": "发送给 AI 的内容",
+  "@aiContentSentToAi": {
+    "description": "Label for the exact document context that will be sent to the configured AI provider."
+  },
+  "aiApiKey": "API 密钥",
+  "@aiApiKey": {
+    "description": "Label for a cloud AI provider API key."
+  },
+  "aiApiKeyStoredHint": "密钥已存储在系统凭据存储中",
+  "@aiApiKeyStoredHint": {
+    "description": "Hint when a cloud API key is already stored."
+  },
+  "aiApiKeyEnterHint": "输入提供商 API 密钥",
+  "@aiApiKeyEnterHint": {
+    "description": "Hint for entering a cloud provider API key."
+  },
+  "aiReplaceApiKey": "替换 API 密钥",
+  "@aiReplaceApiKey": {
+    "description": "Action that replaces a stored cloud provider key."
+  },
+  "aiSaveApiKey": "安全保存 API 密钥",
+  "@aiSaveApiKey": {
+    "description": "Action that saves a cloud provider key to the system credential store."
+  },
+  "aiRemoveApiKey": "移除已保存的 API 密钥",
+  "@aiRemoveApiKey": {
+    "description": "Action that removes a cloud provider key from the system credential store."
+  },
+  "aiCredentialSaved": "API 密钥已保存到系统凭据存储中。",
+  "@aiCredentialSaved": {
+    "description": "Confirmation after saving an AI provider key."
+  },
+  "aiCredentialRemoved": "已移除保存的 API 密钥。",
+  "@aiCredentialRemoved": {
+    "description": "Confirmation after removing an AI provider key."
+  },
+  "aiModelRouting": "模型路由",
+  "@aiModelRouting": {
+    "description": "Settings label for AI model routing."
+  },
+  "aiAutomaticRouting": "按任务自动选择",
+  "@aiAutomaticRouting": {
+    "description": "AI model routing option that chooses by task class."
+  },
+  "aiFixedModelRouting": "使用选中的模型",
+  "@aiFixedModelRouting": {
+    "description": "AI model routing option that always uses the preferred model."
+  },
+  "aiPreferredModel": "首选模型",
+  "@aiPreferredModel": {
+    "description": "Settings label for a preferred cloud AI model."
+  },
+  "aiModel": "模型",
+  "@aiModel": {
+    "description": "Label for selecting a model for one AI request."
+  },
+  "aiUsageThisMonth": "{requests} 个请求 · {input} 个输入 token · {output} 个输出 token",
+  "@aiUsageThisMonth": {
+    "description": "Local monthly AI usage summary.",
+    "placeholders": {
+      "requests": {
+        "type": "int"
+      },
+      "input": {
+        "type": "int"
+      },
+      "output": {
+        "type": "int"
+      }
+    }
+  },
+  "aiCloudConsentTitle": "将内容发送给 {provider}？",
+  "@aiCloudConsentTitle": {
+    "description": "Cloud AI data-sharing confirmation title.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentEnable": "启用 {provider}",
+  "@aiCloudConsentEnable": {
+    "description": "Action that confirms use of a cloud AI provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCloudConsentMessage": "只会发送每个 AI 审核对话框中显示的内容。请求不保存状态，建议需要审核，API 密钥存储在 Linux 系统凭据存储中。",
+  "@aiCloudConsentMessage": {
+    "description": "Cloud AI data-sharing and credential disclosure."
+  },
+  "aiCloudConsentRequired": "请先在设置 → AI 中确认与 {provider} 共享数据。",
+  "@aiCloudConsentRequired": {
+    "description": "AI action error when cloud consent is missing.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiGenerationVerified": "已通过 {model} 验证生成能力。有 {count} 个兼容模型可用。",
+  "@aiGenerationVerified": {
+    "description": "Successful AI model generation qualification.",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiColdStartObserved": "检测到本地模型冷启动。",
+  "@aiColdStartObserved": {
+    "description": "Additional model qualification status when local generation required a cold start."
+  },
+  "aiNoCompatibleModels": "没有可用的兼容文本生成模型。",
+  "@aiNoCompatibleModels": {
+    "description": "AI connection status when no compatible generation model is available."
+  },
+  "aiEnableProvider": "请先启用 AI 提供商。",
+  "@aiEnableProvider": {
+    "description": "AI settings error when no provider is enabled."
+  },
+  "aiDraftCommitMessage": "起草提交消息",
+  "@aiDraftCommitMessage": {
+    "description": "AI action that drafts a Git commit message."
+  },
+  "aiDrafting": "正在起草…",
+  "@aiDrafting": {
+    "description": "Progress label while AI drafts a commit message."
+  },
+  "aiDraftWithAi": "使用 AI 起草",
+  "@aiDraftWithAi": {
+    "description": "Action that drafts a Git commit message with AI."
+  },
+  "generateOrUpdateMarkdownToc": "生成/更新目录",
+  "@generateOrUpdateMarkdownToc": {
+    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
+  },
+  "markdownTocTitle": "目录",
+  "@markdownTocTitle": {
+    "description": "Heading inserted above a generated Markdown table of contents."
+  },
+  "markdownTocUpdated": "目录已更新，包含 {count} 个条目。",
+  "@markdownTocUpdated": {
+    "description": "Confirmation after generating a Markdown table of contents.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markdownTocNoHeadings": "请先添加至少一个节标题，再生成目录。",
+  "@markdownTocNoHeadings": {
+    "description": "Message when a Markdown document has no section headings for a generated table of contents."
+  },
+  "markdownTocMalformedMarkers": "BusyMark 目录标记缺失、重复或顺序错误。",
+  "@markdownTocMalformedMarkers": {
+    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
+  },
+  "diagnosticMarkdownHeadingSkippedLevel": "标题级别 {level} 跟在级别 {previousLevel} 之后；请检查节的嵌套结构。",
+  "@diagnosticMarkdownHeadingSkippedLevel": {
+    "description": "Accessibility diagnostic for a skipped Markdown heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "previousLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkEmptyText": "链接文本为空；请提供能描述其用途的可访问名称。",
+  "@diagnosticMarkdownLinkEmptyText": {
+    "description": "Accessibility diagnostic for a Markdown link without text."
+  },
+  "diagnosticMarkdownLinkReviewText": "请检查链接文本“{text}”是否在上下文中描述了其用途。",
+  "@diagnosticMarkdownLinkReviewText": {
+    "description": "Accessibility hint for potentially non-descriptive Markdown link text.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownTableEmptyHeader": "表头单元格必须标识其列；请补全每个空表头。",
+  "@diagnosticMarkdownTableEmptyHeader": {
+    "description": "Accessibility diagnostic for an empty Markdown table header cell."
+  },
+  "mathRenderFailed": "无法渲染数学表达式。",
+  "@mathRenderFailed": {
+    "description": "Tooltip and diagnostic text shown when a mathematical expression cannot be rendered."
+  },
+  "inlineMath": "行内数学",
+  "@inlineMath": {
+    "description": "Editor action that inserts an inline mathematical expression."
+  },
+  "displayMath": "显示数学",
+  "@displayMath": {
+    "description": "Editor action that inserts a display mathematical expression."
+  },
+  "aiExplicitEditingDescription": "AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。",
+  "@aiExplicitEditingDescription": {
+    "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
+  }
+}

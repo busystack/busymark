@@ -11,6 +11,7 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
     this.ordered = false,
     this.marker,
     this.task,
+    this.hidden = false,
     this.onTaskChanged,
     this.taskTooltip,
   }) : assert(onTaskChanged == null || task != null);
@@ -18,6 +19,7 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
   final bool ordered;
   final String? marker;
   final bool? task;
+  final bool hidden;
   final ValueChanged<bool>? onTaskChanged;
   final String? taskTooltip;
 
@@ -25,7 +27,9 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final taskState = task;
-    final markerWidget = taskState != null
+    final markerWidget = hidden
+        ? const SizedBox.shrink()
+        : taskState != null
         ? _taskMarker(context, colors, taskState)
         : ordered
         ? Text(

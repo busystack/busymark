@@ -242,8 +242,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
-      case HeaderBarAction.markdownAndHtml:
-        showBusyMarkMarkdownHtmlDialog(context);
+      case HeaderBarAction.syntaxReference:
+        showBusyMarkSyntaxReferenceDialog(context);
       case HeaderBarAction.reportIssue:
         showBusyMarkFeedbackDialog(
           context,
@@ -296,8 +296,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.commandPalette:
         return;
-      case BusyMarkMainMenuAction.markdownAndHtml:
-        showBusyMarkMarkdownHtmlDialog(context);
+      case BusyMarkMainMenuAction.syntaxReference:
+        showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
         showBusyMarkFeedbackDialog(
           context,

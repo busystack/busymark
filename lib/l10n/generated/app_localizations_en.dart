@@ -66,7 +66,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackMessage => 'Detailed message';
 
   @override
-  String get feedbackReplyEmail => 'Reply email (optional)';
+  String get feedbackReplyEmail => 'Email address for replies (optional)';
 
   @override
   String get feedbackIncludeTechnicalDetails => 'Include technical details';
@@ -313,10 +313,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageGerman => 'Deutsch';
 
   @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
   String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norsk';
+  String get languageNorwegian => 'Norsk bokmål';
 
   @override
   String get languageFrench => 'Français';
@@ -346,7 +352,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageIndonesian => 'Bahasa Indonesia';
+
+  @override
   String get languageEstonian => 'Eesti';
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
 
   @override
   String get toggleSidebar => 'Sidebar panel';
@@ -430,8 +451,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show this keyboard shortcut reference';
 
   @override
-  String get shortcutMarkdownAndHtmlDescription =>
-      'Open the Markdown and HTML reference';
+  String get shortcutSyntaxReferenceDescription => 'Open the Syntax Reference';
 
   @override
   String get shortcutSettingsDescription => 'Open BusyMark settings';
@@ -1399,7 +1419,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceSearchReplacement => 'Replace with';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Replace current';
+  String get sourceSearchReplaceCurrent => 'Replace current match';
 
   @override
   String get sourceSearchReplaceAndFindNext => 'Replace and find next';
@@ -1427,7 +1447,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String selectFileMatches(int count) {
-    return 'Select all $count matches';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Select all $count matches',
+      one: 'Select 1 match',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2138,7 +2164,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> is missing from.';
+      '<include> is missing the from attribute.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -2627,113 +2653,261 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitErrorCommandFailed => 'Git command failed.';
 
   @override
-  String get markdownAndHtml => 'Markdown and HTML';
+  String get syntaxReference => 'Syntax Reference';
 
   @override
-  String get markdownHtmlMarkdownBlocks => 'Markdown Blocks';
+  String get syntaxReferenceMarkdownBlocks => 'Markdown Blocks';
 
   @override
-  String get markdownHtmlMarkdownBlocksDescription =>
+  String get syntaxReferenceMarkdownBlocksDescription =>
       'Block structures supported in Markdown source and preview.';
 
   @override
-  String get markdownHtmlInlineFormatting => 'Inline Markdown';
+  String get syntaxReferenceInlineFormatting => 'Inline Markdown';
 
   @override
-  String get markdownHtmlInlineFormattingDescription =>
+  String get syntaxReferenceInlineFormattingDescription =>
       'Formatting that can appear inside paragraphs, list items, and table cells.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Raw HTML Blocks';
+  String get syntaxReferenceRawHtmlBlocks => 'Raw HTML Blocks';
 
   @override
-  String get markdownHtmlRawHtmlBlocksDescription =>
+  String get syntaxReferenceRawHtmlBlocksDescription =>
       'Safe block-level HTML tags rendered through BusyMark preview widgets.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Raw HTML Inline Tags';
+  String get syntaxReferenceRawHtmlInline => 'Raw HTML Inline Tags';
 
   @override
-  String get markdownHtmlRawHtmlInlineDescription =>
+  String get syntaxReferenceRawHtmlInlineDescription =>
       'Safe inline HTML tags rendered without showing literal tags.';
 
   @override
-  String get markdownHtmlSafety => 'Safety Rules';
+  String get syntaxReferenceHeadings => 'Headings';
 
   @override
-  String get markdownHtmlSafetyDescription =>
-      'Raw HTML is parsed and sanitized before preview rendering.';
+  String get syntaxReferenceParagraphs => 'Paragraphs';
 
   @override
-  String get markdownHtmlHeadings => 'Headings';
+  String get syntaxReferenceLists => 'Lists';
 
   @override
-  String get markdownHtmlParagraphs => 'Paragraphs';
+  String get syntaxReferenceHtmlContainers => 'Containers';
 
   @override
-  String get markdownHtmlLists => 'Lists';
+  String get syntaxReferenceHtmlTextBlocks => 'Text blocks';
 
   @override
-  String get markdownHtmlHtmlContainers => 'Containers';
+  String get syntaxReferenceHtmlFigures => 'Figures and images';
 
   @override
-  String get markdownHtmlHtmlTextBlocks => 'Text blocks';
+  String get syntaxReferenceHtmlPreformatted => 'Preformatted code';
 
   @override
-  String get markdownHtmlHtmlFigures => 'Figures and images';
+  String get syntaxReferenceHtmlDisclosure => 'Disclosure blocks';
 
   @override
-  String get markdownHtmlHtmlPreformatted => 'Preformatted code';
+  String get syntaxReferenceHtmlDescriptionLists => 'Description lists';
 
   @override
-  String get markdownHtmlHtmlDisclosure => 'Disclosure blocks';
+  String get syntaxReferenceHtmlFormattingTags => 'Formatting tags';
 
   @override
-  String get markdownHtmlHtmlDescriptionLists => 'Description lists';
+  String get syntaxReferenceHtmlInlineCodeTags => 'Inline code tags';
 
   @override
-  String get markdownHtmlHtmlFormattingTags => 'Formatting tags';
+  String get syntaxReferenceHtmlNeutralInlineTags => 'Semantic text tags';
 
   @override
-  String get markdownHtmlHtmlInlineCodeTags => 'Inline code tags';
-
-  @override
-  String get markdownHtmlHtmlNeutralInlineTags => 'Semantic text tags';
-
-  @override
-  String get markdownHtmlSanitizedPreview => 'Sanitized preview';
-
-  @override
-  String get markdownHtmlSanitizedPreviewDescription =>
+  String get syntaxReferenceSanitizedPreviewDescription =>
       'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Source is preserved';
-
-  @override
-  String get markdownHtmlSourcePreservedDescription =>
+  String get syntaxReferenceSourcePreservedDescription =>
       'Unedited raw HTML is saved back exactly as source text.';
 
   @override
-  String get markdownHtmlMarkdownInsideHtml => 'Markdown inside HTML';
-
-  @override
-  String get markdownHtmlMarkdownInsideHtmlDescription =>
+  String get syntaxReferenceMarkdownInsideHtmlDescription =>
       'Markdown markers inside raw HTML render as literal text.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Blocked active content';
-
-  @override
-  String get markdownHtmlBlockedContentDescription =>
+  String get syntaxReferenceBlockedContentDescription =>
       'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.';
 
   @override
-  String get markdownHtmlSafeUrls => 'Safe URLs only';
+  String get syntaxReferenceSafeUrlsDescription =>
+      'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.';
 
   @override
-  String get markdownHtmlSafeUrlsDescription =>
-      'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.';
+  String get syntaxReferenceCategory => 'Category';
+
+  @override
+  String get syntaxReferenceCategoryHtml => 'HTML';
+
+  @override
+  String get syntaxReferenceCategoryDiagramsAndApi => 'Diagrams and API';
+
+  @override
+  String get syntaxReferenceCategoryMathematics => 'Mathematics';
+
+  @override
+  String get syntaxReferenceExample => 'Example';
+
+  @override
+  String get syntaxReferenceIdentifiers => 'Identifiers and aliases';
+
+  @override
+  String get syntaxReferenceScope => 'Scope';
+
+  @override
+  String get syntaxReferenceLimitation => 'BusyMark limitation';
+
+  @override
+  String get syntaxReferenceOfficialDocumentation => 'Official documentation';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdown =>
+      'Writerside Markdown only';
+
+  @override
+  String get syntaxReferenceScopeWritersideMarkdownAndXml =>
+      'Writerside Markdown and Writerside XML only';
+
+  @override
+  String get syntaxReferenceMarkdownDescription =>
+      'The core Markdown forms BusyMark can author and preview.';
+
+  @override
+  String get syntaxReferenceParagraphExample => 'A paragraph of text.';
+
+  @override
+  String get syntaxReferenceTableLimitation =>
+      'Tables use GitHub Flavored Markdown pipe syntax.';
+
+  @override
+  String get syntaxReferenceHardBreakIdentifiers =>
+      'two trailing spaces, \\, <br>';
+
+  @override
+  String get syntaxReferenceHtmlDescription =>
+      'BusyMark accepts a focused safe subset of raw HTML in Markdown source.';
+
+  @override
+  String get syntaxReferenceDiagramsDescription =>
+      'Fenced Mermaid, PlantUML, D2, and OpenAPI work in Markdown source. Fence identifiers are case-insensitive, and BusyMark preserves their original spelling.';
+
+  @override
+  String get syntaxReferenceMermaid => 'Mermaid';
+
+  @override
+  String get syntaxReferencePlantUml => 'PlantUML';
+
+  @override
+  String get syntaxReferenceD2 => 'D2';
+
+  @override
+  String get syntaxReferenceOpenApi => 'OpenAPI';
+
+  @override
+  String get syntaxReferenceOpenApiLimitation =>
+      'Use fenced YAML or JSON content. BusyMark does not treat an arbitrary whole-file YAML or JSON document as an OpenAPI reference.';
+
+  @override
+  String get syntaxReferenceSemanticDiagramBlocks =>
+      'Semantic diagram code blocks';
+
+  @override
+  String get syntaxReferenceSemanticDiagramLimitation =>
+      'Semantic code-block and src forms support Mermaid, PlantUML, and D2, not OpenAPI, and only inside Writerside projects.';
+
+  @override
+  String get syntaxReferenceReferencedDiagramSource =>
+      'Referenced diagram source';
+
+  @override
+  String get syntaxReferenceReferencedDiagramLimitation =>
+      'Paths must be relative and remain inside the opened Writerside project; the fence-plus-src form is Writerside Markdown only.';
+
+  @override
+  String get syntaxReferenceMathematicsDescription =>
+      'BusyMark supports TeX expressions, not complete TeX or LaTeX documents.';
+
+  @override
+  String get syntaxReferenceInlineMath => 'Inline math';
+
+  @override
+  String get syntaxReferenceGithubMath => 'GitHub dollar/backtick math';
+
+  @override
+  String get syntaxReferenceDisplayMath => 'Display math';
+
+  @override
+  String get syntaxReferenceMathFence => 'math fence';
+
+  @override
+  String get syntaxReferenceTexFence => 'tex fence';
+
+  @override
+  String get syntaxReferenceMathDelimitersLimitation =>
+      'BusyMark does not recognize \\(...\\) or \\[...\\] as Markdown math delimiters.';
+
+  @override
+  String get syntaxReferenceTexFenceLimitation =>
+      'Outside Writerside mode, a tex fence remains an ordinary code block.';
+
+  @override
+  String get syntaxReferenceWritersideMathElement => 'Writerside math element';
+
+  @override
+  String get syntaxReferenceWritersideMathElementLimitation =>
+      'The math element is semantic Writerside syntax, not permitted raw HTML MathML.';
+
+  @override
+  String get syntaxReferenceSemanticTexBlock => 'Semantic TeX code block';
+
+  @override
+  String get syntaxReferenceWritersideDescription =>
+      'These focused extensions are interpreted only inside opened Writerside projects.';
+
+  @override
+  String get syntaxReferenceAdmonitionBlockquote => 'Admonition blockquote';
+
+  @override
+  String get syntaxReferenceAdmonitionLimitation =>
+      'A plain blockquote is a tip in Writerside Markdown; it remains an ordinary quote in ordinary Markdown.';
+
+  @override
+  String get syntaxReferenceSemanticAdmonitions => 'Semantic admonitions';
+
+  @override
+  String get syntaxReferenceSemanticMarkupLimitation =>
+      'Ordinary Markdown does not interpret these Writerside semantic elements.';
+
+  @override
+  String get syntaxReferenceCollapsibleHeading => 'Collapsible heading';
+
+  @override
+  String get syntaxReferenceCollapsibleCode => 'Collapsible code fence';
+
+  @override
+  String get syntaxReferenceSemanticCollapsibles =>
+      'Semantic collapsible content';
+
+  @override
+  String get syntaxReferenceSemanticCollapsiblesLimitation =>
+      'BusyMark supports collapsible chapter, procedure, code-block, and definition-list forms, not the full Writerside catalog.';
+
+  @override
+  String get syntaxReferenceSemanticCodeBlocks =>
+      'Semantic code blocks for math and diagrams';
+
+  @override
+  String get syntaxReferenceVideo => 'Writerside video';
+
+  @override
+  String get syntaxReferenceVideoLimitation =>
+      'Local video uses a local preview-src image; hosted video sources must be supported HTTPS YouTube or Vimeo URLs.';
 
   @override
   String get exportAsPdf => 'Export as PDF';
@@ -2795,7 +2969,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName was exported with $count warning(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings',
+      one: '1 warning',
+    );
+    return '$fileName was exported with $_temp0.';
   }
 
   @override
@@ -2973,7 +3153,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String markdownFilesFound(int count) {
-    return '$count Markdown file(s) found';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Markdown files found',
+      one: '1 Markdown file found',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3211,7 +3397,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiDisabled => 'Disabled';
 
   @override
-  String get aiLocalOnlyDescription =>
+  String get aiExplicitEditingDescription =>
       'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.';
 
   @override
@@ -3240,7 +3426,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiConnectionReady(int count) {
-    return 'Connected. $count installed model(s) found.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count installed models found',
+      one: '1 installed model found',
+    );
+    return 'Connected. $_temp0.';
   }
 
   @override
@@ -3310,7 +3502,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'The selected provider will receive $count characters from the displayed context.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count characters',
+      one: '1 character',
+    );
+    return 'The selected provider will receive $_temp0 from the displayed context.';
   }
 
   @override
@@ -3414,7 +3612,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiGenerationVerified(String model, int count) {
-    return 'Generation verified with $model. $count compatible model(s) available.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count compatible models available',
+      one: '1 compatible model available',
+    );
+    return 'Generation verified with $model. $_temp0.';
   }
 
   @override
@@ -3444,7 +3648,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String markdownTocUpdated(int count) {
-    return 'Table of contents updated with $count entries.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return 'Table of contents updated with $_temp0.';
   }
 
   @override

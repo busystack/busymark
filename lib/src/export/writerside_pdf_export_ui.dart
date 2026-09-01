@@ -129,6 +129,7 @@ Future<void> exportWritersideModuleToPdf(
   final token = WritersidePdfCancellationToken();
   final request = WritersidePdfExportRequest(
     moduleRoot: module.rootPath,
+    projectRoot: workspace.rootPath,
     instanceId: selection.instance.id,
     destinationPath: destination,
     overwrite: overwrite,

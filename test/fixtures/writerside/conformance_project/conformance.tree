@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<instance-profile id="conformance" name="Conformance"
+                  start-page="features.topic">
+  <toc-element topic="features.topic"/>
+  <toc-element topic="semantic.md"/>
+</instance-profile>

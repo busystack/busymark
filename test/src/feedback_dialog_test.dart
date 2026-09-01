@@ -126,9 +126,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('dark route keeps the modal and fields theme-owned', (
-    tester,
-  ) async {
+  testWidgets('dark route uses the shared dialog surface', (tester) async {
     final service = _FakeFeedbackService();
     await _pumpDialogRoute(tester, service, brightness: Brightness.dark);
 
@@ -140,11 +138,12 @@ void main() {
         matching: find.byType(Dialog),
       ),
     );
-    expect(
-      dialog.backgroundColor,
-      Theme.of(feedbackContext).scaffoldBackgroundColor,
-    );
+    expect(dialog.backgroundColor, busyMarkDialogSurfaceColor(feedbackContext));
     expect(dialog.surfaceTintColor, dialog.backgroundColor);
+    expect(
+      BusyMarkSurfaceScope.roleOf(feedbackContext),
+      BusyMarkSurfaceRole.dialog,
+    );
 
     for (final key in const [
       BusyMarkFeedbackKeys.subject,
