@@ -1889,7 +1889,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           .where((buffer) => buffer.filePath == path)
           .firstOrNull;
       if (existing != null) {
-        return _activateBuffer(
+        return await _activateBuffer(
           selected,
           existing,
           documentBuffers: state.documentBuffers,

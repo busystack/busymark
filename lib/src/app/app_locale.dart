@@ -70,7 +70,8 @@ String? normalizeBusyMarkLocaleTag(String? tag) {
   }
 
   if (parsed.languageCode == 'zh') {
-    final isTraditional = parsed.scriptCode == 'Hant' ||
+    final isTraditional =
+        parsed.scriptCode == 'Hant' ||
         parsed.countryCode == 'TW' ||
         parsed.countryCode == 'HK' ||
         parsed.countryCode == 'MO';
@@ -78,12 +79,15 @@ String? normalizeBusyMarkLocaleTag(String? tag) {
         (parsed.countryCode != null && parsed.countryCode != 'CN')) {
       return null;
     }
-    return const Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN')
-        .toLanguageTag();
+    return const Locale.fromSubtags(
+      languageCode: 'zh',
+      countryCode: 'CN',
+    ).toLanguageTag();
   }
 
   for (final option in busyMarkLocaleOptions) {
-    if (option.locale == parsed || option.locale.languageCode == parsed.languageCode) {
+    if (option.locale == parsed ||
+        option.locale.languageCode == parsed.languageCode) {
       return option.tag;
     }
   }
