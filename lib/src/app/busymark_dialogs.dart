@@ -2657,13 +2657,15 @@ class _AboutVersionTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Center(
       child: DecoratedBox(
+        key: const ValueKey('about-version-tag'),
         decoration: BoxDecoration(
-          color: colors.control,
+          color: colorScheme.primary,
           borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
-          border: Border.all(color: colors.subtleBorder),
+          border: Border.all(color: colorScheme.primary),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -2675,8 +2677,8 @@ class _AboutVersionTag extends StatelessWidget {
             child: Text(
               version,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: colors.foreground,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),

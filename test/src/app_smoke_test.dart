@@ -1532,6 +1532,16 @@ void main() {
     expect(find.text(l10n.aboutTagline), findsOneWidget);
     expect(find.text(busyMarkAppVersion), findsOneWidget);
     expect(find.textContaining('Version'), findsNothing);
+    final versionTag = find.byKey(const ValueKey('about-version-tag'));
+    expect(versionTag, findsOneWidget);
+    final versionTagTheme = Theme.of(tester.element(versionTag));
+    final versionTagDecoration =
+        tester.widget<DecoratedBox>(versionTag).decoration as BoxDecoration;
+    expect(versionTagDecoration.color, versionTagTheme.colorScheme.primary);
+    expect(
+      tester.widget<Text>(find.text(busyMarkAppVersion)).style?.color,
+      versionTagTheme.colorScheme.onPrimary,
+    );
     expect(
       find.ancestor(
         of: find.text(busyMarkAppVersion),
