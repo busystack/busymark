@@ -144,13 +144,7 @@ int visibleSourceLineIndex(
 
 int sourceLineNumberForOffset(String source, int offset) {
   final safeOffset = offset.clamp(0, source.length).toInt();
-  final lines = sourceLineInfos(source);
-  for (final line in lines) {
-    if (safeOffset <= line.endOffsetIncludingLineBreak) {
-      return line.number;
-    }
-  }
-  return lines.isEmpty ? 1 : lines.last.number;
+  return SourceLineIndex(source).lineNumberAtOffset(safeOffset);
 }
 
 List<SourceFoldRegion> collapsedSourceFoldRegions(

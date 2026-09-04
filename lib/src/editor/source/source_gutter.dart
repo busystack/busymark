@@ -144,12 +144,12 @@ class BusyMarkSourceGutter extends StatelessWidget {
                   textWidth: textWidth,
                   diagnostics: diagnosticMarkers,
                 );
-                final activeLine = sourceLineNumberForOffset(
-                  controller.fullText,
-                  controller.visibleOffsetToFullOffset(
-                    controller.selection.extentOffset,
-                  ),
-                );
+                final activeLine = controller.document.lineIndex
+                    .lineNumberAtOffset(
+                      controller.visibleOffsetToFullOffset(
+                        controller.selection.extentOffset,
+                      ),
+                    );
                 final scrollOffset = safeScrollOffset(scrollController);
                 final children = <Widget>[];
                 final visibleRange = sourceVisibleLayoutRange(

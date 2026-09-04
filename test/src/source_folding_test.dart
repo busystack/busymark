@@ -3,6 +3,14 @@ import 'package:busymark/src/editor/source_language.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('line starts map to the following source line', () {
+    const source = 'one\ntwo\nthree';
+
+    expect(sourceLineNumberForOffset(source, 3), 1);
+    expect(sourceLineNumberForOffset(source, 4), 2);
+    expect(sourceLineNumberForOffset(source, 8), 3);
+  });
+
   test('markdown folding detects sections lists quotes and code blocks', () {
     const source = '''
 # Title

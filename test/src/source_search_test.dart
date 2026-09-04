@@ -136,4 +136,38 @@ void main() {
     expect(await stale, isNull);
     expect((await current)!.totalMatchCount, 1);
   });
+
+  test('source search worker bounds transferred high-match results', () async {
+    final worker = SourceSearchWorker();
+    addTearDown(worker.dispose);
+    final source = List.filled(
+      sourceInteractiveSearchMatchLimit + 500,
+      'a',
+    ).join();
+
+    final firstWindow = await worker.search(
+      SourceDocument(fullText: source),
+      const SourceSearchOptions(query: 'a'),
+    );
+
+    expect(firstWindow, isNotNull);
+    expect(firstWindow!.totalMatchCount, source.length);
+    expect(firstWindow.matches, hasLength(sourceInteractiveSearchMatchLimit));
+    expect(firstWindow.firstMatchIndex, 0);
+
+    final nextWindow = await worker.search(
+      SourceDocument(fullText: source),
+      const SourceSearchOptions(query: 'a'),
+      currentMatchIndex: sourceInteractiveSearchMatchLimit,
+      firstMatchIndex: sourceInteractiveSearchMatchLimit,
+    );
+    expect(nextWindow, isNotNull);
+    expect(nextWindow!.totalMatchCount, source.length);
+    expect(nextWindow.firstMatchIndex, sourceInteractiveSearchMatchLimit);
+    expect(
+      nextWindow.currentMatch?.fullStart,
+      sourceInteractiveSearchMatchLimit,
+    );
+    expect(nextWindow.matches, hasLength(500));
+  });
 }

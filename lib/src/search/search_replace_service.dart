@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:path/path.dart' as p;
 
@@ -31,6 +33,7 @@ class TextReplacementPreview {
     required this.replacement,
     required this.matches,
     this.invalidRegex = false,
+    this.truncated = false,
   });
 
   final String source;
@@ -38,16 +41,28 @@ class TextReplacementPreview {
   final String replacement;
   final List<TextReplacementMatch> matches;
   final bool invalidRegex;
+  final bool truncated;
 
   String apply({Set<String>? selectedMatchIds}) {
-    var result = source;
-    for (final match in matches.reversed) {
+    if (matches.isEmpty) {
+      return source;
+    }
+    final output = StringBuffer();
+    var sourceOffset = 0;
+    for (final match in matches) {
       if (selectedMatchIds != null && !selectedMatchIds.contains(match.id)) {
         continue;
       }
-      result = result.replaceRange(match.start, match.end, match.replacement);
+      output
+        ..write(source.substring(sourceOffset, match.start))
+        ..write(match.replacement);
+      sourceOffset = match.end;
     }
-    return result;
+    if (sourceOffset == 0) {
+      return source;
+    }
+    output.write(source.substring(sourceOffset));
+    return output.toString();
   }
 }
 
@@ -149,9 +164,11 @@ class SearchReplacementService {
     required String replacement,
     String idPrefix = 'match',
   }) {
+    final matchLimit = maximumMatches.clamp(0, 0x7ffffffe).toInt();
     final search = searchSourceDocument(
       SourceDocument(fullText: source),
       options,
+      maximumMatches: matchLimit + 1,
     );
     if (search.invalidRegex) {
       return TextReplacementPreview(
@@ -171,7 +188,7 @@ class SearchReplacementService {
       );
     }
     final matches = <TextReplacementMatch>[];
-    for (final (index, match) in search.matches.indexed) {
+    for (final (index, match) in search.matches.take(matchLimit).indexed) {
       final original = source.substring(match.fullStart, match.fullEnd);
       var renderedReplacement = replacement;
       if (expression != null) {
@@ -198,6 +215,66 @@ class SearchReplacementService {
       options: options,
       replacement: replacement,
       matches: List.unmodifiable(matches),
+      truncated: search.totalMatchCount > matchLimit,
+    );
+  }
+
+  TextReplacementPreview previewMatch({
+    required String source,
+    required SourceSearchOptions options,
+    required String replacement,
+    required int start,
+    required int end,
+  }) {
+    if (start < 0 || end <= start || end > source.length) {
+      return TextReplacementPreview(
+        source: source,
+        options: options,
+        replacement: replacement,
+        matches: const [],
+      );
+    }
+    var renderedReplacement = replacement;
+    if (options.regex) {
+      try {
+        final expression = RegExp(
+          options.query,
+          caseSensitive: options.caseSensitive,
+          multiLine: true,
+        );
+        final match = expression.matchAsPrefix(source, start);
+        if (match is! RegExpMatch || match.end != end) {
+          return TextReplacementPreview(
+            source: source,
+            options: options,
+            replacement: replacement,
+            matches: const [],
+          );
+        }
+        renderedReplacement = _expandRegexReplacement(replacement, match);
+      } on FormatException {
+        return TextReplacementPreview(
+          source: source,
+          options: options,
+          replacement: replacement,
+          matches: const [],
+          invalidRegex: true,
+        );
+      }
+    }
+    return TextReplacementPreview(
+      source: source,
+      options: options,
+      replacement: replacement,
+      matches: [
+        TextReplacementMatch(
+          id: 'match:0:$start:$end',
+          start: start,
+          end: end,
+          original: source.substring(start, end),
+          replacement: renderedReplacement,
+        ),
+      ],
     );
   }
 
@@ -571,6 +648,175 @@ class SearchReplacementService {
       _ => false,
     };
   }
+}
+
+/// Plans Source-view replacements away from Flutter's UI isolate.
+///
+/// A newer request immediately invalidates and terminates the preceding one,
+/// matching the cancellation contract used by interactive Source search.
+class SearchReplacementWorker {
+  Isolate? _isolate;
+  ReceivePort? _receivePort;
+  Completer<TextReplacementPreview?>? _completer;
+  var _generation = 0;
+
+  Future<TextReplacementPreview?> previewText({
+    required String source,
+    required SourceSearchOptions options,
+    required String replacement,
+    int maximumMatches = 5000,
+    int? targetStart,
+    int? targetEnd,
+  }) {
+    cancel();
+    final generation = ++_generation;
+    final receivePort = ReceivePort();
+    final completer = Completer<TextReplacementPreview?>();
+    _receivePort = receivePort;
+    _completer = completer;
+    receivePort.listen((message) {
+      if (generation != _generation || completer.isCompleted) {
+        return;
+      }
+      if (message is Map<Object?, Object?>) {
+        completer.complete(
+          _decodeReplacementPreview(
+            message,
+            source: source,
+            options: options,
+            replacement: replacement,
+          ),
+        );
+      } else {
+        completer.complete(null);
+      }
+      _releaseWorker(kill: true);
+    });
+    final request = <String, Object?>{
+      'source': source,
+      'query': options.query,
+      'caseSensitive': options.caseSensitive,
+      'wholeWord': options.wholeWord,
+      'regex': options.regex,
+      'replacement': replacement,
+      'maximumMatches': maximumMatches,
+      'targetStart': targetStart,
+      'targetEnd': targetEnd,
+    };
+    Isolate.spawn<List<Object?>>(
+          _replacementWorkerMain,
+          <Object?>[receivePort.sendPort, request],
+          debugName: 'BusyMark source replacement',
+          onError: receivePort.sendPort,
+          onExit: receivePort.sendPort,
+        )
+        .then((isolate) {
+          if (generation != _generation || completer.isCompleted) {
+            isolate.kill(priority: Isolate.immediate);
+          } else {
+            _isolate = isolate;
+          }
+        })
+        .catchError((Object _) {
+          if (generation == _generation && !completer.isCompleted) {
+            completer.complete(null);
+            _releaseWorker(kill: false);
+          }
+        });
+    return completer.future;
+  }
+
+  void cancel() {
+    _generation++;
+    final completer = _completer;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete(null);
+    }
+    _releaseWorker(kill: true);
+  }
+
+  void dispose() => cancel();
+
+  void _releaseWorker({required bool kill}) {
+    if (kill) {
+      _isolate?.kill(priority: Isolate.immediate);
+    }
+    _isolate = null;
+    _receivePort?.close();
+    _receivePort = null;
+    _completer = null;
+  }
+}
+
+void _replacementWorkerMain(List<Object?> payload) {
+  final sendPort = payload[0] as SendPort;
+  final request = payload[1] as Map<Object?, Object?>;
+  final options = SourceSearchOptions(
+    query: request['query']! as String,
+    caseSensitive: request['caseSensitive']! as bool,
+    wholeWord: request['wholeWord']! as bool,
+    regex: request['regex']! as bool,
+  );
+  final service = SearchReplacementService(
+    maximumMatches: request['maximumMatches']! as int,
+  );
+  final source = request['source']! as String;
+  final replacement = request['replacement']! as String;
+  final targetStart = request['targetStart'] as int?;
+  final targetEnd = request['targetEnd'] as int?;
+  final preview = targetStart != null && targetEnd != null
+      ? service.previewMatch(
+          source: source,
+          options: options,
+          replacement: replacement,
+          start: targetStart,
+          end: targetEnd,
+        )
+      : service.previewText(
+          source: source,
+          options: options,
+          replacement: replacement,
+        );
+  sendPort.send(<Object?, Object?>{
+    'invalidRegex': preview.invalidRegex,
+    'truncated': preview.truncated,
+    'matches': [
+      for (final match in preview.matches)
+        <Object?>[
+          match.id,
+          match.start,
+          match.end,
+          match.original,
+          match.replacement,
+        ],
+    ],
+  });
+}
+
+TextReplacementPreview _decodeReplacementPreview(
+  Map<Object?, Object?> payload, {
+  required String source,
+  required SourceSearchOptions options,
+  required String replacement,
+}) {
+  final encodedMatches = payload['matches']! as List<Object?>;
+  return TextReplacementPreview(
+    source: source,
+    options: options,
+    replacement: replacement,
+    matches: List.unmodifiable([
+      for (final item in encodedMatches.cast<List<Object?>>())
+        TextReplacementMatch(
+          id: item[0]! as String,
+          start: item[1]! as int,
+          end: item[2]! as int,
+          original: item[3]! as String,
+          replacement: item[4]! as String,
+        ),
+    ]),
+    invalidRegex: payload['invalidRegex']! as bool,
+    truncated: payload['truncated']! as bool,
+  );
 }
 
 class _WorkspaceReplacementOperation {

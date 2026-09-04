@@ -23,6 +23,53 @@ void main() {
     expect(preview.apply(), 'dog scatter dog');
   });
 
+  test('text replacement previews enforce their match limit', () {
+    const limited = SearchReplacementService(maximumMatches: 2);
+
+    final preview = limited.previewText(
+      source: 'a a a',
+      options: const SourceSearchOptions(query: 'a'),
+      replacement: 'x',
+    );
+
+    expect(preview.matches, hasLength(2));
+    expect(preview.truncated, isTrue);
+  });
+
+  test('replacement worker expands one accepted regex match', () async {
+    final worker = SearchReplacementWorker();
+    addTearDown(worker.dispose);
+
+    final preview = await worker.previewText(
+      source: 'Ada Lovelace',
+      options: const SourceSearchOptions(query: r'(\w+) (\w+)', regex: true),
+      replacement: r'$2, $1',
+      targetStart: 0,
+      targetEnd: 12,
+    );
+
+    expect(preview, isNotNull);
+    expect(preview!.matches.single.replacement, 'Lovelace, Ada');
+  });
+
+  test('replacement worker cancels stale plans', () async {
+    final worker = SearchReplacementWorker();
+    addTearDown(worker.dispose);
+    final stale = worker.previewText(
+      source: List.filled(10000, 'alpha').join(' '),
+      options: const SourceSearchOptions(query: 'alpha'),
+      replacement: 'stale',
+    );
+    final current = worker.previewText(
+      source: 'current',
+      options: const SourceSearchOptions(query: 'current'),
+      replacement: 'fresh',
+    );
+
+    expect(await stale, isNull);
+    expect((await current)!.apply(), 'fresh');
+  });
+
   test('expands numbered and named regex capture groups', () {
     final numbered = replacementService.previewText(
       source: 'Ada Lovelace; Grace Hopper',

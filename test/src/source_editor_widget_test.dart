@@ -14,6 +14,7 @@ import 'package:busymark/src/editor/source/source_autocomplete.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
     show sourceTextHeightBehavior;
 import 'package:busymark/src/editor/source/source_search.dart';
+import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
@@ -546,9 +547,9 @@ void main() {
       find.byKey(const ValueKey('source-search-replacement')),
       'dog',
     );
-    await tester.pump();
+    await _pumpUntil(tester, () => find.text('1 / 2').evaluate().isNotEmpty);
     await tester.tap(find.byTooltip(en.sourceSearchReplaceAll));
-    await tester.pump();
+    await _pumpUntil(tester, () => currentText == 'dog dog');
 
     expect(currentText, 'dog dog');
 
@@ -558,6 +559,130 @@ void main() {
     await tester.pump();
 
     expect(currentText, 'cat cat');
+  });
+
+  testWidgets('source Replace and Find Next selects the logical next match', (
+    tester,
+  ) async {
+    final en = AppLocalizationsEn();
+    var currentText = 'a a a';
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: currentText,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'a'),
+                searchReplacement: 'x',
+                onSearchReplacementChanged: (_) {},
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) => setState(() => currentText = text),
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => find.text('1 / 3').evaluate().isNotEmpty);
+
+    await tester.tap(find.byTooltip(en.sourceSearchReplaceAndFindNext));
+    await _pumpUntil(tester, () => currentText == 'x a a');
+    await _pumpUntil(tester, () => find.text('1 / 2').evaluate().isNotEmpty);
+
+    final sourceField = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .firstWhere((field) => field.controller?.text == currentText);
+    expect(currentText, 'x a a');
+    expect(
+      sourceField.controller!.selection,
+      const TextSelection(baseOffset: 2, extentOffset: 3),
+    );
+  });
+
+  testWidgets('shifted folded regions are persisted after edit debounce', (
+    tester,
+  ) async {
+    final en = AppLocalizationsEn();
+    var currentText = 'Prelude\n# Section\nHidden\nMore\n';
+    var sessionKeys = <String>{};
+
+    Widget editor({Key? key, Set<String> initialKeys = const {}}) {
+      return MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              key: key,
+              text: currentText,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (text, _) => currentText = text,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              initialFoldedRegionKeys: initialKeys,
+              onSessionChanged: (_, _, keys) => sessionKeys = keys,
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(editor(key: const ValueKey('original')));
+    await tester.tap(find.byTooltip(en.collapseKind(en.foldKindSection)));
+    await tester.pump();
+    final sourceField = tester.widget<TextField>(find.byType(TextField));
+    final visibleBeforeEdit = sourceField.controller!.text;
+    expect(visibleBeforeEdit, isNot(contains('Hidden')));
+    await tester.tap(find.byType(TextField));
+    await tester.showKeyboard(find.byType(TextField));
+
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: 'Lead\n$visibleBeforeEdit',
+        selection: const TextSelection.collapsed(offset: 5),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump();
+
+    final shiftedRegion = sourceFoldRegions(
+      currentText,
+      SourceSyntaxLanguage.markdown,
+    ).singleWhere((region) => region.startLine == 3);
+    expect(sessionKeys, contains(shiftedRegion.key));
+
+    await tester.pumpWidget(
+      editor(key: const ValueKey('restored'), initialKeys: sessionKeys),
+    );
+    await tester.pump();
+
+    expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isNot(contains('Hidden')),
+    );
   });
 
   testWidgets(
@@ -644,6 +769,170 @@ void main() {
       expect(selectionBox.bottom - caret.bottom, greaterThan(1));
     },
   );
+
+  testWidgets('source heading caret advances after a typed space', (
+    tester,
+  ) async {
+    var source = '';
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 600,
+                child: BusyMarkSourceEditor(
+                  text: source,
+                  language: SourceSyntaxLanguage.markdown,
+                  filePath: '/project/topic.md',
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: true,
+                  searchActive: false,
+                  searchOptions: const SourceSearchOptions(),
+                  onSearchOptionsChanged: (_) {},
+                  onChanged: (text, _) => setState(() => source = text),
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    final fieldFinder = find.byType(TextField);
+    await tester.tap(fieldFinder);
+    await tester.showKeyboard(fieldFinder);
+
+    Future<Rect> enterAndReadCaret(String text) async {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        ),
+      );
+      await tester.pump();
+      final field = tester.widget<TextField>(fieldFinder);
+      expect(field.controller!.selection.extentOffset, text.length);
+      final editable = _findRenderEditable(
+        tester.renderObject<RenderObject>(find.byType(EditableText)),
+      )!;
+      return editable.getLocalRectForCaret(TextPosition(offset: text.length));
+    }
+
+    final beforeMarkerSpace = await enterAndReadCaret('#');
+    final afterMarkerSpace = await enterAndReadCaret('# ');
+    final beforeWordSpace = await enterAndReadCaret('# Linguality');
+    final afterWordSpace = await enterAndReadCaret('# Linguality ');
+    await enterAndReadCaret('# Linguality\nBody');
+    final field = tester.widget<TextField>(fieldFinder);
+    field.controller!.selection = const TextSelection.collapsed(offset: 12);
+    await tester.pump();
+    final editable = _findRenderEditable(
+      tester.renderObject<RenderObject>(find.byType(EditableText)),
+    )!;
+    final beforeLineEndSpace = editable.getLocalRectForCaret(
+      const TextPosition(offset: 12),
+    );
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: '# Linguality \nBody',
+        selection: TextSelection.collapsed(offset: 13),
+      ),
+    );
+    await tester.pump();
+    final lineEndSelection = tester
+        .widget<TextField>(fieldFinder)
+        .controller!
+        .selection;
+    final afterLineEndSpace = editable.getLocalRectForCaret(
+      TextPosition(offset: 13, affinity: lineEndSelection.affinity),
+    );
+
+    expect(afterMarkerSpace.left, greaterThan(beforeMarkerSpace.left));
+    expect(afterWordSpace.left, greaterThan(beforeWordSpace.left));
+    expect(lineEndSelection.affinity, TextAffinity.upstream);
+    expect(afterLineEndSpace.left, greaterThan(beforeLineEndSpace.left));
+  });
+
+  testWidgets('source caret follows an immediate end-of-file contraction', (
+    tester,
+  ) async {
+    var source = List.generate(80, (index) => 'Line $index').join('\n');
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              body: SizedBox(
+                width: 500,
+                height: 180,
+                child: BusyMarkSourceEditor(
+                  text: source,
+                  language: SourceSyntaxLanguage.markdown,
+                  filePath: '/project/topic.md',
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: true,
+                  searchActive: false,
+                  searchOptions: const SourceSearchOptions(),
+                  onSearchOptionsChanged: (_) {},
+                  onChanged: (text, _) => setState(() => source = text),
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    final fieldFinder = find.byType(TextField);
+    await tester.tap(fieldFinder);
+    await tester.showKeyboard(fieldFinder);
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: source,
+        selection: TextSelection.collapsed(offset: source.length),
+      ),
+    );
+    await tester.pumpAndSettle();
+    var field = tester.widget<TextField>(fieldFinder);
+    expect(field.scrollController!.offset, greaterThan(0));
+
+    const shortened = 'Remaining text';
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: shortened,
+        selection: TextSelection.collapsed(offset: shortened.length),
+      ),
+    );
+    await tester.pump();
+
+    field = tester.widget<TextField>(fieldFinder);
+    final editable = _findRenderEditable(
+      tester.renderObject<RenderObject>(find.byType(EditableText)),
+    )!;
+    final caret = editable.getLocalRectForCaret(
+      const TextPosition(offset: shortened.length),
+    );
+    expect(field.scrollController!.offset, 0);
+    expect(caret.top, lessThan(180));
+  });
 
   testWidgets('Ctrl+Space opens project-aware source completion', (
     tester,
@@ -757,6 +1046,13 @@ void main() {
     );
     expect(scroller.controller!.position.maxScrollExtent, greaterThan(0));
     expect(tester.getSize(find.byType(TextField)).width, greaterThan(320));
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.controller!.selection = TextSelection.collapsed(
+      offset: source.length,
+    );
+    await tester.pump();
+    expect(scroller.controller!.offset, greaterThan(0));
   });
 
   testWidgets('source input preserves an active IME composing range', (
@@ -876,4 +1172,17 @@ RenderEditable? _findRenderEditable(RenderObject root) {
     result ??= _findRenderEditable(child);
   });
   return result;
+}
+
+Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
+  for (var attempt = 0; attempt < 100; attempt++) {
+    if (condition()) {
+      return;
+    }
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5)),
+    );
+  }
+  fail('Timed out waiting for asynchronous Source editor work.');
 }
