@@ -490,8 +490,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                           textAlignVertical: TextAlignVertical.top,
                           style: _sourceTextStyle,
                           strutStyle: sourceStrutStyle,
-                          selectionHeightStyle:
-                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                          selectionHeightStyle: BusyMarkDocumentTextGeometry
+                              .sourceSelectionHeightStyle,
                           selectionWidthStyle:
                               BusyMarkDocumentTextGeometry.selectionWidthStyle,
                           cursorColor: colors.foreground.withValues(

@@ -866,10 +866,7 @@ void main() {
       sourceEditor,
       contains('focusColor: BusyMarkLinuxPalette.transparent'),
     );
-    expect(
-      sourceEditor,
-      contains('BusyMarkDocumentTextGeometry.selectionHeightStyle'),
-    );
+    expect(sourceEditor, contains('.sourceSelectionHeightStyle'));
     expect(
       sourceEditor,
       contains('BusyMarkDocumentTextGeometry.selectionWidthStyle'),

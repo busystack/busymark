@@ -730,11 +730,11 @@ void main() {
       expect(field.style?.height, BusyMarkTypography.sourceEditorLineHeight);
       expect(
         field.selectionHeightStyle,
-        BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        BusyMarkDocumentTextGeometry.sourceSelectionHeightStyle,
       );
       expect(
-        BusyMarkDocumentTextGeometry.selectionHeightStyle,
-        BoxHeightStyle.strut,
+        BusyMarkDocumentTextGeometry.sourceSelectionHeightStyle,
+        BoxHeightStyle.max,
       );
       expect(
         field.cursorHeight,
@@ -765,10 +765,81 @@ void main() {
       expect(selectionBox.bottom, greaterThan(glyphBox.bottom));
       expect(caret.top, lessThan(glyphBox.top));
       expect(caret.bottom, greaterThan(glyphBox.bottom));
-      expect(selectionBox.bottom - glyphBox.bottom, greaterThan(2));
+      final selectionTopPadding = glyphBox.top - selectionBox.top;
+      final selectionBottomPadding = selectionBox.bottom - glyphBox.bottom;
+      expect(selectionTopPadding, greaterThan(1));
+      expect(selectionBottomPadding, greaterThan(1));
+      expect(selectionBottomPadding, closeTo(selectionTopPadding, 1));
       expect(selectionBox.bottom - caret.bottom, greaterThan(1));
     },
   );
+
+  testWidgets('source heading selections cover styled glyphs evenly', (
+    tester,
+  ) async {
+    const source = '# Agjpqy\nBody\n';
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final renderEditable = _findRenderEditable(
+      tester.renderObject<RenderObject>(find.byType(EditableText)),
+    )!;
+    const selection = TextSelection(baseOffset: 2, extentOffset: 8);
+    final selectionBox = renderEditable
+        .getBoxesForSelection(selection)
+        .single
+        .toRect();
+    final textPainter = TextPainter(
+      text: renderEditable.text,
+      strutStyle: field.strutStyle,
+      textDirection: TextDirection.ltr,
+      textHeightBehavior: sourceTextHeightBehavior,
+      textScaler: MediaQuery.textScalerOf(
+        tester.element(find.byType(EditableText)),
+      ),
+    )..layout(maxWidth: 800);
+    final glyphBox = textPainter
+        .getBoxesForSelection(selection, boxHeightStyle: BoxHeightStyle.tight)
+        .single
+        .toRect();
+    textPainter.dispose();
+
+    final topPadding = glyphBox.top - selectionBox.top;
+    final bottomPadding = selectionBox.bottom - glyphBox.bottom;
+    expect(topPadding, greaterThan(1));
+    expect(bottomPadding, greaterThan(1));
+    expect(bottomPadding, closeTo(topPadding, 2));
+  });
 
   testWidgets('source heading caret advances after a typed space', (
     tester,
