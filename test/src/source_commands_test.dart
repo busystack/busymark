@@ -14,6 +14,18 @@ void main() {
     expect(value.text, 'a  ');
   });
 
+  test('tab indents selected lines without replacing their text', () {
+    final value = SourceCommands.insertTab(
+      const TextEditingValue(
+        text: 'one\ntwo\nthree',
+        selection: TextSelection(baseOffset: 1, extentOffset: 6),
+      ),
+    );
+
+    expect(value.text, '  one\n  two\nthree');
+    expect(value.selection.textInside(value.text), '  one\n  two');
+  });
+
   test('indent and outdent selected lines', () {
     const value = TextEditingValue(
       text: 'one\ntwo\n',

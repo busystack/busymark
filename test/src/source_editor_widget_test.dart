@@ -934,6 +934,53 @@ void main() {
     expect(caret.top, lessThan(180));
   });
 
+  testWidgets('Tab indents selected Source lines without replacing text', (
+    tester,
+  ) async {
+    var source = 'one\ntwo\nthree';
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              body: BusyMarkSourceEditor(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) => setState(() => source = text),
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    final fieldFinder = find.byType(TextField);
+    await tester.tap(fieldFinder);
+    final controller = tester.widget<TextField>(fieldFinder).controller!;
+    controller.selection = const TextSelection(baseOffset: 1, extentOffset: 6);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+
+    expect(source, '  one\n  two\nthree');
+    expect(controller.selection.textInside(controller.text), '  one\n  two');
+  });
+
   testWidgets('Ctrl+Space opens project-aware source completion', (
     tester,
   ) async {

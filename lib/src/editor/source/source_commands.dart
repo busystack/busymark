@@ -26,6 +26,9 @@ abstract final class SourceCommands {
     TextEditingValue value, {
     int indentWidth = defaultIndentWidth,
   }) {
+    if (!_normalizedSelection(value).isCollapsed) {
+      return indentSelection(value, indentWidth: indentWidth);
+    }
     return _replaceSelection(value, ' ' * indentWidth);
   }
 
