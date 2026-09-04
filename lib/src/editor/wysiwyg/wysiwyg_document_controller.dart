@@ -2710,12 +2710,46 @@ BusyBlock _blockWithEditedText(
       );
     }
   }
+  final rebuiltInlines = _inlinesFromStyleRanges(nextText, nextRanges);
   return block.copyWith(
-    inlines: _inlinesFromStyleRanges(nextText, nextRanges),
+    inlines: _restoreSemanticInlineAnchors(
+      originalInlines: block.inlines,
+      oldText: oldText,
+      newText: nextText,
+      rebuiltInlines: rebuiltInlines,
+    ),
     attributes: _attributesForText(block.attributes, block.kind, nextText),
     preserveRaw: false,
     dirty: true,
   );
+}
+
+List<BusyInline> _restoreSemanticInlineAnchors({
+  required List<BusyInline> originalInlines,
+  required String oldText,
+  required String newText,
+  required List<BusyInline> rebuiltInlines,
+}) {
+  final anchors = busyInlineSemanticAnchors(originalInlines);
+  if (anchors.isEmpty) {
+    return rebuiltInlines;
+  }
+  final prefix = _commonPrefixLength(oldText, newText);
+  final suffix = _commonSuffixLength(oldText, newText, prefix);
+  final oldEditEnd = oldText.length - suffix;
+  final newEditEnd = newText.length - suffix;
+  final delta = newText.length - oldText.length;
+  var result = rebuiltInlines;
+  for (final anchor in anchors) {
+    final offset = switch (anchor.offset) {
+      final value when value <= prefix => value,
+      final value when value >= oldEditEnd => value + delta,
+      _ => newEditEnd,
+    }.clamp(0, newText.length).toInt();
+    final partition = _partitionInlinesForReplacement(result, offset, offset);
+    result = [...partition.before, anchor.inline, ...partition.after];
+  }
+  return result;
 }
 
 BusyBlock _withoutSourceSpan(BusyBlock block, {required bool dirty}) {

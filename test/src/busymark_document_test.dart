@@ -4315,6 +4315,41 @@ void main() {}
     expect(controller.markdown, 'Hello **bold!** world\n');
   });
 
+  test('WYSIWYG text edits preserve empty-alt inline images', () {
+    const cases = [
+      (
+        editedText: 'Earlier  after.',
+        expectedMarkdown: 'Earlier ![](image.png) after.\n',
+      ),
+      (
+        editedText: 'Before  later.',
+        expectedMarkdown: 'Before ![](image.png) later.\n',
+      ),
+    ];
+
+    for (final item in cases) {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Before ![](image.png) after.\n',
+      );
+      final block = parsed.busyDocument.blocks.single;
+      expect(block.plainText, 'Before  after.');
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      controller.updateBlockText(block.id, item.editedText);
+
+      final image = controller
+          .blockById(block.id)!
+          .inlines
+          .singleWhere((inline) => inline.kind == BusyInlineKind.image);
+      expect(image.text, isEmpty);
+      expect(image.destination, 'image.png');
+      expect(controller.markdown, item.expectedMarkdown);
+    }
+  });
+
   testWidgets('WYSIWYG link dialog submits with Enter', (tester) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Linked word\n');
     var markdown = parsed.source;
