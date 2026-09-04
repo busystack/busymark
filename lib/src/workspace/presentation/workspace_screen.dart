@@ -26,6 +26,7 @@ import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
+import '../../core/busymark_exception.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
@@ -12424,9 +12425,28 @@ Future<void> _openPreviewLink(
   final resolvedPath = p.normalize(
     p.join(p.dirname(activeFilePath), targetPath),
   );
-  final file = workspace.files
+  var file = workspace.files
       .where((file) => p.normalize(file.absolutePath) == resolvedPath)
       .firstOrNull;
+  if (file == null) {
+    try {
+      file = await ref
+          .read(workspaceServiceProvider)
+          .resolveWorkspaceDocument(workspace, resolvedPath);
+    } on BusyMarkException {
+      // Paths outside the workspace safety boundary are unavailable links.
+    } on FileSystemException {
+      // Missing and unreadable paths are unavailable links.
+    }
+    if (!context.mounted) {
+      return;
+    }
+    final currentWorkspace = ref.read(workspaceControllerProvider).workspace;
+    if (currentWorkspace?.id != workspace.id ||
+        currentWorkspace?.activeFilePath != activeFilePath) {
+      return;
+    }
+  }
   if (file == null) {
     if (context.mounted) {
       _showPreviewLinkMessage(
@@ -12442,10 +12462,13 @@ Future<void> _openPreviewLink(
     }
     return;
   }
-  if (workspace.activeFilePath != file.absolutePath) {
-    await ref
+  if (!p.equals(activeFilePath, file.absolutePath)) {
+    final opened = await ref
         .read(workspaceControllerProvider.notifier)
         .openActiveFile(file.absolutePath);
+    if (!opened) {
+      return;
+    }
     _clearGitDetailSelection(ref);
   }
   if (!context.mounted) {

@@ -24,6 +24,40 @@ void main() {
     expect(workspace.activeFilePath, isNotNull);
   });
 
+  test('resolves an unindexed sibling document within the workspace', () async {
+    final base = await Directory.systemTemp.createTemp(
+      'busymark-workspace-sibling-',
+    );
+    addTearDown(() async {
+      if (await base.exists()) {
+        await base.delete(recursive: true);
+      }
+    });
+    final directory = Directory(p.join(base.path, 'workspace'));
+    await directory.create();
+    final readme = File(p.join(directory.path, 'README.md'));
+    final guide = File(p.join(directory.path, 'guide.md'));
+    final outside = File(p.join(base.path, 'outside.md'));
+    await readme.writeAsString('[Guide](guide.md)\n');
+    await guide.writeAsString('# Guide\n');
+    await outside.writeAsString('# Outside\n');
+    final workspace = await service.openPath(readme.path);
+
+    expect(workspace.files.map((file) => file.absolutePath), [readme.path]);
+
+    final resolved = await service.resolveWorkspaceDocument(
+      workspace,
+      guide.path,
+    );
+
+    expect(resolved?.absolutePath, guide.path);
+    expect(resolved?.kind, DocumentKind.markdown);
+    await expectLater(
+      service.resolveWorkspaceDocument(workspace, outside.path),
+      throwsA(isA<BusyMarkException>()),
+    );
+  });
+
   test('opens a Markdown file from a file URI path', () async {
     final file = File('test/fixtures/markdown/basic.md');
     final workspace = await service.openPath(file.absolute.uri.toString());

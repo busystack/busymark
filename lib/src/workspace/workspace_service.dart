@@ -159,6 +159,31 @@ class WorkspaceService {
     return _openMarkdownFolder(canonicalPath);
   }
 
+  Future<DocumentFile?> resolveWorkspaceDocument(
+    Workspace workspace,
+    String candidatePath,
+  ) async {
+    final anchor = await _workspacePathAnchor(workspace);
+    final resolution = await _resolveWorkspacePath(
+      anchor,
+      candidatePath,
+      allowRoot: false,
+    );
+    if (resolution.type != FileSystemEntityType.file) {
+      return null;
+    }
+    final relativePath = p.relative(resolution.path, from: anchor.rootPath);
+    if (p
+        .split(relativePath)
+        .any(versionControlMetadataDirectoryNames.contains)) {
+      throw BusyMarkException(
+        'workspace.file-operation-outside-root',
+        args: {'path': resolution.path},
+      );
+    }
+    return _documentFile(resolution.path, anchor.rootPath);
+  }
+
   Future<Workspace> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {

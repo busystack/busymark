@@ -6485,6 +6485,100 @@ Draft paragraph.
     );
   });
 
+  testWidgets('Reading opens an unindexed sibling document link', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark_reading_sibling_link_',
+    );
+    addTearDown(() {
+      directory.deleteSync(recursive: true);
+    });
+    final readme = File(p.join(directory.path, 'README.md'))
+      ..writeAsStringSync('[Open guide](guide.md)\n');
+    final guide = File(p.join(directory.path, 'guide.md'))
+      ..writeAsStringSync('# Sibling guide\n');
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.runAsync(() async {
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      await container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(readme.path);
+    });
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Open guide').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final initialWorkspace = container
+        .read(workspaceControllerProvider)
+        .workspace!;
+    expect(initialWorkspace.kind, WorkspaceKind.singleMarkdown);
+    expect(initialWorkspace.files.map((file) => file.absolutePath), [
+      readme.path,
+    ]);
+    expect(
+      find.byKey(const ValueKey('preview-document-scroll')),
+      findsOneWidget,
+    );
+
+    final linkText = tester.widget<Text>(find.text('Open guide'));
+    final linkRecognizer = _firstTapRecognizer(linkText.textSpan!);
+    expect(linkRecognizer?.onTap, isNotNull);
+    await tester.runAsync(() async {
+      linkRecognizer!.onTap!();
+      for (var index = 0; index < 100; index += 1) {
+        if (container
+                .read(workspaceControllerProvider)
+                .workspace
+                ?.activeFilePath ==
+            guide.path) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    });
+    await tester.pump();
+
+    expect(find.text(l10n.linkTargetNotFound('guide.md')), findsNothing);
+    expect(find.text(l10n.cannotOpenFileTypeInEditor), findsNothing);
+    expect(container.read(workspaceControllerProvider).message, isNull);
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      guide.path,
+    );
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Sibling guide\n',
+    );
+  });
+
   testWidgets('new empty document leaves remembered preview mode for editor', (
     tester,
   ) async {
@@ -8170,6 +8264,23 @@ String _fsrsReadmeSearchSource() {
       '',
     ],
   ].join('\n');
+}
+
+TapGestureRecognizer? _firstTapRecognizer(InlineSpan span) {
+  if (span is! TextSpan) {
+    return null;
+  }
+  final recognizer = span.recognizer;
+  if (recognizer is TapGestureRecognizer) {
+    return recognizer;
+  }
+  for (final child in span.children ?? const <InlineSpan>[]) {
+    final nested = _firstTapRecognizer(child);
+    if (nested != null) {
+      return nested;
+    }
+  }
+  return null;
 }
 
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
