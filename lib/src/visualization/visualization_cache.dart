@@ -181,6 +181,7 @@ Map<String, Object?> _encodeResult(
       'png': base64Encode(result.pngBytes),
       'width': result.width,
       'height': result.height,
+      'pixelRatio': result.pixelRatio,
     },
     OpenApiVisualizationResult() => {
       ...base,
@@ -218,6 +219,7 @@ VisualizationRenderResult? _decodeResult(Map<String, Object?> json) {
       pngBytes: Uint8List.fromList(base64Decode(json['png']! as String)),
       width: (json['width'] as num?)?.toInt() ?? 1,
       height: (json['height'] as num?)?.toInt() ?? 1,
+      pixelRatio: (json['pixelRatio'] as num?)?.toDouble() ?? 1,
       diagnostics: diagnostics,
     ),
     'openapi'

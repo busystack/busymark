@@ -62,6 +62,7 @@ class _BusyMarkVisualizationCardState
   static const _editDebounce = Duration(milliseconds: 260);
 
   final _transformationController = TransformationController();
+  final _diagramViewportKey = GlobalKey<_DiagramViewportState>();
   late final VisualizationCoordinator _coordinator;
   Timer? _debounce;
   VisualizationRenderResult? _successfulResult;
@@ -303,8 +304,7 @@ class _BusyMarkVisualizationCardState
               tooltip: context.l10n.visualizationFitWidth,
               icon: BusyMarkGlyphs.fitWidth,
               foregroundColor: colors.mutedForeground,
-              onPressed: () =>
-                  _transformationController.value = Matrix4.identity(),
+              onPressed: () => _diagramViewportKey.currentState?.fitWidth(),
             ),
             BusyMarkHeaderIconButton(
               tooltip: context.l10n.fullScreen,
@@ -369,6 +369,7 @@ class _BusyMarkVisualizationCardState
     if (result is SvgVisualizationResult ||
         result is RasterVisualizationResult) {
       return _DiagramViewport(
+        key: _diagramViewportKey,
         result: result!,
         transformationController: _transformationController,
       );
@@ -697,8 +698,9 @@ class _FullScreenDiagramState extends State<_FullScreenDiagram> {
   }
 }
 
-class _DiagramViewport extends StatelessWidget {
+class _DiagramViewport extends StatefulWidget {
   const _DiagramViewport({
+    super.key,
     required this.result,
     required this.transformationController,
     this.maximumHeight = 520,
@@ -709,13 +711,30 @@ class _DiagramViewport extends StatelessWidget {
   final double maximumHeight;
 
   @override
+  State<_DiagramViewport> createState() => _DiagramViewportState();
+}
+
+class _DiagramViewportState extends State<_DiagramViewport> {
+  var _fitWidthScale = 1.0;
+
+  void fitWidth() {
+    widget.transformationController.value = Matrix4.diagonal3Values(
+      _fitWidthScale,
+      _fitWidthScale,
+      1,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final (width, height) = switch (result) {
+    final (width, height) = switch (widget.result) {
       SvgVisualizationResult(:final width, :final height) => (width, height),
-      RasterVisualizationResult(:final width, :final height) => (
-        width.toDouble(),
-        height.toDouble(),
-      ),
+      RasterVisualizationResult(
+        :final width,
+        :final height,
+        :final pixelRatio,
+      ) =>
+        (width / pixelRatio, height / pixelRatio),
       _ => (1.0, 1.0),
     };
     return LayoutBuilder(
@@ -723,40 +742,68 @@ class _DiagramViewport extends StatelessWidget {
         final availableWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : BusyMarkSizes.documentContentWidth;
-        final naturalHeight = availableWidth * height / width;
-        final viewportHeight = maximumHeight.isFinite
-            ? naturalHeight.clamp(160.0, maximumHeight)
-            : constraints.maxHeight;
+        final maximumViewportHeight = math.max(
+          1.0,
+          widget.maximumHeight.isFinite
+              ? widget.maximumHeight
+              : constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 600.0,
+        );
+        final fitScale = math.min(
+          availableWidth / width,
+          maximumViewportHeight / height,
+        );
+        // Preserve at least the renderer's logical 1:1 scale. Wide and tall
+        // diagrams remain readable and can be panned; compact diagrams still
+        // grow to make good use of the card.
+        final displayScale = math.max(1.0, fitScale);
+        final displayWidth = width * displayScale;
+        final displayHeight = height * displayScale;
+        final minimumViewportHeight = math.min(160.0, maximumViewportHeight);
+        final viewportHeight = displayHeight.clamp(
+          minimumViewportHeight,
+          maximumViewportHeight,
+        );
+        final contentWidth = math.max(availableWidth, displayWidth);
+        final contentHeight = math.max(viewportHeight, displayHeight);
+        _fitWidthScale = math.min(1.0, availableWidth / contentWidth);
         return SizedBox(
           width: availableWidth,
-          height: viewportHeight.isFinite ? viewportHeight : 600,
+          height: viewportHeight,
           child: InteractiveViewer(
-            transformationController: transformationController,
-            minScale: 0.5,
+            transformationController: widget.transformationController,
+            constrained: false,
+            alignment: Alignment.topLeft,
+            minScale: math.min(0.5, _fitWidthScale),
             maxScale: 8,
             boundaryMargin: const EdgeInsets.all(BusyMarkSpacing.xxl),
-            // Keep the fitter under the viewport's tight constraints. Wrapping
-            // it in Center would loosen those constraints, leaving smaller
-            // Mermaid SVGs at their intrinsic size instead of fitting them to
-            // the available preview width.
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: switch (result) {
-                  SvgVisualizationResult(:final svg) => SvgPicture.string(
-                    svg,
-                    fit: BoxFit.contain,
-                    semanticsLabel: context.l10n.image,
-                  ),
-                  RasterVisualizationResult(:final pngBytes) => Image.memory(
-                    pngBytes,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
-                  ),
-                  _ => const SizedBox.shrink(),
-                },
+            child: SizedBox(
+              width: contentWidth,
+              height: contentHeight,
+              child: Center(
+                child: SizedBox(
+                  width: displayWidth,
+                  height: displayHeight,
+                  child: switch (widget.result) {
+                    SvgVisualizationResult(:final svg) => SvgPicture.string(
+                      svg,
+                      fit: BoxFit.contain,
+                      semanticsLabel: context.l10n.image,
+                    ),
+                    RasterVisualizationResult(
+                      :final pngBytes,
+                      :final pixelRatio,
+                    ) =>
+                      Image.memory(
+                        pngBytes,
+                        scale: pixelRatio,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    _ => const SizedBox.shrink(),
+                  },
+                ),
               ),
             ),
           ),

@@ -74,8 +74,10 @@ void main() {
         final webRaster = webResult as RasterVisualizationResult;
         expect(d2Raster.width, d2Host.pixelWidth);
         expect(d2Raster.height, d2Host.pixelHeight);
+        expect(d2Raster.pixelRatio, closeTo(d2Host.lastScale!, 1e-12));
         expect(webRaster.width, webHost.pixelWidth);
         expect(webRaster.height, webHost.pixelHeight);
+        expect(webRaster.pixelRatio, closeTo(webHost.lastScale!, 1e-12));
         expect(d2Host.lastScale, closeTo(webHost.lastScale!, 1e-12));
       },
     );

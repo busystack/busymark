@@ -60,6 +60,9 @@ void main() {
       final webBuild = File(
         'tools/visualization/build_render_engines.js',
       ).readAsStringSync();
+      final webEngines = File(
+        'tools/visualization/render_engines.js',
+      ).readAsStringSync();
       final cmake = File('linux/CMakeLists.txt').readAsStringSync();
 
       expect(dependencies, isNot(contains('mermaid')));
@@ -98,6 +101,10 @@ void main() {
       expect(
         webBuild,
         contains("path.join(mermaidSource, 'src', 'mermaid.ts')"),
+      );
+      expect(
+        webEngines,
+        contains("svg.style.setProperty('max-width', 'none', 'important')"),
       );
       expect(cmake, contains('share/busymark/visualization'));
       expect(cmake, contains('bootstrap.js'));

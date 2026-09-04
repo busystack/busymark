@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:busymark/src/visualization/visualization_cache.dart';
 import 'package:busymark/src/visualization/visualization_models.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -110,6 +112,28 @@ void main() {
         expect(keys, hasLength(7));
       },
     );
+
+    test('invalidates entries produced by the previous render pipeline', () {
+      final request = _request();
+      final legacyKey = sha256
+          .convert(
+            utf8.encode(
+              jsonEncode({
+                'renderer': request.kind.name,
+                'engineVersion': request.engineVersion,
+                'source': request.source,
+                'theme': request.theme.name,
+                'profile': request.profile.name,
+                'options': request.options.canonicalValues,
+                'sanitizerVersion': visualizationSanitizerVersion,
+                'dependencies': const <Object?>[],
+              }),
+            ),
+          )
+          .toString();
+
+      expect(request.cacheKey, isNot(legacyKey));
+    });
   });
 
   group('visualization disk cache', () {
@@ -136,6 +160,7 @@ void main() {
         pngBytes: Uint8List.fromList([137, 80, 78, 71]),
         width: 2,
         height: 3,
+        pixelRatio: 2,
       );
       const openApi = OpenApiVisualizationResult(
         content: 'openapi: 3.1.0',
@@ -168,6 +193,7 @@ void main() {
           await reader.get('openapi') as OpenApiVisualizationResult;
       expect(readSvg.svg, svg.svg);
       expect(readRaster.pngBytes, raster.pngBytes);
+      expect(readRaster.pixelRatio, 2);
       expect(readOpenApi.reference.title, 'Demo');
       expect(readOpenApi.dependencies.single.id, 'parts.yaml');
     });

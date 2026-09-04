@@ -208,6 +208,7 @@ class WebVisualizationRenderer implements VisualizationRenderer {
         pngBytes: png,
         width: rasterSize.pixelWidth,
         height: rasterSize.pixelHeight,
+        pixelRatio: rasterSize.scale,
         diagnostics: diagnostics,
       );
     }

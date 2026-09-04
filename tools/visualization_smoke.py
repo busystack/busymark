@@ -366,6 +366,11 @@ def expect_raster_ready(response: dict[str, object]) -> None:
         raise AssertionError(f"WebKit did not prepare the raster image: {response}")
     if response.get("pixelWidth") != 1200 or response.get("pixelHeight") != 800:
         raise AssertionError(f"Unexpected raster dimensions: {response}")
+    if (
+        response.get("renderedWidth") != 1200
+        or response.get("renderedHeight") != 800
+    ):
+        raise AssertionError(f"SVG did not fill the raster canvas: {response}")
 
 
 def d2_smoke(executable: Path) -> tuple[list[str], dict[str, str]]:
@@ -686,6 +691,23 @@ def main() -> int:
             if "D2 foreignObject" in d2_outputs
             else []
         ),
+        {
+            "name": "Responsive SVG raster scaling",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "rasterizeSvg",
+                "svg": (
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="100%" '
+                    'style="max-width:600px" viewBox="0 0 600 400">'
+                    '<rect width="600" height="400" fill="#1a73e8"/></svg>'
+                ),
+                "width": 600,
+                "height": 400,
+                "scale": 2,
+            },
+            "validator": expect_raster_ready,
+            "snapshot": True,
+        },
         *[
             {
                 "name": f"PlantUML {index + 1}/{len(plantuml)}",
