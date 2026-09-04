@@ -4350,6 +4350,56 @@ void main() {}
     }
   });
 
+  test('WYSIWYG edits preserve escaped literal punctuation semantics', () {
+    const cases = [
+      (source: r'\*literal\*', plain: '*literal*', expected: r'\*literal\*!'),
+      (source: r'\_literal\_', plain: '_literal_', expected: r'\_literal\_!'),
+      (source: r'\`literal\`', plain: '`literal`', expected: r'\`literal\`!'),
+      (
+        source: r'\~\~literal\~\~',
+        plain: '~~literal~~',
+        expected: r'\~\~literal\~\~!',
+      ),
+      (source: r'\<tag\>', plain: '<tag>', expected: r'\<tag>!'),
+      (source: r'\&copy;', plain: '&copy;', expected: r'\&copy;!'),
+      (source: r'\# heading', plain: '# heading', expected: r'\# heading!'),
+      (source: r'\- item', plain: '- item', expected: r'\- item!'),
+      (source: r'1\. item', plain: '1. item', expected: r'1\. item!'),
+      (source: r'\> quote', plain: '> quote', expected: r'\> quote!'),
+    ];
+
+    for (final item in cases) {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '${item.source}\n',
+      );
+      final block = parsed.busyDocument.blocks.single;
+      expect(block.kind, BusyBlockKind.paragraph, reason: item.source);
+      expect(block.plainText, item.plain, reason: item.source);
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      controller.updateBlockText(block.id, '${block.plainText}!');
+
+      expect(controller.markdown, '${item.expected}\n', reason: item.source);
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(
+        reparsed.busyDocument.blocks.single.kind,
+        BusyBlockKind.paragraph,
+        reason: item.source,
+      );
+      expect(
+        reparsed.busyDocument.blocks.single.plainText,
+        '${item.plain}!',
+        reason: item.source,
+      );
+    }
+  });
+
   testWidgets('WYSIWYG link dialog submits with Enter', (tester) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Linked word\n');
     var markdown = parsed.source;

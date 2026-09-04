@@ -38,7 +38,10 @@ class BusyMarkMarkdownSerializer {
     }
     return switch (block.kind) {
       BusyBlockKind.heading => _heading(block),
-      BusyBlockKind.paragraph => _inlineMarkdown(block.inlines),
+      BusyBlockKind.paragraph => _inlineMarkdown(
+        block.inlines,
+        atBlockStart: true,
+      ),
       BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
       BusyBlockKind.unorderedListItem => _listItem(block, '-'),
@@ -441,18 +444,40 @@ class BusyMarkMarkdownSerializer {
         .replaceAll('>', '&gt;');
   }
 
-  String _inlineMarkdown(List<BusyInline> inlines, {bool tableCell = false}) {
-    return inlines
-        .map((inline) => _inline(inline, tableCell: tableCell))
-        .join();
+  String _inlineMarkdown(
+    List<BusyInline> inlines, {
+    bool tableCell = false,
+    bool atBlockStart = false,
+  }) {
+    final buffer = StringBuffer();
+    var nextAtBlockStart = atBlockStart;
+    for (final inline in inlines) {
+      final source = _inline(
+        inline,
+        tableCell: tableCell,
+        atBlockStart: nextAtBlockStart,
+      );
+      buffer.write(source);
+      if (source.isNotEmpty) {
+        nextAtBlockStart = source.endsWith('\n');
+      }
+    }
+    return buffer.toString();
   }
 
-  String _inline(BusyInline inline, {bool tableCell = false}) {
+  String _inline(
+    BusyInline inline, {
+    bool tableCell = false,
+    bool atBlockStart = false,
+  }) {
     final children = inline.children.isEmpty
-        ? _escapeInlineText(inline.text)
+        ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
         : _inlineMarkdown(inline.children, tableCell: tableCell);
     return switch (inline.kind) {
-      BusyInlineKind.text => _escapeInlineText(inline.text),
+      BusyInlineKind.text => _escapeInlineText(
+        inline.text,
+        atBlockStart: atBlockStart,
+      ),
       BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
@@ -545,13 +570,86 @@ class BusyMarkMarkdownSerializer {
     return required < minimum ? minimum : required;
   }
 
-  String _escapeInlineText(String value) {
-    return value
-        .replaceAll('\\', r'\\')
-        .replaceAll(r'$', r'\$')
-        .replaceAll('[', r'\[')
-        .replaceAll(']', r'\]');
+  String _escapeInlineText(String value, {bool atBlockStart = false}) {
+    final blockMarkerOffsets = _blockMarkerEscapeOffsets(
+      value,
+      atBlockStart: atBlockStart,
+    );
+    final buffer = StringBuffer();
+    for (var index = 0; index < value.length; index++) {
+      final unit = value.codeUnitAt(index);
+      if (_inlineSyntaxCharacters.contains(unit) ||
+          blockMarkerOffsets.contains(index)) {
+        buffer.writeCharCode(0x5c);
+      }
+      buffer.writeCharCode(unit);
+    }
+    return buffer.toString();
   }
+
+  Set<int> _blockMarkerEscapeOffsets(
+    String value, {
+    required bool atBlockStart,
+  }) {
+    final offsets = <int>{};
+    var lineStart = 0;
+    var firstLine = true;
+    while (lineStart <= value.length) {
+      final newline = value.indexOf('\n', lineStart);
+      final lineEnd = newline < 0 ? value.length : newline;
+      if (!firstLine || atBlockStart) {
+        final markerOffset = _blockMarkerEscapeOffset(
+          value.substring(lineStart, lineEnd),
+        );
+        if (markerOffset != null) {
+          offsets.add(lineStart + markerOffset);
+        }
+      }
+      if (newline < 0) {
+        break;
+      }
+      lineStart = newline + 1;
+      firstLine = false;
+    }
+    return offsets;
+  }
+
+  int? _blockMarkerEscapeOffset(String line) {
+    final indentation = RegExp(r'^[ \t]{0,3}').firstMatch(line)!.group(0)!;
+    final content = line.substring(indentation.length);
+    if (RegExp(r'^#{1,6}(?:[ \t]+|$)').hasMatch(content)) {
+      return indentation.length;
+    }
+    if (content.startsWith('>')) {
+      return indentation.length;
+    }
+    if (RegExp(r'^[-+](?:[ \t]+|$)').hasMatch(content)) {
+      return indentation.length;
+    }
+    final ordered = RegExp(r'^(\d{1,9})([.)])(?:[ \t]+|$)').firstMatch(content);
+    if (ordered != null) {
+      return indentation.length + ordered.group(1)!.length;
+    }
+    if (RegExp(r'^=+[ \t]*$').hasMatch(content) ||
+        RegExp(r'^-(?:[ \t]*-){2,}[ \t]*$').hasMatch(content)) {
+      return indentation.length;
+    }
+    return null;
+  }
+
+  static const _inlineSyntaxCharacters = <int>{
+    0x24, // $
+    0x25, // %
+    0x26, // &
+    0x2a, // *
+    0x3c, // <
+    0x5b, // [
+    0x5c, // backslash
+    0x5d, // ]
+    0x5f, // _
+    0x60, // `
+    0x7e, // ~
+  };
 }
 
 extension _FirstOrNull<T> on Iterable<T> {
