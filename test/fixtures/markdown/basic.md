@@ -660,7 +660,7 @@ Filesystem -> BusyMark.Editor: Markdown files
 
 # 23. OpenAPI
 
-```yaml openapi
+```openapi
 openapi: 3.1.0
 
 info:
