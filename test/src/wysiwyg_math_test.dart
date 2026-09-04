@@ -468,12 +468,16 @@ void main() {
     final table = controller.document.blocks.single;
     final cell = table.children[1].children.single;
 
-    controller.updateTableCellText(table.id, cell.id, r'before $y^2$ after');
+    controller.updateTableCellMarkdownSource(
+      table.id,
+      cell.id,
+      r'before $y^2$ after',
+    );
     var edited = controller.blockById(cell.id)!;
     expect(busyMarkWysiwygBlockContainsMath(edited), isTrue);
     expect(controller.markdown, contains(r'before $y^2$ after'));
 
-    controller.updateTableCellText(table.id, cell.id, 'plain text');
+    controller.updateTableCellMarkdownSource(table.id, cell.id, 'plain text');
     edited = controller.blockById(cell.id)!;
     expect(busyMarkWysiwygBlockContainsMath(edited), isFalse);
     expect(controller.markdown, contains('| plain text |'));
@@ -543,7 +547,7 @@ void main() {
     final cell = table.children[1].children.single;
     final editableCell = busyMarkWysiwygEditableText(cell);
     expect(editableCell, contains(r'\$x\$'));
-    tableController.updateTableCellText(
+    tableController.updateTableCellMarkdownSource(
       table.id,
       cell.id,
       '$editableCell updated',
@@ -921,7 +925,7 @@ void main() {
     expect(markdown, contains(r'| before $y^2$ after |'));
   });
 
-  testWidgets('focused plain table cell stays editable after math is typed', (
+  testWidgets('plain table cell treats typed Markdown as rich text', (
     tester,
   ) async {
     final document = const MarkdownParser()
@@ -960,14 +964,15 @@ void main() {
     expect(tester.widget<TextField>(field).focusNode?.hasFocus, isTrue);
     await tester.enterText(field, r'before $x$ after');
     await tester.pump();
-    expect(markdown, contains(r'| before $x$ after |'));
+    expect(markdown, contains(r'| before \$x\$ after |'));
 
     tester.widget<TextField>(field).focusNode?.unfocus();
     await _pumpMath(tester);
     expect(
       find.byKey(ValueKey('wysiwyg-rendered-math-${cell.id}')),
-      findsOneWidget,
+      findsNothing,
     );
+    expect(field, findsOneWidget);
   });
 }
 

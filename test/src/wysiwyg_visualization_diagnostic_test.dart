@@ -117,6 +117,7 @@ void main() {
                 focusNode: focusNode,
                 onChanged: (_) {},
                 onTableCellChanged: (_, _) {},
+                onTableCellSourceChanged: (_, _) {},
                 onTableRowInserted: (_, {required after}) {},
                 onTableRowDeleted: (_) {},
                 onTableColumnInserted: (_, {required after}) {},

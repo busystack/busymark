@@ -269,7 +269,7 @@ void main() {
     expect(markdown, contains('After'));
   });
 
-  test('table cell edits normalize every newline form before parsing', () {
+  test('table cell edits normalize every newline form before updating', () {
     final document = parser
         .parse(filePath: 'topic.md', source: '| A |\n| --- |\n| value |\n')
         .busyDocument;
@@ -283,7 +283,7 @@ void main() {
     expect(controller.markdown, contains('| A  B C D |'));
   });
 
-  test('table cell edits parse block-marker prefixes as inline text', () {
+  test('table cell edits preserve block-marker prefixes as literal text', () {
     for (final value in const ['# title', '- item', '1. item', '> quote']) {
       final document = parser
           .parse(filePath: 'topic.md', source: '| A |\n| --- |\n| value |\n')
@@ -297,6 +297,89 @@ void main() {
       expect(controller.blockById(cell.id)?.plainText, value, reason: value);
       expect(controller.markdown, contains('| $value |'), reason: value);
     }
+  });
+
+  test('ordinary table cell edits preserve formatting and links', () {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '| Value |\n'
+              '| --- |\n'
+              '| **bold** and [link](https://example.com) tail |\n',
+        )
+        .busyDocument;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final table = document.blocks.single;
+    final cell = table.children.last.children.single;
+
+    controller.updateTableCellText(table.id, cell.id, '${cell.plainText}!');
+
+    final edited = controller.blockById(cell.id)!;
+    expect(
+      edited.inlines.where((inline) => inline.kind == BusyInlineKind.strong),
+      hasLength(1),
+    );
+    final link = edited.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    expect(link.destination, 'https://example.com');
+    expect(
+      controller.markdown,
+      '| Value |\n'
+      '| --- |\n'
+      '| **bold** and [link](https://example.com) tail! |\n',
+    );
+  });
+
+  test('ordinary cell edits retain toolbar-applied formatting', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '| Value |\n| --- |\n| cell |\n')
+        .busyDocument;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final table = document.blocks.single;
+    final cell = table.children.last.children.single;
+    controller.applyInlineCommand(
+      cell.id,
+      BusyWysiwygInlineCommand.bold,
+      0,
+      cell.plainText.length,
+    );
+
+    controller.updateTableCellText(table.id, cell.id, 'cell!');
+
+    expect(controller.markdown, '| Value |\n| --- |\n| **cell!** |\n');
+  });
+
+  testWidgets('table field edits preserve rendered formatting and links', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              '| Value |\n'
+              '| --- |\n'
+              '| **bold** and [link](https://example.com) tail |\n',
+        )
+        .busyDocument;
+    final cell = document.blocks.single.children.last.children.single;
+    var markdown = '';
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWysiwygEditor(
+          document: document,
+          onSourceChanged: (_, value) => markdown = value,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byKey(ValueKey(cell.id)), '${cell.plainText}!');
+    await tester.pump();
+
+    expect(markdown, contains('**bold**'));
+    expect(markdown, contains('[link](https://example.com)'));
   });
 
   testWidgets('table fields reject multiline input and reconcile the model', (
@@ -633,7 +716,7 @@ Body.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     await tester.pump();
-    expect(markdown, contains('| new line |'));
+    expect(markdown, contains('| **new line** |'));
     expect(session?.activeBlockId, table.id);
     expect(session?.activeCellId, cell.id);
     expect(session?.anchorBlockId, cell.id);

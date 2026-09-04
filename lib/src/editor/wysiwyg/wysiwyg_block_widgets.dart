@@ -154,6 +154,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.focusNode,
     required this.onChanged,
     required this.onTableCellChanged,
+    required this.onTableCellSourceChanged,
     required this.onTableRowInserted,
     required this.onTableRowDeleted,
     required this.onTableColumnInserted,
@@ -193,6 +194,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
   final void Function(String cellId, String text) onTableCellChanged;
+  final void Function(String cellId, String source) onTableCellSourceChanged;
   final void Function(int rowIndex, {required bool after}) onTableRowInserted;
   final ValueChanged<int> onTableRowDeleted;
   final void Function(int columnIndex, {required bool after})
@@ -367,6 +369,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           block: block,
           onFocused: onFocused,
           onCellChanged: onTableCellChanged,
+          onCellSourceChanged: onTableCellSourceChanged,
           onRowInserted: onTableRowInserted,
           onRowDeleted: onTableRowDeleted,
           onColumnInserted: onTableColumnInserted,
@@ -1431,6 +1434,7 @@ class _TableBlockEditor extends StatelessWidget {
     required this.block,
     required this.onFocused,
     required this.onCellChanged,
+    required this.onCellSourceChanged,
     required this.onRowInserted,
     required this.onRowDeleted,
     required this.onColumnInserted,
@@ -1451,6 +1455,7 @@ class _TableBlockEditor extends StatelessWidget {
   final BusyBlock block;
   final VoidCallback onFocused;
   final void Function(String cellId, String text) onCellChanged;
+  final void Function(String cellId, String source) onCellSourceChanged;
   final void Function(int rowIndex, {required bool after}) onRowInserted;
   final ValueChanged<int> onRowDeleted;
   final void Function(int columnIndex, {required bool after}) onColumnInserted;
@@ -1531,6 +1536,7 @@ class _TableBlockEditor extends StatelessWidget {
                       style: busyMarkDocumentBodyTextStyle(context),
                       onFocused: onFocused,
                       onChanged: onCellChanged,
+                      onSourceChanged: onCellSourceChanged,
                       editRevision: editRevision,
                       sourceSpan: block.sourceSpan,
                       onMathDiagnostic: onMathDiagnostic,
@@ -1782,6 +1788,7 @@ class _TableCellEditor extends StatefulWidget {
     required this.style,
     required this.onFocused,
     required this.onChanged,
+    required this.onSourceChanged,
     required this.editRevision,
     this.sourceSpan,
     this.onMathDiagnostic,
@@ -1797,6 +1804,7 @@ class _TableCellEditor extends StatefulWidget {
   final TextStyle style;
   final VoidCallback onFocused;
   final void Function(String cellId, String text) onChanged;
+  final void Function(String cellId, String source) onSourceChanged;
   final int editRevision;
   final SourceSpan? sourceSpan;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
@@ -1983,7 +1991,13 @@ class _TableCellEditorState extends State<_TableCellEditor> {
               onCellFocused(cell.id);
             }
           },
-          onChanged: (value) => widget.onChanged(cell.id, value),
+          onChanged: (value) {
+            if (_sourceEditing) {
+              widget.onSourceChanged(cell.id, value);
+            } else {
+              widget.onChanged(cell.id, value);
+            }
+          },
         ),
       ),
     );

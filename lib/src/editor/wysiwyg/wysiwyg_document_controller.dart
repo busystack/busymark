@@ -446,6 +446,33 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void updateTableCellText(String tableBlockId, String cellId, String text) {
+    _updateTableCellText(
+      tableBlockId,
+      cellId,
+      text,
+      parseMarkdownSource: false,
+    );
+  }
+
+  void updateTableCellMarkdownSource(
+    String tableBlockId,
+    String cellId,
+    String source,
+  ) {
+    _updateTableCellText(
+      tableBlockId,
+      cellId,
+      source,
+      parseMarkdownSource: true,
+    );
+  }
+
+  void _updateTableCellText(
+    String tableBlockId,
+    String cellId,
+    String text, {
+    required bool parseMarkdownSource,
+  }) {
     final acceptedText = busyMarkNormalizeTableCellText(text);
     var changed = false;
     _document = _document.copyWith(
@@ -459,7 +486,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           final cells = <BusyBlock>[];
           for (final cell in row.children) {
             if (cell.id == cellId) {
-              cells.add(_tableCellWithEditedSource(cell, acceptedText));
+              cells.add(
+                parseMarkdownSource
+                    ? _tableCellWithEditedSource(cell, acceptedText)
+                    : _blockWithEditedText(cell, acceptedText),
+              );
               rowChanged = true;
               changed = true;
             } else {

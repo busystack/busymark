@@ -860,6 +860,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         cellId,
         value,
       ),
+      onTableCellSourceChanged: (cellId, value) =>
+          _handleTableCellSourceChanged(
+            documentFilePath,
+            block.id,
+            cellId,
+            value,
+          ),
       tableCellController: _tableCellControllerFor,
       tableCellUndoController: _textUndoControllerFor,
       tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
@@ -1469,6 +1476,37 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String cellId,
     String value,
   ) {
+    _handleTableCellEdit(
+      documentFilePath,
+      tableBlockId,
+      cellId,
+      value,
+      markdownSource: false,
+    );
+  }
+
+  void _handleTableCellSourceChanged(
+    String documentFilePath,
+    String tableBlockId,
+    String cellId,
+    String value,
+  ) {
+    _handleTableCellEdit(
+      documentFilePath,
+      tableBlockId,
+      cellId,
+      value,
+      markdownSource: true,
+    );
+  }
+
+  void _handleTableCellEdit(
+    String documentFilePath,
+    String tableBlockId,
+    String cellId,
+    String value, {
+    required bool markdownSource,
+  }) {
     if (documentFilePath != _documentController.document.filePath) {
       return;
     }
@@ -1487,20 +1525,50 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       );
     }
     final currentCell = _documentController.blockById(cellId);
-    if (currentCell == null ||
-        busyMarkWysiwygEditableText(currentCell) == accepted) {
+    if (currentCell == null) {
+      return;
+    }
+    final currentText = markdownSource
+        ? busyMarkWysiwygEditableText(currentCell)
+        : currentCell.plainText;
+    if (currentText == accepted) {
       return;
     }
     _recordUndoSnapshot();
-    _documentController.updateTableCellText(tableBlockId, cellId, accepted);
+    if (markdownSource) {
+      _documentController.updateTableCellMarkdownSource(
+        tableBlockId,
+        cellId,
+        accepted,
+      );
+    } else {
+      _documentController.updateTableCellText(tableBlockId, cellId, accepted);
+    }
     _emitMarkdown(
       undoGroup: _undoGroupForTextEdit(
         targetId: cellId,
-        oldText: busyMarkWysiwygEditableText(currentCell),
+        oldText: currentText,
         newText: accepted,
         selection: controller?.selection,
       ),
     );
+  }
+
+  void _updateTableCellFromControllerText(
+    String tableBlockId,
+    String cellId,
+    String text,
+  ) {
+    final cell = _documentController.blockById(cellId);
+    if (cell != null && busyMarkWysiwygBlockContainsMath(cell)) {
+      _documentController.updateTableCellMarkdownSource(
+        tableBlockId,
+        cellId,
+        text,
+      );
+      return;
+    }
+    _documentController.updateTableCellText(tableBlockId, cellId, text);
   }
 
   void _handleTableRowInserted(
@@ -4024,7 +4092,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       acceptedReplacement,
     );
     _recordUndoSnapshot();
-    _documentController.updateTableCellText(tableId, cellId, nextText);
+    _updateTableCellFromControllerText(tableId, cellId, nextText);
     _emitMarkdown();
     _focusTextTargetAfterFrame(
       cellId,
@@ -5809,11 +5877,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (cellEntry == null) {
       _documentController.updateBlockText(blockId, nextText);
     } else {
-      _documentController.updateTableCellText(
-        cellEntry.table.id,
-        blockId,
-        nextText,
-      );
+      _updateTableCellFromControllerText(cellEntry.table.id, blockId, nextText);
     }
     _emitMarkdown();
     _focusTextTargetAfterFrame(blockId, offset: start);
