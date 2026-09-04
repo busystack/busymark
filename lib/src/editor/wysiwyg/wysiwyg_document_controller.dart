@@ -1453,10 +1453,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (!_isMergeableTextBlock(previous) || !_isMergeableTextBlock(current)) {
       return null;
     }
+    if (!_canMergeBlockStructures(previous, current)) {
+      return null;
+    }
     final previousText = previous.plainText;
     final currentText = current.plainText;
+    final mergedChildren = [...previous.children, ...current.children];
     if (currentText.isEmpty) {
-      final updatedPrevious = _withoutSourceSpan(previous, dirty: true);
+      final updatedPrevious = _withoutSourceSpan(
+        previous.copyWith(children: mergedChildren),
+        dirty: true,
+      );
       _document = _document.copyWith(
         blocks: [
           ...blocks.take(index - 1),
@@ -1488,7 +1495,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         ...previousRanges,
         ...currentRanges,
       ]),
-      children: previous.children,
+      children: mergedChildren,
       attributes: previous.attributes,
       dirty: true,
     );
@@ -2640,6 +2647,17 @@ bool _isMergeableTextBlock(BusyBlock block) {
     BusyBlockKind.blockquote => true,
     _ => false,
   };
+}
+
+bool _canMergeBlockStructures(BusyBlock previous, BusyBlock current) {
+  if (previous.children.isNotEmpty && !_isListItemKind(previous.kind)) {
+    return false;
+  }
+  if (current.children.isNotEmpty &&
+      (!_isListItemKind(previous.kind) || !_isListItemKind(current.kind))) {
+    return false;
+  }
+  return true;
 }
 
 BusyBlock _blockWithEditedText(

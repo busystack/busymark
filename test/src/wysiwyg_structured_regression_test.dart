@@ -110,6 +110,63 @@ void main() {
     }
   });
 
+  test('Backspace merge preserves the current list item descendants', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '- first\n- second\n  - child\n')
+        .busyDocument;
+    final first = document.blocks.first;
+    final second = document.blocks.last;
+    expect(second.children.single.plainText, 'child');
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+
+    final result = controller.applyBackspaceAtStart(second.id);
+
+    expect(result?.blockId, first.id);
+    expect(result?.offset, 'first'.length);
+    final merged = controller.document.blocks.single;
+    expect(merged.plainText, 'firstsecond');
+    expect(merged.children.single.plainText, 'child');
+    expect(controller.markdown, '- firstsecond\n  - child\n');
+  });
+
+  test('Backspace merge preserves descendants of an empty list item', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '- first\n-\n  - child\n')
+        .busyDocument;
+    final first = document.blocks.first;
+    final emptyParent = document.blocks.last;
+    expect(emptyParent.plainText, isEmpty);
+    expect(emptyParent.children.single.plainText, 'child');
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+
+    final result = controller.applyBackspaceAtStart(emptyParent.id);
+
+    expect(result?.blockId, first.id);
+    expect(result?.offset, 'first'.length);
+    final merged = controller.document.blocks.single;
+    expect(merged.plainText, 'first');
+    expect(merged.children.single.plainText, 'child');
+    expect(controller.markdown, '- first\n  - child\n');
+  });
+
+  test('Backspace rejects a merge that cannot represent descendants', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: 'intro\n\n- second\n  - child\n')
+        .busyDocument;
+    final nestedItem = document.blocks.last;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final originalMarkdown = controller.markdown;
+
+    final result = controller.applyBackspaceAtStart(nestedItem.id);
+
+    expect(result, isNull);
+    expect(controller.markdown, originalMarkdown);
+    expect(
+      controller.blockById(nestedItem.id)?.children.single.plainText,
+      'child',
+    );
+  });
+
   test('complete clipboard snapshots reconstruct a table transactionally', () {
     final tableDocument = parser
         .parse(
