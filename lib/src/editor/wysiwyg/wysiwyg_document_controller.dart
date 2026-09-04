@@ -529,40 +529,58 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String text,
     int cursorOffset,
   ) {
-    final normalizedText = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-    if (!normalizedText.contains('\n')) {
-      return null;
-    }
     final block = blockById(blockId);
     if (block == null || !_shouldSplitNewlines(block.kind)) {
+      return null;
+    }
+    final normalizedText = _normalizeLineEndings(text);
+    final previousText = _normalizeLineEndings(block.plainText);
+    final editStart = _commonPrefixLength(previousText, normalizedText);
+    final editSuffix = _commonSuffixLength(
+      previousText,
+      normalizedText,
+      editStart,
+    );
+    final editEnd = normalizedText.length - editSuffix;
+    final paragraphBreaks = [
+      for (final match in '\n'.allMatches(normalizedText))
+        if (match.start >= editStart && match.start < editEnd) match,
+    ];
+    if (paragraphBreaks.isEmpty) {
       return null;
     }
     if (_isListItemKind(block.kind) && normalizedText.trim().isEmpty) {
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
-    final parts = normalizedText.split('\n');
-    final safeOffset = cursorOffset.clamp(0, normalizedText.length).toInt();
-    final textBeforeCursor = normalizedText.substring(0, safeOffset);
-    final focusIndex = '\n'
-        .allMatches(textBeforeCursor)
+    final rawOffset = cursorOffset.clamp(0, text.length).toInt();
+    final safeOffset = _normalizeLineEndings(
+      text.substring(0, rawOffset),
+    ).length;
+    final focusIndex = paragraphBreaks
+        .where((match) => match.start < safeOffset)
         .length
-        .clamp(0, parts.length - 1)
+        .clamp(0, paragraphBreaks.length)
         .toInt();
-    final lastLineStart = textBeforeCursor.lastIndexOf('\n') + 1;
-    final focusOffset = safeOffset - lastLineStart;
+    final focusStart = focusIndex == 0
+        ? 0
+        : paragraphBreaks[focusIndex - 1].end;
+    final focusOffset = safeOffset - focusStart;
     final ranges = _remapRangesForTextEdit(
       oldText: block.plainText,
       newText: normalizedText,
       ranges: busyInlineStyleRanges(block.inlines),
     );
     final replacements = <BusyBlock>[];
-    var lineStart = 0;
-    for (final (index, part) in parts.indexed) {
-      final lineEnd = lineStart + part.length;
-      final inlines = _inlinesFromStyleRanges(
+    var partStart = 0;
+    for (var index = 0; index <= paragraphBreaks.length; index++) {
+      final partEnd = index < paragraphBreaks.length
+          ? paragraphBreaks[index].start
+          : normalizedText.length;
+      final part = normalizedText.substring(partStart, partEnd);
+      final inlines = _inlinesFromStyleRangesWithHardBreaks(
         part,
-        _styleRangesForSlice(ranges, lineStart, lineEnd),
+        _styleRangesForSlice(ranges, partStart, partEnd),
       );
       if (index == 0) {
         replacements.add(
@@ -589,7 +607,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ),
         );
       }
-      lineStart = lineEnd + 1;
+      if (index < paragraphBreaks.length) {
+        partStart = paragraphBreaks[index].end;
+      }
     }
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
@@ -2710,7 +2730,10 @@ BusyBlock _blockWithEditedText(
       );
     }
   }
-  final rebuiltInlines = _inlinesFromStyleRanges(nextText, nextRanges);
+  final rebuiltInlines = _inlinesFromStyleRangesWithHardBreaks(
+    nextText,
+    nextRanges,
+  );
   return block.copyWith(
     inlines: _restoreSemanticInlineAnchors(
       originalInlines: block.inlines,
@@ -2722,6 +2745,10 @@ BusyBlock _blockWithEditedText(
     preserveRaw: false,
     dirty: true,
   );
+}
+
+String _normalizeLineEndings(String text) {
+  return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 }
 
 List<BusyInline> _restoreSemanticInlineAnchors({

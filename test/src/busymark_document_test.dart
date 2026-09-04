@@ -5334,6 +5334,40 @@ void main() {}
     expect(find.byType(TextField), findsNWidgets(2));
   });
 
+  testWidgets('WYSIWYG typing preserves an existing hard break', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Alpha  \nBeta\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Alpha\nBeta!');
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \nBeta!\n');
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
   testWidgets('WYSIWYG editor lazily builds large documents', (tester) async {
     final source = List.generate(
       500,
