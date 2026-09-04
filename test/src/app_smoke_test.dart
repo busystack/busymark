@@ -36,6 +36,7 @@ import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -6579,6 +6580,92 @@ Draft paragraph.
     );
   });
 
+  testWidgets('Reading linked block and inline images open their targets', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    const rootPath = '/tmp/busymark-linked-images';
+    const readmePath = '$rootPath/README.md';
+    const blockTargetPath = '$rootPath/block-guide.md';
+    const inlineTargetPath = '$rootPath/inline-guide.md';
+    const source = '''
+[![Block logo](block-logo.png)](block-guide.md)
+
+Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
+''';
+    final parsed = const MarkdownParser().parse(
+      filePath: readmePath,
+      source: source,
+    );
+    final workspace = Workspace(
+      id: readmePath,
+      rootPath: rootPath,
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: readmePath,
+      openFilePaths: const [readmePath],
+      files: [
+        for (final path in const [
+          readmePath,
+          blockTargetPath,
+          inlineTargetPath,
+        ])
+          DocumentFile(
+            absolutePath: path,
+            relativePath: p.basename(path),
+            kind: DocumentKind.markdown,
+            size: 1,
+            lastModified: DateTime(2026),
+          ),
+      ],
+      diagnostics: parsed.diagnostics,
+      markdown: parsed,
+    );
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        activeText: source,
+        preview: const MarkdownPreviewBuilder().build(parsed),
+      ),
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MarkdownImageView), findsNWidgets(2));
+    for (final (destination, expectedPath) in const [
+      ('block-guide.md', blockTargetPath),
+      ('inline-guide.md', inlineTargetPath),
+    ]) {
+      await tester.tap(
+        find.byKey(ValueKey('preview-linked-image-$destination')),
+      );
+      await tester.pump();
+      expect(controller.openedFilePath, expectedPath);
+    }
+  });
+
   testWidgets('new empty document leaves remembered preview mode for editor', (
     tester,
   ) async {
@@ -8309,6 +8396,7 @@ class _MutableWorkspaceController extends WorkspaceController {
   WritersideTopicRemovalMode? analyzedRemovalMode;
   String? selectedWritersideModuleId;
   String? selectedWritersideInstanceId;
+  String? openedFilePath;
 
   @override
   WorkspaceState build() => initialState;
@@ -8431,7 +8519,10 @@ class _MutableWorkspaceController extends WorkspaceController {
   }
 
   @override
-  Future<bool> openActiveFile(String path) async => true;
+  Future<bool> openActiveFile(String path) async {
+    openedFilePath = path;
+    return true;
+  }
 
   void replaceWorkspace(Workspace workspace) {
     state = state.copyWith(workspace: workspace);

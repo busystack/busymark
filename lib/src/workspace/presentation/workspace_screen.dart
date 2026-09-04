@@ -11916,6 +11916,10 @@ class _PreviewImageBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final width = busyMarkDocumentImageWidth(block.attributes);
     final source = _previewImageSource(block);
+    final linkDestination = _previewImageLinkDestination(block);
+    final followLink = linkDestination == null
+        ? null
+        : () => unawaited(_openPreviewLink(context, ref, linkDestination));
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     final settings = ref.watch(appSettingsControllerProvider);
@@ -11930,19 +11934,24 @@ class _PreviewImageBlock extends ConsumerWidget {
         ),
         child: Align(
           alignment: AlignmentDirectional.centerStart,
-          child: MarkdownImageView(
-            source: source,
-            alt: block.text,
-            activeFilePath: activeFilePath ?? '',
-            workspaceRoot: _imageWorkspaceRoot(workspace),
-            writersideRoot: workspace?.writersideModule?.rootPath,
-            imagesDir:
-                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: () =>
-                unawaited(_showRemoteImagesPrompt(context, ref)),
-            width: width,
-            maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+          child: _previewLinkedImage(
+            destination: linkDestination,
+            onTap: followLink,
+            child: MarkdownImageView(
+              source: source,
+              alt: block.text,
+              activeFilePath: activeFilePath ?? '',
+              workspaceRoot: _imageWorkspaceRoot(workspace),
+              writersideRoot: workspace?.writersideModule?.rootPath,
+              imagesDir:
+                  workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked:
+                  followLink ??
+                  () => unawaited(_showRemoteImagesPrompt(context, ref)),
+              width: width,
+              maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+            ),
           ),
         ),
       ),
@@ -12040,6 +12049,61 @@ String? _previewImageSourceFromInline(PreviewInline inline) {
     }
   }
   return null;
+}
+
+String? _previewImageLinkDestination(PreviewBlock block) {
+  for (final inline in block.inlines) {
+    final destination = _previewImageLinkDestinationFromInline(inline);
+    if (destination != null) {
+      return destination;
+    }
+  }
+  return null;
+}
+
+String? _previewImageLinkDestinationFromInline(
+  PreviewInline inline, {
+  String? inheritedDestination,
+}) {
+  final destination = inline.kind == PreviewInlineKind.link
+      ? (inline.destination ?? inline.text).trim()
+      : inheritedDestination;
+  if (inline.kind == PreviewInlineKind.image) {
+    return destination == null || destination.isEmpty ? null : destination;
+  }
+  for (final child in inline.children) {
+    final imageDestination = _previewImageLinkDestinationFromInline(
+      child,
+      inheritedDestination: destination,
+    );
+    if (imageDestination != null) {
+      return imageDestination;
+    }
+  }
+  return null;
+}
+
+Widget _previewLinkedImage({
+  required Widget child,
+  required String? destination,
+  required VoidCallback? onTap,
+}) {
+  if (destination == null || destination.isEmpty || onTap == null) {
+    return child;
+  }
+  return Semantics(
+    link: true,
+    onTap: onTap,
+    child: MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        key: ValueKey('preview-linked-image-$destination'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: child,
+      ),
+    ),
+  );
 }
 
 InlineSpan _previewInlineSpan(
@@ -12217,6 +12281,8 @@ InlineSpan _previewInlineSpan(
       workspace,
       allowRemoteImages: allowRemoteImages,
       onRemoteImageBlocked: onRemoteImageBlocked,
+      linkDestination: linkDestination,
+      onLinkTap: onLinkTap,
       style: mergeStyle(
         TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
       ),
@@ -12276,10 +12342,16 @@ InlineSpan _previewInlineImageSpan(
   Workspace? workspace, {
   required bool allowRemoteImages,
   required VoidCallback? onRemoteImageBlocked,
+  required String? linkDestination,
+  required Future<void> Function(String destination) onLinkTap,
   required TextStyle? style,
 }) {
   final activeFilePath =
       workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+  final destination = linkDestination?.trim();
+  final followLink = destination == null || destination.isEmpty
+      ? null
+      : () => unawaited(onLinkTap(destination));
   return WidgetSpan(
     alignment: PlaceholderAlignment.middle,
     style: const TextStyle(
@@ -12290,19 +12362,23 @@ InlineSpan _previewInlineImageSpan(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(
         style: style,
-        child: MarkdownImageView(
-          source: inline.destination ?? '',
-          alt: inline.text,
-          activeFilePath: activeFilePath ?? '',
-          workspaceRoot: _imageWorkspaceRoot(workspace),
-          writersideRoot: workspace?.writersideModule?.rootPath,
-          imagesDir:
-              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: onRemoteImageBlocked,
-          maxWidth: BusyMarkSizes.previewMinWidth,
-          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-          height: BusyMarkSizes.previewInlineImageHeight,
+        child: _previewLinkedImage(
+          destination: destination,
+          onTap: followLink,
+          child: MarkdownImageView(
+            source: inline.destination ?? '',
+            alt: inline.text,
+            activeFilePath: activeFilePath ?? '',
+            workspaceRoot: _imageWorkspaceRoot(workspace),
+            writersideRoot: workspace?.writersideModule?.rootPath,
+            imagesDir:
+                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: followLink ?? onRemoteImageBlocked,
+            maxWidth: BusyMarkSizes.previewMinWidth,
+            maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+            height: BusyMarkSizes.previewInlineImageHeight,
+          ),
         ),
       ),
     ),
