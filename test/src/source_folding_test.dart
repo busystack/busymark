@@ -80,6 +80,66 @@ Done.
     expect(codeRegion.endLine, 5);
   });
 
+  test('markdown structures inside fences do not create fold regions', () {
+    const source =
+        '# Outer\n'
+        'Before\n'
+        '```text\n'
+        '# Not a heading\n'
+        '- not a list\n'
+        '- still not a list\n'
+        '> not a quote\n'
+        '> still not a quote\n'
+        '```\n'
+        'After\n'
+        '# Next\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.markdown);
+
+    expect(
+      regions.where((region) => region.kind == SourceFoldKind.section),
+      hasLength(1),
+    );
+    expect(
+      regions
+          .singleWhere((region) => region.kind == SourceFoldKind.section)
+          .endLine,
+      10,
+    );
+    expect(
+      regions.where((region) => region.kind == SourceFoldKind.list),
+      isEmpty,
+    );
+    expect(
+      regions.where((region) => region.kind == SourceFoldKind.blockquote),
+      isEmpty,
+    );
+  });
+
+  test('xml folding ignores tags inside multiline comments and CDATA', () {
+    const source =
+        '<root>\n'
+        '<!--\n'
+        '<fake>\n'
+        '</fake>\n'
+        '-->\n'
+        '<![CDATA[\n'
+        '<ghost>\n'
+        '</ghost>\n'
+        ']]>\n'
+        '<real>\n'
+        'content\n'
+        '</real>\n'
+        '</root>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(regions, hasLength(2));
+    expect(regions.map((region) => region.startLine), containsAll([1, 10]));
+    expect(regions.map((region) => region.startLine), isNot(contains(3)));
+    expect(regions.map((region) => region.startLine), isNot(contains(7)));
+  });
+
   test('markdown folding does not join separate indented code blocks', () {
     const source = '    ```\n# Heading\n    ```\n';
 

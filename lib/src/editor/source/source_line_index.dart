@@ -25,6 +25,80 @@ class SourceLineIndex {
     _lines = _buildLines(source);
   }
 
+  SourceLineIndex._({required this.source, required List<SourceLine> lines})
+    : _lines = lines;
+
+  factory SourceLineIndex.updated({
+    required SourceLineIndex previous,
+    required String source,
+    required int oldStart,
+    required int oldEnd,
+  }) {
+    if (previous.source == source) {
+      return previous;
+    }
+    final safeStart = oldStart.clamp(0, previous.source.length).toInt();
+    final safeEnd = oldEnd.clamp(safeStart, previous.source.length).toInt();
+    // Include the neighboring code units so edits at a CRLF boundary cannot
+    // leave one half of the pair in a reused prefix or suffix line.
+    final firstChangedIndex =
+        previous.lineNumberAtOffset(math.max(0, safeStart - 1)) - 1;
+    final lastChangedIndex =
+        previous.lineNumberAtOffset(
+          math.min(previous.source.length, safeEnd + 1),
+        ) -
+        1;
+    final suffixIndex = lastChangedIndex + 1;
+    final segmentStart = previous._lines[firstChangedIndex].startOffset;
+    final oldSuffixStart = suffixIndex < previous._lines.length
+        ? previous._lines[suffixIndex].startOffset
+        : previous.source.length;
+    final delta = source.length - previous.source.length;
+    final newSuffixStart = (oldSuffixStart + delta)
+        .clamp(segmentStart, source.length)
+        .toInt();
+    final localLines = _buildLines(
+      source.substring(segmentStart, newSuffixStart),
+    );
+    if (suffixIndex < previous._lines.length &&
+        localLines.isNotEmpty &&
+        localLines.last.text.isEmpty &&
+        !localLines.last.hasLineBreak) {
+      localLines.removeLast();
+    }
+
+    final result = <SourceLine>[...previous._lines.take(firstChangedIndex)];
+    for (final line in localLines) {
+      result.add(
+        SourceLine(
+          number: result.length + 1,
+          startOffset: segmentStart + line.startOffset,
+          endOffset: segmentStart + line.endOffset,
+          endOffsetIncludingLineBreak:
+              segmentStart + line.endOffsetIncludingLineBreak,
+          text: line.text,
+          lineBreak: line.lineBreak,
+        ),
+      );
+    }
+    for (final line in previous._lines.skip(suffixIndex)) {
+      result.add(
+        SourceLine(
+          number: result.length + 1,
+          startOffset: line.startOffset + delta,
+          endOffset: line.endOffset + delta,
+          endOffsetIncludingLineBreak: line.endOffsetIncludingLineBreak + delta,
+          text: line.text,
+          lineBreak: line.lineBreak,
+        ),
+      );
+    }
+    if (result.isEmpty) {
+      return SourceLineIndex(source);
+    }
+    return SourceLineIndex._(source: source, lines: result);
+  }
+
   final String source;
   late final List<SourceLine> _lines;
 

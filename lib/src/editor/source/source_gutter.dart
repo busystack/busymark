@@ -49,8 +49,25 @@ List<SourceGutterLine> sourceGutterModel({
   }
   final diagnosticsByLine = <int, List<SourceDiagnosticMarker>>{};
   for (final diagnostic in diagnostics) {
+    var displayLine = diagnostic.fullLine;
+    if (diagnostic.hidden) {
+      final visibleCollapsedOwner = foldRegions
+          .where(
+            (region) =>
+                collapsedRegionKeys.contains(region.key) &&
+                region.containsLine(diagnostic.fullLine) &&
+                document.visibleLineForFullLine(region.startLine) != null,
+          )
+          .fold<SourceFoldRegion?>(null, (current, candidate) {
+            if (current == null || candidate.startLine > current.startLine) {
+              return candidate;
+            }
+            return current;
+          });
+      displayLine = visibleCollapsedOwner?.startLine ?? displayLine;
+    }
     diagnosticsByLine
-        .putIfAbsent(diagnostic.fullLine, () => <SourceDiagnosticMarker>[])
+        .putIfAbsent(displayLine, () => <SourceDiagnosticMarker>[])
         .add(diagnostic);
   }
 
@@ -135,11 +152,17 @@ class BusyMarkSourceGutter extends StatelessWidget {
                 );
                 final scrollOffset = safeScrollOffset(scrollController);
                 final children = <Widget>[];
-                for (final layout in layouts) {
+                final visibleRange = sourceVisibleLayoutRange(
+                  layouts,
+                  scrollOffset: scrollOffset,
+                  viewportHeight: constraints.maxHeight,
+                  overscan: lineHeight,
+                );
+                for (final layout in layouts.sublist(
+                  visibleRange.start,
+                  visibleRange.end,
+                )) {
                   final top = layout.top - scrollOffset;
-                  if (top < -lineHeight || top > constraints.maxHeight) {
-                    continue;
-                  }
                   final line = layout.gutterLine;
                   children.add(
                     Positioned(
@@ -370,8 +393,7 @@ class SourceLineLayoutCache {
         _lineHeight == lineHeight &&
         _textWidth == textWidth &&
         _textScaler == textScaler &&
-        _collapsedRegionKeys.isEmpty &&
-        collapsedRegionKeys.isEmpty;
+        _setEquals(_collapsedRegionKeys, collapsedRegionKeys);
     if (geometryMatches) {
       final document = controller.document;
       if (identical(_document, document)) {
@@ -479,6 +501,46 @@ class SourceLineLayoutCache {
     _diagnostics = diagnostics;
     _entries = entries;
   }
+}
+
+bool _setEquals(Set<String> left, Set<String> right) {
+  return left.length == right.length && left.containsAll(right);
+}
+
+({int start, int end}) sourceVisibleLayoutRange(
+  List<SourceLineLayoutEntry> layouts, {
+  required double scrollOffset,
+  required double viewportHeight,
+  double overscan = 0,
+}) {
+  if (layouts.isEmpty || viewportHeight <= 0) {
+    return (start: 0, end: 0);
+  }
+  final minimum = math.max(0, scrollOffset - overscan);
+  final maximum = scrollOffset + viewportHeight + overscan;
+  var low = 0;
+  var high = layouts.length;
+  while (low < high) {
+    final middle = (low + high) >> 1;
+    final entry = layouts[middle];
+    if (entry.top + entry.height < minimum) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  final start = low;
+  low = start;
+  high = layouts.length;
+  while (low < high) {
+    final middle = (low + high) >> 1;
+    if (layouts[middle].top <= maximum) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  return (start: start, end: low);
 }
 
 List<SourceLineLayoutEntry> _entriesWithCurrentGutterModel(
@@ -681,9 +743,6 @@ List<SourceLineLayoutEntry> sourceLineLayoutEntries(
     collapsedRegionKeys: collapsedRegionKeys,
     diagnostics: diagnostics,
   );
-  final linesByFullLine = {
-    for (final line in controller.document.lineIndex.lines) line.number: line,
-  };
   final layouts = <SourceLineLayoutEntry>[];
   final painter = sourceTextPainter(
     context,
@@ -725,7 +784,6 @@ List<SourceLineLayoutEntry> sourceLineLayoutEntries(
     );
   }
   painter.dispose();
-  linesByFullLine.clear();
   return layouts;
 }
 

@@ -33,6 +33,25 @@ void main() {
     );
   });
 
+  test('whole-word boundaries recognize Unicode letters and marks', () {
+    final cyrillic = searchSourceDocument(
+      SourceDocument(fullText: 'привет рив'),
+      const SourceSearchOptions(query: 'рив', wholeWord: true),
+    );
+    final combining = searchSourceDocument(
+      SourceDocument(fullText: 'cafe\u0301 fe'),
+      const SourceSearchOptions(query: 'fe', wholeWord: true),
+    );
+    final cjk = searchSourceDocument(
+      SourceDocument(fullText: '中文 文'),
+      const SourceSearchOptions(query: '文', wholeWord: true),
+    );
+
+    expect(cyrillic.matches.map((match) => match.fullStart), [7]);
+    expect(combining.matches.map((match) => match.fullStart), [6]);
+    expect(cjk.matches.map((match) => match.fullStart), [3]);
+  });
+
   test('regex search and invalid regex are safe', () {
     final document = SourceDocument(fullText: 'v1 v22 vx');
 
@@ -100,5 +119,21 @@ void main() {
       'topics/intro.md',
     ]);
     expect(results.expand((result) => result.matches), hasLength(2));
+  });
+
+  test('source search worker cancels stale requests', () async {
+    final worker = SourceSearchWorker();
+    addTearDown(worker.dispose);
+    final stale = worker.search(
+      SourceDocument(fullText: List.filled(10000, 'alpha').join(' ')),
+      const SourceSearchOptions(query: 'alpha'),
+    );
+    final current = worker.search(
+      SourceDocument(fullText: 'current result'),
+      const SourceSearchOptions(query: 'current'),
+    );
+
+    expect(await stale, isNull);
+    expect((await current)!.totalMatchCount, 1);
   });
 }

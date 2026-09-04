@@ -184,27 +184,32 @@ SourceFoldRegion? collapsedRegionContainingLine(
 
 List<SourceFoldRegion> _markdownFoldRegions(List<SourceLineInfo> lines) {
   final regions = <SourceFoldRegion>[];
-  _addMarkdownHeadingRegions(lines, regions);
-  _addMarkdownFenceRegions(lines, regions);
-  _addMarkdownListRegions(lines, regions);
-  _addMarkdownBlockquoteRegions(lines, regions);
+  final fencedLines = _addMarkdownFenceRegions(lines, regions);
+  _addMarkdownHeadingRegions(lines, regions, fencedLines);
+  _addMarkdownListRegions(lines, regions, fencedLines);
+  _addMarkdownBlockquoteRegions(lines, regions, fencedLines);
   return regions;
 }
 
 void _addMarkdownHeadingRegions(
   List<SourceLineInfo> lines,
   List<SourceFoldRegion> regions,
+  List<bool> fencedLines,
 ) {
   final headingPattern = RegExp(r'^\s{0,3}(#{1,6})\s+');
   for (var index = 0; index < lines.length; index++) {
-    final heading = headingPattern.firstMatch(lines[index].text);
+    final heading = fencedLines[index]
+        ? null
+        : headingPattern.firstMatch(lines[index].text);
     if (heading == null) {
       continue;
     }
     final level = heading.group(1)!.length;
     var endIndex = lines.length - 1;
     for (var next = index + 1; next < lines.length; next++) {
-      final nextHeading = headingPattern.firstMatch(lines[next].text);
+      final nextHeading = fencedLines[next]
+          ? null
+          : headingPattern.firstMatch(lines[next].text);
       if (nextHeading != null && nextHeading.group(1)!.length <= level) {
         endIndex = next - 1;
         break;
@@ -220,10 +225,11 @@ void _addMarkdownHeadingRegions(
   }
 }
 
-void _addMarkdownFenceRegions(
+List<bool> _addMarkdownFenceRegions(
   List<SourceLineInfo> lines,
   List<SourceFoldRegion> regions,
 ) {
+  final fencedLines = List<bool>.filled(lines.length, false);
   var index = 0;
   while (index < lines.length) {
     final fence = MarkdownFence.parse(lines[index].text);
@@ -233,6 +239,7 @@ void _addMarkdownFenceRegions(
     }
     var endIndex = index;
     for (var next = index + 1; next < lines.length; next++) {
+      fencedLines[next] = true;
       if (fence.closes(lines[next].text)) {
         endIndex = next;
         break;
@@ -245,17 +252,25 @@ void _addMarkdownFenceRegions(
       startIndex: index,
       endIndex: endIndex,
     );
+    if (endIndex == index) {
+      for (var next = index + 1; next < lines.length; next++) {
+        fencedLines[next] = true;
+      }
+      break;
+    }
     index = endIndex + 1;
   }
+  return fencedLines;
 }
 
 void _addMarkdownListRegions(
   List<SourceLineInfo> lines,
   List<SourceFoldRegion> regions,
+  List<bool> fencedLines,
 ) {
   var index = 0;
   while (index < lines.length) {
-    if (!_isMarkdownListLine(lines[index].text)) {
+    if (fencedLines[index] || !_isMarkdownListLine(lines[index].text)) {
       index++;
       continue;
     }
@@ -288,16 +303,19 @@ void _addMarkdownListRegions(
 void _addMarkdownBlockquoteRegions(
   List<SourceLineInfo> lines,
   List<SourceFoldRegion> regions,
+  List<bool> fencedLines,
 ) {
   var index = 0;
   while (index < lines.length) {
-    if (!RegExp(r'^\s{0,3}>\s?').hasMatch(lines[index].text)) {
+    if (fencedLines[index] ||
+        !RegExp(r'^\s{0,3}>\s?').hasMatch(lines[index].text)) {
       index++;
       continue;
     }
     var endIndex = index;
     for (var next = index + 1; next < lines.length; next++) {
-      if (!RegExp(r'^\s{0,3}>\s?').hasMatch(lines[next].text)) {
+      if (fencedLines[next] ||
+          !RegExp(r'^\s{0,3}>\s?').hasMatch(lines[next].text)) {
         break;
       }
       endIndex = next;
@@ -316,8 +334,9 @@ void _addMarkdownBlockquoteRegions(
 List<SourceFoldRegion> _xmlFoldRegions(List<SourceLineInfo> lines) {
   final regions = <SourceFoldRegion>[];
   final stack = <({String tag, int lineIndex})>[];
+  final lexicalState = _XmlLexicalState();
   for (var index = 0; index < lines.length; index++) {
-    final text = _xmlLineWithoutComments(lines[index].text);
+    final text = _xmlStructuralText(lines[index].text, lexicalState);
     for (final tag in _xmlTagsInLine(text)) {
       if (tag.selfClosing || tag.declaration) {
         continue;
@@ -348,8 +367,55 @@ List<SourceFoldRegion> _xmlFoldRegions(List<SourceLineInfo> lines) {
   return regions;
 }
 
-String _xmlLineWithoutComments(String line) {
-  return line.replaceAll(RegExp(r'<!--.*?-->'), '');
+class _XmlLexicalState {
+  bool inComment = false;
+  bool inCdata = false;
+}
+
+String _xmlStructuralText(String line, _XmlLexicalState state) {
+  final visible = StringBuffer();
+  var offset = 0;
+  while (offset < line.length) {
+    if (state.inComment) {
+      final end = line.indexOf('-->', offset);
+      if (end < 0) {
+        return visible.toString();
+      }
+      state.inComment = false;
+      offset = end + 3;
+      continue;
+    }
+    if (state.inCdata) {
+      final end = line.indexOf(']]>', offset);
+      if (end < 0) {
+        return visible.toString();
+      }
+      state.inCdata = false;
+      offset = end + 3;
+      continue;
+    }
+    final commentStart = line.indexOf('<!--', offset);
+    final cdataStart = line.indexOf('<![CDATA[', offset);
+    final excludedStart = switch ((commentStart, cdataStart)) {
+      (-1, -1) => -1,
+      (-1, _) => cdataStart,
+      (_, -1) => commentStart,
+      _ => commentStart < cdataStart ? commentStart : cdataStart,
+    };
+    if (excludedStart < 0) {
+      visible.write(line.substring(offset));
+      break;
+    }
+    visible.write(line.substring(offset, excludedStart));
+    if (excludedStart == commentStart) {
+      state.inComment = true;
+      offset = excludedStart + 4;
+    } else {
+      state.inCdata = true;
+      offset = excludedStart + 9;
+    }
+  }
+  return visible.toString();
 }
 
 Iterable<({String name, bool closing, bool selfClosing, bool declaration})>

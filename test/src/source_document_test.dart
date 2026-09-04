@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:busymark/src/editor/source/source_document.dart';
 import 'package:busymark/src/editor/source/source_hidden_ranges.dart';
+import 'package:busymark/src/editor/source/source_line_index.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:flutter/services.dart';
@@ -55,6 +58,42 @@ void main() {
       ),
       region.hiddenEndOffset,
     );
+  });
+
+  test('fold-boundary selection mapping preserves direction, not coverage', () {
+    const source = '# Title\nIntro.\nMore.\n# Next\n';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).firstWhere((region) => region.startLine == 1);
+    final document = SourceDocument(
+      fullText: source,
+      hiddenRanges: SourceHiddenRanges(
+        ranges: [
+          SourceHiddenRange(
+            start: region.hiddenStartOffset,
+            end: region.hiddenEndOffset,
+          ),
+        ],
+        textLength: source.length,
+      ),
+    );
+    final boundary = document.fullOffsetToVisibleOffset(
+      region.hiddenStartOffset,
+    );
+
+    final forward = document.visibleSelectionToFullSelection(
+      TextSelection(baseOffset: 0, extentOffset: boundary),
+    );
+    final backward = document.visibleSelectionToFullSelection(
+      TextSelection(baseOffset: boundary, extentOffset: 0),
+    );
+
+    expect(forward.start, backward.start);
+    expect(forward.end, backward.end);
+    expect(forward.end, region.hiddenEndOffset);
+    expect(forward.baseOffset, backward.extentOffset);
+    expect(forward.extentOffset, backward.baseOffset);
   });
 
   test('multiple adjacent and overlapping ranges normalize safely', () {
@@ -135,6 +174,90 @@ void main() {
     expect(controller.foldedRegions, hasLength(1));
     expect(controller.fullText, endsWith('Done.\nTail\n'));
   });
+
+  test('visible edits incrementally retain unaffected line entries', () {
+    final controller = BusyMarkSourceEditingController(
+      text: 'first\nsecond\nthird\nfourth\n',
+    );
+    final previous = controller.document;
+
+    controller.value = const TextEditingValue(
+      text: 'first\nsecond\nTHIRD\nfourth\n',
+      selection: TextSelection.collapsed(offset: 18),
+    );
+
+    expect(
+      identical(
+        previous.lineIndex.lines.first,
+        controller.document.lineIndex.lines.first,
+      ),
+      isTrue,
+    );
+    expect(controller.document.lineIndex.lines.map((line) => line.text), [
+      'first',
+      'second',
+      'THIRD',
+      'fourth',
+      '',
+    ]);
+    expect(controller.document.visibleLineIndex.lineCount, 5);
+  });
+
+  test(
+    'incremental line indexes match full indexes across line-break edits',
+    () {
+      final random = math.Random(149);
+      const pieces = ['a', 'b', ' ', '\n', '\r', '\r\n'];
+      for (var iteration = 0; iteration < 300; iteration++) {
+        final oldText = List.generate(
+          random.nextInt(30),
+          (_) => pieces[random.nextInt(pieces.length)],
+        ).join();
+        final start = random.nextInt(oldText.length + 1);
+        final end = start + random.nextInt(oldText.length - start + 1);
+        final replacement = List.generate(
+          random.nextInt(8),
+          (_) => pieces[random.nextInt(pieces.length)],
+        ).join();
+        final nextText = oldText.replaceRange(start, end, replacement);
+        final incremental = SourceLineIndex.updated(
+          previous: SourceLineIndex(oldText),
+          source: nextText,
+          oldStart: start,
+          oldEnd: end,
+        );
+        final rebuilt = SourceLineIndex(nextText);
+
+        expect(
+          incremental.lines
+              .map(
+                (line) => (
+                  line.number,
+                  line.startOffset,
+                  line.endOffset,
+                  line.endOffsetIncludingLineBreak,
+                  line.text,
+                  line.lineBreak,
+                ),
+              )
+              .toList(),
+          rebuilt.lines
+              .map(
+                (line) => (
+                  line.number,
+                  line.startOffset,
+                  line.endOffset,
+                  line.endOffsetIncludingLineBreak,
+                  line.text,
+                  line.lineBreak,
+                ),
+              )
+              .toList(),
+          reason: 'iteration $iteration: ${oldText.replaceAll('\n', r'\n')}',
+        );
+      }
+    },
+  );
 
   test('visible edit intersecting a fold unfolds only affected region', () {
     const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';

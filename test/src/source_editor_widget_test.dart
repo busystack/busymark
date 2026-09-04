@@ -720,6 +720,141 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('wordWrap false uses one horizontally scrollable layout', (
+    tester,
+  ) async {
+    final source = List.filled(80, 'long-source-token').join('-');
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            height: 240,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: false,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final scroller = tester.widget<SingleChildScrollView>(
+      find.byKey(const ValueKey('source-horizontal-scroll-view')),
+    );
+    expect(scroller.controller!.position.maxScrollExtent, greaterThan(0));
+    expect(tester.getSize(find.byType(TextField)).width, greaterThan(320));
+  });
+
+  testWidgets('source input preserves an active IME composing range', (
+    tester,
+  ) async {
+    String? changedText;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: '',
+            language: SourceSyntaxLanguage.markdown,
+            filePath: '/project/topic.md',
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            onSearchOptionsChanged: (_) {},
+            onChanged: (text, _) => changedText = text,
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+          ),
+        ),
+      ),
+    );
+    final fieldFinder = find.byType(TextField);
+    await tester.tap(fieldFinder);
+    await tester.showKeyboard(fieldFinder);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'に',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(fieldFinder);
+    expect(
+      field.controller!.value.composing,
+      const TextRange(start: 0, end: 1),
+    );
+    expect(changedText, 'に');
+  });
+
+  testWidgets('focused Source accepts authoritative parent text updates', (
+    tester,
+  ) async {
+    var source = 'local';
+    String? changedText;
+    late StateSetter updateHost;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return BusyMarkSourceEditor(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) => changedText = text,
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    final fieldFinder = find.byType(TextField);
+    await tester.tap(fieldFinder);
+    expect(tester.widget<TextField>(fieldFinder).focusNode!.hasFocus, isTrue);
+
+    updateHost(() => source = 'authoritative');
+    await tester.pump();
+
+    expect(tester.widget<TextField>(fieldFinder).controller!.text, source);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'authoritative!',
+        selection: TextSelection.collapsed(offset: 14),
+      ),
+    );
+    await tester.pump();
+    expect(changedText, 'authoritative!');
+  });
 }
 
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {

@@ -36,7 +36,7 @@ void main() {
   });
 
   test(
-    'diagnostic inside folded region is safe and gutter skips hidden line',
+    'diagnostic inside folded region is aggregated onto its fold header',
     () {
       const source = '# Title\nBroken link\n# Next\n';
       final fold = sourceFoldRegions(
@@ -85,8 +85,53 @@ void main() {
       expect(gutter.map((line) => line.fullLine), [1, 3, 4]);
       expect(gutter.first.foldable, isTrue);
       expect(gutter.first.collapsed, isTrue);
+      expect(gutter.first.diagnostics, [markers.single]);
+      expect(
+        gutter.first.diagnostics.single.diagnostic.severity,
+        DiagnosticSeverity.warning,
+      );
     },
   );
+
+  testWidgets('folded layout geometry is reused for equal collapsed sets', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (builderContext) {
+            context = builderContext;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    const source = '# Heading\nBody\nMore\n# Next\n';
+    final folds = sourceFoldRegions(source, SourceSyntaxLanguage.markdown);
+    final fold = folds.firstWhere((region) => region.startLine == 1);
+    final controller = BusyMarkSourceEditingController(text: source)
+      ..setFoldedRegions([fold]);
+    addTearDown(controller.dispose);
+    final cache = SourceLineLayoutCache();
+
+    List<SourceLineLayoutEntry> resolve(Set<String> keys) => cache.resolve(
+      context,
+      controller: controller,
+      foldRegions: folds,
+      collapsedRegionKeys: keys,
+      textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+      strutStyle: const StrutStyle(fontFamily: 'monospace', fontSize: 14),
+      lineHeight: 18,
+      textWidth: 400,
+      diagnostics: const [],
+    );
+
+    final first = resolve({fold.key});
+    final second = resolve({fold.key});
+
+    expect(identical(first, second), isTrue);
+  });
 
   testWidgets('incremental gutter layout matches a full measured layout', (
     tester,
