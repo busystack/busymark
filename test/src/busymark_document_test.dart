@@ -5884,6 +5884,48 @@ void main() {}
     );
   });
 
+  testWidgets('WYSIWYG table cells apply Markdown column alignment', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Center heading | Right heading |\n'
+          '| :---: | ---: |\n'
+          '| Center value | Right value |\n',
+    );
+    final rows = parsed.busyDocument.blocks.single.children;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkWysiwygEditor(
+            document: parsed.busyDocument,
+            onSourceChanged: (_, _) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    for (final row in rows) {
+      expect(
+        tester
+            .widget<TextField>(find.byKey(ValueKey(row.children[0].id)))
+            .textAlign,
+        TextAlign.center,
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(ValueKey(row.children[1].id)))
+            .textAlign,
+        TextAlign.right,
+      );
+    }
+  });
+
   testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -5981,9 +6023,17 @@ void main() {}
     expect(find.text('Alignment: Left'), findsOneWidget);
     expect(find.text('Alignment: Center'), findsOneWidget);
     expect(find.text('Alignment: Right'), findsOneWidget);
-    await tester.tap(find.text('Alignment: Left'));
+    await tester.tap(find.text('Alignment: Center'));
     await tester.pumpAndSettle();
-    expect(markdown, contains('| :--- | --- |'));
+    expect(markdown, contains('| :---: | --- |'));
+    expect(
+      tester.widget<TextField>(find.byKey(ValueKey(headerCellId))).textAlign,
+      TextAlign.center,
+    );
+    expect(
+      tester.widget<TextField>(find.byKey(ValueKey(bodyCellId))).textAlign,
+      TextAlign.center,
+    );
 
     await tester.tap(deleteTableFinder);
     await tester.pump();

@@ -11508,6 +11508,9 @@ class _PreviewTable extends StatelessWidget {
                           ? _PreviewInlineText(
                               block: row.children[index],
                               editRevision: editRevision,
+                              textAlign: _previewTableCellTextAlign(
+                                row.children[index].attributes['align'],
+                              ),
                               style: row.attributes['header'] == 'true'
                                   ? busyMarkDocumentBodyTextStyle(
                                       context,
@@ -11530,11 +11533,13 @@ class _PreviewInlineText extends ConsumerWidget {
     super.key,
     required this.block,
     this.style,
+    this.textAlign = TextAlign.start,
     this.editRevision = 0,
   });
 
   final PreviewBlock block;
   final TextStyle? style;
+  final TextAlign textAlign;
   final int editRevision;
 
   @override
@@ -11584,9 +11589,19 @@ class _PreviewInlineText extends ConsumerWidget {
               ),
           ],
         ),
+        textAlign: textAlign,
       ),
     );
   }
+}
+
+TextAlign _previewTableCellTextAlign(String? value) {
+  return switch (busyTableAlignmentFromAttribute(value)) {
+    BusyTableAlignment.unspecified => TextAlign.start,
+    BusyTableAlignment.left => TextAlign.left,
+    BusyTableAlignment.center => TextAlign.center,
+    BusyTableAlignment.right => TextAlign.right,
+  };
 }
 
 String _previewBlockSearchText(PreviewBlock block) {

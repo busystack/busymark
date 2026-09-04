@@ -7950,6 +7950,49 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(find.textContaining('<table>'), findsNothing);
   });
 
+  testWidgets('Reading applies Markdown table column alignment', (
+    tester,
+  ) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '| Center heading | Right heading |\n'
+      '| :---: | ---: |\n'
+      '| Center value | Right value |\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/aligned-table.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Center heading').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    for (final text in const ['Center heading', 'Center value']) {
+      expect(tester.widget<Text>(find.text(text)).textAlign, TextAlign.center);
+    }
+    for (final text in const ['Right heading', 'Right value']) {
+      expect(tester.widget<Text>(find.text(text)).textAlign, TextAlign.right);
+    }
+  });
+
   testWidgets('preview search result click lands on code block line', (
     tester,
   ) async {

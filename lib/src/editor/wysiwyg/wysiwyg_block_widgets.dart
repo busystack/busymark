@@ -703,12 +703,14 @@ class _RenderedMathBlock extends StatelessWidget {
     required this.block,
     required this.editRevision,
     required this.style,
+    this.textAlign = TextAlign.start,
     this.onMathDiagnostic,
   });
 
   final BusyBlock block;
   final int editRevision;
   final TextStyle style;
+  final TextAlign textAlign;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
@@ -736,6 +738,7 @@ class _RenderedMathBlock extends StatelessWidget {
             _span(inline, style, editRevision, 'i$index'),
         ],
       ),
+      textAlign: textAlign,
     );
   }
 
@@ -1922,6 +1925,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final cell = widget.cell;
+    final textAlign = _tableCellTextAlign(cell?.attributes['align']);
     final textStyle = widget.style.copyWith(
       fontWeight: widget.header ? FontWeight.w700 : FontWeight.w400,
     );
@@ -1949,6 +1953,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
             block: cell.copyWith(sourceSpan: widget.sourceSpan),
             editRevision: widget.editRevision,
             style: textStyle,
+            textAlign: textAlign,
             onMathDiagnostic: widget.onMathDiagnostic,
           ),
         ),
@@ -1967,6 +1972,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
           maxLines: 1,
           inputFormatters: const [_SingleLineTableCellFormatter()],
           style: textStyle,
+          textAlign: textAlign,
           selectionHeightStyle:
               BusyMarkDocumentTextGeometry.selectionHeightStyle,
           selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
@@ -2002,6 +2008,15 @@ class _TableCellEditorState extends State<_TableCellEditor> {
       ),
     );
   }
+}
+
+TextAlign _tableCellTextAlign(String? value) {
+  return switch (busyTableAlignmentFromAttribute(value)) {
+    BusyTableAlignment.unspecified => TextAlign.start,
+    BusyTableAlignment.left => TextAlign.left,
+    BusyTableAlignment.center => TextAlign.center,
+    BusyTableAlignment.right => TextAlign.right,
+  };
 }
 
 class _SingleLineTableCellFormatter extends TextInputFormatter {
