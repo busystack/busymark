@@ -9518,6 +9518,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
+  BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
 
   @override
@@ -9548,6 +9549,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _wysiwygScrollHeadingId = null;
       _wysiwygScrollBlockId = null;
       _wysiwygSearchQuery = null;
+      _wysiwygSearchRange = null;
       _wysiwygScrollRequest = 0;
     }
     if (oldWidget.viewMode == DocumentViewModePreference.editor &&
@@ -9800,6 +9802,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           unawaited(_showRemoteImagesPrompt(context, ref)),
                       onDocumentChanged: _cacheWysiwygDocument,
                       onSourceChanged: _handleWysiwygSourceChanged,
+                      onTransactionalSourceChanged: _handleWysiwygSourceChanged,
                       toolbarPlacement: widget.editorToolbarPlacement,
                       toolbarDirection: widget.editorToolbarDirection,
                       onToolbarPlacementChanged: ref
@@ -9811,6 +9814,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       scrollToHeadingId: _wysiwygScrollHeadingId,
                       scrollToBlockId: _wysiwygScrollBlockId,
                       scrollToSearchQuery: _wysiwygSearchQuery,
+                      scrollToSourceRange: _wysiwygSearchRange,
                       scrollRequest: _wysiwygScrollRequest,
                       onVisibleHeadingChanged:
                           _handleWysiwygVisibleHeadingChanged,
@@ -10119,7 +10123,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .updateActiveText(value, sourceFilePath: sourceFilePath ?? activePath);
   }
 
-  void _handleWysiwygSourceChanged(String filePath, String value) {
+  void _handleWysiwygSourceChanged(
+    String filePath,
+    String value, [
+    String? undoGroup,
+  ]) {
     if (filePath != _activeEditorPath()) {
       return;
     }
@@ -10135,6 +10143,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       value,
       document: document,
       sourceFilePath: filePath,
+      undoGroup: undoGroup,
     );
   }
 
@@ -10201,6 +10210,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _wysiwygScrollHeadingId = target.headingId;
         _wysiwygScrollBlockId = target.editorBlockId;
         _wysiwygSearchQuery = null;
+        _wysiwygSearchRange = null;
         _wysiwygScrollRequest += 1;
       });
       if (target.line case final line?) {
@@ -10232,7 +10242,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         setState(() {
           _wysiwygScrollHeadingId = null;
           _wysiwygScrollBlockId = null;
-          _wysiwygSearchQuery = target.query;
+          _wysiwygSearchQuery = null;
+          _wysiwygSearchRange = BusyMarkWysiwygSourceRange(
+            startOffset: target.startOffset,
+            endOffset: target.endOffset,
+          );
           _wysiwygScrollRequest += 1;
         });
       }
@@ -10568,6 +10582,7 @@ bool _sameWysiwygSession(
   WysiwygEditorSessionState right,
 ) {
   return left.activeBlockId == right.activeBlockId &&
+      left.activeCellId == right.activeCellId &&
       left.anchorBlockId == right.anchorBlockId &&
       left.anchorOffset == right.anchorOffset &&
       left.extentBlockId == right.extentBlockId &&

@@ -26,6 +26,76 @@ enum BusyWysiwygInlineCommand {
   link,
 }
 
+/// Whether [block] can safely be replaced by a generic block command.
+///
+/// Structured and source-preserved blocks need dedicated transformations. A
+/// generic conversion only changes the block kind and inline metadata, so
+/// applying it to one of those blocks would strand or discard its payload.
+bool busyMarkWysiwygCanApplyBlockCommand(
+  BusyBlock block,
+  BusyWysiwygBlockCommand command,
+) {
+  if (command == BusyWysiwygBlockCommand.image &&
+      block.kind == BusyBlockKind.image &&
+      !block.isSourceProtected) {
+    return true;
+  }
+  if (block.preserveRaw ||
+      block.isSourceOnly ||
+      block.isGenerated ||
+      block.isSourceProtected) {
+    return false;
+  }
+  if (block.children.isNotEmpty) {
+    final sourceSupportsChildren = switch (block.kind) {
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem ||
+      BusyBlockKind.blockquote => true,
+      _ => false,
+    };
+    final destinationKind = blockKindForCommand(command);
+    final destinationSupportsChildren = switch (destinationKind) {
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem ||
+      BusyBlockKind.blockquote => true,
+      _ => false,
+    };
+    if (!sourceSupportsChildren || !destinationSupportsChildren) {
+      return false;
+    }
+  }
+  return switch (block.kind) {
+    BusyBlockKind.paragraph ||
+    BusyBlockKind.heading ||
+    BusyBlockKind.codeBlock ||
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem ||
+    BusyBlockKind.blockquote => true,
+    BusyBlockKind.math ||
+    BusyBlockKind.thematicBreak ||
+    BusyBlockKind.image ||
+    BusyBlockKind.video ||
+    BusyBlockKind.table ||
+    BusyBlockKind.htmlBlock ||
+    BusyBlockKind.writersideAdmonition ||
+    BusyBlockKind.writersideTabs ||
+    BusyBlockKind.writersideProcedure ||
+    BusyBlockKind.writersideRawXml ||
+    BusyBlockKind.frontMatter ||
+    BusyBlockKind.unknown => false,
+  };
+}
+
+bool busyMarkWysiwygCanApplyAdmonitionStyle(BusyBlock block) {
+  return busyMarkWysiwygCanApplyBlockCommand(
+    block,
+    BusyWysiwygBlockCommand.blockquote,
+  );
+}
+
 BusyBlockKind blockKindForCommand(BusyWysiwygBlockCommand command) {
   return switch (command) {
     BusyWysiwygBlockCommand.paragraph => BusyBlockKind.paragraph,

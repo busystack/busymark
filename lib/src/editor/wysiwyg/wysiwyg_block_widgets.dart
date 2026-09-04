@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -170,6 +171,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
+    this.tableCellController,
+    this.tableCellUndoController,
+    this.tableCellFocusNode,
+    this.tableCellKey,
+    this.onTableCellFocused,
   });
 
   final BusyBlock block;
@@ -206,6 +212,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
+  final TextEditingController Function(BusyBlock cell)? tableCellController;
+  final UndoHistoryController Function(BusyBlock cell)? tableCellUndoController;
+  final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
+  final GlobalKey Function(String cellId)? tableCellKey;
+  final ValueChanged<String>? onTableCellFocused;
 
   @override
   Widget build(BuildContext context) {
@@ -364,6 +375,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           onTableDeleted: onTableDeleted,
           editRevision: editRevision,
           onMathDiagnostic: onMathDiagnostic,
+          cellController: tableCellController,
+          cellUndoController: tableCellUndoController,
+          cellFocusNode: tableCellFocusNode,
+          cellKey: tableCellKey,
+          onCellFocused: onTableCellFocused,
         ),
       );
     }
@@ -1423,6 +1439,11 @@ class _TableBlockEditor extends StatelessWidget {
     required this.onTableDeleted,
     required this.editRevision,
     this.onMathDiagnostic,
+    this.cellController,
+    this.cellUndoController,
+    this.cellFocusNode,
+    this.cellKey,
+    this.onCellFocused,
   });
 
   static const double _controlSize = BusyMarkSizes.tableControl;
@@ -1439,6 +1460,11 @@ class _TableBlockEditor extends StatelessWidget {
   final VoidCallback onTableDeleted;
   final int editRevision;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
+  final TextEditingController Function(BusyBlock cell)? cellController;
+  final UndoHistoryController Function(BusyBlock cell)? cellUndoController;
+  final FocusNode Function(BusyBlock cell)? cellFocusNode;
+  final GlobalKey Function(String cellId)? cellKey;
+  final ValueChanged<String>? onCellFocused;
 
   @override
   Widget build(BuildContext context) {
@@ -1508,6 +1534,19 @@ class _TableBlockEditor extends StatelessWidget {
                       editRevision: editRevision,
                       sourceSpan: block.sourceSpan,
                       onMathDiagnostic: onMathDiagnostic,
+                      controller: column < row.children.length
+                          ? cellController?.call(row.children[column])
+                          : null,
+                      undoController: column < row.children.length
+                          ? cellUndoController?.call(row.children[column])
+                          : null,
+                      focusNode: column < row.children.length
+                          ? cellFocusNode?.call(row.children[column])
+                          : null,
+                      cellKey: column < row.children.length
+                          ? cellKey?.call(row.children[column].id)
+                          : null,
+                      onCellFocused: onCellFocused,
                     ),
                 ],
               ),
@@ -1746,6 +1785,11 @@ class _TableCellEditor extends StatefulWidget {
     required this.editRevision,
     this.sourceSpan,
     this.onMathDiagnostic,
+    this.controller,
+    this.undoController,
+    this.focusNode,
+    this.cellKey,
+    this.onCellFocused,
   });
 
   final BusyBlock? cell;
@@ -1756,6 +1800,11 @@ class _TableCellEditor extends StatefulWidget {
   final int editRevision;
   final SourceSpan? sourceSpan;
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
+  final TextEditingController? controller;
+  final UndoHistoryController? undoController;
+  final FocusNode? focusNode;
+  final GlobalKey? cellKey;
+  final ValueChanged<String>? onCellFocused;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
@@ -1764,31 +1813,66 @@ class _TableCellEditor extends StatefulWidget {
 class _TableCellEditorState extends State<_TableCellEditor> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
-  String? _cellId;
+  late bool _ownsController;
+  late bool _ownsFocusNode;
   bool _sourceEditing = false;
 
   @override
   void initState() {
     super.initState();
-    _cellId = widget.cell?.id;
-    _controller = TextEditingController(text: _editableText(widget.cell));
-    _focusNode = FocusNode(debugLabel: 'BusyMark table cell $_cellId');
-    _focusNode.addListener(_handleFocusChanged);
+    _attachInputs();
   }
 
   @override
   void didUpdateWidget(covariant _TableCellEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final cell = widget.cell;
-    if (cell?.id != _cellId) {
-      _cellId = cell?.id;
-      _controller.text = _editableText(cell);
+    if (!identical(oldWidget.controller, widget.controller) ||
+        !identical(oldWidget.focusNode, widget.focusNode) ||
+        oldWidget.cell?.id != widget.cell?.id) {
+      _detachInputs();
+      _attachInputs();
+    } else {
+      _reconcileController();
+    }
+  }
+
+  void _attachInputs() {
+    _ownsController = widget.controller == null;
+    _ownsFocusNode = widget.focusNode == null;
+    _controller =
+        widget.controller ??
+        TextEditingController(text: _editableText(widget.cell));
+    _focusNode =
+        widget.focusNode ??
+        FocusNode(debugLabel: 'BusyMark table cell ${widget.cell?.id}');
+    _focusNode.addListener(_handleFocusChanged);
+    _reconcileController();
+  }
+
+  void _detachInputs() {
+    _focusNode.removeListener(_handleFocusChanged);
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    if (_ownsFocusNode) {
+      _focusNode.dispose();
+    }
+  }
+
+  void _reconcileController() {
+    final nextText = _editableText(widget.cell);
+    if (nextText == _controller.text) {
       return;
     }
-    final nextText = _editableText(cell);
-    if (!_focusNode.hasFocus && nextText != _controller.text) {
-      _controller.text = nextText;
-    }
+    final selection = _controller.selection;
+    _controller.value = _controller.value.copyWith(
+      text: nextText,
+      selection: TextSelection(
+        baseOffset: selection.baseOffset.clamp(0, nextText.length).toInt(),
+        extentOffset: selection.extentOffset.clamp(0, nextText.length).toInt(),
+      ),
+      composing: TextRange.empty,
+    );
   }
 
   String _editableText(BusyBlock? cell) {
@@ -1802,13 +1886,21 @@ class _TableCellEditorState extends State<_TableCellEditor> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_handleFocusChanged);
-    _controller.dispose();
-    _focusNode.dispose();
+    _detachInputs();
     super.dispose();
   }
 
   void _handleFocusChanged() {
+    if (_focusNode.hasFocus && widget.cell != null) {
+      final onCellFocused = widget.onCellFocused;
+      if (onCellFocused == null) {
+        widget.onFocused();
+      } else {
+        onCellFocused(widget.cell!.id);
+      }
+    } else if (!_focusNode.hasFocus) {
+      _reconcileController();
+    }
     if (mounted) {
       setState(() {
         if (!_focusNode.hasFocus) {
@@ -1854,33 +1946,81 @@ class _TableCellEditorState extends State<_TableCellEditor> {
         ),
       );
     }
-    return Padding(
-      padding: BusyMarkInsets.documentTableCell,
-      child: TextField(
-        key: ValueKey(cell.id),
-        controller: _controller,
-        focusNode: _focusNode,
-        minLines: 1,
-        maxLines: null,
-        style: textStyle,
-        selectionHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
-        selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
-        decoration: InputDecoration(
-          isCollapsed: true,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          filled: false,
-          hoverColor: BusyMarkLinuxPalette.transparent,
-          hintText: widget.header
-              ? context.l10n.tableHeaderHint
-              : context.l10n.tableCellHint,
-          hintStyle: textStyle.copyWith(color: colors.mutedForeground),
-          contentPadding: EdgeInsets.zero,
+    return KeyedSubtree(
+      key: widget.cellKey,
+      child: Padding(
+        padding: BusyMarkInsets.documentTableCell,
+        child: TextField(
+          key: ValueKey(cell.id),
+          controller: _controller,
+          focusNode: _focusNode,
+          undoController: widget.undoController,
+          minLines: 1,
+          maxLines: 1,
+          inputFormatters: const [_SingleLineTableCellFormatter()],
+          style: textStyle,
+          selectionHeightStyle:
+              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+          selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+          decoration: InputDecoration(
+            isCollapsed: true,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
+            hoverColor: BusyMarkLinuxPalette.transparent,
+            hintText: widget.header
+                ? context.l10n.tableHeaderHint
+                : context.l10n.tableCellHint,
+            hintStyle: textStyle.copyWith(color: colors.mutedForeground),
+            contentPadding: EdgeInsets.zero,
+          ),
+          onTap: () {
+            final onCellFocused = widget.onCellFocused;
+            if (onCellFocused == null) {
+              widget.onFocused();
+            } else {
+              onCellFocused(cell.id);
+            }
+          },
+          onChanged: (value) => widget.onChanged(cell.id, value),
         ),
-        onTap: widget.onFocused,
-        onChanged: (value) => widget.onChanged(cell.id, value),
       ),
+    );
+  }
+}
+
+class _SingleLineTableCellFormatter extends TextInputFormatter {
+  const _SingleLineTableCellFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final normalized = newValue.text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
+    if (normalized == newValue.text) {
+      return newValue;
+    }
+    int normalizedOffset(int offset) {
+      if (offset < 0) {
+        return offset;
+      }
+      return newValue.text
+          .substring(0, offset.clamp(0, newValue.text.length).toInt())
+          .replaceAll(RegExp(r'\r\n|\r|\n'), ' ')
+          .length;
+    }
+
+    return newValue.copyWith(
+      text: normalized,
+      selection: TextSelection(
+        baseOffset: normalizedOffset(newValue.selection.baseOffset),
+        extentOffset: normalizedOffset(newValue.selection.extentOffset),
+        affinity: newValue.selection.affinity,
+        isDirectional: newValue.selection.isDirectional,
+      ),
+      composing: TextRange.empty,
     );
   }
 }

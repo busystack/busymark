@@ -1833,6 +1833,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String text, {
     required BusyDocument document,
     String? sourceFilePath,
+    String? undoGroup,
   }) {
     _updateActiveText(
       text,
@@ -1840,6 +1841,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       rebuildPreview: false,
       liveOutline: document.outline,
       preserveFinalNewline: true,
+      undoGroup: undoGroup,
     );
   }
 
@@ -1943,6 +1945,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? sourceFilePath,
     List<DocumentOutlineHeading>? liveOutline,
     bool preserveFinalNewline = false,
+    String? undoGroup,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -1957,7 +1960,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final effectiveText = preserveFinalNewline
         ? _withFinalNewlinePolicy(text, activeBuffer.format.hasFinalNewline)
         : text;
-    final nextBuffer = activeBuffer.edited(effectiveText);
+    final nextBuffer = activeBuffer.edited(effectiveText, undoGroup: undoGroup);
     if (identical(nextBuffer, activeBuffer)) {
       return;
     }

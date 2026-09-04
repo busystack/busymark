@@ -1,6 +1,7 @@
 class WysiwygEditorSessionState {
   const WysiwygEditorSessionState({
     this.activeBlockId,
+    this.activeCellId,
     this.anchorBlockId,
     this.anchorOffset = 0,
     this.extentBlockId,
@@ -10,6 +11,7 @@ class WysiwygEditorSessionState {
   });
 
   final String? activeBlockId;
+  final String? activeCellId;
   final String? anchorBlockId;
   final int anchorOffset;
   final String? extentBlockId;
@@ -19,6 +21,7 @@ class WysiwygEditorSessionState {
 
   Map<String, Object?> toJson() => {
     'activeBlockId': activeBlockId,
+    'activeCellId': activeCellId,
     'anchorBlockId': anchorBlockId,
     'anchorOffset': anchorOffset,
     'extentBlockId': extentBlockId,
@@ -30,6 +33,7 @@ class WysiwygEditorSessionState {
   factory WysiwygEditorSessionState.fromJson(Map<String, Object?> json) {
     return WysiwygEditorSessionState(
       activeBlockId: json['activeBlockId']?.toString(),
+      activeCellId: json['activeCellId']?.toString(),
       anchorBlockId: json['anchorBlockId']?.toString(),
       anchorOffset: (json['anchorOffset'] as num?)?.toInt() ?? 0,
       extentBlockId: json['extentBlockId']?.toString(),

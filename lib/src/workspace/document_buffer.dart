@@ -13,25 +13,37 @@ const Object _bufferUnset = Object();
 enum DocumentDiskState { present, changed, deleted, conflict }
 
 class DocumentUndoState {
-  const DocumentUndoState({this.undo = const [], this.redo = const []});
+  const DocumentUndoState({
+    this.undo = const [],
+    this.redo = const [],
+    this.activeGroup,
+  });
 
   static const historyLimit = 100;
 
   final List<String> undo;
   final List<String> redo;
+  final String? activeGroup;
 
-  DocumentUndoState push(String text) => DocumentUndoState(
-    undo: List.unmodifiable(
-      [...undo, text].skip(math.max(0, undo.length + 1 - historyLimit)),
-    ),
-    redo: const [],
-  );
+  DocumentUndoState push(String text, {String? group}) {
+    if (group != null && group == activeGroup && undo.isNotEmpty) {
+      return DocumentUndoState(undo: undo, redo: const [], activeGroup: group);
+    }
+    return DocumentUndoState(
+      undo: List.unmodifiable(
+        [...undo, text].skip(math.max(0, undo.length + 1 - historyLimit)),
+      ),
+      redo: const [],
+      activeGroup: group,
+    );
+  }
 
   DocumentUndoState afterUndo(String currentText) => DocumentUndoState(
     undo: List.unmodifiable(undo.take(undo.length - 1)),
     redo: List.unmodifiable(
       [...redo, currentText].skip(math.max(0, redo.length + 1 - historyLimit)),
     ),
+    activeGroup: null,
   );
 
   DocumentUndoState afterRedo(String currentText) => DocumentUndoState(
@@ -39,6 +51,7 @@ class DocumentUndoState {
       [...undo, currentText].skip(math.max(0, undo.length + 1 - historyLimit)),
     ),
     redo: List.unmodifiable(redo.take(redo.length - 1)),
+    activeGroup: null,
   );
 }
 
@@ -216,7 +229,7 @@ class DocumentBuffer {
   String get identity => filePath ?? id;
   String get displayName => untitledName ?? filePath?.split('/').last ?? id;
 
-  DocumentBuffer edited(String nextText) {
+  DocumentBuffer edited(String nextText, {String? undoGroup}) {
     if (nextText == text) {
       return this;
     }
@@ -226,7 +239,7 @@ class DocumentBuffer {
       format: format.copyWith(hasFinalNewline: nextText.endsWith('\n')),
       revision: revision + 1,
       editorState: editorState.copyWith(
-        undoState: editorState.undoState.push(text),
+        undoState: editorState.undoState.push(text, group: undoGroup),
       ),
     );
   }
