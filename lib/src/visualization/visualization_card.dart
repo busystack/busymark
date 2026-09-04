@@ -735,26 +735,28 @@ class _DiagramViewport extends StatelessWidget {
             minScale: 0.5,
             maxScale: 8,
             boundaryMargin: const EdgeInsets.all(BusyMarkSpacing.xxl),
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: width,
-                  height: height,
-                  child: switch (result) {
-                    SvgVisualizationResult(:final svg) => SvgPicture.string(
-                      svg,
-                      fit: BoxFit.contain,
-                      semanticsLabel: context.l10n.image,
-                    ),
-                    RasterVisualizationResult(:final pngBytes) => Image.memory(
-                      pngBytes,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                    ),
-                    _ => const SizedBox.shrink(),
-                  },
-                ),
+            // Keep the fitter under the viewport's tight constraints. Wrapping
+            // it in Center would loosen those constraints, leaving smaller
+            // Mermaid SVGs at their intrinsic size instead of fitting them to
+            // the available preview width.
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: switch (result) {
+                  SvgVisualizationResult(:final svg) => SvgPicture.string(
+                    svg,
+                    fit: BoxFit.contain,
+                    semanticsLabel: context.l10n.image,
+                  ),
+                  RasterVisualizationResult(:final pngBytes) => Image.memory(
+                    pngBytes,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                  _ => const SizedBox.shrink(),
+                },
               ),
             ),
           ),

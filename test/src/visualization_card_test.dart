@@ -76,6 +76,30 @@ void main() {
     expect(find.textContaining('```MerMAID'), findsOneWidget);
   });
 
+  testWidgets('fits a small Mermaid diagram to the preview width', (
+    tester,
+  ) async {
+    final coordinator = VisualizationCoordinator(
+      renderers: const [_CardRenderer()],
+      cache: _MemoryVisualizationCache(cacheDirectory),
+    );
+    addTearDown(coordinator.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          visualizationCoordinatorProvider.overrideWithValue(coordinator),
+        ],
+        child: _App(child: _CardHarness(onDiagnosticSelected: (_) {})),
+      ),
+    );
+    await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+    final renderedBounds = tester.getRect(find.byType(SvgPicture));
+    expect(renderedBounds.width, greaterThan(700));
+    expect(renderedBounds.height, greaterThan(140));
+  });
+
   testWidgets(
     'shows searchable OpenAPI operations and opens the native reference',
     (tester) async {
@@ -293,9 +317,9 @@ class _CardRenderer implements VisualizationRenderer {
     }
     return const SvgVisualizationResult(
       svg:
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10"/></svg>',
-      width: 10,
-      height: 10,
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80"><rect width="400" height="80"/></svg>',
+      width: 400,
+      height: 80,
     );
   }
 }
