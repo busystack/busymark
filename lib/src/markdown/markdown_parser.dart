@@ -26,6 +26,16 @@ const int _backgroundParseThresholdBytes = 64 * 1024;
 class MarkdownParser {
   const MarkdownParser();
 
+  List<BusyInline> parseInlineFragment({
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+  }) {
+    return const MarkdownAstAdapter().parseInlineFragment(
+      source: source,
+      mode: mode,
+    );
+  }
+
   Future<ParsedMarkdownDocument> parseAsync({
     required String filePath,
     required String source,

@@ -482,23 +482,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyBlock _tableCellWithEditedSource(BusyBlock cell, String source) {
-    final parsed = const MarkdownParser().parse(
-      filePath: _document.filePath,
-      source: '$source\n',
+    final inlines = const MarkdownParser().parseInlineFragment(
+      source: source,
       mode: _document.mode,
-      validateLocalReferences: false,
     );
-    final parsedBlock = parsed.busyDocument.blocks
-        .where(
-          (block) =>
-              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-        )
-        .firstOrNull;
-    final inlines = parsedBlock?.inlines;
     return cell.copyWith(
-      inlines: inlines == null || inlines.isEmpty
-          ? _textInlines(source)
-          : inlines,
+      inlines: inlines.isEmpty ? _textInlines(source) : inlines,
       preserveRaw: false,
       dirty: true,
     );
@@ -595,7 +584,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final blocks = _replaceInBlocks(
       _document.blocks,
       blockId,
-      (block) => _blockWithCommand(block, command),
+      (block) => _blockWithCommand(
+        block,
+        command,
+        nextId: () => _nextGeneratedBlockId('paragraph'),
+      ),
     );
     _document = _document.copyWith(
       blocks: command == BusyWysiwygBlockCommand.orderedList
@@ -627,7 +620,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final idSet = eligibleIds.toSet();
     final replaced = _replaceBlocksByIds(_document.blocks, idSet, (block) {
-      return _blockWithCommand(block, command);
+      return _blockWithCommand(
+        block,
+        command,
+        nextId: () => _nextGeneratedBlockId('paragraph'),
+      );
     });
     _document = _document.copyWith(
       blocks: command == BusyWysiwygBlockCommand.orderedList
@@ -646,7 +643,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceInBlocks(
         _document.blocks,
         blockId,
-        (block) => _blockWithAdmonitionStyle(block, style),
+        (block) => _blockWithAdmonitionStyle(
+          block,
+          style,
+          nextId: () => _nextGeneratedBlockId('paragraph'),
+        ),
       ),
     );
     notifyListeners();
@@ -669,7 +670,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceBlocksByIds(
         _document.blocks,
         ids,
-        (block) => _blockWithAdmonitionStyle(block, style),
+        (block) => _blockWithAdmonitionStyle(
+          block,
+          style,
+          nextId: () => _nextGeneratedBlockId('paragraph'),
+        ),
       ),
     );
     notifyListeners();
@@ -2680,8 +2685,13 @@ BusyBlock _withoutSourceSpan(BusyBlock block, {required bool dirty}) {
   );
 }
 
-BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
+BusyBlock _blockWithCommand(
+  BusyBlock block,
+  BusyWysiwygBlockCommand command, {
+  required String Function() nextId,
+}) {
   final kind = blockKindForCommand(command);
+  final structured = _blockWithStructureForKind(block, kind, nextId);
   final attributes = {...block.attributes}
     ..remove('ordered')
     ..remove('marker')
@@ -2729,14 +2739,18 @@ BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     attributes['marker'] = '-';
     attributes['task'] = block.attributes['task'] ?? 'false';
   }
-  return block.copyWith(kind: kind, attributes: attributes, dirty: true);
+  return structured.copyWith(kind: kind, attributes: attributes, dirty: true);
 }
 
 BusyBlock _blockWithAdmonitionStyle(
   BusyBlock block,
-  BusyAdmonitionStyle style,
-) {
+  BusyAdmonitionStyle style, {
+  required String Function() nextId,
+}) {
   final semanticElement = block.kind == BusyBlockKind.writersideAdmonition;
+  final structured = semanticElement
+      ? block
+      : _blockWithStructureForKind(block, BusyBlockKind.blockquote, nextId);
   final attributes = {...block.attributes}
     ..remove('ordered')
     ..remove('marker')
@@ -2755,7 +2769,7 @@ BusyBlock _blockWithAdmonitionStyle(
   } else {
     attributes.remove('element');
   }
-  return block.copyWith(
+  return structured.copyWith(
     kind: semanticElement
         ? BusyBlockKind.writersideAdmonition
         : BusyBlockKind.blockquote,
@@ -2763,6 +2777,48 @@ BusyBlock _blockWithAdmonitionStyle(
     preserveRaw: false,
     dirty: true,
   );
+}
+
+BusyBlock _blockWithStructureForKind(
+  BusyBlock block,
+  BusyBlockKind destinationKind,
+  String Function() nextId,
+) {
+  if (_isListItemKind(block.kind) &&
+      destinationKind == BusyBlockKind.blockquote &&
+      block.children.isNotEmpty) {
+    return block.copyWith(
+      inlines: const [],
+      children: [
+        if (block.inlines.isNotEmpty)
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.paragraph,
+            inlines: block.inlines,
+            dirty: true,
+          ),
+        ...block.children,
+      ],
+    );
+  }
+  if (block.kind == BusyBlockKind.blockquote &&
+      _isListItemKind(destinationKind) &&
+      block.children.isNotEmpty) {
+    final leading = block.children.first;
+    if (block.inlines.isEmpty &&
+        leading.kind == BusyBlockKind.paragraph &&
+        leading.children.isEmpty &&
+        !leading.preserveRaw &&
+        !leading.isSourceOnly &&
+        !leading.isGenerated &&
+        !leading.isSourceProtected) {
+      return block.copyWith(
+        inlines: leading.inlines,
+        children: block.children.skip(1).toList(growable: false),
+      );
+    }
+  }
+  return block;
 }
 
 BusyBlock _numberIndentedListItem(

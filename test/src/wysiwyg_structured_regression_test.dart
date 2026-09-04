@@ -48,6 +48,68 @@ void main() {
     },
   );
 
+  test('nested list-to-blockquote conversion preserves parent text', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '- parent\n  - child\n')
+        .busyDocument;
+    final parent = document.blocks.single;
+    expect(parent.children, isNotEmpty);
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+
+    expect(
+      busyMarkWysiwygCanApplyBlockCommand(
+        parent,
+        BusyWysiwygBlockCommand.heading1,
+      ),
+      isFalse,
+    );
+    expect(
+      busyMarkWysiwygCanApplyBlockCommand(
+        parent,
+        BusyWysiwygBlockCommand.orderedList,
+      ),
+      isTrue,
+    );
+    controller.applyBlockCommand(parent.id, BusyWysiwygBlockCommand.blockquote);
+
+    final quote = controller.blockById(parent.id)!;
+    expect(quote.kind, BusyBlockKind.blockquote);
+    expect(quote.inlines, isEmpty);
+    expect(quote.children.first.kind, BusyBlockKind.paragraph);
+    expect(quote.children.first.plainText, 'parent');
+    expect(quote.children.last.plainText, 'child');
+    expect(controller.markdown, '> parent\n>\n> - child\n');
+
+    controller.applyBlockCommand(
+      parent.id,
+      BusyWysiwygBlockCommand.unorderedList,
+    );
+    final restoredList = controller.blockById(parent.id)!;
+    expect(restoredList.plainText, 'parent');
+    expect(restoredList.children.single.plainText, 'child');
+    expect(controller.markdown, '- parent\n  - child\n');
+  });
+
+  test('every admonition style preserves nested list parent text', () {
+    for (final style in BusyAdmonitionStyle.values) {
+      final document = parser
+          .parse(filePath: 'topic.md', source: '- parent\n  - child\n')
+          .busyDocument;
+      final parent = document.blocks.single;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+
+      controller.applyAdmonitionStyle(parent.id, style);
+
+      final admonition = controller.blockById(parent.id)!;
+      expect(admonition.kind, BusyBlockKind.blockquote, reason: style.name);
+      expect(admonition.attributes['style'], style.name, reason: style.name);
+      expect(admonition.children.first.plainText, 'parent', reason: style.name);
+      expect(admonition.children.last.plainText, 'child', reason: style.name);
+      expect(controller.markdown, contains('> parent'), reason: style.name);
+      expect(controller.markdown, contains('child'), reason: style.name);
+    }
+  });
+
   test('complete clipboard snapshots reconstruct a table transactionally', () {
     final tableDocument = parser
         .parse(
@@ -164,6 +226,22 @@ void main() {
     expect(controller.markdown, contains('| A  B C D |'));
   });
 
+  test('table cell edits parse block-marker prefixes as inline text', () {
+    for (final value in const ['# title', '- item', '1. item', '> quote']) {
+      final document = parser
+          .parse(filePath: 'topic.md', source: '| A |\n| --- |\n| value |\n')
+          .busyDocument;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final table = document.blocks.single;
+      final cell = table.children.last.children.single;
+
+      controller.updateTableCellText(table.id, cell.id, value);
+
+      expect(controller.blockById(cell.id)?.plainText, value, reason: value);
+      expect(controller.markdown, contains('| $value |'), reason: value);
+    }
+  });
+
   testWidgets('table fields reject multiline input and reconcile the model', (
     tester,
   ) async {
@@ -191,6 +269,39 @@ void main() {
     expect(field.maxLines, 1);
     expect(field.controller?.text, 'AB');
     expect(markdown, contains('| AB |'));
+  });
+
+  testWidgets('table fields preserve block-marker-prefixed cell values', (
+    tester,
+  ) async {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '| A |\n| --- |\n| value |\n')
+        .busyDocument;
+    final table = document.blocks.single;
+    final cell = table.children.last.children.single;
+    var markdown = '';
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWysiwygEditor(
+          document: document,
+          onSourceChanged: (_, value) => markdown = value,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final finder = find.byKey(ValueKey(cell.id));
+    for (final value in const ['# title', '- item', '1. item', '> quote']) {
+      await tester.enterText(finder, value);
+      await tester.pump();
+
+      expect(
+        tester.widget<TextField>(finder).controller?.text,
+        value,
+        reason: value,
+      );
+      expect(markdown, contains('| $value |'), reason: value);
+    }
   });
 
   testWidgets('exact source ranges select repeated text and table cells', (

@@ -47,22 +47,8 @@ bool busyMarkWysiwygCanApplyBlockCommand(
     return false;
   }
   if (block.children.isNotEmpty) {
-    final sourceSupportsChildren = switch (block.kind) {
-      BusyBlockKind.unorderedListItem ||
-      BusyBlockKind.orderedListItem ||
-      BusyBlockKind.taskListItem ||
-      BusyBlockKind.blockquote => true,
-      _ => false,
-    };
     final destinationKind = blockKindForCommand(command);
-    final destinationSupportsChildren = switch (destinationKind) {
-      BusyBlockKind.unorderedListItem ||
-      BusyBlockKind.orderedListItem ||
-      BusyBlockKind.taskListItem ||
-      BusyBlockKind.blockquote => true,
-      _ => false,
-    };
-    if (!sourceSupportsChildren || !destinationSupportsChildren) {
+    if (!_hasSafeStructuredConversion(block, destinationKind)) {
       return false;
     }
   }
@@ -90,10 +76,45 @@ bool busyMarkWysiwygCanApplyBlockCommand(
 }
 
 bool busyMarkWysiwygCanApplyAdmonitionStyle(BusyBlock block) {
+  if (block.kind == BusyBlockKind.writersideAdmonition &&
+      !block.preserveRaw &&
+      !block.isSourceOnly &&
+      !block.isGenerated &&
+      !block.isSourceProtected) {
+    return true;
+  }
   return busyMarkWysiwygCanApplyBlockCommand(
     block,
     BusyWysiwygBlockCommand.blockquote,
   );
+}
+
+bool _hasSafeStructuredConversion(
+  BusyBlock block,
+  BusyBlockKind destinationKind,
+) {
+  final sourceIsList = _isListItemKind(block.kind);
+  final destinationIsList = _isListItemKind(destinationKind);
+  if (sourceIsList) {
+    // List-family conversions share the same inline/children representation.
+    // Converting to a quote is handled by an explicit structural transform.
+    return destinationIsList || destinationKind == BusyBlockKind.blockquote;
+  }
+  if (block.kind == BusyBlockKind.blockquote) {
+    // The reverse list conversion is also structural: its leading paragraph
+    // becomes the list item's own inline content.
+    return destinationKind == BusyBlockKind.blockquote || destinationIsList;
+  }
+  return false;
+}
+
+bool _isListItemKind(BusyBlockKind kind) {
+  return switch (kind) {
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem => true,
+    _ => false,
+  };
 }
 
 BusyBlockKind blockKindForCommand(BusyWysiwygBlockCommand command) {
