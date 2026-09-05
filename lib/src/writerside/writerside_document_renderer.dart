@@ -3,6 +3,7 @@ import '../markdown/markdown_model.dart';
 import '../markdown/math_syntax.dart';
 import 'writerside_document.dart';
 import 'writerside_schema.dart';
+import 'writerside_source_loader.dart';
 
 class WritersideDocumentRenderer {
   const WritersideDocumentRenderer();
@@ -44,6 +45,19 @@ class WritersideDocumentRenderer {
     final result = <BusyBlock>[];
     for (final node in nodes) {
       if (node is WritersideRawNode) {
+        if (!writersideIgnorableRaw(node.rawSource)) {
+          result.add(
+            BusyBlock(
+              id: _id('unsupported', node.span.startOffset),
+              kind: BusyBlockKind.codeBlock,
+              inlines: [
+                BusyInline(kind: BusyInlineKind.text, text: node.rawSource),
+              ],
+              attributes: const {'unsupported': 'true', 'language': 'xml'},
+              sourceSpan: node.span,
+            ),
+          );
+        }
         continue;
       }
       if (node is WritersideMarkdownBlockNode) {
@@ -73,8 +87,23 @@ class WritersideDocumentRenderer {
         case WritersideSemanticKind.topic:
         case WritersideSemanticKind.condition:
         case WritersideSemanticKind.container:
-        case null:
           result.addAll(_blocks(element.children, headingLevel: headingLevel));
+        case null:
+          result.add(
+            BusyBlock(
+              id: _nodeId(element),
+              kind: BusyBlockKind.codeBlock,
+              inlines: [
+                BusyInline(kind: BusyInlineKind.text, text: element.rawSource),
+              ],
+              attributes: {
+                ...attributes,
+                'unsupported': 'true',
+                'language': 'xml',
+              },
+              sourceSpan: element.span,
+            ),
+          );
         case WritersideSemanticKind.paragraph:
           final inlines = _inlines(element.children, element);
           if (inlines.isNotEmpty) {
@@ -162,7 +191,10 @@ class WritersideDocumentRenderer {
           result.add(_table(element));
         case WritersideSemanticKind.codeBlock:
           final language = element.attributes['lang'];
-          final text = _trimCode(element.plainText);
+          final text = _trimCode(
+            element.attributes[writersideResolvedSourceAttribute] ??
+                element.plainText,
+          );
           if (language?.toLowerCase() == 'tex') {
             result.add(
               BusyBlock(
@@ -555,10 +587,23 @@ class WritersideDocumentRenderer {
         case WritersideSemanticKind.link:
           result.add(
             BusyInline(
-              kind: BusyInlineKind.link,
-              text: text,
-              destination: node.attributes['href'] ?? node.attributes['anchor'],
-              children: children,
+              kind:
+                  node.attributes['nullable'] == 'true' &&
+                      node.attributes['resolved-available'] == 'false'
+                  ? BusyInlineKind.text
+                  : BusyInlineKind.link,
+              text: text.trim().isEmpty
+                  ? node.attributes['resolved-label'] ??
+                        node.attributes['href'] ??
+                        ''
+                  : text,
+              destination:
+                  node.attributes['resolved-destination'] ??
+                  node.attributes['href'] ??
+                  (node.attributes['anchor'] == null
+                      ? null
+                      : '#${node.attributes['anchor']}'),
+              children: text.trim().isEmpty ? const [] : children,
               attributes: _attributes(node),
             ),
           );

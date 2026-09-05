@@ -9,6 +9,14 @@ const writersideSourceModuleRootAttribute =
 const writersideSourceTopicPathAttribute =
     'busymark-writerside-source-topic-path';
 
+bool writersideIgnorableRaw(String source) {
+  final value = source.trim();
+  return value.isEmpty ||
+      value.startsWith('<!--') ||
+      value.startsWith('<?') ||
+      value.startsWith('<!DOCTYPE');
+}
+
 class WritersideSourceProvenance {
   const WritersideSourceProvenance({
     required this.moduleRoot,
@@ -68,6 +76,63 @@ class WritersideDocument {
       }
     }
     return null;
+  }
+
+  /// The source representation is immaterial to reference identity. Markdown
+  /// headings own the following blocks up to the next peer or ancestor heading.
+  List<WritersideDocumentNode>? contentById(String id) {
+    List<WritersideDocumentNode>? search(
+      List<WritersideDocumentNode> siblings,
+    ) {
+      for (var i = 0; i < siblings.length; i++) {
+        final node = siblings[i];
+        if (node is WritersideElementNode) {
+          if (node.attributes['id'] == id) return [node];
+          final nested = search(node.children);
+          if (nested != null) return nested;
+        } else if (node is WritersideMarkdownBlockNode) {
+          if (node.block.attributes['id'] == id) {
+            if (node.block.kind != BusyBlockKind.heading) return [node];
+            final level =
+                int.tryParse(node.block.attributes['level'] ?? '') ?? 1;
+            var end = i + 1;
+            while (end < siblings.length) {
+              final next = siblings[end];
+              if (next is WritersideMarkdownBlockNode &&
+                  next.block.kind == BusyBlockKind.heading &&
+                  (int.tryParse(next.block.attributes['level'] ?? '') ?? 1) <=
+                      level) {
+                break;
+              }
+              end++;
+            }
+            return siblings.sublist(i, end);
+          }
+          List<WritersideDocumentNode>? searchBlocks(List<BusyBlock> blocks) {
+            for (final block in blocks) {
+              if (block.attributes['id'] == id) {
+                return [
+                  WritersideMarkdownBlockNode(
+                    block: block,
+                    span: block.sourceSpan ?? node.span,
+                    rawSource: block.rawSource ?? node.rawSource,
+                  ),
+                ];
+              }
+              final nested = searchBlocks(block.children);
+              if (nested != null) return nested;
+            }
+            return null;
+          }
+
+          final nested = searchBlocks(node.block.children);
+          if (nested != null) return nested;
+        }
+      }
+      return null;
+    }
+
+    return search(nodes);
   }
 
   WritersideDocument copyWith({

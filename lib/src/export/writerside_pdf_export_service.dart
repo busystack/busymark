@@ -382,6 +382,7 @@ class WritersidePdfExportService {
       final attributes = {...block.attributes};
       final source = sourceContext(attributes);
       for (final name in ['src', 'preview-src']) {
+        if (name == 'src' && block.kind == BusyBlockKind.codeBlock) continue;
         final value = attributes[name];
         if (value == null || value.trim().isEmpty) {
           continue;

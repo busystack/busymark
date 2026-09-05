@@ -1226,22 +1226,7 @@ class MarkdownParser {
       r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
     ).firstMatch(lines[startIndex].line);
     final tag = match?.group(1)?.toLowerCase();
-    if (tag == null ||
-        !{
-          'note',
-          'tip',
-          'warning',
-          'quote',
-          'tabs',
-          'tab',
-          'procedure',
-          'step',
-          'chapter',
-          'code-block',
-          'deflist',
-          'def',
-          'video',
-        }.contains(tag)) {
+    if (tag == null || !WritersideSchema.isMarkdownSemanticBlock(tag)) {
       return null;
     }
     var balance = 0;

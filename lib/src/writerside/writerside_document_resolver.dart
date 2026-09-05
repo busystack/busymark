@@ -3,6 +3,8 @@ import '../markdown/busymark_document.dart';
 import 'writerside_document.dart';
 import 'writerside_model.dart';
 import 'writerside_schema.dart';
+import 'writerside_source_loader.dart';
+import 'writerside_code_selection.dart';
 
 class WritersideResolveContext {
   const WritersideResolveContext({
@@ -43,7 +45,8 @@ class WritersideDocumentResolver {
     final state = _ResolveState(context);
     final variables = <String, String>{
       for (final variable in context.module.variables)
-        variable.name: variable.value,
+        if (state._matchesInstance(variable.instanceCondition, context.module))
+          variable.name: variable.value,
       if (context.instance case final instance?) ...{
         'instance': instance.name,
         'instance-lowercase': instance.name.toLowerCase(),
@@ -84,6 +87,7 @@ class _ResolveState {
     required Set<String>? activeFilters,
     required Set<String> includeStack,
     required bool inheritedIgnoreVariables,
+    Map<String, String> arguments = const {},
   }) {
     final scopedVariables = {...variables};
     for (final node in nodes.whereType<WritersideElementNode>()) {
@@ -96,12 +100,13 @@ class _ResolveState {
       if (name != null && name.isNotEmpty && value != null) {
         scopedVariables[name] = _interpolate(
           value,
-          variables,
+          scopedVariables,
           node,
           ignore: inheritedIgnoreVariables,
         );
       }
     }
+    scopedVariables.addAll(arguments);
 
     final result = <WritersideDocumentNode>[];
     final provenance = WritersideSourceProvenance(
@@ -121,6 +126,12 @@ class _ResolveState {
         continue;
       }
       if (node is WritersideRawNode) {
+        if (!writersideIgnorableRaw(node.rawSource)) {
+          _referenceDiagnostic(
+            code: 'writerside.content.unsupported',
+            node: node,
+          );
+        }
         result.add(node.copyWith(provenance: provenance));
         continue;
       }
@@ -132,6 +143,8 @@ class _ResolveState {
           node.copyWith(
             block: _resolveMarkdownBlock(
               node.block,
+              module: module,
+              topic: topic,
               variables: scopedVariables,
               ignoreVariables: inheritedIgnoreVariables,
               sourceNode: node,
@@ -144,6 +157,14 @@ class _ResolveState {
       final element = node as WritersideElementNode;
       if (!_matchesConditions(element.attributes, activeFilters, module)) {
         continue;
+      }
+      if (element.semanticKind == null) {
+        _referenceDiagnostic(
+          code: 'writerside.content.unsupported',
+          node: element,
+          args: {'element': element.name},
+          severity: DiagnosticSeverity.warning,
+        );
       }
       if (element.semanticKind == WritersideSemanticKind.variable) {
         continue;
@@ -186,6 +207,22 @@ class _ResolveState {
         includeStack: includeStack,
         inheritedIgnoreVariables: ignoreVariables,
       );
+      if (element.semanticKind == WritersideSemanticKind.codeBlock &&
+          attributes.containsKey('src')) {
+        attributes[writersideResolvedSourceAttribute] = _resolveCodeSource(
+          attributes,
+          module: module,
+          topic: topic,
+          node: element,
+          variables: scopedVariables,
+          ignore: ignoreVariables,
+        );
+      }
+      if (element.semanticKind == WritersideSemanticKind.link) {
+        attributes.addAll(
+          _resolveLink(attributes, module: module, topic: topic, node: element),
+        );
+      }
       if (element.semanticKind == WritersideSemanticKind.condition) {
         result.addAll(children);
       } else {
@@ -199,6 +236,140 @@ class _ResolveState {
       }
     }
     return result;
+  }
+
+  String _resolveCodeSource(
+    Map<String, String> attributes, {
+    required WritersideModule module,
+    required WritersideTopic topic,
+    required WritersideDocumentNode node,
+    required Map<String, String> variables,
+    required bool ignore,
+  }) {
+    final reference = attributes['src']!;
+    final loaded = module
+        .sourceFiles[WritersideSourceLoader.key(topic.filePath, reference)];
+    try {
+      if (loaded?.text == null) {
+        throw FormatException(loaded?.failure ?? 'missing');
+      }
+      return _interpolate(
+        const WritersideCodeSelection().select(loaded!.text!, attributes),
+        variables,
+        node,
+        ignore: ignore,
+      );
+    } on FormatException catch (error) {
+      _referenceDiagnostic(
+        code: 'writerside.source.invalid',
+        node: node,
+        args: {'reference': reference, 'reason': error.message},
+      );
+      return 'Unable to load $reference: ${error.message}';
+    }
+  }
+
+  Map<String, String> _resolveLink(
+    Map<String, String> attributes, {
+    required WritersideModule module,
+    required WritersideTopic topic,
+    required WritersideDocumentNode node,
+  }) {
+    final href = attributes['href']?.trim() ?? '';
+    final hash = href.indexOf('#');
+    final path = hash < 0 ? href : href.substring(0, hash);
+    final anchor =
+        attributes['anchor']?.replaceFirst(RegExp(r'^#'), '') ??
+        (hash < 0 ? '' : href.substring(hash + 1));
+    final destination = '$path${anchor.isEmpty ? '' : '#$anchor'}';
+    if (Uri.tryParse(path)?.hasScheme == true) {
+      return {
+        'resolved-destination': destination,
+        'resolved-label': destination,
+        'resolved-available': 'true',
+      };
+    }
+    final origin = attributes['origin'];
+    final targetModule = origin == null
+        ? module
+        : context.modulesByOrigin[origin];
+    final targetTopic = path.isEmpty
+        ? topic
+        : targetModule?.topicByReference(
+                path,
+                fromTopic: identical(module, targetModule) ? topic : null,
+              ) ??
+              targetModule?.topicsById[path];
+    final target = anchor.isEmpty
+        ? null
+        : targetTopic?.document.contentById(anchor)?.first;
+    final instance = context.instance;
+    var available =
+        targetModule != null &&
+        targetTopic != null &&
+        (anchor.isEmpty || target != null);
+    if (available &&
+        instance != null &&
+        targetTopic.filePath != context.topic.filePath) {
+      available = instance.navigationTocRoots
+          .expand((root) => root.flatten())
+          .any((entry) {
+            final entryModule = entry.origin == null
+                ? context.module
+                : context.modulesByOrigin[entry.origin];
+            return entry.topicReference != null &&
+                entryModule
+                        ?.topicByReference(entry.topicReference!)
+                        ?.filePath ==
+                    targetTopic.filePath;
+          });
+    }
+    if (target is WritersideElementNode) {
+      available =
+          available &&
+          _matchesInstance(target.attributes['instance'], targetModule!);
+    } else if (target is WritersideMarkdownBlockNode) {
+      available =
+          available &&
+          _matchesInstance(target.block.attributes['instance'], targetModule!);
+    }
+    final targetTitle = target is WritersideElementNode
+        ? target.attributes['title'] ??
+              target.children
+                  .whereType<WritersideElementNode>()
+                  .where((element) => element.name == 'title')
+                  .firstOrNull
+                  ?.plainText ??
+              target.plainText
+        : target?.plainText;
+    final label = targetTitle?.trim().isNotEmpty == true
+        ? targetTitle!
+        : targetTopic?.title ?? destination;
+    final summary =
+        attributes['summary'] ??
+        targetTopic?.document.elements
+            .where((element) => element.name == 'link-summary')
+            .firstOrNull
+            ?.plainText ??
+        targetTopic?.document.elements
+            .where((element) => element.name == 'p')
+            .firstOrNull
+            ?.plainText;
+    if (!available && attributes['nullable'] != 'true') {
+      _referenceDiagnostic(
+        code: 'writerside.link.unavailable',
+        node: node,
+        args: {'destination': destination},
+      );
+    }
+    return {
+      'resolved-label': label,
+      'resolved-destination': path.isEmpty
+          ? '#$anchor'
+          : '${targetTopic?.filePath ?? path}${anchor.isEmpty ? '' : '#$anchor'}',
+      'resolved-available': '$available',
+      if (summary != null) 'summary': summary.trim(),
+    };
   }
 
   List<WritersideDocumentNode> _resolveInclude(
@@ -266,7 +437,7 @@ class _ResolveState {
     try {
       Iterable<WritersideDocumentNode> selected;
       if (elementId != null && elementId.isNotEmpty) {
-        final target = targetTopic.document.elementById(elementId);
+        final target = targetTopic.document.contentById(elementId);
         if (target == null) {
           if (!nullable) {
             _referenceDiagnostic(
@@ -277,9 +448,14 @@ class _ResolveState {
           }
           return const [];
         }
-        selected = target.semanticKind == WritersideSemanticKind.snippet
-            ? target.children
-            : [target];
+        final first = target.first;
+        selected =
+            first is WritersideElementNode &&
+                first.semanticKind == WritersideSemanticKind.snippet
+            ? (_matchesConditions(first.attributes, null, targetModule)
+                  ? first.children
+                  : const [])
+            : target;
       } else {
         final root = targetTopic.document.rootElement;
         selected = root == null
@@ -294,17 +470,20 @@ class _ResolveState {
 
       final includeVariables = <String, String>{
         for (final variable in targetModule.variables)
-          variable.name: variable.value,
+          if (_matchesInstance(variable.instanceCondition, targetModule))
+            variable.name: variable.value,
         ...variables,
       };
+      final arguments = <String, String>{};
       for (final child in include.children.whereType<WritersideElementNode>()) {
-        if (child.semanticKind != WritersideSemanticKind.variable) {
+        if (child.semanticKind != WritersideSemanticKind.variable ||
+            !_matchesConditions(child.attributes, null, module)) {
           continue;
         }
         final name = child.attributes['name']?.trim();
         final value = child.attributes['value'];
         if (name != null && name.isNotEmpty && value != null) {
-          includeVariables[name] = _interpolate(
+          arguments[name] = _interpolate(
             value,
             variables,
             child,
@@ -318,6 +497,7 @@ class _ResolveState {
         module: targetModule,
         topic: targetTopic,
         variables: includeVariables,
+        arguments: arguments,
         activeFilters: filters.isEmpty ? null : filters,
         includeStack: includeStack,
         inheritedIgnoreVariables: inheritedIgnoreVariables,
@@ -404,6 +584,8 @@ class _ResolveState {
 
   BusyBlock _resolveMarkdownBlock(
     BusyBlock block, {
+    required WritersideModule module,
+    required WritersideTopic topic,
     required Map<String, String> variables,
     required bool ignoreVariables,
     required WritersideDocumentNode sourceNode,
@@ -416,7 +598,7 @@ class _ResolveState {
         explicit == 'true' ||
         (explicit != 'false' && (ignoreVariables || smart));
     BusyInline resolveInline(BusyInline inline) {
-      return inline.copyWith(
+      final resolved = inline.copyWith(
         text: _interpolate(inline.text, variables, sourceNode, ignore: ignore),
         destination: inline.destination == null
             ? null
@@ -428,20 +610,56 @@ class _ResolveState {
               ),
         children: inline.children.map(resolveInline).toList(growable: false),
       );
+      if (resolved.kind != BusyInlineKind.link) return resolved;
+      final attributes = _resolveLink(
+        {...resolved.attributes, 'href': resolved.destination ?? ''},
+        module: module,
+        topic: topic,
+        node: sourceNode,
+      );
+      return resolved.copyWith(
+        kind:
+            resolved.attributes['nullable'] == 'true' &&
+                attributes['resolved-available'] == 'false'
+            ? BusyInlineKind.text
+            : BusyInlineKind.link,
+        text: resolved.plainText.trim().isEmpty
+            ? attributes['resolved-label']
+            : resolved.text,
+        destination: attributes['resolved-destination'],
+        attributes: {...resolved.attributes, ...attributes},
+      );
     }
 
+    final sourceText =
+        block.kind == BusyBlockKind.codeBlock &&
+            block.attributes.containsKey('src')
+        ? _resolveCodeSource(
+            block.attributes,
+            module: module,
+            topic: topic,
+            node: sourceNode,
+            variables: variables,
+            ignore: ignore,
+          )
+        : null;
     return block.copyWith(
-      inlines: block.inlines.map(resolveInline).toList(growable: false),
+      inlines: sourceText == null
+          ? block.inlines.map(resolveInline).toList(growable: false)
+          : [BusyInline(kind: BusyInlineKind.text, text: sourceText)],
       children: [
         for (final child in block.children)
           _resolveMarkdownBlock(
             child,
+            module: module,
+            topic: topic,
             variables: variables,
             ignoreVariables: ignore,
             sourceNode: sourceNode,
           ),
       ],
       attributes: {
+        if (sourceText != null) writersideResolvedSourceAttribute: sourceText,
         for (final entry in block.attributes.entries)
           entry.key: _interpolate(
             entry.value,

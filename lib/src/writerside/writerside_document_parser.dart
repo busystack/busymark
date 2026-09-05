@@ -2,6 +2,8 @@ import 'package:xml/xml_events.dart';
 
 import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
+import '../markdown/markdown_model.dart';
+import '../markdown/markdown_parser.dart';
 import 'writerside_document.dart';
 import 'writerside_schema.dart';
 
@@ -54,6 +56,7 @@ class WritersideDocumentParser {
             source: raw,
             sourceOffset: span.startOffset,
             completeSource: source,
+            markdownContent: true,
           );
           if (parsed.whereType<WritersideElementNode>().isNotEmpty) {
             nodes.addAll(parsed);
@@ -81,6 +84,7 @@ class WritersideDocumentParser {
     required String source,
     int sourceOffset = 0,
     String? completeSource,
+    bool markdownContent = false,
   }) {
     final fullSource = completeSource ?? source;
     final roots = <WritersideDocumentNode>[];
@@ -142,6 +146,36 @@ class WritersideDocumentParser {
           continue;
         }
         final frame = stack.removeLast();
+        if (markdownContent && _markdownContainers.contains(frame.name)) {
+          final inner = fullSource.substring(frame.openingEndOffset, start);
+          if (RegExp(r'^\s*\n\s*\n').hasMatch(inner) &&
+              RegExp(r'\n\s*\n\s*$').hasMatch(inner) &&
+              !inner.contains('<![CDATA[')) {
+            final parsed = const MarkdownParser().parse(
+              filePath: filePath,
+              source: inner,
+              mode: MarkdownMode.writersideMarkdown,
+              validateLocalReferences: false,
+            );
+            final mixed = parseMarkdown(
+              filePath: filePath,
+              source: inner,
+              markdown: parsed.busyDocument,
+            );
+            frame.children
+              ..clear()
+              ..addAll(
+                mixed.nodes.map(
+                  (node) => _rebaseNode(
+                    node,
+                    frame.openingEndOffset,
+                    filePath,
+                    fullSource,
+                  ),
+                ),
+              );
+          }
+        }
         append(frame.build(filePath: filePath, source: fullSource, end: end));
         continue;
       }
@@ -207,6 +241,81 @@ class WritersideDocumentParser {
         block.kind == BusyBlockKind.htmlBlock ||
         block.kind == BusyBlockKind.unknown;
   }
+}
+
+const _markdownContainers = {
+  'snippet',
+  'tab',
+  'chapter',
+  'note',
+  'tip',
+  'warning',
+  'quote',
+  'step',
+  'li',
+  'def',
+  'td',
+  'if',
+  'description',
+  'card',
+  'section-starting-page',
+};
+
+WritersideDocumentNode _rebaseNode(
+  WritersideDocumentNode node,
+  int offset,
+  String filePath,
+  String source,
+) {
+  SourceSpan span(SourceSpan original) => SourceSpan.fromOffsets(
+    filePath: filePath,
+    source: source,
+    startOffset: offset + original.startOffset,
+    endOffset: offset + original.endOffset,
+  );
+  BusyBlock block(BusyBlock original) => original.copyWith(
+    sourceSpan: original.sourceSpan == null ? null : span(original.sourceSpan!),
+    children: original.children.map(block).toList(),
+  );
+  if (node is WritersideMarkdownBlockNode) {
+    return WritersideMarkdownBlockNode(
+      block: block(node.block),
+      span: span(node.span),
+      rawSource: node.rawSource,
+    );
+  }
+  if (node is WritersideTextNode) {
+    return WritersideTextNode(
+      text: node.text,
+      span: span(node.span),
+      rawSource: node.rawSource,
+    );
+  }
+  if (node is WritersideRawNode) {
+    return WritersideRawNode(span: span(node.span), rawSource: node.rawSource);
+  }
+  final element = node as WritersideElementNode;
+  final frame = _ElementFrame(
+    name: element.name,
+    qualifiedName: element.qualifiedName,
+    attributes: element.attributes,
+    qualifiedAttributes: element.qualifiedAttributes,
+    attributeSpans: element.attributeSpans.map(
+      (key, value) => MapEntry(key, span(value)),
+    ),
+    startOffset: offset + element.span.startOffset,
+    openingEndOffset: offset + element.span.startOffset,
+  );
+  frame.children.addAll(
+    element.children.map(
+      (child) => _rebaseNode(child, offset, filePath, source),
+    ),
+  );
+  return frame.build(
+    filePath: filePath,
+    source: source,
+    end: offset + element.span.endOffset,
+  );
 }
 
 class _ElementFrame {

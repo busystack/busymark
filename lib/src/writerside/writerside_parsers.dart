@@ -867,7 +867,9 @@ class WritersideVariablesParser {
         );
         continue;
       }
-      if (seen.containsKey(name)) {
+      final condition = element.getAttribute('instance');
+      final identity = '$name:${condition ?? ''}';
+      if (seen.containsKey(identity)) {
         diagnostics.add(
           Diagnostic(
             code: 'writerside.variable.duplicate-name',
@@ -875,12 +877,19 @@ class WritersideVariablesParser {
             filePath: filePath,
             args: {'name': name},
             sourceSpan: span,
-            relatedSpans: [seen[name]!],
+            relatedSpans: [seen[identity]!],
           ),
         );
       }
-      seen[name] = span;
-      variables.add(WritersideVariable(name: name, value: value, span: span));
+      seen[identity] = span;
+      variables.add(
+        WritersideVariable(
+          name: name,
+          value: value,
+          span: span,
+          instanceCondition: condition,
+        ),
+      );
     }
     return (variables, diagnostics);
   }
@@ -1203,7 +1212,11 @@ class WritersideTopicParser {
           case 'web-file-name':
             webFileName = element.innerText.trim();
           case 'a':
-            final href = element.getAttribute('href');
+            final href =
+                element.getAttribute('href') ??
+                (element.getAttribute('anchor') == null
+                    ? null
+                    : '#${element.getAttribute('anchor')}');
             if (href == null) {
               diagnostics.add(
                 Diagnostic(

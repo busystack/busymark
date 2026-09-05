@@ -408,7 +408,7 @@ class WritersideProjectIndex {
       }
       if (id != null &&
           id.isNotEmpty &&
-          topics.single.document.elementById(id) == null) {
+          topics.single.document.contentById(id) == null) {
         diagnostics.add(
           _referenceDiagnostic(
             'writerside.index.unresolved-reference',

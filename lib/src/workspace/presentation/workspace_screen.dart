@@ -1,3 +1,4 @@
+import '../../writerside/writerside_source_loader.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -11384,7 +11385,10 @@ class _PreviewBlockView extends ConsumerWidget {
       key: ValueKey('visualization-$documentPath-$blockIdentity'),
       descriptor: descriptor,
       source: block.text,
-      sourceReference: block.attributes['src'],
+      sourceReference:
+          block.attributes.containsKey(writersideResolvedSourceAttribute)
+          ? null
+          : block.attributes['src'],
       sourceFence: _visualizationSourceFence(block, descriptor),
       documentPath: documentPath,
       workspaceRoot: workspace?.rootPath ?? '',
