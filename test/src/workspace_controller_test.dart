@@ -766,9 +766,14 @@ void main() {
     controller.updateActiveText('# Source discrete edit\n');
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    expect(service.reparseCount, 0);
+    expect(service.reparseCount, greaterThan(0));
     expect(service.asyncPreviewBuildCount, 0);
+    expect(
+      controller.state.liveOutline?.headings.single.text,
+      'Source discrete edit',
+    );
 
+    service.resetCounts();
     controller.updateActiveEditorMode(DocumentViewModePreference.preview);
     await _waitFor(
       () => controller.state.preview?.title == 'Source discrete edit',

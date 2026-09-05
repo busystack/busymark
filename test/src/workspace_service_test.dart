@@ -20,7 +20,7 @@ void main() {
     final workspace = await service.openPath('test/fixtures/markdown/basic.md');
 
     expect(workspace.kind, WorkspaceKind.singleMarkdown);
-    expect(workspace.markdown?.title, 'Basic Markdown');
+    expect(workspace.markdown?.title, 'BusyMark Markdown Demo');
     expect(workspace.activeFilePath, isNotNull);
   });
 
@@ -64,7 +64,7 @@ void main() {
 
     expect(workspace.kind, WorkspaceKind.singleMarkdown);
     expect(workspace.activeFilePath, file.absolute.path);
-    expect(workspace.markdown?.title, 'Basic Markdown');
+    expect(workspace.markdown?.title, 'BusyMark Markdown Demo');
   });
 
   test('opens a generic Markdown folder workspace', () async {

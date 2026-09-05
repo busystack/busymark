@@ -162,6 +162,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _derivedRefreshRunning = false;
   var _derivedRefreshPending = false;
   var _pendingPreviewRefresh = false;
+  var _pendingOutlineRefresh = false;
   _ActivePreviewRevision? _activePreviewRevision;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
@@ -1813,7 +1814,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _requestDerivedRefresh(rebuildPreview: _activeModeShowsPreview);
+    _requestDerivedRefresh(
+      rebuildPreview: _activeModeShowsPreview,
+      refreshOutline: !_activeModeShowsPreview,
+    );
     _schedulePersistence();
     return true;
   }
@@ -1844,7 +1848,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _requestDerivedRefresh(rebuildPreview: _activeModeShowsPreview);
+    _requestDerivedRefresh(
+      rebuildPreview: _activeModeShowsPreview,
+      refreshOutline: !_activeModeShowsPreview,
+    );
     _schedulePersistence();
     return true;
   }
@@ -2028,7 +2035,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             ),
     );
     _schedulePersistence();
-    _requestDerivedRefresh(rebuildPreview: rebuildPreview);
+    _requestDerivedRefresh(
+      rebuildPreview: rebuildPreview,
+      refreshOutline: !rebuildPreview && liveOutline == null,
+    );
     _scheduleAutoSave(nextBuffer.id);
   }
 
@@ -2064,12 +2074,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
-  void _requestDerivedRefresh({required bool rebuildPreview}) {
-    if (!_settingsController.state.validateOnEdit && !rebuildPreview) {
+  void _requestDerivedRefresh({
+    required bool rebuildPreview,
+    bool refreshOutline = false,
+  }) {
+    if (!_settingsController.state.validateOnEdit &&
+        !rebuildPreview &&
+        !refreshOutline) {
       return;
     }
     _derivedRefreshPending = true;
     _pendingPreviewRefresh = _pendingPreviewRefresh || rebuildPreview;
+    _pendingOutlineRefresh = _pendingOutlineRefresh || refreshOutline;
     if (!_derivedRefreshRunning) {
       unawaited(_drainDerivedRefreshes());
     }
@@ -2084,11 +2100,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       while (_derivedRefreshPending) {
         _derivedRefreshPending = false;
         final rebuildPreview = _pendingPreviewRefresh;
+        final refreshOutline = _pendingOutlineRefresh;
         _pendingPreviewRefresh = false;
+        _pendingOutlineRefresh = false;
         if (_settingsController.state.validateOnEdit) {
           await _validateActive(rebuildPreview: rebuildPreview);
         } else if (rebuildPreview) {
           await _refreshActivePreview();
+        } else if (refreshOutline) {
+          await _refreshActiveOutline();
         }
       }
     } finally {
@@ -2102,6 +2122,49 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   void _cancelPendingDerivedRefresh() {
     _derivedRefreshPending = false;
     _pendingPreviewRefresh = false;
+    _pendingOutlineRefresh = false;
+  }
+
+  Future<void> _refreshActiveOutline() async {
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null) {
+      return;
+    }
+    final workspaceId = workspace.id;
+    final activeFilePath = workspace.activeFilePath;
+    final bufferId = buffer.id;
+    final text = buffer.text;
+    final editRevision = buffer.revision;
+    final operationRevision = _activeDocumentRevision;
+    try {
+      final reparsed = await _service.reparseActive(workspace, text);
+      if (!_isCurrentActiveDocument(
+            operationRevision,
+            workspaceId: workspaceId,
+            activeFilePath: activeFilePath,
+          ) ||
+          state.activeBuffer?.id != bufferId ||
+          state.activeText != text ||
+          state.activeBuffer?.revision != editRevision) {
+        return;
+      }
+      state = state.copyWith(
+        liveOutline: ActiveDocumentOutline(
+          workspaceId: workspaceId,
+          filePath: activeFilePath,
+          source: text,
+          headings: _service.activeDocumentOutline(reparsed),
+        ),
+      );
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Could not refresh Source outline',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(activeFilePath ?? '')},
+      );
+    }
   }
 
   Future<void> _refreshActivePreview() async {
@@ -2975,6 +3038,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       } else {
         state = state.copyWith(
           workspace: validatedWorkspace,
+          liveOutline: ActiveDocumentOutline(
+            workspaceId: validatedWorkspace.id,
+            filePath: validatedWorkspace.activeFilePath,
+            source: text,
+            headings: _service.activeDocumentOutline(validatedWorkspace),
+          ),
           clearMessage: true,
         );
       }
