@@ -25,6 +25,7 @@ import 'source_autocomplete.dart';
 import 'source_diagnostics.dart';
 import 'source_document.dart';
 import 'source_gutter.dart';
+import 'source_intrinsic_width.dart';
 import 'source_search.dart';
 
 typedef BusyMarkSourceChanged =
@@ -119,7 +120,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _searchController = SourceSearchController();
   final _searchWorker = SourceSearchWorker();
   final _replacementWorker = SearchReplacementWorker();
-  final _intrinsicWidthCache = _SourceIntrinsicWidthCache();
+  final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
   List<SourceFoldRegion> _foldRegions = const [];
@@ -1695,7 +1696,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
   final SourceLineLayoutCache layoutCache;
-  final _SourceIntrinsicWidthCache intrinsicWidthCache;
+  final SourceIntrinsicWidthCache intrinsicWidthCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
   final ValueChanged<int?>? onVisibleLineChanged;
   final Widget child;
@@ -1864,56 +1865,6 @@ class _SourceEditorFrame extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-class _SourceIntrinsicWidthCache {
-  Object? _document;
-  SourceSyntaxLanguage? _language;
-  TextStyle? _textStyle;
-  StrutStyle? _strutStyle;
-  TextScaler? _textScaler;
-  double? _width;
-
-  double resolve(
-    BuildContext context, {
-    required BusyMarkSourceEditingController controller,
-    required TextStyle textStyle,
-    required StrutStyle? strutStyle,
-  }) {
-    final document = controller.document;
-    final textScaler = MediaQuery.textScalerOf(context);
-    final cached = _width;
-    if (cached != null &&
-        identical(_document, document) &&
-        _language == controller.language &&
-        _textStyle == textStyle &&
-        _strutStyle == strutStyle &&
-        _textScaler == textScaler) {
-      return cached;
-    }
-    final painter = TextPainter(
-      text: controller.buildSourceTextSpan(
-        context: context,
-        style: textStyle,
-        hideCollapsedStartLines: true,
-      ),
-      strutStyle: strutStyle,
-      textDirection: TextDirection.ltr,
-      textHeightBehavior: sourceTextHeightBehavior,
-      textScaler: textScaler,
-    )..layout();
-    final width = math
-        .max(1, painter.width + BusyMarkStroke.sourceCursor)
-        .toDouble();
-    painter.dispose();
-    _document = document;
-    _language = controller.language;
-    _textStyle = textStyle;
-    _strutStyle = strutStyle;
-    _textScaler = textScaler;
-    _width = width;
-    return width;
   }
 }
 
