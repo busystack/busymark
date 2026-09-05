@@ -3754,4 +3754,140 @@ class AppLocalizationsId extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Urutkan $column';
   }
+
+  @override
+  String get exportReset => 'Pulihkan nilai bawaan';
+
+  @override
+  String get exportToc => 'Sertakan daftar isi';
+
+  @override
+  String get exportTocDepth => 'Kedalaman daftar isi';
+
+  @override
+  String get exportNumberHeadings => 'Nomori judul';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Khusus';
+
+  @override
+  String get exportPageWidth => 'Lebar halaman (mm)';
+
+  @override
+  String get exportPageHeight => 'Tinggi halaman (mm)';
+
+  @override
+  String get exportMarginTop => 'Margin atas (mm)';
+
+  @override
+  String get exportMarginRight => 'Margin kanan (mm)';
+
+  @override
+  String get exportMarginBottom => 'Margin bawah (mm)';
+
+  @override
+  String get exportMarginLeft => 'Margin kiri (mm)';
+
+  @override
+  String get exportTypography => 'Tipografi';
+
+  @override
+  String get exportSans => 'Tanpa serif';
+
+  @override
+  String get exportSerif => 'Berserif';
+
+  @override
+  String get exportBodySize => 'Ukuran huruf isi';
+
+  @override
+  String get exportCodeSize => 'Ukuran huruf kode';
+
+  @override
+  String get exportRunningText => 'Kepala dan kaki halaman';
+
+  @override
+  String get exportHeader => 'Kepala halaman';
+
+  @override
+  String get exportFooter => 'Kaki halaman';
+
+  @override
+  String get exportNone => 'Tidak ada';
+
+  @override
+  String get exportDocumentTitle => 'Judul dokumen';
+
+  @override
+  String get exportBottomLeft => 'Kiri bawah';
+
+  @override
+  String get exportBottomCenter => 'Tengah bawah';
+
+  @override
+  String get exportBottomRight => 'Kanan bawah';
+
+  @override
+  String get exportFirstPage =>
+      'Tampilkan kepala dan kaki pada halaman pertama';
+
+  @override
+  String get exportAccent => 'Warna aksen / tautan';
+
+  @override
+  String get exportTheme => 'Tema';
+
+  @override
+  String get exportAutomatic => 'Otomatis';
+
+  @override
+  String get exportLayout => 'Tata letak';
+
+  @override
+  String get exportContentWidth => 'Lebar isi maksimum';
+
+  @override
+  String get exportOutput => 'Keluaran';
+
+  @override
+  String get exportPackaging => 'Pengemasan';
+
+  @override
+  String get exportSingleFile => 'Satu berkas HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + folder aset';
+
+  @override
+  String get exportCustomCss => 'Lembar gaya khusus…';
+
+  @override
+  String get exportRemoveCss => 'Hapus lembar gaya khusus';
+
+  @override
+  String get exportCssNote =>
+      'Pilih berkas CSS UTF-8 opsional (hingga 256 KiB). Impor, URL sumber daya, serta CSS yang dapat dieksekusi atau memakai escape ditolak. Gaya diterapkan setelah CSS BusyMark. Sumber daya jarak jauh tidak diunduh.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside mempertahankan halaman topik terpisah yang saling tertaut. Mode berkas tunggal menyematkan sumber daya di setiap halaman.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Sisakan lebar dan tinggi isi minimal 20 mm setelah margin.';
+
+  @override
+  String get exportInvalidColor => 'Masukkan warna sebagai #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Pilih berkas .css UTF-8 yang dapat dibaca hingga 256 KiB, tanpa impor, URL sumber daya, HTML, atau CSS yang dapat dieksekusi atau memakai escape.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: masukkan angka antara $minimum dan $maximum.';
+  }
 }

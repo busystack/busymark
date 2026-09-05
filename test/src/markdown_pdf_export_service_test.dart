@@ -65,7 +65,7 @@ void main() => print("Hello");
           filePath: p.absolute('test/fixtures/markdown/export-test.md'),
           workspaceRoot: p.absolute('test/fixtures'),
           destinationPath: destination,
-          options: const MarkdownPdfOptions(),
+          options: const PdfExportOptions(),
           overwrite: false,
         ),
       );
@@ -111,7 +111,7 @@ void main() => print("Hello");
           filePath: p.absolute('test/fixtures/markdown/video.md'),
           workspaceRoot: p.absolute('test/fixtures'),
           destinationPath: destination,
-          options: const MarkdownPdfOptions(),
+          options: const PdfExportOptions(),
           overwrite: false,
         ),
       );
@@ -160,7 +160,7 @@ void main() => print("Hello");
           filePath: p.absolute('test/fixtures/markdown/admonitions.md'),
           workspaceRoot: p.absolute('test/fixtures'),
           destinationPath: destination,
-          options: const MarkdownPdfOptions(),
+          options: const PdfExportOptions(),
           overwrite: false,
         ),
       );

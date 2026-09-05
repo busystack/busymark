@@ -33,10 +33,12 @@ class HtmlRichContent {
     required this.token,
     required this.warnings,
     required this.exportId,
+    this.options = const HtmlExportOptions(),
     this.math,
     this.visualization,
     this.limits = const HtmlExportLimits(),
   });
+  final HtmlExportOptions options;
   final HtmlExportAssets assets;
   final HtmlExportCancellationToken token;
   final List<HtmlExportWarning> warnings;
@@ -157,7 +159,7 @@ class HtmlRichContent {
         editRevision: 0,
         em: fontSize,
         ex: fontSize / 2,
-        containerWidth: 800,
+        containerWidth: options.mathContainerWidth,
         renderProfile: 'html',
       ),
     ]);

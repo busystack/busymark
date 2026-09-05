@@ -1,21 +1,10 @@
 import '../markdown/table_grid.dart';
-import 'package:path/path.dart' as p;
 
 import '../core/uri_utils.dart';
 import '../markdown/busymark_document.dart';
 import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
-
-const double busyMarkPdfBodyTextSize = 10.5;
-
-double busyMarkPdfHeadingTextSize(int level) => switch (level.clamp(1, 6)) {
-  1 => 22,
-  2 => 17,
-  3 => 13.5,
-  4 => 11.5,
-  5 || 6 => busyMarkPdfBodyTextSize,
-  _ => busyMarkPdfBodyTextSize,
-};
+import 'export_metadata_mapper.dart';
 
 class MarkdownExportMapper {
   const MarkdownExportMapper();
@@ -25,49 +14,8 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides = const {},
   }) {
     return MarkdownExportDocument(
-      metadata: _metadata(document),
+      metadata: const ExportMetadataMapper().map(document),
       blocks: _mapBlocks(document.blocks, blockOverrides),
-    );
-  }
-
-  MarkdownExportMetadata _metadata(BusyDocument document) {
-    final frontMatter = {
-      for (final entry in document.frontMatter.entries)
-        entry.key.toLowerCase().trim(): entry.value.trim(),
-    };
-    final title = _firstNonEmpty([
-      frontMatter['title'],
-      document.title,
-      document.filePath.isEmpty
-          ? null
-          : p.basenameWithoutExtension(document.filePath),
-      'Untitled',
-    ])!;
-    final keywords = _firstNonEmpty([
-      frontMatter['keywords'],
-      frontMatter['tags'],
-    ]);
-    return MarkdownExportMetadata(
-      title: title,
-      author:
-          _firstNonEmpty([frontMatter['author'], frontMatter['authors']]) ?? '',
-      description:
-          _firstNonEmpty([
-            frontMatter['description'],
-            frontMatter['summary'],
-          ]) ??
-          '',
-      language: _normalizedLanguage(
-        _firstNonEmpty([frontMatter['lang'], frontMatter['language']]),
-      ),
-      keywords: keywords == null
-          ? const []
-          : keywords
-                .split(RegExp(r'[,;]'))
-                .map((value) => value.trim())
-                .where((value) => value.isNotEmpty)
-                .take(32)
-                .toList(growable: false),
     );
   }
 
@@ -295,10 +243,7 @@ class MarkdownExportMapper {
         int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1;
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.heading,
-      inlines: _mapInlines(
-        block.inlines,
-        mathEm: busyMarkPdfHeadingTextSize(level),
-      ),
+      inlines: _mapInlines(block.inlines),
       attributes: {
         'level': level,
         if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
@@ -407,20 +352,12 @@ class MarkdownExportMapper {
     );
   }
 
-  List<MarkdownExportInline> _mapInlines(
-    List<BusyInline> inlines, {
-    double mathEm = busyMarkPdfBodyTextSize,
-  }) {
-    return List.unmodifiable(
-      inlines.map((inline) => _mapInline(inline, mathEm: mathEm)),
-    );
+  List<MarkdownExportInline> _mapInlines(List<BusyInline> inlines) {
+    return List.unmodifiable(inlines.map(_mapInline));
   }
 
-  MarkdownExportInline _mapInline(
-    BusyInline inline, {
-    double mathEm = busyMarkPdfBodyTextSize,
-  }) {
-    final children = _mapInlines(inline.children, mathEm: mathEm);
+  MarkdownExportInline _mapInline(BusyInline inline) {
+    final children = _mapInlines(inline.children);
     return switch (inline.kind) {
       BusyInlineKind.text => MarkdownExportInline(
         kind: MarkdownExportInlineKind.text,
@@ -460,8 +397,6 @@ class MarkdownExportMapper {
         attributes: {
           'mathId': inline.attributes['expressionId'] ?? inline.text,
           'display': 'false',
-          'renderEm': '$mathEm',
-          'renderEx': '${mathEm / 2}',
           if (inline.attributes['mathSourceForm'] case final sourceForm?)
             'sourceForm': sourceForm,
         },
@@ -577,23 +512,5 @@ class MarkdownExportMapper {
     return const {'left', 'center', 'right'}.contains(normalized)
         ? normalized
         : null;
-  }
-
-  String _normalizedLanguage(String? value) {
-    final normalized = value?.trim().replaceAll('_', '-').toLowerCase();
-    if (normalized == null ||
-        !RegExp(r'^[a-z]{2,3}(?:-[a-z]{2})?$').hasMatch(normalized)) {
-      return 'en';
-    }
-    return normalized.split('-').first;
-  }
-
-  String? _firstNonEmpty(Iterable<String?> values) {
-    for (final value in values) {
-      if (value != null && value.trim().isNotEmpty) {
-        return value.trim();
-      }
-    }
-    return null;
   }
 }

@@ -10,30 +10,45 @@
   description: document-metadata.description,
   keywords: document-metadata.keywords,
 )
+#assert(data.schemaVersion == 2, message: "Unsupported export payload")
+#let typography = options.typography
+#let geometry = options.page
+#let margins = geometry.marginsPt
+#let running-visible() = options.showHeaderFooterOnFirstPage or counter(page).get().first() > 1
+#let number-position = if options.pageNumbers == "bottomLeft" { left } else if options.pageNumbers == "bottomRight" { right } else { center }
 #set page(
-  paper: options.paper,
-  flipped: options.landscape,
-  margin: (
-    x: options.marginHorizontalPt * 1pt,
-    y: options.marginVerticalPt * 1pt,
-  ),
-  numbering: if options.pageNumbers { "1" } else { none },
-  number-align: center + bottom,
+  width: geometry.widthPt * 1pt,
+  height: geometry.heightPt * 1pt,
+  margin: (top: margins.top * 1pt, right: margins.right * 1pt, bottom: margins.bottom * 1pt, left: margins.left * 1pt),
+  // Logical page numbering also supplies native outline page references.
+  // First-page visibility belongs to the running footer, never the numbering
+  // function: an outline on that page must still show its destination numbers.
+  numbering: "1",
+  number-align: number-position + bottom,
+  header: if options.header == "none" { none } else { context { if running-visible() { text(document-metadata.title) } } },
+  footer: if options.footer == "none" and options.pageNumbers == "off" { none } else { context {
+    if running-visible() {
+      // Native page footer content combines title and counter without overlap.
+      if options.footer == "documentTitle" { align(center, text(document-metadata.title)) }
+      if options.pageNumbers != "off" { align(number-position, counter(page).display("1")) }
+    }
+  } },
 )
 #set text(
+  font: typography.bodyFont,
   fallback: true,
-  size: 10.5pt,
-  lang: document-metadata.language,
+  size: typography.bodySizePt * 1pt,
+  lang: document-metadata.language.split("-").first(),
+  region: if document-metadata.language.split("-").len() == 2 and document-metadata.language.split("-").last().len() == 2 { document-metadata.language.split("-").last() } else { none },
 )
 #set par(leading: 0.68em)
-#set heading(numbering: none)
-#show heading.where(level: 1): set text(size: 22pt, weight: "bold")
-#show heading.where(level: 2): set text(size: 17pt, weight: "bold")
-#show heading.where(level: 3): set text(size: 13.5pt, weight: "bold")
-#show heading.where(level: 4): set text(size: 11.5pt, weight: "bold")
-#show heading.where(level: 5): set text(size: 10.5pt, weight: "bold")
-#show heading.where(level: 6): set text(size: 10.5pt, weight: "bold")
-#show link: set text(fill: rgb("2563a5"))
+#set heading(numbering: if options.content.numberHeadings { "1.1" } else { none })
+#show heading: it => {
+  set text(size: typography.headingSizesPt.at(calc.min(it.level, 6) - 1) * 1pt, weight: "bold")
+  it
+}
+#show raw: set text(font: typography.codeFont, size: typography.codeSizePt * 1pt)
+#show link: set text(fill: rgb(options.accentColor))
 
 #let value-or(item, key, default) = item.at(key, default: default)
 
@@ -374,6 +389,11 @@
   } else {
     render-inlines(inlines)
   }
+}
+
+#if options.content.includeToc {
+  outline(depth: options.content.tocDepth)
+  v(1em)
 }
 
 #for block-data in data.blocks { render-block(block-data) }

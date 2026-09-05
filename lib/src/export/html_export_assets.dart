@@ -16,7 +16,14 @@ class HtmlExportAssets {
     required this.token,
     required this.warnings,
     this.limits = const HtmlExportLimits(),
+    this.packaging = HtmlPackaging.assetsDirectory,
   });
+  final HtmlPackaging packaging;
+  final Map<String, String> _embedded = {};
+  final Set<String> _ownedEmbeddedUrls = {};
+  bool ownsEmbeddedUrl(String url) => _ownedEmbeddedUrls.contains(url);
+  bool get hasExternalAssets =>
+      packaging == HtmlPackaging.assetsDirectory && filenames.isNotEmpty;
   final Directory directory;
   final String urlDirectory;
   final List<String> allowedRoots;
@@ -156,12 +163,35 @@ class HtmlExportAssets {
           _total + bytes.length > limits.totalAssetBytes) {
         throw const HtmlExportException('The export asset limit was reached.');
       }
-      await directory.create(recursive: true);
-      await File(p.join(directory.path, name)).writeAsBytes(bytes, flush: true);
+      if (packaging == HtmlPackaging.singleFile) {
+        final mime = switch (extension) {
+          '.png' => 'image/png',
+          '.jpg' => 'image/jpeg',
+          '.gif' => 'image/gif',
+          '.svg' => 'image/svg+xml',
+          '.webp' => 'image/webp',
+          '.mp4' => 'video/mp4',
+          '.webm' => 'video/webm',
+          '.pdf' => 'application/pdf',
+          '.zip' => 'application/zip',
+          '.json' => 'application/json',
+          '.csv' => 'text/csv',
+          _ => 'text/plain',
+        };
+        final url = 'data:$mime;base64,${base64.encode(bytes)}';
+        _embedded[name] = url;
+        _ownedEmbeddedUrls.add(url);
+      } else {
+        await directory.create(recursive: true);
+        await File(
+          p.join(directory.path, name),
+        ).writeAsBytes(bytes, flush: true);
+      }
       filenames.add(name);
       _total += bytes.length;
     }
-    return '${Uri.encodeComponent(urlDirectory)}/${Uri.encodeComponent(name)}';
+    return _embedded[name] ??
+        '${Uri.encodeComponent(urlDirectory)}/${Uri.encodeComponent(name)}';
   }
 
   static String safeSvg(String source) {

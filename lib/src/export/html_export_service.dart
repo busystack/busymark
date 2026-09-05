@@ -19,6 +19,7 @@ import 'html_export_publisher.dart';
 import 'html_publication_plan.dart';
 import 'html_document_writer.dart';
 import 'html_rich_content.dart';
+import 'html_export_styles.dart';
 
 class HtmlExportService {
   const HtmlExportService({
@@ -44,6 +45,9 @@ class HtmlExportService {
     HtmlExportProgress? onProgress,
   }) async {
     final token = cancellationToken ?? HtmlExportCancellationToken();
+    token.check();
+    request.options.validateOrThrow();
+    final customCss = await HtmlExportStyles.readCustomCss(request.options);
     token.check();
     if (utf8.encode(request.source).length > limits.sourceBytes) {
       throw const HtmlExportException(
@@ -85,6 +89,8 @@ class HtmlExportService {
       plan,
       destination,
       site: false,
+      options: request.options,
+      customCss: customCss,
       overwrite: request.overwrite,
       roots: [
         if (request.filePath.isNotEmpty) p.dirname(request.filePath),
@@ -104,11 +110,15 @@ class HtmlExportService {
     required String instanceId,
     required String destinationPath,
     bool overwrite = false,
+    HtmlExportOptions options = const HtmlExportOptions(),
     WritersideProject? capturedProject,
     HtmlExportCancellationToken? cancellationToken,
     HtmlExportProgress? onProgress,
   }) async {
     final token = cancellationToken ?? HtmlExportCancellationToken();
+    token.check();
+    options.validateOrThrow();
+    final customCss = await HtmlExportStyles.readCustomCss(options);
     token.check();
     final project =
         capturedProject ??
@@ -143,6 +153,8 @@ class HtmlExportService {
       plan,
       p.normalize(p.absolute(destinationPath)),
       site: true,
+      options: options,
+      customCss: customCss,
       overwrite: overwrite,
       roots: project.modules.map((m) => m.rootPath).toList(),
       modules: project.modules,
@@ -156,6 +168,8 @@ class HtmlExportService {
     HtmlPublicationPlan plan,
     String destination, {
     required bool site,
+    required HtmlExportOptions options,
+    required String customCss,
     required bool overwrite,
     required List<String> roots,
     List<WritersideModule> modules = const [],
@@ -180,6 +194,7 @@ class HtmlExportService {
       final assets = HtmlExportAssets(
         directory: Directory(p.join(stage.path, assetName)),
         urlDirectory: assetName,
+        packaging: options.packaging,
         allowedRoots: canonicalRoots,
         token: token,
         warnings: warnings,
@@ -202,6 +217,7 @@ class HtmlExportService {
         token: token,
         warnings: warnings,
         exportId: p.basename(stage.path),
+        options: options,
         math: math,
         visualization: visualization,
         limits: limits,
@@ -237,6 +253,7 @@ class HtmlExportService {
         await captureGraphics(page, page.document.blocks);
       }
       final outputs = <String, String>{};
+      var outputBytes = 0;
       for (final (index, page) in plan.pages.indexed) {
         token.check();
         onProgress?.call(index, plan.pages.length);
@@ -246,9 +263,17 @@ class HtmlExportService {
           links: links,
           rich: rich,
           stylesheet: css,
+          options: options,
+          customCss: customCss,
           warnings: warnings,
           limits: limits,
         ).write();
+        outputBytes += utf8.encode(outputs[page.filename]!).length;
+        if (outputBytes > limits.sourceBytes * 4) {
+          throw const HtmlExportException(
+            'Generated HTML exceeds the output byte limit.',
+          );
+        }
       }
       if (site) outputs['index.html'] = outputs[plan.startPage.filename]!;
       _validateOutputs(outputs, assets);
@@ -278,7 +303,7 @@ class HtmlExportService {
       onProgress?.call(plan.pages.length, plan.pages.length);
       return HtmlExportResult(
         entryPointPath: site ? p.join(destination, 'index.html') : destination,
-        assetsPath: assets.filenames.isEmpty
+        assetsPath: !assets.hasExternalAssets
             ? null
             : p.join(site ? destination : p.dirname(destination), assetName),
         pageCount: plan.pages.length,
@@ -393,7 +418,10 @@ class HtmlExportService {
       final doc = html.parse(entry.value);
       for (final element in doc.querySelectorAll('[href],[src]')) {
         final value = element.attributes['href'] ?? element.attributes['src']!;
-        if (HtmlExportLinks.external(value) != null) continue;
+        if (HtmlExportLinks.external(value) != null ||
+            assets.ownsEmbeddedUrl(value)) {
+          continue;
+        }
         final uri = Uri.parse(value);
         final path = Uri.decodeComponent(uri.path);
         if (path.startsWith('${assets.urlDirectory}/')) {

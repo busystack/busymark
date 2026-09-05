@@ -68,6 +68,8 @@ parts:
     build-snaps:
       - node/24/stable
     build-packages:
+      - fonts-noto-core
+      - fonts-noto-mono
       - curl
       - libhandy-1-dev
       - libsecret-1-dev
@@ -94,6 +96,7 @@ parts:
       - libxcb1
       - git
       - fonts-noto-core
+      - fonts-noto-mono
       - openssh-client
       - util-linux
       - yaru-theme-gtk

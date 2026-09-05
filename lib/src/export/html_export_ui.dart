@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
-import '../app/app_settings.dart';
+import 'export_options_editor.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/localization.dart';
@@ -16,7 +16,6 @@ import '../visualization/visualization_providers.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
-import '../writerside/writerside_model.dart';
 import 'markdown_pdf_export_ui.dart' show canExportActiveMarkdown;
 import 'writerside_pdf_export_ui.dart' show canExportWritersidePdf;
 import 'html_export_models.dart';
@@ -42,48 +41,20 @@ Future<void> exportWorkspaceToHtml(BuildContext context, WidgetRef ref) async {
   }
   final workspace = snapshot.workspace!;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  WritersideInstance? instance;
-  if (site) {
-    final instances = workspace.writersideModule!.instances
-        .where((i) => !i.isLibrary)
-        .toList();
-    final stored = ref
-        .read(appSettingsControllerProvider)
-        .selectedWritersideInstanceId(workspace.rootPath);
-    var selected =
-        instances.where((i) => i.id == stored).firstOrNull ?? instances.first;
-    instance = await showBusyMarkModalDialog<WritersideInstance>(
-      context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => BusyMarkDialogShell(
-          title: context.l10n.exportAsHtml,
-          actions: [
-            BusyMarkDialogButton(
-              label: context.l10n.cancel,
-              onPressed: () => Navigator.pop(context),
-            ),
-            BusyMarkDialogButton(
-              label: context.l10n.export,
-              suggested: true,
-              onPressed: () => Navigator.pop(context, selected),
-            ),
-          ],
-          children: [
-            Text(context.l10n.htmlInstanceDescription),
-            BusyMarkComboRow<WritersideInstance>(
-              title: context.l10n.htmlInstance,
-              values: instances,
-              selected: selected,
-              labelFor: (i) => i.name,
-              onSelected: (i) => setState(() => selected = i),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (instance == null || !context.mounted) return;
-  }
+  final selection = await showExportOptions(
+    context,
+    ref,
+    pdf: false,
+    instances: site
+        ? workspace.writersideModule!.instances
+              .where((i) => !i.isLibrary)
+              .toList()
+        : const [],
+    workspaceRoot: site ? workspace.rootPath : null,
+  );
+  if (selection == null || !context.mounted) return;
+  final instance = selection.instance;
+  final options = selection.html!;
   final path = workspace.activeFilePath ?? workspace.markdown?.filePath ?? '';
   final name = path.isEmpty
       ? context.l10n.untitledMarkdownFileName
@@ -149,6 +120,7 @@ Future<void> exportWorkspaceToHtml(BuildContext context, WidgetRef ref) async {
     workspaceRoot: workspace.rootPath,
     destinationPath: destination,
     overwrite: overwrite,
+    options: options,
     mode: workspace.markdown?.mode ?? MarkdownMode.commonMark,
   );
   final selected = instance;
@@ -166,6 +138,7 @@ Future<void> exportWorkspaceToHtml(BuildContext context, WidgetRef ref) async {
               instanceId: selected!.id,
               destinationPath: destination,
               overwrite: overwrite,
+              options: options,
               cancellationToken: token,
               onProgress: progress,
             )

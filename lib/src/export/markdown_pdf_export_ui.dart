@@ -9,7 +9,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
-import '../app/busymark_glyphs.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
@@ -18,6 +17,7 @@ import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
 import '../visualization/visualization_providers.dart';
 import 'markdown_visualization_export.dart';
+import 'export_options_editor.dart';
 import 'markdown_math_export.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
@@ -76,14 +76,9 @@ Future<void> exportActiveMarkdownToPdf(
   }
   final workspace = snapshot.workspace!;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final options = await showBusyMarkModalDialog<MarkdownPdfOptions>(
-    context,
-    headerBarService: headerBar.isAvailable ? headerBar : null,
-    builder: (context) => const _MarkdownPdfOptionsDialog(),
-  );
-  if (options == null || !context.mounted) {
-    return;
-  }
+  final selection = await showExportOptions(context, ref, pdf: true);
+  if (selection == null || !context.mounted) return;
+  final options = selection.pdf!;
 
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
   final baseName = activePath == null || activePath.isEmpty
@@ -249,105 +244,6 @@ Future<void> _showPdfExportError(
       children: [Text(message)],
     ),
   );
-}
-
-class _MarkdownPdfOptionsDialog extends StatefulWidget {
-  const _MarkdownPdfOptionsDialog();
-
-  @override
-  State<_MarkdownPdfOptionsDialog> createState() =>
-      _MarkdownPdfOptionsDialogState();
-}
-
-class _MarkdownPdfOptionsDialogState extends State<_MarkdownPdfOptionsDialog> {
-  var _options = const MarkdownPdfOptions();
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
-      title: context.l10n.exportAsPdf,
-      maxWidth: 520,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.export,
-          icon: BusyMarkGlyphs.exportPdf,
-          suggested: true,
-          onPressed: () => Navigator.pop(context, _options),
-        ),
-      ],
-      children: [
-        Text(context.l10n.pdfExportDescription),
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkComboRow<MarkdownPdfPageSize>(
-              title: context.l10n.pdfPageSize,
-              values: MarkdownPdfPageSize.values,
-              selected: _options.pageSize,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfPageSize.a4 => context.l10n.pdfPageSizeA4,
-                MarkdownPdfPageSize.letter => context.l10n.pdfPageSizeLetter,
-              },
-              onSelected: (value) =>
-                  setState(() => _options = _options.copyWith(pageSize: value)),
-            ),
-            BusyMarkComboRow<MarkdownPdfOrientation>(
-              title: context.l10n.pdfOrientation,
-              values: MarkdownPdfOrientation.values,
-              selected: _options.orientation,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfOrientation.portrait => context.l10n.pdfPortrait,
-                MarkdownPdfOrientation.landscape => context.l10n.pdfLandscape,
-              },
-              onSelected: (value) => setState(
-                () => _options = _options.copyWith(orientation: value),
-              ),
-            ),
-            BusyMarkComboRow<MarkdownPdfMargin>(
-              title: context.l10n.pdfMargins,
-              values: MarkdownPdfMargin.values,
-              selected: _options.margin,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfMargin.narrow => context.l10n.pdfMarginNarrow,
-                MarkdownPdfMargin.normal => context.l10n.pdfMarginNormal,
-                MarkdownPdfMargin.wide => context.l10n.pdfMarginWide,
-              },
-              onSelected: (value) =>
-                  setState(() => _options = _options.copyWith(margin: value)),
-            ),
-            BusyMarkSwitchRow(
-              title: context.l10n.pdfIncludePageNumbers,
-              value: _options.pageNumbers,
-              onChanged: (value) => setState(
-                () => _options = _options.copyWith(pageNumbers: value),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsetsDirectional.only(top: 2),
-              child: Icon(BusyMarkGlyphs.info, size: BusyMarkSizes.iconSm),
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(
-              child: Text(
-                context.l10n.pdfRemoteImagesNote,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 }
 
 class _MarkdownPdfProgressDialog extends StatefulWidget {

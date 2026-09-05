@@ -2396,5 +2396,62 @@
         "type": "String"
       }
     }
+  },
+  "exportReset": "Reset to defaults",
+  "exportToc": "Include table of contents",
+  "exportTocDepth": "TOC depth",
+  "exportNumberHeadings": "Number headings",
+  "exportLegal": "US Legal",
+  "exportCustom": "Custom",
+  "exportPageWidth": "Page width (mm)",
+  "exportPageHeight": "Page height (mm)",
+  "exportMarginTop": "Top margin (mm)",
+  "exportMarginRight": "Right margin (mm)",
+  "exportMarginBottom": "Bottom margin (mm)",
+  "exportMarginLeft": "Left margin (mm)",
+  "exportTypography": "Typography",
+  "exportSans": "Sans-serif",
+  "exportSerif": "Serif",
+  "exportBodySize": "Body font size",
+  "exportCodeSize": "Code font size",
+  "exportRunningText": "Header & Footer",
+  "exportHeader": "Header",
+  "exportFooter": "Footer",
+  "exportNone": "None",
+  "exportDocumentTitle": "Document title",
+  "exportBottomLeft": "Bottom left",
+  "exportBottomCenter": "Bottom center",
+  "exportBottomRight": "Bottom right",
+  "exportFirstPage": "Show header and footer on first page",
+  "exportAccent": "Accent / link color",
+  "exportTheme": "Theme",
+  "exportAutomatic": "Automatic",
+  "exportLayout": "Layout",
+  "exportContentWidth": "Maximum content width",
+  "exportOutput": "Output",
+  "exportPackaging": "Packaging",
+  "exportSingleFile": "Single HTML file",
+  "exportAssetsDirectory": "HTML + assets directory",
+  "exportCustomCss": "Custom stylesheet…",
+  "exportRemoveCss": "Remove custom stylesheet",
+  "exportCssNote": "Select an optional UTF-8 CSS file (up to 256 KiB). Imports, resource URLs, and executable or escaped CSS are not accepted. Styles are applied after BusyMark’s stylesheet. Remote resources are never fetched.",
+  "exportSitePackagingNote": "Writerside keeps separate linked topic pages. Single-file mode embeds resources in each page.",
+  "exportInvalidGeometry": "Leave at least 20 mm of content width and height after margins.",
+  "exportInvalidColor": "Enter a color as #RRGGBB.",
+  "exportInvalidCss": "Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.",
+  "exportInvalidRange": "{field}: enter a number between {minimum} and {maximum}.",
+  "@exportInvalidRange": {
+    "description": "Invalid numeric export setting.",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "minimum": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      }
+    }
   }
 }

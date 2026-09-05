@@ -32,6 +32,8 @@ jobs:
             bubblewrap \
             clang \
             cmake \
+            fonts-noto-core \
+            fonts-noto-mono \
             ninja-build \
             pkg-config \
             libgtk-3-dev \

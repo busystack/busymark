@@ -125,7 +125,7 @@ void main() {
           filePath: p.join(temporaryDirectory.path, 'document.md'),
           workspaceRoot: temporaryDirectory.path,
           destinationPath: destination,
-          options: const MarkdownPdfOptions(),
+          options: const PdfExportOptions(),
           overwrite: false,
         ),
       ),

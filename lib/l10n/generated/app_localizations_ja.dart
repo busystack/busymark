@@ -3647,4 +3647,138 @@ class AppLocalizationsJa extends AppLocalizations {
   String sortTableColumn(String column) {
     return '$column を並べ替え';
   }
+
+  @override
+  String get exportReset => '既定値に戻す';
+
+  @override
+  String get exportToc => '目次を含める';
+
+  @override
+  String get exportTocDepth => '目次の深さ';
+
+  @override
+  String get exportNumberHeadings => '見出しに番号を付ける';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'カスタム';
+
+  @override
+  String get exportPageWidth => 'ページ幅 (mm)';
+
+  @override
+  String get exportPageHeight => 'ページ高さ (mm)';
+
+  @override
+  String get exportMarginTop => '上余白 (mm)';
+
+  @override
+  String get exportMarginRight => '右余白 (mm)';
+
+  @override
+  String get exportMarginBottom => '下余白 (mm)';
+
+  @override
+  String get exportMarginLeft => '左余白 (mm)';
+
+  @override
+  String get exportTypography => '書体';
+
+  @override
+  String get exportSans => 'サンセリフ';
+
+  @override
+  String get exportSerif => 'セリフ';
+
+  @override
+  String get exportBodySize => '本文の文字サイズ';
+
+  @override
+  String get exportCodeSize => 'コードの文字サイズ';
+
+  @override
+  String get exportRunningText => 'ヘッダーとフッター';
+
+  @override
+  String get exportHeader => 'ヘッダー';
+
+  @override
+  String get exportFooter => 'フッター';
+
+  @override
+  String get exportNone => 'なし';
+
+  @override
+  String get exportDocumentTitle => '文書タイトル';
+
+  @override
+  String get exportBottomLeft => '左下';
+
+  @override
+  String get exportBottomCenter => '中央下';
+
+  @override
+  String get exportBottomRight => '右下';
+
+  @override
+  String get exportFirstPage => '最初のページにもヘッダーとフッターを表示';
+
+  @override
+  String get exportAccent => 'アクセント／リンクの色';
+
+  @override
+  String get exportTheme => 'テーマ';
+
+  @override
+  String get exportAutomatic => '自動';
+
+  @override
+  String get exportLayout => 'レイアウト';
+
+  @override
+  String get exportContentWidth => 'コンテンツの最大幅';
+
+  @override
+  String get exportOutput => '出力';
+
+  @override
+  String get exportPackaging => 'パッケージ形式';
+
+  @override
+  String get exportSingleFile => '単一の HTML ファイル';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + アセットフォルダー';
+
+  @override
+  String get exportCustomCss => 'カスタムスタイルシート…';
+
+  @override
+  String get exportRemoveCss => 'カスタムスタイルシートを削除';
+
+  @override
+  String get exportCssNote =>
+      '任意の UTF-8 CSS ファイルを選択できます（最大 256 KiB）。インポート、リソース URL、実行可能な CSS、エスケープを含む CSS は拒否されます。BusyMark のスタイルの後に適用されます。外部リソースは取得しません。';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside はリンクされた個別のトピックページを保持します。単一ファイルモードでは各ページにリソースを埋め込みます。';
+
+  @override
+  String get exportInvalidGeometry => '余白を除いたコンテンツの幅と高さをそれぞれ 20 mm 以上にしてください。';
+
+  @override
+  String get exportInvalidColor => '色を #RRGGBB 形式で入力してください。';
+
+  @override
+  String get exportInvalidCss =>
+      '読み取り可能な UTF-8 .css ファイル（最大 256 KiB）を選択してください。インポート、リソース URL、HTML、実行可能な CSS、エスケープを含む CSS は使用できません。';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum から $maximum の数値を入力してください。';
+  }
 }

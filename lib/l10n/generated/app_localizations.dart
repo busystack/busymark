@@ -6286,6 +6286,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sort {column}'**
   String sortTableColumn(String column);
+
+  /// No description provided for @exportReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get exportReset;
+
+  /// No description provided for @exportToc.
+  ///
+  /// In en, this message translates to:
+  /// **'Include table of contents'**
+  String get exportToc;
+
+  /// No description provided for @exportTocDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC depth'**
+  String get exportTocDepth;
+
+  /// No description provided for @exportNumberHeadings.
+  ///
+  /// In en, this message translates to:
+  /// **'Number headings'**
+  String get exportNumberHeadings;
+
+  /// No description provided for @exportLegal.
+  ///
+  /// In en, this message translates to:
+  /// **'US Legal'**
+  String get exportLegal;
+
+  /// No description provided for @exportCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get exportCustom;
+
+  /// No description provided for @exportPageWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Page width (mm)'**
+  String get exportPageWidth;
+
+  /// No description provided for @exportPageHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Page height (mm)'**
+  String get exportPageHeight;
+
+  /// No description provided for @exportMarginTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top margin (mm)'**
+  String get exportMarginTop;
+
+  /// No description provided for @exportMarginRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right margin (mm)'**
+  String get exportMarginRight;
+
+  /// No description provided for @exportMarginBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom margin (mm)'**
+  String get exportMarginBottom;
+
+  /// No description provided for @exportMarginLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left margin (mm)'**
+  String get exportMarginLeft;
+
+  /// No description provided for @exportTypography.
+  ///
+  /// In en, this message translates to:
+  /// **'Typography'**
+  String get exportTypography;
+
+  /// No description provided for @exportSans.
+  ///
+  /// In en, this message translates to:
+  /// **'Sans-serif'**
+  String get exportSans;
+
+  /// No description provided for @exportSerif.
+  ///
+  /// In en, this message translates to:
+  /// **'Serif'**
+  String get exportSerif;
+
+  /// No description provided for @exportBodySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Body font size'**
+  String get exportBodySize;
+
+  /// No description provided for @exportCodeSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Code font size'**
+  String get exportCodeSize;
+
+  /// No description provided for @exportRunningText.
+  ///
+  /// In en, this message translates to:
+  /// **'Header & Footer'**
+  String get exportRunningText;
+
+  /// No description provided for @exportHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Header'**
+  String get exportHeader;
+
+  /// No description provided for @exportFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Footer'**
+  String get exportFooter;
+
+  /// No description provided for @exportNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get exportNone;
+
+  /// No description provided for @exportDocumentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document title'**
+  String get exportDocumentTitle;
+
+  /// No description provided for @exportBottomLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom left'**
+  String get exportBottomLeft;
+
+  /// No description provided for @exportBottomCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom center'**
+  String get exportBottomCenter;
+
+  /// No description provided for @exportBottomRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom right'**
+  String get exportBottomRight;
+
+  /// No description provided for @exportFirstPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Show header and footer on first page'**
+  String get exportFirstPage;
+
+  /// No description provided for @exportAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent / link color'**
+  String get exportAccent;
+
+  /// No description provided for @exportTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get exportTheme;
+
+  /// No description provided for @exportAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get exportAutomatic;
+
+  /// No description provided for @exportLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get exportLayout;
+
+  /// No description provided for @exportContentWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum content width'**
+  String get exportContentWidth;
+
+  /// No description provided for @exportOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Output'**
+  String get exportOutput;
+
+  /// No description provided for @exportPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Packaging'**
+  String get exportPackaging;
+
+  /// No description provided for @exportSingleFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Single HTML file'**
+  String get exportSingleFile;
+
+  /// No description provided for @exportAssetsDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML + assets directory'**
+  String get exportAssetsDirectory;
+
+  /// No description provided for @exportCustomCss.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom stylesheet…'**
+  String get exportCustomCss;
+
+  /// No description provided for @exportRemoveCss.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove custom stylesheet'**
+  String get exportRemoveCss;
+
+  /// No description provided for @exportCssNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an optional UTF-8 CSS file (up to 256 KiB). Imports, resource URLs, and executable or escaped CSS are not accepted. Styles are applied after BusyMark’s stylesheet. Remote resources are never fetched.'**
+  String get exportCssNote;
+
+  /// No description provided for @exportSitePackagingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside keeps separate linked topic pages. Single-file mode embeds resources in each page.'**
+  String get exportSitePackagingNote;
+
+  /// No description provided for @exportInvalidGeometry.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave at least 20 mm of content width and height after margins.'**
+  String get exportInvalidGeometry;
+
+  /// No description provided for @exportInvalidColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a color as #RRGGBB.'**
+  String get exportInvalidColor;
+
+  /// No description provided for @exportInvalidCss.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.'**
+  String get exportInvalidCss;
+
+  /// Invalid numeric export setting.
+  ///
+  /// In en, this message translates to:
+  /// **'{field}: enter a number between {minimum} and {maximum}.'**
+  String exportInvalidRange(String field, String minimum, String maximum);
 }
 
 class _AppLocalizationsDelegate

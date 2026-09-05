@@ -84,8 +84,11 @@ class DartTypstCommandRunner implements TypstCommandRunner {
     try {
       process = await Process.start(
         executable,
-        const [
+        [
           'compile',
+          '--ignore-system-fonts',
+          '--font-path',
+          _fontDirectory(executable),
           '--root',
           '.',
           '--format',
@@ -101,6 +104,7 @@ class DartTypstCommandRunner implements TypstCommandRunner {
         ],
         workingDirectory: workingDirectory.path,
         environment: {
+          'TYPST_FONT_PATHS': _fontDirectory(executable),
           'TYPST_PACKAGE_PATH': p.join(workingDirectory.path, 'packages'),
           'TYPST_PACKAGE_CACHE_PATH': p.join(workingDirectory.path, 'cache'),
         },
@@ -169,6 +173,13 @@ class DartTypstCommandRunner implements TypstCommandRunner {
       cancellationToken.detach();
     }
   }
+
+  String _fontDirectory(String executable) => p.join(
+    p.dirname(p.dirname(p.dirname(executable))),
+    'share',
+    'busymark',
+    'fonts',
+  );
 
   Future<String> _collectBounded(Stream<List<int>> stream) async {
     final bytes = <int>[];

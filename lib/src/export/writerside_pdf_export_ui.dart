@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
-import '../app/app_settings.dart';
+import 'export_options_editor.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_toast.dart';
@@ -21,7 +21,6 @@ import '../workspace/workspace_safety.dart';
 import '../writerside/writerside_model.dart';
 import 'markdown_math_export.dart';
 import 'markdown_pdf_export_service.dart';
-import 'markdown_pdf_models.dart';
 import 'markdown_visualization_export.dart';
 import 'writerside_pdf_export_service.dart';
 import 'writerside_pdf_models.dart';
@@ -73,31 +72,15 @@ Future<void> exportWritersideModuleToPdf(
   final instances = module.instances
       .where((instance) => !instance.isLibrary)
       .toList(growable: false);
-  final storedInstanceId = ref
-      .read(appSettingsControllerProvider)
-      .selectedWritersideInstanceId(workspace.rootPath);
-  final initialInstance = instances
-      .where((instance) => instance.id == storedInstanceId)
-      .firstOrNull;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final selection =
-      await showBusyMarkModalEditorDialog<_WritersidePdfSelection>(
-        context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
-        maxWidth: BusyMarkSizes.dialog,
-        builder: (context) => _WritersidePdfOptionsDialog(
-          instances: instances,
-          initialInstance: initialInstance ?? instances.first,
-        ),
-      );
-  if (selection == null || !context.mounted) {
-    return;
-  }
-  unawaited(
-    ref
-        .read(appSettingsControllerProvider.notifier)
-        .selectWritersideInstance(workspace.rootPath, selection.instance.id),
+  final selection = await showExportOptions(
+    context,
+    ref,
+    pdf: true,
+    instances: instances,
+    workspaceRoot: workspace.rootPath,
   );
+  if (selection == null || !context.mounted) return;
   final location = await getSaveLocation(
     acceptedTypeGroups: [
       XTypeGroup(
@@ -106,7 +89,7 @@ Future<void> exportWritersideModuleToPdf(
         mimeTypes: const ['application/pdf'],
       ),
     ],
-    suggestedName: '${selection.instance.id}.pdf',
+    suggestedName: '${selection.instance!.id}.pdf',
     initialDirectory: module.rootPath,
     confirmButtonText: context.l10n.export,
   );
@@ -130,10 +113,10 @@ Future<void> exportWritersideModuleToPdf(
   final request = WritersidePdfExportRequest(
     moduleRoot: module.rootPath,
     projectRoot: workspace.rootPath,
-    instanceId: selection.instance.id,
+    instanceId: selection.instance!.id,
     destinationPath: destination,
     overwrite: overwrite,
-    options: selection.options,
+    options: selection.pdf!,
   );
   final outcome = await showBusyMarkModalDialog<_WritersidePdfOutcome>(
     context,
@@ -168,129 +151,6 @@ Future<void> exportWritersideModuleToPdf(
       ),
     ),
   );
-}
-
-class _WritersidePdfOptionsDialog extends StatefulWidget {
-  const _WritersidePdfOptionsDialog({
-    required this.instances,
-    required this.initialInstance,
-  });
-
-  final List<WritersideInstance> instances;
-  final WritersideInstance initialInstance;
-
-  @override
-  State<_WritersidePdfOptionsDialog> createState() =>
-      _WritersidePdfOptionsDialogState();
-}
-
-class _WritersidePdfOptionsDialogState
-    extends State<_WritersidePdfOptionsDialog> {
-  late WritersideInstance _instance;
-  var _pageSize = MarkdownPdfPageSize.a4;
-  var _orientation = MarkdownPdfOrientation.portrait;
-  var _margin = MarkdownPdfMargin.normal;
-  var _pageNumbers = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _instance = widget.initialInstance;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkModalEditorScaffold(
-      title: context.l10n.exportWritersideAsPdf,
-      cancelLabel: context.l10n.cancel,
-      saveLabel: context.l10n.export,
-      onCancel: () => Navigator.pop(context),
-      onSave: _submit,
-      children: [
-        BusyMarkGroupedList(
-          title: context.l10n.writersidePdfContent,
-          filled: true,
-          children: [
-            BusyMarkComboRow<WritersideInstance>(
-              title: context.l10n.instanceName,
-              values: widget.instances,
-              selected: _instance,
-              labelFor: (instance) => '${instance.name} (${instance.id})',
-              onSelected: (instance) => setState(() => _instance = instance),
-            ),
-          ],
-        ),
-        BusyMarkGroupedList(
-          title: context.l10n.writersidePdfPage,
-          filled: true,
-          children: [
-            BusyMarkComboRow<MarkdownPdfPageSize>(
-              title: context.l10n.pdfPageSize,
-              values: MarkdownPdfPageSize.values,
-              selected: _pageSize,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfPageSize.a4 => context.l10n.pdfPageSizeA4,
-                MarkdownPdfPageSize.letter => context.l10n.pdfPageSizeLetter,
-              },
-              onSelected: (value) => setState(() => _pageSize = value),
-            ),
-            BusyMarkComboRow<MarkdownPdfOrientation>(
-              title: context.l10n.pdfOrientation,
-              values: MarkdownPdfOrientation.values,
-              selected: _orientation,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfOrientation.portrait => context.l10n.pdfPortrait,
-                MarkdownPdfOrientation.landscape => context.l10n.pdfLandscape,
-              },
-              onSelected: (value) => setState(() => _orientation = value),
-            ),
-            BusyMarkComboRow<MarkdownPdfMargin>(
-              title: context.l10n.pdfMargins,
-              values: MarkdownPdfMargin.values,
-              selected: _margin,
-              labelFor: (value) => switch (value) {
-                MarkdownPdfMargin.narrow => context.l10n.pdfMarginNarrow,
-                MarkdownPdfMargin.normal => context.l10n.pdfMarginNormal,
-                MarkdownPdfMargin.wide => context.l10n.pdfMarginWide,
-              },
-              onSelected: (value) => setState(() => _margin = value),
-            ),
-            BusyMarkSwitchRow(
-              title: context.l10n.pdfIncludePageNumbers,
-              value: _pageNumbers,
-              onChanged: (value) => setState(() => _pageNumbers = value),
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.lg),
-      ],
-    );
-  }
-
-  void _submit() {
-    Navigator.pop(
-      context,
-      _WritersidePdfSelection(
-        instance: _instance,
-        options: MarkdownPdfOptions(
-          pageSize: _pageSize,
-          orientation: _orientation,
-          margin: _margin,
-          pageNumbers: _pageNumbers,
-        ),
-      ),
-    );
-  }
-}
-
-class _WritersidePdfSelection {
-  const _WritersidePdfSelection({
-    required this.instance,
-    required this.options,
-  });
-
-  final WritersideInstance instance;
-  final MarkdownPdfOptions options;
 }
 
 class _WritersidePdfProgressDialog extends StatefulWidget {
@@ -462,8 +322,4 @@ String _withPdfExtension(String path) {
   return p.extension(normalized).toLowerCase() == '.pdf'
       ? normalized
       : '$normalized.pdf';
-}
-
-extension _FirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }

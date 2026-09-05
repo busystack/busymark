@@ -1,4 +1,6 @@
 import '../markdown/markdown_model.dart';
+import 'export_options.dart';
+export 'export_options.dart';
 import '../markdown/busymark_document.dart';
 
 class HtmlExportWarning {
@@ -82,11 +84,13 @@ class MarkdownHtmlExportRequest {
     this.overwrite = false,
     this.mode = MarkdownMode.commonMark,
     this.document,
+    this.options = const HtmlExportOptions(),
   });
   final String source, filePath, workspaceRoot, destinationPath;
   final bool overwrite;
   final MarkdownMode mode;
   final BusyDocument? document;
+  final HtmlExportOptions options;
 }
 
 class HtmlExportResult {

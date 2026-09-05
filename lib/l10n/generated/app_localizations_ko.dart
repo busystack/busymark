@@ -3643,4 +3643,138 @@ class AppLocalizationsKo extends AppLocalizations {
   String sortTableColumn(String column) {
     return '$column 정렬';
   }
+
+  @override
+  String get exportReset => '기본값으로 재설정';
+
+  @override
+  String get exportToc => '목차 포함';
+
+  @override
+  String get exportTocDepth => '목차 깊이';
+
+  @override
+  String get exportNumberHeadings => '제목 번호 매기기';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => '사용자 지정';
+
+  @override
+  String get exportPageWidth => '페이지 너비 (mm)';
+
+  @override
+  String get exportPageHeight => '페이지 높이 (mm)';
+
+  @override
+  String get exportMarginTop => '위쪽 여백 (mm)';
+
+  @override
+  String get exportMarginRight => '오른쪽 여백 (mm)';
+
+  @override
+  String get exportMarginBottom => '아래쪽 여백 (mm)';
+
+  @override
+  String get exportMarginLeft => '왼쪽 여백 (mm)';
+
+  @override
+  String get exportTypography => '글꼴';
+
+  @override
+  String get exportSans => '고딕체';
+
+  @override
+  String get exportSerif => '명조체';
+
+  @override
+  String get exportBodySize => '본문 글꼴 크기';
+
+  @override
+  String get exportCodeSize => '코드 글꼴 크기';
+
+  @override
+  String get exportRunningText => '머리글 및 바닥글';
+
+  @override
+  String get exportHeader => '머리글';
+
+  @override
+  String get exportFooter => '바닥글';
+
+  @override
+  String get exportNone => '없음';
+
+  @override
+  String get exportDocumentTitle => '문서 제목';
+
+  @override
+  String get exportBottomLeft => '왼쪽 아래';
+
+  @override
+  String get exportBottomCenter => '가운데 아래';
+
+  @override
+  String get exportBottomRight => '오른쪽 아래';
+
+  @override
+  String get exportFirstPage => '첫 페이지에 머리글과 바닥글 표시';
+
+  @override
+  String get exportAccent => '강조 / 링크 색상';
+
+  @override
+  String get exportTheme => '테마';
+
+  @override
+  String get exportAutomatic => '자동';
+
+  @override
+  String get exportLayout => '레이아웃';
+
+  @override
+  String get exportContentWidth => '최대 콘텐츠 너비';
+
+  @override
+  String get exportOutput => '출력';
+
+  @override
+  String get exportPackaging => '패키징';
+
+  @override
+  String get exportSingleFile => '단일 HTML 파일';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + 리소스 폴더';
+
+  @override
+  String get exportCustomCss => '사용자 지정 스타일시트…';
+
+  @override
+  String get exportRemoveCss => '사용자 지정 스타일시트 제거';
+
+  @override
+  String get exportCssNote =>
+      '선택적으로 UTF-8 CSS 파일을 지정하세요(최대 256 KiB). 가져오기, 리소스 URL, 실행 가능하거나 이스케이프된 CSS는 허용되지 않습니다. BusyMark 스타일 뒤에 적용됩니다. 원격 리소스를 가져오지 않습니다.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside는 별도로 연결된 주제 페이지를 유지합니다. 단일 파일 모드는 각 페이지에 리소스를 포함합니다.';
+
+  @override
+  String get exportInvalidGeometry => '여백을 제외한 콘텐츠 너비와 높이를 각각 20 mm 이상 확보하세요.';
+
+  @override
+  String get exportInvalidColor => '#RRGGBB 형식으로 색상을 입력하세요.';
+
+  @override
+  String get exportInvalidCss =>
+      '가져오기, 리소스 URL, HTML, 실행 가능하거나 이스케이프된 CSS가 없는 읽기 가능한 UTF-8 .css 파일(최대 256 KiB)을 선택하세요.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
+  }
 }

@@ -271,7 +271,7 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
             filePath: p.join(workingDirectory.path, 'visualization-smoke.md'),
             workspaceRoot: workingDirectory.path,
             destinationPath: pdfPath,
-            options: const MarkdownPdfOptions(),
+            options: const PdfExportOptions(),
             overwrite: true,
           ),
         );
@@ -290,6 +290,55 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
     checks['typstPdf'] = true;
     checks['pdfEmbeddedImages'] = embeddedImages;
     checks['pdfPath'] = pdfPath;
+
+    final customizedPdf =
+        await MarkdownPdfExportService(
+          visualizationRenderer: MarkdownVisualizationExportRenderer(
+            coordinator: coordinator,
+          ),
+          mathRenderer: MarkdownMathExportRenderer(
+            coordinator: mathCoordinator,
+          ),
+        ).export(
+          MarkdownPdfExportRequest(
+            source: _pdfSource,
+            filePath: p.join(workingDirectory.path, 'visualization-smoke.md'),
+            workspaceRoot: workingDirectory.path,
+            destinationPath: p.join(reportFile.parent.path, 'customized.pdf'),
+            overwrite: true,
+            options: const PdfExportOptions(
+              pageSize: PdfPageSize.custom,
+              customWidthMm: 240,
+              customHeightMm: 320,
+              margin: PdfMarginPreset.custom,
+              customMargins: PdfMargins(
+                top: 18,
+                right: 20,
+                bottom: 25,
+                left: 30,
+              ),
+              bodyTypography: ExportBodyTypography.sansSerif,
+              bodyFontSize: 14,
+              codeFontSize: 11,
+              content: ExportContentOptions(
+                includeToc: true,
+                tocDepth: 3,
+                numberHeadings: true,
+              ),
+              accentColor: '#7651a8',
+              header: PdfRunningText.documentTitle,
+              footer: PdfRunningText.documentTitle,
+              pageNumbers: PdfPageNumberPosition.bottomRight,
+              showHeaderFooterOnFirstPage: false,
+            ),
+          ),
+        );
+    if (customizedPdf.warnings.isNotEmpty) {
+      throw StateError(
+        'Customized PDF: ${customizedPdf.warnings.map((w) => w.destination).join('; ')}',
+      );
+    }
+    checks['customPdfPath'] = customizedPdf.destinationPath;
 
     await checkpoint('exporting offline HTML documents');
     checks.addAll(

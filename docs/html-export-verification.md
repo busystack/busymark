@@ -1,65 +1,108 @@
-# HTML export verification — September 5, 2026
+# PDF and HTML export verification — September 5, 2026
 
-The implementation and reproduction commands are described in
-[HTML export](html-export.md). Validation used Flutter 3.47.0 on Linux and the
-application's bundled rendering executables; no dependency was added to the
-application for HTML serialization or browser-side rendering.
+Validation used Flutter 3.47.0 on Linux, bundled Typst 0.15.1, the bundled Noto
+fonts, and BusyMark’s existing local math and visualization engines. User-facing
+settings are documented in [PDF export](pdf-export.md), [HTML export](html-export.md),
+and [Writerside PDF export](writerside-pdf-export.md).
 
-| Check | Executed result |
+## Implementation areas
+
+- `lib/src/export/export_options.dart` supplies shared content options and one
+  validated, serializable option model per format. `app_settings.dart` persists
+  the last confirmed values through the existing settings store.
+- `export_options_editor.dart` supplies the reusable modal editors for Markdown
+  and Writerside. Existing PDF and HTML export UI entry points use those editors;
+  Writerside retains its workspace-specific instance and Save/Discard/Cancel flow.
+- `typst_payload_builder.dart`, `markdown_math_export.dart`, `typst_compiler.dart`,
+  and `assets/export/markdown.typ` carry PDF geometry, typography, native TOC,
+  numbering, accent, and running text through payload schema 2. The semantic
+  `markdown_export_mapper.dart` no longer sets PDF math metrics.
+- `html_document_writer.dart`, `html_export_styles.dart`, `html_export_assets.dart`,
+  and the HTML service/rich-content preparation apply themes, typography, semantic
+  TOCs, numbering, bounded custom CSS, and both resource packaging modes.
+  `export_metadata_mapper.dart` provides common resolved metadata.
+- Linux and Snap build configuration stages Noto Sans, Serif, Mono and available
+  Noto script fallbacks. Localization sources and generated output cover all new
+  settings. Focused model, widget, payload, native PDF, HTML, math and Writerside
+  tests sit beside the existing export tests.
+
+## Executed checks
+
+| Check | Result |
 | --- | --- |
-| Dart formatting of changed handwritten sources | Passed; no formatting changes required |
+| Changed Dart sources formatted; `git diff --check`; Python browser script syntax | Passed |
 | Repository-wide `flutter analyze --no-pub` | Passed; no issues |
-| `flutter gen-l10n` | Passed; new HTML and missing Writerside messages supplied for all shipped regional locales |
-| Full `flutter test --no-pub`, with `BUSYMARK_TYPST_PATH` and `BUSYMARK_D2_PATH` pointing to the release bundle | **1,438 passed, no skips** |
-| Focused rich-export checks after improving renderer failure messages | Passed; profiles, snapshots, timeout fallback, active cancellation and output preservation |
-| `flutter build linux --release --no-pub` | Passed |
-| Native release smoke under Xvfb | Passed; real MathJax 4.1.3, Mermaid, PlantUML, D2, static OpenAPI and existing PDF smoke; zero HTML warnings |
-| Relocated browser checks | **20 passed**: five pages × two URL modes × two browsers |
-| `git diff --check` and Python browser-check syntax compilation | Passed |
+| `flutter gen-l10n` and localization audit | Passed |
+| Full `flutter test --no-pub` with bundled Typst and D2 paths | **1,469 passed; no skips** |
+| Native PDF customization tests | Six profiles compiled; page geometry, embedded Noto families, body/code sizes, native outline entries/page references, heading numbering, running titles and counter placement verified |
+| Workspace refresh regression | Reproduced before the fix; all 63 controller tests pass after the fix |
+| `flutter build linux --release --no-pub` | Passed; final release bundle includes Noto fonts and licenses |
+| Release application smoke under Xvfb | Passed; MathJax 4.1.3, Mermaid, PlantUML, D2, static OpenAPI, default/custom PDFs and Markdown/Writerside HTML; zero HTML warnings |
+| Relocated browser verification | **46 passed** in Chrome 151.0.7922.137 and Firefox 154.0.1 |
 
-The full suite includes the existing PDF exports and native configuration,
-localization, source preservation, and editor regression tests. Base `pt` and
-`zh` localization templates remain partial as before; the shipped `pt_BR` and
-`zh_CN` locales have complete messages and pass the localization audit.
+The new tests cover absent/malformed persisted settings, validation and geometry,
+all four dialogs’ reuse of remembered format options, dependent controls, Reset,
+cancellation, CSS validation and ordering, embedded and external assets, output
+bounds, existing-output preservation, metadata, TOC hierarchy/depth, numbering,
+custom math metrics, and unchanged Writerside resolution and publication order.
+Existing PDF, HTML, native menu, source-preservation and editor tests remain part
+of the complete suite.
 
-Browser verification used **Chromium/Chrome 151.0.7922.137** and **Firefox
-154.0.1**. Each opened the relocated Markdown page and all four Writerside HTML
-files directly through `file:` URLs and through a local static HTTP server.
-Outbound proxy connections were unavailable, and BiDi observation recorded no
-unexpected external request. HTTP-only favicon probes were local 404s and are
-not export dependencies.
+Full-suite verification exposed an existing filesystem-monitor race: a background
+refresh could invalidate a foreground Writerside operation. A controlled regression
+test reproduced that failure. Monitor refreshes now wait for active loading to
+finish, and stale/disposed refreshes stop before changing controller state.
 
-Checks covered stylesheet/CSP hashing, image loading, internal anchors,
-footnote references and return links, current navigation, keyboard focus,
-disclosure interaction, horizontal overflow, script blocking, and printing.
-PDF text extraction confirmed that collapsed disclosure content and every tab
-were printed. Representative Chromium and Firefox screenshots were also
-visually inspected. The footnote case crosses a raw HTML disclosure block,
-exercising the corrected shared reference context.
+Base `pt` and `zh` localization templates remain partial as before. The shipped
+`pt_BR` and `zh_CN` locales have complete messages and pass the localization audit.
 
-Representative outputs from the real release binary:
+## Browser and output verification
 
-- `/tmp/busymark-html-final/offline.html` and `offline.assets/`: unsaved-source
-  export path, Unicode headings, nested/task lists, tables, disclosure, a local
-  SVG, inline/display math, three diagram engines, static API reference, and a
-  structured footnote.
-- `/tmp/busymark-html-final/writerside/index.html`: selected-instance entry point,
-  also preserved as `Welcome.html`; includes with caller variable overrides,
-  all tabs, procedure steps, custom filename, hidden-page links and WIP status.
-- `/tmp/busymark-html-final/writerside/reference.html`: spanning table,
-  collapsible chapter, and a diagram loaded from the configured snippets folder.
-- `/tmp/busymark-html-final/writerside/hidden.html`: link-accessible hidden topic.
-- `/tmp/busymark-html-final/visualization-smoke.pdf`: existing PDF verification.
+Browser checks open relocated Markdown and Writerside pages through both `file:`
+URLs and a local static HTTP server, with external networking unavailable. They
+verify image loading, CSP/style hashing, metadata, custom CSS overrides, typography,
+automatic light/dark preference, embedded resources, anchors, footnotes, navigation,
+keyboard focus, disclosure, overflow, script blocking and printing. Request
+observation recorded no unexpected external resources; local favicon 404 probes
+are not document dependencies. Representative screenshots were visually inspected.
+Print checks include disclosure bodies and every Writerside tab.
 
-Native results are recorded in `/tmp/busymark-html-final/report.json`. Browser
-results, screenshots, and printed PDFs are under
-`/tmp/busymark-html-browser-final/`; its `browser-report.json` identifies the
-separate relocated root. Sources and engine temporary directories were removed
-before the relocated copies were opened. These paths are verification artifacts,
-not dependencies of the exported documents, and may be removed by temporary-file
-cleanup. The committed scripts reproduce them.
+Representative outputs generated by the release application:
 
-No requested automated check remains unavailable. Browser interaction and print
-verification ran headlessly; physical-printer output and assistive-technology
-certification were not tested. This is behavioral validation of BusyMark's native
-export, not an assertion of pixel parity with JetBrains' website builder.
+- `/tmp/busymark-custom-output/offline.html` and `offline.assets/`: default
+  Markdown output with Unicode headings, nested/task lists, tables, disclosure,
+  local SVG, inline/display math, three diagram engines, static API and footnotes.
+- `/tmp/busymark-custom-output/automatic-single.html`: automatic theme, embedded
+  resources, 20 px serif text, customized width/accent, numbered headings and CSS.
+- `/tmp/busymark-custom-output/dark-assets.html`: dark appearance with companion
+  resources using relative URLs.
+- `/tmp/busymark-custom-output/writerside/index.html`: default multipage instance
+  with includes, variables, all tabs, procedures, custom filenames, hidden topics
+  and work-in-progress status.
+- `/tmp/busymark-custom-output/writerside-embedded/index.html`: the same instance
+  with shared customization and embedded resources in each topic page.
+- `/tmp/busymark-custom-output/visualization-smoke.pdf`: default PDF rich content.
+- `/tmp/busymark-custom-output/customized.pdf`: 240 × 320 mm pages, independent
+  margins, 14 pt Noto Sans, 11 pt code, purple accent, numbered native TOC,
+  title headers/footers, right-aligned page numbers and first-page suppression.
+
+Native results are in `/tmp/busymark-custom-output/report.json`. Browser results,
+screenshots and printed PDFs are under `/tmp/busymark-custom-browser-final/`;
+`browser-report.json` identifies the separate relocated root. The source fixtures
+and renderer temporary directories were removed before opening relocated copies.
+These temporary artifact paths are not export dependencies and may be cleaned up.
+
+To reproduce with a release bundle and the browser-check dependencies installed:
+
+```sh
+BUSYMARK_RELEASE_SMOKE=1 xvfb-run -a build/linux/x64/release/bundle/busymark \
+  --visualization-release-smoke=/tmp/busymark-custom-output/report.json
+python3 tools/verify_html_export_browser.py /tmp/busymark-custom-output \
+  --output /tmp/busymark-custom-browser-final
+```
+
+Browser and print verification ran headlessly. Physical-printer output, assistive
+technology certification, and a complete Snap package build were not performed;
+the Linux bundle and its staged Noto fonts/licenses were verified. The existing
+HTML exporter has no client-side syntax highlighter, so this change retains its
+code rendering and supplies a theme-aware code palette without another dependency.

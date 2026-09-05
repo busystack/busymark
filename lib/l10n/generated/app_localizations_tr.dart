@@ -3749,4 +3749,139 @@ class AppLocalizationsTr extends AppLocalizations {
   String sortTableColumn(String column) {
     return '$column sırala';
   }
+
+  @override
+  String get exportReset => 'Varsayılanlara sıfırla';
+
+  @override
+  String get exportToc => 'İçindekiler tablosunu ekle';
+
+  @override
+  String get exportTocDepth => 'İçindekiler derinliği';
+
+  @override
+  String get exportNumberHeadings => 'Başlıkları numaralandır';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Özel';
+
+  @override
+  String get exportPageWidth => 'Sayfa genişliği (mm)';
+
+  @override
+  String get exportPageHeight => 'Sayfa yüksekliği (mm)';
+
+  @override
+  String get exportMarginTop => 'Üst kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginRight => 'Sağ kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginBottom => 'Alt kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginLeft => 'Sol kenar boşluğu (mm)';
+
+  @override
+  String get exportTypography => 'Tipografi';
+
+  @override
+  String get exportSans => 'Serifsiz';
+
+  @override
+  String get exportSerif => 'Serifli';
+
+  @override
+  String get exportBodySize => 'Gövde yazı tipi boyutu';
+
+  @override
+  String get exportCodeSize => 'Kod yazı tipi boyutu';
+
+  @override
+  String get exportRunningText => 'Üst bilgi ve alt bilgi';
+
+  @override
+  String get exportHeader => 'Üst bilgi';
+
+  @override
+  String get exportFooter => 'Alt bilgi';
+
+  @override
+  String get exportNone => 'Yok';
+
+  @override
+  String get exportDocumentTitle => 'Belge başlığı';
+
+  @override
+  String get exportBottomLeft => 'Sol alt';
+
+  @override
+  String get exportBottomCenter => 'Alt orta';
+
+  @override
+  String get exportBottomRight => 'Sağ alt';
+
+  @override
+  String get exportFirstPage => 'İlk sayfada üst ve alt bilgiyi göster';
+
+  @override
+  String get exportAccent => 'Vurgu / bağlantı rengi';
+
+  @override
+  String get exportTheme => 'Tema';
+
+  @override
+  String get exportAutomatic => 'Otomatik';
+
+  @override
+  String get exportLayout => 'Düzen';
+
+  @override
+  String get exportContentWidth => 'En fazla içerik genişliği';
+
+  @override
+  String get exportOutput => 'Çıktı';
+
+  @override
+  String get exportPackaging => 'Paketleme';
+
+  @override
+  String get exportSingleFile => 'Tek HTML dosyası';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + kaynak klasörü';
+
+  @override
+  String get exportCustomCss => 'Özel stil sayfası…';
+
+  @override
+  String get exportRemoveCss => 'Özel stil sayfasını kaldır';
+
+  @override
+  String get exportCssNote =>
+      'İsteğe bağlı UTF-8 CSS dosyası seçin (en fazla 256 KiB). İçe aktarımlar, kaynak URL’leri ve çalıştırılabilir veya kaçışlı CSS reddedilir. Stiller BusyMark CSS’inden sonra uygulanır. Uzak kaynaklar indirilmez.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside ayrı bağlantılı konu sayfalarını korur. Tek dosya modu kaynakları her sayfaya gömer.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Kenar boşluklarından sonra en az 20 mm içerik genişliği ve yüksekliği bırakın.';
+
+  @override
+  String get exportInvalidColor => '#RRGGBB biçiminde bir renk girin.';
+
+  @override
+  String get exportInvalidCss =>
+      'İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum ile $maximum arasında bir sayı girin.';
+  }
 }

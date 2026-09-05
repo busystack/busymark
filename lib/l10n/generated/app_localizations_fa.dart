@@ -3792,4 +3792,139 @@ class AppLocalizationsFa extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'مرتب‌سازی $column';
   }
+
+  @override
+  String get exportReset => 'بازنشانی به پیش‌فرض‌ها';
+
+  @override
+  String get exportToc => 'افزودن فهرست مطالب';
+
+  @override
+  String get exportTocDepth => 'عمق فهرست مطالب';
+
+  @override
+  String get exportNumberHeadings => 'شماره‌گذاری عنوان‌ها';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'سفارشی';
+
+  @override
+  String get exportPageWidth => 'عرض صفحه (میلی‌متر)';
+
+  @override
+  String get exportPageHeight => 'ارتفاع صفحه (میلی‌متر)';
+
+  @override
+  String get exportMarginTop => 'حاشیهٔ بالا (میلی‌متر)';
+
+  @override
+  String get exportMarginRight => 'حاشیهٔ راست (میلی‌متر)';
+
+  @override
+  String get exportMarginBottom => 'حاشیهٔ پایین (میلی‌متر)';
+
+  @override
+  String get exportMarginLeft => 'حاشیهٔ چپ (میلی‌متر)';
+
+  @override
+  String get exportTypography => 'حروف‌چینی';
+
+  @override
+  String get exportSans => 'بدون سریف';
+
+  @override
+  String get exportSerif => 'سریف';
+
+  @override
+  String get exportBodySize => 'اندازهٔ قلم متن';
+
+  @override
+  String get exportCodeSize => 'اندازهٔ قلم کد';
+
+  @override
+  String get exportRunningText => 'سرصفحه و پاصفحه';
+
+  @override
+  String get exportHeader => 'سرصفحه';
+
+  @override
+  String get exportFooter => 'پاصفحه';
+
+  @override
+  String get exportNone => 'هیچ‌کدام';
+
+  @override
+  String get exportDocumentTitle => 'عنوان سند';
+
+  @override
+  String get exportBottomLeft => 'پایین چپ';
+
+  @override
+  String get exportBottomCenter => 'پایین وسط';
+
+  @override
+  String get exportBottomRight => 'پایین راست';
+
+  @override
+  String get exportFirstPage => 'نمایش سرصفحه و پاصفحه در صفحهٔ نخست';
+
+  @override
+  String get exportAccent => 'رنگ تأکید / پیوند';
+
+  @override
+  String get exportTheme => 'پوسته';
+
+  @override
+  String get exportAutomatic => 'خودکار';
+
+  @override
+  String get exportLayout => 'چیدمان';
+
+  @override
+  String get exportContentWidth => 'بیشترین عرض محتوا';
+
+  @override
+  String get exportOutput => 'خروجی';
+
+  @override
+  String get exportPackaging => 'بسته‌بندی';
+
+  @override
+  String get exportSingleFile => 'یک فایل HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + پوشهٔ منابع';
+
+  @override
+  String get exportCustomCss => 'شیوه‌نامهٔ سفارشی…';
+
+  @override
+  String get exportRemoveCss => 'حذف شیوه‌نامهٔ سفارشی';
+
+  @override
+  String get exportCssNote =>
+      'یک فایل CSS اختیاری با UTF-8 انتخاب کنید (تا ۲۵۶ KiB). واردسازی، نشانی منابع و CSS اجرایی یا دارای نویسهٔ گریز پذیرفته نمی‌شود. سبک‌ها پس از CSS برنامه اعمال می‌شوند. منابع راه دور دریافت نمی‌شوند.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside صفحه‌های موضوعی جدا و پیوندخورده را نگه می‌دارد. حالت تک‌فایلی منابع را در هر صفحه جاسازی می‌کند.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'پس از حاشیه‌ها دست‌کم ۲۰ میلی‌متر عرض و ارتفاع برای محتوا باقی بگذارید.';
+
+  @override
+  String get exportInvalidColor => 'رنگ را به‌صورت #RRGGBB وارد کنید.';
+
+  @override
+  String get exportInvalidCss =>
+      'یک فایل .css خوانا با UTF-8 تا ۲۵۶ KiB انتخاب کنید، بدون واردسازی، نشانی منابع، HTML یا CSS اجرایی یا دارای نویسهٔ گریز.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: عددی بین $minimum و $maximum وارد کنید.';
+  }
 }

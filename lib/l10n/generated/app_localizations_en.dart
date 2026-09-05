@@ -3775,4 +3775,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Sort $column';
   }
+
+  @override
+  String get exportReset => 'Reset to defaults';
+
+  @override
+  String get exportToc => 'Include table of contents';
+
+  @override
+  String get exportTocDepth => 'TOC depth';
+
+  @override
+  String get exportNumberHeadings => 'Number headings';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Custom';
+
+  @override
+  String get exportPageWidth => 'Page width (mm)';
+
+  @override
+  String get exportPageHeight => 'Page height (mm)';
+
+  @override
+  String get exportMarginTop => 'Top margin (mm)';
+
+  @override
+  String get exportMarginRight => 'Right margin (mm)';
+
+  @override
+  String get exportMarginBottom => 'Bottom margin (mm)';
+
+  @override
+  String get exportMarginLeft => 'Left margin (mm)';
+
+  @override
+  String get exportTypography => 'Typography';
+
+  @override
+  String get exportSans => 'Sans-serif';
+
+  @override
+  String get exportSerif => 'Serif';
+
+  @override
+  String get exportBodySize => 'Body font size';
+
+  @override
+  String get exportCodeSize => 'Code font size';
+
+  @override
+  String get exportRunningText => 'Header & Footer';
+
+  @override
+  String get exportHeader => 'Header';
+
+  @override
+  String get exportFooter => 'Footer';
+
+  @override
+  String get exportNone => 'None';
+
+  @override
+  String get exportDocumentTitle => 'Document title';
+
+  @override
+  String get exportBottomLeft => 'Bottom left';
+
+  @override
+  String get exportBottomCenter => 'Bottom center';
+
+  @override
+  String get exportBottomRight => 'Bottom right';
+
+  @override
+  String get exportFirstPage => 'Show header and footer on first page';
+
+  @override
+  String get exportAccent => 'Accent / link color';
+
+  @override
+  String get exportTheme => 'Theme';
+
+  @override
+  String get exportAutomatic => 'Automatic';
+
+  @override
+  String get exportLayout => 'Layout';
+
+  @override
+  String get exportContentWidth => 'Maximum content width';
+
+  @override
+  String get exportOutput => 'Output';
+
+  @override
+  String get exportPackaging => 'Packaging';
+
+  @override
+  String get exportSingleFile => 'Single HTML file';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + assets directory';
+
+  @override
+  String get exportCustomCss => 'Custom stylesheet…';
+
+  @override
+  String get exportRemoveCss => 'Remove custom stylesheet';
+
+  @override
+  String get exportCssNote =>
+      'Select an optional UTF-8 CSS file (up to 256 KiB). Imports, resource URLs, and executable or escaped CSS are not accepted. Styles are applied after BusyMark’s stylesheet. Remote resources are never fetched.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside keeps separate linked topic pages. Single-file mode embeds resources in each page.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Leave at least 20 mm of content width and height after margins.';
+
+  @override
+  String get exportInvalidColor => 'Enter a color as #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: enter a number between $minimum and $maximum.';
+  }
 }

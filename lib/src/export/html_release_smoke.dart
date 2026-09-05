@@ -102,6 +102,43 @@ paths:
   if (document.warnings.isNotEmpty) {
     throw StateError('HTML smoke diagnostics: ${document.warnings.join('; ')}');
   }
+  final customStyles = File(p.join(sourceRoot.path, 'custom.css'));
+  await customStyles.writeAsString('article { --custom-css-proof: applied; }');
+  for (final variant in ['automatic-single', 'dark-assets']) {
+    final customized = await exporter.exportMarkdown(
+      MarkdownHtmlExportRequest(
+        source: markdown,
+        filePath: documentPath,
+        workspaceRoot: sourceRoot.path,
+        destinationPath: p.join(outputRoot.path, '$variant.html'),
+        mode: MarkdownMode.gfm,
+        overwrite: true,
+        options: HtmlExportOptions(
+          theme: variant == 'automatic-single'
+              ? HtmlExportTheme.automatic
+              : HtmlExportTheme.dark,
+          packaging: variant == 'automatic-single'
+              ? HtmlPackaging.singleFile
+              : HtmlPackaging.assetsDirectory,
+          bodyTypography: ExportBodyTypography.serif,
+          baseFontSize: 20,
+          contentMaxWidth: 1000,
+          accentColor: '#7651a8',
+          customCssPath: customStyles.path,
+          content: const ExportContentOptions(
+            includeToc: true,
+            tocDepth: 2,
+            numberHeadings: true,
+          ),
+        ),
+      ),
+    );
+    if (customized.warnings.isNotEmpty) {
+      throw StateError(
+        'Custom HTML diagnostics: ${customized.warnings.join('; ')}',
+      );
+    }
+  }
   final module = Directory(p.join(sourceRoot.path, 'writerside'));
   Future<void> put(String path, String source) async {
     final file = File(p.join(module.path, path));
@@ -142,10 +179,35 @@ paths:
       'Writerside HTML smoke diagnostics: ${site.warnings.join('; ')}',
     );
   }
+  final embeddedSite = await exporter.exportWriterside(
+    projectRoot: module.path,
+    moduleRoot: module.path,
+    instanceId: 'guide',
+    destinationPath: p.join(outputRoot.path, 'writerside-embedded'),
+    overwrite: true,
+    options: const HtmlExportOptions(
+      packaging: HtmlPackaging.singleFile,
+      theme: HtmlExportTheme.dark,
+      baseFontSize: 20,
+      bodyTypography: ExportBodyTypography.serif,
+      content: ExportContentOptions(
+        includeToc: true,
+        tocDepth: 2,
+        numberHeadings: true,
+      ),
+    ),
+  );
+  if (embeddedSite.warnings.isNotEmpty) {
+    throw StateError(
+      'Embedded Writerside diagnostics: ${embeddedSite.warnings.join('; ')}',
+    );
+  }
   return {
     'markdownHtml': document.entryPointPath,
     'writersideHtml': site.entryPointPath,
-    'htmlPages': site.pageCount + 1,
+    'customHtml': p.join(outputRoot.path, 'automatic-single.html'),
+    'embeddedWritersideHtml': embeddedSite.entryPointPath,
+    'htmlPages': site.pageCount * 2 + 3,
     'htmlWarnings': 0,
   };
 }

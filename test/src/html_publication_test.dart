@@ -40,13 +40,68 @@ void main() {
     String dir = 'module',
     String output = 'site',
     bool overwrite = false,
+    HtmlExportOptions options = const HtmlExportOptions(),
   }) => const HtmlExportService().exportWriterside(
     projectRoot: root.path,
     moduleRoot: p.join(root.path, dir),
     instanceId: 'guide',
     destinationPath: p.join(root.path, output),
     overwrite: overwrite,
+    options: options,
   );
+  test(
+    'Writerside shares HTML appearance without changing TOC status or source',
+    () async {
+      await module(
+        'module',
+        'module',
+        '<instance-profile id="guide" name="Guide" start-page="Start.topic"><toc-element topic="Start.topic"/><toc-element topic="Hidden.topic" hidden="true"/><toc-element topic="Wip.topic" wip="true"/></instance-profile>',
+      );
+      const source =
+          '<topic id="Start" title="%product%"><chapter id="one" title="First"><p>Body</p></chapter><chapter id="two" title="Second"/></topic>';
+      await put('module/topics/Start.topic', source);
+      await put(
+        'module/topics/Hidden.topic',
+        '<topic id="Hidden" title="Hidden"><p>Hidden content</p></topic>',
+      );
+      await put(
+        'module/topics/Wip.topic',
+        '<topic id="Wip" title="Wip"><p>Work in progress</p></topic>',
+      );
+      const options = HtmlExportOptions(
+        theme: HtmlExportTheme.dark,
+        bodyTypography: ExportBodyTypography.serif,
+        baseFontSize: 19,
+        packaging: HtmlPackaging.singleFile,
+        content: ExportContentOptions(
+          includeToc: true,
+          tocDepth: 2,
+          numberHeadings: true,
+        ),
+      );
+      final result = await site(options: options);
+      expect(result.pageCount, 3);
+      final doc = html.parse(await File(result.entryPointPath).readAsString());
+      expect(doc.querySelector('style')!.text, contains('--body-size:19.0px'));
+      expect(doc.querySelector('style')!.text, contains('color-scheme:dark'));
+      expect(doc.querySelector('.heading-number'), isNotNull);
+      expect(doc.querySelector('h1')!.text, contains('BusyMark'));
+      final nav = doc.querySelector('.instance-nav')!.text;
+      expect(nav, isNot(contains('Hidden')));
+      expect(nav, contains('Work in progress'));
+      expect(
+        await File(p.join(root.path, 'site/hidden.html')).exists(),
+        isTrue,
+      );
+      expect(
+        await File(
+          p.join(root.path, 'module/topics/Start.topic'),
+        ).readAsString(),
+        source,
+      );
+    },
+  );
+
   test(
     'Writerside module origins preserve includes, variables, file identity and nullable links',
     () async {

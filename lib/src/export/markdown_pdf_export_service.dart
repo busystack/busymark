@@ -51,6 +51,7 @@ class MarkdownPdfExportService {
   }) async {
     final token = cancellationToken ?? MarkdownPdfCancellationToken();
     token.throwIfCancelled();
+    request.options.validateOrThrow();
     final executable = compilerLocator.locate();
     if (executable == null) {
       throw const MarkdownPdfExportException(
@@ -108,7 +109,7 @@ class MarkdownPdfExportService {
           : await mathRenderer!.prepare(
               document: mappedDocument,
               exportRoot: exportRoot,
-              containerWidth: _pdfContentWidth(request.options),
+              options: request.options,
               cancellationToken: token,
             );
       token.throwIfCancelled();
@@ -209,27 +210,6 @@ class MarkdownPdfExportService {
     } finally {
       await _deleteExportRootBestEffort(exportRoot);
     }
-  }
-
-  double _pdfContentWidth(MarkdownPdfOptions options) {
-    final pageWidth = switch (options.pageSize) {
-      MarkdownPdfPageSize.a4 => 595.28,
-      MarkdownPdfPageSize.letter => 612.0,
-    };
-    final pageHeight = switch (options.pageSize) {
-      MarkdownPdfPageSize.a4 => 841.89,
-      MarkdownPdfPageSize.letter => 792.0,
-    };
-    final horizontalMargin = switch (options.margin) {
-      MarkdownPdfMargin.narrow => 36.0,
-      MarkdownPdfMargin.normal => 57.0,
-      MarkdownPdfMargin.wide => 78.0,
-    };
-    final orientedWidth =
-        options.orientation == MarkdownPdfOrientation.landscape
-        ? pageHeight
-        : pageWidth;
-    return orientedWidth - 2 * horizontalMargin;
   }
 
   static Future<String> _loadBundledTemplate() {

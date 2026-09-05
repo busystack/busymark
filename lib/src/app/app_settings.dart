@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../export/export_options.dart';
 import 'app_locale.dart';
 
 enum BusyMarkThemeModePreference { system, light, dark }
@@ -95,6 +96,8 @@ class AppSettings {
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
     required this.trustedGitWorkspacePaths,
+    this.pdfExportOptions = const PdfExportOptions(),
+    this.htmlExportOptions = const HtmlExportOptions(),
     required this.selectedWritersideInstanceIds,
     required this.writersideInstanceIconColors,
     required this.reopenPreviousWorkspaceOnStartup,
@@ -202,6 +205,8 @@ class AppSettings {
       trustedGitWorkspacePaths: _gitWorkspacePathListFromJson(
         json['trustedGitWorkspacePaths'],
       ),
+      pdfExportOptions: PdfExportOptions.fromJson(json['pdfExportOptions']),
+      htmlExportOptions: HtmlExportOptions.fromJson(json['htmlExportOptions']),
       selectedWritersideInstanceIds: _stringMapFromJson(
         json['selectedWritersideInstanceIds'],
       ),
@@ -247,6 +252,8 @@ class AppSettings {
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
   final List<String> trustedGitWorkspacePaths;
+  final PdfExportOptions pdfExportOptions;
+  final HtmlExportOptions htmlExportOptions;
   final Map<String, String> selectedWritersideInstanceIds;
   final Map<String, String> writersideInstanceIconColors;
   final bool reopenPreviousWorkspaceOnStartup;
@@ -280,6 +287,8 @@ class AppSettings {
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
     'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
+    'pdfExportOptions': pdfExportOptions.toJson(),
+    'htmlExportOptions': htmlExportOptions.toJson(),
     'selectedWritersideInstanceIds': selectedWritersideInstanceIds,
     'writersideInstanceIconColors': writersideInstanceIconColors,
     'reopenPreviousWorkspaceOnStartup': reopenPreviousWorkspaceOnStartup,
@@ -352,6 +361,8 @@ class AppSettings {
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
     List<String>? trustedGitWorkspacePaths,
+    PdfExportOptions? pdfExportOptions,
+    HtmlExportOptions? htmlExportOptions,
     Map<String, String>? selectedWritersideInstanceIds,
     Map<String, String>? writersideInstanceIconColors,
     bool? reopenPreviousWorkspaceOnStartup,
@@ -390,6 +401,8 @@ class AppSettings {
           this.remoteImageAllowedWorkspacePaths,
       trustedGitWorkspacePaths:
           trustedGitWorkspacePaths ?? this.trustedGitWorkspacePaths,
+      pdfExportOptions: pdfExportOptions ?? this.pdfExportOptions,
+      htmlExportOptions: htmlExportOptions ?? this.htmlExportOptions,
       selectedWritersideInstanceIds:
           selectedWritersideInstanceIds ?? this.selectedWritersideInstanceIds,
       writersideInstanceIconColors:
@@ -492,6 +505,16 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> waitUntilLoaded() => _loadFuture;
+
+  Future<void> setPdfExportOptions(PdfExportOptions options) {
+    options.validateOrThrow();
+    return _mutate((settings) => settings.copyWith(pdfExportOptions: options));
+  }
+
+  Future<void> setHtmlExportOptions(HtmlExportOptions options) {
+    options.validateOrThrow();
+    return _mutate((settings) => settings.copyWith(htmlExportOptions: options));
+  }
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
     return _mutate(

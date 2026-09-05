@@ -3747,4 +3747,139 @@ class AppLocalizationsEt extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Sordi $column';
   }
+
+  @override
+  String get exportReset => 'Taasta vaikeväärtused';
+
+  @override
+  String get exportToc => 'Lisa sisukord';
+
+  @override
+  String get exportTocDepth => 'Sisukorra sügavus';
+
+  @override
+  String get exportNumberHeadings => 'Nummerda pealkirjad';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Kohandatud';
+
+  @override
+  String get exportPageWidth => 'Lehe laius (mm)';
+
+  @override
+  String get exportPageHeight => 'Lehe kõrgus (mm)';
+
+  @override
+  String get exportMarginTop => 'Ülaveeris (mm)';
+
+  @override
+  String get exportMarginRight => 'Paremveeris (mm)';
+
+  @override
+  String get exportMarginBottom => 'Alaveeris (mm)';
+
+  @override
+  String get exportMarginLeft => 'Vasakveeris (mm)';
+
+  @override
+  String get exportTypography => 'Tüpograafia';
+
+  @override
+  String get exportSans => 'Seriifideta';
+
+  @override
+  String get exportSerif => 'Seriifidega';
+
+  @override
+  String get exportBodySize => 'Põhiteksti suurus';
+
+  @override
+  String get exportCodeSize => 'Koodi suurus';
+
+  @override
+  String get exportRunningText => 'Päis ja jalus';
+
+  @override
+  String get exportHeader => 'Päis';
+
+  @override
+  String get exportFooter => 'Jalus';
+
+  @override
+  String get exportNone => 'Puudub';
+
+  @override
+  String get exportDocumentTitle => 'Dokumendi pealkiri';
+
+  @override
+  String get exportBottomLeft => 'All vasakul';
+
+  @override
+  String get exportBottomCenter => 'All keskel';
+
+  @override
+  String get exportBottomRight => 'All paremal';
+
+  @override
+  String get exportFirstPage => 'Näita päist ja jalust esimesel lehel';
+
+  @override
+  String get exportAccent => 'Rõhu-/lingivärv';
+
+  @override
+  String get exportTheme => 'Teema';
+
+  @override
+  String get exportAutomatic => 'Automaatne';
+
+  @override
+  String get exportLayout => 'Paigutus';
+
+  @override
+  String get exportContentWidth => 'Sisu suurim laius';
+
+  @override
+  String get exportOutput => 'Väljund';
+
+  @override
+  String get exportPackaging => 'Pakendamine';
+
+  @override
+  String get exportSingleFile => 'Üks HTML-fail';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + ressursikaust';
+
+  @override
+  String get exportCustomCss => 'Kohandatud laadileht…';
+
+  @override
+  String get exportRemoveCss => 'Eemalda kohandatud laadileht';
+
+  @override
+  String get exportCssNote =>
+      'Vali soovi korral UTF-8 CSS-fail (kuni 256 KiB). Importimine, ressursside URL-id ning käivitatav või paojadadega CSS pole lubatud. Laadid järgnevad BusyMarki laadidele. Võrguressursse ei laadita.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside säilitab eraldi lingitud teemalehed. Ühe faili režiim manustab ressursid igale lehele.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Jäta pärast veeriseid sisule vähemalt 20 mm laiust ja kõrgust.';
+
+  @override
+  String get exportInvalidColor => 'Sisesta värv kujul #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Vali loetav UTF-8 .css-fail kuni 256 KiB, ilma importide, ressursside URL-ide, HTML-i ning käivitatava või paojadadega CSS-ita.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: sisesta arv vahemikus $minimum kuni $maximum.';
+  }
 }

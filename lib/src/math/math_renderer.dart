@@ -67,7 +67,7 @@ class MathRenderer {
           'display': request.display,
           'em': request.em,
           'ex': request.ex,
-          'containerWidth': request.widthBucket,
+          'containerWidth': request.renderWidth,
           'renderProfile': request.renderProfile,
           'svgIdPrefix': 'bm-${request.cacheKey.substring(0, 16)}',
         });

@@ -11,10 +11,22 @@ Open a Writerside module and select **Main menu → Export as PDF** or press
 discard unsaved project changes, then lets you select:
 
 - one non-library Writerside instance;
-- A4 or US Letter page size;
-- portrait or landscape orientation;
-- narrow, normal, or wide margins; and
-- whether to include page numbers.
+- a generated table of contents with heading depth 1–6 and optional heading numbering;
+- A4, US Letter, US Legal, or custom page dimensions in millimetres;
+- portrait or landscape and preset or four independent custom margins;
+- serif or sans-serif Noto typography, body size, and code size;
+- document-title headers and footers, page-number position, and first-page visibility; and
+- an accent/link color.
+
+These are the same controls used for Markdown PDF export. Confirmed PDF settings
+are remembered globally; instance selection remains specific to the workspace.
+**Reset to defaults** restores the default settings in the dialog. Cancelling
+keeps the previously remembered settings. The editor theme does not affect PDF
+appearance. See [PDF export settings](pdf-export.md) for ranges and defaults.
+
+Generated TOC and heading numbering use the exported heading structure without
+changing topic source. Custom typography also controls heading and equation
+sizing; custom dimensions and margins determine the available content width.
 
 The instance's resolved TOC determines topic order. Hidden and work-in-progress
 TOC entries are omitted unless a work-in-progress topic is the configured start
@@ -61,19 +73,3 @@ BusyMark is not the JetBrains Writerside publication builder. The native export
 targets a reliable offline PDF of the syntax BusyMark understands; teams that
 need byte-for-byte parity with JetBrains website artifacts can still run
 JetBrains' separate CI tooling outside BusyMark.
-
-## Verification
-
-Focused tests cover instance selection, TOC ordering, variables, Markdown and
-`.topic` XML composition, local asset rebasing, cancellation, failure mapping,
-and the repository's Writerside demo through a test compiler runner. A separate
-integration test compiles semantic content using the real bundled Typst binary
-when available. See [Writerside support](writerside-support.md) for the official
-builder fixture comparison and the limits of that evidence.
-
-Run:
-
-```bash
-flutter test test/src/writerside_pdf_export_test.dart
-flutter test test/src/markdown_pdf_export_test.dart
-```

@@ -3790,4 +3790,139 @@ class AppLocalizationsNl extends AppLocalizations {
   String sortTableColumn(String column) {
     return '$column sorteren';
   }
+
+  @override
+  String get exportReset => 'Standaardwaarden herstellen';
+
+  @override
+  String get exportToc => 'Inhoudsopgave opnemen';
+
+  @override
+  String get exportTocDepth => 'Diepte inhoudsopgave';
+
+  @override
+  String get exportNumberHeadings => 'Koppen nummeren';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Aangepast';
+
+  @override
+  String get exportPageWidth => 'Paginabreedte (mm)';
+
+  @override
+  String get exportPageHeight => 'Paginahoogte (mm)';
+
+  @override
+  String get exportMarginTop => 'Bovenmarge (mm)';
+
+  @override
+  String get exportMarginRight => 'Rechtermarge (mm)';
+
+  @override
+  String get exportMarginBottom => 'Ondermarge (mm)';
+
+  @override
+  String get exportMarginLeft => 'Linkermarge (mm)';
+
+  @override
+  String get exportTypography => 'Typografie';
+
+  @override
+  String get exportSans => 'Schreefloos';
+
+  @override
+  String get exportSerif => 'Met schreef';
+
+  @override
+  String get exportBodySize => 'Tekstgrootte';
+
+  @override
+  String get exportCodeSize => 'Codegrootte';
+
+  @override
+  String get exportRunningText => 'Kop- en voettekst';
+
+  @override
+  String get exportHeader => 'Koptekst';
+
+  @override
+  String get exportFooter => 'Voettekst';
+
+  @override
+  String get exportNone => 'Geen';
+
+  @override
+  String get exportDocumentTitle => 'Documenttitel';
+
+  @override
+  String get exportBottomLeft => 'Linksonder';
+
+  @override
+  String get exportBottomCenter => 'Middenonder';
+
+  @override
+  String get exportBottomRight => 'Rechtsonder';
+
+  @override
+  String get exportFirstPage => 'Kop- en voettekst op de eerste pagina tonen';
+
+  @override
+  String get exportAccent => 'Accent-/linkkleur';
+
+  @override
+  String get exportTheme => 'Thema';
+
+  @override
+  String get exportAutomatic => 'Automatisch';
+
+  @override
+  String get exportLayout => 'Indeling';
+
+  @override
+  String get exportContentWidth => 'Maximale inhoudsbreedte';
+
+  @override
+  String get exportOutput => 'Uitvoer';
+
+  @override
+  String get exportPackaging => 'Verpakking';
+
+  @override
+  String get exportSingleFile => 'Eén HTML-bestand';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + middelenmap';
+
+  @override
+  String get exportCustomCss => 'Aangepast stijlblad…';
+
+  @override
+  String get exportRemoveCss => 'Aangepast stijlblad verwijderen';
+
+  @override
+  String get exportCssNote =>
+      'Kies een optioneel UTF-8-CSS-bestand (maximaal 256 KiB). Imports, bron-URL’s en uitvoerbare of ontsnapte CSS worden geweigerd. De stijlen volgen die van BusyMark. Externe bronnen worden nooit opgehaald.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside behoudt aparte gekoppelde onderwerppagina’s. De enkelbestandsmodus sluit bronnen in elke pagina in.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Laat na de marges minimaal 20 mm inhoudsbreedte en -hoogte over.';
+
+  @override
+  String get exportInvalidColor => 'Voer een kleur in als #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: voer een getal tussen $minimum en $maximum in.';
+  }
 }

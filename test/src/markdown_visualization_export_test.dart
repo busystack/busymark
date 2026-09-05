@@ -297,7 +297,7 @@ void main() {
           filePath: p.join(temporaryDirectory.path, 'guide.md'),
           workspaceRoot: temporaryDirectory.path,
           destinationPath: destination,
-          options: const MarkdownPdfOptions(),
+          options: const PdfExportOptions(),
           overwrite: false,
         ),
       );

@@ -9,6 +9,8 @@ import '../markdown/raw_html_policy.dart';
 import '../visualization/visualization_models.dart';
 import '../writerside/writerside_document.dart';
 import 'html_export_links.dart';
+import 'html_export_styles.dart';
+import 'export_metadata_mapper.dart';
 import 'html_export_models.dart';
 import 'html_publication_plan.dart';
 import 'html_rich_content.dart';
@@ -37,12 +39,16 @@ class HtmlDocumentWriter {
     required this.stylesheet,
     required this.warnings,
     this.limits = const HtmlExportLimits(),
+    this.options = const HtmlExportOptions(),
+    this.customCss = '',
     this.navigationLabel = 'Documentation',
     this.outlineLabel = 'On this page',
     this.workInProgressLabel = 'Work in progress',
     this.contentLabel = 'Content',
     this.disclosureLabel = 'Details',
   });
+  final HtmlExportOptions options;
+  final String customCss;
   final HtmlPage page;
   final HtmlPublicationPlan plan;
   final HtmlExportLinks links;
@@ -71,6 +77,8 @@ class HtmlDocumentWriter {
   );
 
   Future<String> write() async {
+    options.validateOrThrow();
+    HtmlExportStyles.validateCss(customCss);
     var contentId = 'busymark-content';
     while (page.ids.contains(contentId)) {
       contentId = '$contentId-main';
@@ -90,6 +98,7 @@ class HtmlDocumentWriter {
     if (article.querySelector('h1') == null) {
       article.nodes.insert(0, _el('h1', text: page.title));
     }
+    final numbers = _prepareOutline(article);
     final body = _el(
       'body',
       children: [
@@ -117,7 +126,7 @@ class HtmlDocumentWriter {
           'main',
           attrs: {'id': contentId, 'tabindex': '-1'},
           children: [
-            if (page.outline.where((h) => h.level > 1).length > 1)
+            if (options.content.includeToc && page.outline.isNotEmpty)
               _el(
                 'nav',
                 attrs: {'class': 'outline', 'aria-label': outlineLabel},
@@ -126,26 +135,7 @@ class HtmlDocumentWriter {
                     'details',
                     children: [
                       _el('summary', text: outlineLabel),
-                      _el(
-                        'ul',
-                        children: [
-                          for (final h in page.outline.where(
-                            (h) => h.level > 1,
-                          ))
-                            _el(
-                              'li',
-                              children: [
-                                _el(
-                                  'a',
-                                  text: h.title,
-                                  attrs: {
-                                    'href': '#${Uri.encodeComponent(h.id)}',
-                                  },
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
+                      _outline(numbers),
                     ],
                   ),
                 ],
@@ -155,18 +145,21 @@ class HtmlDocumentWriter {
         ),
       ],
     );
-    final css = '$stylesheet\n${_rules.join('\n')}';
+    final css =
+        '$stylesheet\n${HtmlExportStyles.generate(options)}\n${_rules.join('\n')}\n$customCss';
     // Meta CSP cannot enforce frame-ancestors or sandbox. All active source
     // content has already been rejected. file: images need an explicit source
     // in browsers that assign each local document an opaque origin.
+    final embeddedSource = options.packaging == HtmlPackaging.singleFile
+        ? ' data:'
+        : '';
     final csp =
-        "default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; font-src 'none'; img-src 'self' file:; media-src 'self' file:; style-src 'sha256-${base64.encode(sha256.convert(utf8.encode(css)).bytes)}'";
-    final metadata = page.document.frontMatter;
-    final lang = metadata['lang'] ?? metadata['language'] ?? 'und';
-    final language =
-        RegExp(r'^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$').hasMatch(lang)
-        ? lang
-        : 'und';
+        "default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; font-src 'none'; img-src 'self' file:$embeddedSource; media-src 'self' file:$embeddedSource; style-src 'sha256-${base64.encode(sha256.convert(utf8.encode(css)).bytes)}'";
+    final metadata = const ExportMetadataMapper().map(
+      page.document,
+      titleOverride: page.title,
+      defaultLanguage: 'und',
+    );
     final head = _el(
       'head',
       children: [
@@ -182,27 +175,95 @@ class HtmlDocumentWriter {
             'content': 'width=device-width, initial-scale=1',
           },
         ),
-        _el('title', text: page.title),
-        for (final key in ['author', 'description', 'keywords'])
-          if (metadata[key] case final value?)
-            _el('meta', attrs: {'name': key, 'content': value}),
-        if (metadata['web-summary'] case final summary?
-            when !metadata.containsKey('description'))
-          _el('meta', attrs: {'name': 'description', 'content': summary}),
+        _el('title', text: metadata.title),
+        for (final entry in {
+          'author': metadata.author,
+          'description': metadata.description,
+          'keywords': metadata.keywords.join(', '),
+        }.entries)
+          if (entry.value.isNotEmpty)
+            _el('meta', attrs: {'name': entry.key, 'content': entry.value}),
         _el('style', text: css),
       ],
     );
     final root = _el(
       'html',
       attrs: {
-        'lang': language,
-        if ({'rtl', 'ltr', 'auto'}.contains(metadata['dir']))
-          'dir': metadata['dir']!,
+        'lang': metadata.language,
+        if ({'rtl', 'ltr', 'auto'}.contains(page.document.frontMatter['dir']))
+          'dir': page.document.frontMatter['dir']!,
       },
       children: [head, body],
     );
     _validateBoundary(root);
     return '<!DOCTYPE html>\n${root.outerHtml}\n';
+  }
+
+  // The publication plan's headings are the same semantic headings used for
+  // IDs and links. Numbering is renderer-owned and never changes source blocks.
+  Map<String, String> _prepareOutline(dom.Element article) {
+    final result = <String, String>{};
+    final elements = {
+      for (final h in article.querySelectorAll('h1,h2,h3,h4,h5,h6')) h.id: h,
+    };
+    // Static API headings are added during rich-content preparation. Keep the
+    // single publication outline in the final document order before numbering.
+    final positions = {
+      for (final (index, id) in elements.keys.indexed) id: index,
+    };
+    page.outline.sort(
+      (a, b) => (positions[a.id] ?? 0).compareTo(positions[b.id] ?? 0),
+    );
+    if (!options.content.numberHeadings) return result;
+    final counts = List.filled(6, 0);
+    for (final heading in page.outline) {
+      final level = heading.level.clamp(1, 6);
+      counts[level - 1]++;
+      for (var i = level; i < 6; i++) {
+        counts[i] = 0;
+      }
+      final number = counts.take(level).join('.');
+      result[heading.id] = number;
+      elements[heading.id]?.nodes.insert(
+        0,
+        _el('span', text: '$number ', attrs: {'class': 'heading-number'}),
+      );
+    }
+    return result;
+  }
+
+  dom.Element _outline(Map<String, String> numbers) {
+    final root = _el('ul');
+    final stack = <({int level, dom.Element item})>[];
+    for (final h in page.outline.where(
+      (h) => h.level <= options.content.tocDepth,
+    )) {
+      while (stack.isNotEmpty && stack.last.level >= h.level) {
+        stack.removeLast();
+      }
+      var list = root;
+      if (stack.isNotEmpty) {
+        final parent = stack.last.item;
+        list =
+            parent.children.where((e) => e.localName == 'ul').firstOrNull ??
+            _el('ul');
+        if (list.parentNode == null) parent.nodes.add(list);
+      }
+      final item = _el(
+        'li',
+        children: [
+          _el(
+            'a',
+            text:
+                '${numbers[h.id] == null ? '' : '${numbers[h.id]} '}${h.title}',
+            attrs: {'href': '#${Uri.encodeComponent(h.id)}'},
+          ),
+        ],
+      );
+      list.nodes.add(item);
+      stack.add((level: h.level, item: item));
+    }
+    return root;
   }
 
   Future<dom.Element> _navigation(List<HtmlNavigationEntry> entries) async {
@@ -889,13 +950,10 @@ class HtmlDocumentWriter {
     BusyBlock block,
   ) async {
     final fontSize = block.kind == BusyBlockKind.heading
-        ? switch (block.attributes['level']) {
-            '1' => 39.1,
-            '2' => 29.75,
-            '3' => 22.1,
-            _ => 17.0,
-          }
-        : 17.0;
+        ? options.headingFontSize(
+            int.tryParse(block.attributes['level'] ?? '') ?? 1,
+          )
+        : options.baseFontSize;
     final image = await rich.formula(
       expression,
       display,
@@ -1137,7 +1195,34 @@ class HtmlDocumentWriter {
   );
 
   void _validateBoundary(dom.Element root) {
+    // Bound serialization before constructing the final string. Repeated
+    // embedded images share one validated asset, but each occurrence adds its
+    // encoded bytes to the HTML output.
+    var outputBytes = 32;
+    void addBytes(int count) {
+      outputBytes += count;
+      if (outputBytes > limits.sourceBytes * 4) {
+        throw const HtmlExportException(
+          'Generated HTML exceeds the output byte limit.',
+        );
+      }
+    }
+
     for (final element in [root, ...root.querySelectorAll('*')]) {
+      addBytes((element.localName?.length ?? 0) * 2 + 5);
+      for (final text in element.nodes.whereType<dom.Text>()) {
+        addBytes(
+          utf8
+              .encode(
+                element.localName == 'style'
+                    ? text.data
+                    : const HtmlEscape(
+                        HtmlEscapeMode.element,
+                      ).convert(text.data),
+              )
+              .length,
+        );
+      }
       if ({
         'script',
         'iframe',
@@ -1153,6 +1238,17 @@ class HtmlDocumentWriter {
       }
       for (final entry in element.attributes.entries) {
         final key = entry.key.toString();
+        addBytes(
+          utf8.encode(key).length +
+              4 +
+              utf8
+                  .encode(
+                    const HtmlEscape(
+                      HtmlEscapeMode.attribute,
+                    ).convert(entry.value),
+                  )
+                  .length,
+        );
         if (key.startsWith('on') ||
             key == 'style' ||
             key.startsWith('busymark-source')) {
@@ -1163,6 +1259,10 @@ class HtmlDocumentWriter {
         if (key == 'href' || key == 'src') {
           final value = entry.value;
           if (HtmlExportLinks.external(value) != null && key == 'href') {
+            continue;
+          }
+          if (links.assets.ownsEmbeddedUrl(value) &&
+              (key == 'src' || element.attributes.containsKey('download'))) {
             continue;
           }
           final uri = Uri.tryParse(value);

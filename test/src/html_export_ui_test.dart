@@ -119,6 +119,11 @@ void main() {
           .read(workspaceControllerProvider.notifier)
           .updateActiveText('# Captured unsaved');
       await tester.tap(find.text('Run HTML'));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 80)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export'));
       await tester.pumpAndSettle();
       expect(suggestion, endsWith('.html'));
       ref
@@ -290,6 +295,7 @@ class _RecordingExporter extends HtmlExportService {
     required String instanceId,
     required String destinationPath,
     bool overwrite = false,
+    HtmlExportOptions options = const HtmlExportOptions(),
     WritersideProject? capturedProject,
     HtmlExportCancellationToken? cancellationToken,
     HtmlExportProgress? onProgress,

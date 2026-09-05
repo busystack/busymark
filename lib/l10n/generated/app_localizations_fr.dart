@@ -3779,4 +3779,140 @@ class AppLocalizationsFr extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Trier $column';
   }
+
+  @override
+  String get exportReset => 'Rétablir les valeurs par défaut';
+
+  @override
+  String get exportToc => 'Inclure une table des matières';
+
+  @override
+  String get exportTocDepth => 'Profondeur de la table';
+
+  @override
+  String get exportNumberHeadings => 'Numéroter les titres';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Personnalisé';
+
+  @override
+  String get exportPageWidth => 'Largeur de page (mm)';
+
+  @override
+  String get exportPageHeight => 'Hauteur de page (mm)';
+
+  @override
+  String get exportMarginTop => 'Marge supérieure (mm)';
+
+  @override
+  String get exportMarginRight => 'Marge droite (mm)';
+
+  @override
+  String get exportMarginBottom => 'Marge inférieure (mm)';
+
+  @override
+  String get exportMarginLeft => 'Marge gauche (mm)';
+
+  @override
+  String get exportTypography => 'Typographie';
+
+  @override
+  String get exportSans => 'Sans empattement';
+
+  @override
+  String get exportSerif => 'Avec empattement';
+
+  @override
+  String get exportBodySize => 'Taille du texte';
+
+  @override
+  String get exportCodeSize => 'Taille du code';
+
+  @override
+  String get exportRunningText => 'En-tête et pied de page';
+
+  @override
+  String get exportHeader => 'En-tête';
+
+  @override
+  String get exportFooter => 'Pied de page';
+
+  @override
+  String get exportNone => 'Aucun';
+
+  @override
+  String get exportDocumentTitle => 'Titre du document';
+
+  @override
+  String get exportBottomLeft => 'En bas à gauche';
+
+  @override
+  String get exportBottomCenter => 'En bas au centre';
+
+  @override
+  String get exportBottomRight => 'En bas à droite';
+
+  @override
+  String get exportFirstPage =>
+      'Afficher l’en-tête et le pied sur la première page';
+
+  @override
+  String get exportAccent => 'Couleur d’accent / des liens';
+
+  @override
+  String get exportTheme => 'Thème';
+
+  @override
+  String get exportAutomatic => 'Automatique';
+
+  @override
+  String get exportLayout => 'Mise en page';
+
+  @override
+  String get exportContentWidth => 'Largeur maximale du contenu';
+
+  @override
+  String get exportOutput => 'Sortie';
+
+  @override
+  String get exportPackaging => 'Conditionnement';
+
+  @override
+  String get exportSingleFile => 'Fichier HTML unique';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + dossier de ressources';
+
+  @override
+  String get exportCustomCss => 'Feuille de style personnalisée…';
+
+  @override
+  String get exportRemoveCss => 'Retirer la feuille de style';
+
+  @override
+  String get exportCssNote =>
+      'Choisissez un fichier CSS UTF-8 facultatif (256 KiB maximum). Les imports, URL de ressources et CSS exécutable ou échappé sont refusés. Les styles suivent ceux de BusyMark. Aucune ressource distante n’est téléchargée.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside conserve des pages liées distinctes. Le mode fichier unique intègre les ressources dans chaque page.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Laissez au moins 20 mm de largeur et de hauteur de contenu après les marges.';
+
+  @override
+  String get exportInvalidColor => 'Saisissez une couleur au format #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Choisissez un fichier .css UTF-8 lisible de 256 KiB maximum, sans imports, URL de ressources, HTML ni CSS exécutable ou échappé.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field : saisissez un nombre entre $minimum et $maximum.';
+  }
 }

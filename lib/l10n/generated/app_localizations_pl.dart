@@ -3799,4 +3799,139 @@ class AppLocalizationsPl extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Sortuj $column';
   }
+
+  @override
+  String get exportReset => 'Przywróć domyślne';
+
+  @override
+  String get exportToc => 'Dołącz spis treści';
+
+  @override
+  String get exportTocDepth => 'Głębokość spisu treści';
+
+  @override
+  String get exportNumberHeadings => 'Numeruj nagłówki';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Niestandardowy';
+
+  @override
+  String get exportPageWidth => 'Szerokość strony (mm)';
+
+  @override
+  String get exportPageHeight => 'Wysokość strony (mm)';
+
+  @override
+  String get exportMarginTop => 'Margines górny (mm)';
+
+  @override
+  String get exportMarginRight => 'Margines prawy (mm)';
+
+  @override
+  String get exportMarginBottom => 'Margines dolny (mm)';
+
+  @override
+  String get exportMarginLeft => 'Margines lewy (mm)';
+
+  @override
+  String get exportTypography => 'Typografia';
+
+  @override
+  String get exportSans => 'Bezszeryfowa';
+
+  @override
+  String get exportSerif => 'Szeryfowa';
+
+  @override
+  String get exportBodySize => 'Rozmiar tekstu';
+
+  @override
+  String get exportCodeSize => 'Rozmiar kodu';
+
+  @override
+  String get exportRunningText => 'Nagłówek i stopka';
+
+  @override
+  String get exportHeader => 'Nagłówek';
+
+  @override
+  String get exportFooter => 'Stopka';
+
+  @override
+  String get exportNone => 'Brak';
+
+  @override
+  String get exportDocumentTitle => 'Tytuł dokumentu';
+
+  @override
+  String get exportBottomLeft => 'Na dole po lewej';
+
+  @override
+  String get exportBottomCenter => 'Na dole na środku';
+
+  @override
+  String get exportBottomRight => 'Na dole po prawej';
+
+  @override
+  String get exportFirstPage => 'Pokaż nagłówek i stopkę na pierwszej stronie';
+
+  @override
+  String get exportAccent => 'Kolor akcentu / łączy';
+
+  @override
+  String get exportTheme => 'Motyw';
+
+  @override
+  String get exportAutomatic => 'Automatyczny';
+
+  @override
+  String get exportLayout => 'Układ';
+
+  @override
+  String get exportContentWidth => 'Maksymalna szerokość treści';
+
+  @override
+  String get exportOutput => 'Wyjście';
+
+  @override
+  String get exportPackaging => 'Pakowanie';
+
+  @override
+  String get exportSingleFile => 'Jeden plik HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + katalog zasobów';
+
+  @override
+  String get exportCustomCss => 'Własny arkusz stylów…';
+
+  @override
+  String get exportRemoveCss => 'Usuń własny arkusz stylów';
+
+  @override
+  String get exportCssNote =>
+      'Wybierz opcjonalny plik CSS UTF-8 (do 256 KiB). Importy, adresy zasobów oraz wykonywalny CSS lub sekwencje ucieczki są odrzucane. Style następują po arkuszu BusyMark. Zdalne zasoby nie są pobierane.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside zachowuje osobne połączone strony tematów. Tryb jednego pliku osadza zasoby w każdej stronie.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Po odjęciu marginesów pozostaw co najmniej 20 mm szerokości i wysokości treści.';
+
+  @override
+  String get exportInvalidColor => 'Wpisz kolor w formacie #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Wybierz czytelny plik .css UTF-8 do 256 KiB, bez importów, adresów zasobów, HTML oraz wykonywalnego CSS i sekwencji ucieczki.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: wpisz liczbę między $minimum a $maximum.';
+  }
 }

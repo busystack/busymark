@@ -38,7 +38,7 @@ void main() {
     await MarkdownMathExportRenderer(coordinator: coordinator).prepare(
       document: mapped,
       exportRoot: root,
-      containerWidth: 480,
+      options: const PdfExportOptions(),
       cancellationToken: MarkdownPdfCancellationToken(),
     );
 
@@ -48,10 +48,59 @@ void main() {
       final request = requests.singleWhere(
         (item) => item['expression'] == 'h$level',
       );
-      final expected = busyMarkPdfHeadingTextSize(level);
+      final expected = const PdfExportOptions().headingFontSize(level);
       expect(request['em'], expected, reason: 'heading level $level');
-      expect(request['ex'], expected / 2, reason: 'heading level $level');
+      expect(request['ex'], expected * 0.536, reason: 'heading level $level');
     }
+  });
+
+  test('custom typography and four margins control actual math jobs', () async {
+    final root = await Directory.systemTemp.createTemp('pdf-math-options-');
+    addTearDown(() => root.delete(recursive: true));
+    final host = _PdfMathHost();
+    final coordinator = MathCoordinator(renderer: MathRenderer(host: host));
+    addTearDown(coordinator.dispose);
+    final document = const MarkdownExportMapper().map(
+      const MarkdownParser()
+          .parse(
+            filePath: '/math.md',
+            source:
+                r'# Heading $h$'
+                '\n\n'
+                r'Body $b$'
+                '\n\n'
+                r'$$d$$',
+          )
+          .busyDocument,
+    );
+    const options = PdfExportOptions(
+      pageSize: PdfPageSize.custom,
+      customWidthMm: 280,
+      customHeightMm: 300,
+      margin: PdfMarginPreset.custom,
+      customMargins: PdfMargins(left: 30, right: 40, top: 20, bottom: 25),
+      bodyTypography: ExportBodyTypography.sansSerif,
+      bodyFontSize: 16,
+    );
+    await MarkdownMathExportRenderer(coordinator: coordinator).prepare(
+      document: document,
+      exportRoot: root,
+      options: options,
+      cancellationToken: MarkdownPdfCancellationToken(),
+    );
+    final requests = host.batches.expand((e) => e).toList();
+    expect(requests, hasLength(3));
+    expect(
+      requests.map((r) => r['containerWidth']),
+      everyElement(closeTo(210 * 72 / 25.4, .001)),
+    );
+    expect(requests.first['em'], options.headingFontSize(1));
+    expect(requests.skip(1).map((r) => r['em']), everyElement(16.0));
+    expect(requests.skip(1).map((r) => r['ex']), everyElement(16 * .536));
+    expect(
+      document.blocks.first.inlines.last.attributes,
+      isNot(contains('renderEm')),
+    );
   });
 
   test(
@@ -82,7 +131,7 @@ $$
           await MarkdownMathExportRenderer(coordinator: coordinator).prepare(
             document: mapped,
             exportRoot: root,
-            containerWidth: 480,
+            options: const PdfExportOptions(),
             cancellationToken: MarkdownPdfCancellationToken(),
           );
 
@@ -127,7 +176,7 @@ $$
 
       final payload = const TypstPayloadBuilder().build(
         document: preparation.document,
-        options: const MarkdownPdfOptions(),
+        options: const PdfExportOptions(),
         assets: const {},
       );
       final json = jsonEncode(payload);
@@ -169,7 +218,7 @@ Failed but visible: $BAD$.
               filePath: p.join(root.path, 'math.md'),
               workspaceRoot: root.path,
               destinationPath: destination,
-              options: const MarkdownPdfOptions(),
+              options: const PdfExportOptions(),
               overwrite: false,
             ),
           );

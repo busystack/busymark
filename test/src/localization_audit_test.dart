@@ -679,6 +679,7 @@ const _sharedEnglishMatches = <String>{
   'xml',
   'fileTypeMarkdown',
   'pdfPageSizeA4',
+  'exportLegal', // International paper format name.
   'headingLevelAbbreviation',
   'git',
   'gitPull',
@@ -693,6 +694,7 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
+    'exportLayout',
     'aboutWebsite',
     'editor',
     'horizontal',
@@ -746,6 +748,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
   'pl': {'folder', 'foldKindTag', 'aiModel'},
   'pt_BR': {
+    'exportLayout',
     'editor',
     'link',
     'toc',

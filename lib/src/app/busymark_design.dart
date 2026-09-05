@@ -10,6 +10,15 @@ import 'package:yaru/yaru.dart';
 import '../platform/native_menu_service.dart';
 import 'busymark_glyphs.dart';
 
+/// Resolve an explicit six-digit RGB color chosen in a document/export control.
+/// This does not inherit the application's theme accent.
+Color busyMarkRgbHexColor(String value) {
+  if (!RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) {
+    throw ArgumentError.value(value, 'value');
+  }
+  return Color(int.parse(value.substring(1), radix: 16) | 0xff000000);
+}
+
 abstract final class BusyMarkSpacing {
   static const double xxs = 2;
   static const double xs = 4;

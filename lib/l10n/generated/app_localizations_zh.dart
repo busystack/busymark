@@ -3765,6 +3765,140 @@ class AppLocalizationsZh extends AppLocalizations {
   String sortTableColumn(String column) {
     return '排序 $column';
   }
+
+  @override
+  String get exportReset => '恢复默认值';
+
+  @override
+  String get exportToc => '包含目录';
+
+  @override
+  String get exportTocDepth => '目录深度';
+
+  @override
+  String get exportNumberHeadings => '为标题编号';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => '自定义';
+
+  @override
+  String get exportPageWidth => '页面宽度（mm）';
+
+  @override
+  String get exportPageHeight => '页面高度（mm）';
+
+  @override
+  String get exportMarginTop => '上边距（mm）';
+
+  @override
+  String get exportMarginRight => '右边距（mm）';
+
+  @override
+  String get exportMarginBottom => '下边距（mm）';
+
+  @override
+  String get exportMarginLeft => '左边距（mm）';
+
+  @override
+  String get exportTypography => '字体';
+
+  @override
+  String get exportSans => '无衬线';
+
+  @override
+  String get exportSerif => '衬线';
+
+  @override
+  String get exportBodySize => '正文字号';
+
+  @override
+  String get exportCodeSize => '代码字号';
+
+  @override
+  String get exportRunningText => '页眉和页脚';
+
+  @override
+  String get exportHeader => '页眉';
+
+  @override
+  String get exportFooter => '页脚';
+
+  @override
+  String get exportNone => '无';
+
+  @override
+  String get exportDocumentTitle => '文档标题';
+
+  @override
+  String get exportBottomLeft => '左下';
+
+  @override
+  String get exportBottomCenter => '底部居中';
+
+  @override
+  String get exportBottomRight => '右下';
+
+  @override
+  String get exportFirstPage => '在首页显示页眉和页脚';
+
+  @override
+  String get exportAccent => '强调色／链接颜色';
+
+  @override
+  String get exportTheme => '主题';
+
+  @override
+  String get exportAutomatic => '自动';
+
+  @override
+  String get exportLayout => '布局';
+
+  @override
+  String get exportContentWidth => '内容最大宽度';
+
+  @override
+  String get exportOutput => '输出';
+
+  @override
+  String get exportPackaging => '打包方式';
+
+  @override
+  String get exportSingleFile => '单个 HTML 文件';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + 资源目录';
+
+  @override
+  String get exportCustomCss => '自定义样式表…';
+
+  @override
+  String get exportRemoveCss => '移除自定义样式表';
+
+  @override
+  String get exportCssNote =>
+      '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
+
+  @override
+  String get exportInvalidGeometry => '扣除边距后，请至少保留 20 mm 的内容宽度和高度。';
+
+  @override
+  String get exportInvalidColor => '请输入 #RRGGBB 格式的颜色。';
+
+  @override
+  String get exportInvalidCss =>
+      '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field：请输入 $minimum 到 $maximum 之间的数字。';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -7342,5 +7476,139 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String sortTableColumn(String column) {
     return '排序 $column';
+  }
+
+  @override
+  String get exportReset => '恢复默认值';
+
+  @override
+  String get exportToc => '包含目录';
+
+  @override
+  String get exportTocDepth => '目录深度';
+
+  @override
+  String get exportNumberHeadings => '为标题编号';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => '自定义';
+
+  @override
+  String get exportPageWidth => '页面宽度（mm）';
+
+  @override
+  String get exportPageHeight => '页面高度（mm）';
+
+  @override
+  String get exportMarginTop => '上边距（mm）';
+
+  @override
+  String get exportMarginRight => '右边距（mm）';
+
+  @override
+  String get exportMarginBottom => '下边距（mm）';
+
+  @override
+  String get exportMarginLeft => '左边距（mm）';
+
+  @override
+  String get exportTypography => '字体';
+
+  @override
+  String get exportSans => '无衬线';
+
+  @override
+  String get exportSerif => '衬线';
+
+  @override
+  String get exportBodySize => '正文字号';
+
+  @override
+  String get exportCodeSize => '代码字号';
+
+  @override
+  String get exportRunningText => '页眉和页脚';
+
+  @override
+  String get exportHeader => '页眉';
+
+  @override
+  String get exportFooter => '页脚';
+
+  @override
+  String get exportNone => '无';
+
+  @override
+  String get exportDocumentTitle => '文档标题';
+
+  @override
+  String get exportBottomLeft => '左下';
+
+  @override
+  String get exportBottomCenter => '底部居中';
+
+  @override
+  String get exportBottomRight => '右下';
+
+  @override
+  String get exportFirstPage => '在首页显示页眉和页脚';
+
+  @override
+  String get exportAccent => '强调色／链接颜色';
+
+  @override
+  String get exportTheme => '主题';
+
+  @override
+  String get exportAutomatic => '自动';
+
+  @override
+  String get exportLayout => '布局';
+
+  @override
+  String get exportContentWidth => '内容最大宽度';
+
+  @override
+  String get exportOutput => '输出';
+
+  @override
+  String get exportPackaging => '打包方式';
+
+  @override
+  String get exportSingleFile => '单个 HTML 文件';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + 资源目录';
+
+  @override
+  String get exportCustomCss => '自定义样式表…';
+
+  @override
+  String get exportRemoveCss => '移除自定义样式表';
+
+  @override
+  String get exportCssNote =>
+      '可选用 UTF-8 CSS 文件（最大 256 KiB）。不接受导入、资源 URL、可执行或转义 CSS。样式在 BusyMark 样式表之后应用。不会获取远程资源。';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside 保留独立且相互链接的主题页面。单文件模式将资源嵌入每个页面。';
+
+  @override
+  String get exportInvalidGeometry => '扣除边距后，请至少保留 20 mm 的内容宽度和高度。';
+
+  @override
+  String get exportInvalidColor => '请输入 #RRGGBB 格式的颜色。';
+
+  @override
+  String get exportInvalidCss =>
+      '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
 }

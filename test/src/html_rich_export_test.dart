@@ -64,6 +64,8 @@ a -> b
 ```openapi
 openapi: 3.1.0
 ```
+
+## After API
 ''',
           filePath: p.join(root.path, 'source.md'),
           workspaceRoot: root.path,
@@ -76,6 +78,15 @@ openapi: 3.1.0
       expect(doc.querySelectorAll('.math-display').length, 1);
       expect(doc.querySelectorAll('img').length, 7);
       expect(doc.body!.text, contains('Test API'));
+      final outline = doc
+          .querySelectorAll('.outline a')
+          .map((e) => e.text)
+          .toList();
+      expect(outline.last, 'After API');
+      expect(
+        outline.indexWhere((e) => e.contains('Test API')),
+        lessThan(outline.indexOf('After API')),
+      );
       expect(
         renderer.requests.map((r) => r.profile),
         everyElement(VisualizationRenderProfile.html),
@@ -85,7 +96,7 @@ openapi: 3.1.0
         host.requests.map((r) => r['renderProfile']),
         everyElement('html'),
       );
-      expect(host.requests.first['em'], 39.1);
+      expect(host.requests.first['em'], closeTo(39.1, .0001));
       expect(host.requests.skip(1).map((r) => r['em']), everyElement(17.0));
       for (final file in await Directory(
         result.assetsPath!,
@@ -94,6 +105,62 @@ openapi: 3.1.0
         expect(svg, isNot(contains('currentColor')));
         expect(svg, isNot(contains('http://localhost')));
       }
+    },
+  );
+
+  test(
+    'custom HTML metrics and embedded rich assets stay self-contained',
+    () async {
+      final root = await Directory.systemTemp.createTemp('html-rich-options-');
+      addTearDown(() => root.delete(recursive: true));
+      final host = _MathHost();
+      final math = MathCoordinator(renderer: MathRenderer(host: host));
+      addTearDown(math.dispose);
+      final visualization = VisualizationCoordinator(
+        renderers: [_Diagrams()],
+        cache: VisualizationCache(
+          diskRoot: Directory(p.join(root.path, 'cache')),
+        ),
+      );
+      addTearDown(visualization.dispose);
+      const options = HtmlExportOptions(
+        baseFontSize: 22,
+        contentMaxWidth: 1100,
+        packaging: HtmlPackaging.singleFile,
+      );
+      final result =
+          await HtmlExportService(
+            math: math,
+            visualization: visualization,
+          ).exportMarkdown(
+            MarkdownHtmlExportRequest(
+              source:
+                  r'# Heading $h$'
+                  '\n\n'
+                  r'Inline $x$'
+                  '\n\n'
+                  r'$$d$$'
+                  '\n\n```mermaid\ngraph LR; A-->B\n```',
+              filePath: p.join(root.path, 'source.md'),
+              workspaceRoot: root.path,
+              destinationPath: p.join(root.path, 'out.html'),
+              options: options,
+            ),
+          );
+      expect(result.warnings, isEmpty);
+      expect(result.assetsPath, isNull);
+      final doc = html.parse(await File(result.entryPointPath).readAsString());
+      expect(doc.querySelectorAll('img'), hasLength(4));
+      expect(
+        doc.querySelectorAll('img').map((e) => e.attributes['src']),
+        everyElement(startsWith('data:image/svg+xml;base64,')),
+      );
+      expect(
+        host.requests.map((r) => r['containerWidth']),
+        everyElement(968.0),
+      );
+      expect(host.requests.first['em'], options.headingFontSize(1));
+      expect(host.requests.skip(1).map((r) => r['em']), everyElement(22.0));
     },
   );
 

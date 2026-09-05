@@ -45,7 +45,7 @@ void main() {
         document: const MarkdownExportMapper().map(
           recording.request!.document!,
         ),
-        options: const MarkdownPdfOptions(),
+        options: const PdfExportOptions(),
         assets: {},
       );
       await File(
@@ -137,9 +137,20 @@ void main() {
           instanceId: 'guide',
           destinationPath: destination,
           overwrite: false,
-          options: const MarkdownPdfOptions(
-            pageSize: MarkdownPdfPageSize.letter,
-            orientation: MarkdownPdfOrientation.landscape,
+          options: const PdfExportOptions(
+            pageSize: PdfPageSize.letter,
+            orientation: PdfOrientation.landscape,
+            content: ExportContentOptions(
+              includeToc: true,
+              tocDepth: 3,
+              numberHeadings: true,
+            ),
+            bodyTypography: ExportBodyTypography.sansSerif,
+            bodyFontSize: 15,
+            codeFontSize: 12,
+            accentColor: '#247550',
+            header: PdfRunningText.documentTitle,
+            pageNumbers: PdfPageNumberPosition.bottomRight,
           ),
         ),
       );
@@ -149,8 +160,22 @@ void main() {
       expect(result.pageCount, 3);
       expect(request.mode, MarkdownMode.writersideMarkdown);
       expect(request.workspaceRoot, fixture.module.path);
-      expect(request.options.pageSize, MarkdownPdfPageSize.letter);
-      expect(request.options.orientation, MarkdownPdfOrientation.landscape);
+      expect(request.options.pageSize, PdfPageSize.letter);
+      expect(request.options.orientation, PdfOrientation.landscape);
+      expect(request.options.bodyFontSize, 15);
+      expect(request.options.codeFontSize, 12);
+      expect(request.options.bodyFont, 'Noto Sans');
+      expect(
+        request.options.content.toJson(),
+        const ExportContentOptions(
+          includeToc: true,
+          tocDepth: 3,
+          numberHeadings: true,
+        ).toJson(),
+      );
+      expect(request.options.header, PdfRunningText.documentTitle);
+      expect(request.options.accentColor, '#247550');
+      expect(request.options.pageNumbers, PdfPageNumberPosition.bottomRight);
       expect(request.source, isEmpty);
       expect(request.document, isNotNull);
       final blocks = _allBlocks(request.document!.blocks).toList();

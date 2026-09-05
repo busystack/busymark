@@ -3737,4 +3737,139 @@ class AppLocalizationsHi extends AppLocalizations {
   String sortTableColumn(String column) {
     return '$column क्रमबद्ध करें';
   }
+
+  @override
+  String get exportReset => 'डिफ़ॉल्ट पर रीसेट करें';
+
+  @override
+  String get exportToc => 'विषय-सूची शामिल करें';
+
+  @override
+  String get exportTocDepth => 'विषय-सूची की गहराई';
+
+  @override
+  String get exportNumberHeadings => 'शीर्षकों को क्रमांक दें';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'कस्टम';
+
+  @override
+  String get exportPageWidth => 'पृष्ठ की चौड़ाई (mm)';
+
+  @override
+  String get exportPageHeight => 'पृष्ठ की ऊँचाई (mm)';
+
+  @override
+  String get exportMarginTop => 'ऊपरी मार्जिन (mm)';
+
+  @override
+  String get exportMarginRight => 'दायाँ मार्जिन (mm)';
+
+  @override
+  String get exportMarginBottom => 'निचला मार्जिन (mm)';
+
+  @override
+  String get exportMarginLeft => 'बायाँ मार्जिन (mm)';
+
+  @override
+  String get exportTypography => 'टाइपोग्राफ़ी';
+
+  @override
+  String get exportSans => 'बिना सेरिफ़';
+
+  @override
+  String get exportSerif => 'सेरिफ़';
+
+  @override
+  String get exportBodySize => 'मुख्य पाठ का फ़ॉन्ट आकार';
+
+  @override
+  String get exportCodeSize => 'कोड का फ़ॉन्ट आकार';
+
+  @override
+  String get exportRunningText => 'शीर्षलेख और पादलेख';
+
+  @override
+  String get exportHeader => 'शीर्षलेख';
+
+  @override
+  String get exportFooter => 'पादलेख';
+
+  @override
+  String get exportNone => 'कोई नहीं';
+
+  @override
+  String get exportDocumentTitle => 'दस्तावेज़ का शीर्षक';
+
+  @override
+  String get exportBottomLeft => 'नीचे बाएँ';
+
+  @override
+  String get exportBottomCenter => 'नीचे बीच में';
+
+  @override
+  String get exportBottomRight => 'नीचे दाएँ';
+
+  @override
+  String get exportFirstPage => 'पहले पृष्ठ पर शीर्षलेख और पादलेख दिखाएँ';
+
+  @override
+  String get exportAccent => 'हाइलाइट / लिंक का रंग';
+
+  @override
+  String get exportTheme => 'थीम';
+
+  @override
+  String get exportAutomatic => 'स्वचालित';
+
+  @override
+  String get exportLayout => 'लेआउट';
+
+  @override
+  String get exportContentWidth => 'सामग्री की अधिकतम चौड़ाई';
+
+  @override
+  String get exportOutput => 'आउटपुट';
+
+  @override
+  String get exportPackaging => 'पैकेजिंग';
+
+  @override
+  String get exportSingleFile => 'एक HTML फ़ाइल';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + संसाधन फ़ोल्डर';
+
+  @override
+  String get exportCustomCss => 'कस्टम स्टाइलशीट…';
+
+  @override
+  String get exportRemoveCss => 'कस्टम स्टाइलशीट हटाएँ';
+
+  @override
+  String get exportCssNote =>
+      'वैकल्पिक UTF-8 CSS फ़ाइल चुनें (256 KiB तक)। इंपोर्ट, संसाधन URL और निष्पादन योग्य या एस्केप वाला CSS स्वीकार नहीं किया जाता। शैलियाँ BusyMark CSS के बाद लागू होती हैं। दूरस्थ संसाधन डाउनलोड नहीं किए जाते।';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside अलग-अलग लिंक किए गए विषय पृष्ठ रखता है। एकल फ़ाइल मोड हर पृष्ठ में संसाधन एम्बेड करता है।';
+
+  @override
+  String get exportInvalidGeometry =>
+      'मार्जिन के बाद सामग्री के लिए कम से कम 20 mm चौड़ाई और ऊँचाई छोड़ें।';
+
+  @override
+  String get exportInvalidColor => 'रंग #RRGGBB के रूप में दर्ज करें।';
+
+  @override
+  String get exportInvalidCss =>
+      '256 KiB तक की पढ़ने योग्य UTF-8 .css फ़ाइल चुनें, जिसमें इंपोर्ट, संसाधन URL, HTML और निष्पादन योग्य या एस्केप वाला CSS न हो।';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
+  }
 }

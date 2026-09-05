@@ -3806,4 +3806,139 @@ class AppLocalizationsUk extends AppLocalizations {
   String sortTableColumn(String column) {
     return 'Сортувати $column';
   }
+
+  @override
+  String get exportReset => 'Відновити типові значення';
+
+  @override
+  String get exportToc => 'Додати зміст';
+
+  @override
+  String get exportTocDepth => 'Глибина змісту';
+
+  @override
+  String get exportNumberHeadings => 'Нумерувати заголовки';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Власний';
+
+  @override
+  String get exportPageWidth => 'Ширина сторінки (мм)';
+
+  @override
+  String get exportPageHeight => 'Висота сторінки (мм)';
+
+  @override
+  String get exportMarginTop => 'Верхнє поле (мм)';
+
+  @override
+  String get exportMarginRight => 'Праве поле (мм)';
+
+  @override
+  String get exportMarginBottom => 'Нижнє поле (мм)';
+
+  @override
+  String get exportMarginLeft => 'Ліве поле (мм)';
+
+  @override
+  String get exportTypography => 'Типографіка';
+
+  @override
+  String get exportSans => 'Без зарубок';
+
+  @override
+  String get exportSerif => 'Із зарубками';
+
+  @override
+  String get exportBodySize => 'Розмір основного шрифту';
+
+  @override
+  String get exportCodeSize => 'Розмір шрифту коду';
+
+  @override
+  String get exportRunningText => 'Колонтитули';
+
+  @override
+  String get exportHeader => 'Верхній колонтитул';
+
+  @override
+  String get exportFooter => 'Нижній колонтитул';
+
+  @override
+  String get exportNone => 'Немає';
+
+  @override
+  String get exportDocumentTitle => 'Назва документа';
+
+  @override
+  String get exportBottomLeft => 'Знизу ліворуч';
+
+  @override
+  String get exportBottomCenter => 'Знизу по центру';
+
+  @override
+  String get exportBottomRight => 'Знизу праворуч';
+
+  @override
+  String get exportFirstPage => 'Показувати колонтитули на першій сторінці';
+
+  @override
+  String get exportAccent => 'Колір акценту / посилань';
+
+  @override
+  String get exportTheme => 'Тема';
+
+  @override
+  String get exportAutomatic => 'Автоматично';
+
+  @override
+  String get exportLayout => 'Макет';
+
+  @override
+  String get exportContentWidth => 'Максимальна ширина вмісту';
+
+  @override
+  String get exportOutput => 'Вивід';
+
+  @override
+  String get exportPackaging => 'Пакування';
+
+  @override
+  String get exportSingleFile => 'Один файл HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + папка ресурсів';
+
+  @override
+  String get exportCustomCss => 'Власний файл стилів…';
+
+  @override
+  String get exportRemoveCss => 'Вилучити власний файл стилів';
+
+  @override
+  String get exportCssNote =>
+      'Виберіть необов’язковий файл CSS у UTF-8 (до 256 КіБ). Імпорти, URL ресурсів, виконуваний CSS і escape-послідовності заборонені. Стилі застосовуються після стилів BusyMark. Віддалені ресурси не завантажуються.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside зберігає окремі пов’язані сторінки тем. Режим одного файлу вбудовує ресурси в кожну сторінку.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Після віднімання полів залиште щонайменше 20 мм ширини й висоти вмісту.';
+
+  @override
+  String get exportInvalidColor => 'Введіть колір у форматі #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: введіть число від $minimum до $maximum.';
+  }
 }

@@ -37,7 +37,10 @@ class MathRenderRequest {
   final double containerWidth;
   final String renderProfile;
 
-  double get widthBucket => (containerWidth / 16).round() * 16.0;
+  // Preview resizes share cache buckets. Exports must use their real geometry.
+  double get renderWidth => renderProfile == 'preview'
+      ? (containerWidth / 16).round() * 16.0
+      : containerWidth;
 
   String get cacheKey => sha256
       .convert(
@@ -53,7 +56,7 @@ class MathRenderRequest {
             renderProfile,
             em.toStringAsFixed(3),
             ex.toStringAsFixed(3),
-            widthBucket.toStringAsFixed(0),
+            renderWidth.toString(),
           ].join('\u0000'),
         ),
       )

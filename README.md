@@ -110,8 +110,11 @@ disabled in the text editor. Version-control metadata directories such as
 Use **Main menu → Export as PDF** or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
 to export either the active Markdown document or the opened Writerside module.
 Markdown export uses the current editor contents, including unsaved changes,
-and offers A4 or Letter paper, portrait or landscape orientation, three margin
-sizes, and optional page numbers.
+and offers A4, Letter, Legal or custom paper, orientation and independent margins,
+Noto typography, accent colors, title headers/footers, positioned page numbers,
+and optional TOC and heading numbering. Settings are remembered separately for
+PDF and HTML; **Reset to defaults** restores each format’s defaults. See
+[PDF export settings](docs/pdf-export.md).
 
 Markdown PDF generation is local and offline. BusyMark bundles the pinned Typst
 compiler; users do not install or configure a separate program. Local PNG,
@@ -302,7 +305,7 @@ component with BusyMark and do not install development packages, Node.js, Java,
 or Chromium.
 
 ```bash
-sudo apt-get install curl libhandy-1-dev xz-utils libwebkit2gtk-4.1-dev
+sudo apt-get install curl libhandy-1-dev xz-utils libwebkit2gtk-4.1-dev fonts-noto-core fonts-noto-mono
 # Install Node.js 22 or newer from https://nodejs.org/en/download
 node --version
 npm --version
