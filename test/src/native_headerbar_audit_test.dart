@@ -570,6 +570,16 @@ void main() {
     expect(script, contains(r'"$FLUTTER_BIN" build linux --release --no-pub'));
   });
 
+  test('local snap builder keeps compiler output off the system tmpfs', () {
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(script, contains('BUSYMARK_BUILD_TMP_ROOT'));
+    expect(script, contains(r'${XDG_CACHE_HOME:-$HOME/.cache}/busymark/tmp'));
+    expect(script, contains(r'mktemp -d "$build_tmp_root/snap-build.XXXXXX"'));
+    expect(script, contains(r'export TMPDIR="$BUSYMARK_BUILD_TMP_DIR"'));
+    expect(script, contains('trap cleanup_build_tmp EXIT'));
+  });
+
   test('native headerbar uses the shared tooltip visuals', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 

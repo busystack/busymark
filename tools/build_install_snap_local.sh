@@ -28,7 +28,7 @@ Environment overrides are also supported:
   VERSION, OUT, SNAP_ROOT, SNAP_SCAFFOLD, SNAP_NAME, BINARY_NAME, APP_ID,
   INSTALL_AFTER_BUILD=0, RUN_AFTER_INSTALL=0, SKIP_TESTS=1, BUNDLE_GIT=0,
   DART_DEFINE_FROM_FILE, BUSYMARK_FLUTTER_BIN, BUSYMARK_FLUTTER_CACHE,
-  BUSYMARK_BOOTSTRAP_FLUTTER=0
+  BUSYMARK_BOOTSTRAP_FLUTTER=0, BUSYMARK_BUILD_TMP_ROOT
 EOF
 }
 
@@ -142,6 +142,20 @@ select_project_flutter() {
   [[ "$actual_version" == "$required_version" ]] || \
     fail "downloaded Flutter reports $actual_version; expected $required_version"
   FLUTTER_BIN="$candidate"
+}
+
+prepare_build_tmp() {
+  local build_tmp_root="${BUSYMARK_BUILD_TMP_ROOT:-${XDG_CACHE_HOME:-$HOME/.cache}/busymark/tmp}"
+  mkdir -p "$build_tmp_root"
+  BUSYMARK_BUILD_TMP_DIR="$(mktemp -d "$build_tmp_root/snap-build.XXXXXX")" || \
+    fail "could not create build temporary directory under $build_tmp_root"
+  export TMPDIR="$BUSYMARK_BUILD_TMP_DIR"
+}
+
+cleanup_build_tmp() {
+  if [[ -n "${BUSYMARK_BUILD_TMP_DIR:-}" ]]; then
+    rm -rf -- "$BUSYMARK_BUILD_TMP_DIR" || true
+  fi
 }
 
 cmake_value() {
@@ -360,6 +374,8 @@ REQUIRED_FLUTTER_VERSION="$(project_flutter_version)"
 [[ -n "$REQUIRED_FLUTTER_VERSION" ]] || \
   fail "pubspec.yaml must declare an exact environment.flutter version"
 select_project_flutter "$REQUIRED_FLUTTER_VERSION"
+prepare_build_tmp
+trap cleanup_build_tmp EXIT
 
 SNAP_NAME="${SNAP_NAME:-$PROJECT_NAME}"
 BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
@@ -379,6 +395,7 @@ echo "Version:  $VERSION"
 echo "Binary:   $BINARY_NAME"
 echo "App ID:   $APP_ID"
 echo "Flutter:  $REQUIRED_FLUTTER_VERSION ($FLUTTER_BIN)"
+echo "Temp:     $BUSYMARK_BUILD_TMP_DIR"
 echo "Scaffold: $SNAP_SCAFFOLD"
 echo "Root:     $SNAP_ROOT"
 echo "Output:   $OUT"
