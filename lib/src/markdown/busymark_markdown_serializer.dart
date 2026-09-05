@@ -254,7 +254,7 @@ class BusyMarkMarkdownSerializer {
   }
 
   String _listItem(BusyBlock block, String marker, {String? contentPrefix}) {
-    final text = _inlineMarkdown(block.inlines);
+    final text = _inlineMarkdown(block.inlines, atBlockStart: true);
     final content = [
       if (contentPrefix != null) contentPrefix,
       if (text.isNotEmpty) text,
@@ -451,11 +451,15 @@ class BusyMarkMarkdownSerializer {
   }) {
     final buffer = StringBuffer();
     var nextAtBlockStart = atBlockStart;
-    for (final inline in inlines) {
+    for (var index = 0; index < inlines.length; index++) {
+      final inline = inlines[index];
       final source = _inline(
         inline,
         tableCell: tableCell,
         atBlockStart: nextAtBlockStart,
+        followedByLink:
+            index + 1 < inlines.length &&
+            inlines[index + 1].kind == BusyInlineKind.link,
       );
       buffer.write(source);
       if (source.isNotEmpty) {
@@ -469,6 +473,7 @@ class BusyMarkMarkdownSerializer {
     BusyInline inline, {
     bool tableCell = false,
     bool atBlockStart = false,
+    bool followedByLink = false,
   }) {
     final children = inline.children.isEmpty
         ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
@@ -477,6 +482,7 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.text => _escapeInlineText(
         inline.text,
         atBlockStart: atBlockStart,
+        escapeTrailingBang: followedByLink,
       ),
       BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong => '**$children**',
@@ -570,7 +576,11 @@ class BusyMarkMarkdownSerializer {
     return required < minimum ? minimum : required;
   }
 
-  String _escapeInlineText(String value, {bool atBlockStart = false}) {
+  String _escapeInlineText(
+    String value, {
+    bool atBlockStart = false,
+    bool escapeTrailingBang = false,
+  }) {
     final blockMarkerOffsets = _blockMarkerEscapeOffsets(
       value,
       atBlockStart: atBlockStart,
@@ -579,6 +589,7 @@ class BusyMarkMarkdownSerializer {
     for (var index = 0; index < value.length; index++) {
       final unit = value.codeUnitAt(index);
       if (_inlineSyntaxCharacters.contains(unit) ||
+          (escapeTrailingBang && unit == 0x21 && index == value.length - 1) ||
           blockMarkerOffsets.contains(index)) {
         buffer.writeCharCode(0x5c);
       }

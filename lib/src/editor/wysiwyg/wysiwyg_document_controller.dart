@@ -1439,16 +1439,19 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final safeOffset = offset.clamp(0, text.length).toInt();
     final leftText = text.substring(0, safeOffset);
     final rightText = text.substring(safeOffset);
-    final ranges = busyInlineStyleRanges(block.inlines);
+    final inlinePartition = _partitionInlinesForReplacement(
+      block.inlines,
+      safeOffset,
+      safeOffset,
+    );
     final nextBlockId = _nextGeneratedBlockId(_newBlockPrefixFor(block.kind));
     final nextKind = _splitKindFor(block.kind);
     final currentBlock = BusyBlock(
       id: block.id,
       kind: block.kind,
-      inlines: _inlinesFromStyleRanges(
-        leftText,
-        _styleRangesForSlice(ranges, 0, safeOffset),
-      ),
+      inlines: inlinePartition.before.isEmpty
+          ? _textInlines('')
+          : inlinePartition.before,
       children: block.children,
       attributes: _attributesForText(block.attributes, block.kind, leftText),
       dirty: true,
@@ -1456,10 +1459,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final nextBlock = BusyBlock(
       id: nextBlockId,
       kind: nextKind,
-      inlines: _inlinesFromStyleRanges(
-        rightText,
-        _styleRangesForSlice(ranges, safeOffset, text.length),
-      ),
+      inlines: inlinePartition.after.isEmpty
+          ? _textInlines('')
+          : inlinePartition.after,
       attributes: _attributesForText(
         _splitAttributesFor(block, nextKind, orderedOffset: 1),
         nextKind,
@@ -1510,9 +1512,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final previousText = previous.plainText;
     final currentText = current.plainText;
     final mergedChildren = [...previous.children, ...current.children];
+    final mergedInlines = _mergeAdjacentInlineStyles([
+      ...previous.inlines,
+      ...current.inlines,
+    ]);
     if (currentText.isEmpty) {
       final updatedPrevious = _withoutSourceSpan(
-        previous.copyWith(children: mergedChildren),
+        previous.copyWith(inlines: mergedInlines, children: mergedChildren),
         dirty: true,
       );
       _document = _document.copyWith(
@@ -1528,24 +1534,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         offset: previousText.length,
       );
     }
-    final mergedText = '$previousText$currentText';
-    final previousRanges = busyInlineStyleRanges(previous.inlines);
-    final currentRanges = [
-      for (final range in busyInlineStyleRanges(current.inlines))
-        BusyInlineStyleRange(
-          start: range.start + previousText.length,
-          end: range.end + previousText.length,
-          kind: range.kind,
-          destination: range.destination,
-        ),
-    ];
     final merged = BusyBlock(
       id: previous.id,
       kind: previous.kind,
-      inlines: _inlinesFromStyleRanges(mergedText, [
-        ...previousRanges,
-        ...currentRanges,
-      ]),
+      inlines: mergedInlines,
       children: mergedChildren,
       attributes: previous.attributes,
       dirty: true,
@@ -3060,8 +3052,14 @@ BusyBlock _blockWithInlineCommand(
             : null,
       ),
   ];
+  final rebuiltInlines = _inlinesFromStyleRangesWithHardBreaks(text, ranges);
   return block.copyWith(
-    inlines: _inlinesFromStyleRanges(text, ranges),
+    inlines: _restoreSemanticInlineAnchors(
+      originalInlines: block.inlines,
+      oldText: text,
+      newText: text,
+      rebuiltInlines: rebuiltInlines,
+    ),
     dirty: true,
   );
 }

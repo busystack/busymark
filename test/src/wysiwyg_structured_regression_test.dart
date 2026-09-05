@@ -351,6 +351,116 @@ void main() {
     expect(controller.markdown, '| Value |\n| --- |\n| **cell!** |\n');
   });
 
+  test('structural edits preserve empty-alt inline images', () {
+    BusyMarkWysiwygDocumentController open(String source) {
+      return BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: source)
+            .busyDocument,
+      );
+    }
+
+    final split = open('Before ![](image.png) after.\n');
+    final splitBlock = split.document.blocks.single;
+    split.applyEnterAt(splitBlock.id, splitBlock.plainText.length);
+    expect(split.markdown, 'Before ![](image.png) after.\n\n');
+    expect(
+      split.document.blocks.first.inlines.where(
+        (inline) => inline.kind == BusyInlineKind.image,
+      ),
+      hasLength(1),
+    );
+
+    final formatted = open('Before ![](image.png) after.\n');
+    final formattedBlock = formatted.document.blocks.single;
+    formatted.applyInlineCommand(
+      formattedBlock.id,
+      BusyWysiwygInlineCommand.bold,
+      0,
+      'Before'.length,
+    );
+    expect(formatted.markdown, '**Before** ![](image.png) after.\n');
+
+    final merged = open('Lead\n\nBefore ![](image.png) after.\n');
+    final current = merged.document.blocks.last;
+    merged.applyBackspaceAtStart(current.id);
+    expect(merged.markdown, 'LeadBefore ![](image.png) after.\n');
+  });
+
+  test('structural edits preserve existing hard line breaks', () {
+    BusyMarkWysiwygDocumentController open(String source) {
+      return BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: source)
+            .busyDocument,
+      );
+    }
+
+    final split = open('Alpha  \nBeta\n');
+    final splitBlock = split.document.blocks.single;
+    split.applyEnterAt(splitBlock.id, splitBlock.plainText.length);
+    expect(split.markdown, 'Alpha  \nBeta\n\n');
+
+    final formatted = open('Alpha  \nBeta\n');
+    final formattedBlock = formatted.document.blocks.single;
+    formatted.applyInlineCommand(
+      formattedBlock.id,
+      BusyWysiwygInlineCommand.bold,
+      0,
+      'Alpha'.length,
+    );
+    expect(formatted.markdown, '**Alpha**  \nBeta\n');
+
+    final merged = open('Lead\n\nAlpha  \nBeta\n');
+    merged.applyBackspaceAtStart(merged.document.blocks.last.id);
+    expect(merged.markdown, 'LeadAlpha  \nBeta\n');
+  });
+
+  test('editing preserves a literal bang before an inline link', () {
+    final document = parser
+        .parse(
+          filePath: 'topic.md',
+          source:
+              r'\![guide](guide.md) tail'
+              '\n',
+        )
+        .busyDocument;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final block = document.blocks.single;
+
+    controller.updateBlockText(block.id, '${block.plainText} extended');
+
+    expect(
+      controller.markdown,
+      r'\![guide](guide.md) tail extended'
+      '\n',
+    );
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(reparsed.images, isEmpty);
+    expect(reparsed.links, hasLength(1));
+  });
+
+  test('editing escapes block syntax at the start of a list item', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: '- \\# label\n')
+        .busyDocument;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    final item = document.blocks.single;
+
+    controller.updateBlockText(item.id, '# label edited');
+
+    expect(controller.markdown, '- \\# label edited\n');
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(reparsed.busyDocument.blocks.single.plainText, '# label edited');
+    expect(reparsed.busyDocument.blocks.single.children, isEmpty);
+  });
+
   testWidgets('table field edits preserve rendered formatting and links', (
     tester,
   ) async {
