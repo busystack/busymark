@@ -2137,7 +2137,9 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         ? context.l10n.sourceSearchInvalidRegex
         : result.totalMatchCount == 0
         ? '0 / 0'
-        : '${(result.currentMatchIndex ?? 0) + 1} / ${result.totalMatchCount}';
+        : result.currentMatchIndex == null
+        ? '– / ${result.totalMatchCount}'
+        : '${result.currentMatchIndex! + 1} / ${result.totalMatchCount}';
     return BusyMarkSurface(
       color: colors.panel,
       child: Padding(

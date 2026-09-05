@@ -432,6 +432,56 @@ void main() {
     expect(find.text(de.sourceSearchInvalidRegex), findsOneWidget);
   });
 
+  testWidgets('source search reports no current match before navigation', (
+    tester,
+  ) async {
+    final en = AppLocalizationsEn();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: 'cat cat',
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: true,
+              searchOptions: const SourceSearchOptions(query: 'cat'),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await _pumpUntil(tester, () => find.text('– / 2').evaluate().isNotEmpty);
+    final sourceField = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .firstWhere((field) => field.controller?.text == 'cat cat');
+    final controller =
+        sourceField.controller! as BusyMarkSourceEditingController;
+    expect(controller.searchResult.currentMatch, isNull);
+
+    await tester.tap(find.byTooltip(en.sourceSearchNextMatch));
+    await tester.pump();
+
+    expect(find.text('1 / 2'), findsOneWidget);
+    expect(controller.searchResult.currentMatchIndex, 0);
+    expect(
+      controller.selection,
+      const TextSelection(baseOffset: 0, extentOffset: 3),
+    );
+  });
+
   testWidgets('source fold and search options use semantic icon buttons', (
     tester,
   ) async {
@@ -552,7 +602,7 @@ void main() {
       find.byKey(const ValueKey('source-search-replacement')),
       'dog',
     );
-    await _pumpUntil(tester, () => find.text('1 / 2').evaluate().isNotEmpty);
+    await _pumpUntil(tester, () => find.text('– / 2').evaluate().isNotEmpty);
     await tester.tap(find.byTooltip(en.sourceSearchReplaceAll));
     await _pumpUntil(tester, () => currentText == 'dog dog');
 
@@ -601,7 +651,7 @@ void main() {
         ),
       ),
     );
-    await _pumpUntil(tester, () => find.text('1 / 3').evaluate().isNotEmpty);
+    await _pumpUntil(tester, () => find.text('– / 3').evaluate().isNotEmpty);
 
     await tester.tap(find.byTooltip(en.sourceSearchReplaceAndFindNext));
     await _pumpUntil(tester, () => currentText == 'x a a');

@@ -96,6 +96,7 @@ void main() {
     expect(firstTab, isNot(contains('lastKnownText')));
     expect(firstTab, isNot(contains('diskSnapshot')));
     expect(firstTab, isNot(contains('format')));
+    expect(firstTab, isNot(contains('searchCurrentMatchIndex')));
     expect(
       await File(p.join(directory.path, 'session.json')).readAsString(),
       isNot(contains('# First')),

@@ -72,7 +72,6 @@ class DocumentEditorState {
     this.foldedRegionKeys = const {},
     this.searchOptions = const SourceSearchOptions(),
     this.searchReplacement = '',
-    this.searchCurrentMatchIndex,
     this.undoState = const DocumentUndoState(),
     this.wysiwygState = const WysiwygEditorSessionState(),
   });
@@ -83,7 +82,6 @@ class DocumentEditorState {
   final Set<String> foldedRegionKeys;
   final SourceSearchOptions searchOptions;
   final String searchReplacement;
-  final int? searchCurrentMatchIndex;
   final DocumentUndoState undoState;
   final WysiwygEditorSessionState wysiwygState;
 
@@ -94,7 +92,6 @@ class DocumentEditorState {
     Set<String>? foldedRegionKeys,
     SourceSearchOptions? searchOptions,
     String? searchReplacement,
-    Object? searchCurrentMatchIndex = _bufferUnset,
     DocumentUndoState? undoState,
     WysiwygEditorSessionState? wysiwygState,
   }) {
@@ -107,9 +104,6 @@ class DocumentEditorState {
       ),
       searchOptions: searchOptions ?? this.searchOptions,
       searchReplacement: searchReplacement ?? this.searchReplacement,
-      searchCurrentMatchIndex: identical(searchCurrentMatchIndex, _bufferUnset)
-          ? this.searchCurrentMatchIndex
-          : searchCurrentMatchIndex as int?,
       undoState: undoState ?? this.undoState,
       wysiwygState: wysiwygState ?? this.wysiwygState,
     );
@@ -126,7 +120,6 @@ class DocumentEditorState {
     'searchWholeWord': searchOptions.wholeWord,
     'searchRegex': searchOptions.regex,
     'searchReplacement': searchReplacement,
-    'searchCurrentMatchIndex': searchCurrentMatchIndex,
     'wysiwygState': wysiwygState.toJson(),
   };
 
@@ -153,8 +146,6 @@ class DocumentEditorState {
         regex: json['searchRegex'] as bool? ?? false,
       ),
       searchReplacement: json['searchReplacement']?.toString() ?? '',
-      searchCurrentMatchIndex: (json['searchCurrentMatchIndex'] as num?)
-          ?.toInt(),
       wysiwygState: WysiwygEditorSessionState.fromJson(
         (json['wysiwygState'] as Map?)?.cast<String, Object?>() ?? const {},
       ),
