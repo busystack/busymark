@@ -148,6 +148,60 @@ Done.
     expect(regions.map((region) => region.startLine), isNot(contains(7)));
   });
 
+  test('xml folding ignores greater-than signs inside quoted attributes', () {
+    const source =
+        '<topic>\n'
+        '  <img alt="a > b"/>\n'
+        "  <img alt='c > d'/>\n"
+        '</topic>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(regions, hasLength(1));
+    expect(regions.single.startLine, 1);
+    expect(regions.single.endLine, 4);
+  });
+
+  test('xml folding scans opening tags across source lines', () {
+    const source =
+        '<topic\n'
+        '    title="Installation">\n'
+        '  <section\n'
+        "      title='A > B'>\n"
+        '    Content\n'
+        '  </section>\n'
+        '</topic>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(
+      regions.any((region) => region.startLine == 1 && region.endLine == 7),
+      isTrue,
+    );
+    expect(
+      regions.any((region) => region.startLine == 3 && region.endLine == 6),
+      isTrue,
+    );
+  });
+
+  test('xml folding skips processing instructions and declarations', () {
+    const source =
+        '<?xml version="1.0"?>\n'
+        '<!DOCTYPE topic [\n'
+        '  <!ELEMENT topic ANY>\n'
+        '  <!ENTITY comparison "a > b">\n'
+        ']>\n'
+        '<topic>\n'
+        '  Content\n'
+        '</topic>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(regions, hasLength(1));
+    expect(regions.single.startLine, 6);
+    expect(regions.single.endLine, 8);
+  });
+
   test('markdown folding does not join separate indented code blocks', () {
     const source = '    ```\n# Heading\n    ```\n';
 

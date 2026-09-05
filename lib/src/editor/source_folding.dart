@@ -328,110 +328,194 @@ void _addMarkdownBlockquoteRegions(
 List<SourceFoldRegion> _xmlFoldRegions(List<SourceLineInfo> lines) {
   final regions = <SourceFoldRegion>[];
   final stack = <({String tag, int lineIndex})>[];
-  final lexicalState = _XmlLexicalState();
-  for (var index = 0; index < lines.length; index++) {
-    final text = _xmlStructuralText(lines[index].text, lexicalState);
-    for (final tag in _xmlTagsInLine(text)) {
-      if (tag.selfClosing || tag.declaration) {
-        continue;
-      }
-      if (!tag.closing) {
-        stack.add((tag: tag.name, lineIndex: index));
-        continue;
-      }
-      if (stack.isEmpty) {
-        continue;
-      }
-      final opening = stack.removeLast();
-      if (opening.tag != tag.name) {
-        stack.clear();
-        continue;
-      }
-      if (opening.lineIndex < index) {
-        _addRegion(
-          regions,
-          lines,
-          kind: SourceFoldKind.xml,
-          startIndex: opening.lineIndex,
-          endIndex: index,
-        );
-      }
+  for (final tag in _xmlTags(lines)) {
+    if (tag.selfClosing) {
+      continue;
+    }
+    if (!tag.closing) {
+      stack.add((tag: tag.name, lineIndex: tag.startLineIndex));
+      continue;
+    }
+    if (stack.isEmpty) {
+      continue;
+    }
+    final opening = stack.removeLast();
+    if (opening.tag != tag.name) {
+      stack.clear();
+      continue;
+    }
+    if (opening.lineIndex < tag.endLineIndex) {
+      _addRegion(
+        regions,
+        lines,
+        kind: SourceFoldKind.xml,
+        startIndex: opening.lineIndex,
+        endIndex: tag.endLineIndex,
+      );
     }
   }
   return regions;
 }
 
-class _XmlLexicalState {
-  bool inComment = false;
-  bool inCdata = false;
+enum _XmlScanMode {
+  text,
+  tag,
+  comment,
+  cdata,
+  processingInstruction,
+  declaration,
+  declarationComment,
 }
 
-String _xmlStructuralText(String line, _XmlLexicalState state) {
-  final visible = StringBuffer();
-  var offset = 0;
-  while (offset < line.length) {
-    if (state.inComment) {
-      final end = line.indexOf('-->', offset);
-      if (end < 0) {
-        return visible.toString();
+Iterable<
+  ({
+    String name,
+    bool closing,
+    bool selfClosing,
+    int startLineIndex,
+    int endLineIndex,
+  })
+>
+_xmlTags(List<SourceLineInfo> lines) sync* {
+  var mode = _XmlScanMode.text;
+  var quote = 0;
+  var declarationBracketDepth = 0;
+  var tagStartLineIndex = 0;
+  var tagText = StringBuffer();
+
+  for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    final line = lines[lineIndex].text;
+    var offset = 0;
+    while (offset < line.length) {
+      switch (mode) {
+        case _XmlScanMode.text:
+          if (line.codeUnitAt(offset) != 60) {
+            offset++;
+            continue;
+          }
+          if (line.startsWith('<!--', offset)) {
+            mode = _XmlScanMode.comment;
+            offset += 4;
+          } else if (line.startsWith('<![CDATA[', offset)) {
+            mode = _XmlScanMode.cdata;
+            offset += 9;
+          } else if (line.startsWith('<?', offset)) {
+            mode = _XmlScanMode.processingInstruction;
+            offset += 2;
+          } else if (line.startsWith('<!', offset)) {
+            mode = _XmlScanMode.declaration;
+            quote = 0;
+            declarationBracketDepth = 0;
+            offset += 2;
+          } else {
+            mode = _XmlScanMode.tag;
+            quote = 0;
+            tagStartLineIndex = lineIndex;
+            tagText = StringBuffer('<');
+            offset++;
+          }
+        case _XmlScanMode.tag:
+          final unit = line.codeUnitAt(offset);
+          tagText.writeCharCode(unit);
+          offset++;
+          if (quote != 0) {
+            if (unit == quote) {
+              quote = 0;
+            }
+            continue;
+          }
+          if (unit == 34 || unit == 39) {
+            quote = unit;
+            continue;
+          }
+          if (unit != 62) {
+            continue;
+          }
+          final parsed = _parseXmlTag(tagText.toString());
+          mode = _XmlScanMode.text;
+          if (parsed != null) {
+            yield (
+              name: parsed.name,
+              closing: parsed.closing,
+              selfClosing: parsed.selfClosing,
+              startLineIndex: tagStartLineIndex,
+              endLineIndex: lineIndex,
+            );
+          }
+        case _XmlScanMode.comment:
+          final end = line.indexOf('-->', offset);
+          if (end < 0) {
+            offset = line.length;
+          } else {
+            mode = _XmlScanMode.text;
+            offset = end + 3;
+          }
+        case _XmlScanMode.cdata:
+          final end = line.indexOf(']]>', offset);
+          if (end < 0) {
+            offset = line.length;
+          } else {
+            mode = _XmlScanMode.text;
+            offset = end + 3;
+          }
+        case _XmlScanMode.processingInstruction:
+          final end = line.indexOf('?>', offset);
+          if (end < 0) {
+            offset = line.length;
+          } else {
+            mode = _XmlScanMode.text;
+            offset = end + 2;
+          }
+        case _XmlScanMode.declaration:
+          if (line.startsWith('<!--', offset)) {
+            mode = _XmlScanMode.declarationComment;
+            offset += 4;
+            continue;
+          }
+          final unit = line.codeUnitAt(offset);
+          offset++;
+          if (quote != 0) {
+            if (unit == quote) {
+              quote = 0;
+            }
+          } else if (unit == 34 || unit == 39) {
+            quote = unit;
+          } else if (unit == 91) {
+            declarationBracketDepth++;
+          } else if (unit == 93 && declarationBracketDepth > 0) {
+            declarationBracketDepth--;
+          } else if (unit == 62 && declarationBracketDepth == 0) {
+            mode = _XmlScanMode.text;
+          }
+        case _XmlScanMode.declarationComment:
+          final end = line.indexOf('-->', offset);
+          if (end < 0) {
+            offset = line.length;
+          } else {
+            mode = _XmlScanMode.declaration;
+            offset = end + 3;
+          }
       }
-      state.inComment = false;
-      offset = end + 3;
-      continue;
     }
-    if (state.inCdata) {
-      final end = line.indexOf(']]>', offset);
-      if (end < 0) {
-        return visible.toString();
-      }
-      state.inCdata = false;
-      offset = end + 3;
-      continue;
-    }
-    final commentStart = line.indexOf('<!--', offset);
-    final cdataStart = line.indexOf('<![CDATA[', offset);
-    final excludedStart = switch ((commentStart, cdataStart)) {
-      (-1, -1) => -1,
-      (-1, _) => cdataStart,
-      (_, -1) => commentStart,
-      _ => commentStart < cdataStart ? commentStart : cdataStart,
-    };
-    if (excludedStart < 0) {
-      visible.write(line.substring(offset));
-      break;
-    }
-    visible.write(line.substring(offset, excludedStart));
-    if (excludedStart == commentStart) {
-      state.inComment = true;
-      offset = excludedStart + 4;
-    } else {
-      state.inCdata = true;
-      offset = excludedStart + 9;
+    if (mode == _XmlScanMode.tag) {
+      tagText.writeln();
     }
   }
-  return visible.toString();
 }
 
-Iterable<({String name, bool closing, bool selfClosing, bool declaration})>
-_xmlTagsInLine(String line) sync* {
-  for (final match in RegExp(r'<[^>]+>').allMatches(line)) {
-    final text = match.group(0)!;
-    if (text.startsWith('<!--')) {
-      continue;
-    }
-    final declaration =
-        text.startsWith('<?') || text.startsWith('<!') || text.startsWith('<!');
-    final name = RegExp(r'^</?\s*([A-Za-z_][\w:.-]*)').firstMatch(text);
-    if (name == null) {
-      continue;
-    }
-    yield (
-      name: name.group(1)!,
-      closing: text.startsWith('</'),
-      selfClosing: text.endsWith('/>'),
-      declaration: declaration,
-    );
+({String name, bool closing, bool selfClosing})? _parseXmlTag(String text) {
+  final match = RegExp(
+    r'^<(/?)\s*([A-Za-z_][A-Za-z0-9_.:-]*)',
+  ).firstMatch(text);
+  if (match == null) {
+    return null;
   }
+  final closing = match.group(1)!.isNotEmpty;
+  return (
+    name: match.group(2)!,
+    closing: closing,
+    selfClosing: !closing && RegExp(r'/\s*>$').hasMatch(text),
+  );
 }
 
 bool _isMarkdownListLine(String text) {
