@@ -209,6 +209,10 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.paragraph,
         text: _plainText(block.inlines),
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
+        children: [
+          for (final (index, child) in block.children.indexed)
+            _block(child, '$path.b$index'),
+        ],
         attributes: block.attributes,
       ),
       BusyBlockKind.math => PreviewBlock(

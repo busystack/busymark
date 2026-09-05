@@ -1,3 +1,6 @@
+import 'dart:convert';
+import '../../writerside/writerside_table_view.dart';
+import '../../writerside/writerside_tabs_view.dart';
 import '../../writerside/writerside_source_loader.dart';
 import 'dart:async';
 import 'dart:io';
@@ -10878,21 +10881,24 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.nothingToRead,
       );
     }
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: SelectionArea(
-        child: ScrollablePositionedList.builder(
-          key: const ValueKey('preview-document-scroll'),
-          itemScrollController: controller,
-          itemPositionsListener: itemPositionsListener,
-          padding: documentLayout.scrollPadding,
-          itemCount: document.blocks.length,
-          itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
-            layout: documentLayout,
-            contentKey: index == 0
-                ? const ValueKey('preview-document-content')
-                : null,
-            child: _keyedPreviewBlock(context, index, document.blocks[index]),
+    return WritersidePreviewScope(
+      key: ValueKey(workspace?.activeFilePath),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: colors.view),
+        child: SelectionArea(
+          child: ScrollablePositionedList.builder(
+            key: const ValueKey('preview-document-scroll'),
+            itemScrollController: controller,
+            itemPositionsListener: itemPositionsListener,
+            padding: documentLayout.scrollPadding,
+            itemCount: document.blocks.length,
+            itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
+              layout: documentLayout,
+              contentKey: index == 0
+                  ? const ValueKey('preview-document-content')
+                  : null,
+              child: _keyedPreviewBlock(context, index, document.blocks[index]),
+            ),
           ),
         ),
       ),
@@ -11013,6 +11019,17 @@ class _PreviewBlockView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     final displayBlock = _localizedPreviewBlock(context, block);
+    final switcher =
+        WritersidePreviewScope.of(
+          context,
+        )?.selected('busymark-topic-switcher') ??
+        displayBlock.attributes['switcher-default'];
+    final switcherKeys = displayBlock.attributes['switcher-key'];
+    if (switcherKeys != null &&
+        switcher != null &&
+        !switcherKeys.split(',').map((key) => key.trim()).contains(switcher)) {
+      return const SizedBox.shrink();
+    }
     final inheritedDirection = Directionality.of(context);
     final blockDirection = _previewBlockTextDirection(
       displayBlock,
@@ -11149,9 +11166,9 @@ class _PreviewBlockView extends ConsumerWidget {
               )
             : _previewChildBlocks(displayBlock.children, first: true),
       ),
-      PreviewBlockKind.tabs => BusyMarkDocumentCallout(
-        icon: BusyMarkGlyphs.tab,
-        child: Text(displayBlock.text),
+      PreviewBlockKind.tabs => WritersideTabsView(
+        block: displayBlock,
+        panelBuilder: (blocks) => _previewChildBlocks(blocks, first: true),
       ),
       PreviewBlockKind.procedure
           when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
@@ -11297,6 +11314,7 @@ class _PreviewBlockView extends ConsumerWidget {
       PreviewBlockKind.table => _PreviewTable(
         block: displayBlock,
         editRevision: editRevision,
+        childrenBuilder: (blocks) => _previewChildBlocks(blocks, first: true),
       ),
       PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
@@ -11579,66 +11597,35 @@ String _previewDirectionalText(PreviewBlock block) {
 }
 
 class _PreviewTable extends StatelessWidget {
-  const _PreviewTable({required this.block, this.editRevision = 0});
-
+  const _PreviewTable({
+    required this.block,
+    required this.childrenBuilder,
+    this.editRevision = 0,
+  });
   final PreviewBlock block;
   final int editRevision;
-
+  final Widget Function(List<PreviewBlock>) childrenBuilder;
   @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final columnCount = block.children.fold<int>(
-      0,
-      (max, row) => math.max(max, row.children.length),
-    );
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
-      decoration: BoxDecoration(
-        color: colors.panel,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        border: Border.all(color: colors.subtleBorder),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        child: Table(
-          border: TableBorder.symmetric(
-            inside: BorderSide(color: colors.subtleBorder),
+  Widget build(BuildContext context) => WritersideTableView(
+    block: block,
+    cellBuilder: (cell, header) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (cell.text.trim().isNotEmpty || cell.inlines.isNotEmpty)
+          _PreviewInlineText(
+            block: cell,
+            editRevision: editRevision,
+            textAlign: _previewTableCellTextAlign(cell.attributes['align']),
+            style: header
+                ? busyMarkDocumentBodyTextStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w700)
+                : null,
           ),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            for (final row in block.children)
-              TableRow(
-                decoration: BoxDecoration(
-                  color: row.attributes['header'] == 'true'
-                      ? colors.control
-                      : BusyMarkLinuxPalette.transparent,
-                ),
-                children: [
-                  for (var index = 0; index < columnCount; index += 1)
-                    Padding(
-                      padding: BusyMarkInsets.documentTableCell,
-                      child: index < row.children.length
-                          ? _PreviewInlineText(
-                              block: row.children[index],
-                              editRevision: editRevision,
-                              textAlign: _previewTableCellTextAlign(
-                                row.children[index].attributes['align'],
-                              ),
-                              style: row.attributes['header'] == 'true'
-                                  ? busyMarkDocumentBodyTextStyle(
-                                      context,
-                                    ).copyWith(fontWeight: FontWeight.w700)
-                                  : null,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+        if (cell.children.isNotEmpty) childrenBuilder(cell.children),
+      ],
+    ),
+  );
 }
 
 class _PreviewInlineText extends ConsumerWidget {
@@ -12247,6 +12234,61 @@ InlineSpan _previewInlineSpan(
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
 }) {
+  final shortcutLayouts = inline.attributes['shortcut-layouts'];
+  if (shortcutLayouts != null) {
+    final layouts = (jsonDecode(shortcutLayouts) as Map).cast<String, String>();
+    final controller = WritersidePreviewScope.of(context);
+    final layout =
+        controller?.selected('busymark-keymap') ??
+        inline.attributes['shortcut-layout'];
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: PopupMenuButton<String>(
+        tooltip: 'Keyboard layout',
+        onSelected: (value) => controller?.select('busymark-keymap', value),
+        itemBuilder: (context) => [
+          for (final entry in layouts.entries)
+            PopupMenuItem(
+              value: entry.key,
+              child: Text('${entry.key}: ${entry.value}'),
+            ),
+        ],
+        child: Text(
+          layouts[layout] ?? inline.text,
+          style: busyMarkDocumentCodeTextStyle(context),
+        ),
+      ),
+    );
+  }
+  final summary = inline.attributes['summary'];
+  if (summary != null && summary.isNotEmpty) {
+    final label = Text.rich(
+      TextSpan(
+        text: inline.children.isEmpty ? inline.text : null,
+        children: [
+          for (final child in inline.children) TextSpan(text: child.text),
+        ],
+        style: inline.kind == PreviewInlineKind.link
+            ? TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              )
+            : inheritedStyle,
+      ),
+    );
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: Tooltip(
+        message: summary,
+        child:
+            inline.kind == PreviewInlineKind.link && inline.destination != null
+            ? InkWell(onTap: () => onLinkTap(inline.destination!), child: label)
+            : label,
+      ),
+    );
+  }
   final colors = BusyMarkSurfaceColors.of(context);
   final theme = Theme.of(context);
   final linkDestination = inline.kind == PreviewInlineKind.link

@@ -46,11 +46,11 @@ void main() {
       final generic = document.elements.singleWhere(
         (element) => element.name == 'search-keyword',
       );
-      expect(generic, isA<WritersideGenericElementNode>());
+      expect(generic.semanticKind, WritersideSemanticKind.metadata);
       expect(generic.schemaKnown, isTrue);
       expect(generic.attributes['custom'], 'kept');
       expect(const WritersideDocumentSerializer().serialize(document), source);
-      expect(WritersideSchema.builderVersion, '2026.07.8925');
+      expect(WritersideSchema.builderVersion, '2026.08.0328');
     },
   );
 
@@ -76,7 +76,7 @@ void main() {
     expect(document.format, WritersideDocumentFormat.markdown);
     expect(
       document.elements.singleWhere((element) => element.name == 'card'),
-      isA<WritersideGenericElementNode>(),
+      isA<WritersideSemanticElementNode>(),
     );
     expect(const WritersideDocumentSerializer().serialize(document), source);
   });

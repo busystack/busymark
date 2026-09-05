@@ -76,6 +76,42 @@ void main() {
     },
   );
 
+  test(
+    'referenced diagrams keep resolved source and all tab panels reach PDF',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      await File(
+        p.join(fixture.module.path, 'topics', 'graph.mmd'),
+      ).writeAsString('flowchart LR\nA --> B');
+      await File(
+        p.join(fixture.module.path, 'topics', 'advanced.topic'),
+      ).writeAsString(
+        '<topic id="advanced"><tabs><tab title="Linux"><code-block lang="mermaid" src="graph.mmd"/></tab><tab title="Windows"><p>Windows instructions</p></tab></tabs></topic>',
+      );
+      final exporter = _RecordingMarkdownExporter();
+      await WritersidePdfExportService(markdownExporter: exporter).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'tabs.pdf'),
+          overwrite: false,
+        ),
+      );
+      final blocks = _allBlocks(exporter.request!.document!.blocks).toList();
+      final code = blocks.singleWhere(
+        (block) => block.kind == BusyBlockKind.codeBlock,
+      );
+      expect(code.plainText, 'flowchart LR\nA --> B');
+      expect(code.attributes['src'], 'graph.mmd');
+      expect(
+        blocks.map((block) => block.plainText),
+        containsAll(['Linux', 'Windows', 'Windows instructions']),
+      );
+    },
+  );
+
   test('pre-cancelled native export never starts PDF compilation', () async {
     final fixture = await _WritersideFixture.create();
     addTearDown(fixture.dispose);

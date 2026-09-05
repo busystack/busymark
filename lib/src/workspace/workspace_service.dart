@@ -1,4 +1,5 @@
 import '../writerside/writerside_source_loader.dart';
+import '../writerside/writerside_reference_data.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -1392,6 +1393,7 @@ class WorkspaceService {
       sourceFiles: await const WritersideSourceLoader().loadModule(
         updatedModule,
       ),
+      referenceData: await WritersideReferenceData.load(updatedModule),
     );
     final previousProject = workspace.writersideProject;
     final updatedProject = previousProject?.withModule(updatedModule);
@@ -1475,6 +1477,8 @@ class WorkspaceService {
     final candidates = <String>{
       config.filePath,
       for (final source in module.sourceFiles.values)
+        if (source.path case final path?) path,
+      for (final source in module.referenceData.sources.values)
         if (source.path case final path?) path,
       for (final instance in module.instances) instance.sourceTreePath,
       for (final instance in config.instances)

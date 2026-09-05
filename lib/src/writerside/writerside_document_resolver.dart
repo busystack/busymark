@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:path/path.dart' as p;
+
 import '../core/diagnostic.dart';
+import '../export/openapi_static_export_mapper.dart';
 import '../markdown/busymark_document.dart';
 import 'writerside_document.dart';
 import 'writerside_model.dart';
@@ -12,12 +16,14 @@ class WritersideResolveContext {
     required this.topic,
     this.instance,
     this.modulesByOrigin = const {},
+    this.shortcutLayout,
   });
 
   final WritersideModule module;
   final WritersideTopic topic;
   final WritersideInstance? instance;
   final Map<String, WritersideModule> modulesByOrigin;
+  final String? shortcutLayout;
 }
 
 class ResolvedWritersideDocument {
@@ -199,7 +205,22 @@ class _ResolveState {
           ),
       };
       final children = resolveNodes(
-        element.children,
+        [
+          for (final child in element.children)
+            if (element.semanticKind == WritersideSemanticKind.api &&
+                child is WritersideElementNode &&
+                child.semanticKind == WritersideSemanticKind.api &&
+                !child.attributes.containsKey('openapi-path'))
+              child.copyWith(
+                attributes: {
+                  ...child.attributes,
+                  if (attributes['openapi-path'] case final path?)
+                    'openapi-path': path,
+                },
+              )
+            else
+              child,
+        ],
         module: module,
         topic: topic,
         variables: scopedVariables,
@@ -207,6 +228,35 @@ class _ResolveState {
         includeStack: includeStack,
         inheritedIgnoreVariables: ignoreVariables,
       );
+      if (element.semanticKind == WritersideSemanticKind.api) {
+        final reference = attributes['openapi-path'] ?? '';
+        final source = module
+            .sourceFiles[WritersideSourceLoader.key(topic.filePath, reference)];
+        if (source?.api case final api?) {
+          attributes['busymark-api-reference'] = jsonEncode(api.toJson());
+          try {
+            const OpenApiStaticExportMapper().mapWriterside(
+              api,
+              element: element.name,
+              attributes: attributes,
+            );
+          } on FormatException catch (error) {
+            _referenceDiagnostic(
+              code: 'writerside.api.invalid-selection',
+              node: element,
+              args: {'reason': error.message},
+            );
+          }
+        } else {
+          attributes['busymark-api-error'] =
+              source?.failure ?? 'Missing API specification: $reference';
+          _referenceDiagnostic(
+            code: 'writerside.api.unresolved',
+            node: element,
+            args: {'reference': reference, 'reason': source?.failure},
+          );
+        }
+      }
       if (element.semanticKind == WritersideSemanticKind.codeBlock &&
           attributes.containsKey('src')) {
         attributes[writersideResolvedSourceAttribute] = _resolveCodeSource(
@@ -218,10 +268,72 @@ class _ResolveState {
           ignore: ignoreVariables,
         );
       }
-      if (element.semanticKind == WritersideSemanticKind.link) {
+      if (element.semanticKind == WritersideSemanticKind.link ||
+          element.semanticKind == WritersideSemanticKind.card) {
         attributes.addAll(
           _resolveLink(attributes, module: module, topic: topic, node: element),
         );
+      }
+      final referenceData = module.referenceData;
+      if (element.semanticKind == WritersideSemanticKind.shortcut &&
+          attributes['key'] != null) {
+        final key = attributes['key']!;
+        final actions =
+            referenceData.shortcuts[context.instance?.id] ??
+            referenceData.shortcuts[''];
+        final combinations = actions?[key] ?? const <String, String>{};
+        final layout =
+            context.shortcutLayout ??
+            (combinations.containsKey('Linux')
+                ? 'Linux'
+                : combinations.keys.firstOrNull);
+        attributes['resolved-label'] = combinations[layout] ?? key;
+        attributes['shortcut-layouts'] = jsonEncode(combinations);
+        attributes['shortcut-layout'] = layout ?? '';
+        if (combinations.isEmpty || combinations[layout]?.isEmpty == true) {
+          _referenceDiagnostic(
+            code: 'writerside.shortcut.unresolved',
+            node: element,
+            args: {'key': key},
+          );
+        }
+      }
+      if (element.semanticKind == WritersideSemanticKind.tooltip) {
+        final term = attributes['term'] ?? element.plainText;
+        final description = referenceData.glossary[term];
+        attributes['resolved-label'] = term;
+        if (description != null) {
+          attributes['summary'] = description;
+        } else {
+          _referenceDiagnostic(
+            code: 'writerside.tooltip.unresolved',
+            node: element,
+            args: {'term': term},
+          );
+        }
+      }
+      if (element.semanticKind == WritersideSemanticKind.resource) {
+        final src = attributes['src'] ?? '';
+        final resource = referenceData.resources[src];
+        attributes['resolved-label'] = p.basename(src);
+        if (resource?.path case final path?) {
+          attributes['resolved-destination'] = Uri.file(path).toString();
+        } else {
+          _referenceDiagnostic(
+            code: 'writerside.resource.unresolved',
+            node: element,
+            args: {'src': src},
+          );
+        }
+      }
+      if (element.semanticKind == WritersideSemanticKind.category) {
+        final category = module.categories
+            .where((category) => category.id == attributes['ref'])
+            .firstOrNull;
+        if (category != null) {
+          attributes['title'] = category.name;
+          attributes['order'] = '${category.order ?? 0}';
+        }
       }
       if (element.semanticKind == WritersideSemanticKind.condition) {
         result.addAll(children);

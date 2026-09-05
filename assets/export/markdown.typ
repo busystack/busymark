@@ -151,18 +151,18 @@
   }
 }
 
-#let render-table(block-data) = {
+#let render-table(block-data, render) = {
   let rows = value-or(block-data, "children", ())
   if rows.len() == 0 {
     none
   } else {
-    let column-count = calc.max(..rows.map(row => value-or(row, "children", ()).len()))
+    let column-count = value-or(block-data, "columnCount", calc.max(..rows.map(row => value-or(row, "children", ()).len())))
     let cells = ()
     for row in rows {
       let is-header = value-or(row, "header", false)
       let row-cells = ()
       for cell in value-or(row, "children", ()) {
-        let cell-body = render-inlines(value-or(cell, "inlines", ()))
+        let cell-body = [#render-inlines(value-or(cell, "inlines", ()))#for child in value-or(cell, "children", ()) { render(child) }]
         let alignment = value-or(cell, "align", "left")
         let cell-align = if alignment == "center" {
           center
@@ -173,11 +173,13 @@
         }
         row-cells.push(table.cell(
           align: cell-align,
-          if is-header { strong(cell-body) } else { cell-body },
+          x: value-or(cell, "x", auto),
+          y: value-or(cell, "y", auto),
+          colspan: value-or(cell, "colspan", 1),
+          rowspan: value-or(cell, "rowspan", 1),
+          fill: if value-or(cell, "header", is-header) { rgb("f1f3f5") } else { none },
+          if value-or(cell, "header", is-header) { strong(cell-body) } else { cell-body },
         ))
-      }
-      for ignored in range(value-or(row, "children", ()).len(), column-count) {
-        row-cells.push(none)
       }
       if is-header {
         cells.push(table.header(..row-cells))
@@ -186,10 +188,11 @@
       }
     }
     table(
-      columns: column-count,
+      columns: if value-or(block-data, "columnWidths", ()).len() == column-count {
+        value-or(block-data, "columnWidths", ()).map(width => if width != "" { float(width) * 0.75pt } else if value-or(block-data, "fixedColumns", false) { 1fr } else { auto })
+      } else { column-count },
       inset: 5pt,
       stroke: 0.5pt + rgb("c8cdd4"),
-      fill: (x, y) => if y == 0 { rgb("f1f3f5") } else { none },
       ..cells,
     )
   }
@@ -328,7 +331,7 @@
       if source.starts-with("https://") { link(source, body) } else { body },
     )
   } else if kind == "table" {
-    render-table(block-data)
+    render-table(block-data, render-block)
   } else if kind == "visualization" {
     let asset = value-or(block-data, "asset", "")
     let alt = value-or(block-data, "alt", "Diagram")

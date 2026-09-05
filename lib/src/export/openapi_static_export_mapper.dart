@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../visualization/visualization_models.dart';
 import 'markdown_export_document.dart';
 
@@ -14,6 +15,82 @@ class OpenApiStaticExportMapper {
     'patch',
     'trace',
   };
+
+  /// Writerside markup selects operations from the same bundled specification
+  /// used by fenced OpenAPI previews and native export.
+  MarkdownExportBlock mapWriterside(
+    OpenApiReferenceModel reference, {
+    required String element,
+    required Map<String, String> attributes,
+    Map<String, List<MarkdownExportBlock>> overrides = const {},
+  }) {
+    final root = reference.document;
+    final blocks = <MarkdownExportBlock>[];
+    if (element == 'api-schema') {
+      final name = attributes['name'] ?? '';
+      final schema = _map(
+        _map(_map(root['components'])['schemas'])[name] ??
+            _map(root['definitions'])[name],
+      );
+      if (schema.isEmpty) throw FormatException('Unknown API schema: $name');
+      blocks.addAll(_schemaBlocks(name, schema));
+    } else {
+      final selected = <String, Object?>{};
+      final sources = <String, Object?>{
+        if (element != 'api-webhook' && attributes['display'] != 'webhooks')
+          ..._map(root['paths']),
+        if (element == 'api-webhook' ||
+            (element == 'api-doc' &&
+                !{'endpoints', 'operations'}.contains(attributes['display'])))
+          ..._map(root['webhooks']),
+      };
+      for (final entry in sources.entries) {
+        if (attributes['endpoint'] != null &&
+            attributes['endpoint'] != entry.key) {
+          continue;
+        }
+        if (attributes['webhook'] != null &&
+            attributes['webhook'] != entry.key) {
+          continue;
+        }
+        final path = _map(entry.value);
+        final operations = <String, Object?>{
+          if (path['parameters'] != null) 'parameters': path['parameters'],
+        };
+        for (final operation in path.entries) {
+          if (!_httpMethods.contains(operation.key.toLowerCase())) continue;
+          if (attributes['method'] != null &&
+              attributes['method']!.toLowerCase() !=
+                  operation.key.toLowerCase()) {
+            continue;
+          }
+          if (attributes['tag'] != null &&
+              !_list(
+                _map(operation.value)['tags'],
+              ).contains(attributes['tag'])) {
+            continue;
+          }
+          operations[operation.key] = operation.value;
+        }
+        if (operations.keys.any(_httpMethods.contains)) {
+          selected[entry.key] = operations;
+        }
+      }
+      if (selected.isEmpty) {
+        throw const FormatException('No matching API operations');
+      }
+      _addOperations(
+        blocks,
+        {...root, 'paths': selected},
+        overrides: overrides,
+        generateSamples: attributes['generate-samples']?.toLowerCase() ?? 'all',
+      );
+    }
+    return MarkdownExportBlock(
+      kind: MarkdownExportBlockKind.openApiReference,
+      children: blocks,
+    );
+  }
 
   MarkdownExportBlock map(OpenApiReferenceModel reference) {
     final blocks = <MarkdownExportBlock>[
@@ -79,8 +156,10 @@ class OpenApiStaticExportMapper {
 
   void _addOperations(
     List<MarkdownExportBlock> blocks,
-    Map<String, Object?> document,
-  ) {
+    Map<String, Object?> document, {
+    Map<String, List<MarkdownExportBlock>> overrides = const {},
+    String generateSamples = 'none',
+  }) {
     final paths = _map(document['paths']);
     if (paths.isEmpty) {
       return;
@@ -126,6 +205,27 @@ class OpenApiStaticExportMapper {
         _addParameters(blocks, parameters, headingLevel: 5);
         _addRequestBody(blocks, operation['requestBody'], headingLevel: 5);
         _addResponses(blocks, operation['responses'], headingLevel: 5);
+        final replacement = overrides['$method ${pathEntry.key}'];
+        if (replacement != null) {
+          blocks.addAll(replacement);
+        } else {
+          if ({'all', 'request'}.contains(generateSamples)) {
+            _addExamples(
+              blocks,
+              'Request sample',
+              _map(operation['requestBody']),
+            );
+          }
+          if ({'all', 'response'}.contains(generateSamples)) {
+            for (final response in _map(operation['responses']).entries) {
+              _addExamples(
+                blocks,
+                'Response ${response.key}',
+                _map(response.value),
+              );
+            }
+          }
+        }
 
         final callbacks = _map(operation['callbacks']);
         if (callbacks.isNotEmpty) {
@@ -133,6 +233,35 @@ class OpenApiStaticExportMapper {
             ..add(_heading(5, 'Callbacks'))
             ..add(_paragraph(callbacks.keys.join(', ')));
         }
+      }
+    }
+  }
+
+  void _addExamples(
+    List<MarkdownExportBlock> blocks,
+    String title,
+    Map<String, Object?> object,
+  ) {
+    for (final media in _map(object['content']).values.map(_map)) {
+      final examples = [
+        if (media['example'] != null) media['example'],
+        for (final example in _map(media['examples']).values)
+          _map(example)['value'],
+        if (media['example'] == null &&
+            _map(media['examples']).isEmpty &&
+            _map(media['schema'])['example'] != null)
+          _map(media['schema'])['example'],
+      ];
+      for (final example in examples.where((value) => value != null)) {
+        blocks
+          ..add(_heading(5, title))
+          ..add(
+            MarkdownExportBlock(
+              kind: MarkdownExportBlockKind.code,
+              text: const JsonEncoder.withIndent('  ').convert(example),
+              attributes: const {'language': 'json'},
+            ),
+          );
       }
     }
   }

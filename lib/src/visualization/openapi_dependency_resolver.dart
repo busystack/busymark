@@ -15,12 +15,14 @@ class OpenApiDependencyResolver {
     this.maximumFiles = 32,
     this.maximumFileBytes = 4 * 1024 * 1024,
     this.maximumTotalBytes = 16 * 1024 * 1024,
+    this.sourceOverrides = const {},
   });
 
   final WebRenderHost host;
   final int maximumFiles;
   final int maximumFileBytes;
   final int maximumTotalBytes;
+  final Map<String, String> sourceOverrides;
 
   Future<VisualizationRenderRequest> resolve(
     VisualizationRenderRequest request,
@@ -134,9 +136,12 @@ class OpenApiDependencyResolver {
           );
         }
         final file = File(resolution.path);
+        final override = sourceOverrides[resolution.path];
         late int size;
         try {
-          size = await file.length();
+          size = override == null
+              ? await file.length()
+              : utf8.encode(override).length;
         } on FileSystemException {
           throw _referenceError(
             'visualization.openapiReferenceUnavailable',
@@ -153,7 +158,7 @@ class OpenApiDependencyResolver {
         }
         late String source;
         try {
-          source = utf8.decode(await file.readAsBytes());
+          source = override ?? utf8.decode(await file.readAsBytes());
         } on FormatException {
           throw _referenceError(
             'visualization.openapiReferenceEncoding',

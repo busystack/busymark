@@ -222,6 +222,62 @@ Nested **tab** content.
     },
   );
 
+  test(
+    'summaries stay metadata and starting pages suppress outside content',
+    () async {
+      await write(
+        'topics/main.topic',
+        '<topic id="main"><link-summary>Hidden summary</link-summary><p>Outside body</p><section-starting-page><title>Start here</title><description>Visible intro</description><primary><title>Guides</title><card href="target.topic" summary="Card description"/></primary></section-starting-page></topic>',
+      );
+      final rendered = await render();
+      final text = walk(
+        rendered.blocks,
+      ).map((block) => block.plainText).join(' ');
+      expect(text, isNot(contains('Outside body')));
+      expect(text, isNot(contains('Hidden summary')));
+      expect(rendered.frontMatter['link-summary'], 'Hidden summary');
+      expect(text, contains('Start here'));
+      expect(text, contains('Target title'));
+      expect(text, contains('Card description'));
+    },
+  );
+
+  test(
+    'configured shortcuts, glossary and binary resources have visible references',
+    () async {
+      await write(
+        'cfg/buildprofiles.xml',
+        '<buildprofiles><shortcuts><src>keymap.xml</src><layout name="Linux"/><layout name="macOS"/></shortcuts></buildprofiles>',
+      );
+      await write(
+        'cfg/glossary.xml',
+        '<terms><term name="HTTP">Hypertext Transfer Protocol</term></terms>',
+      );
+      await write(
+        'keymap.xml',
+        '<keymap><actions><action id="copy"><shortcut layout="Linux">Ctrl+C</shortcut><shortcut layout="macOS">Cmd+C</shortcut></action></actions></keymap>',
+      );
+      await write('resources/example.zip', 'binary placeholder');
+      await write(
+        'topics/main.topic',
+        '<topic id="main"><p><shortcut key="copy"/> <tooltip term="HTTP"/> <resource src="example.zip"/></p></topic>',
+      );
+      final inlines = (await render()).blocks.single.inlines;
+      expect(inlines.first.text, 'Ctrl+C');
+      expect(
+        inlines
+            .singleWhere((inline) => inline.attributes['element'] == 'tooltip')
+            .attributes['summary'],
+        'Hypertext Transfer Protocol',
+      );
+      final resource = inlines.singleWhere(
+        (inline) => inline.attributes['element'] == 'resource',
+      );
+      expect(resource.text, 'example.zip');
+      expect(resource.destination, endsWith('/resources/example.zip'));
+    },
+  );
+
   test('line and symbol selectors reject invalid selections', () {
     const selection = WritersideCodeSelection();
     expect(selection.select('a\nb\nc\n', {'include-lines': '1,3'}), 'a\nc');

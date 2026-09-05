@@ -12,6 +12,7 @@ import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'writerside_model.dart';
 import 'writerside_source_loader.dart';
+import 'writerside_reference_data.dart';
 import 'writerside_parsers.dart';
 import 'writerside_tree_resolver.dart';
 import 'writerside_video.dart';
@@ -503,6 +504,7 @@ class WritersideModuleService {
       instanceGroups: module.instanceGroups,
       sourceOverrides: normalizedOverrides,
       sourceFiles: await const WritersideSourceLoader().loadModule(module),
+      referenceData: await WritersideReferenceData.load(module),
     );
   }
 

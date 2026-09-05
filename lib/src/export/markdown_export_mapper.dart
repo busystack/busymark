@@ -1,3 +1,4 @@
+import '../markdown/table_grid.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/uri_utils.dart';
@@ -195,7 +196,22 @@ class MarkdownExportMapper {
         block,
         blockOverrides,
       ),
-      BusyBlockKind.writersideTabs ||
+      BusyBlockKind.writersideTabs
+          when block.attributes['topic-switcher'] == 'true' =>
+        null,
+      BusyBlockKind.writersideTabs => MarkdownExportBlock(
+        kind: MarkdownExportBlockKind.group,
+        children: [
+          if (block.plainText.isNotEmpty)
+            MarkdownExportBlock(
+              kind: MarkdownExportBlockKind.paragraph,
+              inlines: _mapInlines([
+                BusyInline(kind: BusyInlineKind.strong, text: block.plainText),
+              ]),
+            ),
+          ..._mapBlocks(block.children, blockOverrides),
+        ],
+      ),
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.unknown => MarkdownExportBlock(
@@ -266,21 +282,55 @@ class MarkdownExportMapper {
     BusyBlock table,
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
+    final grid = TableGrid.place(
+      table.children.map((row) => row.children).toList(),
+      (cell) => cell.attributes,
+    );
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.table,
+      attributes: {
+        'columnCount': grid.columns,
+        'fixedColumns': table.attributes['column-width'] == 'fixed',
+        'columnWidths': [
+          for (var column = 0; column < grid.columns; column++)
+            grid.cells
+                    .where(
+                      (cell) =>
+                          cell.column == column &&
+                          cell.colspan == 1 &&
+                          cell.value.attributes.containsKey('width'),
+                    )
+                    .firstOrNull
+                    ?.value
+                    .attributes['width'] ??
+                '',
+        ],
+      },
       children: [
-        for (final row in table.children)
+        for (final (rowIndex, row) in table.children.indexed)
           MarkdownExportBlock(
             kind: MarkdownExportBlockKind.tableRow,
             attributes: {'header': row.attributes['header'] == 'true'},
             children: [
-              for (final cell in row.children)
+              for (final placement in grid.cells.where(
+                (cell) => cell.row == rowIndex,
+              ))
                 MarkdownExportBlock(
                   kind: MarkdownExportBlockKind.tableCell,
-                  inlines: _mapInlines(cell.inlines),
-                  children: _mapBlocks(cell.children, blockOverrides),
+                  inlines: _mapInlines(placement.value.inlines),
+                  children: _mapBlocks(
+                    placement.value.children,
+                    blockOverrides,
+                  ),
                   attributes: {
-                    if (_safeAlignment(cell.attributes['align'])
+                    'x': placement.column,
+                    'y': placement.row,
+                    'colspan': placement.colspan,
+                    'rowspan': placement.rowspan,
+                    'header':
+                        placement.value.attributes['header'] == 'true' ||
+                        row.attributes['header'] == 'true',
+                    if (_safeAlignment(placement.value.attributes['align'])
                         case final alignment?)
                       'align': alignment,
                   },
