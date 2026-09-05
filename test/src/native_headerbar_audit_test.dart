@@ -442,8 +442,16 @@ void main() {
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
     expect(snapcraft, contains('export CI=true'));
-    expect(snapcraft, contains('flutter --no-version-check precache --linux'));
-    expect(snapcraft, contains('flutter --no-version-check pub get'));
+    expect(
+      snapcraft,
+      contains(
+        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
+      ),
+    );
+    expect(
+      snapcraft,
+      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
+    );
     expect(
       snapcraft,
       contains(
@@ -568,6 +576,30 @@ void main() {
     expect(script, contains(r'"$FLUTTER_BIN" analyze --no-pub'));
     expect(script, contains(r'"$FLUTTER_BIN" test --no-pub'));
     expect(script, contains(r'"$FLUTTER_BIN" build linux --release --no-pub'));
+  });
+
+  test('Snapcraft pins the same Flutter release as the project', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final projectVersion = RegExp(
+      r'^  flutter: (\d+\.\d+\.\d+)$',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1)!;
+
+    expect(snapcraft, contains('BUSYMARK_FLUTTER_VERSION: "$projectVersion"'));
+    expect(
+      snapcraft,
+      contains(r'git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION"'),
+    );
+    expect(
+      snapcraft,
+      contains(r'git -C "$flutter_sdk" describe --tags --exact-match HEAD'),
+    );
+    expect(
+      snapcraft,
+      contains(r'"$flutter_sdk/bin/flutter" --no-version-check build linux'),
+    );
+    expect(snapcraft, isNot(contains('git clone --depth 1 -b stable')));
   });
 
   test('local snap builder keeps compiler output off the system tmpfs', () {

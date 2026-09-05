@@ -63,6 +63,8 @@ parts:
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
+    build-environment:
+      - BUSYMARK_FLUTTER_VERSION: "3.47.0"
     build-snaps:
       - node/24/stable
     build-packages:
@@ -100,14 +102,20 @@ parts:
       rm -rf "$CRAFT_PART_BUILD/build"
       rm -rf "$CRAFT_PART_BUILD/.dart_tool"
       rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
-      if [ ! -x "$CRAFT_PART_BUILD/flutter-distro/bin/flutter" ]; then
-        git clone --depth 1 -b stable https://github.com/flutter/flutter.git \
-          "$CRAFT_PART_BUILD/flutter-distro"
+      flutter_sdk="$CRAFT_PART_BUILD/flutter-distro"
+      flutter_sdk_version="$(git -C "$flutter_sdk" describe --tags --exact-match HEAD 2>/dev/null || true)"
+      if [ ! -x "$flutter_sdk/bin/flutter" ] || \
+          [ "$flutter_sdk_version" != "$BUSYMARK_FLUTTER_VERSION" ]; then
+        rm -rf "$flutter_sdk"
+        git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION" \
+          https://github.com/flutter/flutter.git "$flutter_sdk"
       fi
+      test "$(git -C "$flutter_sdk" describe --tags --exact-match HEAD)" = \
+        "$BUSYMARK_FLUTTER_VERSION"
       export CI=true
-      flutter --no-version-check precache --linux
-      flutter --no-version-check pub get
-      flutter --no-version-check build linux --release --verbose \
+      "$flutter_sdk/bin/flutter" --no-version-check precache --linux
+      "$flutter_sdk/bin/flutter" --no-version-check pub get
+      "$flutter_sdk/bin/flutter" --no-version-check build linux --release --verbose \
         --target lib/main.dart
       cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
 
