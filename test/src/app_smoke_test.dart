@@ -4181,6 +4181,120 @@ void main() {
     }
   });
 
+  testWidgets('Source remount starts a distinct undo group', (tester) async {
+    const source = 'abc';
+    const startupPath = '/tmp/source-remount-undo.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    Finder sourceField() => find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+
+    await tester.tap(sourceField());
+    await tester.showKeyboard(sourceField());
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcd',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+    final firstGroup = container
+        .read(workspaceControllerProvider)
+        .activeBuffer!
+        .editorState
+        .undoState
+        .activeGroup;
+    expect(firstGroup, isNotNull);
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(BusyMarkSourceEditor), findsNothing);
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var index = 0; index < 10; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.tap(sourceField());
+    await tester.showKeyboard(sourceField());
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcde',
+        selection: TextSelection.collapsed(offset: 5),
+      ),
+    );
+    await tester.pump();
+
+    final remountedBuffer = container
+        .read(workspaceControllerProvider)
+        .activeBuffer!;
+    expect(
+      remountedBuffer.editorState.undoState.activeGroup,
+      isNot(firstGroup),
+    );
+    expect(
+      remountedBuffer.editorState.undoState.undo.map((state) => state.text),
+      [source, 'abcd'],
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    final remountedController = tester
+        .widget<TextField>(sourceField())
+        .controller!;
+    expect(remountedController.text, 'abcd');
+    expect(remountedController.selection.isCollapsed, isTrue);
+    expect(remountedController.selection.extentOffset, 4);
+  });
+
   testWidgets('source view supports editor formatting shortcuts', (
     tester,
   ) async {

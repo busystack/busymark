@@ -47,6 +47,8 @@ typedef BusyMarkSourceSessionChanged =
       Set<String> foldedRegionKeys,
     );
 
+var _sourceEditorUndoSessionSequence = 0;
+
 class BusyMarkSourceEditor extends StatefulWidget {
   const BusyMarkSourceEditor({
     super.key,
@@ -134,6 +136,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   _ContinuousSourceEdit? _continuousSourceEdit;
   _SourceSessionSnapshot? _lastPublishedSession;
   bool _sessionPublicationScheduled = false;
+  final _undoSessionId = ++_sourceEditorUndoSessionSequence;
   var _undoGroupSequence = 0;
 
   @override
@@ -1333,7 +1336,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final group = continuous
         ? previous.group
         : 'source-${widget.documentId ?? widget.filePath ?? 'document'}-'
-              '${++_undoGroupSequence}';
+              '$_undoSessionId-${++_undoGroupSequence}';
     _continuousSourceEdit = _ContinuousSourceEdit(
       kind: kind,
       newText: currentText,
