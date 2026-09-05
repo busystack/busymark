@@ -12,8 +12,13 @@ abstract final class BusyMarkDocumentTextGeometry {
       editableCaretGap + editableCursorWidth;
 
   /// Uses the complete text strut so selection has balanced breathing room
-  /// above capitals and below descenders in both Source and Editor views.
+  /// above capitals and below descenders in rich Editor fields.
   static const BoxHeightStyle selectionHeightStyle = BoxHeightStyle.strut;
+
+  /// Follows the tallest styled glyph on each Source line. Source syntax can
+  /// enlarge headings beyond the base monospace strut, so a strut-sized box
+  /// can clip the lower edge of selected heading text.
+  static const BoxHeightStyle sourceSelectionHeightStyle = BoxHeightStyle.max;
   static const BoxWidthStyle selectionWidthStyle = BoxWidthStyle.tight;
   static const double fallbackSelectionAlpha = 0.40;
 }

@@ -27,7 +27,8 @@ Options:
 Environment overrides are also supported:
   VERSION, OUT, SNAP_ROOT, SNAP_SCAFFOLD, SNAP_NAME, BINARY_NAME, APP_ID,
   INSTALL_AFTER_BUILD=0, RUN_AFTER_INSTALL=0, SKIP_TESTS=1, BUNDLE_GIT=0,
-  DART_DEFINE_FROM_FILE
+  DART_DEFINE_FROM_FILE, BUSYMARK_FLUTTER_BIN, BUSYMARK_FLUTTER_CACHE,
+  BUSYMARK_BOOTSTRAP_FLUTTER=0, BUSYMARK_BUILD_TMP_ROOT
 EOF
 }
 
@@ -40,6 +41,121 @@ project_value() {
   local key="$1"
   sed -nE "s/^${key}:[[:space:]]*['\"]?([^'\"]+)['\"]?[[:space:]]*$/\\1/p" \
     pubspec.yaml | head -n 1
+}
+
+project_flutter_version() {
+  sed -nE \
+    "/^environment:/,/^[^[:space:]#]/{s/^[[:space:]]+flutter:[[:space:]]*['\"]?([^'\"[:space:]]+)['\"]?[[:space:]]*$/\\1/p}" \
+    pubspec.yaml | head -n 1
+}
+
+flutter_binary_version() {
+  local executable
+  executable="$(readlink -f "$1")"
+  local sdk_root
+  sdk_root="$(cd "$(dirname "$executable")/.." && pwd)"
+  local version=""
+
+  version="$(git -C "$sdk_root" describe --tags --exact-match HEAD 2>/dev/null || true)"
+  if [[ -n "$version" ]]; then
+    echo "$version"
+    return
+  fi
+  if [[ -f "$sdk_root/bin/cache/flutter.version.json" ]]; then
+    python3 -c \
+      'import json,sys; print(json.load(open(sys.argv[1]))["frameworkVersion"])' \
+      "$sdk_root/bin/cache/flutter.version.json"
+    return
+  fi
+  "$1" --version --machine |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["frameworkVersion"])'
+}
+
+select_project_flutter() {
+  local required_version="$1"
+  local explicit_bin="${BUSYMARK_FLUTTER_BIN:-}"
+  local candidate=""
+  local actual_version=""
+
+  if [[ -n "$explicit_bin" ]]; then
+    candidate="$(command -v "$explicit_bin" || true)"
+    [[ -n "$candidate" && -x "$candidate" ]] || \
+      fail "BUSYMARK_FLUTTER_BIN is not executable: $explicit_bin"
+    actual_version="$(flutter_binary_version "$candidate")" || \
+      fail "could not determine Flutter version from $candidate"
+    [[ "$actual_version" == "$required_version" ]] || \
+      fail "BUSYMARK_FLUTTER_BIN provides Flutter $actual_version; project requires $required_version"
+    FLUTTER_BIN="$candidate"
+    return
+  fi
+
+  candidate="$PROJECT_ROOT/.fvm/flutter_sdk/bin/flutter"
+  if [[ -x "$candidate" ]]; then
+    actual_version="$(flutter_binary_version "$candidate")" || true
+    if [[ "$actual_version" == "$required_version" ]]; then
+      FLUTTER_BIN="$candidate"
+      return
+    fi
+  fi
+
+  candidate="$(command -v flutter || true)"
+  if [[ -n "$candidate" && -x "$candidate" ]]; then
+    actual_version="$(flutter_binary_version "$candidate")" || true
+    if [[ "$actual_version" == "$required_version" ]]; then
+      FLUTTER_BIN="$candidate"
+      return
+    fi
+    if [[ -n "$actual_version" ]]; then
+      echo "Flutter $actual_version on PATH does not match required $required_version."
+    fi
+  fi
+
+  local cache_root="${BUSYMARK_FLUTTER_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/busymark/flutter}"
+  local cached_sdk="$cache_root/$required_version"
+  candidate="$cached_sdk/bin/flutter"
+  if [[ -x "$candidate" ]]; then
+    actual_version="$(flutter_binary_version "$candidate")" || true
+    [[ "$actual_version" == "$required_version" ]] || \
+      fail "cached Flutter SDK at $cached_sdk reports version ${actual_version:-unknown}"
+    FLUTTER_BIN="$candidate"
+    return
+  fi
+
+  [[ "${BUSYMARK_BOOTSTRAP_FLUTTER:-1}" == "1" ]] || \
+    fail "Flutter $required_version is unavailable; install it or set BUSYMARK_FLUTTER_BIN"
+  [[ ! -e "$cached_sdk" ]] || \
+    fail "cached Flutter SDK is incomplete: $cached_sdk"
+
+  local partial_sdk="${cached_sdk}.partial.$$"
+  mkdir -p "$cache_root"
+  echo "== Bootstrap Flutter $required_version =="
+  echo "Cache: $cached_sdk"
+  if ! git clone --depth 1 --branch "$required_version" \
+    https://github.com/flutter/flutter.git "$partial_sdk"; then
+    rm -rf "$partial_sdk"
+    fail "could not download Flutter $required_version"
+  fi
+  mv "$partial_sdk" "$cached_sdk"
+  candidate="$cached_sdk/bin/flutter"
+  actual_version="$(flutter_binary_version "$candidate")" || \
+    fail "could not initialize Flutter at $cached_sdk"
+  [[ "$actual_version" == "$required_version" ]] || \
+    fail "downloaded Flutter reports $actual_version; expected $required_version"
+  FLUTTER_BIN="$candidate"
+}
+
+prepare_build_tmp() {
+  local build_tmp_root="${BUSYMARK_BUILD_TMP_ROOT:-${XDG_CACHE_HOME:-$HOME/.cache}/busymark/tmp}"
+  mkdir -p "$build_tmp_root"
+  BUSYMARK_BUILD_TMP_DIR="$(mktemp -d "$build_tmp_root/snap-build.XXXXXX")" || \
+    fail "could not create build temporary directory under $build_tmp_root"
+  export TMPDIR="$BUSYMARK_BUILD_TMP_DIR"
+}
+
+cleanup_build_tmp() {
+  if [[ -n "${BUSYMARK_BUILD_TMP_DIR:-}" ]]; then
+    rm -rf -- "$BUSYMARK_BUILD_TMP_DIR" || true
+  fi
 }
 
 cmake_value() {
@@ -254,6 +370,13 @@ PROJECT_NAME="$(project_value name)"
 VERSION="${VERSION_ARG:-${VERSION:-$(project_value version)}}"
 [[ -n "$VERSION" ]] || fail "could not read version from pubspec.yaml"
 
+REQUIRED_FLUTTER_VERSION="$(project_flutter_version)"
+[[ -n "$REQUIRED_FLUTTER_VERSION" ]] || \
+  fail "pubspec.yaml must declare an exact environment.flutter version"
+select_project_flutter "$REQUIRED_FLUTTER_VERSION"
+prepare_build_tmp
+trap cleanup_build_tmp EXIT
+
 SNAP_NAME="${SNAP_NAME:-$PROJECT_NAME}"
 BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
 BINARY_NAME="${BINARY_NAME:-$PROJECT_NAME}"
@@ -271,22 +394,28 @@ echo "Project:  $PROJECT_ROOT"
 echo "Version:  $VERSION"
 echo "Binary:   $BINARY_NAME"
 echo "App ID:   $APP_ID"
+echo "Flutter:  $REQUIRED_FLUTTER_VERSION ($FLUTTER_BIN)"
+echo "Temp:     $BUSYMARK_BUILD_TMP_DIR"
 echo "Scaffold: $SNAP_SCAFFOLD"
 echo "Root:     $SNAP_ROOT"
 echo "Output:   $OUT"
 echo "Defines:  $((${#DART_DEFINE_ARGS[@]} + ${#DART_DEFINE_FILE_ARGS[@]})) build-time entries"
 
+echo "== Resolve locked dependencies =="
+"$FLUTTER_BIN" pub get --enforce-lockfile
+
 if [[ "$SKIP_TESTS" != "1" ]]; then
   echo "== Validate source =="
-  flutter analyze
-  flutter test --reporter=compact
+  "$FLUTTER_BIN" analyze --no-pub
+  "$FLUTTER_BIN" test --no-pub --reporter=compact
 else
   echo "== Validate source =="
   echo "Skipping tests because SKIP_TESTS=1"
 fi
 
 echo "== Build Flutter Linux release =="
-flutter build linux --release "${DART_DEFINE_ARGS[@]}" "${DART_DEFINE_FILE_ARGS[@]}"
+"$FLUTTER_BIN" build linux --release --no-pub \
+  "${DART_DEFINE_ARGS[@]}" "${DART_DEFINE_FILE_ARGS[@]}"
 
 test -f "$BUNDLE_DIR/$BINARY_NAME" || fail "missing built binary: $BUNDLE_DIR/$BINARY_NAME"
 

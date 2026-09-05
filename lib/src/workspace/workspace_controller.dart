@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -161,6 +162,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _derivedRefreshRunning = false;
   var _derivedRefreshPending = false;
   var _pendingPreviewRefresh = false;
+  var _pendingOutlineRefresh = false;
+  _ActivePreviewRevision? _activePreviewRevision;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
   var _untitledSequence = 0;
@@ -373,6 +376,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               )
             : null,
       );
+      _recordActivePreviewRevision();
       _editRevision = active.revision;
       await _startMonitoring(reparsed);
       await _settingsController.setDocumentViewMode(active.editorState.mode);
@@ -677,6 +681,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             workspace: reparsed,
             preview: _safePreview(reparsed, disk.text),
           );
+          _recordActivePreviewRevision();
         }
       }
     } on FileSystemException {
@@ -763,6 +768,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             ),
             preview: _safePreview(reparsed, remapped.text),
           );
+          _recordActivePreviewRevision();
         }
       }
       _schedulePersistence();
@@ -816,6 +822,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspace: workspace,
         preview: _safePreview(workspace, disk.text),
       );
+      _recordActivePreviewRevision();
     }
     return true;
   }
@@ -910,6 +917,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       activeBufferId: buffer.id,
       isLoading: false,
     );
+    _recordActivePreviewRevision();
     await _startMonitoring(workspace);
     _schedulePersistence();
     await viewModeChange;
@@ -949,6 +957,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
       );
+      _recordActivePreviewRevision();
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
@@ -1014,6 +1023,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
       );
+      _recordActivePreviewRevision();
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
@@ -1105,6 +1115,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffers,
         activeBufferId: buffer?.id,
       );
+      _recordActivePreviewRevision();
       await _startMonitoring(tabbedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
@@ -1597,6 +1608,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       activeBufferId: null,
       clearMessage: true,
     );
+    _recordActivePreviewRevision();
     _fileMonitor.updateOpenFilePaths(const <String>[]);
     _schedulePersistence();
   }
@@ -1651,6 +1663,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeBufferId: buffer.id,
         clearMessage: true,
       );
+      _recordActivePreviewRevision();
       _fileMonitor.updateOpenFilePaths(
         [
           ...buffers,
@@ -1703,6 +1716,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       activeBufferId: buffer.id,
       clearMessage: true,
     );
+    _recordActivePreviewRevision();
     _fileMonitor.updateOpenFilePaths(
       documentBuffers
           .map((candidate) => candidate.filePath)
@@ -1769,6 +1783,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     updateActiveEditorState(buffer.editorState.copyWith(mode: mode));
+    if (_modeShowsPreview(mode) && _activePreviewIsStale) {
+      _requestDerivedRefresh(rebuildPreview: true);
+    }
   }
 
   bool undoActiveBuffer() {
@@ -1777,20 +1794,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     final undo = buffer.editorState.undoState;
-    final text = undo.undo.last;
+    final target = undo.undo.last;
+    final current = DocumentHistoryState(
+      text: buffer.text,
+      selection: buffer.editorState.selection,
+    );
     final next = buffer.copyWith(
-      text: text,
-      dirty: text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
+      text: target.text,
+      dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(
+        hasFinalNewline: target.text.endsWith('\n'),
+      ),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
-        undoState: undo.afterUndo(buffer.text),
+        selection: target.selection,
+        undoState: undo.afterUndo(current),
       ),
     );
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _requestDerivedRefresh(rebuildPreview: true);
+    _requestDerivedRefresh(
+      rebuildPreview: _activeModeShowsPreview,
+      refreshOutline: !_activeModeShowsPreview,
+    );
     _schedulePersistence();
     return true;
   }
@@ -1801,20 +1828,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     final undo = buffer.editorState.undoState;
-    final text = undo.redo.last;
+    final target = undo.redo.last;
+    final current = DocumentHistoryState(
+      text: buffer.text,
+      selection: buffer.editorState.selection,
+    );
     final next = buffer.copyWith(
-      text: text,
-      dirty: text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
+      text: target.text,
+      dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(
+        hasFinalNewline: target.text.endsWith('\n'),
+      ),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
-        undoState: undo.afterRedo(buffer.text),
+        selection: target.selection,
+        undoState: undo.afterRedo(current),
       ),
     );
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
-    _requestDerivedRefresh(rebuildPreview: true);
+    _requestDerivedRefresh(
+      rebuildPreview: _activeModeShowsPreview,
+      refreshOutline: !_activeModeShowsPreview,
+    );
     _schedulePersistence();
     return true;
   }
@@ -1823,7 +1860,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _updateActiveText(
       text,
       sourceFilePath: sourceFilePath,
-      rebuildPreview: true,
+      rebuildPreview:
+          state.activeBuffer?.editorState.mode !=
+          DocumentViewModePreference.source,
+    );
+  }
+
+  void updateActiveSourceText(
+    String text, {
+    String? sourceFilePath,
+    required TextSelection previousSelection,
+    required TextSelection selection,
+    String? undoGroup,
+  }) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: _activeModeShowsPreview,
+      previousSelection: previousSelection,
+      selection: selection,
+      undoGroup: undoGroup,
     );
   }
 
@@ -1833,6 +1889,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String text, {
     required BusyDocument document,
     String? sourceFilePath,
+    String? undoGroup,
   }) {
     _updateActiveText(
       text,
@@ -1840,20 +1897,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       rebuildPreview: false,
       liveOutline: document.outline,
       preserveFinalNewline: true,
+      undoGroup: undoGroup,
     );
-  }
-
-  /// Rebuilds derived preview data after leaving WYSIWYG mode without creating
-  /// another edit revision for text that is already in state.
-  void refreshActivePreview({String? sourceFilePath}) {
-    final workspace = state.workspace;
-    final activeEditorPath =
-        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    if (workspace == null ||
-        (sourceFilePath != null && activeEditorPath != sourceFilePath)) {
-      return;
-    }
-    _requestDerivedRefresh(rebuildPreview: true);
   }
 
   Future<bool> selectWritersideContext({
@@ -1883,6 +1928,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeBufferId: null,
           clearMessage: true,
         );
+        _recordActivePreviewRevision();
         return true;
       }
       final existing = state.documentBuffers
@@ -1921,6 +1967,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeBufferId: buffer.id,
         clearMessage: true,
       );
+      _recordActivePreviewRevision();
       _fileMonitor.updateOpenFilePaths(
         buffers.map((candidate) => candidate.filePath).whereType<String>(),
       );
@@ -1943,6 +1990,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? sourceFilePath,
     List<DocumentOutlineHeading>? liveOutline,
     bool preserveFinalNewline = false,
+    TextSelection? previousSelection,
+    TextSelection? selection,
+    String? undoGroup,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -1957,7 +2007,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final effectiveText = preserveFinalNewline
         ? _withFinalNewlinePolicy(text, activeBuffer.format.hasFinalNewline)
         : text;
-    final nextBuffer = activeBuffer.edited(effectiveText);
+    final nextBuffer = activeBuffer.edited(
+      effectiveText,
+      undoGroup: undoGroup,
+      previousSelection: previousSelection,
+      nextSelection: selection,
+    );
     if (identical(nextBuffer, activeBuffer)) {
       return;
     }
@@ -1980,16 +2035,57 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             ),
     );
     _schedulePersistence();
-    _requestDerivedRefresh(rebuildPreview: rebuildPreview);
+    _requestDerivedRefresh(
+      rebuildPreview: rebuildPreview,
+      refreshOutline: !rebuildPreview && liveOutline == null,
+    );
     _scheduleAutoSave(nextBuffer.id);
   }
 
-  void _requestDerivedRefresh({required bool rebuildPreview}) {
-    if (!_settingsController.state.validateOnEdit && !rebuildPreview) {
+  bool get _activeModeShowsPreview {
+    final mode = state.activeBuffer?.editorState.mode;
+    return mode != null && _modeShowsPreview(mode);
+  }
+
+  bool get _activePreviewIsStale {
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    final revision = _activePreviewRevision;
+    return workspace == null ||
+        buffer == null ||
+        state.preview == null ||
+        revision == null ||
+        revision.workspaceId != workspace.id ||
+        revision.bufferId != buffer.id ||
+        revision.revision != buffer.revision;
+  }
+
+  void _recordActivePreviewRevision() {
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null || state.preview == null) {
+      _activePreviewRevision = null;
+      return;
+    }
+    _activePreviewRevision = _ActivePreviewRevision(
+      workspaceId: workspace.id,
+      bufferId: buffer.id,
+      revision: buffer.revision,
+    );
+  }
+
+  void _requestDerivedRefresh({
+    required bool rebuildPreview,
+    bool refreshOutline = false,
+  }) {
+    if (!_settingsController.state.validateOnEdit &&
+        !rebuildPreview &&
+        !refreshOutline) {
       return;
     }
     _derivedRefreshPending = true;
     _pendingPreviewRefresh = _pendingPreviewRefresh || rebuildPreview;
+    _pendingOutlineRefresh = _pendingOutlineRefresh || refreshOutline;
     if (!_derivedRefreshRunning) {
       unawaited(_drainDerivedRefreshes());
     }
@@ -2004,11 +2100,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       while (_derivedRefreshPending) {
         _derivedRefreshPending = false;
         final rebuildPreview = _pendingPreviewRefresh;
+        final refreshOutline = _pendingOutlineRefresh;
         _pendingPreviewRefresh = false;
+        _pendingOutlineRefresh = false;
         if (_settingsController.state.validateOnEdit) {
-          await validateActive();
+          await _validateActive(rebuildPreview: rebuildPreview);
         } else if (rebuildPreview) {
           await _refreshActivePreview();
+        } else if (refreshOutline) {
+          await _refreshActiveOutline();
         }
       }
     } finally {
@@ -2022,6 +2122,49 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   void _cancelPendingDerivedRefresh() {
     _derivedRefreshPending = false;
     _pendingPreviewRefresh = false;
+    _pendingOutlineRefresh = false;
+  }
+
+  Future<void> _refreshActiveOutline() async {
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null) {
+      return;
+    }
+    final workspaceId = workspace.id;
+    final activeFilePath = workspace.activeFilePath;
+    final bufferId = buffer.id;
+    final text = buffer.text;
+    final editRevision = buffer.revision;
+    final operationRevision = _activeDocumentRevision;
+    try {
+      final reparsed = await _service.reparseActive(workspace, text);
+      if (!_isCurrentActiveDocument(
+            operationRevision,
+            workspaceId: workspaceId,
+            activeFilePath: activeFilePath,
+          ) ||
+          state.activeBuffer?.id != bufferId ||
+          state.activeText != text ||
+          state.activeBuffer?.revision != editRevision) {
+        return;
+      }
+      state = state.copyWith(
+        liveOutline: ActiveDocumentOutline(
+          workspaceId: workspaceId,
+          filePath: activeFilePath,
+          source: text,
+          headings: _service.activeDocumentOutline(reparsed),
+        ),
+      );
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Could not refresh Source outline',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(activeFilePath ?? '')},
+      );
+    }
   }
 
   Future<void> _refreshActivePreview() async {
@@ -2050,6 +2193,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       // workspace (including its diagnostics and persisted document model)
       // must only advance through explicit validation.
       state = state.copyWith(preview: preview);
+      _recordActivePreviewRevision();
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(
         '[BusyMark] Could not refresh preview',
@@ -2242,6 +2386,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspace: nextWorkspace,
         preview: _safePreview(nextWorkspace, text),
       );
+      _recordActivePreviewRevision();
     } on Object catch (error, stackTrace) {
       busyMarkDebugLogError(
         '[BusyMark] Document reparse after disk update failed',
@@ -2489,7 +2634,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (hasNewerEdits) {
         if (state.activeBufferId == savedBuffer.id &&
             _settingsController.state.validateOnEdit) {
-          unawaited(validateActive());
+          unawaited(_validateActive(rebuildPreview: _activeModeShowsPreview));
         }
         _scheduleAutoSave(savedBuffer.id);
       } else if (state.activeBufferId == savedBuffer.id) {
@@ -2753,6 +2898,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffers,
         activeBufferId: activeBuffer?.id,
       );
+      _recordActivePreviewRevision();
       _fileMonitor.updateOpenFilePaths(tabPaths);
       _schedulePersistence();
       _resetSaveTracking();
@@ -2851,7 +2997,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
-  Future<void> validateActive() async {
+  Future<void> validateActive() => _validateActive(rebuildPreview: true);
+
+  Future<void> _validateActive({required bool rebuildPreview}) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return;
@@ -2875,15 +3023,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return;
       }
       final currentSnapshot = currentWorkspace.activeFileSnapshot;
-      state = state.copyWith(
-        workspace: reparsed.copyWith(
-          activeFileSnapshot: currentSnapshot,
-          openFilePaths: currentWorkspace.openFilePaths,
-          files: currentWorkspace.files,
-        ),
-        preview: _safePreview(reparsed, text),
-        clearMessage: true,
+      final validatedWorkspace = reparsed.copyWith(
+        activeFileSnapshot: currentSnapshot,
+        openFilePaths: currentWorkspace.openFilePaths,
+        files: currentWorkspace.files,
       );
+      if (rebuildPreview) {
+        state = state.copyWith(
+          workspace: validatedWorkspace,
+          preview: _safePreview(reparsed, text),
+          clearMessage: true,
+        );
+        _recordActivePreviewRevision();
+      } else {
+        state = state.copyWith(
+          workspace: validatedWorkspace,
+          liveOutline: ActiveDocumentOutline(
+            workspaceId: validatedWorkspace.id,
+            filePath: validatedWorkspace.activeFilePath,
+            source: text,
+            headings: _service.activeDocumentOutline(validatedWorkspace),
+          ),
+          clearMessage: true,
+        );
+      }
     } on Object catch (error) {
       if (_isCurrentActiveDocument(
             operationRevision,
@@ -3166,6 +3329,23 @@ List<DocumentBuffer> _replaceBuffer(
     for (final buffer in buffers)
       if (buffer.id == replacement.id) replacement else buffer,
   ]);
+}
+
+class _ActivePreviewRevision {
+  const _ActivePreviewRevision({
+    required this.workspaceId,
+    required this.bufferId,
+    required this.revision,
+  });
+
+  final String workspaceId;
+  final String bufferId;
+  final int revision;
+}
+
+bool _modeShowsPreview(DocumentViewModePreference mode) {
+  return mode == DocumentViewModePreference.preview ||
+      mode == DocumentViewModePreference.split;
 }
 
 List<DocumentFile> _mergedDocumentFiles(

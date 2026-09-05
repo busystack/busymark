@@ -442,8 +442,16 @@ void main() {
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
     expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
     expect(snapcraft, contains('export CI=true'));
-    expect(snapcraft, contains('flutter --no-version-check precache --linux'));
-    expect(snapcraft, contains('flutter --no-version-check pub get'));
+    expect(
+      snapcraft,
+      contains(
+        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
+      ),
+    );
+    expect(
+      snapcraft,
+      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
+    );
     expect(
       snapcraft,
       contains(
@@ -550,6 +558,58 @@ void main() {
     expect(script, contains('item_indent = match.group(1)'));
     expect(script, contains('f"{item_indent}- {item}\\n"'));
     expect(script, contains('the currently installed snap was not changed'));
+  });
+
+  test('local snap builder uses the project Flutter toolchain', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(
+      RegExp(r'^  flutter: \d+\.\d+\.\d+$', multiLine: true).hasMatch(pubspec),
+      isTrue,
+    );
+    expect(script, contains('project_flutter_version'));
+    expect(script, contains('select_project_flutter'));
+    expect(script, contains('BUSYMARK_FLUTTER_BIN'));
+    expect(script, contains(r'--branch "$required_version"'));
+    expect(script, contains(r'"$FLUTTER_BIN" pub get --enforce-lockfile'));
+    expect(script, contains(r'"$FLUTTER_BIN" analyze --no-pub'));
+    expect(script, contains(r'"$FLUTTER_BIN" test --no-pub'));
+    expect(script, contains(r'"$FLUTTER_BIN" build linux --release --no-pub'));
+  });
+
+  test('Snapcraft pins the same Flutter release as the project', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final projectVersion = RegExp(
+      r'^  flutter: (\d+\.\d+\.\d+)$',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1)!;
+
+    expect(snapcraft, contains('BUSYMARK_FLUTTER_VERSION: "$projectVersion"'));
+    expect(
+      snapcraft,
+      contains(r'git clone --depth 1 --branch "$BUSYMARK_FLUTTER_VERSION"'),
+    );
+    expect(
+      snapcraft,
+      contains(r'git -C "$flutter_sdk" describe --tags --exact-match HEAD'),
+    );
+    expect(
+      snapcraft,
+      contains(r'"$flutter_sdk/bin/flutter" --no-version-check build linux'),
+    );
+    expect(snapcraft, isNot(contains('git clone --depth 1 -b stable')));
+  });
+
+  test('local snap builder keeps compiler output off the system tmpfs', () {
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(script, contains('BUSYMARK_BUILD_TMP_ROOT'));
+    expect(script, contains(r'${XDG_CACHE_HOME:-$HOME/.cache}/busymark/tmp'));
+    expect(script, contains(r'mktemp -d "$build_tmp_root/snap-build.XXXXXX"'));
+    expect(script, contains(r'export TMPDIR="$BUSYMARK_BUILD_TMP_DIR"'));
+    expect(script, contains('trap cleanup_build_tmp EXIT'));
   });
 
   test('native headerbar uses the shared tooltip visuals', () {

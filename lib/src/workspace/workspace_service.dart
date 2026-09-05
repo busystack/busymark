@@ -10,6 +10,8 @@ import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/document_outline.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/preview_model.dart';
@@ -157,6 +159,31 @@ class WorkspaceService {
       );
     }
     return _openMarkdownFolder(canonicalPath);
+  }
+
+  Future<DocumentFile?> resolveWorkspaceDocument(
+    Workspace workspace,
+    String candidatePath,
+  ) async {
+    final anchor = await _workspacePathAnchor(workspace);
+    final resolution = await _resolveWorkspacePath(
+      anchor,
+      candidatePath,
+      allowRoot: false,
+    );
+    if (resolution.type != FileSystemEntityType.file) {
+      return null;
+    }
+    final relativePath = p.relative(resolution.path, from: anchor.rootPath);
+    if (p
+        .split(relativePath)
+        .any(versionControlMetadataDirectoryNames.contains)) {
+      throw BusyMarkException(
+        'workspace.file-operation-outside-root',
+        args: {'path': resolution.path},
+      );
+    }
+    return _documentFile(resolution.path, anchor.rootPath);
   }
 
   Future<Workspace> createWritersideProject(
@@ -1507,6 +1534,35 @@ class WorkspaceService {
     return previewBuilder.build(parsed);
   }
 
+  List<DocumentOutlineHeading> activeDocumentOutline(Workspace workspace) {
+    final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (active == null) {
+      return const [];
+    }
+    final markdown = workspace.markdown;
+    if (markdown != null && p.equals(markdown.filePath, active)) {
+      return List.unmodifiable([
+        for (final heading in markdown.headings)
+          DocumentOutlineHeading.fromMarkdown(heading),
+      ]);
+    }
+    if (workspace.kind != WorkspaceKind.writersideModule) {
+      return const [];
+    }
+    final topic = workspace.writersideModule?.topics
+        .where((candidate) => p.equals(candidate.filePath, active))
+        .firstOrNull;
+    if (topic == null) {
+      return const [];
+    }
+    return _buildWritersideDocument(
+          workspace,
+          active,
+          topic.document.source,
+        )?.outline ??
+        const [];
+  }
+
   /// Builds preview data without running Markdown parsing on Flutter's UI
   /// isolate. An already-current workspace parse is reused when available.
   Future<PreviewDocument?> buildPreviewAsync(
@@ -1541,6 +1597,23 @@ class WorkspaceService {
     String active,
     String source,
   ) {
+    final document = _buildWritersideDocument(workspace, active, source);
+    if (document != null) {
+      return const BusyMarkPreviewBuilder().build(document);
+    }
+    return PreviewDocument(
+      title: p.basename(active),
+      modeLabel: '',
+      compatibility: '',
+      blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
+    );
+  }
+
+  BusyDocument? _buildWritersideDocument(
+    Workspace workspace,
+    String active,
+    String source,
+  ) {
     final module = workspace.writersideModule;
     if (module == null) {
       return null;
@@ -1549,14 +1622,11 @@ class WorkspaceService {
         .where((item) => item.filePath == active)
         .firstOrNull;
     if (originalTopic == null) {
-      return PreviewDocument(
-        title: p.basename(active),
-        modeLabel: '',
-        compatibility: '',
-        blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
-      );
+      return null;
     }
-    final topic = originalTopic.format == WritersideTopicFormat.markdown
+    final topic = originalTopic.document.source == source
+        ? originalTopic
+        : originalTopic.format == WritersideTopicFormat.markdown
         ? writersideService.topicParser.parseMarkdown(
             filePath: active,
             source: source,
@@ -1591,11 +1661,9 @@ class WorkspaceService {
             {if (module.config.moduleName case final name?) name: module},
       ),
     );
-    return const BusyMarkPreviewBuilder().build(
-      writersideDocumentRenderer.toBusyDocument(
-        resolved.document,
-        title: resolved.title ?? topic.title ?? topic.fileName,
-      ),
+    return writersideDocumentRenderer.toBusyDocument(
+      resolved.document,
+      title: resolved.title ?? topic.title ?? topic.fileName,
     );
   }
 

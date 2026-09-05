@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -11,6 +13,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('basic fixture uses a renderable OpenAPI fence', () {
+    final source = File('test/fixtures/markdown/basic.md').readAsStringSync();
+    final parsed = const MarkdownParser().parse(
+      filePath: 'test/fixtures/markdown/basic.md',
+      source: source,
+      validateLocalReferences: false,
+    );
+    final openApiBlock = parsed.busyDocument.blocks.singleWhere(
+      (block) =>
+          block.kind == BusyBlockKind.codeBlock &&
+          block.plainText.contains('title: Document API'),
+    );
+    final preview = const BusyMarkPreviewBuilder().build(parsed.busyDocument);
+    final openApiPreview = preview.blocks.singleWhere(
+      (block) => block.visualization?.kind == VisualizationRendererKind.openApi,
+    );
+
+    expect(openApiBlock.attributes['language'], 'openapi');
+    expect(openApiBlock.attributes['metadata'], isNull);
+    expect(openApiPreview.language, 'openapi');
+    expect(openApiPreview.text, contains('openapi: 3.1.0'));
+  });
+
   test(
     'visualizer fences remain generic code and round-trip byte-for-byte',
     () {

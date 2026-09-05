@@ -543,10 +543,25 @@ async function handleRequest(request) {
       if (!svg) throw new Error('Raster input is not SVG.')
       svg.setAttribute('width', String(pixelWidth))
       svg.setAttribute('height', String(pixelHeight))
-      svg.style.width = `${pixelWidth}px`
-      svg.style.height = `${pixelHeight}px`
+      // Mermaid emits width="100%" together with an inline max-width equal to
+      // its logical viewBox width. When the raster scale is greater than one,
+      // that max-width otherwise keeps the drawing at logical size inside a
+      // larger pixel canvas, producing a half-sized, left-aligned preview.
+      // The raster canvas owns the outer geometry; the SVG viewBox continues
+      // to preserve the diagram's aspect ratio.
+      svg.style.setProperty('width', `${pixelWidth}px`, 'important')
+      svg.style.setProperty('height', `${pixelHeight}px`, 'important')
+      svg.style.setProperty('max-width', 'none', 'important')
+      svg.style.setProperty('max-height', 'none', 'important')
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-      return { rasterReady: true, pixelWidth, pixelHeight }
+      const renderedBounds = svg.getBoundingClientRect()
+      return {
+        rasterReady: true,
+        pixelWidth,
+        pixelHeight,
+        renderedWidth: renderedBounds.width,
+        renderedHeight: renderedBounds.height,
+      }
     }
     default:
       throw new Error('Unknown visualization operation.')

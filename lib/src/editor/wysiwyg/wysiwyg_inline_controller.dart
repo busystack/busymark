@@ -53,6 +53,52 @@ class BusyInlineStyleRange {
   final String? destination;
 }
 
+class BusyInlineSemanticAnchor {
+  const BusyInlineSemanticAnchor({required this.offset, required this.inline});
+
+  final int offset;
+  final BusyInline inline;
+}
+
+List<BusyInlineSemanticAnchor> busyInlineSemanticAnchors(
+  List<BusyInline> inlines,
+) {
+  final anchors = <BusyInlineSemanticAnchor>[];
+  var offset = 0;
+
+  void visit(BusyInline inline, List<BusyInline> ancestors) {
+    if (inline.plainText.isEmpty) {
+      if (inline.kind == BusyInlineKind.text &&
+          !inline.children.any(_containsNonTextInline)) {
+        return;
+      }
+      var anchored = inline;
+      for (final ancestor in ancestors.reversed) {
+        anchored = ancestor.copyWith(text: '', children: [anchored]);
+      }
+      anchors.add(BusyInlineSemanticAnchor(offset: offset, inline: anchored));
+      return;
+    }
+    if (inline.children.isNotEmpty) {
+      for (final child in inline.children) {
+        visit(child, [...ancestors, inline]);
+      }
+      return;
+    }
+    offset += inline.plainText.length;
+  }
+
+  for (final inline in inlines) {
+    visit(inline, const []);
+  }
+  return anchors;
+}
+
+bool _containsNonTextInline(BusyInline inline) {
+  return inline.kind != BusyInlineKind.text ||
+      inline.children.any(_containsNonTextInline);
+}
+
 class BusyMarkWysiwygTextController extends TextEditingController {
   BusyMarkWysiwygTextController({
     required String text,

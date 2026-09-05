@@ -22,15 +22,26 @@ void main() {
       workspaceRoot: 'test/fixtures/markdown',
     );
 
-    expect(parsed.title, 'Basic Markdown');
-    expect(parsed.headings.map((item) => item.text), contains('Steps'));
+    expect(parsed.title, 'BusyMark Markdown Demo');
     expect(
-      parsed.headings.singleWhere((item) => item.text == 'Steps').id,
-      'steps',
+      parsed.headings.map((item) => item.text),
+      contains('12. Fenced Code Blocks'),
     );
-    expect(parsed.links.single.destination, 'other.md');
-    expect(parsed.images.single.destination, 'logo.png');
-    expect(parsed.codeBlocks.single.language, 'dart');
+    expect(
+      parsed.headings
+          .singleWhere((item) => item.text == '12. Fenced Code Blocks')
+          .id,
+      '12-fenced-code-blocks',
+    );
+    expect(
+      parsed.links.map((item) => item.destination),
+      contains('https://openai.com'),
+    );
+    expect(
+      parsed.images.map((item) => item.destination),
+      contains('https://picsum.photos/800/300'),
+    );
+    expect(parsed.codeBlocks.map((item) => item.language), contains('dart'));
   });
 
   test('extracts front matter title', () {

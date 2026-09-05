@@ -1,10 +1,11 @@
 name: busymark
 description: Local-first Markdown and Writerside-compatible documentation editor.
 publish_to: 'none'
-version: 0.3.3
+version: 0.3.4
 
 environment:
   sdk: ^3.12.1
+  flutter: 3.47.0
 
 dependencies:
   flutter:

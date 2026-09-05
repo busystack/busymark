@@ -4,6 +4,9 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
 const visualizationSanitizerVersion = '4';
+// Increment whenever BusyMark's rendering pipeline changes cached image bytes
+// without changing the bundled third-party engine version.
+const visualizationRenderPipelineVersion = '2';
 const mermaidEngineVersion = '11.16.1';
 const plantUmlEngineVersion = '1.2026.6';
 const d2EngineVersion = '0.7.1';
@@ -154,6 +157,7 @@ class VisualizationRenderRequest {
       'profile': profile.name,
       'options': options.canonicalValues,
       'sanitizerVersion': visualizationSanitizerVersion,
+      'renderPipelineVersion': visualizationRenderPipelineVersion,
       'dependencies': [
         for (final dependency in sortedDependencies)
           {'id': dependency.id, 'hash': dependency.hash},
@@ -279,12 +283,20 @@ class RasterVisualizationResult extends VisualizationRenderResult {
     required this.pngBytes,
     required this.width,
     required this.height,
+    this.pixelRatio = 1,
     super.diagnostics,
-  });
+  }) : assert(pixelRatio > 0);
 
   final Uint8List pngBytes;
   final int width;
   final int height;
+
+  /// Raster pixels per logical diagram unit.
+  ///
+  /// Preview rasters are normally generated at 2× so they remain sharp. The
+  /// viewport uses this value to avoid treating resolution pixels as layout
+  /// pixels when enforcing a readable initial scale.
+  final double pixelRatio;
 }
 
 @immutable

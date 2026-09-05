@@ -36,6 +36,41 @@ class SourceDocument {
     visibleLineIndex = SourceLineIndex(visibleText);
   }
 
+  SourceDocument._({
+    required this.fullText,
+    required this.hiddenRanges,
+    required this.lineIndex,
+    required this.visibleText,
+    required this.visibleLineIndex,
+  });
+
+  factory SourceDocument.afterVisibleEdit({
+    required SourceDocument previous,
+    required String fullText,
+    required SourceHiddenRanges hiddenRanges,
+    required SourceVisibleEdit edit,
+  }) {
+    final visibleText = hiddenRanges.visibleTextFor(fullText);
+    final visibleChange = _changedRange(previous.visibleText, visibleText);
+    return SourceDocument._(
+      fullText: fullText,
+      hiddenRanges: hiddenRanges,
+      lineIndex: SourceLineIndex.updated(
+        previous: previous.lineIndex,
+        source: fullText,
+        oldStart: edit.fullStart,
+        oldEnd: edit.fullEnd,
+      ),
+      visibleText: visibleText,
+      visibleLineIndex: SourceLineIndex.updated(
+        previous: previous.visibleLineIndex,
+        source: visibleText,
+        oldStart: visibleChange.oldStart,
+        oldEnd: visibleChange.oldEnd,
+      ),
+    );
+  }
+
   final String fullText;
   final SourceHiddenRanges hiddenRanges;
   final SourceLineIndex lineIndex;
@@ -88,15 +123,18 @@ class SourceDocument {
         affinity: selection.affinity,
       );
     }
+    final fullStart = visibleOffsetToFullOffset(
+      selection.start,
+      affinity: SourceHiddenAffinity.downstream,
+    );
+    final fullEnd = visibleOffsetToFullOffset(
+      selection.end,
+      affinity: SourceHiddenAffinity.upstream,
+    );
+    final forward = selection.baseOffset <= selection.extentOffset;
     return selection.copyWith(
-      baseOffset: visibleOffsetToFullOffset(
-        selection.baseOffset,
-        affinity: SourceHiddenAffinity.downstream,
-      ),
-      extentOffset: visibleOffsetToFullOffset(
-        selection.extentOffset,
-        affinity: SourceHiddenAffinity.upstream,
-      ),
+      baseOffset: forward ? fullStart : fullEnd,
+      extentOffset: forward ? fullEnd : fullStart,
     );
   }
 

@@ -15,6 +15,21 @@ const _rawHtmlAdapter = RawHtmlAdapter();
 class MarkdownAstAdapter {
   const MarkdownAstAdapter();
 
+  /// Parses Markdown in an inline-only context, such as a table cell.
+  ///
+  /// Block markers at the beginning of [source] remain literal because the
+  /// block grammar is deliberately never invoked.
+  List<BusyInline> parseInlineFragment({
+    required String source,
+    required MarkdownMode mode,
+  }) {
+    if (source.isEmpty) {
+      return const [];
+    }
+    final document = busyMarkMarkdownDocument(mode);
+    return _inlinesFromNodes(document.parseInline(source));
+  }
+
   BusyDocument parse({
     required String filePath,
     required String source,

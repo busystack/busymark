@@ -26,6 +26,97 @@ enum BusyWysiwygInlineCommand {
   link,
 }
 
+/// Whether [block] can safely be replaced by a generic block command.
+///
+/// Structured and source-preserved blocks need dedicated transformations. A
+/// generic conversion only changes the block kind and inline metadata, so
+/// applying it to one of those blocks would strand or discard its payload.
+bool busyMarkWysiwygCanApplyBlockCommand(
+  BusyBlock block,
+  BusyWysiwygBlockCommand command,
+) {
+  if (command == BusyWysiwygBlockCommand.image &&
+      block.kind == BusyBlockKind.image &&
+      !block.isSourceProtected) {
+    return true;
+  }
+  if (block.preserveRaw ||
+      block.isSourceOnly ||
+      block.isGenerated ||
+      block.isSourceProtected) {
+    return false;
+  }
+  if (block.children.isNotEmpty) {
+    final destinationKind = blockKindForCommand(command);
+    if (!_hasSafeStructuredConversion(block, destinationKind)) {
+      return false;
+    }
+  }
+  return switch (block.kind) {
+    BusyBlockKind.paragraph ||
+    BusyBlockKind.heading ||
+    BusyBlockKind.codeBlock ||
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem ||
+    BusyBlockKind.blockquote => true,
+    BusyBlockKind.math ||
+    BusyBlockKind.thematicBreak ||
+    BusyBlockKind.image ||
+    BusyBlockKind.video ||
+    BusyBlockKind.table ||
+    BusyBlockKind.htmlBlock ||
+    BusyBlockKind.writersideAdmonition ||
+    BusyBlockKind.writersideTabs ||
+    BusyBlockKind.writersideProcedure ||
+    BusyBlockKind.writersideRawXml ||
+    BusyBlockKind.frontMatter ||
+    BusyBlockKind.unknown => false,
+  };
+}
+
+bool busyMarkWysiwygCanApplyAdmonitionStyle(BusyBlock block) {
+  if (block.kind == BusyBlockKind.writersideAdmonition &&
+      !block.preserveRaw &&
+      !block.isSourceOnly &&
+      !block.isGenerated &&
+      !block.isSourceProtected) {
+    return true;
+  }
+  return busyMarkWysiwygCanApplyBlockCommand(
+    block,
+    BusyWysiwygBlockCommand.blockquote,
+  );
+}
+
+bool _hasSafeStructuredConversion(
+  BusyBlock block,
+  BusyBlockKind destinationKind,
+) {
+  final sourceIsList = _isListItemKind(block.kind);
+  final destinationIsList = _isListItemKind(destinationKind);
+  if (sourceIsList) {
+    // List-family conversions share the same inline/children representation.
+    // Converting to a quote is handled by an explicit structural transform.
+    return destinationIsList || destinationKind == BusyBlockKind.blockquote;
+  }
+  if (block.kind == BusyBlockKind.blockquote) {
+    // The reverse list conversion is also structural: its leading paragraph
+    // becomes the list item's own inline content.
+    return destinationKind == BusyBlockKind.blockquote || destinationIsList;
+  }
+  return false;
+}
+
+bool _isListItemKind(BusyBlockKind kind) {
+  return switch (kind) {
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem => true,
+    _ => false,
+  };
+}
+
 BusyBlockKind blockKindForCommand(BusyWysiwygBlockCommand command) {
   return switch (command) {
     BusyWysiwygBlockCommand.paragraph => BusyBlockKind.paragraph,

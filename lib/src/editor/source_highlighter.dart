@@ -101,6 +101,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
   List<SourceFoldRegion> _foldedRegions = const [];
   SourceDocument _document;
   SourceVisibleEdit? lastVisibleEdit;
+  TextSelection? lastFullSelectionBeforeEdit;
   SourceSearchResult _searchResult = SourceSearchResult.empty;
   void Function(String fullText, SourceVisibleEdit? edit)? onFullTextChanged;
   bool renderText = true;
@@ -143,6 +144,10 @@ class BusyMarkSourceEditingController extends TextEditingController {
     selection = _document.fullSelectionToVisibleSelection(value);
   }
 
+  TextRange get fullComposing {
+    return _visibleComposingToFullRange(value.composing);
+  }
+
   int fullOffsetToVisibleOffset(int offset) {
     return _document.fullOffsetToVisibleOffset(offset);
   }
@@ -158,13 +163,20 @@ class BusyMarkSourceEditingController extends TextEditingController {
     final selectionSnapshot = fullSelection ?? this.fullSelection;
     _document = _createDocument(value, _foldedRegions);
     lastVisibleEdit = null;
+    final visibleSelection = _document.fullSelectionToVisibleSelection(
+      selectionSnapshot,
+    );
     super.value = TextEditingValue(
       text: _document.visibleText,
-      selection: _document.fullSelectionToVisibleSelection(selectionSnapshot),
+      selection: _selectionWithLineEndAffinity(
+        visibleSelection,
+        _document.visibleText,
+      ),
     );
   }
 
   void setFullEditingValue(TextEditingValue value) {
+    lastFullSelectionBeforeEdit = fullSelection;
     _foldedRegions = _preserveFoldedRegionsForFullReplacement(
       _foldedRegions,
       _document.fullText,
@@ -172,26 +184,41 @@ class BusyMarkSourceEditingController extends TextEditingController {
     );
     _document = _createDocument(value.text, _foldedRegions);
     lastVisibleEdit = null;
+    final visibleSelection = _document.fullSelectionToVisibleSelection(
+      value.selection,
+    );
     super.value = TextEditingValue(
       text: _document.visibleText,
-      selection: _document.fullSelectionToVisibleSelection(value.selection),
+      selection: _selectionWithLineEndAffinity(
+        visibleSelection,
+        _document.visibleText,
+      ),
+      composing: _fullComposingToVisibleRange(value.composing),
     );
     onFullTextChanged?.call(_document.fullText, null);
   }
 
   void setFoldedRegions(Iterable<SourceFoldRegion> regions) {
     final fullSelectionSnapshot = fullSelection;
+    final fullComposingSnapshot = _visibleComposingToFullRange(
+      super.value.composing,
+    );
     final normalized = _normalizedFoldRegions(regions);
     if (_foldRegionsEqual(_foldedRegions, normalized)) {
       return;
     }
     _foldedRegions = normalized;
     _document = _createDocument(_document.fullText, _foldedRegions);
+    final visibleSelection = _document.fullSelectionToVisibleSelection(
+      fullSelectionSnapshot,
+    );
     super.value = TextEditingValue(
       text: _document.visibleText,
-      selection: _document.fullSelectionToVisibleSelection(
-        fullSelectionSnapshot,
+      selection: _selectionWithLineEndAffinity(
+        visibleSelection,
+        _document.visibleText,
       ),
+      composing: _fullComposingToVisibleRange(fullComposingSnapshot),
     );
   }
 
@@ -200,13 +227,47 @@ class BusyMarkSourceEditingController extends TextEditingController {
       return;
     }
     final fullSelectionSnapshot = fullSelection;
+    final fullComposingSnapshot = _visibleComposingToFullRange(
+      super.value.composing,
+    );
     _foldedRegions = const [];
     _document = _createDocument(_document.fullText, _foldedRegions);
+    final visibleSelection = _document.fullSelectionToVisibleSelection(
+      fullSelectionSnapshot,
+    );
     super.value = TextEditingValue(
       text: _document.visibleText,
-      selection: _document.fullSelectionToVisibleSelection(
-        fullSelectionSnapshot,
+      selection: _selectionWithLineEndAffinity(
+        visibleSelection,
+        _document.visibleText,
       ),
+      composing: _fullComposingToVisibleRange(fullComposingSnapshot),
+    );
+  }
+
+  TextRange _visibleComposingToFullRange(TextRange range) {
+    if (!range.isValid) {
+      return TextRange.empty;
+    }
+    return TextRange(
+      start: _document.visibleOffsetToFullOffset(
+        range.start,
+        affinity: SourceHiddenAffinity.downstream,
+      ),
+      end: _document.visibleOffsetToFullOffset(
+        range.end,
+        affinity: SourceHiddenAffinity.upstream,
+      ),
+    );
+  }
+
+  TextRange _fullComposingToVisibleRange(TextRange range) {
+    if (!range.isValid) {
+      return TextRange.empty;
+    }
+    return TextRange(
+      start: _document.fullOffsetToVisibleOffset(range.start),
+      end: _document.fullOffsetToVisibleOffset(range.end),
     );
   }
 
@@ -222,10 +283,16 @@ class BusyMarkSourceEditingController extends TextEditingController {
   set value(TextEditingValue newValue) {
     final hasTextChanged = newValue.text != super.value.text;
     if (!hasTextChanged) {
-      super.value = newValue;
+      super.value = newValue.copyWith(
+        selection: _selectionWithLineEndAffinity(
+          newValue.selection,
+          newValue.text,
+        ),
+      );
       return;
     }
 
+    lastFullSelectionBeforeEdit = fullSelection;
     final oldDocument = _document;
     final edit = oldDocument.describeVisibleEdit(newValue.text);
     final nextFullText = oldDocument.fullText.replaceRange(
@@ -245,24 +312,154 @@ class BusyMarkSourceEditingController extends TextEditingController {
       edit,
       affectedKeys,
     );
-    _document = _createDocument(nextFullText, _foldedRegions);
+    final hiddenRanges = _hiddenRangesFor(nextFullText, _foldedRegions);
+    _document = SourceDocument.afterVisibleEdit(
+      previous: oldDocument,
+      fullText: nextFullText,
+      hiddenRanges: hiddenRanges,
+      edit: edit,
+    );
     lastVisibleEdit = edit;
-    final selection = TextSelection(
-      baseOffset: newValue.selection.baseOffset
-          .clamp(0, _document.visibleText.length)
-          .toInt(),
-      extentOffset: newValue.selection.extentOffset
-          .clamp(0, _document.visibleText.length)
-          .toInt(),
-      affinity: newValue.selection.affinity,
-      isDirectional: newValue.selection.isDirectional,
+    final selection = _projectIncomingSelection(
+      oldDocument: oldDocument,
+      nextDocument: _document,
+      edit: edit,
+      incomingValue: newValue,
+    );
+    final composing = _projectIncomingComposingRange(
+      oldDocument: oldDocument,
+      nextDocument: _document,
+      edit: edit,
+      incomingValue: newValue,
     );
     super.value = TextEditingValue(
       text: _document.visibleText,
       selection: selection,
-      composing: TextRange.empty,
+      composing: composing,
     );
     onFullTextChanged?.call(_document.fullText, edit);
+  }
+
+  TextSelection _projectIncomingSelection({
+    required SourceDocument oldDocument,
+    required SourceDocument nextDocument,
+    required SourceVisibleEdit edit,
+    required TextEditingValue incomingValue,
+  }) {
+    final incoming = incomingValue.selection;
+    if (!incoming.isValid) {
+      return TextSelection.collapsed(offset: nextDocument.visibleText.length);
+    }
+    if (incomingValue.text == nextDocument.visibleText) {
+      return _selectionWithLineEndAffinity(
+        incoming.copyWith(
+          baseOffset: incoming.baseOffset
+              .clamp(0, nextDocument.visibleText.length)
+              .toInt(),
+          extentOffset: incoming.extentOffset
+              .clamp(0, nextDocument.visibleText.length)
+              .toInt(),
+        ),
+        nextDocument.visibleText,
+      );
+    }
+    return _selectionWithLineEndAffinity(
+      incoming.copyWith(
+        baseOffset: _projectIncomingVisibleOffset(
+          oldDocument: oldDocument,
+          nextDocument: nextDocument,
+          edit: edit,
+          incomingOffset: incoming.baseOffset,
+          affinity: SourceHiddenAffinity.downstream,
+        ),
+        extentOffset: _projectIncomingVisibleOffset(
+          oldDocument: oldDocument,
+          nextDocument: nextDocument,
+          edit: edit,
+          incomingOffset: incoming.extentOffset,
+          affinity: SourceHiddenAffinity.upstream,
+        ),
+      ),
+      nextDocument.visibleText,
+    );
+  }
+
+  TextRange _projectIncomingComposingRange({
+    required SourceDocument oldDocument,
+    required SourceDocument nextDocument,
+    required SourceVisibleEdit edit,
+    required TextEditingValue incomingValue,
+  }) {
+    final incoming = incomingValue.composing;
+    if (!incoming.isValid) {
+      return TextRange.empty;
+    }
+    if (incomingValue.text == nextDocument.visibleText) {
+      return TextRange(
+        start: incoming.start.clamp(0, nextDocument.visibleText.length).toInt(),
+        end: incoming.end.clamp(0, nextDocument.visibleText.length).toInt(),
+      );
+    }
+    final start = _projectIncomingVisibleOffset(
+      oldDocument: oldDocument,
+      nextDocument: nextDocument,
+      edit: edit,
+      incomingOffset: incoming.start,
+      affinity: SourceHiddenAffinity.downstream,
+    );
+    final end = _projectIncomingVisibleOffset(
+      oldDocument: oldDocument,
+      nextDocument: nextDocument,
+      edit: edit,
+      incomingOffset: incoming.end,
+      affinity: SourceHiddenAffinity.upstream,
+    );
+    return TextRange(start: math.min(start, end), end: math.max(start, end));
+  }
+
+  int _projectIncomingVisibleOffset({
+    required SourceDocument oldDocument,
+    required SourceDocument nextDocument,
+    required SourceVisibleEdit edit,
+    required int incomingOffset,
+    required SourceHiddenAffinity affinity,
+  }) {
+    final safeOffset = incomingOffset
+        .clamp(
+          0,
+          edit.visibleStart +
+              edit.replacement.length +
+              (oldDocument.visibleText.length - edit.visibleEnd),
+        )
+        .toInt();
+    final replacementEnd = edit.visibleStart + edit.replacement.length;
+    late final int fullOffset;
+    if (safeOffset <= edit.visibleStart) {
+      fullOffset = safeOffset == edit.visibleStart
+          ? edit.fullStart
+          : oldDocument.visibleOffsetToFullOffset(
+              safeOffset,
+              affinity: affinity,
+            );
+    } else if (safeOffset <= replacementEnd) {
+      fullOffset = edit.fullStart + safeOffset - edit.visibleStart;
+    } else {
+      final oldVisibleOffset =
+          safeOffset -
+          edit.replacement.length +
+          (edit.visibleEnd - edit.visibleStart);
+      final oldFullOffset = oldDocument.visibleOffsetToFullOffset(
+        oldVisibleOffset,
+        affinity: affinity,
+      );
+      fullOffset = oldFullOffset >= edit.fullEnd
+          ? oldFullOffset + edit.fullDelta
+          : oldFullOffset;
+    }
+    return nextDocument
+        .fullOffsetToVisibleOffset(fullOffset)
+        .clamp(0, nextDocument.visibleText.length)
+        .toInt();
   }
 
   @override
@@ -356,17 +553,24 @@ class BusyMarkSourceEditingController extends TextEditingController {
   ) {
     return SourceDocument(
       fullText: fullText,
-      hiddenRanges: SourceHiddenRanges(
-        ranges: [
-          for (final region in foldedRegions)
-            SourceHiddenRange(
-              start: region.hiddenStartOffset,
-              end: region.hiddenEndOffset,
-              key: region.key,
-            ),
-        ],
-        textLength: fullText.length,
-      ),
+      hiddenRanges: _hiddenRangesFor(fullText, foldedRegions),
+    );
+  }
+
+  SourceHiddenRanges _hiddenRangesFor(
+    String fullText,
+    Iterable<SourceFoldRegion> foldedRegions,
+  ) {
+    return SourceHiddenRanges(
+      ranges: [
+        for (final region in foldedRegions)
+          SourceHiddenRange(
+            start: region.hiddenStartOffset,
+            end: region.hiddenEndOffset,
+            key: region.key,
+          ),
+      ],
+      textLength: fullText.length,
     );
   }
 
@@ -498,6 +702,24 @@ class _HighlightRange {
   bool overlaps(int otherStart, int otherEnd) {
     return start < otherEnd && otherStart < end;
   }
+}
+
+TextSelection _selectionWithLineEndAffinity(
+  TextSelection selection,
+  String text,
+) {
+  if (!selection.isValid || !selection.isCollapsed) {
+    return selection;
+  }
+  final offset = selection.extentOffset;
+  if (offset < 0 || offset >= text.length) {
+    return selection;
+  }
+  final nextUnit = text.codeUnitAt(offset);
+  if (nextUnit != 10 && nextUnit != 13) {
+    return selection;
+  }
+  return selection.copyWith(affinity: TextAffinity.upstream);
 }
 
 class _HiddenRange {
@@ -1682,18 +1904,34 @@ List<_HighlightRange> _searchHighlightRanges(
   final matchStyle = baseStyle.copyWith(backgroundColor: matchBackground);
   final currentStyle = baseStyle.copyWith(backgroundColor: currentBackground);
   final currentIndex = result.currentMatchIndex;
-  for (final (index, match) in result.matches.indexed) {
+  void addMatch(int index, SourceSearchMatch match) {
     if (match.hidden || match.visibleEnd <= match.visibleStart) {
-      continue;
+      return;
     }
+    final isCurrent = result.firstMatchIndex + index == currentIndex;
     ranges.add(
       _HighlightRange(
         match.visibleStart.clamp(0, source.length).toInt(),
         match.visibleEnd.clamp(0, source.length).toInt(),
-        index == currentIndex ? currentStyle : matchStyle,
-        priority: index == currentIndex ? 100 : 90,
+        isCurrent ? currentStyle : matchStyle,
+        priority: isCurrent ? 100 : 90,
       ),
     );
+  }
+
+  final highlightCount = math.min(
+    result.matches.length,
+    sourceInteractiveSearchMatchLimit,
+  );
+  for (var index = 0; index < highlightCount; index++) {
+    addMatch(index, result.matches[index]);
+  }
+  final currentLocalIndex = currentIndex == null
+      ? -1
+      : currentIndex - result.firstMatchIndex;
+  if (currentLocalIndex >= highlightCount &&
+      currentLocalIndex < result.matches.length) {
+    addMatch(currentLocalIndex, result.matches[currentLocalIndex]);
   }
   return ranges;
 }
@@ -1705,16 +1943,6 @@ List<TextSpan> _spansFromRanges(
   TextStyle baseStyle, {
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
-  final sortedRanges = [...ranges]
-    ..sort((a, b) {
-      final start = a.start.compareTo(b.start);
-      if (start != 0) {
-        return start;
-      }
-      return a.priority.compareTo(b.priority);
-    });
-  final sortedHiddenRanges = [...hiddenRanges]
-    ..sort((a, b) => a.start.compareTo(b.start));
   final hiddenStyle = baseStyle.copyWith(
     color: BusyMarkLinuxPalette.transparent,
     fontSize: BusyMarkTypography.hiddenLayoutFontSize,
@@ -1723,37 +1951,61 @@ List<TextSpan> _spansFromRanges(
     wordSpacing: 0,
   );
   final boundaries = <int>{0, source.length};
-  for (final range in sortedRanges) {
-    boundaries.add(range.start.clamp(0, source.length).toInt());
-    boundaries.add(range.end.clamp(0, source.length).toInt());
+  final highlightStarts = <int, List<_HighlightRange>>{};
+  final highlightEnds = <int, List<_HighlightRange>>{};
+  for (final range in ranges) {
+    final start = range.start.clamp(0, source.length).toInt();
+    final end = range.end.clamp(start, source.length).toInt();
+    if (end <= start) {
+      continue;
+    }
+    boundaries
+      ..add(start)
+      ..add(end);
+    (highlightStarts[start] ??= []).add(range);
+    (highlightEnds[end] ??= []).add(range);
   }
-  for (final range in sortedHiddenRanges) {
-    boundaries.add(range.start.clamp(0, source.length).toInt());
-    boundaries.add(range.end.clamp(0, source.length).toInt());
+  final hiddenStarts = <int, List<_HiddenRange>>{};
+  final hiddenEnds = <int, List<_HiddenRange>>{};
+  for (final range in hiddenRanges) {
+    final start = range.start.clamp(0, source.length).toInt();
+    final end = range.end.clamp(start, source.length).toInt();
+    if (end <= start) {
+      continue;
+    }
+    boundaries
+      ..add(start)
+      ..add(end);
+    (hiddenStarts[start] ??= []).add(range);
+    (hiddenEnds[end] ??= []).add(range);
   }
   final sortedBoundaries = boundaries.toList()..sort();
   final spans = <TextSpan>[];
+  final activeHighlights = <_HighlightRange>[];
+  final activeHiddenRanges = <_HiddenRange>[];
   for (var index = 0; index < sortedBoundaries.length - 1; index++) {
     final start = sortedBoundaries[index];
     final end = sortedBoundaries[index + 1];
     if (end <= start) {
       continue;
     }
-    _HiddenRange? hiddenRange;
-    for (final range in sortedHiddenRanges) {
-      if (range.contains(start, end)) {
-        hiddenRange = range;
-        break;
-      }
+    for (final range in highlightEnds[start] ?? const <_HighlightRange>[]) {
+      activeHighlights.remove(range);
     }
-    final highlights = <_HighlightRange>[];
-    for (final range in sortedRanges) {
-      if (range.start <= start && end <= range.end) {
-        highlights.add(range);
-      }
+    for (final range in hiddenEnds[start] ?? const <_HiddenRange>[]) {
+      activeHiddenRanges.remove(range);
     }
-    highlights.sort((a, b) => a.priority.compareTo(b.priority));
-    final style = _mergeHighlightStyles(baseStyle, highlights);
+    activeHighlights.addAll(
+      highlightStarts[start] ?? const <_HighlightRange>[],
+    );
+    activeHiddenRanges.addAll(hiddenStarts[start] ?? const <_HiddenRange>[]);
+    activeHighlights.sort((a, b) {
+      final priority = a.priority.compareTo(b.priority);
+      return priority != 0 ? priority : a.start.compareTo(b.start);
+    });
+    activeHiddenRanges.sort((a, b) => a.start.compareTo(b.start));
+    final hiddenRange = activeHiddenRanges.firstOrNull;
+    final style = _mergeHighlightStyles(baseStyle, activeHighlights);
     final visibleStyle = style == null
         ? baseStyle
         : styleOverride?.call(style) ?? style;

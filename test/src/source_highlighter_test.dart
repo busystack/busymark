@@ -3,10 +3,48 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
+import 'package:busymark/src/editor/source/source_document.dart';
+import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('source highlighting bounds high-match span composition', (
+    tester,
+  ) async {
+    final source = List.filled(
+      sourceInteractiveSearchMatchLimit + 500,
+      'a',
+    ).join();
+    late TextSpan span;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) {
+            final controller = BusyMarkSourceEditingController(text: source)
+              ..setSearchResult(
+                searchSourceDocument(
+                  SourceDocument(fullText: source),
+                  const SourceSearchOptions(query: 'a'),
+                ),
+              );
+            span = controller.buildSourceTextSpan(context: context);
+            controller.dispose();
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(span.toPlainText(), source);
+    expect(
+      _flattenTextSpans(span),
+      hasLength(lessThanOrEqualTo(sourceInteractiveSearchMatchLimit + 2)),
+    );
+  });
+
   testWidgets('markdown source highlighter colors editor syntax', (
     tester,
   ) async {
@@ -327,6 +365,18 @@ void main() {
         transparentMetrics[index].width,
         closeTo(renderedMetrics[index].width, 0.01),
       );
+    }
+    for (var offset = 0; offset <= source.length; offset++) {
+      final transparentCaret = transparentPainter.getOffsetForCaret(
+        TextPosition(offset: offset),
+        Rect.zero,
+      );
+      final renderedCaret = renderedPainter.getOffsetForCaret(
+        TextPosition(offset: offset),
+        Rect.zero,
+      );
+      expect(transparentCaret.dx, closeTo(renderedCaret.dx, 0.01));
+      expect(transparentCaret.dy, closeTo(renderedCaret.dy, 0.01));
     }
   });
 

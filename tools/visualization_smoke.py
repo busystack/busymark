@@ -216,9 +216,13 @@ return JSON.stringify(await window.{function}(JSON.parse({payload})))
                 raise AssertionError(
                     f"Raster snapshot was too small: {surface.get_width()}x{surface.get_height()}"
                 )
-            if opaque_pixels < 1000 or len(colors) < 8:
+            if opaque_pixels < 1000:
                 raise AssertionError(
-                    f"Raster snapshot was visually empty: {opaque_pixels} pixels, {len(colors)} colors"
+                    f"Raster snapshot was transparent: {opaque_pixels} opaque pixels"
+                )
+            if len(colors) < 8:
+                raise AssertionError(
+                    f"Raster snapshot lacked visual variation: {len(colors)} colors"
                 )
             print(f"PASS {case['name']} visual snapshot")
         except Exception as error:  # noqa: BLE001
@@ -366,6 +370,11 @@ def expect_raster_ready(response: dict[str, object]) -> None:
         raise AssertionError(f"WebKit did not prepare the raster image: {response}")
     if response.get("pixelWidth") != 1200 or response.get("pixelHeight") != 800:
         raise AssertionError(f"Unexpected raster dimensions: {response}")
+    if (
+        response.get("renderedWidth") != 1200
+        or response.get("renderedHeight") != 800
+    ):
+        raise AssertionError(f"SVG did not fill the raster canvas: {response}")
 
 
 def d2_smoke(executable: Path) -> tuple[list[str], dict[str, str]]:
@@ -686,6 +695,29 @@ def main() -> int:
             if "D2 foreignObject" in d2_outputs
             else []
         ),
+        {
+            "name": "Responsive SVG raster scaling",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "rasterizeSvg",
+                "svg": (
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="100%" '
+                    'style="max-width:600px" viewBox="0 0 600 400">'
+                    '<defs><linearGradient id="smoke-responsive-gradient" '
+                    'x1="0%" y1="0%" x2="100%" y2="100%">'
+                    '<stop offset="0" stop-color="#1a73e8"/>'
+                    '<stop offset="1" stop-color="#34a853"/>'
+                    '</linearGradient></defs>'
+                    '<rect width="600" height="400" '
+                    'fill="url(#smoke-responsive-gradient)"/></svg>'
+                ),
+                "width": 600,
+                "height": 400,
+                "scale": 2,
+            },
+            "validator": expect_raster_ready,
+            "snapshot": True,
+        },
         *[
             {
                 "name": f"PlantUML {index + 1}/{len(plantuml)}",

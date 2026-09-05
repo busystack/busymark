@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
@@ -21,11 +23,22 @@ import 'source_commands.dart';
 import 'source_controller.dart';
 import 'source_autocomplete.dart';
 import 'source_diagnostics.dart';
+import 'source_document.dart';
 import 'source_gutter.dart';
+import 'source_intrinsic_width.dart';
 import 'source_search.dart';
 
 typedef BusyMarkSourceChanged =
     void Function(String fullText, String? sourceFilePath);
+
+typedef BusyMarkSourceTransactionalChanged =
+    void Function(
+      String fullText,
+      String? sourceFilePath,
+      TextSelection previousSelection,
+      TextSelection selection,
+      String? undoGroup,
+    );
 
 typedef BusyMarkSourceSessionChanged =
     void Function(
@@ -33,6 +46,8 @@ typedef BusyMarkSourceSessionChanged =
       double scrollOffset,
       Set<String> foldedRegionKeys,
     );
+
+var _sourceEditorUndoSessionSequence = 0;
 
 class BusyMarkSourceEditor extends StatefulWidget {
   const BusyMarkSourceEditor({
@@ -50,6 +65,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.searchReplacement = '',
     this.onSearchReplacementChanged,
     required this.onChanged,
+    this.onTransactionalChanged,
     this.onUndo,
     this.onRedo,
     required this.onOpenSearch,
@@ -77,8 +93,9 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final String searchReplacement;
   final ValueChanged<String>? onSearchReplacementChanged;
   final BusyMarkSourceChanged onChanged;
-  final String? Function()? onUndo;
-  final String? Function()? onRedo;
+  final BusyMarkSourceTransactionalChanged? onTransactionalChanged;
+  final TextEditingValue? Function()? onUndo;
+  final TextEditingValue? Function()? onRedo;
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
@@ -98,17 +115,29 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   late BusyMarkSourceController _controller;
   late final FocusNode _focusNode;
   late final ScrollController _scrollController;
+  late final ScrollController _horizontalScrollController;
   late UndoHistoryController _undoController;
   final _sourceEditorKey = GlobalKey();
   final _foldedRegionKeys = <String>{};
   final _searchController = SourceSearchController();
-  final _replacementService = const SearchReplacementService();
+  final _searchWorker = SourceSearchWorker();
+  final _replacementWorker = SearchReplacementWorker();
+  final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
   List<SourceFoldRegion> _foldRegions = const [];
   List<SourceAutocompleteSuggestion> _autocompleteSuggestions = const [];
   var _autocompleteSelection = 0;
   String _lastPath = '';
+  bool _horizontalCaretScheduled = false;
+  bool _contentShrinkCorrectionScheduled = false;
+  Timer? _searchDebounce;
+  Timer? _foldRefreshDebounce;
+  _ContinuousSourceEdit? _continuousSourceEdit;
+  _SourceSessionSnapshot? _lastPublishedSession;
+  bool _sessionPublicationScheduled = false;
+  final _undoSessionId = ++_sourceEditorUndoSessionSequence;
+  var _undoGroupSequence = 0;
 
   @override
   void initState() {
@@ -119,22 +148,31 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
     _scrollController = ScrollController();
+    _horizontalScrollController = ScrollController();
     _undoController = UndoHistoryController();
     _lastPath = widget.documentId ?? widget.filePath ?? '';
     _recomputeFoldRegions(resetCollapsed: true);
     _restoreSessionState();
+    _lastPublishedSession = _sourceSessionSnapshot();
     _syncSearchOptions();
-    _controller.addListener(_publishSessionState);
-    _scrollController.addListener(_publishSessionState);
+    _controller.addListener(_handleControllerActivity);
+    _scrollController.addListener(_scheduleSessionPublication);
   }
 
   @override
   void didUpdateWidget(covariant BusyMarkSourceEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.text != oldWidget.text ||
+        widget.searchOptions != oldWidget.searchOptions ||
+        widget.searchReplacement != oldWidget.searchReplacement) {
+      _replacementWorker.cancel();
+    }
     final path = widget.documentId ?? widget.filePath ?? '';
     final pathChanged = path != _lastPath;
     final languageChanged = widget.language != oldWidget.language;
+    var authoritativeDocumentChanged = false;
     if (pathChanged) {
+      authoritativeDocumentChanged = true;
       _lastPath = path;
       _foldedRegionKeys.clear();
       _withoutSessionPublication(() {
@@ -142,8 +180,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         _recomputeFoldRegions(resetCollapsed: true);
         _restoreSessionState();
       });
-    } else if ((widget.text != oldWidget.text && !_focusNode.hasFocus) ||
-        languageChanged) {
+      _lastPublishedSession = _sourceSessionSnapshot();
+    } else if (widget.text != _controller.fullText || languageChanged) {
+      authoritativeDocumentChanged = true;
+      _continuousSourceEdit = null;
       _withoutSessionPublication(() {
         _controller.replaceFullTextAndLanguage(
           text: widget.text,
@@ -154,19 +194,79 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     if (widget.searchActive != oldWidget.searchActive ||
         widget.searchOptions != oldWidget.searchOptions ||
-        widget.text != oldWidget.text ||
-        pathChanged) {
+        authoritativeDocumentChanged) {
       _syncSearchOptions();
+    }
+    if (widget.wordWrap && !oldWidget.wordWrap) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_horizontalScrollController.hasClients) {
+          _horizontalScrollController.jumpTo(0);
+        }
+      });
     }
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _foldRefreshDebounce?.cancel();
+    _searchWorker.dispose();
+    _replacementWorker.dispose();
+    _controller.removeListener(_handleControllerActivity);
     _scrollController.dispose();
+    _horizontalScrollController.dispose();
     _focusNode.dispose();
     _undoController.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleControllerActivity() {
+    _scheduleSessionPublication();
+    if (widget.wordWrap || _horizontalCaretScheduled) {
+      return;
+    }
+    _horizontalCaretScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _horizontalCaretScheduled = false;
+      _ensureCaretHorizontallyVisible();
+    });
+  }
+
+  void _ensureCaretHorizontallyVisible() {
+    if (!mounted ||
+        widget.wordWrap ||
+        !_horizontalScrollController.hasClients ||
+        !_controller.selection.isValid) {
+      return;
+    }
+    final editorRenderObject = _sourceEditorKey.currentContext
+        ?.findRenderObject();
+    if (editorRenderObject is! RenderBox) {
+      return;
+    }
+    final editable = _findSourceRenderEditable(editorRenderObject);
+    if (editable == null) {
+      return;
+    }
+    final caret = editable.getLocalRectForCaret(
+      TextPosition(offset: _controller.selection.extentOffset),
+    );
+    final caretX = editable
+        .localToGlobal(caret.topLeft, ancestor: editorRenderObject)
+        .dx;
+    final position = _horizontalScrollController.position;
+    const margin = BusyMarkSpacing.lg;
+    var target = position.pixels;
+    if (caretX < position.pixels + margin) {
+      target = caretX - margin;
+    } else if (caretX > position.pixels + position.viewportDimension - margin) {
+      target = caretX - position.viewportDimension + margin;
+    }
+    target = target.clamp(0.0, position.maxScrollExtent).toDouble();
+    if ((target - position.pixels).abs() > 0.5) {
+      position.jumpTo(target);
+    }
   }
 
   void scrollToLine(int line) {
@@ -217,6 +317,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    if (_hasActiveComposition) {
+      // Keep Source shortcuts and focus traversal out of an active platform
+      // composition while leaving the key unhandled for the input method.
+      return KeyEventResult.skipRemainingHandlers;
+    }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     if (_autocompleteSuggestions.isNotEmpty) {
@@ -255,9 +360,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       event,
       keyboard,
     )) {
-      final text = widget.onUndo?.call();
-      if (text != null) {
-        _applyOwnedUndoText(text);
+      final value = widget.onUndo?.call();
+      if (value != null) {
+        _applyOwnedUndoValue(value);
         return KeyEventResult.handled;
       }
     }
@@ -266,9 +371,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       event,
       keyboard,
     )) {
-      final text = widget.onRedo?.call();
-      if (text != null) {
-        _applyOwnedUndoText(text);
+      final value = widget.onRedo?.call();
+      if (value != null) {
+        _applyOwnedUndoValue(value);
         return KeyEventResult.handled;
       }
     }
@@ -343,6 +448,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
             child: _SourceEditorFrame(
               controller: _controller,
               scrollController: _scrollController,
+              horizontalScrollController: _horizontalScrollController,
+              wordWrap: widget.wordWrap,
               lineHeight: sourceLineHeight,
               textStyle: _sourceTextStyle,
               strutStyle: sourceStrutStyle,
@@ -350,6 +457,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               foldRegions: _foldRegions,
               diagnosticMarkers: markers,
               layoutCache: _lineLayoutCache,
+              intrinsicWidthCache: _intrinsicWidthCache,
               onToggleFold: _toggleFold,
               onVisibleLineChanged: widget.onVisibleLineChanged,
               child: SizedBox(
@@ -369,6 +477,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                         BusyMarkContextCommandIntent:
                             BusyMarkContextCommandAction(
                               isCommandEnabled: (commandId) =>
+                                  !_hasActiveComposition &&
                                   commandId.startsWith('editor.'),
                               onCommand: (commandId) {
                                 final name = commandId.substring(
@@ -401,9 +510,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                           focusNode: _focusNode,
                           scrollController: _scrollController,
                           textDirection: TextDirection.ltr,
-                          keyboardType: widget.wordWrap
-                              ? TextInputType.multiline
-                              : TextInputType.text,
+                          keyboardType: TextInputType.multiline,
                           autocorrect: false,
                           enableSuggestions: false,
                           smartDashesType: SmartDashesType.disabled,
@@ -413,8 +520,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                           textAlignVertical: TextAlignVertical.top,
                           style: _sourceTextStyle,
                           strutStyle: sourceStrutStyle,
-                          selectionHeightStyle:
-                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                          selectionHeightStyle: BusyMarkDocumentTextGeometry
+                              .sourceSelectionHeightStyle,
                           selectionWidthStyle:
                               BusyMarkDocumentTextGeometry.selectionWidthStyle,
                           cursorColor: colors.foreground.withValues(
@@ -485,10 +592,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 replacement: widget.searchReplacement,
                 onReplacementChanged:
                     widget.onSearchReplacementChanged ?? (_) {},
-                onReplaceCurrent: _replaceCurrentSearchMatch,
+                onReplaceCurrent: () => unawaited(_replaceCurrentSearchMatch()),
                 onReplaceAndFindNext: () =>
-                    _replaceCurrentSearchMatch(findNext: true),
-                onReplaceAll: _replaceAllSearchMatches,
+                    unawaited(_replaceCurrentSearchMatch(findNext: true)),
+                onReplaceAll: () => unawaited(_replaceAllSearchMatches()),
                 onClose: widget.onCloseSearch,
               ),
             ),
@@ -583,26 +690,101 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _syncSearchOptions() {
-    if (!widget.searchActive) {
-      _searchController.setOptions(
-        const SourceSearchOptions(),
-        _controller.document,
-      );
-      _controller.setSearchResult(SourceSearchResult.empty);
-      return;
-    }
-    _searchController.setOptions(widget.searchOptions, _controller.document);
-    _controller.setSearchResult(_searchController.result);
+    _scheduleSearch();
   }
 
-  void _refreshSearch({int? currentIndex}) {
+  void _scheduleSearch({
+    int? currentIndex,
+    int? firstMatchIndex,
+    int? minimumFullOffset,
+    bool revealCurrentAfterRefresh = false,
+    bool wrapIfOffsetMissing = true,
+  }) {
+    _searchDebounce?.cancel();
+    _searchWorker.cancel();
+    if (!widget.searchActive) {
+      _searchController.stageOptions(const SourceSearchOptions());
+      _controller.setSearchResult(SourceSearchResult.empty);
+      return;
+    }
+    final options = widget.searchOptions;
+    final previousResult = _searchController.result;
+    final requestedFirstMatchIndex =
+        firstMatchIndex ??
+        (previousResult.options == options
+            ? previousResult.firstMatchIndex
+            : 0);
+    final invalidRegex = sourceSearchOptionsHaveInvalidRegex(options);
+    _searchController.stageOptions(options, invalidRegex: invalidRegex);
+    _controller.setSearchResult(_searchController.result);
+    if (options.query.isEmpty || invalidRegex) {
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 120), () {
+      final document = _controller.document;
+      unawaited(
+        _searchWorker
+            .search(
+              document,
+              options,
+              currentMatchIndex: currentIndex,
+              firstMatchIndex: requestedFirstMatchIndex,
+              minimumFullOffset: minimumFullOffset,
+            )
+            .then((result) {
+              if (!mounted ||
+                  result == null ||
+                  !identical(document, _controller.document) ||
+                  options != widget.searchOptions ||
+                  !widget.searchActive) {
+                return;
+              }
+              if (minimumFullOffset != null &&
+                  result.matches.isEmpty &&
+                  result.totalMatchCount > 0 &&
+                  wrapIfOffsetMissing) {
+                _scheduleSearch(
+                  currentIndex: 0,
+                  firstMatchIndex: 0,
+                  revealCurrentAfterRefresh: revealCurrentAfterRefresh,
+                  wrapIfOffsetMissing: false,
+                );
+                return;
+              }
+              _searchController.acceptResult(result);
+              if (minimumFullOffset != null && result.matches.isNotEmpty) {
+                _searchController.setCurrentMatchIndex(result.firstMatchIndex);
+              } else if (revealCurrentAfterRefresh &&
+                  _searchController.result.currentMatch == null &&
+                  result.matches.isNotEmpty) {
+                _searchController.setCurrentMatchIndex(result.firstMatchIndex);
+              }
+              _controller.setSearchResult(_searchController.result);
+              setState(() {});
+              if (revealCurrentAfterRefresh) {
+                _revealSearchMatch(_searchController.result.currentMatch);
+              }
+            }),
+      );
+    });
+  }
+
+  void _refreshSearch({
+    int? currentIndex,
+    int? firstMatchIndex,
+    int? minimumFullOffset,
+    bool revealCurrentAfterRefresh = false,
+  }) {
     if (!widget.searchActive) {
       _controller.setSearchResult(SourceSearchResult.empty);
       return;
     }
-    _searchController.refresh(_controller.document);
-    _searchController.setCurrentMatchIndex(currentIndex);
-    _controller.setSearchResult(_searchController.result);
+    _scheduleSearch(
+      currentIndex: currentIndex,
+      firstMatchIndex: firstMatchIndex,
+      minimumFullOffset: minimumFullOffset,
+      revealCurrentAfterRefresh: revealCurrentAfterRefresh,
+    );
   }
 
   void _updateSearchOptions(SourceSearchOptions options) {
@@ -610,36 +792,80 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _nextSearchMatch() {
-    final match = _searchController.next(_controller.document);
-    _revealSearchMatch(match);
+    final result = _searchController.result;
+    if (result.totalMatchCount == 0) {
+      _revealSearchMatch(null);
+      return;
+    }
+    final index = result.currentMatchIndex == null
+        ? 0
+        : (result.currentMatchIndex! + 1) % result.totalMatchCount;
+    _selectSearchMatchIndex(index, loadPreviousWindow: false);
   }
 
   void _previousSearchMatch() {
-    final match = _searchController.previous(_controller.document);
-    _revealSearchMatch(match);
+    final result = _searchController.result;
+    if (result.totalMatchCount == 0) {
+      _revealSearchMatch(null);
+      return;
+    }
+    final index = result.currentMatchIndex == null
+        ? result.totalMatchCount - 1
+        : (result.currentMatchIndex! - 1 + result.totalMatchCount) %
+              result.totalMatchCount;
+    _selectSearchMatchIndex(index, loadPreviousWindow: true);
   }
 
-  void _replaceCurrentSearchMatch({bool findNext = false}) {
+  void _selectSearchMatchIndex(int index, {required bool loadPreviousWindow}) {
+    final result = _searchController.result;
+    final storedEnd = result.firstMatchIndex + result.matches.length;
+    if (index >= result.firstMatchIndex && index < storedEnd) {
+      _searchController.setCurrentMatchIndex(index);
+      _revealSearchMatch(_searchController.result.currentMatch);
+      return;
+    }
+    final firstMatchIndex = loadPreviousWindow
+        ? math.max(0, index - sourceInteractiveSearchMatchLimit + 1)
+        : index;
+    _scheduleSearch(
+      currentIndex: index,
+      firstMatchIndex: firstMatchIndex,
+      revealCurrentAfterRefresh: true,
+    );
+  }
+
+  Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
     if (_searchController.result.invalidRegex) {
       return;
     }
-    var currentIndex = _searchController.result.currentMatchIndex;
-    if (currentIndex == null) {
+    if (_searchController.result.currentMatchIndex == null) {
       _searchController.next(_controller.document);
-      currentIndex = _searchController.result.currentMatchIndex;
     }
-    if (currentIndex == null) {
+    final currentIndex = _searchController.result.currentMatchIndex;
+    final currentMatch = _searchController.result.currentMatch;
+    if (currentIndex == null || currentMatch == null) {
       return;
     }
-    final preview = _replacementService.previewText(
-      source: _controller.fullText,
-      options: widget.searchOptions,
-      replacement: widget.searchReplacement,
+    final document = _controller.document;
+    final options = widget.searchOptions;
+    final replacement = widget.searchReplacement;
+    final preview = await _replacementWorker.previewText(
+      source: document.fullText,
+      options: options,
+      replacement: replacement,
+      targetStart: currentMatch.fullStart,
+      targetEnd: currentMatch.fullEnd,
     );
-    if (preview.invalidRegex || currentIndex >= preview.matches.length) {
+    if (!mounted ||
+        preview == null ||
+        !identical(document, _controller.document) ||
+        options != widget.searchOptions ||
+        replacement != widget.searchReplacement ||
+        preview.invalidRegex ||
+        preview.matches.isEmpty) {
       return;
     }
-    final match = preview.matches[currentIndex];
+    final match = preview.matches.single;
     final nextText = preview.source.replaceRange(
       match.start,
       match.end,
@@ -654,24 +880,44 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         ),
       ),
     );
-    _refreshSearch(
-      currentIndex: math.min(
-        currentIndex,
-        math.max(0, preview.matches.length - 2),
-      ),
-    );
+    final replacementEnd = match.start + match.replacement.length;
     if (findNext) {
-      _nextSearchMatch();
+      _refreshSearch(
+        minimumFullOffset: replacementEnd,
+        revealCurrentAfterRefresh: true,
+      );
+    } else {
+      _refreshSearch(
+        currentIndex: currentIndex,
+        firstMatchIndex: _searchController.result.firstMatchIndex,
+      );
     }
   }
 
-  void _replaceAllSearchMatches() {
-    final preview = _replacementService.previewText(
-      source: _controller.fullText,
-      options: widget.searchOptions,
-      replacement: widget.searchReplacement,
+  Future<void> _replaceAllSearchMatches() async {
+    final document = _controller.document;
+    final options = widget.searchOptions;
+    final replacement = widget.searchReplacement;
+    final preview = await _replacementWorker.previewText(
+      source: document.fullText,
+      options: options,
+      replacement: replacement,
     );
-    if (preview.invalidRegex || preview.matches.isEmpty) {
+    if (!mounted ||
+        preview == null ||
+        !identical(document, _controller.document) ||
+        options != widget.searchOptions ||
+        replacement != widget.searchReplacement ||
+        preview.invalidRegex ||
+        preview.matches.isEmpty) {
+      return;
+    }
+    if (preview.truncated) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.workspaceReplaceIssueTruncated,
+        priority: BusyMarkToastPriority.high,
+      );
       return;
     }
     final nextText = preview.apply();
@@ -698,15 +944,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final currentIndex = _searchController.result.currentMatchIndex;
     if (match.hidden) {
       _unfoldSourceRange(match.fullStart, match.fullEnd);
-      _searchController.refreshCurrent(_controller.document);
-      _searchController.setCurrentMatchIndex(currentIndex);
-      match = _searchController.result.currentMatch;
-      if (match == null) {
-        setState(() {
-          _controller.setSearchResult(_searchController.result);
-        });
-        return;
-      }
+      _refreshSearch(currentIndex: currentIndex);
     }
     final line = _controller.document.lineIndex.lineNumberAtOffset(
       match.fullStart,
@@ -805,15 +1043,76 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _handleSourceChanged() {
-    setState(() {
-      _recomputeFoldRegions();
-      _refreshSearch(currentIndex: _searchController.result.currentMatchIndex);
-    });
-    widget.onChanged(_controller.fullText, widget.filePath);
+    _replacementWorker.cancel();
+    final visibleEdit = _controller.lastVisibleEdit;
+    final selection = _controller.fullSelection;
+    final previousSelection =
+        _controller.lastFullSelectionBeforeEdit ?? selection;
+    final undoGroup = _undoGroupForSourceEdit(
+      visibleEdit,
+      previousSelection: previousSelection,
+      selection: selection,
+    );
+    final currentSearchIndex = _searchController.result.currentMatchIndex;
+    final firstMatchIndex = _searchController.result.firstMatchIndex;
+    _scheduleFoldRefresh();
+    _refreshSearch(
+      currentIndex: currentSearchIndex,
+      firstMatchIndex: firstMatchIndex,
+    );
+    final transactionalCallback = widget.onTransactionalChanged;
+    if (transactionalCallback == null) {
+      widget.onChanged(_controller.fullText, widget.filePath);
+    } else {
+      transactionalCallback(
+        _controller.fullText,
+        widget.filePath,
+        previousSelection,
+        selection,
+        undoGroup,
+      );
+    }
     if (_autocompleteSuggestions.isNotEmpty) {
       _refreshAutocomplete();
     }
+    if (mounted) {
+      setState(() {});
+    }
+    if (visibleEdit != null && visibleEdit.fullDelta < 0) {
+      _scheduleContentShrinkCorrection();
+    }
     _publishSessionState();
+  }
+
+  void _scheduleContentShrinkCorrection() {
+    if (_contentShrinkCorrectionScheduled) {
+      return;
+    }
+    _contentShrinkCorrectionScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _contentShrinkCorrectionScheduled = false;
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+      final position = _scrollController.position;
+      final target = position.pixels
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble();
+      if ((target - position.pixels).abs() > 0.5) {
+        position.jumpTo(target);
+      }
+    });
+  }
+
+  void _scheduleFoldRefresh() {
+    _foldRefreshDebounce?.cancel();
+    _foldRefreshDebounce = Timer(const Duration(milliseconds: 100), () {
+      if (!mounted) {
+        return;
+      }
+      setState(_recomputeFoldRegions);
+      _publishSessionState();
+    });
   }
 
   void _showAutocomplete() {
@@ -914,10 +1213,36 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (_suppressSessionPublication) {
       return;
     }
+    final snapshot = _sourceSessionSnapshot();
+    if (snapshot.sameAs(_lastPublishedSession)) {
+      return;
+    }
+    _lastPublishedSession = snapshot;
     widget.onSessionChanged?.call(
-      _controller.fullSelection,
-      _scrollController.hasClients ? _scrollController.offset : 0,
-      Set.unmodifiable(_foldedRegionKeys),
+      snapshot.selection,
+      snapshot.scrollOffset,
+      snapshot.foldedRegionKeys,
+    );
+  }
+
+  void _scheduleSessionPublication() {
+    if (_suppressSessionPublication || _sessionPublicationScheduled) {
+      return;
+    }
+    _sessionPublicationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sessionPublicationScheduled = false;
+      if (mounted) {
+        _publishSessionState();
+      }
+    });
+  }
+
+  _SourceSessionSnapshot _sourceSessionSnapshot() {
+    return _SourceSessionSnapshot(
+      selection: _controller.fullSelection,
+      scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0,
+      foldedRegionKeys: Set.unmodifiable(_foldedRegionKeys),
     );
   }
 
@@ -937,7 +1262,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return TextEditingValue(
       text: _controller.fullText,
       selection: _controller.fullSelection,
+      composing: _controller.fullComposing,
     );
+  }
+
+  bool get _hasActiveComposition {
+    final value = _controller.value;
+    final composing = value.composing;
+    return composing.isValid &&
+        composing.isNormalized &&
+        !composing.isCollapsed &&
+        composing.end <= value.text.length;
   }
 
   void _applyFullEditingValue(TextEditingValue value) {
@@ -946,14 +1281,87 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _handleSourceChanged();
   }
 
-  void _applyOwnedUndoText(String text) {
-    _controller.replaceFullTextAndLanguage(
-      text: text,
-      language: widget.language,
-    );
+  void _applyOwnedUndoValue(TextEditingValue value) {
+    _continuousSourceEdit = null;
+    _controller.setFullEditingValue(value);
     _recomputeFoldRegions();
     _refreshSearch();
     setState(() {});
+  }
+
+  String? _undoGroupForSourceEdit(
+    SourceVisibleEdit? edit, {
+    required TextSelection previousSelection,
+    required TextSelection selection,
+  }) {
+    if (edit == null ||
+        !previousSelection.isValid ||
+        !previousSelection.isCollapsed ||
+        !selection.isValid ||
+        !selection.isCollapsed) {
+      _continuousSourceEdit = null;
+      return null;
+    }
+    final insertedLength = edit.replacement.length;
+    final removedLength = edit.replacedFullText.length;
+    final kind = switch ((insertedLength, removedLength)) {
+      (1, 0) => _SourceSimpleEditKind.typing,
+      (0, 1) => _SourceSimpleEditKind.deletion,
+      _ => null,
+    };
+    if (kind == null ||
+        !_sourceEditSelectionIsContinuous(
+          kind,
+          edit,
+          previousSelection,
+          selection,
+        )) {
+      _continuousSourceEdit = null;
+      return null;
+    }
+    final currentText = _controller.fullText;
+    final oldText = currentText.replaceRange(
+      edit.fullStart,
+      edit.fullStart + insertedLength,
+      edit.replacedFullText,
+    );
+    final now = DateTime.now();
+    final previous = _continuousSourceEdit;
+    final continuous =
+        previous != null &&
+        previous.kind == kind &&
+        previous.newText == oldText &&
+        previous.selection == previousSelection &&
+        now.difference(previous.timestamp) < const Duration(seconds: 2);
+    final group = continuous
+        ? previous.group
+        : 'source-${widget.documentId ?? widget.filePath ?? 'document'}-'
+              '$_undoSessionId-${++_undoGroupSequence}';
+    _continuousSourceEdit = _ContinuousSourceEdit(
+      kind: kind,
+      newText: currentText,
+      selection: selection,
+      timestamp: now,
+      group: group,
+    );
+    return group;
+  }
+
+  bool _sourceEditSelectionIsContinuous(
+    _SourceSimpleEditKind kind,
+    SourceVisibleEdit edit,
+    TextSelection previousSelection,
+    TextSelection selection,
+  ) {
+    final previousCaret = previousSelection.extentOffset;
+    final caret = selection.extentOffset;
+    return switch (kind) {
+      _SourceSimpleEditKind.typing =>
+        previousCaret == edit.fullStart && caret == edit.fullStart + 1,
+      _SourceSimpleEditKind.deletion =>
+        (previousCaret == edit.fullStart || previousCaret == edit.fullEnd) &&
+            caret == edit.fullStart,
+    };
   }
 
   void _applyShortcutAction(BusyMarkEditorShortcutAction action) {
@@ -1150,9 +1558,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required String text,
     required SourceSyntaxLanguage language,
   }) {
+    _continuousSourceEdit = null;
     final previous = _controller;
     _controller = BusyMarkSourceController(text: text, language: language);
-    _controller.addListener(_publishSessionState);
+    _controller.addListener(_handleControllerActivity);
     _resetUndoHistory();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       previous.dispose();
@@ -1257,6 +1666,8 @@ class _SourceEditorFrame extends StatelessWidget {
   const _SourceEditorFrame({
     required this.controller,
     required this.scrollController,
+    required this.horizontalScrollController,
+    required this.wordWrap,
     required this.lineHeight,
     required this.textStyle,
     required this.strutStyle,
@@ -1264,6 +1675,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
     required this.layoutCache,
+    required this.intrinsicWidthCache,
     required this.onToggleFold,
     this.onVisibleLineChanged,
     required this.child,
@@ -1278,6 +1690,8 @@ class _SourceEditorFrame extends StatelessWidget {
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
+  final ScrollController horizontalScrollController;
+  final bool wordWrap;
   final double lineHeight;
   final TextStyle textStyle;
   final StrutStyle? strutStyle;
@@ -1285,6 +1699,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
   final SourceLineLayoutCache layoutCache;
+  final SourceIntrinsicWidthCache intrinsicWidthCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
   final ValueChanged<int?>? onVisibleLineChanged;
   final Widget child;
@@ -1300,9 +1715,22 @@ class _SourceEditorFrame extends StatelessWidget {
               constraints.maxWidth - _gutterWidth - BusyMarkStroke.hairline,
             )
             .toDouble();
-        final textWidth = math
+        final viewportTextWidth = math
             .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
             .toDouble();
+        final textWidth = wordWrap
+            ? viewportTextWidth
+            : math.max(
+                viewportTextWidth,
+                intrinsicWidthCache.resolve(
+                  context,
+                  controller: controller,
+                  textStyle: textStyle,
+                  strutStyle: strutStyle,
+                ),
+              );
+        final editorContentWidth =
+            textWidth + editorPaddingLeft + editorPaddingRight;
         int? visibleLineAt(double scrollOffset) {
           final layouts = layoutCache.resolve(
             context,
@@ -1372,44 +1800,67 @@ class _SourceEditorFrame extends StatelessWidget {
                 color: colors.subtleBorder,
               ),
               Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: _SourceRenderedTextLayer(
-                        controller: controller,
-                        scrollController: scrollController,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        textWidth: textWidth,
-                      ),
-                    ),
-                    if (collapsedRegionKeys.isNotEmpty)
-                      Positioned.fill(
-                        child: _CollapsedSourceLineOverlay(
-                          controller: controller,
-                          scrollController: scrollController,
-                          lineHeight: lineHeight,
-                          textWidth: textWidth,
-                          textStyle: textStyle,
-                          strutStyle: strutStyle,
-                          foldRegions: foldRegions,
-                          collapsedRegionKeys: collapsedRegionKeys,
-                          diagnosticMarkers: diagnosticMarkers,
-                          layoutCache: layoutCache,
+                child: ClipRect(
+                  child: Scrollbar(
+                    controller: horizontalScrollController,
+                    thumbVisibility: !wordWrap,
+                    notificationPredicate: (notification) =>
+                        notification.metrics.axis == Axis.horizontal,
+                    child: SingleChildScrollView(
+                      key: const ValueKey('source-horizontal-scroll-view'),
+                      controller: horizontalScrollController,
+                      scrollDirection: Axis.horizontal,
+                      physics: wordWrap
+                          ? const NeverScrollableScrollPhysics()
+                          : null,
+                      child: SizedBox(
+                        width: editorContentWidth,
+                        height: constraints.maxHeight,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: _SourceRenderedTextLayer(
+                                controller: controller,
+                                scrollController: scrollController,
+                                textStyle: textStyle,
+                                strutStyle: strutStyle,
+                                textWidth: textWidth,
+                              ),
+                            ),
+                            if (collapsedRegionKeys.isNotEmpty)
+                              Positioned.fill(
+                                child: _CollapsedSourceLineOverlay(
+                                  controller: controller,
+                                  scrollController: scrollController,
+                                  lineHeight: lineHeight,
+                                  textWidth: textWidth,
+                                  textStyle: textStyle,
+                                  strutStyle: strutStyle,
+                                  foldRegions: foldRegions,
+                                  collapsedRegionKeys: collapsedRegionKeys,
+                                  diagnosticMarkers: diagnosticMarkers,
+                                  layoutCache: layoutCache,
+                                ),
+                              ),
+                            Positioned.fill(
+                              child: NotificationListener<ScrollNotification>(
+                                onNotification: (notification) {
+                                  if (notification.metrics.axis ==
+                                      Axis.vertical) {
+                                    reportVisibleLine(
+                                      notification.metrics.pixels,
+                                    );
+                                  }
+                                  return false;
+                                },
+                                child: child,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    Positioned.fill(
-                      child: NotificationListener<ScrollNotification>(
-                        onNotification: (notification) {
-                          if (notification.metrics.axis == Axis.vertical) {
-                            reportVisibleLine(notification.metrics.pixels);
-                          }
-                          return false;
-                        },
-                        child: child,
-                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -1418,6 +1869,17 @@ class _SourceEditorFrame extends StatelessWidget {
       },
     );
   }
+}
+
+RenderEditable? _findSourceRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findSourceRenderEditable(child);
+  });
+  return result;
 }
 
 class _SourceRenderedTextLayer extends StatelessWidget {
@@ -1519,25 +1981,30 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                   textWidth: textWidth,
                   diagnostics: diagnosticMarkers,
                 );
-                final linesByNumber = {
-                  for (final line in sourceLineInfos(controller.fullText))
-                    line.number: line,
-                };
                 final scrollOffset = safeScrollOffset(scrollController);
                 final children = <Widget>[];
-                for (final layout in layouts) {
+                final visibleRange = sourceVisibleLayoutRange(
+                  layouts,
+                  scrollOffset: scrollOffset,
+                  viewportHeight: constraints.maxHeight,
+                  overscan: lineHeight,
+                );
+                for (final layout in layouts.sublist(
+                  visibleRange.start,
+                  visibleRange.end,
+                )) {
                   final line = layout.gutterLine;
                   if (!line.collapsed) {
                     continue;
                   }
                   final top = layout.top - scrollOffset;
-                  if (top < -layout.height || top > constraints.maxHeight) {
+                  if (line.fullLine < 1 ||
+                      line.fullLine > controller.document.lineIndex.lineCount) {
                     continue;
                   }
-                  final fullLine = linesByNumber[line.fullLine];
-                  if (fullLine == null) {
-                    continue;
-                  }
+                  final fullLine = controller.document.lineIndex.lineAt(
+                    line.fullLine,
+                  );
                   children.add(
                     Positioned(
                       top: top,
@@ -1673,7 +2140,9 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         ? context.l10n.sourceSearchInvalidRegex
         : result.totalMatchCount == 0
         ? '0 / 0'
-        : '${(result.currentMatchIndex ?? 0) + 1} / ${result.totalMatchCount}';
+        : result.currentMatchIndex == null
+        ? '– / ${result.totalMatchCount}'
+        : '${result.currentMatchIndex! + 1} / ${result.totalMatchCount}';
     return BusyMarkSurface(
       color: colors.panel,
       child: Padding(
@@ -1775,7 +2244,8 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   _SearchPanelIconButton(
                     tooltip: context.l10n.sourceSearchReplaceAll,
                     icon: BusyMarkGlyphs.searchUnavailable,
-                    onPressed: result.totalMatchCount == 0
+                    onPressed:
+                        result.options.query.isEmpty || result.invalidRegex
                         ? null
                         : widget.onReplaceAll,
                   ),
@@ -1938,6 +2408,43 @@ class _SourceLargeFileBanner extends StatelessWidget {
         message: context.l10n.sourceLargeFileFeaturesPaused,
       ),
     );
+  }
+}
+
+enum _SourceSimpleEditKind { typing, deletion }
+
+class _ContinuousSourceEdit {
+  const _ContinuousSourceEdit({
+    required this.kind,
+    required this.newText,
+    required this.selection,
+    required this.timestamp,
+    required this.group,
+  });
+
+  final _SourceSimpleEditKind kind;
+  final String newText;
+  final TextSelection selection;
+  final DateTime timestamp;
+  final String group;
+}
+
+class _SourceSessionSnapshot {
+  const _SourceSessionSnapshot({
+    required this.selection,
+    required this.scrollOffset,
+    required this.foldedRegionKeys,
+  });
+
+  final TextSelection selection;
+  final double scrollOffset;
+  final Set<String> foldedRegionKeys;
+
+  bool sameAs(_SourceSessionSnapshot? other) {
+    return other != null &&
+        selection == other.selection &&
+        scrollOffset == other.scrollOffset &&
+        setEquals(foldedRegionKeys, other.foldedRegionKeys);
   }
 }
 

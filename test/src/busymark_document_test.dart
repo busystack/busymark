@@ -4315,6 +4315,91 @@ void main() {}
     expect(controller.markdown, 'Hello **bold!** world\n');
   });
 
+  test('WYSIWYG text edits preserve empty-alt inline images', () {
+    const cases = [
+      (
+        editedText: 'Earlier  after.',
+        expectedMarkdown: 'Earlier ![](image.png) after.\n',
+      ),
+      (
+        editedText: 'Before  later.',
+        expectedMarkdown: 'Before ![](image.png) later.\n',
+      ),
+    ];
+
+    for (final item in cases) {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Before ![](image.png) after.\n',
+      );
+      final block = parsed.busyDocument.blocks.single;
+      expect(block.plainText, 'Before  after.');
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      controller.updateBlockText(block.id, item.editedText);
+
+      final image = controller
+          .blockById(block.id)!
+          .inlines
+          .singleWhere((inline) => inline.kind == BusyInlineKind.image);
+      expect(image.text, isEmpty);
+      expect(image.destination, 'image.png');
+      expect(controller.markdown, item.expectedMarkdown);
+    }
+  });
+
+  test('WYSIWYG edits preserve escaped literal punctuation semantics', () {
+    const cases = [
+      (source: r'\*literal\*', plain: '*literal*', expected: r'\*literal\*!'),
+      (source: r'\_literal\_', plain: '_literal_', expected: r'\_literal\_!'),
+      (source: r'\`literal\`', plain: '`literal`', expected: r'\`literal\`!'),
+      (
+        source: r'\~\~literal\~\~',
+        plain: '~~literal~~',
+        expected: r'\~\~literal\~\~!',
+      ),
+      (source: r'\<tag\>', plain: '<tag>', expected: r'\<tag>!'),
+      (source: r'\&copy;', plain: '&copy;', expected: r'\&copy;!'),
+      (source: r'\# heading', plain: '# heading', expected: r'\# heading!'),
+      (source: r'\- item', plain: '- item', expected: r'\- item!'),
+      (source: r'1\. item', plain: '1. item', expected: r'1\. item!'),
+      (source: r'\> quote', plain: '> quote', expected: r'\> quote!'),
+    ];
+
+    for (final item in cases) {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '${item.source}\n',
+      );
+      final block = parsed.busyDocument.blocks.single;
+      expect(block.kind, BusyBlockKind.paragraph, reason: item.source);
+      expect(block.plainText, item.plain, reason: item.source);
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      controller.updateBlockText(block.id, '${block.plainText}!');
+
+      expect(controller.markdown, '${item.expected}\n', reason: item.source);
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(
+        reparsed.busyDocument.blocks.single.kind,
+        BusyBlockKind.paragraph,
+        reason: item.source,
+      );
+      expect(
+        reparsed.busyDocument.blocks.single.plainText,
+        '${item.plain}!',
+        reason: item.source,
+      );
+    }
+  });
+
   testWidgets('WYSIWYG link dialog submits with Enter', (tester) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Linked word\n');
     var markdown = parsed.source;
@@ -5249,6 +5334,40 @@ void main() {}
     expect(find.byType(TextField), findsNWidgets(2));
   });
 
+  testWidgets('WYSIWYG typing preserves an existing hard break', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Alpha  \nBeta\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Alpha\nBeta!');
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \nBeta!\n');
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
   testWidgets('WYSIWYG editor lazily builds large documents', (tester) async {
     final source = List.generate(
       500,
@@ -5765,6 +5884,48 @@ void main() {}
     );
   });
 
+  testWidgets('WYSIWYG table cells apply Markdown column alignment', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Center heading | Right heading |\n'
+          '| :---: | ---: |\n'
+          '| Center value | Right value |\n',
+    );
+    final rows = parsed.busyDocument.blocks.single.children;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkWysiwygEditor(
+            document: parsed.busyDocument,
+            onSourceChanged: (_, _) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    for (final row in rows) {
+      expect(
+        tester
+            .widget<TextField>(find.byKey(ValueKey(row.children[0].id)))
+            .textAlign,
+        TextAlign.center,
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(ValueKey(row.children[1].id)))
+            .textAlign,
+        TextAlign.right,
+      );
+    }
+  });
+
   testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -5862,9 +6023,17 @@ void main() {}
     expect(find.text('Alignment: Left'), findsOneWidget);
     expect(find.text('Alignment: Center'), findsOneWidget);
     expect(find.text('Alignment: Right'), findsOneWidget);
-    await tester.tap(find.text('Alignment: Left'));
+    await tester.tap(find.text('Alignment: Center'));
     await tester.pumpAndSettle();
-    expect(markdown, contains('| :--- | --- |'));
+    expect(markdown, contains('| :---: | --- |'));
+    expect(
+      tester.widget<TextField>(find.byKey(ValueKey(headerCellId))).textAlign,
+      TextAlign.center,
+    );
+    expect(
+      tester.widget<TextField>(find.byKey(ValueKey(bodyCellId))).textAlign,
+      TextAlign.center,
+    );
 
     await tester.tap(deleteTableFinder);
     await tester.pump();

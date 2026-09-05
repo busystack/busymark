@@ -36,6 +36,7 @@ import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -1532,6 +1533,16 @@ void main() {
     expect(find.text(l10n.aboutTagline), findsOneWidget);
     expect(find.text(busyMarkAppVersion), findsOneWidget);
     expect(find.textContaining('Version'), findsNothing);
+    final versionTag = find.byKey(const ValueKey('about-version-tag'));
+    expect(versionTag, findsOneWidget);
+    final versionTagTheme = Theme.of(tester.element(versionTag));
+    final versionTagDecoration =
+        tester.widget<DecoratedBox>(versionTag).decoration as BoxDecoration;
+    expect(versionTagDecoration.color, versionTagTheme.colorScheme.primary);
+    expect(
+      tester.widget<Text>(find.text(busyMarkAppVersion)).style?.color,
+      versionTagTheme.colorScheme.onPrimary,
+    );
     expect(
       find.ancestor(
         of: find.text(busyMarkAppVersion),
@@ -4017,6 +4028,273 @@ void main() {
     expect(service.savedText, '# Edited Introduction\n');
   });
 
+  testWidgets('Source groups typing and deletion undo with historical carets', (
+    tester,
+  ) async {
+    const source = 'abc';
+    const startupPath = '/tmp/source-grouped-undo.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    await tester.tap(sourceField);
+    await tester.showKeyboard(sourceField);
+    final textController = tester.widget<TextField>(sourceField).controller!;
+    textController.selection = const TextSelection.collapsed(offset: 1);
+    await tester.pump();
+
+    for (final (text, caret) in const [
+      ('awbc', 2),
+      ('awobc', 3),
+      ('aworbc', 4),
+      ('awordbc', 5),
+    ]) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: caret),
+        ),
+      );
+      await tester.pump();
+    }
+
+    final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(buffer.editorState.undoState.undo.map((state) => state.text), [
+      source,
+    ]);
+    expect(buffer.text, 'awordbc');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, source);
+    expect(textController.selection, const TextSelection.collapsed(offset: 1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, 'awordbc');
+    expect(textController.selection, const TextSelection.collapsed(offset: 5));
+
+    for (final (text, caret) in const [('aworbc', 4), ('awobc', 3)]) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: caret),
+        ),
+      );
+      await tester.pump();
+    }
+
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .map((state) => state.text),
+      [source, 'awordbc'],
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, 'awordbc');
+    expect(textController.selection, const TextSelection.collapsed(offset: 5));
+
+    textController.selection = const TextSelection.collapsed(offset: 1);
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'aXwordbc',
+        selection: TextSelection.collapsed(offset: 2),
+      ),
+    );
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'aXYZwordbc',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .map((state) => state.text),
+      [source, 'awordbc', 'aXwordbc'],
+    );
+
+    for (final (text, caret) in const [('aXwordbc', 2), ('awordbc', 1)]) {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(textController.text, text);
+      expect(textController.selection, TextSelection.collapsed(offset: caret));
+    }
+  });
+
+  testWidgets('Source remount starts a distinct undo group', (tester) async {
+    const source = 'abc';
+    const startupPath = '/tmp/source-remount-undo.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    Finder sourceField() => find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+
+    await tester.tap(sourceField());
+    await tester.showKeyboard(sourceField());
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcd',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+    final firstGroup = container
+        .read(workspaceControllerProvider)
+        .activeBuffer!
+        .editorState
+        .undoState
+        .activeGroup;
+    expect(firstGroup, isNotNull);
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.preview);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(BusyMarkSourceEditor), findsNothing);
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveEditorMode(DocumentViewModePreference.source);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var index = 0; index < 10; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.tap(sourceField());
+    await tester.showKeyboard(sourceField());
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcde',
+        selection: TextSelection.collapsed(offset: 5),
+      ),
+    );
+    await tester.pump();
+
+    final remountedBuffer = container
+        .read(workspaceControllerProvider)
+        .activeBuffer!;
+    expect(
+      remountedBuffer.editorState.undoState.activeGroup,
+      isNot(firstGroup),
+    );
+    expect(
+      remountedBuffer.editorState.undoState.undo.map((state) => state.text),
+      [source, 'abcd'],
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    final remountedController = tester
+        .widget<TextField>(sourceField())
+        .controller!;
+    expect(remountedController.text, 'abcd');
+    expect(remountedController.selection.isCollapsed, isTrue);
+    expect(remountedController.selection.extentOffset, 4);
+  });
+
   testWidgets('source view supports editor formatting shortcuts', (
     tester,
   ) async {
@@ -6475,6 +6753,186 @@ Draft paragraph.
     );
   });
 
+  testWidgets('Reading opens an unindexed sibling document link', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final directory = Directory.systemTemp.createTempSync(
+      'busymark_reading_sibling_link_',
+    );
+    addTearDown(() {
+      directory.deleteSync(recursive: true);
+    });
+    final readme = File(p.join(directory.path, 'README.md'))
+      ..writeAsStringSync('[Open guide](guide.md)\n');
+    final guide = File(p.join(directory.path, 'guide.md'))
+      ..writeAsStringSync('# Sibling guide\n');
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.runAsync(() async {
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .waitUntilLoaded();
+      await container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(readme.path);
+    });
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Open guide').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final initialWorkspace = container
+        .read(workspaceControllerProvider)
+        .workspace!;
+    expect(initialWorkspace.kind, WorkspaceKind.singleMarkdown);
+    expect(initialWorkspace.files.map((file) => file.absolutePath), [
+      readme.path,
+    ]);
+    expect(
+      find.byKey(const ValueKey('preview-document-scroll')),
+      findsOneWidget,
+    );
+
+    final linkText = tester.widget<Text>(find.text('Open guide'));
+    final linkRecognizer = _firstTapRecognizer(linkText.textSpan!);
+    expect(linkRecognizer?.onTap, isNotNull);
+    await tester.runAsync(() async {
+      linkRecognizer!.onTap!();
+      for (var index = 0; index < 100; index += 1) {
+        if (container
+                .read(workspaceControllerProvider)
+                .workspace
+                ?.activeFilePath ==
+            guide.path) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    });
+    await tester.pump();
+
+    expect(find.text(l10n.linkTargetNotFound('guide.md')), findsNothing);
+    expect(find.text(l10n.cannotOpenFileTypeInEditor), findsNothing);
+    expect(container.read(workspaceControllerProvider).message, isNull);
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      guide.path,
+    );
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Sibling guide\n',
+    );
+  });
+
+  testWidgets('Reading linked block and inline images open their targets', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    const rootPath = '/tmp/busymark-linked-images';
+    const readmePath = '$rootPath/README.md';
+    const blockTargetPath = '$rootPath/block-guide.md';
+    const inlineTargetPath = '$rootPath/inline-guide.md';
+    const source = '''
+[![Block logo](block-logo.png)](block-guide.md)
+
+Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
+''';
+    final parsed = const MarkdownParser().parse(
+      filePath: readmePath,
+      source: source,
+    );
+    final workspace = Workspace(
+      id: readmePath,
+      rootPath: rootPath,
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: readmePath,
+      openFilePaths: const [readmePath],
+      files: [
+        for (final path in const [
+          readmePath,
+          blockTargetPath,
+          inlineTargetPath,
+        ])
+          DocumentFile(
+            absolutePath: path,
+            relativePath: p.basename(path),
+            kind: DocumentKind.markdown,
+            size: 1,
+            lastModified: DateTime(2026),
+          ),
+      ],
+      diagnostics: parsed.diagnostics,
+      markdown: parsed,
+    );
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        activeText: source,
+        preview: const MarkdownPreviewBuilder().build(parsed),
+      ),
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MarkdownImageView), findsNWidgets(2));
+    for (final (destination, expectedPath) in const [
+      ('block-guide.md', blockTargetPath),
+      ('inline-guide.md', inlineTargetPath),
+    ]) {
+      await tester.tap(
+        find.byKey(ValueKey('preview-linked-image-$destination')),
+      );
+      await tester.pump();
+      expect(controller.openedFilePath, expectedPath);
+    }
+  });
+
   testWidgets('new empty document leaves remembered preview mode for editor', (
     tester,
   ) async {
@@ -7221,7 +7679,10 @@ Draft paragraph.
       final service = _DeferredWorkspaceSearchService();
       final settingsStore = _MemorySettingsStore()
         ..value = AppSettings.defaults()
-            .copyWith(documentViewMode: DocumentViewModePreference.preview)
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.preview,
+            )
             .toJson();
       final container = ProviderContainer(
         overrides: [
@@ -7280,6 +7741,34 @@ Draft paragraph.
 
       expect(service.searchReadCount, 1);
       expect(find.text('Delayed needle result'), findsOneWidget);
+
+      final activeBuffer = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateDocumentEditorState(
+            activeBuffer.id,
+            activeBuffer.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 3),
+              scrollOffset: 24,
+            ),
+          );
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(service.searchReadCount, 1);
+      expect(find.text('Delayed needle result'), findsOneWidget);
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(
+            '# Active needle document\n',
+            sourceFilePath: _DeferredWorkspaceSearchService.activePath,
+          );
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump();
+
+      expect(service.searchReadCount, 2);
     },
   );
 
@@ -7759,6 +8248,49 @@ Draft paragraph.
     expect(find.textContaining('<table>'), findsNothing);
   });
 
+  testWidgets('Reading applies Markdown table column alignment', (
+    tester,
+  ) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '| Center heading | Right heading |\n'
+      '| :---: | ---: |\n'
+      '| Center value | Right value |\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/aligned-table.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Center heading').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    for (final text in const ['Center heading', 'Center value']) {
+      expect(tester.widget<Text>(find.text(text)).textAlign, TextAlign.center);
+    }
+    for (final text in const ['Right heading', 'Right value']) {
+      expect(tester.widget<Text>(find.text(text)).textAlign, TextAlign.right);
+    }
+  });
+
   testWidgets('preview search result click lands on code block line', (
     tester,
   ) async {
@@ -8162,6 +8694,23 @@ String _fsrsReadmeSearchSource() {
   ].join('\n');
 }
 
+TapGestureRecognizer? _firstTapRecognizer(InlineSpan span) {
+  if (span is! TextSpan) {
+    return null;
+  }
+  final recognizer = span.recognizer;
+  if (recognizer is TapGestureRecognizer) {
+    return recognizer;
+  }
+  for (final child in span.children ?? const <InlineSpan>[]) {
+    final nested = _firstTapRecognizer(child);
+    if (nested != null) {
+      return nested;
+    }
+  }
+  return null;
+}
+
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
   _FallbackHeaderBarService()
     : super(channel: const MethodChannel('test.busymark/headerbar'));
@@ -8188,6 +8737,7 @@ class _MutableWorkspaceController extends WorkspaceController {
   WritersideTopicRemovalMode? analyzedRemovalMode;
   String? selectedWritersideModuleId;
   String? selectedWritersideInstanceId;
+  String? openedFilePath;
 
   @override
   WorkspaceState build() => initialState;
@@ -8310,7 +8860,10 @@ class _MutableWorkspaceController extends WorkspaceController {
   }
 
   @override
-  Future<bool> openActiveFile(String path) async => true;
+  Future<bool> openActiveFile(String path) async {
+    openedFilePath = path;
+    return true;
+  }
 
   void replaceWorkspace(Workspace workspace) {
     state = state.copyWith(workspace: workspace);

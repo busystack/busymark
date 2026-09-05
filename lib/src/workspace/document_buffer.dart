@@ -12,34 +12,56 @@ const Object _bufferUnset = Object();
 
 enum DocumentDiskState { present, changed, deleted, conflict }
 
+class DocumentHistoryState {
+  const DocumentHistoryState({required this.text, required this.selection});
+
+  final String text;
+  final TextSelection selection;
+}
+
 class DocumentUndoState {
-  const DocumentUndoState({this.undo = const [], this.redo = const []});
+  const DocumentUndoState({
+    this.undo = const [],
+    this.redo = const [],
+    this.activeGroup,
+  });
 
   static const historyLimit = 100;
 
-  final List<String> undo;
-  final List<String> redo;
+  final List<DocumentHistoryState> undo;
+  final List<DocumentHistoryState> redo;
+  final String? activeGroup;
 
-  DocumentUndoState push(String text) => DocumentUndoState(
-    undo: List.unmodifiable(
-      [...undo, text].skip(math.max(0, undo.length + 1 - historyLimit)),
-    ),
-    redo: const [],
-  );
+  DocumentUndoState push(DocumentHistoryState state, {String? group}) {
+    if (group != null && group == activeGroup && undo.isNotEmpty) {
+      return DocumentUndoState(undo: undo, redo: const [], activeGroup: group);
+    }
+    return DocumentUndoState(
+      undo: List.unmodifiable(
+        [...undo, state].skip(math.max(0, undo.length + 1 - historyLimit)),
+      ),
+      redo: const [],
+      activeGroup: group,
+    );
+  }
 
-  DocumentUndoState afterUndo(String currentText) => DocumentUndoState(
-    undo: List.unmodifiable(undo.take(undo.length - 1)),
-    redo: List.unmodifiable(
-      [...redo, currentText].skip(math.max(0, redo.length + 1 - historyLimit)),
-    ),
-  );
+  DocumentUndoState afterUndo(DocumentHistoryState current) =>
+      DocumentUndoState(
+        undo: List.unmodifiable(undo.take(undo.length - 1)),
+        redo: List.unmodifiable(
+          [...redo, current].skip(math.max(0, redo.length + 1 - historyLimit)),
+        ),
+        activeGroup: null,
+      );
 
-  DocumentUndoState afterRedo(String currentText) => DocumentUndoState(
-    undo: List.unmodifiable(
-      [...undo, currentText].skip(math.max(0, undo.length + 1 - historyLimit)),
-    ),
-    redo: List.unmodifiable(redo.take(redo.length - 1)),
-  );
+  DocumentUndoState afterRedo(DocumentHistoryState current) =>
+      DocumentUndoState(
+        undo: List.unmodifiable(
+          [...undo, current].skip(math.max(0, undo.length + 1 - historyLimit)),
+        ),
+        redo: List.unmodifiable(redo.take(redo.length - 1)),
+        activeGroup: null,
+      );
 }
 
 class DocumentEditorState {
@@ -50,7 +72,6 @@ class DocumentEditorState {
     this.foldedRegionKeys = const {},
     this.searchOptions = const SourceSearchOptions(),
     this.searchReplacement = '',
-    this.searchCurrentMatchIndex,
     this.undoState = const DocumentUndoState(),
     this.wysiwygState = const WysiwygEditorSessionState(),
   });
@@ -61,7 +82,6 @@ class DocumentEditorState {
   final Set<String> foldedRegionKeys;
   final SourceSearchOptions searchOptions;
   final String searchReplacement;
-  final int? searchCurrentMatchIndex;
   final DocumentUndoState undoState;
   final WysiwygEditorSessionState wysiwygState;
 
@@ -72,7 +92,6 @@ class DocumentEditorState {
     Set<String>? foldedRegionKeys,
     SourceSearchOptions? searchOptions,
     String? searchReplacement,
-    Object? searchCurrentMatchIndex = _bufferUnset,
     DocumentUndoState? undoState,
     WysiwygEditorSessionState? wysiwygState,
   }) {
@@ -85,9 +104,6 @@ class DocumentEditorState {
       ),
       searchOptions: searchOptions ?? this.searchOptions,
       searchReplacement: searchReplacement ?? this.searchReplacement,
-      searchCurrentMatchIndex: identical(searchCurrentMatchIndex, _bufferUnset)
-          ? this.searchCurrentMatchIndex
-          : searchCurrentMatchIndex as int?,
       undoState: undoState ?? this.undoState,
       wysiwygState: wysiwygState ?? this.wysiwygState,
     );
@@ -104,7 +120,6 @@ class DocumentEditorState {
     'searchWholeWord': searchOptions.wholeWord,
     'searchRegex': searchOptions.regex,
     'searchReplacement': searchReplacement,
-    'searchCurrentMatchIndex': searchCurrentMatchIndex,
     'wysiwygState': wysiwygState.toJson(),
   };
 
@@ -131,8 +146,6 @@ class DocumentEditorState {
         regex: json['searchRegex'] as bool? ?? false,
       ),
       searchReplacement: json['searchReplacement']?.toString() ?? '',
-      searchCurrentMatchIndex: (json['searchCurrentMatchIndex'] as num?)
-          ?.toInt(),
       wysiwygState: WysiwygEditorSessionState.fromJson(
         (json['wysiwygState'] as Map?)?.cast<String, Object?>() ?? const {},
       ),
@@ -216,17 +229,34 @@ class DocumentBuffer {
   String get identity => filePath ?? id;
   String get displayName => untitledName ?? filePath?.split('/').last ?? id;
 
-  DocumentBuffer edited(String nextText) {
+  DocumentBuffer edited(
+    String nextText, {
+    String? undoGroup,
+    TextSelection? previousSelection,
+    TextSelection? nextSelection,
+  }) {
     if (nextText == text) {
       return this;
     }
+    final historicalSelection = _selectionForText(
+      previousSelection ?? editorState.selection,
+      text,
+    );
+    final updatedSelection = _selectionForText(
+      nextSelection ?? editorState.selection,
+      nextText,
+    );
     return copyWith(
       text: nextText,
       dirty: nextText != lastSavedText || isUntitled,
       format: format.copyWith(hasFinalNewline: nextText.endsWith('\n')),
       revision: revision + 1,
       editorState: editorState.copyWith(
-        undoState: editorState.undoState.push(text),
+        selection: updatedSelection,
+        undoState: editorState.undoState.push(
+          DocumentHistoryState(text: text, selection: historicalSelection),
+          group: undoGroup,
+        ),
       ),
     );
   }
@@ -273,4 +303,14 @@ class DocumentBuffer {
       recovered: recovered ?? this.recovered,
     );
   }
+}
+
+TextSelection _selectionForText(TextSelection selection, String text) {
+  if (!selection.isValid) {
+    return TextSelection.collapsed(offset: text.length);
+  }
+  return selection.copyWith(
+    baseOffset: selection.baseOffset.clamp(0, text.length).toInt(),
+    extentOffset: selection.extentOffset.clamp(0, text.length).toInt(),
+  );
 }

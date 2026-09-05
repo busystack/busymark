@@ -76,6 +76,64 @@ void main() {
     expect(find.textContaining('```MerMAID'), findsOneWidget);
   });
 
+  testWidgets('fits a small Mermaid diagram to the preview width', (
+    tester,
+  ) async {
+    final coordinator = VisualizationCoordinator(
+      renderers: const [_CardRenderer()],
+      cache: _MemoryVisualizationCache(cacheDirectory),
+    );
+    addTearDown(coordinator.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          visualizationCoordinatorProvider.overrideWithValue(coordinator),
+        ],
+        child: _App(child: _CardHarness(onDiagnosticSelected: (_) {})),
+      ),
+    );
+    await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+    final renderedBounds = tester.getRect(find.byType(SvgPicture));
+    expect(renderedBounds.width, greaterThan(700));
+    expect(renderedBounds.height, greaterThan(140));
+  });
+
+  testWidgets('keeps a wide Mermaid diagram readable until fit is requested', (
+    tester,
+  ) async {
+    final coordinator = VisualizationCoordinator(
+      renderers: const [_CardRenderer()],
+      cache: _MemoryVisualizationCache(cacheDirectory),
+    );
+    addTearDown(coordinator.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          visualizationCoordinatorProvider.overrideWithValue(coordinator),
+        ],
+        child: _App(
+          child: _CardHarness(
+            initialSource: 'wide diagram',
+            onDiagnosticSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+    await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+    expect(tester.getRect(find.byType(SvgPicture)).width, closeTo(1200, 0.1));
+
+    await tester.tap(find.byTooltip('Fit to width'));
+    await tester.pump();
+
+    final fittedBounds = tester.getRect(find.byType(SvgPicture));
+    expect(fittedBounds.width, greaterThan(700));
+    expect(fittedBounds.width, lessThan(800));
+  });
+
   testWidgets(
     'shows searchable OpenAPI operations and opens the native reference',
     (tester) async {
@@ -158,17 +216,28 @@ class _App extends StatelessWidget {
 }
 
 class _CardHarness extends StatefulWidget {
-  const _CardHarness({super.key, required this.onDiagnosticSelected});
+  const _CardHarness({
+    super.key,
+    required this.onDiagnosticSelected,
+    this.initialSource = 'graph TD; A-->B',
+  });
 
   final ValueChanged<int> onDiagnosticSelected;
+  final String initialSource;
 
   @override
   State<_CardHarness> createState() => _CardHarnessState();
 }
 
 class _CardHarnessState extends State<_CardHarness> {
-  var source = 'graph TD; A-->B';
+  late String source;
   var revision = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    source = widget.initialSource;
+  }
 
   void updateSource(String value) {
     setState(() {
@@ -291,11 +360,19 @@ class _CardRenderer implements VisualizationRenderer {
         ],
       );
     }
+    if (request.source.contains('wide')) {
+      return const SvgVisualizationResult(
+        svg:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 80"><rect width="1200" height="80"/></svg>',
+        width: 1200,
+        height: 80,
+      );
+    }
     return const SvgVisualizationResult(
       svg:
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10"/></svg>',
-      width: 10,
-      height: 10,
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80"><rect width="400" height="80"/></svg>',
+      width: 400,
+      height: 80,
     );
   }
 }

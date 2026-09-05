@@ -11,10 +11,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.3\.3$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.3\.4$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.3\.3"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.3\.4"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -39,9 +39,9 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.3.3"'));
-    expect(pubspec, isNot(contains('0.3.34')));
-    expect(snapcraft, isNot(contains('0.3.34')));
+    expect(metainfo, contains('<release version="0.3.4"'));
+    expect(pubspec, isNot(contains('0.3.44')));
+    expect(snapcraft, isNot(contains('0.3.44')));
   });
 
   test(
@@ -59,6 +59,9 @@ void main() {
       ).readAsStringSync();
       final webBuild = File(
         'tools/visualization/build_render_engines.js',
+      ).readAsStringSync();
+      final webEngines = File(
+        'tools/visualization/render_engines.js',
       ).readAsStringSync();
       final cmake = File('linux/CMakeLists.txt').readAsStringSync();
 
@@ -98,6 +101,10 @@ void main() {
       expect(
         webBuild,
         contains("path.join(mermaidSource, 'src', 'mermaid.ts')"),
+      );
+      expect(
+        webEngines,
+        contains("svg.style.setProperty('max-width', 'none', 'important')"),
       );
       expect(cmake, contains('share/busymark/visualization'));
       expect(cmake, contains('bootstrap.js'));
@@ -152,6 +159,9 @@ void main() {
     expect(workflow, contains('tools/visualization_smoke.py'));
     expect(workflow, contains('GDK_BACKEND=wayland'));
     expect(workflow, contains('snapcore/action-build@v1'));
+    expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
+    expect(workflow, contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}'));
+    expect(workflow, contains('steps.snap-artifact.outputs.snap'));
     expect(workflow, contains('sudo snap install --dangerous'));
     expect(workflow, isNot(contains('--dangerous --classic')));
     expect(workflow, contains('snap run busymark'));
@@ -161,6 +171,8 @@ void main() {
     final smoke = File('tools/visualization_smoke.py').readAsStringSync();
     expect(smoke, contains('terminate_web_process'));
     expect(smoke, contains('WebKit process termination and recovery'));
+    expect(smoke, contains('smoke-responsive-gradient'));
+    expect(smoke, contains('Raster snapshot lacked visual variation'));
   });
 
   test(

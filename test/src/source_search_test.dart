@@ -33,6 +33,25 @@ void main() {
     );
   });
 
+  test('whole-word boundaries recognize Unicode letters and marks', () {
+    final cyrillic = searchSourceDocument(
+      SourceDocument(fullText: 'привет рив'),
+      const SourceSearchOptions(query: 'рив', wholeWord: true),
+    );
+    final combining = searchSourceDocument(
+      SourceDocument(fullText: 'cafe\u0301 fe'),
+      const SourceSearchOptions(query: 'fe', wholeWord: true),
+    );
+    final cjk = searchSourceDocument(
+      SourceDocument(fullText: '中文 文'),
+      const SourceSearchOptions(query: '文', wholeWord: true),
+    );
+
+    expect(cyrillic.matches.map((match) => match.fullStart), [7]);
+    expect(combining.matches.map((match) => match.fullStart), [6]);
+    expect(cjk.matches.map((match) => match.fullStart), [3]);
+  });
+
   test('regex search and invalid regex are safe', () {
     final document = SourceDocument(fullText: 'v1 v22 vx');
 
@@ -100,5 +119,55 @@ void main() {
       'topics/intro.md',
     ]);
     expect(results.expand((result) => result.matches), hasLength(2));
+  });
+
+  test('source search worker cancels stale requests', () async {
+    final worker = SourceSearchWorker();
+    addTearDown(worker.dispose);
+    final stale = worker.search(
+      SourceDocument(fullText: List.filled(10000, 'alpha').join(' ')),
+      const SourceSearchOptions(query: 'alpha'),
+    );
+    final current = worker.search(
+      SourceDocument(fullText: 'current result'),
+      const SourceSearchOptions(query: 'current'),
+    );
+
+    expect(await stale, isNull);
+    expect((await current)!.totalMatchCount, 1);
+  });
+
+  test('source search worker bounds transferred high-match results', () async {
+    final worker = SourceSearchWorker();
+    addTearDown(worker.dispose);
+    final source = List.filled(
+      sourceInteractiveSearchMatchLimit + 500,
+      'a',
+    ).join();
+
+    final firstWindow = await worker.search(
+      SourceDocument(fullText: source),
+      const SourceSearchOptions(query: 'a'),
+    );
+
+    expect(firstWindow, isNotNull);
+    expect(firstWindow!.totalMatchCount, source.length);
+    expect(firstWindow.matches, hasLength(sourceInteractiveSearchMatchLimit));
+    expect(firstWindow.firstMatchIndex, 0);
+
+    final nextWindow = await worker.search(
+      SourceDocument(fullText: source),
+      const SourceSearchOptions(query: 'a'),
+      currentMatchIndex: sourceInteractiveSearchMatchLimit,
+      firstMatchIndex: sourceInteractiveSearchMatchLimit,
+    );
+    expect(nextWindow, isNotNull);
+    expect(nextWindow!.totalMatchCount, source.length);
+    expect(nextWindow.firstMatchIndex, sourceInteractiveSearchMatchLimit);
+    expect(
+      nextWindow.currentMatch?.fullStart,
+      sourceInteractiveSearchMatchLimit,
+    );
+    expect(nextWindow.matches, hasLength(500));
   });
 }

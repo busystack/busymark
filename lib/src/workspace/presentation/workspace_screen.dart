@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,7 @@ import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
+import '../../core/busymark_exception.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
@@ -159,15 +161,32 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
   _WorkspaceSearchState build() {
     _loadText = ref.read(workspaceServiceProvider).loadText;
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
-      if (previous?.activeBufferId != next.activeBufferId) {
+      final activeBufferChanged =
+          previous?.activeBufferId != next.activeBufferId;
+      var shouldRefresh = _workspaceSearchInputsChanged(previous, next);
+      if (activeBufferChanged) {
         final options = next.activeBuffer?.editorState.searchOptions;
         if (options != null) {
           state = state
               .withOptions(options)
               .copyWith(matches: const [], searching: false);
         }
+      } else {
+        final previousOptions =
+            previous?.activeBuffer?.editorState.searchOptions;
+        final nextOptions = next.activeBuffer?.editorState.searchOptions;
+        if (nextOptions != null &&
+            previousOptions != nextOptions &&
+            !_sameSourceSearchOptions(state.options, nextOptions)) {
+          state = state
+              .withOptions(nextOptions)
+              .copyWith(matches: const [], searching: false);
+          shouldRefresh = true;
+        }
       }
-      refresh(next);
+      if (shouldRefresh) {
+        refresh(next);
+      }
     });
     ref.onDispose(() {
       _disposed = true;
@@ -416,6 +435,56 @@ bool _sameSourceSearchOptions(
       first.caseSensitive == second.caseSensitive &&
       first.wholeWord == second.wholeWord &&
       first.regex == second.regex;
+}
+
+bool _workspaceSearchInputsChanged(
+  WorkspaceState? previous,
+  WorkspaceState next,
+) {
+  if (previous == null ||
+      previous.activeBufferId != next.activeBufferId ||
+      previous.activeText != next.activeText) {
+    return true;
+  }
+  final previousWorkspace = previous.workspace;
+  final nextWorkspace = next.workspace;
+  if (identical(previousWorkspace, nextWorkspace)) {
+    return false;
+  }
+  if (previousWorkspace == null || nextWorkspace == null) {
+    return previousWorkspace != nextWorkspace;
+  }
+  final previousActivePath =
+      previousWorkspace.activeFilePath ?? previousWorkspace.markdown?.filePath;
+  final nextActivePath =
+      nextWorkspace.activeFilePath ?? nextWorkspace.markdown?.filePath;
+  return previousActivePath != nextActivePath ||
+      !_sameWorkspaceSearchFiles(previousWorkspace.files, nextWorkspace.files);
+}
+
+bool _sameWorkspaceSearchFiles(
+  List<DocumentFile> first,
+  List<DocumentFile> second,
+) {
+  final firstSearchable = first.where(_isOpenableTextDocument).toList()
+    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
+  final secondSearchable = second.where(_isOpenableTextDocument).toList()
+    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
+  if (firstSearchable.length != secondSearchable.length) {
+    return false;
+  }
+  for (var index = 0; index < firstSearchable.length; index++) {
+    final left = firstSearchable[index];
+    final right = secondSearchable[index];
+    if (left.absolutePath != right.absolutePath ||
+        left.relativePath != right.relativePath ||
+        left.kind != right.kind ||
+        left.size != right.size ||
+        left.lastModified != right.lastModified) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class _SearchNavigationTarget {
@@ -9518,6 +9587,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
+  BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
 
   @override
@@ -9548,25 +9618,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _wysiwygScrollHeadingId = null;
       _wysiwygScrollBlockId = null;
       _wysiwygSearchQuery = null;
+      _wysiwygSearchRange = null;
       _wysiwygScrollRequest = 0;
-    }
-    if (oldWidget.viewMode == DocumentViewModePreference.editor &&
-        widget.viewMode != DocumentViewModePreference.editor &&
-        widget.state.workspace != null &&
-        widget.state.isDirty) {
-      final workspaceId = widget.state.workspace!.id;
-      final sourceFilePath = _activeEditorPath();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted ||
-            widget.viewMode == DocumentViewModePreference.editor ||
-            widget.state.workspace?.id != workspaceId ||
-            _activeEditorPath() != sourceFilePath) {
-          return;
-        }
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .refreshActivePreview(sourceFilePath: sourceFilePath);
-      });
     }
   }
 
@@ -9800,6 +9853,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           unawaited(_showRemoteImagesPrompt(context, ref)),
                       onDocumentChanged: _cacheWysiwygDocument,
                       onSourceChanged: _handleWysiwygSourceChanged,
+                      onTransactionalSourceChanged: _handleWysiwygSourceChanged,
                       toolbarPlacement: widget.editorToolbarPlacement,
                       toolbarDirection: widget.editorToolbarDirection,
                       onToolbarPlacementChanged: ref
@@ -9811,6 +9865,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       scrollToHeadingId: _wysiwygScrollHeadingId,
                       scrollToBlockId: _wysiwygScrollBlockId,
                       scrollToSearchQuery: _wysiwygSearchQuery,
+                      scrollToSourceRange: _wysiwygSearchRange,
                       scrollRequest: _wysiwygScrollRequest,
                       onVisibleHeadingChanged:
                           _handleWysiwygVisibleHeadingChanged,
@@ -9913,7 +9968,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                         candidate.id == activeBuffer.id,
                                   )
                                   .firstOrNull;
-                              if (latest == null) {
+                              if (latest == null ||
+                                  _sameSourceSession(
+                                    latest.editorState,
+                                    selection,
+                                    scrollOffset,
+                                    foldedRegionKeys,
+                                  )) {
                                 return;
                               }
                               ref
@@ -9935,21 +9996,40 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           .request(),
                       onVisibleLineChanged: _handleSourceVisibleLineChanged,
                       onChanged: _handleSourceChanged,
+                      onTransactionalChanged: _handleTransactionalSourceChanged,
                       onUndo: () {
                         final controller = ref.read(
                           workspaceControllerProvider.notifier,
                         );
-                        return controller.undoActiveBuffer()
-                            ? ref.read(workspaceControllerProvider).activeText
-                            : null;
+                        if (!controller.undoActiveBuffer()) {
+                          return null;
+                        }
+                        final buffer = ref
+                            .read(workspaceControllerProvider)
+                            .activeBuffer;
+                        return buffer == null
+                            ? null
+                            : TextEditingValue(
+                                text: buffer.text,
+                                selection: buffer.editorState.selection,
+                              );
                       },
                       onRedo: () {
                         final controller = ref.read(
                           workspaceControllerProvider.notifier,
                         );
-                        return controller.redoActiveBuffer()
-                            ? ref.read(workspaceControllerProvider).activeText
-                            : null;
+                        if (!controller.redoActiveBuffer()) {
+                          return null;
+                        }
+                        final buffer = ref
+                            .read(workspaceControllerProvider)
+                            .activeBuffer;
+                        return buffer == null
+                            ? null
+                            : TextEditingValue(
+                                text: buffer.text,
+                                selection: buffer.editorState.selection,
+                              );
                       },
                       editRevision: ref
                           .read(workspaceControllerProvider.notifier)
@@ -10119,7 +10199,34 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .updateActiveText(value, sourceFilePath: sourceFilePath ?? activePath);
   }
 
-  void _handleWysiwygSourceChanged(String filePath, String value) {
+  void _handleTransactionalSourceChanged(
+    String value,
+    String? sourceFilePath,
+    TextSelection previousSelection,
+    TextSelection selection,
+    String? undoGroup,
+  ) {
+    final activePath = _activeEditorPath();
+    if (sourceFilePath != null && sourceFilePath != activePath) {
+      return;
+    }
+    _clearWysiwygCache();
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveSourceText(
+          value,
+          sourceFilePath: sourceFilePath ?? activePath,
+          previousSelection: previousSelection,
+          selection: selection,
+          undoGroup: undoGroup,
+        );
+  }
+
+  void _handleWysiwygSourceChanged(
+    String filePath,
+    String value, [
+    String? undoGroup,
+  ]) {
     if (filePath != _activeEditorPath()) {
       return;
     }
@@ -10135,6 +10242,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       value,
       document: document,
       sourceFilePath: filePath,
+      undoGroup: undoGroup,
     );
   }
 
@@ -10201,6 +10309,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _wysiwygScrollHeadingId = target.headingId;
         _wysiwygScrollBlockId = target.editorBlockId;
         _wysiwygSearchQuery = null;
+        _wysiwygSearchRange = null;
         _wysiwygScrollRequest += 1;
       });
       if (target.line case final line?) {
@@ -10232,7 +10341,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         setState(() {
           _wysiwygScrollHeadingId = null;
           _wysiwygScrollBlockId = null;
-          _wysiwygSearchQuery = target.query;
+          _wysiwygSearchQuery = null;
+          _wysiwygSearchRange = BusyMarkWysiwygSourceRange(
+            startOffset: target.startOffset,
+            endOffset: target.endOffset,
+          );
           _wysiwygScrollRequest += 1;
         });
       }
@@ -10568,12 +10681,24 @@ bool _sameWysiwygSession(
   WysiwygEditorSessionState right,
 ) {
   return left.activeBlockId == right.activeBlockId &&
+      left.activeCellId == right.activeCellId &&
       left.anchorBlockId == right.anchorBlockId &&
       left.anchorOffset == right.anchorOffset &&
       left.extentBlockId == right.extentBlockId &&
       left.extentOffset == right.extentOffset &&
       left.viewportBlockId == right.viewportBlockId &&
       (left.viewportAlignment - right.viewportAlignment).abs() < 0.001;
+}
+
+bool _sameSourceSession(
+  DocumentEditorState current,
+  TextSelection selection,
+  double scrollOffset,
+  Set<String> foldedRegionKeys,
+) {
+  return current.selection == selection &&
+      (current.scrollOffset - scrollOffset).abs() < 0.01 &&
+      setEquals(current.foldedRegionKeys, foldedRegionKeys);
 }
 
 class _ExternalFileBanner extends StatelessWidget {
@@ -11492,6 +11617,9 @@ class _PreviewTable extends StatelessWidget {
                           ? _PreviewInlineText(
                               block: row.children[index],
                               editRevision: editRevision,
+                              textAlign: _previewTableCellTextAlign(
+                                row.children[index].attributes['align'],
+                              ),
                               style: row.attributes['header'] == 'true'
                                   ? busyMarkDocumentBodyTextStyle(
                                       context,
@@ -11514,11 +11642,13 @@ class _PreviewInlineText extends ConsumerWidget {
     super.key,
     required this.block,
     this.style,
+    this.textAlign = TextAlign.start,
     this.editRevision = 0,
   });
 
   final PreviewBlock block;
   final TextStyle? style;
+  final TextAlign textAlign;
   final int editRevision;
 
   @override
@@ -11568,9 +11698,19 @@ class _PreviewInlineText extends ConsumerWidget {
               ),
           ],
         ),
+        textAlign: textAlign,
       ),
     );
   }
+}
+
+TextAlign _previewTableCellTextAlign(String? value) {
+  return switch (busyTableAlignmentFromAttribute(value)) {
+    BusyTableAlignment.unspecified => TextAlign.start,
+    BusyTableAlignment.left => TextAlign.left,
+    BusyTableAlignment.center => TextAlign.center,
+    BusyTableAlignment.right => TextAlign.right,
+  };
 }
 
 String _previewBlockSearchText(PreviewBlock block) {
@@ -11900,6 +12040,10 @@ class _PreviewImageBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final width = busyMarkDocumentImageWidth(block.attributes);
     final source = _previewImageSource(block);
+    final linkDestination = _previewImageLinkDestination(block);
+    final followLink = linkDestination == null
+        ? null
+        : () => unawaited(_openPreviewLink(context, ref, linkDestination));
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     final settings = ref.watch(appSettingsControllerProvider);
@@ -11914,19 +12058,24 @@ class _PreviewImageBlock extends ConsumerWidget {
         ),
         child: Align(
           alignment: AlignmentDirectional.centerStart,
-          child: MarkdownImageView(
-            source: source,
-            alt: block.text,
-            activeFilePath: activeFilePath ?? '',
-            workspaceRoot: _imageWorkspaceRoot(workspace),
-            writersideRoot: workspace?.writersideModule?.rootPath,
-            imagesDir:
-                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-            allowRemoteImages: allowRemoteImages,
-            onRemoteImageBlocked: () =>
-                unawaited(_showRemoteImagesPrompt(context, ref)),
-            width: width,
-            maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+          child: _previewLinkedImage(
+            destination: linkDestination,
+            onTap: followLink,
+            child: MarkdownImageView(
+              source: source,
+              alt: block.text,
+              activeFilePath: activeFilePath ?? '',
+              workspaceRoot: _imageWorkspaceRoot(workspace),
+              writersideRoot: workspace?.writersideModule?.rootPath,
+              imagesDir:
+                  workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked:
+                  followLink ??
+                  () => unawaited(_showRemoteImagesPrompt(context, ref)),
+              width: width,
+              maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+            ),
           ),
         ),
       ),
@@ -12024,6 +12173,61 @@ String? _previewImageSourceFromInline(PreviewInline inline) {
     }
   }
   return null;
+}
+
+String? _previewImageLinkDestination(PreviewBlock block) {
+  for (final inline in block.inlines) {
+    final destination = _previewImageLinkDestinationFromInline(inline);
+    if (destination != null) {
+      return destination;
+    }
+  }
+  return null;
+}
+
+String? _previewImageLinkDestinationFromInline(
+  PreviewInline inline, {
+  String? inheritedDestination,
+}) {
+  final destination = inline.kind == PreviewInlineKind.link
+      ? (inline.destination ?? inline.text).trim()
+      : inheritedDestination;
+  if (inline.kind == PreviewInlineKind.image) {
+    return destination == null || destination.isEmpty ? null : destination;
+  }
+  for (final child in inline.children) {
+    final imageDestination = _previewImageLinkDestinationFromInline(
+      child,
+      inheritedDestination: destination,
+    );
+    if (imageDestination != null) {
+      return imageDestination;
+    }
+  }
+  return null;
+}
+
+Widget _previewLinkedImage({
+  required Widget child,
+  required String? destination,
+  required VoidCallback? onTap,
+}) {
+  if (destination == null || destination.isEmpty || onTap == null) {
+    return child;
+  }
+  return Semantics(
+    link: true,
+    onTap: onTap,
+    child: MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        key: ValueKey('preview-linked-image-$destination'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: child,
+      ),
+    ),
+  );
 }
 
 InlineSpan _previewInlineSpan(
@@ -12201,6 +12405,8 @@ InlineSpan _previewInlineSpan(
       workspace,
       allowRemoteImages: allowRemoteImages,
       onRemoteImageBlocked: onRemoteImageBlocked,
+      linkDestination: linkDestination,
+      onLinkTap: onLinkTap,
       style: mergeStyle(
         TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
       ),
@@ -12260,10 +12466,16 @@ InlineSpan _previewInlineImageSpan(
   Workspace? workspace, {
   required bool allowRemoteImages,
   required VoidCallback? onRemoteImageBlocked,
+  required String? linkDestination,
+  required Future<void> Function(String destination) onLinkTap,
   required TextStyle? style,
 }) {
   final activeFilePath =
       workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+  final destination = linkDestination?.trim();
+  final followLink = destination == null || destination.isEmpty
+      ? null
+      : () => unawaited(onLinkTap(destination));
   return WidgetSpan(
     alignment: PlaceholderAlignment.middle,
     style: const TextStyle(
@@ -12274,19 +12486,23 @@ InlineSpan _previewInlineImageSpan(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(
         style: style,
-        child: MarkdownImageView(
-          source: inline.destination ?? '',
-          alt: inline.text,
-          activeFilePath: activeFilePath ?? '',
-          workspaceRoot: _imageWorkspaceRoot(workspace),
-          writersideRoot: workspace?.writersideModule?.rootPath,
-          imagesDir:
-              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: onRemoteImageBlocked,
-          maxWidth: BusyMarkSizes.previewMinWidth,
-          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
-          height: BusyMarkSizes.previewInlineImageHeight,
+        child: _previewLinkedImage(
+          destination: destination,
+          onTap: followLink,
+          child: MarkdownImageView(
+            source: inline.destination ?? '',
+            alt: inline.text,
+            activeFilePath: activeFilePath ?? '',
+            workspaceRoot: _imageWorkspaceRoot(workspace),
+            writersideRoot: workspace?.writersideModule?.rootPath,
+            imagesDir:
+                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: followLink ?? onRemoteImageBlocked,
+            maxWidth: BusyMarkSizes.previewMinWidth,
+            maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+            height: BusyMarkSizes.previewInlineImageHeight,
+          ),
         ),
       ),
     ),
@@ -12409,9 +12625,28 @@ Future<void> _openPreviewLink(
   final resolvedPath = p.normalize(
     p.join(p.dirname(activeFilePath), targetPath),
   );
-  final file = workspace.files
+  var file = workspace.files
       .where((file) => p.normalize(file.absolutePath) == resolvedPath)
       .firstOrNull;
+  if (file == null) {
+    try {
+      file = await ref
+          .read(workspaceServiceProvider)
+          .resolveWorkspaceDocument(workspace, resolvedPath);
+    } on BusyMarkException {
+      // Paths outside the workspace safety boundary are unavailable links.
+    } on FileSystemException {
+      // Missing and unreadable paths are unavailable links.
+    }
+    if (!context.mounted) {
+      return;
+    }
+    final currentWorkspace = ref.read(workspaceControllerProvider).workspace;
+    if (currentWorkspace?.id != workspace.id ||
+        currentWorkspace?.activeFilePath != activeFilePath) {
+      return;
+    }
+  }
   if (file == null) {
     if (context.mounted) {
       _showPreviewLinkMessage(
@@ -12427,10 +12662,13 @@ Future<void> _openPreviewLink(
     }
     return;
   }
-  if (workspace.activeFilePath != file.absolutePath) {
-    await ref
+  if (!p.equals(activeFilePath, file.absolutePath)) {
+    final opened = await ref
         .read(workspaceControllerProvider.notifier)
         .openActiveFile(file.absolutePath);
+    if (!opened) {
+      return;
+    }
     _clearGitDetailSelection(ref);
   }
   if (!context.mounted) {

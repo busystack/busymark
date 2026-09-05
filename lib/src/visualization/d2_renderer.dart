@@ -446,6 +446,7 @@ class D2VisualizationRenderer implements VisualizationRenderer {
           pngBytes: png,
           width: rasterSize.pixelWidth,
           height: rasterSize.pixelHeight,
+          pixelRatio: rasterSize.scale,
         );
       }
       return SvgVisualizationResult(
