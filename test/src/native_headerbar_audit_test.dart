@@ -552,6 +552,24 @@ void main() {
     expect(script, contains('the currently installed snap was not changed'));
   });
 
+  test('local snap builder uses the project Flutter toolchain', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(
+      RegExp(r'^  flutter: \d+\.\d+\.\d+$', multiLine: true).hasMatch(pubspec),
+      isTrue,
+    );
+    expect(script, contains('project_flutter_version'));
+    expect(script, contains('select_project_flutter'));
+    expect(script, contains('BUSYMARK_FLUTTER_BIN'));
+    expect(script, contains(r'--branch "$required_version"'));
+    expect(script, contains(r'"$FLUTTER_BIN" pub get --enforce-lockfile'));
+    expect(script, contains(r'"$FLUTTER_BIN" analyze --no-pub'));
+    expect(script, contains(r'"$FLUTTER_BIN" test --no-pub'));
+    expect(script, contains(r'"$FLUTTER_BIN" build linux --release --no-pub'));
+  });
+
   test('native headerbar uses the shared tooltip visuals', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
