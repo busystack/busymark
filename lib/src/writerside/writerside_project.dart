@@ -9,6 +9,7 @@ import 'writerside_document.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_schema.dart';
+import 'writerside_source_loader.dart';
 
 enum WritersideSymbolKind {
   module,
@@ -35,6 +36,8 @@ class WritersideSymbol {
     required this.moduleId,
     required this.filePath,
     this.span,
+    this.instanceCondition,
+    this.scopeSpan,
   });
 
   final String name;
@@ -43,6 +46,8 @@ class WritersideSymbol {
   final String moduleId;
   final String filePath;
   final SourceSpan? span;
+  final String? instanceCondition;
+  final SourceSpan? scopeSpan;
 }
 
 class WritersideReference {
@@ -54,6 +59,7 @@ class WritersideReference {
     required this.span,
     this.origin,
     this.sourceValue,
+    this.scopeReference,
   });
 
   final String value;
@@ -63,6 +69,7 @@ class WritersideReference {
   final SourceSpan span;
   final String? origin;
   final String? sourceValue;
+  final String? scopeReference;
 }
 
 class WritersideRenameEdit {
@@ -70,11 +77,13 @@ class WritersideRenameEdit {
     required this.filePath,
     required this.span,
     required this.replacement,
+    this.expectedText,
   });
 
   final String filePath;
   final SourceSpan span;
   final String replacement;
+  final String? expectedText;
 }
 
 class WritersideProjectIndex {
@@ -82,11 +91,13 @@ class WritersideProjectIndex {
     required this.symbols,
     required this.references,
     required this.diagnostics,
+    this.modulesById = const {},
   });
 
   final List<WritersideSymbol> symbols;
   final List<WritersideReference> references;
   final List<Diagnostic> diagnostics;
+  final Map<String, WritersideModule> modulesById;
 
   factory WritersideProjectIndex.build(
     List<WritersideModule> modules, {
@@ -136,7 +147,47 @@ class WritersideProjectIndex {
           );
         }
         final indexedElementIds = <String>{};
+        final parents = <WritersideElementNode, WritersideElementNode>{};
+        for (final parent in topic.document.elements) {
+          for (final child
+              in parent.children.whereType<WritersideElementNode>()) {
+            parents[child] = parent;
+          }
+        }
         for (final element in topic.document.elements) {
+          if (element.semanticKind == WritersideSemanticKind.variable) {
+            final name = element.attributes['name'];
+            final parent = parents[element];
+            if (name != null &&
+                parent?.semanticKind == WritersideSemanticKind.include) {
+              references.add(
+                WritersideReference(
+                  value: name,
+                  kind: WritersideSymbolKind.variable,
+                  moduleId: moduleId,
+                  filePath: topic.filePath,
+                  span: element.attributeSpans['name'] ?? element.span,
+                  sourceValue: name,
+                  origin: parent!.attributes['origin'],
+                  scopeReference:
+                      "${parent.attributes['from'] ?? ''}#${parent.attributes['element-id'] ?? ''}",
+                ),
+              );
+            } else if (name != null) {
+              symbols.add(
+                WritersideSymbol(
+                  name: name,
+                  qualifiedName: '$moduleId:${topic.id}:%$name%',
+                  kind: WritersideSymbolKind.variable,
+                  moduleId: moduleId,
+                  filePath: topic.filePath,
+                  span: element.attributeSpans['name'],
+                  scopeSpan: parent?.span ?? element.span,
+                  instanceCondition: element.attributes['instance'],
+                ),
+              );
+            }
+          }
           final id = element.attributes['id']?.trim();
           if (id != null && id.isNotEmpty) {
             indexedElementIds.add(id);
@@ -161,9 +212,78 @@ class WritersideProjectIndex {
             moduleId: moduleId,
             filePath: topic.filePath,
           );
-          final capability = WritersideSchema.capabilityFor(element.name);
+          final parent = parents[element];
+          void schemaDiagnostic(
+            String code, {
+            String? attribute,
+            String? reason,
+          }) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.schema.$code',
+                severity: DiagnosticSeverity.warning,
+                filePath: topic.filePath,
+                sourceSpan: element.attributeSpans[attribute] ?? element.span,
+                args: {
+                  'element': element.name,
+                  if (attribute != null) 'attribute': attribute,
+                  if (reason != null) 'reason': reason,
+                },
+              ),
+            );
+          }
+
+          if (parent != null &&
+              WritersideSchema.isKnownElement(parent.name) &&
+              !WritersideSchema.childElementNames(
+                parent.name,
+              ).contains(element.name)) {
+            schemaDiagnostic('invalid-parent', reason: parent.name);
+          }
+          for (final attribute in element.attributes.entries) {
+            if (attribute.key.startsWith('xmlns') ||
+                element.qualifiedAttributes.any(
+                  (qualified) =>
+                      qualified.name == attribute.key &&
+                      qualified.qualifiedName.contains(':'),
+                )) {
+              continue;
+            }
+            if (!WritersideSchema.attributesFor(
+                  element.name,
+                ).contains(attribute.key) &&
+                !attribute.key.startsWith('data-')) {
+              schemaDiagnostic('unknown-attribute', attribute: attribute.key);
+            }
+            final invalid = WritersideSchema.invalidAttributeValue(
+              element.name,
+              attribute.key,
+              attribute.value,
+            );
+            if (invalid != null) {
+              schemaDiagnostic(
+                'invalid-attribute-value',
+                attribute: attribute.key,
+                reason: invalid,
+              );
+            }
+          }
           for (final requiredAttribute
-              in capability?.requiredAttributes ?? const <String>{}) {
+              in WritersideSchema.requiredAttributesFor(element.name)) {
+            if (requiredAttribute == 'href' &&
+                element.attributes.containsKey('anchor')) {
+              continue;
+            }
+            if (requiredAttribute == 'openapi-path' &&
+                parent?.name == 'api-doc') {
+              continue;
+            }
+            if (requiredAttribute == 'title' &&
+                element.children.whereType<WritersideElementNode>().any(
+                  (child) => child.name == 'title',
+                )) {
+              continue;
+            }
             if ((element.attributes[requiredAttribute] ?? '').trim().isEmpty) {
               diagnostics.add(
                 Diagnostic(
@@ -180,6 +300,11 @@ class WritersideProjectIndex {
               );
             }
           }
+          if (element.name == 'table' &&
+              element.attributes['sortable'] == 'true' &&
+              !{'header-row', null}.contains(element.attributes['style'])) {
+            schemaDiagnostic('invalid-sortable-style', attribute: 'style');
+          }
         }
         for (final elementId in topic.elementIds.where(
           (candidate) => !indexedElementIds.contains(candidate.id),
@@ -191,18 +316,35 @@ class WritersideProjectIndex {
               kind: WritersideSymbolKind.element,
               moduleId: moduleId,
               filePath: topic.filePath,
-              span: elementId.span,
+              span: _markdownIdSpan(
+                topic.document,
+                elementId.id,
+                elementId.span,
+              ),
             ),
           );
         }
-        for (final link in topic.links) {
+        for (final link in topic.links.where(
+          (link) => !references.any(
+            (reference) =>
+                reference.filePath == topic.filePath &&
+                reference.span.startOffset >= link.span.startOffset &&
+                reference.span.endOffset <= link.span.endOffset &&
+                (reference.kind == WritersideSymbolKind.topic ||
+                    reference.kind == WritersideSymbolKind.element),
+          ),
+        )) {
           references.add(
             WritersideReference(
               value: link.destination,
               kind: WritersideSymbolKind.topic,
               moduleId: moduleId,
               filePath: topic.filePath,
-              span: link.span,
+              span: _referenceValueSpan(
+                topic.document,
+                link.span,
+                link.destination,
+              ),
               sourceValue: link.destination,
             ),
           );
@@ -243,6 +385,7 @@ class WritersideProjectIndex {
             moduleId: moduleId,
             filePath: variable.span.filePath,
             span: variable.span,
+            instanceCondition: variable.instanceCondition,
           ),
         );
       }
@@ -344,7 +487,7 @@ class WritersideProjectIndex {
           .putIfAbsent(
             '${symbol.moduleId}:${symbol.kind.name}:'
             '${symbol.kind == WritersideSymbolKind.element || symbol.kind == WritersideSymbolKind.snippet ? symbol.filePath : ''}:'
-            '${symbol.name}',
+            '${symbol.name}:${symbol.instanceCondition ?? ''}:${symbol.scopeSpan?.startOffset ?? ''}',
             () => [],
           )
           .add(symbol);
@@ -422,7 +565,47 @@ class WritersideProjectIndex {
       symbols: List.unmodifiable(symbols),
       references: List.unmodifiable(references),
       diagnostics: sortDiagnostics(diagnostics),
+      modulesById: modulesById,
     );
+  }
+
+  /// Uses the complete project index, including topics outside the active TOC.
+  List<WritersideSymbol> symbolsAt(String filePath, int offset) {
+    bool contains(SourceSpan span) =>
+        span.filePath == filePath &&
+        span.startOffset <= offset &&
+        offset <= span.endOffset;
+    final declarations =
+        symbols
+            .where((symbol) => symbol.span != null && contains(symbol.span!))
+            .toList()
+          ..sort(
+            (a, b) => (a.span!.endOffset - a.span!.startOffset).compareTo(
+              b.span!.endOffset - b.span!.startOffset,
+            ),
+          );
+    final matches =
+        references.where((reference) => contains(reference.span)).toList()
+          ..sort(
+            (a, b) => (a.span.endOffset - a.span.startOffset).compareTo(
+              b.span.endOffset - b.span.startOffset,
+            ),
+          );
+    if (matches.isNotEmpty) {
+      final reference = matches.first;
+      return definitions(
+        reference.value,
+        moduleId: reference.moduleId,
+        origin: reference.origin,
+        filePath: reference.filePath,
+        referenceOffset: reference.span.startOffset,
+        scopeReference: reference.scopeReference,
+        kind: reference.kind == WritersideSymbolKind.apiReference
+            ? WritersideSymbolKind.apiSpecification
+            : reference.kind,
+      ).toList();
+    }
+    return declarations.isEmpty ? const [] : [declarations.first];
   }
 
   Iterable<WritersideSymbol> definitions(
@@ -430,18 +613,139 @@ class WritersideProjectIndex {
     String? moduleId,
     String? origin,
     WritersideSymbolKind? kind,
+    String? filePath,
+    int? referenceOffset,
+    String? scopeReference,
   }) {
     final targetModule = origin ?? moduleId;
-    final normalized = reference.trim().split('#').last;
+    final value = reference.trim();
+    if (kind == WritersideSymbolKind.variable) {
+      var scopedPath = filePath;
+      var scopedOffset = referenceOffset;
+      if (scopeReference != null) {
+        final target = definitions(
+          scopeReference,
+          moduleId: targetModule,
+          kind: WritersideSymbolKind.snippet,
+          filePath: filePath,
+        ).firstOrNull;
+        scopedPath = target?.filePath;
+        final module = modulesById[targetModule];
+        final topic = module?.topics
+            .where((topic) => topic.filePath == scopedPath)
+            .firstOrNull;
+        final node = topic?.document
+            .contentById(scopeReference.split('#').last)
+            ?.firstOrNull;
+        scopedOffset = node?.span.startOffset;
+      }
+      final candidates = symbols
+          .where(
+            (symbol) =>
+                symbol.kind == kind &&
+                symbol.name == value &&
+                (targetModule == null || symbol.moduleId == targetModule),
+          )
+          .toList();
+      final local =
+          candidates
+              .where(
+                (symbol) =>
+                    symbol.scopeSpan != null &&
+                    symbol.filePath == scopedPath &&
+                    scopedOffset != null &&
+                    symbol.scopeSpan!.startOffset <= scopedOffset &&
+                    symbol.scopeSpan!.endOffset >= scopedOffset,
+              )
+              .toList()
+            ..sort(
+              (a, b) => (a.scopeSpan!.endOffset - a.scopeSpan!.startOffset)
+                  .compareTo(b.scopeSpan!.endOffset - b.scopeSpan!.startOffset),
+            );
+      return local.isEmpty
+          ? candidates.where((symbol) => symbol.scopeSpan == null)
+          : local.where(
+              (symbol) =>
+                  symbol.scopeSpan!.startOffset ==
+                  local.first.scopeSpan!.startOffset,
+            );
+    }
+    final hash = value.indexOf('#');
+    final normalized = hash < 0 ? value : value.substring(hash + 1);
+    final module = modulesById[targetModule];
+    final fromTopic = module?.topics
+        .where((topic) => topic.filePath == filePath)
+        .firstOrNull;
+    final targetPath = hash < 0 ? value : value.substring(0, hash);
+    final topic =
+        targetPath.isEmpty ||
+            (hash < 0 &&
+                {
+                  WritersideSymbolKind.element,
+                  WritersideSymbolKind.snippet,
+                  WritersideSymbolKind.seealso,
+                }.contains(kind))
+        ? fromTopic
+        : module?.topicByReference(targetPath, fromTopic: fromTopic) ??
+              module?.topicsById[targetPath];
+    if (hash >= 0 && targetPath.isNotEmpty && module != null && topic == null) {
+      return const [];
+    }
+    final wantsElement =
+        hash >= 0 ||
+        {
+          WritersideSymbolKind.element,
+          WritersideSymbolKind.snippet,
+          WritersideSymbolKind.seealso,
+        }.contains(kind);
+    if ({
+      WritersideSymbolKind.resource,
+      WritersideSymbolKind.image,
+      WritersideSymbolKind.apiSpecification,
+    }.contains(kind)) {
+      final candidates = symbols.where(
+        (symbol) =>
+            symbol.kind == kind &&
+            (targetModule == null || symbol.moduleId == targetModule),
+      );
+      final exact = candidates
+          .where(
+            (symbol) => symbol.name == value || symbol.qualifiedName == value,
+          )
+          .toList();
+      if (exact.isNotEmpty) return exact;
+      final loadedPath = kind == WritersideSymbolKind.resource
+          ? module?.referenceData.resources[value]?.path
+          : module
+                ?.sourceFiles[WritersideSourceLoader.key(filePath ?? '', value)]
+                ?.path;
+      if (loadedPath != null) {
+        return candidates.where((symbol) => symbol.filePath == loadedPath);
+      }
+      return candidates.where((symbol) => p.basename(symbol.name) == value);
+    }
     return symbols.where((symbol) {
       final resourceMatch =
           symbol.kind == WritersideSymbolKind.image ||
           symbol.kind == WritersideSymbolKind.resource ||
           symbol.kind == WritersideSymbolKind.apiSpecification;
       return (targetModule == null || symbol.moduleId == targetModule) &&
-          (kind == null || symbol.kind == kind) &&
+          (wantsElement
+              ? {
+                  WritersideSymbolKind.element,
+                  WritersideSymbolKind.snippet,
+                  WritersideSymbolKind.seealso,
+                }.contains(symbol.kind)
+              : kind == null || symbol.kind == kind) &&
+          (!wantsElement ||
+              (topic == null
+                  ? filePath == null || symbol.filePath == filePath
+                  : symbol.filePath == topic.filePath)) &&
           (symbol.name == normalized ||
               symbol.qualifiedName == reference ||
+              (!wantsElement &&
+                  symbol.kind == WritersideSymbolKind.topic &&
+                  topic?.filePath == symbol.filePath) ||
               (resourceMatch &&
                   p.basename(symbol.name) == p.basename(normalized)));
     });
@@ -449,20 +753,36 @@ class WritersideProjectIndex {
 
   Iterable<WritersideReference> findUsages(WritersideSymbol symbol) {
     return references.where((reference) {
-      final normalized = reference.value.trim().split('#').last;
       final compatibleKind = switch (symbol.kind) {
-        WritersideSymbolKind.element =>
+        WritersideSymbolKind.element ||
+        WritersideSymbolKind.snippet ||
+        WritersideSymbolKind.seealso =>
           reference.kind == WritersideSymbolKind.snippet ||
-              reference.kind == WritersideSymbolKind.topic,
+              reference.kind == WritersideSymbolKind.topic ||
+              reference.kind == WritersideSymbolKind.element,
         WritersideSymbolKind.apiSpecification =>
           reference.kind == WritersideSymbolKind.apiReference,
         _ => reference.kind == symbol.kind,
       };
-      return compatibleKind &&
-          normalized == symbol.name &&
-          (reference.origin == null
-              ? reference.moduleId == symbol.moduleId
-              : reference.origin == symbol.moduleId);
+      if (!compatibleKind) return false;
+      final value = symbol.kind == WritersideSymbolKind.topic
+          ? reference.value.split('#').first
+          : reference.value;
+      return definitions(
+        value,
+        moduleId: reference.moduleId,
+        origin: reference.origin,
+        kind: symbol.kind,
+        filePath: reference.filePath,
+        referenceOffset: reference.span.startOffset,
+        scopeReference: reference.scopeReference,
+      ).any(
+        (target) =>
+            target.moduleId == symbol.moduleId &&
+            target.filePath == symbol.filePath &&
+            target.name == symbol.name &&
+            target.scopeSpan?.startOffset == symbol.scopeSpan?.startOffset,
+      );
     });
   }
 
@@ -478,26 +798,65 @@ class WritersideProjectIndex {
             symbol.name.length) {
       return const [];
     }
+    if (symbols.any(
+      (candidate) =>
+          (candidate.kind == symbol.kind ||
+              ({
+                    WritersideSymbolKind.element,
+                    WritersideSymbolKind.snippet,
+                    WritersideSymbolKind.seealso,
+                  }.contains(candidate.kind) &&
+                  {
+                    WritersideSymbolKind.element,
+                    WritersideSymbolKind.snippet,
+                    WritersideSymbolKind.seealso,
+                  }.contains(symbol.kind))) &&
+          candidate.moduleId == symbol.moduleId &&
+          candidate.name == normalized &&
+          candidate.filePath == symbol.filePath &&
+          candidate.name != symbol.name &&
+          candidate.scopeSpan?.startOffset == symbol.scopeSpan?.startOffset,
+    )) {
+      return const [];
+    }
     final usages = findUsages(symbol).where((reference) {
       return reference.value == symbol.name ||
           reference.value.endsWith('#${symbol.name}');
     });
+    final seen = <String>{};
     return [
-      WritersideRenameEdit(
-        filePath: symbol.filePath,
-        span: symbol.span!,
-        replacement: normalized,
-      ),
-      for (final usage in usages)
-        WritersideRenameEdit(
-          filePath: usage.filePath,
-          span: usage.span,
-          replacement: _renamedReferenceValue(
-            usage.sourceValue ?? usage.value,
-            symbol.name,
-            normalized,
+      for (final declaration in symbols.where(
+        (candidate) =>
+            candidate.kind == symbol.kind &&
+            candidate.moduleId == symbol.moduleId &&
+            candidate.filePath == symbol.filePath &&
+            candidate.name == symbol.name &&
+            candidate.scopeSpan?.startOffset == symbol.scopeSpan?.startOffset &&
+            candidate.span != null,
+      ))
+        if (seen.add(
+          '${declaration.filePath}:${declaration.span!.startOffset}:${declaration.span!.endOffset}',
+        ))
+          WritersideRenameEdit(
+            filePath: declaration.filePath,
+            span: declaration.span!,
+            replacement: normalized,
+            expectedText: declaration.name,
           ),
-        ),
+      for (final usage in usages)
+        if (seen.add(
+          '${usage.filePath}:${usage.span.startOffset}:${usage.span.endOffset}',
+        ))
+          WritersideRenameEdit(
+            filePath: usage.filePath,
+            span: usage.span,
+            expectedText: usage.sourceValue ?? usage.value,
+            replacement: _renamedReferenceValue(
+              usage.sourceValue ?? usage.value,
+              symbol.name,
+              normalized,
+            ),
+          ),
     ];
   }
 
@@ -848,10 +1207,48 @@ void _collectElementReferences(
   required String moduleId,
   required String filePath,
 }) {
+  for (final attribute in ['instance', 'in']) {
+    final value = element.attributes[attribute];
+    final span = element.attributeSpans[attribute];
+    if (value == null || span == null) continue;
+    for (final match in RegExp(r'[A-Za-z_][A-Za-z0-9_.-]*').allMatches(value)) {
+      references.add(
+        WritersideReference(
+          value: match[0]!,
+          kind: WritersideSymbolKind.instance,
+          moduleId: moduleId,
+          filePath: filePath,
+          sourceValue: match[0],
+          span: SourceSpan(
+            filePath: filePath,
+            startOffset: span.startOffset + match.start,
+            endOffset: span.startOffset + match.end,
+            startLine: span.startLine,
+            startColumn: span.startColumn + match.start,
+            endLine: span.startLine,
+            endColumn: span.startColumn + match.end,
+          ),
+        ),
+      );
+    }
+  }
   final kind = element.semanticKind;
   if (kind == WritersideSemanticKind.include) {
     final from = element.attributes['from'];
     final id = element.attributes['element-id'];
+    if (from != null) {
+      references.add(
+        WritersideReference(
+          value: from,
+          kind: WritersideSymbolKind.topic,
+          moduleId: moduleId,
+          filePath: filePath,
+          span: element.attributeSpans['from'] ?? element.span,
+          origin: element.attributes['origin'],
+          sourceValue: from,
+        ),
+      );
+    }
     if (from != null || id != null) {
       references.add(
         WritersideReference(
@@ -867,7 +1264,8 @@ void _collectElementReferences(
         ),
       );
     }
-  } else if (kind == WritersideSemanticKind.link) {
+  } else if (kind == WritersideSemanticKind.link ||
+      kind == WritersideSemanticKind.card) {
     final href = element.attributes['href'];
     if (href != null) {
       references.add(
@@ -879,6 +1277,20 @@ void _collectElementReferences(
           span: element.attributeSpans['href'] ?? element.span,
           origin: element.attributes['origin'],
           sourceValue: href,
+        ),
+      );
+    }
+    final anchor = element.attributes['anchor'];
+    if (anchor != null) {
+      references.add(
+        WritersideReference(
+          value: '${href?.split('#').first ?? ''}#$anchor',
+          kind: WritersideSymbolKind.element,
+          moduleId: moduleId,
+          filePath: filePath,
+          span: element.attributeSpans['anchor'] ?? element.span,
+          origin: element.attributes['origin'],
+          sourceValue: anchor,
         ),
       );
     }
@@ -936,8 +1348,6 @@ void _collectElementReferences(
       'openapi-path',
       'src',
       'spec',
-      'name',
-      'endpoint',
     ].where(element.attributes.containsKey).firstOrNull;
     final value = attribute == null ? null : element.attributes[attribute];
     if (attribute != null && value != null) {
@@ -969,6 +1379,43 @@ String _moduleId(WritersideModule module) =>
     module.config.moduleName?.trim().isNotEmpty == true
     ? module.config.moduleName!.trim()
     : p.basename(module.rootPath);
+
+SourceSpan _referenceValueSpan(
+  WritersideDocument document,
+  SourceSpan fallback,
+  String value,
+) {
+  final start = document.source.indexOf(value, fallback.startOffset);
+  if (start < 0 || start + value.length > fallback.endOffset) return fallback;
+  return SourceSpan.fromOffsets(
+    filePath: document.filePath,
+    source: document.source,
+    startOffset: start,
+    endOffset: start + value.length,
+  );
+}
+
+SourceSpan _markdownIdSpan(
+  WritersideDocument document,
+  String id,
+  SourceSpan fallback,
+) {
+  final raw = document.source.substring(
+    fallback.startOffset,
+    fallback.endOffset,
+  );
+  final match = RegExp(
+    r'''\bid\s*=\s*(["'])(.*?)\1''',
+  ).allMatches(raw).where((match) => match[2] == id).firstOrNull;
+  if (match == null) return fallback;
+  final start = fallback.startOffset + match.end - 1 - id.length;
+  return SourceSpan.fromOffsets(
+    filePath: document.filePath,
+    source: document.source,
+    startOffset: start,
+    endOffset: start + id.length,
+  );
+}
 
 bool _insideModule(WritersideModule module, String candidate) {
   final root = normalizePath(module.rootPath);

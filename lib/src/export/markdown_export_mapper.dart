@@ -77,12 +77,28 @@ class MarkdownExportMapper {
   ) {
     final result = <MarkdownExportBlock>[];
     var index = 0;
+    String? currentVariant;
     while (index < blocks.length) {
       final block = blocks[index];
       if (block.isSourceOnly) {
         index++;
         continue;
       }
+      final variant = block.attributes['switcher-key'];
+      if (variant != null && variant != currentVariant) {
+        result.add(
+          MarkdownExportBlock(
+            kind: MarkdownExportBlockKind.paragraph,
+            inlines: [
+              MarkdownExportInline(
+                kind: MarkdownExportInlineKind.strong,
+                text: variant,
+              ),
+            ],
+          ),
+        );
+      }
+      currentVariant = variant;
       final override = blockOverrides[block.id];
       if (override != null) {
         result.add(override);
@@ -122,7 +138,19 @@ class MarkdownExportMapper {
       }
       final mapped = _mapBlock(block, blockOverrides);
       if (mapped != null) {
-        result.add(mapped);
+        result.add(
+          mapped.copyWith(
+            attributes: {
+              ...mapped.attributes,
+              if (block.attributes['pdf-anchor'] case final anchor?)
+                'anchor': anchor,
+            },
+          ),
+        );
+        if (block.kind == BusyBlockKind.heading ||
+            block.kind == BusyBlockKind.paragraph) {
+          result.addAll(_mapBlocks(block.children, blockOverrides));
+        }
       }
       index++;
     }
@@ -412,6 +440,10 @@ class MarkdownExportMapper {
         kind: MarkdownExportInlineKind.underline,
         text: inline.text,
         children: children,
+        attributes: {
+          if (inline.attributes['summary'] case final summary?)
+            'summary': summary,
+        },
       ),
       BusyInlineKind.strikethrough => MarkdownExportInline(
         kind: MarkdownExportInlineKind.strikethrough,
@@ -437,8 +469,21 @@ class MarkdownExportMapper {
       BusyInlineKind.link => MarkdownExportInline(
         kind: MarkdownExportInlineKind.link,
         text: inline.text,
-        destination: _safeLinkDestination(inline.destination),
+        destination:
+            inline.attributes['element'] == 'resource' &&
+                inline.attributes['resolved-resource-path']?.isNotEmpty ==
+                    true &&
+                Uri.file(
+                      inline.attributes['resolved-resource-path']!,
+                    ).toString() ==
+                    inline.destination
+            ? inline.destination
+            : _safeLinkDestination(inline.destination),
         children: children,
+        attributes: {
+          if (inline.attributes['summary'] case final summary?)
+            'summary': summary,
+        },
       ),
       BusyInlineKind.image => MarkdownExportInline(
         kind: MarkdownExportInlineKind.image,

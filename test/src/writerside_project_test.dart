@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -162,8 +163,8 @@ void main() {
         moduleId: moduleId,
       );
       final completion = const SourceAutocompleteProvider().suggestions(
-        document: SourceDocument(fullText: '<topic><renamed-'),
-        fullOffset: '<topic><renamed-'.length,
+        document: SourceDocument(fullText: '<topic><a href="renamed-'),
+        fullOffset: '<topic><a href="renamed-'.length,
         context: SourceAutocompleteContext(
           projectIndex: project.index,
           moduleId: moduleId,
@@ -356,54 +357,159 @@ void main() {
     );
   });
 
-  test('BusyMark processes the same fixture as the official builder', () async {
-    final root = p.join(
-      Directory.current.path,
-      'test',
-      'fixtures',
-      'writerside',
-      'conformance_project',
-    );
-    final project = await const WritersideProjectService().load(root);
-    final module = project.activeModule!;
-    final instance = project.activeInstance!;
-    final renderedText = StringBuffer();
-    final diagnostics = <Diagnostic>[];
-
-    for (final topic in module.topics) {
-      expect(
-        const WritersideDocumentSerializer().serialize(topic.document),
-        topic.document.source,
-      );
-      final resolved = const WritersideDocumentResolver().resolve(
-        topic.document,
-        WritersideResolveContext(
-          module: module,
-          topic: topic,
-          instance: instance,
-          modulesByOrigin: project.modulesByOrigin,
-        ),
-      );
-      diagnostics.addAll(resolved.diagnostics);
-      final rendered = const WritersideDocumentRenderer().toBusyDocument(
-        resolved.document,
-        title: resolved.title,
-      );
-      for (final block in _walkBlocks(rendered.blocks)) {
-        renderedText.writeln(block.plainText);
+  test(
+    'BusyMark matches the official builder semantic snapshot for the fixture',
+    () async {
+      final root = p.absolute('test/fixtures/writerside/conformance_project');
+      final expected =
+          jsonDecode(
+                await File(
+                  'test/fixtures/writerside/conformance_semantics.json',
+                ).readAsString(),
+              )
+              as Map;
+      final project = await const WritersideProjectService().load(root);
+      String normalized(String text) =>
+          text.replaceAll(RegExp(r'\s+'), ' ').trim();
+      Iterable<BusyInline> inlines(Iterable<BusyInline> values) sync* {
+        for (final value in values) {
+          yield value;
+          yield* inlines(value.children);
+        }
       }
-    }
 
-    expect(
-      diagnostics.where(
-        (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
-      ),
-      isEmpty,
-    );
-    expect(renderedText.toString(), contains('Lossless semantic quote'));
-    expect(renderedText.toString(), contains('Reusable semantic content'));
-    expect(renderedText.toString(), contains('BusyMark'));
-  });
+      for (final topic in project.activeModule!.topics) {
+        final resolved = const WritersideDocumentResolver().resolve(
+          topic.document,
+          WritersideResolveContext(
+            module: project.activeModule!,
+            topic: topic,
+            instance: project.activeInstance,
+          ),
+        );
+        final document = const WritersideDocumentRenderer().toBusyDocument(
+          resolved.document,
+        );
+        final blocks = _walkBlocks(document.blocks).toList();
+        final spans = blocks.expand((block) => inlines(block.inlines)).toList();
+        final actual = {
+          'paragraphs': document.blocks
+              .where((block) => block.kind == BusyBlockKind.paragraph)
+              .map((block) => normalized(block.plainText))
+              .toList(),
+          'quotes': blocks
+              .where((block) => block.attributes['style'] == 'quote')
+              .map((block) => normalized(block.plainText))
+              .toList(),
+          'shortcuts': spans
+              .where((inline) => inline.attributes['element'] == 'shortcut')
+              .map((inline) => inline.text)
+              .toList(),
+          'tooltips': [
+            for (final inline in spans.where(
+              (inline) => inline.attributes['element'] == 'tooltip',
+            ))
+              {
+                'text': inline.plainText,
+                'summary': inline.attributes['summary'],
+              },
+          ],
+          'tables': [
+            for (final table in blocks.where(
+              (block) => block.attributes['element'] == 'table',
+            ))
+              [
+                for (final row in table.children)
+                  [
+                    for (final cell in row.children)
+                      {
+                        'text': normalized(cell.plainText),
+                        'header': cell.attributes['header'] == 'true',
+                        'colspan':
+                            int.tryParse(cell.attributes['colspan'] ?? '') ?? 1,
+                        'rowspan':
+                            int.tryParse(cell.attributes['rowspan'] ?? '') ?? 1,
+                      },
+                  ],
+              ],
+          ],
+          'seealso': [
+            for (final category in blocks.where(
+              (block) => block.attributes['element'] == 'category',
+            ))
+              {
+                'title': category.attributes['title'],
+                'links': [
+                  for (final inline
+                      in _walkBlocks(category.children)
+                          .expand((block) => inlines(block.inlines))
+                          .where(
+                            (inline) => inline.kind == BusyInlineKind.link,
+                          ))
+                    {
+                      'title': inline.plainText,
+                      'topic': p.basenameWithoutExtension(inline.destination!),
+                    },
+                ],
+              },
+          ],
+        };
+        expect(actual, expected['topics'][topic.id], reason: topic.filePath);
+      }
+    },
+  );
+
+  test(
+    'conformance fixture preserves source and resolves semantic content',
+    () async {
+      final root = p.join(
+        Directory.current.path,
+        'test',
+        'fixtures',
+        'writerside',
+        'conformance_project',
+      );
+      final project = await const WritersideProjectService().load(root);
+      final module = project.activeModule!;
+      final instance = project.activeInstance!;
+      final renderedText = StringBuffer();
+      final diagnostics = <Diagnostic>[];
+
+      for (final topic in module.topics) {
+        expect(
+          const WritersideDocumentSerializer().serialize(topic.document),
+          topic.document.source,
+        );
+        final resolved = const WritersideDocumentResolver().resolve(
+          topic.document,
+          WritersideResolveContext(
+            module: module,
+            topic: topic,
+            instance: instance,
+            modulesByOrigin: project.modulesByOrigin,
+          ),
+        );
+        diagnostics.addAll(resolved.diagnostics);
+        final rendered = const WritersideDocumentRenderer().toBusyDocument(
+          resolved.document,
+          title: resolved.title,
+        );
+        for (final block in _walkBlocks(rendered.blocks)) {
+          renderedText.writeln(block.plainText);
+        }
+      }
+
+      expect(
+        diagnostics.where(
+          (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
+        ),
+        isEmpty,
+      );
+      expect(renderedText.toString(), contains('Lossless semantic quote'));
+      expect(renderedText.toString(), contains('Reusable semantic content'));
+      expect(renderedText.toString(), contains('BusyMark'));
+    },
+  );
 }
 
 Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> blocks) sync* {

@@ -24,7 +24,8 @@ class OpenApiStaticExportMapper {
     required Map<String, String> attributes,
     Map<String, List<MarkdownExportBlock>> overrides = const {},
   }) {
-    final root = reference.document;
+    final root = _resolveReferences(reference);
+    final depth = int.tryParse(attributes['depth'] ?? '');
     final blocks = <MarkdownExportBlock>[];
     if (element == 'api-schema') {
       final name = attributes['name'] ?? '';
@@ -33,7 +34,7 @@ class OpenApiStaticExportMapper {
             _map(root['definitions'])[name],
       );
       if (schema.isEmpty) throw FormatException('Unknown API schema: $name');
-      blocks.addAll(_schemaBlocks(name, schema));
+      blocks.addAll(_schemaBlocks(name, schema, depth: depth));
     } else {
       final selected = <String, Object?>{};
       final sources = <String, Object?>{
@@ -84,6 +85,8 @@ class OpenApiStaticExportMapper {
         {...root, 'paths': selected},
         overrides: overrides,
         generateSamples: attributes['generate-samples']?.toLowerCase() ?? 'all',
+        schemaDepth: depth,
+        writerside: true,
       );
     }
     return MarkdownExportBlock(
@@ -125,6 +128,93 @@ class OpenApiStaticExportMapper {
     );
   }
 
+  Map<String, Object?> _resolveReferences(OpenApiReferenceModel reference) {
+    final documents = {
+      '': reference.document,
+      for (final external in reference.externalDocuments)
+        external.id: external.document,
+    };
+    Object? expand(
+      Object? value,
+      String documentId,
+      Set<String> active,
+      int level,
+    ) {
+      if (level > 64) return value;
+      if (value is List) {
+        return [
+          for (final item in value) expand(item, documentId, active, level + 1),
+        ];
+      }
+      if (value is! Map) return value;
+      final object = _map(value);
+      final ref = object[r'$ref'];
+      if (ref is String) {
+        final hash = ref.indexOf('#');
+        final id = hash < 0 ? ref : ref.substring(0, hash);
+        final targetId = id.isEmpty ? documentId : id;
+        final pointer = hash < 0 ? '' : ref.substring(hash + 1);
+        final identity = '$targetId#$pointer';
+        if (!active.contains(identity)) {
+          Object? target = documents[targetId];
+          for (final part in pointer.split('/').skip(1)) {
+            target = target is Map
+                ? target[Uri.decodeComponent(
+                    part,
+                  ).replaceAll('~1', '/').replaceAll('~0', '~')]
+                : null;
+          }
+          if (target is Map) {
+            return expand(
+              {
+                ..._map(target),
+                for (final entry in object.entries)
+                  if (entry.key != r'$ref') entry.key: entry.value,
+              },
+              targetId,
+              {...active, identity},
+              level + 1,
+            );
+          }
+        }
+        return object;
+      }
+      return {
+        for (final entry in object.entries)
+          entry.key: expand(entry.value, documentId, active, level + 1),
+      };
+    }
+
+    return _map(expand(reference.document, '', {}, 0));
+  }
+
+  Object? _schemaExample(Map<String, Object?> schema, [int depth = 0]) {
+    if (depth > 16) return null;
+    if (schema.containsKey('example')) return schema['example'];
+    if (schema.containsKey('default')) return schema['default'];
+    if (schema.containsKey('const')) return schema['const'];
+    if (_list(schema['enum']).isNotEmpty) return _list(schema['enum']).first;
+    if (schema['type'] == 'object' || schema.containsKey('properties')) {
+      return {
+        for (final property in _map(schema['properties']).entries)
+          property.key: _schemaExample(_map(property.value), depth + 1),
+      };
+    }
+    if (schema['type'] == 'array') {
+      return [_schemaExample(_map(schema['items']), depth + 1)];
+    }
+    if (schema['type'] == 'boolean') return false;
+    if (schema['type'] == 'integer' || schema['type'] == 'number') {
+      return schema['minimum'] ?? 0;
+    }
+    for (final key in ['oneOf', 'anyOf', 'allOf']) {
+      if (_list(schema[key]).isNotEmpty) {
+        return _schemaExample(_map(_list(schema[key]).first), depth + 1);
+      }
+    }
+    return schema['type'] == 'null' ? null : 'string';
+  }
+
   void _addServers(
     List<MarkdownExportBlock> blocks,
     Map<String, Object?> document,
@@ -159,6 +249,8 @@ class OpenApiStaticExportMapper {
     Map<String, Object?> document, {
     Map<String, List<MarkdownExportBlock>> overrides = const {},
     String generateSamples = 'none',
+    int? schemaDepth,
+    bool writerside = false,
   }) {
     final paths = _map(document['paths']);
     if (paths.isEmpty) {
@@ -177,10 +269,20 @@ class OpenApiStaticExportMapper {
         if (operation.isEmpty) {
           continue;
         }
-        blocks.add(_heading(4, '${method.toUpperCase()} ${pathEntry.key}'));
         final summary = _string(operation['summary']);
+        blocks.add(
+          _heading(
+            4,
+            writerside && summary.isNotEmpty
+                ? summary
+                : '${method.toUpperCase()} ${pathEntry.key}',
+          ),
+        );
+        if (writerside) {
+          blocks.add(_paragraph('${method.toUpperCase()} ${pathEntry.key}'));
+        }
         final description = _string(operation['description']);
-        _addText(blocks, summary);
+        if (!writerside) _addText(blocks, summary);
         if (description != summary) {
           _addText(blocks, description);
         }
@@ -205,24 +307,58 @@ class OpenApiStaticExportMapper {
         _addParameters(blocks, parameters, headingLevel: 5);
         _addRequestBody(blocks, operation['requestBody'], headingLevel: 5);
         _addResponses(blocks, operation['responses'], headingLevel: 5);
-        final replacement = overrides['$method ${pathEntry.key}'];
+        final operationKey = '$method ${pathEntry.key}';
+        final replacement = overrides[operationKey];
         if (replacement != null) {
           blocks.addAll(replacement);
         } else {
-          if ({'all', 'request'}.contains(generateSamples)) {
+          final request = overrides['$operationKey request'];
+          if (request != null) {
+            blocks.addAll(request);
+          } else if ({'all', 'request'}.contains(generateSamples)) {
             _addExamples(
               blocks,
               'Request sample',
               _map(operation['requestBody']),
             );
           }
-          if ({'all', 'response'}.contains(generateSamples)) {
-            for (final response in _map(operation['responses']).entries) {
+          final responseCodes = {
+            ..._map(operation['responses']).keys,
+            for (final key in overrides.keys)
+              if (key.startsWith('$operationKey response '))
+                key.substring('$operationKey response '.length),
+          };
+          for (final code in responseCodes) {
+            final response = overrides['$operationKey response $code'];
+            if (response != null) {
+              blocks.addAll(response);
+            } else if ({'all', 'response'}.contains(generateSamples)) {
               _addExamples(
                 blocks,
-                'Response ${response.key}',
-                _map(response.value),
+                'Response $code',
+                _map(_map(operation['responses'])[code]),
               );
+            }
+          }
+        }
+        if (writerside) {
+          final schemaSources = {
+            'Request schema': _map(operation['requestBody']),
+            for (final response in _map(operation['responses']).entries)
+              'Response ${response.key} schema': _map(response.value),
+          };
+          for (final source in schemaSources.entries) {
+            for (final media in _map(source.value['content']).entries) {
+              final schema = _map(_map(media.value)['schema']);
+              if (schema.isNotEmpty) {
+                blocks.addAll(
+                  _schemaBlocks(
+                    '${source.key} (${media.key})',
+                    schema,
+                    depth: schemaDepth,
+                  ),
+                );
+              }
             }
           }
         }
@@ -242,7 +378,9 @@ class OpenApiStaticExportMapper {
     String title,
     Map<String, Object?> object,
   ) {
-    for (final media in _map(object['content']).values.map(_map)) {
+    for (final entry in _map(object['content']).entries) {
+      if (!entry.key.toLowerCase().contains('json')) continue;
+      final media = _map(entry.value);
       final examples = [
         if (media['example'] != null) media['example'],
         for (final example in _map(media['examples']).values)
@@ -251,6 +389,11 @@ class OpenApiStaticExportMapper {
             _map(media['examples']).isEmpty &&
             _map(media['schema'])['example'] != null)
           _map(media['schema'])['example'],
+        if (media['example'] == null &&
+            _map(media['examples']).isEmpty &&
+            _map(media['schema'])['example'] == null &&
+            _map(media['schema']).isNotEmpty)
+          _schemaExample(_map(media['schema'])),
       ];
       for (final example in examples.where((value) => value != null)) {
         blocks
@@ -453,8 +596,10 @@ class OpenApiStaticExportMapper {
 
   List<MarkdownExportBlock> _schemaBlocks(
     String name,
-    Map<String, Object?> schema,
-  ) {
+    Map<String, Object?> schema, {
+    int? depth,
+    int level = 0,
+  }) {
     final blocks = <MarkdownExportBlock>[_heading(4, name)];
     _addText(blocks, _string(schema['description']));
     final details = <List<String>>[];
@@ -483,6 +628,43 @@ class OpenApiStaticExportMapper {
       blocks.add(
         _table(const ['Property', 'Type', 'Required', 'Description'], rows),
       );
+    }
+    if ((depth == null || level + 1 < depth) && level < 32) {
+      for (final property in _map(schema['properties']).entries) {
+        final child = _map(property.value);
+        if (_map(child['properties']).isNotEmpty || child['items'] != null) {
+          blocks.addAll(
+            _schemaBlocks(
+              '$name.${property.key}',
+              child,
+              depth: depth,
+              level: level + 1,
+            ),
+          );
+        }
+      }
+      if (schema['items'] != null) {
+        blocks.addAll(
+          _schemaBlocks(
+            '$name[]',
+            _map(schema['items']),
+            depth: depth,
+            level: level + 1,
+          ),
+        );
+      }
+      for (final keyword in ['allOf', 'oneOf', 'anyOf']) {
+        for (final (index, part) in _list(schema[keyword]).indexed) {
+          blocks.addAll(
+            _schemaBlocks(
+              '$name $keyword ${index + 1}',
+              _map(part),
+              depth: depth,
+              level: level + 1,
+            ),
+          );
+        }
+      }
     }
     return blocks;
   }

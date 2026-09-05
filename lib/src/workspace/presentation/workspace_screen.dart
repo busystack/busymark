@@ -76,6 +76,7 @@ import '../../search/search_replace_service.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_project.dart';
 import '../../writerside/writerside_toc_editor.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
@@ -9918,6 +9919,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],
+                      onSymbolAction:
+                          widget.state.workspace?.writersideProject == null
+                          ? null
+                          : (action, offset) =>
+                                unawaited(_handleSymbolAction(action, offset)),
                       autocompleteContext: _sourceAutocompleteContext(
                         widget.state.workspace,
                       ),
@@ -10285,6 +10291,125 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     };
   }
 
+  Future<void> _handleSymbolAction(
+    SourceSymbolAction action,
+    int offset,
+  ) async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final path = widget.state.workspace?.activeFilePath;
+    if (path == null) return;
+    final index = await controller.writersideEditorIndex();
+    if (!mounted || index == null) return;
+    final symbols = index.symbolsAt(path, offset);
+    final symbol = symbols.firstOrNull;
+    if (symbol == null) {
+      await showBusyMarkModalDialog<void>(
+        context,
+        builder: (context) => AlertDialog(
+          content: Text(context.l10n.noResults),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    Future<void> navigate(String filePath, SourceSpan? span) async {
+      await controller.openActiveFile(filePath);
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sourceEditorKey.currentState?.scrollToLine(span?.startLine ?? 1);
+      });
+    }
+
+    if (action == SourceSymbolAction.declaration) {
+      await navigate(symbol.filePath, symbol.span);
+    } else if (action == SourceSymbolAction.usages) {
+      final usages = index.findUsages(symbol).toList();
+      final selected = await showBusyMarkModalDialog<WritersideReference>(
+        context,
+        builder: (context) => AlertDialog(
+          title: Text('${context.l10n.findUsages}: ${symbol.name}'),
+          content: SizedBox(
+            width: 600,
+            height: 360,
+            child: usages.isEmpty
+                ? Text(context.l10n.noResults)
+                : ListView(
+                    children: [
+                      for (final usage in usages)
+                        ListTile(
+                          title: Text(
+                            p.relative(
+                              usage.filePath,
+                              from: widget.state.workspace?.rootPath,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${usage.span.startLine}:${usage.span.startColumn}  ${usage.value}',
+                          ),
+                          onTap: () => Navigator.pop(context, usage),
+                        ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+      if (selected != null) await navigate(selected.filePath, selected.span);
+    } else {
+      var pendingName = symbol.name;
+      final newName = await showBusyMarkModalEditorDialog<String>(
+        context,
+        builder: (context) => AlertDialog(
+          title: Text('${context.l10n.rename}: ${symbol.name}'),
+          content: TextFormField(
+            initialValue: pendingName,
+            onChanged: (value) => pendingName = value,
+            autofocus: true,
+            onFieldSubmitted: (value) => Navigator.pop(context, value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, pendingName),
+              child: Text(context.l10n.rename),
+            ),
+          ],
+        ),
+      );
+      if (newName == null || !mounted) return;
+      final applied = await controller.applyWritersideRename(
+        index.safeRenameEdits(symbol, newName),
+      );
+      if (!applied && mounted) {
+        await showBusyMarkModalDialog<void>(
+          context,
+          builder: (context) => AlertDialog(
+            content: Text(context.l10n.cannotRenameSymbol),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(context.l10n.close),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   SourceAutocompleteContext _sourceAutocompleteContext(Workspace? workspace) {
     final project = workspace?.writersideProject;
     if (workspace == null || project == null) {
@@ -10294,6 +10419,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       projectFiles: [for (final file in workspace.files) file.relativePath],
       projectIndex: project.index,
       moduleId: project.activeModuleId,
+      filePath: workspace.activeFilePath,
     );
   }
 
@@ -10368,15 +10494,58 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _scrollPreviewToHeading(String headingId) {
     final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
-    final index = blocks.indexWhere(
-      (block) =>
-          block.kind == PreviewBlockKind.heading &&
-          block.attributes['id'] == headingId,
-    );
-    if (index < 0 || !_previewScrollController.isAttached) {
-      return;
-    }
-    unawaited(_scrollPreviewToIndex(index, alignment: 0.0));
+    bool contains(PreviewBlock block) =>
+        block.attributes['id'] == headingId || block.children.any(contains);
+    final index = blocks.indexWhere(contains);
+    if (index < 0 || !_previewScrollController.isAttached) return;
+    unawaited(() async {
+      await _scrollPreviewToIndex(index, alignment: 0);
+      if (!mounted) return;
+      final blockContext = _previewBlockContexts[index];
+      if (blockContext == null || !blockContext.mounted) return;
+      final selection = WritersidePreviewScope.of(blockContext);
+      void reveal(PreviewBlock block) {
+        if (!contains(block)) return;
+        if (block.attributes['switcher-key'] case final keys?) {
+          selection?.select(
+            'busymark-topic-switcher',
+            keys.split(',').first.trim(),
+          );
+        }
+        if (block.kind == PreviewBlockKind.tabs) {
+          final panel = block.children.where(contains).firstOrNull;
+          if (panel != null && block.attributes['group'] != null) {
+            selection?.select(
+              block.attributes['group']!,
+              panel.attributes['group-key'] ?? panel.text,
+            );
+          }
+        }
+        for (final child in block.children) {
+          reveal(child);
+        }
+      }
+
+      reveal(blocks[index]);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !blockContext.mounted) return;
+      BuildContext? target;
+      void find(Element element) {
+        if (element.widget.key == ValueKey('writerside-anchor-$headingId')) {
+          target = element;
+        }
+        element.visitChildElements(find);
+      }
+
+      (blockContext as Element).visitChildElements(find);
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target!,
+          alignment: 0,
+          duration: BusyMarkMotion.scroll,
+        );
+      }
+    }());
   }
 
   Future<void> _scrollPreviewToIndex(
@@ -11317,6 +11486,38 @@ class _PreviewBlockView extends ConsumerWidget {
         childrenBuilder: (blocks) => _previewChildBlocks(blocks, first: true),
       ),
       PreviewBlockKind.container
+          when displayBlock.attributes['writerside-card'] == 'true' =>
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _previewChildBlocks(displayBlock.children, first: true),
+          ),
+        ),
+      PreviewBlockKind.container
+          when displayBlock.attributes['writerside-grid'] == 'true' =>
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth < 500
+                ? 1
+                : displayBlock.attributes['narrow'] == 'true'
+                ? 3
+                : 2;
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final child in displayBlock.children)
+                  SizedBox(
+                    width: child.kind == PreviewBlockKind.heading
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 16 * (columns - 1)) / columns,
+                    child: _previewChildBlocks([child], first: true),
+                  ),
+              ],
+            );
+          },
+        ),
+      PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
         _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
       PreviewBlockKind.container => _previewChildBlocks(
@@ -11344,9 +11545,15 @@ class _PreviewBlockView extends ConsumerWidget {
         ),
       ),
     };
-    return blockDirection == inheritedDirection
+    final anchored = displayBlock.attributes['id'] == null
         ? child
-        : Directionality(textDirection: blockDirection, child: child);
+        : KeyedSubtree(
+            key: ValueKey("writerside-anchor-${displayBlock.attributes['id']}"),
+            child: child,
+          );
+    return blockDirection == inheritedDirection
+        ? anchored
+        : Directionality(textDirection: blockDirection, child: anchored);
   }
 
   void _reportMathDiagnostic(
@@ -12234,6 +12441,15 @@ InlineSpan _previewInlineSpan(
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
 }) {
+  final selected =
+      WritersidePreviewScope.of(context)?.selected('busymark-topic-switcher') ??
+      inline.attributes['switcher-default'];
+  final keys = inline.attributes['switcher-key'];
+  if (keys != null &&
+      selected != null &&
+      !keys.split(',').map((key) => key.trim()).contains(selected)) {
+    return const TextSpan(text: '');
+  }
   final shortcutLayouts = inline.attributes['shortcut-layouts'];
   if (shortcutLayouts != null) {
     final layouts = (jsonDecode(shortcutLayouts) as Map).cast<String, String>();
@@ -12245,7 +12461,7 @@ InlineSpan _previewInlineSpan(
       alignment: PlaceholderAlignment.baseline,
       baseline: TextBaseline.alphabetic,
       child: PopupMenuButton<String>(
-        tooltip: 'Keyboard layout',
+        tooltip: context.l10n.keyboardLayout,
         onSelected: (value) => controller?.select('busymark-keymap', value),
         itemBuilder: (context) => [
           for (final entry in layouts.entries)
@@ -12635,7 +12851,28 @@ Future<void> _openPreviewLink(
   }
   final uri = parseSchemedUri(target);
   if (uri != null) {
-    if (!isLaunchableExternalUri(uri)) {
+    var isResource = false;
+    if (uri.scheme == 'file') {
+      final workspace = ref.read(workspaceControllerProvider).workspace;
+      final modules =
+          workspace?.writersideProject?.modules ??
+          [if (workspace?.writersideModule case final module?) module];
+      for (final module in modules) {
+        for (final resource in module.referenceData.resources.values) {
+          if (resource.path != null && Uri.file(resource.path!) == uri) {
+            final checked = await const WritersideSourceLoader().load(
+              reference: p.relative(resource.path!, from: module.rootPath),
+              documentPath: module.config.filePath,
+              workspaceRoot: module.rootPath,
+              readText: false,
+            );
+            isResource =
+                checked.path == resource.path && checked.failure == null;
+          }
+        }
+      }
+    }
+    if (!isResource && !isLaunchableExternalUri(uri)) {
       if (context.mounted) {
         _showPreviewLinkMessage(
           context,
@@ -12791,7 +13028,19 @@ void _navigatePreviewAnchor(
             slugForHeading(heading.text) == slug,
       )
       .firstOrNull;
-  if (heading == null) {
+  PreviewBlock? findAnchor(Iterable<PreviewBlock> blocks) {
+    for (final block in blocks) {
+      if ({normalizedAnchor, decodedAnchor}.contains(block.attributes['id'])) {
+        return block;
+      }
+      final nested = findAnchor(block.children);
+      if (nested != null) return nested;
+    }
+    return null;
+  }
+
+  final element = findAnchor(state.preview?.blocks ?? const []);
+  if (heading == null && element == null) {
     _showPreviewLinkMessage(context, context.l10n.anchorNotFound(anchor));
     return;
   }
@@ -12801,9 +13050,10 @@ void _navigatePreviewAnchor(
         _OutlineNavigationTarget(
           workspaceId: workspace.id,
           filePath: workspace.activeFilePath,
-          headingId: heading.id,
-          line: heading.sourceStartLine,
-          editorBlockId: heading.editorBlockId,
+          headingId: heading?.id ?? element!.attributes['id']!,
+          line: heading?.sourceStartLine ?? element?.sourceStartLine,
+          editorBlockId:
+              heading?.editorBlockId ?? element?.attributes['editorBlockId'],
         ),
       );
 }

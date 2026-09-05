@@ -40,6 +40,7 @@ class SourceAutocompleteContext {
     this.currentElement,
     this.projectIndex,
     this.moduleId,
+    this.filePath,
   });
 
   final List<String> projectFiles;
@@ -50,6 +51,7 @@ class SourceAutocompleteContext {
   final String? currentElement;
   final WritersideProjectIndex? projectIndex;
   final String? moduleId;
+  final String? filePath;
 
   SourceAutocompleteContext atCaret(String source, int offset) {
     final xml = writersideXmlCaretContext(source, offset);
@@ -62,6 +64,7 @@ class SourceAutocompleteContext {
       currentElement: currentElement ?? xml.currentElement,
       projectIndex: projectIndex,
       moduleId: moduleId,
+      filePath: filePath,
     );
   }
 }
@@ -87,10 +90,128 @@ class SourceAutocompleteProvider {
   }) {
     context = context.atCaret(document.fullText, fullOffset);
     final prefix = _prefixBefore(document.fullText, fullOffset).toLowerCase();
+    final before = document.fullText.substring(
+      0,
+      fullOffset.clamp(0, document.fullText.length),
+    );
+    final opening = before.lastIndexOf('<');
+    final fragment = opening < 0 ? '' : before.substring(opening);
+    final inTag = opening >= 0 && !fragment.contains('>');
+    final valueMatch = inTag
+        ? RegExp(r'''([\w-]+)\s*=\s*(["'])([^"']*)$''').firstMatch(fragment)
+        : null;
+    if (valueMatch != null && context.currentElement != null) {
+      final attribute = valueMatch[1]!;
+      var kind = WritersideSchema.referenceKind(
+        context.currentElement!,
+        attribute,
+      );
+      final typedValue = valueMatch[3]!;
+      final hash = typedValue.indexOf('#');
+      if (kind == WritersideAttributeReferenceKind.topic && hash >= 0) {
+        kind = WritersideAttributeReferenceKind.element;
+      }
+      final valuePrefix =
+          (hash >= 0 ? typedValue.substring(hash + 1) : typedValue)
+              .toLowerCase();
+      final symbolKind = switch (kind) {
+        WritersideAttributeReferenceKind.topic => WritersideSymbolKind.topic,
+        WritersideAttributeReferenceKind.element =>
+          WritersideSymbolKind.element,
+        WritersideAttributeReferenceKind.variable =>
+          WritersideSymbolKind.variable,
+        WritersideAttributeReferenceKind.instance =>
+          WritersideSymbolKind.instance,
+        WritersideAttributeReferenceKind.resource =>
+          WritersideSymbolKind.resource,
+        WritersideAttributeReferenceKind.apiSpecification =>
+          WritersideSymbolKind.apiSpecification,
+        WritersideAttributeReferenceKind.image => WritersideSymbolKind.image,
+        WritersideAttributeReferenceKind.category =>
+          WritersideSymbolKind.category,
+        WritersideAttributeReferenceKind.module => WritersideSymbolKind.module,
+        null => null,
+      };
+      final attributes = {
+        for (final match in RegExp(
+          r'''([\w-]+)\s*=\s*(["'])(.*?)\2''',
+        ).allMatches(fragment))
+          match[1]!: match[3]!,
+      };
+      final moduleId = attributes['origin'] ?? context.moduleId;
+      final module = context.projectIndex?.modulesById[moduleId];
+      final current = module?.topics
+          .where((topic) => topic.filePath == context.filePath)
+          .firstOrNull;
+      final topicReference = hash >= 0
+          ? typedValue.substring(0, hash)
+          : attributes['from'] ?? attributes['href'];
+      final target = topicReference == null || topicReference.isEmpty
+          ? current
+          : module?.topicByReference(
+              topicReference.split('#').first,
+              fromTopic: current,
+            );
+      final values =
+          <String>{
+                ...WritersideSchema.valuesFor(
+                  context.currentElement!,
+                  attribute,
+                ),
+                if (attribute == 'lang') ..._codeLanguages,
+                if (symbolKind != null)
+                  for (final symbol
+                      in context.projectIndex?.symbols ??
+                          const <WritersideSymbol>[])
+                    if ((moduleId == null || symbol.moduleId == moduleId) &&
+                        (symbolKind == WritersideSymbolKind.element
+                            ? {
+                                    WritersideSymbolKind.element,
+                                    WritersideSymbolKind.snippet,
+                                    WritersideSymbolKind.seealso,
+                                  }.contains(symbol.kind) &&
+                                  (target != null &&
+                                      symbol.filePath == target.filePath)
+                            : symbol.kind == symbolKind))
+                      symbol.name,
+                if (kind == WritersideAttributeReferenceKind.variable)
+                  ...context.variables,
+                if (kind == WritersideAttributeReferenceKind.topic)
+                  ...context.topicIds,
+                if (kind == WritersideAttributeReferenceKind.category)
+                  ...context.categories,
+                if (attribute == 'src' && kind == null) ...context.projectFiles,
+              }
+              .where((value) => value.toLowerCase().startsWith(valuePrefix))
+              .toList()
+            ..sort();
+      return values
+          .take(limit)
+          .map(
+            (value) => SourceAutocompleteSuggestion(
+              label: value,
+              insertText: value,
+              kind: switch (kind) {
+                WritersideAttributeReferenceKind.topic =>
+                  SourceAutocompleteKind.topic,
+                WritersideAttributeReferenceKind.variable =>
+                  SourceAutocompleteKind.variable,
+                WritersideAttributeReferenceKind.image =>
+                  SourceAutocompleteKind.image,
+                WritersideAttributeReferenceKind.category =>
+                  SourceAutocompleteKind.category,
+                _ => SourceAutocompleteKind.link,
+              },
+            ),
+          )
+          .toList();
+    }
+    final tagNameContext = inTag && RegExp(r'^</?[\w:-]*$').hasMatch(fragment);
+    final attributeContext = inTag && !tagNameContext;
     final suggestions = <SourceAutocompleteSuggestion>[
       for (final tag in WritersideSchema.childElementNames(
         context.parentElement,
-      ).take(context.parentElement == null ? 15 : 60))
+      ))
         SourceAutocompleteSuggestion(
           label: tag,
           insertText: tag,
@@ -188,12 +309,21 @@ class SourceAutocompleteProvider {
     final filtered =
         [
           for (final suggestion in suggestions)
-            if (seen.add('${suggestion.kind.name}:${suggestion.label}') &&
+            if ((!tagNameContext ||
+                    suggestion.kind == SourceAutocompleteKind.xmlTag) &&
+                (!attributeContext ||
+                    suggestion.kind == SourceAutocompleteKind.xmlAttribute) &&
+                seen.add('${suggestion.kind.name}:${suggestion.label}') &&
                 (prefix.isEmpty ||
                     suggestion.label.toLowerCase().startsWith(prefix)))
               suggestion,
         ]..sort((a, b) {
-          final kind = a.kind.index.compareTo(b.kind.index);
+          int rank(SourceAutocompleteKind kind) => switch (kind) {
+            SourceAutocompleteKind.heading => -2,
+            SourceAutocompleteKind.codeLanguage => -1,
+            _ => kind.index,
+          };
+          final kind = rank(a.kind).compareTo(rank(b.kind));
           if (kind != 0) {
             return kind;
           }

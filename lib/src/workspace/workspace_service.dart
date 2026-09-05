@@ -1297,6 +1297,36 @@ class WorkspaceService {
     }
   }
 
+  Future<Workspace> withWritersideSources(
+    Workspace workspace,
+    Map<String, String> sources,
+  ) async {
+    final project = workspace.writersideProject;
+    if (project == null) return workspace;
+    var updated = project;
+    for (final module in project.modules) {
+      final overrides = {
+        for (final entry in sources.entries)
+          if (p.isWithin(module.rootPath, entry.key) &&
+              module.sourceOverrides[entry.key] != entry.value)
+            entry.key: entry.value,
+      };
+      if (overrides.isEmpty) continue;
+      updated = updated.withModule(
+        await writersideService.load(
+          module.rootPath,
+          options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+          sourceOverrides: {...module.sourceOverrides, ...overrides},
+        ),
+      );
+    }
+    return workspace.copyWith(
+      writersideProject: updated,
+      writersideModule: updated.activeModule,
+      diagnostics: updated.diagnostics,
+    );
+  }
+
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
     final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (active == null) {

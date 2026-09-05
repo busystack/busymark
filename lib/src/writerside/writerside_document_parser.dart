@@ -63,8 +63,8 @@ class WritersideDocumentParser {
             continue;
           }
         } on Object {
-          // Retain the original Markdown block when an in-progress XML
-          // fragment is temporarily malformed.
+          nodes.add(WritersideRawNode(span: span, rawSource: raw));
+          continue;
         }
       }
       nodes.add(
@@ -99,7 +99,7 @@ class WritersideDocumentParser {
     }
 
     for (final event in parseEvents(
-      source,
+      markdownContent ? _maskMarkdownCode(source) : source,
       withLocation: true,
       validateNesting: true,
       validateDocument: false,
@@ -149,31 +149,44 @@ class WritersideDocumentParser {
         if (markdownContent && _markdownContainers.contains(frame.name)) {
           final inner = fullSource.substring(frame.openingEndOffset, start);
           if (RegExp(r'^\s*\n\s*\n').hasMatch(inner) &&
-              RegExp(r'\n\s*\n\s*$').hasMatch(inner) &&
-              !inner.contains('<![CDATA[')) {
-            final parsed = const MarkdownParser().parse(
-              filePath: filePath,
-              source: inner,
-              mode: MarkdownMode.writersideMarkdown,
-              validateLocalReferences: false,
-            );
-            final mixed = parseMarkdown(
-              filePath: filePath,
-              source: inner,
-              markdown: parsed.busyDocument,
-            );
-            frame.children
-              ..clear()
-              ..addAll(
+              RegExp(r'\n\s*\n\s*$').hasMatch(inner)) {
+            final literals = frame.children
+                .whereType<WritersideTextNode>()
+                .where((node) => node.rawSource.startsWith('<![CDATA['))
+                .toList();
+            final mixedChildren = <WritersideDocumentNode>[];
+            var segmentStart = frame.openingEndOffset;
+            void markdownSegment(int end) {
+              final segment = fullSource.substring(segmentStart, end);
+              if (segment.trim().isEmpty) return;
+              final parsed = const MarkdownParser().parse(
+                filePath: filePath,
+                source: segment,
+                mode: MarkdownMode.writersideMarkdown,
+                validateLocalReferences: false,
+              );
+              final mixed = parseMarkdown(
+                filePath: filePath,
+                source: segment,
+                markdown: parsed.busyDocument,
+              );
+              mixedChildren.addAll(
                 mixed.nodes.map(
-                  (node) => _rebaseNode(
-                    node,
-                    frame.openingEndOffset,
-                    filePath,
-                    fullSource,
-                  ),
+                  (node) =>
+                      _rebaseNode(node, segmentStart, filePath, fullSource),
                 ),
               );
+            }
+
+            for (final literal in literals) {
+              markdownSegment(literal.span.startOffset);
+              mixedChildren.add(literal);
+              segmentStart = literal.span.endOffset;
+            }
+            markdownSegment(start);
+            frame.children
+              ..clear()
+              ..addAll(mixedChildren);
           }
         }
         append(frame.build(filePath: filePath, source: fullSource, end: end));
@@ -182,7 +195,11 @@ class WritersideDocumentParser {
       if (event is XmlTextEvent) {
         append(
           WritersideTextNode(
-            text: event.value,
+            text: markdownContent
+                ? event.value
+                      .replaceAll('\uE000', '<')
+                      .replaceAll('\uE001', '&')
+                : event.value,
             span: SourceSpan.fromOffsets(
               filePath: filePath,
               source: fullSource,
@@ -415,4 +432,32 @@ String? _safeSubstring(String value, int start, int end) {
     return null;
   }
   return value.substring(start, end);
+}
+
+// XML events still own element boundaries. Mask only fenced Markdown bodies
+// for that scan; the Markdown parser subsequently reads the original source.
+String _maskMarkdownCode(String source) {
+  final chars = source.split('');
+  String? fence;
+  var minimum = 0;
+  var offset = 0;
+  for (final line in source.split('\n')) {
+    final match = RegExp(r'^ {0,3}(`{3,}|~{3,})').firstMatch(line);
+    if (fence == null && match != null) {
+      fence = match[1]![0];
+      minimum = match[1]!.length;
+    } else if (fence != null &&
+        match != null &&
+        match[1]![0] == fence &&
+        match[1]!.length >= minimum) {
+      fence = null;
+    } else if (fence != null) {
+      for (var index = offset; index < offset + line.length; index++) {
+        if (chars[index] == '<') chars[index] = '\uE000';
+        if (chars[index] == '&') chars[index] = '\uE001';
+      }
+    }
+    offset += line.length + 1;
+  }
+  return chars.join();
 }

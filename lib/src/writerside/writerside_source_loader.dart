@@ -113,8 +113,12 @@ class WritersideSourceLoader {
       final reference = attributes['openapi-path'] ?? attributes['src'];
       if (reference == null || reference.isEmpty) return;
       final identity = key(path, reference);
-      if (result.containsKey(identity)) return;
-      result[identity] = await load(
+      if (result.containsKey(identity) &&
+          (!attributes.containsKey('openapi-path') ||
+              result[identity]!.api != null)) {
+        return;
+      }
+      result[identity] ??= await load(
         reference: reference,
         documentPath: path,
         workspaceRoot: module.rootPath,

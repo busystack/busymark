@@ -3709,4 +3709,49 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get displayMath => 'ریاضی نمایشی';
+
+  @override
+  String get goToDeclaration => 'Go to Declaration';
+
+  @override
+  String get findUsages => 'Find Usages';
+
+  @override
+  String get cannotRenameSymbol =>
+      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+
+  @override
+  String get keyboardLayout => 'Keyboard layout';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Unsupported or malformed content is displayed as source.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Cannot resolve source “$reference”: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Link target is unavailable in this instance: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Invalid Writerside markup: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Cannot resolve $kind: $reference';
+  }
 }

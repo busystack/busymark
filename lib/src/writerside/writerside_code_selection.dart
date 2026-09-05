@@ -28,6 +28,14 @@ class WritersideCodeSelection {
       return selected.join('\n');
     }
     if (symbol == null) return source;
+    if (symbol.contains('.')) {
+      final parts = symbol.split('.');
+      var selected = source;
+      for (final part in parts) {
+        selected = select(selected, {...attributes, 'include-symbol': part});
+      }
+      return selected;
+    }
     final language = (attributes['lang'] ?? attributes['language'] ?? '')
         .toLowerCase();
     if (language == 'python' || language == 'py') {

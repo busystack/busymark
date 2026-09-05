@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -326,6 +328,9 @@ class WritersidePdfExportService {
     Map<String, WritersideModule> modulesByOrigin,
   ) async {
     final modules = {module, ...modulesByOrigin.values};
+    final seenAnchors = <String>{};
+    String anchor(String path, String id) =>
+        'ws-${sha256.convert(utf8.encode('$path#$id')).toString().substring(0, 24)}';
 
     ({WritersideModule module, WritersideTopic topic}) sourceContext(
       Map<String, String> attributes,
@@ -362,6 +367,19 @@ class WritersidePdfExportService {
             destination;
       }
       final attributes = {...inline.attributes};
+      if (inline.kind == BusyInlineKind.link &&
+          destination != null &&
+          !(Uri.tryParse(destination)?.hasScheme ?? false)) {
+        final hash = destination.indexOf('#');
+        final path = hash < 0 ? destination : destination.substring(0, hash);
+        final id = hash < 0 ? '' : destination.substring(hash + 1);
+        final target = path.isEmpty ? topic.filePath : path;
+        if (modules.any(
+          (module) => module.topics.any((topic) => topic.filePath == target),
+        )) {
+          destination = '#${anchor(target, id)}';
+        }
+      }
       for (final name in ['src', 'preview-src']) {
         final value = attributes[name];
         if (value == null || value.trim().isEmpty) {
@@ -371,16 +389,42 @@ class WritersidePdfExportService {
             await _resolvedAssetUri(source.module, source.topic, value) ??
             value;
       }
+      var text = inline.text;
+      var children = await Future.wait(inline.children.map(resolveInline));
+      if (attributes['shortcut-layouts'] case final layoutsJson?) {
+        final layouts = (jsonDecode(layoutsJson) as Map).cast<String, String>();
+        if (layouts.length > 1) {
+          text = layouts.entries
+              .map((entry) => '${entry.key}: ${entry.value}')
+              .join('; ');
+          children = const [];
+        }
+      }
+      if (attributes['switcher-key'] case final key?) {
+        text = '[$key] ${inline.plainText}';
+        children = const [];
+      }
       return inline.copyWith(
+        text: text,
         destination: destination,
         attributes: attributes,
-        children: await Future.wait(inline.children.map(resolveInline)),
+        children: children,
       );
     }
 
     Future<BusyBlock> resolveBlock(BusyBlock block) async {
       final attributes = {...block.attributes};
       final source = sourceContext(attributes);
+      final id = attributes['id'];
+      final candidate = block.id == 'writerside-document-title'
+          ? anchor(topic.filePath, '')
+          : id == null
+          ? null
+          : anchor(topic.filePath, id);
+      if (candidate != null && seenAnchors.add(candidate)) {
+        attributes['pdf-anchor'] = candidate;
+      }
+      if (id != null) attributes.remove('id');
       for (final name in ['src', 'preview-src']) {
         if (name == 'src' && block.kind == BusyBlockKind.codeBlock) continue;
         final value = attributes[name];

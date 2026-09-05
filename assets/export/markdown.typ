@@ -1,14 +1,14 @@
 // BusyMark Markdown PDF renderer. All document data enters through JSON;
 // Markdown text is never evaluated as Typst source.
 #let data = json("document.json")
-#let metadata = data.metadata
+#let document-metadata = data.metadata
 #let options = data.options
 
 #set document(
-  title: metadata.title,
-  author: if metadata.author == "" { () } else { (metadata.author,) },
-  description: metadata.description,
-  keywords: metadata.keywords,
+  title: document-metadata.title,
+  author: if document-metadata.author == "" { () } else { (document-metadata.author,) },
+  description: document-metadata.description,
+  keywords: document-metadata.keywords,
 )
 #set page(
   paper: options.paper,
@@ -23,7 +23,7 @@
 #set text(
   fallback: true,
   size: 10.5pt,
-  lang: metadata.language,
+  lang: document-metadata.language,
 )
 #set par(leading: 0.68em)
 #set heading(numbering: none)
@@ -102,6 +102,8 @@
       emph(body)
     } else if kind == "underline" {
       underline(body)
+      let summary = value-or(item, "summary", "")
+      if summary != "" { footnote(text(summary)) }
     } else if kind == "strikethrough" {
       strike(body)
     } else if kind == "code" {
@@ -232,6 +234,8 @@
   let kind = block-data.kind
   let inlines = value-or(block-data, "inlines", ())
   let children = value-or(block-data, "children", ())
+  let block-anchor = value-or(block-data, "anchor", "")
+  if block-anchor != "" { [#metadata(block-anchor) #label(block-anchor)] }
   if kind == "heading" {
     let element = heading(
       level: value-or(block-data, "level", 1),

@@ -104,12 +104,14 @@ class _ResolveState {
       final name = node.attributes['name']?.trim();
       final value = node.attributes['value'];
       if (name != null && name.isNotEmpty && value != null) {
-        scopedVariables[name] = _interpolate(
-          value,
-          scopedVariables,
-          node,
-          ignore: inheritedIgnoreVariables,
-        );
+        scopedVariables[name] = value.contains('%$name%')
+            ? _interpolate(
+                value,
+                scopedVariables,
+                node,
+                ignore: inheritedIgnoreVariables,
+              )
+            : value;
       }
     }
     scopedVariables.addAll(arguments);
@@ -119,7 +121,21 @@ class _ResolveState {
       moduleRoot: module.rootPath,
       topicPath: topic.filePath,
     );
+    final markdownChapters = <(int, bool)>[];
     for (final node in nodes) {
+      if (node is WritersideMarkdownBlockNode &&
+          node.block.kind == BusyBlockKind.heading) {
+        final level = int.tryParse(node.block.attributes['level'] ?? '') ?? 1;
+        while (markdownChapters.isNotEmpty &&
+            markdownChapters.last.$1 >= level) {
+          markdownChapters.removeLast();
+        }
+        markdownChapters.add((
+          level,
+          _matchesConditions(node.block.attributes, activeFilters, module),
+        ));
+      }
+      if (markdownChapters.any((chapter) => !chapter.$2)) continue;
       if (node is WritersideTextNode) {
         result.add(
           node.copyWith(
@@ -178,7 +194,20 @@ class _ResolveState {
       if (element.semanticKind == WritersideSemanticKind.include) {
         result.addAll(
           _resolveInclude(
-            element,
+            element.copyWith(
+              attributes: {
+                for (final entry in element.attributes.entries)
+                  entry.key: _interpolate(
+                    entry.value,
+                    scopedVariables,
+                    element,
+                    ignore: _ignoreVariablesFor(
+                      element,
+                      inheritedIgnoreVariables,
+                    ),
+                  ),
+              },
+            ),
             module: module,
             topic: topic,
             variables: scopedVariables,
@@ -209,13 +238,17 @@ class _ResolveState {
           for (final child in element.children)
             if (element.semanticKind == WritersideSemanticKind.api &&
                 child is WritersideElementNode &&
-                child.semanticKind == WritersideSemanticKind.api &&
-                !child.attributes.containsKey('openapi-path'))
+                child.semanticKind == WritersideSemanticKind.api)
               child.copyWith(
                 attributes: {
+                  for (final name in [
+                    'openapi-path',
+                    'depth',
+                    'generate-samples',
+                    'display-links-if-available',
+                  ])
+                    if (attributes[name] != null) name: attributes[name]!,
                   ...child.attributes,
-                  if (attributes['openapi-path'] case final path?)
-                    'openapi-path': path,
                 },
               )
             else
@@ -316,6 +349,8 @@ class _ResolveState {
         final src = attributes['src'] ?? '';
         final resource = referenceData.resources[src];
         attributes['resolved-label'] = p.basename(src);
+        attributes['resolved-resource-path'] = resource?.path ?? '';
+        attributes.remove('resolved-destination');
         if (resource?.path case final path?) {
           attributes['resolved-destination'] = Uri.file(path).toString();
         } else {
@@ -436,6 +471,17 @@ class _ResolveState {
                     targetTopic.filePath;
           });
     }
+    if (available && target != null) {
+      for (final ancestor in targetTopic!.document.elements.where(
+        (element) =>
+            element.span.startOffset <= target.span.startOffset &&
+            element.span.endOffset >= target.span.endOffset,
+      )) {
+        available =
+            available &&
+            _matchesInstance(ancestor.attributes['instance'], targetModule!);
+      }
+    }
     if (target is WritersideElementNode) {
       available =
           available &&
@@ -445,28 +491,84 @@ class _ResolveState {
           available &&
           _matchesInstance(target.block.attributes['instance'], targetModule!);
     }
+    String? titleOf(WritersideElementNode? element) =>
+        element?.children
+            .whereType<WritersideElementNode>()
+            .where(
+              (child) =>
+                  child.name == 'title' &&
+                  _matchesInstance(child.attributes['instance'], targetModule!),
+            )
+            .firstOrNull
+            ?.plainText ??
+        element?.attributes['title'];
+    if (targetTopic?.document.rootElement case final root?) {
+      available =
+          available &&
+          _matchesInstance(root.attributes['instance'], targetModule!);
+    }
     final targetTitle = target is WritersideElementNode
-        ? target.attributes['title'] ??
-              target.children
-                  .whereType<WritersideElementNode>()
-                  .where((element) => element.name == 'title')
-                  .firstOrNull
-                  ?.plainText ??
-              target.plainText
+        ? titleOf(target) ?? target.plainText
         : target?.plainText;
     final label = targetTitle?.trim().isNotEmpty == true
         ? targetTitle!
-        : targetTopic?.title ?? destination;
+        : titleOf(targetTopic?.document.rootElement) ??
+              targetTopic?.title ??
+              destination;
+    final targetVariables = <String, String>{
+      for (final variable
+          in targetModule?.variables ?? const <WritersideVariable>[])
+        if (_matchesInstance(variable.instanceCondition, targetModule!))
+          variable.name: variable.value,
+      for (final variable
+          in targetTopic?.document.rootElement?.children
+                  .whereType<WritersideElementNode>() ??
+              const <WritersideElementNode>[])
+        if (variable.semanticKind == WritersideSemanticKind.variable &&
+            _matchesInstance(variable.attributes['instance'], targetModule!))
+          if (variable.attributes['name'] != null)
+            variable.attributes['name']!: variable.attributes['value'] ?? '',
+    };
+    String? summaryFor(String name) {
+      final element = targetTopic?.document.elements
+          .where(
+            (element) =>
+                element.name == name &&
+                _matchesInstance(element.attributes['instance'], targetModule!),
+          )
+          .firstOrNull;
+      final selected = element?.attributes['rel'] == null
+          ? element
+          : targetTopic?.document
+                .contentById(element!.attributes['rel']!)
+                ?.firstOrNull;
+      final fallback = targetTopic?.document.elements
+          .where(
+            (element) =>
+                element.name == 'p' &&
+                _matchesInstance(element.attributes['instance'], targetModule!),
+          )
+          .firstOrNull;
+      final summaryNode = selected ?? fallback;
+      return summaryNode == null
+          ? null
+          : _interpolate(
+              summaryNode.plainText,
+              targetVariables,
+              summaryNode,
+              ignore: false,
+            ).trim();
+    }
+
     final summary =
         attributes['summary'] ??
-        targetTopic?.document.elements
-            .where((element) => element.name == 'link-summary')
-            .firstOrNull
-            ?.plainText ??
-        targetTopic?.document.elements
-            .where((element) => element.name == 'p')
-            .firstOrNull
-            ?.plainText;
+        summaryFor(
+          node is WritersideElementNode &&
+                  node.semanticKind == WritersideSemanticKind.card
+              ? 'card-summary'
+              : 'link-summary',
+        );
+    final cardSummary = attributes['summary'] ?? summaryFor('card-summary');
     if (!available && attributes['nullable'] != 'true') {
       _referenceDiagnostic(
         code: 'writerside.link.unavailable',
@@ -475,12 +577,18 @@ class _ResolveState {
       );
     }
     return {
-      'resolved-label': label,
+      'resolved-label': _interpolate(
+        label,
+        targetVariables,
+        node,
+        ignore: false,
+      ),
       'resolved-destination': path.isEmpty
           ? '#$anchor'
           : '${targetTopic?.filePath ?? path}${anchor.isEmpty ? '' : '#$anchor'}',
       'resolved-available': '$available',
       if (summary != null) 'summary': summary.trim(),
+      if (cardSummary != null) 'card-summary': cardSummary,
     };
   }
 
@@ -502,7 +610,7 @@ class _ResolveState {
         node: include,
         args: {'origin': origin},
       );
-      return const [];
+      return [include];
     }
 
     final from = include.attributes['from']?.trim();
@@ -520,7 +628,7 @@ class _ResolveState {
           node: include,
           args: {'from': from},
         );
-        return const [];
+        return [include];
       }
       targetTopic = matches.firstOrNull;
     }
@@ -533,7 +641,7 @@ class _ResolveState {
           args: {'from': from},
         );
       }
-      return const [];
+      return nullable ? const [] : [include];
     }
 
     final elementId = include.attributes['element-id']?.trim();
@@ -544,7 +652,7 @@ class _ResolveState {
         node: include,
         args: {'from': from, 'elementId': elementId},
       );
-      return const [];
+      return [include];
     }
     try {
       Iterable<WritersideDocumentNode> selected;
@@ -558,7 +666,7 @@ class _ResolveState {
               args: {'from': from, 'elementId': elementId},
             );
           }
-          return const [];
+          return nullable ? const [] : [include];
         }
         final first = target.first;
         selected =
@@ -575,8 +683,7 @@ class _ResolveState {
             : root.children.where((node) {
                 return node is! WritersideElementNode ||
                     (node.semanticKind != WritersideSemanticKind.title &&
-                        node.semanticKind != WritersideSemanticKind.metadata &&
-                        node.semanticKind != WritersideSemanticKind.snippet);
+                        node.semanticKind != WritersideSemanticKind.metadata);
               });
       }
 
@@ -788,36 +895,44 @@ class _ResolveState {
     Map<String, String> variables,
     WritersideDocumentNode node, {
     required bool ignore,
+    Set<String> resolving = const {},
   }) {
     if (ignore || !value.contains('%')) {
-      return value;
+      return value.replaceAll('&percnt;', '%');
     }
-    return value.replaceAllMapped(
-      RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%'),
-      (match) {
-        final name = match.group(2)!;
-        if (match.group(1) != null) {
-          return '%$name%';
-        }
-        final replacement = variables[name];
-        if (replacement != null) {
-          return replacement;
-        }
-        final key = '${node.span.filePath}:${node.span.startOffset}:$name';
-        if (_unresolvedVariables.add(key)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.variable.unresolved',
-              severity: DiagnosticSeverity.warning,
-              filePath: node.span.filePath,
-              args: {'name': name},
-              sourceSpan: node.span,
-            ),
-          );
-        }
-        return match.group(0)!;
-      },
-    );
+    return value
+        .replaceAllMapped(RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%'), (
+          match,
+        ) {
+          final name = match.group(2)!;
+          if (match.group(1) != null) {
+            return '%$name%';
+          }
+          final replacement = variables[name];
+          if (replacement != null && !resolving.contains(name)) {
+            return _interpolate(
+              replacement,
+              variables,
+              node,
+              ignore: false,
+              resolving: {...resolving, name},
+            );
+          }
+          final key = '${node.span.filePath}:${node.span.startOffset}:$name';
+          if (_unresolvedVariables.add(key)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.variable.unresolved',
+                severity: DiagnosticSeverity.warning,
+                filePath: node.span.filePath,
+                args: {'name': name},
+                sourceSpan: node.span,
+              ),
+            );
+          }
+          return match.group(0)!;
+        })
+        .replaceAll('&percnt;', '%');
   }
 
   String? titleFor(WritersideDocument document) {

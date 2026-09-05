@@ -70,6 +70,155 @@ void main() {
   }
 
   test(
+    'mixed Markdown protects fenced code and CDATA while preserving spans',
+    () async {
+      const source = '''# Library
+
+<snippet id="mixed">
+
+Before **bold**.
+
+<![CDATA[*literal* <raw>]]>
+
+After *emphasis*.
+
+```xml
+<unclosed>&literal
+```
+
+</snippet>
+''';
+      await write('topics/library.md', source);
+      await write(
+        'topics/main.topic',
+        '<topic id="main"><include from="library.md" element-id="mixed"/></topic>',
+      );
+      final blocks = walk((await render()).blocks).toList();
+      expect(
+        blocks.map((block) => block.plainText),
+        containsAll([
+          'Before bold.',
+          '*literal* <raw>',
+          'After emphasis.',
+          '<unclosed>&literal',
+        ]),
+      );
+      final after = blocks.singleWhere(
+        (block) => block.plainText == 'After emphasis.',
+      );
+      expect(
+        after.inlines.map((inline) => inline.kind),
+        contains(BusyInlineKind.emphasis),
+      );
+      expect(
+        source.substring(
+          after.sourceSpan!.startOffset,
+          after.sourceSpan!.endOffset,
+        ),
+        contains('After *emphasis*.'),
+      );
+    },
+  );
+
+  test('lazy defaults respect caller arguments and percent escaping', () async {
+    await write(
+      'topics/main.topic',
+      r'<topic id="main"><snippet id="s"><var name="base" value="default"/><var name="path" value="%base%/file"/><p>%path% %\base% &percnt;base%</p><code-block ignore-vars="true">%base%</code-block></snippet><include element-id="s"><var name="base" value="caller"/></include></topic>',
+    );
+    final blocks = walk((await render()).blocks).toList();
+    expect(
+      blocks.map((block) => block.plainText),
+      contains('caller/file %base% %base%'),
+    );
+    expect(
+      blocks
+          .where((block) => block.kind == BusyBlockKind.codeBlock)
+          .map((block) => block.plainText),
+      everyElement('%base%'),
+    );
+  });
+
+  test('empty links use the target title for the selected instance', () async {
+    await write(
+      'topics/target.topic',
+      '<topic id="target" title="Default"><title instance="web">Web title</title><title instance="mobile">Mobile title</title><chapter id="intro" title="Default chapter"><title instance="mobile">Mobile chapter</title><p>Summary</p></chapter></topic>',
+    );
+    await write(
+      'topics/main.topic',
+      '<topic id="main"><a href="target.topic"/><a href="target.topic#intro"/></topic>',
+    );
+    final document = await render(instance: 'mobile');
+    expect(
+      walk(
+        document.blocks,
+      ).expand((block) => block.inlines).map((inline) => inline.text),
+      containsAll(['Mobile title', 'Mobile chapter']),
+    );
+  });
+
+  test(
+    'conditional chapter content and links follow the selected instance',
+    () async {
+      await write(
+        'topics/library.md',
+        '# Library\n\n## Web {instance="web" id="web"}\n\nWeb body\n\n## All\n\nShared body\n',
+      );
+      await write(
+        'topics/target.topic',
+        '<topic id="target" title="Target"><chapter instance="web" title="Web"><p id="hidden">Hidden</p></chapter></topic>',
+      );
+      await write(
+        'topics/main.topic',
+        '<topic id="main"><include from="library.md"/><a href="target.topic#hidden" nullable="true">Conditional link</a></topic>',
+      );
+      final web = walk(
+        (await render()).blocks,
+      ).map((block) => block.plainText).join('\n');
+      final mobile = walk((await render(instance: 'mobile')).blocks).toList();
+      expect(web, contains('Web body'));
+      expect(
+        mobile.map((block) => block.plainText).join('\n'),
+        isNot(contains('Web body')),
+      );
+      expect(
+        mobile.map((block) => block.plainText).join('\n'),
+        contains('Shared body'),
+      );
+      expect(
+        mobile
+            .expand((block) => block.inlines)
+            .singleWhere((inline) => inline.text == 'Conditional link')
+            .kind,
+        BusyInlineKind.text,
+      );
+    },
+  );
+
+  test(
+    'malformed markup and unresolved reuse stay visible with diagnostics',
+    () async {
+      await write(
+        'topics/main.topic',
+        '<topic id="main"><include from="missing.topic"/></topic>',
+      );
+      final module = await const WritersideModuleService().load(root.path);
+      final topic = module.topicByReference('main.topic')!;
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(module: module, topic: topic),
+      );
+      final rendered = const WritersideDocumentRenderer().toBusyDocument(
+        resolved.document,
+      );
+      expect(
+        rendered.blocks.single.plainText,
+        contains('Unresolved Writerside include'),
+      );
+      expect(resolved.diagnostics.single.sourceSpan!.filePath, topic.filePath);
+    },
+  );
+
+  test(
     'Markdown IDs include whole chapters and retain mixed-content spans',
     () async {
       const library = '''# Library

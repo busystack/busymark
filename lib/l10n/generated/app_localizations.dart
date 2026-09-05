@@ -6156,6 +6156,70 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display math'**
   String get displayMath;
+
+  /// No description provided for @goToDeclaration.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Declaration'**
+  String get goToDeclaration;
+
+  /// No description provided for @findUsages.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Usages'**
+  String get findUsages;
+
+  /// No description provided for @cannotRenameSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.'**
+  String get cannotRenameSymbol;
+
+  /// No description provided for @keyboardLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard layout'**
+  String get keyboardLayout;
+
+  /// No description provided for @diagnosticWritersideUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported or malformed content is displayed as source.'**
+  String get diagnosticWritersideUnsupported;
+
+  /// No description provided for @diagnosticWritersideSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot resolve source “{reference}”: {reason}'**
+  String diagnosticWritersideSource(String reference, String reason);
+
+  /// No description provided for @diagnosticWritersideLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link target is unavailable in this instance: {destination}'**
+  String diagnosticWritersideLink(String destination);
+
+  /// No description provided for @diagnosticWritersideSchema.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid Writerside markup: {element}, {attribute}. {reason}'**
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  );
+
+  /// No description provided for @diagnosticWritersideLlmsTxt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.'**
+  String get diagnosticWritersideLlmsTxt;
+
+  /// No description provided for @diagnosticWritersideReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot resolve {kind}: {reference}'**
+  String diagnosticWritersideReference(String kind, String reference);
 }
 
 class _AppLocalizationsDelegate

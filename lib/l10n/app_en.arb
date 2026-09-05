@@ -2328,6 +2328,55 @@
   "inlineMath": "Inline math",
   "@inlineMath": {"description": "Editor action that inserts an inline mathematical expression."},
   "displayMath": "Display math",
-  "@displayMath": {"description": "Editor action that inserts a display mathematical expression."}
-
+  "@displayMath": {"description": "Editor action that inserts a display mathematical expression."},
+  "goToDeclaration": "Go to Declaration",
+  "findUsages": "Find Usages",
+  "cannotRenameSymbol": "The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.",
+  "keyboardLayout": "Keyboard layout",
+  "diagnosticWritersideUnsupported": "Unsupported or malformed content is displayed as source.",
+  "diagnosticWritersideSource": "Cannot resolve source “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Link target is unavailable in this instance: {destination}",
+  "diagnosticWritersideSchema": "Invalid Writerside markup: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.",
+  "diagnosticWritersideReference": "Cannot resolve {kind}: {reference}",
+  "@diagnosticWritersideSource": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideLink": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideSchema": {
+    "placeholders": {
+      "element": {
+        "type": "String"
+      },
+      "attribute": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideReference": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "reference": {
+        "type": "String"
+      }
+    }
+  }
 }

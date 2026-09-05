@@ -26,7 +26,14 @@ admonitions, collapsible content, videos, math, Mermaid, PlantUML, and D2 use th
 same export semantics as BusyMark's editor and preview. `.topic` XML content is
 converted into the corresponding native PDF blocks for headings, paragraphs,
 procedures, steps, admonitions, code, lists, images, videos, links, and math.
-Malformed XML remains visible as source instead of disappearing.
+Preview and PDF share the Writerside resolver and renderer. XML chapters retain
+nested content, and links use unique PDF anchors. Every tab and topic variant is
+included as a labeled section. Tables preserve header styles, spans, column
+widths and nested cell content. Configured shortcuts, glossary descriptions,
+resources and API references participate in the same resolution.
+
+Unsupported markup produces a visible fallback and warning. Malformed XML or
+unresolved required content stops export with an explicit error.
 
 ## Offline and security behavior
 
@@ -59,7 +66,10 @@ JetBrains' separate CI tooling outside BusyMark.
 
 Focused tests cover instance selection, TOC ordering, variables, Markdown and
 `.topic` XML composition, local asset rebasing, cancellation, failure mapping,
-and an end-to-end native PDF build of the repository's Writerside demo.
+and the repository's Writerside demo through a test compiler runner. A separate
+integration test compiles semantic content using the real bundled Typst binary
+when available. See [Writerside support](writerside-support.md) for the official
+builder fixture comparison and the limits of that evidence.
 
 Run:
 

@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
+import 'package:busymark/src/export/markdown_export_mapper.dart';
+import 'package:busymark/src/export/markdown_export_document.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
+import 'package:busymark/src/export/typst_payload_builder.dart';
 import 'package:busymark/src/export/writerside_pdf_export_service.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -11,6 +15,112 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  const compiler = 'build/linux/x64/release/bundle/libexec/busymark/typst';
+  test(
+    'bundled Typst compiles semantic tables, anchors and glossary footnotes',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      final glossary = File(p.join(fixture.module.path, 'cfg/glossary.xml'));
+      await glossary.parent.create(recursive: true);
+      await glossary.writeAsString(
+        '<terms><term name="term">Glossary definition</term></terms>',
+      );
+      await File(
+        p.join(fixture.module.path, 'topics/advanced.topic'),
+      ).writeAsString(
+        '<topic id="advanced" title="Advanced"><chapter id="chapter" title="Chapter"><p id="body">Body <tooltip term="term"/></p><a anchor="body"/><table><tr><td colspan="2">Header</td></tr><tr><td rowspan="2"><code-block>Nested code</code-block></td><td>A</td></tr><tr><td>B</td></tr></table></chapter></topic>',
+      );
+      final recording = _RecordingMarkdownExporter();
+      await WritersidePdfExportService(markdownExporter: recording).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'recording.pdf'),
+          overwrite: false,
+        ),
+      );
+      final payload = const TypstPayloadBuilder().build(
+        document: const MarkdownExportMapper().map(
+          recording.request!.document!,
+        ),
+        options: const MarkdownPdfOptions(),
+        assets: {},
+      );
+      await File(
+        p.join(fixture.root.path, 'document.json'),
+      ).writeAsString(jsonEncode(payload));
+      await File(
+        'assets/export/markdown.typ',
+      ).copy(p.join(fixture.root.path, 'main.typ'));
+      final pdf = p.join(fixture.root.path, 'semantic.pdf');
+      final result = await Process.run(p.absolute(compiler), [
+        'compile',
+        p.join(fixture.root.path, 'main.typ'),
+        pdf,
+      ]);
+      expect(result.exitCode, 0, reason: '${result.stderr}');
+      expect(await File(pdf).length(), greaterThan(1000));
+    },
+    skip: !File(compiler).existsSync(),
+  );
+
+  test(
+    'PDF retains nested chapter bodies and resolves unique internal destinations',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      await File(
+        p.join(fixture.module.path, 'topics/advanced.topic'),
+      ).writeAsString(
+        '<topic id="advanced" title="Advanced"><chapter id="nested" title="Nested"><p id="body">Nested body</p><a anchor="body"/></chapter></topic>',
+      );
+      final exporter = _RecordingMarkdownExporter();
+      await WritersidePdfExportService(markdownExporter: exporter).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'anchors.pdf'),
+          overwrite: false,
+        ),
+      );
+      final document = const MarkdownExportMapper().map(
+        exporter.request!.document!,
+      );
+      Iterable<MarkdownExportBlock> walk(
+        List<MarkdownExportBlock> blocks,
+      ) sync* {
+        for (final block in blocks) {
+          yield block;
+          yield* walk(block.children);
+        }
+      }
+
+      final blocks = walk(document.blocks).toList();
+      expect(
+        blocks.expand((block) => block.inlines).map((inline) => inline.text),
+        contains('Nested body'),
+      );
+      final anchors = blocks
+          .map((block) => block.attributes['anchor'])
+          .whereType<String>()
+          .toList();
+      expect(anchors.toSet(), hasLength(anchors.length));
+      final destination = blocks
+          .expand((block) => block.inlines)
+          .singleWhere(
+            (inline) =>
+                inline.text == 'Nested body' &&
+                inline.kind == MarkdownExportInlineKind.link,
+          )
+          .destination!;
+      expect(destination, startsWith('#ws-'));
+      expect(anchors, contains(destination.substring(1)));
+    },
+  );
+
   test(
     'native export composes the selected instance without a container runtime',
     () async {

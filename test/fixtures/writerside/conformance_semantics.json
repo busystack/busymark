@@ -1,0 +1,78 @@
+{
+  "builderVersion": "2026.08.0328",
+  "topics": {
+    "features": {
+      "paragraphs": [
+        "Use Settings, docs/index.md, Ctrl+S, busymark, sample-resource.txt, and semantic markup.",
+        "Writerside",
+        "Reusable semantic content."
+      ],
+      "quotes": [
+        "Lossless semantic quote."
+      ],
+      "shortcuts": [
+        "Ctrl+S"
+      ],
+      "tooltips": [
+        {
+          "text": "semantic markup",
+          "summary": "Markup that conveys the meaning of content."
+        }
+      ],
+      "tables": [
+        [
+          [
+            {
+              "text": "Feature",
+              "header": true,
+              "colspan": 1,
+              "rowspan": 1
+            },
+            {
+              "text": "State",
+              "header": true,
+              "colspan": 1,
+              "rowspan": 1
+            }
+          ],
+          [
+            {
+              "text": "Semantic model",
+              "header": false,
+              "colspan": 1,
+              "rowspan": 1
+            },
+            {
+              "text": "Enabled",
+              "header": false,
+              "colspan": 1,
+              "rowspan": 1
+            }
+          ]
+        ]
+      ],
+      "seealso": []
+    },
+    "semantic": {
+      "paragraphs": [
+        "Welcome to BusyMark.",
+        "Reusable semantic content."
+      ],
+      "quotes": [],
+      "shortcuts": [],
+      "tooltips": [],
+      "tables": [],
+      "seealso": [
+        {
+          "title": "Related",
+          "links": [
+            {
+              "title": "Semantic topic",
+              "topic": "features"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

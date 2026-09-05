@@ -1,6 +1,7 @@
 import 'dart:convert';
 import '../export/openapi_static_export_mapper.dart';
 import '../export/markdown_export_document.dart';
+import '../export/markdown_export_mapper.dart';
 import '../visualization/visualization_models.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
@@ -34,12 +35,25 @@ class WritersideDocumentRenderer {
       ..._blocks(document.nodes, headingLevel: titleHeadingLevel + 1),
     ];
     final keys = <String>{};
+    void inlineKeys(Iterable<BusyInline> values) {
+      for (final value in values) {
+        keys.addAll(
+          (value.attributes['switcher-key'] ?? '')
+              .split(',')
+              .map((key) => key.trim())
+              .where((key) => key.isNotEmpty),
+        );
+        inlineKeys(value.children);
+      }
+    }
+
     void findKeys(Iterable<BusyBlock> values) {
       for (final block in values) {
         final key = block.attributes['switcher-key'];
         if (key != null && key.isNotEmpty) {
           keys.addAll(key.split(',').map((value) => value.trim()));
         }
+        inlineKeys(block.inlines);
         findKeys(block.children);
       }
     }
@@ -47,7 +61,12 @@ class WritersideDocumentRenderer {
     findKeys(blocks);
     if (keys.isNotEmpty) {
       final chapterScopes = <(int, String?)>[];
+      BusyInline annotateInline(BusyInline inline) => inline.copyWith(
+        attributes: {...inline.attributes, 'switcher-default': keys.first},
+        children: inline.children.map(annotateInline).toList(),
+      );
       BusyBlock annotate(BusyBlock block) => block.copyWith(
+        inlines: block.inlines.map(annotateInline).toList(),
         attributes: {...block.attributes, 'switcher-default': keys.first},
         children: block.children.map(annotate).toList(),
       );
@@ -197,17 +216,37 @@ class WritersideDocumentRenderer {
           );
         case WritersideSemanticKind.condition:
         case WritersideSemanticKind.container:
+        case WritersideSemanticKind.snippet:
           result.addAll(_blocks(element.children, headingLevel: headingLevel));
         case WritersideSemanticKind.startingPage:
         case WritersideSemanticKind.section:
         case WritersideSemanticKind.seealso:
         case WritersideSemanticKind.category:
-          final title = _elementTitle(element);
+          final title = _elementTitle(element).isNotEmpty
+              ? _elementTitle(element)
+              : element.name == 'request'
+              ? 'Request samples'
+              : element.name == 'response'
+              ? 'Response ${element.attributes['type'] ?? 'default'} samples'
+              : '';
+          final content = _sectionChildren(element);
           result.add(
             BusyBlock(
               id: _nodeId(element),
               kind: BusyBlockKind.htmlBlock,
-              attributes: {...attributes, 'writerside-section': 'true'},
+              attributes: {
+                ...attributes,
+                'writerside-section': 'true',
+                if ({
+                  'spotlight',
+                  'primary',
+                  'secondary',
+                  'cards',
+                  'misc',
+                  'links',
+                }.contains(element.name))
+                  'writerside-grid': 'true',
+              },
               children: [
                 if (title.isNotEmpty || kind == WritersideSemanticKind.seealso)
                   BusyBlock(
@@ -222,10 +261,7 @@ class WritersideDocumentRenderer {
                     attributes: {'level': '${headingLevel.clamp(1, 6)}'},
                     sourceSpan: element.span,
                   ),
-                ..._blocks(
-                  _contentChildren(element),
-                  headingLevel: headingLevel + 1,
-                ),
+                ..._blocks(content, headingLevel: headingLevel + 1),
               ],
               sourceSpan: element.span,
             ),
@@ -237,13 +273,42 @@ class WritersideDocumentRenderer {
               kind: BusyBlockKind.htmlBlock,
               attributes: {...attributes, 'writerside-card': 'true'},
               children: [
+                if (attributes['image'] ?? attributes['icon'] case final image?)
+                  BusyBlock(
+                    id: '${_nodeId(element)}-image',
+                    kind: BusyBlockKind.image,
+                    attributes: attributes,
+                    sourceSpan: element.span,
+                    inlines: [
+                      BusyInline(
+                        kind: BusyInlineKind.image,
+                        destination: image,
+                        text: '',
+                      ),
+                    ],
+                  ),
+                if (attributes['badge'] case final badge?)
+                  BusyBlock(
+                    id: '${_nodeId(element)}-badge',
+                    kind: BusyBlockKind.paragraph,
+                    inlines: [
+                      BusyInline(kind: BusyInlineKind.code, text: badge),
+                    ],
+                  ),
                 BusyBlock(
                   id: '${_nodeId(element)}-link',
                   kind: BusyBlockKind.paragraph,
                   inlines: [
                     BusyInline(
-                      kind: BusyInlineKind.link,
+                      kind:
+                          attributes['nullable'] == 'true' &&
+                              attributes['resolved-available'] == 'false'
+                          ? BusyInlineKind.text
+                          : BusyInlineKind.link,
                       text:
+                          (element.plainText.trim().isEmpty
+                              ? null
+                              : element.plainText.trim()) ??
                           attributes['resolved-label'] ??
                           attributes['href'] ??
                           element.plainText,
@@ -476,7 +541,13 @@ class WritersideDocumentRenderer {
                 _contentChildren(element),
                 headingLevel: headingLevel,
               ),
-              attributes: attributes,
+              attributes: {
+                ...attributes,
+                if (kind == WritersideSemanticKind.tabs &&
+                    !attributes.containsKey('group'))
+                  'group':
+                      'busymark-tabs:${element.span.filePath}:${element.span.startOffset}',
+              },
               sourceSpan: element.span,
             ),
           );
@@ -540,7 +611,6 @@ class WritersideDocumentRenderer {
         case WritersideSemanticKind.title:
         case WritersideSemanticKind.metadata:
         case WritersideSemanticKind.variable:
-        case WritersideSemanticKind.snippet:
           break;
         case WritersideSemanticKind.include:
           result.add(
@@ -586,6 +656,92 @@ class WritersideDocumentRenderer {
     return result;
   }
 
+  List<WritersideDocumentNode> _sectionChildren(WritersideElementNode element) {
+    final children = _contentChildren(element).toList();
+    if ({'request', 'response'}.contains(element.name)) {
+      final samples = children
+          .whereType<WritersideElementNode>()
+          .where((node) => node.name == 'sample')
+          .toList();
+      if (samples.isNotEmpty) {
+        WritersideElementNode wrap(
+          WritersideSemanticKind kind,
+          String name,
+          WritersideElementNode source,
+          List<WritersideDocumentNode> nodes,
+          Map<String, String> attributes,
+        ) => WritersideSemanticElementNode(
+          kind: kind,
+          name: name,
+          qualifiedName: name,
+          attributes: attributes,
+          qualifiedAttributes: const [],
+          attributeSpans: const {},
+          children: nodes,
+          span: source.span,
+          rawSource: source.rawSource,
+          provenance: source.provenance,
+        );
+        return [
+          wrap(WritersideSemanticKind.tabs, 'tabs', element, [
+            for (final sample in samples)
+              wrap(
+                WritersideSemanticKind.tab,
+                'tab',
+                sample,
+                [sample],
+                {
+                  'title':
+                      sample.attributes['title'] ??
+                      '${sample.attributes['lang'] ?? 'JSON'} example',
+                },
+              ),
+          ], const {}),
+          ...children.where((node) => !samples.contains(node)),
+        ];
+      }
+    }
+    if (element.semanticKind == WritersideSemanticKind.seealso) {
+      children.sort(
+        (a, b) =>
+            (a is WritersideElementNode
+                    ? int.tryParse(a.attributes['order'] ?? '') ?? 0
+                    : 0)
+                .compareTo(
+                  b is WritersideElementNode
+                      ? int.tryParse(b.attributes['order'] ?? '') ?? 0
+                      : 0,
+                ),
+      );
+    }
+    WritersideDocumentNode cards(WritersideDocumentNode node) {
+      if (node is! WritersideElementNode) return node;
+      if (node.name != 'a') {
+        return node.copyWith(children: node.children.map(cards).toList());
+      }
+      return WritersideSemanticElementNode(
+        kind: WritersideSemanticKind.card,
+        name: 'card',
+        qualifiedName: node.qualifiedName,
+        attributes: {
+          ...node.attributes,
+          if (node.attributes['card-summary'] case final summary?)
+            'summary': summary,
+        },
+        qualifiedAttributes: node.qualifiedAttributes,
+        attributeSpans: node.attributeSpans,
+        children: node.children,
+        span: node.span,
+        rawSource: node.rawSource,
+        provenance: node.provenance,
+      );
+    }
+
+    return element.attributes['style'] == 'cards' || element.name == 'cards'
+        ? children.map(cards).toList()
+        : children;
+  }
+
   List<BusyBlock> _apiBlocks(WritersideElementNode element, int headingLevel) {
     final selections = element.children
         .whereType<WritersideElementNode>()
@@ -605,15 +761,43 @@ class WritersideDocumentRenderer {
       final reference = OpenApiReferenceModel.fromJson(
         (jsonDecode(json) as Map).cast<Object?, Object?>(),
       );
-      final hasSamples = element.children
-          .whereType<WritersideElementNode>()
-          .any((child) => {'request', 'response'}.contains(child.name));
+      final samples = element.children.whereType<WritersideElementNode>().where(
+        (child) => {'request', 'response'}.contains(child.name),
+      );
+      final operationKey =
+          "${element.attributes['method']?.toLowerCase() ?? ''} ${element.attributes['endpoint'] ?? element.attributes['webhook'] ?? ''}";
+      final sampleBlocks = {
+        for (final sample in samples)
+          '${sample.span.startOffset}': _blocks([
+            sample,
+          ], headingLevel: headingLevel + 1).single,
+      };
       final mapped = const OpenApiStaticExportMapper().mapWriterside(
         reference,
         element: element.name,
-        attributes: {
-          ...element.attributes,
-          if (hasSamples) 'generate-samples': 'none',
+        attributes: element.attributes,
+        overrides: {
+          for (final sample in samples)
+            '$operationKey ${sample.name}${sample.name == 'response' ? ' ${sample.attributes['type'] ?? 'default'}' : ''}':
+                [
+                  MarkdownExportBlock(
+                    kind: MarkdownExportBlockKind.group,
+                    attributes: {
+                      'writerside-override': '${sample.span.startOffset}',
+                    },
+                    children: const MarkdownExportMapper()
+                        .map(
+                          BusyDocument(
+                            filePath: element.span.filePath,
+                            mode: MarkdownMode.writersideMarkdown,
+                            blocks: [
+                              sampleBlocks['${sample.span.startOffset}']!,
+                            ],
+                          ),
+                        )
+                        .blocks,
+                  ),
+                ],
         },
       );
       var index = 0;
@@ -626,37 +810,40 @@ class WritersideDocumentRenderer {
         destination: value.attributes['destination'],
         children: value.children.map(inline).toList(),
       );
-      BusyBlock block(MarkdownExportBlock value) => BusyBlock(
-        id: '${_nodeId(element)}-api-${index++}',
-        kind: switch (value.kind) {
-          MarkdownExportBlockKind.heading => BusyBlockKind.heading,
-          MarkdownExportBlockKind.code => BusyBlockKind.codeBlock,
-          MarkdownExportBlockKind.table ||
-          MarkdownExportBlockKind.tableRow => BusyBlockKind.table,
-          MarkdownExportBlockKind.group ||
-          MarkdownExportBlockKind.openApiReference => BusyBlockKind.htmlBlock,
-          _ => BusyBlockKind.paragraph,
-        },
-        inlines: value.inlines.isEmpty && value.text.isNotEmpty
-            ? [BusyInline(kind: BusyInlineKind.text, text: value.text)]
-            : value.inlines.map(inline).toList(),
-        children: value.children.map(block).toList(),
-        attributes: {
-          ..._attributes(element),
-          for (final entry in value.attributes.entries)
-            entry.key: '${entry.value}',
-          if (value.kind == MarkdownExportBlockKind.heading)
-            'level':
-                '${((value.attributes['level'] as int? ?? 2) - 3 + headingLevel).clamp(1, 6)}',
-        },
-        sourceSpan: element.span,
-        isGenerated: true,
-      );
-      return [
-        block(mapped),
-        if (hasSamples)
-          ..._blocks(element.children, headingLevel: headingLevel + 1),
-      ];
+      BusyBlock block(MarkdownExportBlock value) {
+        if (sampleBlocks[value.attributes['writerside-override']]
+            case final original?) {
+          return original;
+        }
+        return BusyBlock(
+          id: '${_nodeId(element)}-api-${index++}',
+          kind: switch (value.kind) {
+            MarkdownExportBlockKind.heading => BusyBlockKind.heading,
+            MarkdownExportBlockKind.code => BusyBlockKind.codeBlock,
+            MarkdownExportBlockKind.table ||
+            MarkdownExportBlockKind.tableRow => BusyBlockKind.table,
+            MarkdownExportBlockKind.group ||
+            MarkdownExportBlockKind.openApiReference => BusyBlockKind.htmlBlock,
+            _ => BusyBlockKind.paragraph,
+          },
+          inlines: value.inlines.isEmpty && value.text.isNotEmpty
+              ? [BusyInline(kind: BusyInlineKind.text, text: value.text)]
+              : value.inlines.map(inline).toList(),
+          children: value.children.map(block).toList(),
+          attributes: {
+            ..._attributes(element),
+            for (final entry in value.attributes.entries)
+              entry.key: '${entry.value}',
+            if (value.kind == MarkdownExportBlockKind.heading)
+              'level':
+                  '${((value.attributes['level'] as int? ?? 2) - 3 + headingLevel).clamp(1, 6)}',
+          },
+          sourceSpan: element.span,
+          isGenerated: true,
+        );
+      }
+
+      return [block(mapped)];
     } on FormatException catch (error) {
       return [
         BusyBlock(
@@ -832,6 +1019,7 @@ class WritersideDocumentRenderer {
           result.add(
             BusyInline(
               kind: BusyInlineKind.strong,
+              attributes: _attributes(node),
               text: text,
               children: children,
             ),
@@ -840,6 +1028,7 @@ class WritersideDocumentRenderer {
           result.add(
             BusyInline(
               kind: BusyInlineKind.emphasis,
+              attributes: _attributes(node),
               text: text,
               children: children,
             ),

@@ -11,11 +11,13 @@ Widget buildBusyMarkEditorTextContextMenu(
   EditableTextState editableTextState, {
   required String refineWithAiLabel,
   VoidCallback? onRefineWithAi,
+  List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
   return _BusyMarkEditorTextContextMenu(
     editableTextState: editableTextState,
     refineWithAiLabel: refineWithAiLabel,
     onRefineWithAi: onRefineWithAi,
+    additionalItems: additionalItems,
   );
 }
 
@@ -24,11 +26,13 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.editableTextState,
     required this.refineWithAiLabel,
     required this.onRefineWithAi,
+    required this.additionalItems,
   });
 
   final EditableTextState editableTextState;
   final String refineWithAiLabel;
   final VoidCallback? onRefineWithAi;
+  final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
   @override
   State<_BusyMarkEditorTextContextMenu> createState() =>
@@ -123,6 +127,7 @@ class _BusyMarkEditorTextContextMenuState
         ),
       );
     }
+    items.addAll(widget.additionalItems);
     return items;
   }
 }

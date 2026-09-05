@@ -28,8 +28,22 @@ void main() {
         'post': {
           'summary': 'Add users',
           'tags': ['User'],
+          'requestBody': {
+            'content': {
+              'application/json': {
+                'schema': {r'$ref': '#/components/schemas/Pet'},
+              },
+            },
+          },
           'responses': {
-            '201': {'description': 'User created'},
+            '201': {
+              'description': 'User created',
+              'content': {
+                'application/json': {
+                  'example': {'status': 'generated-response'},
+                },
+              },
+            },
           },
         },
       },
@@ -50,6 +64,15 @@ void main() {
           'type': 'object',
           'properties': {
             'name': {'type': 'string'},
+            'owner': {
+              'type': 'object',
+              'properties': {
+                'id': {
+                  'type': 'integer',
+                  'description': 'Nested owner identifier',
+                },
+              },
+            },
           },
         },
       },
@@ -133,9 +156,22 @@ void main() {
       expect(resolved.diagnostics, isEmpty);
       expect(text, contains('Add users'));
       expect(text, contains('custom request'));
+      expect(text, contains('generated-response'));
       expect(text, isNot(contains('List pets')));
     },
   );
+  test('API schemas resolve references and honor nesting depth', () async {
+    final (full, _) = await render(
+      '<api-doc openapi-path="api.json"><api-endpoint endpoint="/users" method="POST"/></api-doc>',
+    );
+    expect(full, contains('Nested owner identifier'));
+    expect(full, contains('"name": "string"'));
+    final (shallow, _) = await render(
+      '<api-schema openapi-path="api.json" name="Pet" depth="1"/>',
+    );
+    expect(shallow, isNot(contains('Nested owner identifier')));
+    expect(shallow, contains('owner'));
+  });
   test('schema and webhook elements are visible', () async {
     final (text, resolved) = await render(
       '<api-schema openapi-path="api.json" name="Pet"/><api-webhook openapi-path="api.json" webhook="petAdded" method="POST"/>',
