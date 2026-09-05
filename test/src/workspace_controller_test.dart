@@ -1618,6 +1618,36 @@ void main() {
     },
   );
 
+  test('monitor refresh waits for an active foreground refresh', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-refresh-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    File(p.join(directory.path, 'a.md')).writeAsStringSync('# Original\n');
+    final monitor = _ControlledFileMonitor();
+    addTearDown(monitor.dispose);
+    final service = _GatedRefreshWorkspaceService();
+    final harness = await _createControllerHarness(
+      service: service,
+      fileMonitor: monitor,
+    );
+    await harness.controller.openPath(directory.path);
+    service.gate = Completer<void>();
+    final refresh = harness.controller.refreshWorkspaceFromDisk();
+    await _waitFor(() => service.refreshStarts == 1);
+    monitor.emit(directory.path);
+    // Cross the controller's debounce while the foreground operation is held.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    final startsWhileLoading = service.refreshStarts;
+    service.gate!.complete();
+    service.gate = null;
+    final succeeded = await refresh;
+    await _waitFor(() => !harness.controller.state.isLoading);
+    expect(startsWhileLoading, 1);
+    expect(succeeded, isTrue);
+    expect(harness.controller.state.activeText, '# Original\n');
+  });
+
   test('external file moves remap the open document buffer', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-external-move-',
@@ -2542,3 +2572,38 @@ WorkspaceFileSnapshot _delayedSnapshot(String text, [int revision = 0]) {
 
 final _autosaveInitialModifiedAt = DateTime(2026);
 final _delayedInitialModifiedAt = DateTime(2026, 2);
+
+class _ControlledFileMonitor extends WorkspaceFileMonitor {
+  final _events = StreamController<WorkspaceFileMonitorEvent>.broadcast();
+  @override
+  Stream<WorkspaceFileMonitorEvent> get events => _events.stream;
+  void emit(String path) => _events.add(
+    WorkspaceFileMonitorEvent(
+      kind: WorkspaceFileEventKind.workspaceChanged,
+      path: path,
+    ),
+  );
+  @override
+  Future<void> start({
+    required String rootPath,
+    required Iterable<String> openFilePaths,
+  }) async {}
+  @override
+  void updateOpenFilePaths(Iterable<String> paths) {}
+  @override
+  Future<void> dispose() => _events.close();
+}
+
+class _GatedRefreshWorkspaceService extends WorkspaceService {
+  Completer<void>? gate;
+  var refreshStarts = 0;
+  @override
+  Future<Workspace> openPath(String path) async {
+    final pending = gate;
+    if (pending != null) {
+      refreshStarts++;
+      await pending.future;
+    }
+    return super.openPath(path);
+  }
+}

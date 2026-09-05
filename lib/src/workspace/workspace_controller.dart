@@ -596,6 +596,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> _handleFileMonitorEvent(WorkspaceFileMonitorEvent event) async {
+    if (!ref.mounted) return;
     final matching = state.documentBuffers.where((buffer) {
       final path = buffer.filePath;
       return path != null &&
@@ -605,6 +606,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }).toList();
     for (final buffer in matching) {
       await _applyExternalFileState(buffer, event);
+      if (!ref.mounted) return;
     }
     final workspaceRoot = state.workspace?.rootPath;
     if (workspaceRoot == null ||
@@ -612,11 +614,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             !p.isWithin(workspaceRoot, event.path))) {
       return;
     }
+    _scheduleMonitoredWorkspaceRefresh();
+  }
+
+  void _scheduleMonitoredWorkspaceRefresh() {
     _workspaceRefreshDebounce?.cancel();
-    _workspaceRefreshDebounce = Timer(
-      const Duration(milliseconds: 250),
-      () => unawaited(refreshWorkspaceFromDiskPreservingOpenTabs()),
-    );
+    _workspaceRefreshDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!ref.mounted) return;
+      // Our own filesystem writes also emit notifications. A background
+      // refresh must not invalidate an operation already loading its result.
+      if (state.isLoading) {
+        _scheduleMonitoredWorkspaceRefresh();
+        return;
+      }
+      unawaited(refreshWorkspaceFromDiskPreservingOpenTabs());
+    });
   }
 
   Future<void> _applyExternalFileState(
@@ -2928,6 +2940,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
       final refreshed = await _service.openPath(openTarget);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return false;
       final refreshedWorkspace = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.copyWith(
               files: _mergedDocumentFiles(workspace.files, refreshed.files),
@@ -2973,6 +2986,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ),
         );
       }
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) return false;
       var activeBuffer = buffers
           .where((buffer) => buffer.id == state.activeBufferId)
           .firstOrNull;
@@ -3353,7 +3367,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   bool _isCurrentActiveDocumentOperation(int operationRevision) {
-    return operationRevision == _activeDocumentRevision;
+    return ref.mounted && operationRevision == _activeDocumentRevision;
   }
 
   bool _isCurrentActiveDocument(
