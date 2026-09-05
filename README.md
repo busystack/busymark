@@ -163,7 +163,8 @@ references. An interactive exercise is available in
 
 ## Run From Source
 
-1. [Install Flutter](https://docs.flutter.dev/install)
+1. [Install Flutter 3.47.0](https://docs.flutter.dev/install). The exact
+   project version is declared in `pubspec.yaml` and shared with CI.
 
 2. Run the application:
 
