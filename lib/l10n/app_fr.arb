@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "L’édition par IA est déclenchée explicitement. BusyMark envoie uniquement le contexte affiché au fournisseur sélectionné et n’applique jamais une proposition sans validation.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exporter au format HTML…",
+  "fileTypeHtml": "Document HTML",
+  "exportingHtml": "Exportation HTML…",
+  "htmlExported": "Exportation HTML terminée",
+  "htmlExportFailed": "Échec de l’exportation HTML",
+  "htmlKeepAssetsTogether": "Lors de la copie, conservez le fichier HTML et son dossier de ressources ensemble.",
+  "htmlInstanceDescription": "Exportez une instance sous forme de pages liées hors ligne. Choisissez un nom pour un dossier de sortie dédié.",
+  "htmlInstance": "Instance",
+  "htmlOwnedDirectoryOnly": "Seul un dossier créé par l’exportation HTML de BusyMark peut être remplacé. Les fichiers modifiés ou étrangers seront conservés.",
+  "showInFolder": "Afficher dans le dossier",
+  "goToDeclaration": "Aller à la déclaration",
+  "findUsages": "Rechercher les utilisations",
+  "cannotRenameSymbol": "Impossible de renommer ce symbole en toute sécurité. Vérifiez son nom et actualisez la référence avant de réessayer.",
+  "keyboardLayout": "Disposition du clavier",
+  "diagnosticWritersideUnsupported": "Le contenu non pris en charge ou mal formé est affiché sous forme de source.",
+  "diagnosticWritersideSource": "Impossible de résoudre la source « {reference} » : {reason}",
+  "diagnosticWritersideLink": "La cible du lien est indisponible dans cette instance : {destination}",
+  "diagnosticWritersideSchema": "Balisage Writerside invalide : {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Utilisez <llms-txt>true</llms-txt> ou <llms-txt>false</llms-txt> ; single-file n’est plus pris en charge.",
+  "diagnosticWritersideReference": "Impossible de résoudre {kind} : {reference}",
+  "sortTableColumn": "Trier {column}"
 }

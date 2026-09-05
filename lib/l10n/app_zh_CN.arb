@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "AI 编辑需要明确发起。BusyMark 只会将所选提供商对应的显示上下文发送出去，且不会在未经审核的情况下应用建议。",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "导出为 HTML…",
+  "fileTypeHtml": "HTML 文档",
+  "exportingHtml": "正在导出 HTML…",
+  "htmlExported": "HTML 导出完成",
+  "htmlExportFailed": "HTML 导出失败",
+  "htmlKeepAssetsTogether": "复制导出结果时，请将 HTML 文件及其配套资源文件夹放在一起。",
+  "htmlInstanceDescription": "将一个实例导出为相互链接的离线页面。请选择专用输出文件夹的名称。",
+  "htmlInstance": "实例",
+  "htmlOwnedDirectoryOnly": "只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。",
+  "showInFolder": "在文件夹中显示",
+  "goToDeclaration": "转到声明",
+  "findUsages": "查找用法",
+  "cannotRenameSymbol": "无法安全地重命名此符号。请检查名称并刷新引用，然后重试。",
+  "keyboardLayout": "键盘布局",
+  "diagnosticWritersideUnsupported": "不支持或格式错误的内容将显示为源代码。",
+  "diagnosticWritersideSource": "无法解析源“{reference}”：{reason}",
+  "diagnosticWritersideLink": "此实例中无法使用链接目标：{destination}",
+  "diagnosticWritersideSchema": "无效的 Writerside 标记：{element}，{attribute}。{reason}",
+  "diagnosticWritersideLlmsTxt": "请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。",
+  "diagnosticWritersideReference": "无法解析 {kind}：{reference}",
+  "sortTableColumn": "排序 {column}"
 }

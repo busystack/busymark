@@ -85,7 +85,7 @@ class VisualizationDescriptor {
 
 enum VisualizationTheme { light, dark }
 
-enum VisualizationRenderProfile { preview, pdf }
+enum VisualizationRenderProfile { preview, pdf, html }
 
 enum VisualizationRenderPriority { visible, nearVisible, background, export }
 

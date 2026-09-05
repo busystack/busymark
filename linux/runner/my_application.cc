@@ -154,6 +154,7 @@ struct HeaderBarConfiguration {
   const gchar* view_mode;
   gboolean can_refresh;
   gboolean can_export_pdf;
+  gboolean can_export_html;
   gboolean document_controls_visible;
   gboolean search_active;
   gboolean search_visible;
@@ -1322,7 +1323,7 @@ static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
 }
 
 static const gchar* main_menu_icon_name(const gchar* action) {
-  if (g_strcmp0(action, "exportPdf") == 0) {
+  if (g_strcmp0(action, "exportPdf") == 0 || g_strcmp0(action, "exportHtml") == 0) {
     return "document-save-as-symbolic";
   }
   if (g_strcmp0(action, "settings") == 0) {
@@ -1381,6 +1382,11 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       localized_label_or(labels, "exportPdf", ""), "header.export-pdf",
       main_menu_icon_name("exportPdf"),
       fl_lookup_string_arg(labels, "exportPdfGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "exportHtml", ""), "header.export-html",
+      main_menu_icon_name("exportHtml"),
+      nullptr);
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "fullScreen", ""), "header.full-screen",
@@ -1553,6 +1559,8 @@ static void set_header_action_enabled(MyApplication* self,
 static void setup_header_actions(MyApplication* self) {
   self->header_action_group = g_simple_action_group_new();
   add_header_gaction(self, "export-pdf", "exportPdf");
+  add_header_gaction(self, "export-html", "exportHtml");
+  set_header_action_enabled(self, "export-html", FALSE);
   set_header_action_enabled(self, "export-pdf", FALSE);
   add_header_gaction(self, "settings", "settings");
   add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
@@ -1870,6 +1878,7 @@ static gboolean decode_header_bar_configuration(
       configuration->sidebar_width <= 0 ||
       !fl_lookup_optional_bool_arg(args, "canRefresh",
                                    &configuration->can_refresh) ||
+      !fl_lookup_optional_bool_arg(args, "canExportHtml", &configuration->can_export_html) ||
       !fl_lookup_optional_bool_arg(args, "canExportPdf",
                                    &configuration->can_export_pdf) ||
       !fl_lookup_optional_bool_arg(
@@ -1918,6 +1927,7 @@ static void apply_header_bar_configuration(
   set_widget_sensitive(self->refresh_button, configuration.can_refresh);
   set_header_action_enabled(self, "export-pdf",
                             configuration.can_export_pdf);
+  set_header_action_enabled(self, "export-html", configuration.can_export_html);
   set_sidebar_width(self, configuration.sidebar_width);
   set_text_direction(self, configuration.text_direction);
   set_sidebar_visible(self, configuration.sidebar_visible);
@@ -2156,6 +2166,9 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
+    respond_success(method_call);
+  } else if (strcmp(method, "setCanExportHtml") == 0) {
+    set_header_action_enabled(self, "export-html", fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setCanExportPdf") == 0) {
     set_header_action_enabled(self, "export-pdf", fl_method_bool_arg(args));

@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML としてエクスポート…",
+  "fileTypeHtml": "HTML ドキュメント",
+  "exportingHtml": "HTML をエクスポート中…",
+  "htmlExported": "HTML のエクスポートが完了しました",
+  "htmlExportFailed": "HTML のエクスポートに失敗しました",
+  "htmlKeepAssetsTogether": "コピーするときは、HTML ファイルと付属のアセットフォルダーを一緒に移動してください。",
+  "htmlInstanceDescription": "1 つのインスタンスを、リンクでつながるオフラインページとしてエクスポートします。専用の出力フォルダー名を選んでください。",
+  "htmlInstance": "インスタンス",
+  "htmlOwnedDirectoryOnly": "BusyMark の HTML エクスポートで作成されたフォルダーのみ置き換えられます。変更されたファイルや無関係なファイルは保持されます。",
+  "showInFolder": "フォルダーで表示",
+  "goToDeclaration": "宣言へ移動",
+  "findUsages": "使用箇所を検索",
+  "cannotRenameSymbol": "シンボル名を安全に変更できません。名前を確認し、参照を更新してから再試行してください。",
+  "keyboardLayout": "キーボード配列",
+  "diagnosticWritersideUnsupported": "未対応または不正な形式の内容はソースとして表示されます。",
+  "diagnosticWritersideSource": "ソース「{reference}」を解決できません: {reason}",
+  "diagnosticWritersideLink": "このインスタンスではリンク先を利用できません: {destination}",
+  "diagnosticWritersideSchema": "無効な Writerside マークアップ: {element}、{attribute}。{reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> または <llms-txt>false</llms-txt> を使用してください。single-file はサポートされなくなりました。",
+  "diagnosticWritersideReference": "{kind} を解決できません: {reference}",
+  "sortTableColumn": "{column} を並べ替え"
 }

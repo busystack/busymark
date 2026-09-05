@@ -3666,30 +3666,30 @@ class AppLocalizationsEt extends AppLocalizations {
   String get displayMath => 'Plokina matemaatika';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Mine deklaratsiooni juurde';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Otsi kasutusi';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Klaviatuuripaigutus';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Toetamata või vigane sisu kuvatakse lähtekoodina.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'Allikat „$reference” ei saa lahendada: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Lingi siht pole selles eksemplaris saadaval: $destination';
   }
 
   @override
@@ -3698,15 +3698,53 @@ class AppLocalizationsEt extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Vigane Writerside’i märgistus: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'Kasuta <llms-txt>true</llms-txt> või <llms-txt>false</llms-txt>; single-file ei ole enam toetatud.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind ei saa lahendada: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Ekspordi HTML-ina…';
+
+  @override
+  String get fileTypeHtml => 'HTML-dokument';
+
+  @override
+  String get exportingHtml => 'HTML-i eksportimine…';
+
+  @override
+  String get htmlExported => 'HTML-i eksport on valmis';
+
+  @override
+  String get htmlExportFailed => 'HTML-i eksport ebaõnnestus';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Hoia eksporti kopeerides HTML-fail ja selle ressursikaust koos.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Ekspordi üks eksemplar lingitud võrguühenduseta lehtedena. Vali eraldi väljundkaustale nimi.';
+
+  @override
+  String get htmlInstance => 'Eksemplar';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Asendada saab ainult BusyMarki HTML-ekspordiga loodud kausta. Muudetud ja kõrvalised failid säilitatakse.';
+
+  @override
+  String get showInFolder => 'Näita kaustas';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sordi $column';
   }
 }

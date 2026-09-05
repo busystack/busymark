@@ -95,6 +95,7 @@ void main() {
         'textDirection': 'ltr',
         'canRefresh': false,
         'canExportPdf': false,
+        'canExportHtml': false,
         'documentControlsVisible': false,
         'searchActive': false,
         'searchVisible': false,

@@ -3116,5 +3116,26 @@
   "aiExplicitEditingDescription": "ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "خروجی به‌صورت HTML…",
+  "fileTypeHtml": "سند HTML",
+  "exportingHtml": "در حال ایجاد خروجی HTML…",
+  "htmlExported": "خروجی HTML کامل شد",
+  "htmlExportFailed": "ایجاد خروجی HTML ناموفق بود",
+  "htmlKeepAssetsTogether": "هنگام کپی کردن خروجی، فایل HTML و پوشهٔ منابع همراه آن را کنار هم نگه دارید.",
+  "htmlInstanceDescription": "یک نمونه را به‌صورت صفحه‌های آفلاین پیوندخورده خروجی بگیرید. نامی برای پوشهٔ خروجی اختصاصی انتخاب کنید.",
+  "htmlInstance": "نمونه",
+  "htmlOwnedDirectoryOnly": "فقط پوشه‌ای که با خروجی HTML در BusyMark ایجاد شده باشد قابل جایگزینی است. فایل‌های تغییریافته یا نامرتبط حفظ می‌شوند.",
+  "showInFolder": "نمایش در پوشه",
+  "goToDeclaration": "رفتن به اعلان",
+  "findUsages": "یافتن کاربردها",
+  "cannotRenameSymbol": "نمی‌توان نام نماد را با اطمینان تغییر داد. نام را بررسی و ارجاع را تازه‌سازی کنید، سپس دوباره تلاش کنید.",
+  "keyboardLayout": "چیدمان صفحه‌کلید",
+  "diagnosticWritersideUnsupported": "محتوای پشتیبانی‌نشده یا نامعتبر به‌صورت منبع نمایش داده می‌شود.",
+  "diagnosticWritersideSource": "منبع «{reference}» قابل حل نیست: {reason}",
+  "diagnosticWritersideLink": "مقصد پیوند در این نمونه در دسترس نیست: {destination}",
+  "diagnosticWritersideSchema": "نشانه‌گذاری نامعتبر Writerside: {element}، {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "از <llms-txt>true</llms-txt> یا <llms-txt>false</llms-txt> استفاده کنید؛ single-file دیگر پشتیبانی نمی‌شود.",
+  "diagnosticWritersideReference": "{kind} قابل حل نیست: {reference}",
+  "sortTableColumn": "مرتب‌سازی {column}"
 }

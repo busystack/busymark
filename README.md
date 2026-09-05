@@ -32,6 +32,7 @@ projects.
   explicitly selected context through Ollama, OpenAI, or Gemini, with
   diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
+- Export the current Markdown document or a Writerside instance as portable, offline HTML. See [HTML export](docs/html-export.md).
 - Navigate project files, table of contents, and document outline.
 - Review, stage, commit, branch, synchronize, and inspect history in Git-backed
   documentation workspaces using the user's normal Git configuration and tools.

@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "Pengeditan AI bersifat eksplisit. BusyMark hanya mengirimkan konteks yang ditampilkan untuk penyedia yang dipilih dan tidak pernah menerapkan proposal tanpa peninjauan.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Ekspor sebagai HTML…",
+  "fileTypeHtml": "Dokumen HTML",
+  "exportingHtml": "Mengekspor HTML…",
+  "htmlExported": "Ekspor HTML selesai",
+  "htmlExportFailed": "Ekspor HTML gagal",
+  "htmlKeepAssetsTogether": "Saat menyalin hasil ekspor, simpan berkas HTML bersama folder aset pendampingnya.",
+  "htmlInstanceDescription": "Ekspor satu instans sebagai halaman luring yang saling tertaut. Pilih nama untuk folder keluaran khusus.",
+  "htmlInstance": "Instans",
+  "htmlOwnedDirectoryOnly": "Hanya folder yang dibuat oleh ekspor HTML BusyMark yang dapat diganti. Berkas yang diubah atau tidak terkait akan dipertahankan.",
+  "showInFolder": "Tampilkan dalam Folder",
+  "goToDeclaration": "Buka Deklarasi",
+  "findUsages": "Cari Penggunaan",
+  "cannotRenameSymbol": "Nama simbol tidak dapat diubah dengan aman. Periksa nama dan segarkan referensi sebelum mencoba lagi.",
+  "keyboardLayout": "Tata letak papan ketik",
+  "diagnosticWritersideUnsupported": "Konten yang tidak didukung atau salah format ditampilkan sebagai sumber.",
+  "diagnosticWritersideSource": "Tidak dapat menyelesaikan sumber “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Tujuan tautan tidak tersedia dalam instans ini: {destination}",
+  "diagnosticWritersideSchema": "Markup Writerside tidak valid: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Gunakan <llms-txt>true</llms-txt> atau <llms-txt>false</llms-txt>; single-file tidak lagi didukung.",
+  "diagnosticWritersideReference": "Tidak dapat menyelesaikan {kind}: {reference}",
+  "sortTableColumn": "Urutkan {column}"
 }

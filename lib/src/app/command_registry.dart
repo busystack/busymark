@@ -245,6 +245,7 @@ abstract final class BusyMarkCommandIds {
   static const open = 'file.open';
   static const save = 'file.save';
   static const exportPdf = 'file.exportPdf';
+  static const exportHtml = 'file.exportHtml';
   static const fullScreen = 'view.fullScreen';
   static const back = 'navigation.back';
   static const search = 'search.find';
@@ -319,6 +320,12 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.exportHtml,
+        label: (context) => context.l10n.exportAsHtml,
+        category: (context) => context.l10n.export,
+        scope: BusyMarkCommandScope.application,
+      ),
       for (final action in BusyMarkAppShortcutAction.values)
         command(
           id: _appId(action),

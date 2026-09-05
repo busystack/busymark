@@ -3662,30 +3662,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get displayMath => 'Toán hiển thị';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Đi đến khai báo';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Tìm nơi sử dụng';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Bố cục bàn phím';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'Không thể phân giải nguồn “$reference”: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Đích liên kết không khả dụng trong phiên bản này: $destination';
   }
 
   @override
@@ -3694,15 +3694,53 @@ class AppLocalizationsVi extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Đánh dấu Writerside không hợp lệ: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return 'Không thể phân giải $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Xuất dưới dạng HTML…';
+
+  @override
+  String get fileTypeHtml => 'Tài liệu HTML';
+
+  @override
+  String get exportingHtml => 'Đang xuất HTML…';
+
+  @override
+  String get htmlExported => 'Xuất HTML hoàn tất';
+
+  @override
+  String get htmlExportFailed => 'Xuất HTML thất bại';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.';
+
+  @override
+  String get htmlInstance => 'Phiên bản';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.';
+
+  @override
+  String get showInFolder => 'Hiển thị trong thư mục';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sắp xếp $column';
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../markdown/preview_model.dart';
+import '../app/localization.dart';
+import '../app/busymark_glyphs.dart';
 import '../markdown/table_grid.dart';
 
 class WritersideTableView extends StatefulWidget {
@@ -109,14 +111,16 @@ class _WritersideTableViewState extends State<WritersideTableView> {
                           }),
                           child: Semantics(
                             button: true,
-                            label: 'Sort ${cell.value.text}',
+                            label: context.l10n.sortTableColumn(
+                              cell.value.text,
+                            ),
                             child: Row(
                               children: [
                                 Expanded(child: content),
                                 Icon(
                                   sortColumn == cell.column && !ascending
-                                      ? Icons.arrow_downward
-                                      : Icons.arrow_upward,
+                                      ? BusyMarkGlyphs.downArrow
+                                      : BusyMarkGlyphs.upArrow,
                                   size: 16,
                                 ),
                               ],

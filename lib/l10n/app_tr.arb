@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "AI düzenleme açıkça kullanıcının isteğiyle başlatılır. BusyMark yalnızca seçili sağlayıcı için gösterilen bağlamı gönderir ve bir öneriyi hiçbiri onaylama olmadan uygulamaz.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML olarak dışa aktar…",
+  "fileTypeHtml": "HTML belgesi",
+  "exportingHtml": "HTML dışa aktarılıyor…",
+  "htmlExported": "HTML dışa aktarımı tamamlandı",
+  "htmlExportFailed": "HTML dışa aktarılamadı",
+  "htmlKeepAssetsTogether": "Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.",
+  "htmlInstanceDescription": "Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.",
+  "htmlInstance": "Örnek",
+  "htmlOwnedDirectoryOnly": "Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.",
+  "showInFolder": "Klasörde Göster",
+  "goToDeclaration": "Bildirime git",
+  "findUsages": "Kullanımları bul",
+  "cannotRenameSymbol": "Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.",
+  "keyboardLayout": "Klavye düzeni",
+  "diagnosticWritersideUnsupported": "Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.",
+  "diagnosticWritersideSource": "“{reference}” kaynağı çözümlenemiyor: {reason}",
+  "diagnosticWritersideLink": "Bağlantı hedefi bu örnekte kullanılamıyor: {destination}",
+  "diagnosticWritersideSchema": "Geçersiz Writerside işaretlemesi: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.",
+  "diagnosticWritersideReference": "{kind} çözümlenemiyor: {reference}",
+  "sortTableColumn": "{column} sırala"
 }

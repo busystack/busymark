@@ -3567,30 +3567,29 @@ class AppLocalizationsJa extends AppLocalizations {
   String get displayMath => 'ディスプレイ数式';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => '宣言へ移動';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => '使用箇所を検索';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'シンボル名を安全に変更できません。名前を確認し、参照を更新してから再試行してください。';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'キーボード配列';
 
   @override
-  String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+  String get diagnosticWritersideUnsupported => '未対応または不正な形式の内容はソースとして表示されます。';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'ソース「$reference」を解決できません: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'このインスタンスではリンク先を利用できません: $destination';
   }
 
   @override
@@ -3599,15 +3598,53 @@ class AppLocalizationsJa extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return '無効な Writerside マークアップ: $element、$attribute。$reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      '<llms-txt>true</llms-txt> または <llms-txt>false</llms-txt> を使用してください。single-file はサポートされなくなりました。';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind を解決できません: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML としてエクスポート…';
+
+  @override
+  String get fileTypeHtml => 'HTML ドキュメント';
+
+  @override
+  String get exportingHtml => 'HTML をエクスポート中…';
+
+  @override
+  String get htmlExported => 'HTML のエクスポートが完了しました';
+
+  @override
+  String get htmlExportFailed => 'HTML のエクスポートに失敗しました';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'コピーするときは、HTML ファイルと付属のアセットフォルダーを一緒に移動してください。';
+
+  @override
+  String get htmlInstanceDescription =>
+      '1 つのインスタンスを、リンクでつながるオフラインページとしてエクスポートします。専用の出力フォルダー名を選んでください。';
+
+  @override
+  String get htmlInstance => 'インスタンス';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'BusyMark の HTML エクスポートで作成されたフォルダーのみ置き換えられます。変更されたファイルや無関係なファイルは保持されます。';
+
+  @override
+  String get showInFolder => 'フォルダーで表示';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column を並べ替え';
   }
 }

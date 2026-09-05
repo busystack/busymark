@@ -529,6 +529,37 @@ class _ResolveState {
           if (variable.attributes['name'] != null)
             variable.attributes['name']!: variable.attributes['value'] ?? '',
     };
+    Map<String, String> variablesFor(WritersideDocumentNode? target) {
+      if (target == null || targetTopic == null) return targetVariables;
+      final scoped = {...targetVariables};
+      // Link metadata inherits the same lexical defaults as the target text,
+      // including a paragraph nested inside a reusable snippet.
+      final ancestors =
+          targetTopic.document.elements
+              .where(
+                (element) =>
+                    element.span.startOffset <= target.span.startOffset &&
+                    element.span.endOffset >= target.span.endOffset,
+              )
+              .toList()
+            ..sort((a, b) => a.span.startOffset.compareTo(b.span.startOffset));
+      for (final ancestor in ancestors) {
+        for (final variable
+            in ancestor.children.whereType<WritersideElementNode>()) {
+          if (variable.semanticKind == WritersideSemanticKind.variable &&
+              _matchesInstance(
+                variable.attributes['instance'],
+                targetModule!,
+              ) &&
+              variable.attributes['name'] != null) {
+            scoped[variable.attributes['name']!] =
+                variable.attributes['value'] ?? '';
+          }
+        }
+      }
+      return scoped;
+    }
+
     String? summaryFor(String name) {
       final element = targetTopic?.document.elements
           .where(
@@ -554,7 +585,7 @@ class _ResolveState {
           ? null
           : _interpolate(
               summaryNode.plainText,
-              targetVariables,
+              variablesFor(summaryNode),
               summaryNode,
               ignore: false,
             ).trim();
@@ -579,7 +610,7 @@ class _ResolveState {
     return {
       'resolved-label': _interpolate(
         label,
-        targetVariables,
+        variablesFor(target),
         node,
         ignore: false,
       ),

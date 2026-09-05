@@ -3668,30 +3668,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get displayMath => 'Blok matematik';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Bildirime git';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Kullanımları bul';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Klavye düzeni';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return '“$reference” kaynağı çözümlenemiyor: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Bağlantı hedefi bu örnekte kullanılamıyor: $destination';
   }
 
   @override
@@ -3700,15 +3700,53 @@ class AppLocalizationsTr extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Geçersiz Writerside işaretlemesi: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      '<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind çözümlenemiyor: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML olarak dışa aktar…';
+
+  @override
+  String get fileTypeHtml => 'HTML belgesi';
+
+  @override
+  String get exportingHtml => 'HTML dışa aktarılıyor…';
+
+  @override
+  String get htmlExported => 'HTML dışa aktarımı tamamlandı';
+
+  @override
+  String get htmlExportFailed => 'HTML dışa aktarılamadı';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.';
+
+  @override
+  String get htmlInstance => 'Örnek';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.';
+
+  @override
+  String get showInFolder => 'Klasörde Göster';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column sırala';
   }
 }

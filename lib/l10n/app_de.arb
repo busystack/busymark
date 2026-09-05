@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "KI-Bearbeitung erfolgt nur auf ausdrücklichen Befehl. BusyMark sendet ausschließlich den angezeigten Kontext an den ausgewählten Anbieter und übernimmt keinen Vorschlag ohne Prüfung.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Als HTML exportieren…",
+  "fileTypeHtml": "HTML-Dokument",
+  "exportingHtml": "HTML wird exportiert…",
+  "htmlExported": "HTML-Export abgeschlossen",
+  "htmlExportFailed": "HTML-Export fehlgeschlagen",
+  "htmlKeepAssetsTogether": "Lassen Sie beim Kopieren die HTML-Datei und den zugehörigen Ressourcenordner zusammen.",
+  "htmlInstanceDescription": "Exportieren Sie eine Instanz als verknüpfte Offline-Seiten. Wählen Sie einen Namen für einen eigenen Ausgabeordner.",
+  "htmlInstance": "Instanz",
+  "htmlOwnedDirectoryOnly": "Nur ein vom BusyMark-HTML-Export erstellter Ordner kann ersetzt werden. Geänderte oder fremde Dateien bleiben erhalten.",
+  "showInFolder": "Im Ordner anzeigen",
+  "goToDeclaration": "Zur Deklaration wechseln",
+  "findUsages": "Verwendungen suchen",
+  "cannotRenameSymbol": "Das Symbol kann nicht sicher umbenannt werden. Prüfen Sie den Namen und aktualisieren Sie die Referenz, bevor Sie es erneut versuchen.",
+  "keyboardLayout": "Tastaturbelegung",
+  "diagnosticWritersideUnsupported": "Nicht unterstützter oder fehlerhafter Inhalt wird als Quelltext angezeigt.",
+  "diagnosticWritersideSource": "Quelle „{reference}“ kann nicht aufgelöst werden: {reason}",
+  "diagnosticWritersideLink": "Das Linkziel ist in dieser Instanz nicht verfügbar: {destination}",
+  "diagnosticWritersideSchema": "Ungültiges Writerside-Markup: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Verwenden Sie <llms-txt>true</llms-txt> oder <llms-txt>false</llms-txt>; single-file wird nicht mehr unterstützt.",
+  "diagnosticWritersideReference": "{kind} kann nicht aufgelöst werden: {reference}",
+  "sortTableColumn": "{column} sortieren"
 }

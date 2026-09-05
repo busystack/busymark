@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "AI संपादन केवल स्पष्ट कार्रवाई से शुरू होता है। BusyMark चयनित प्रदाता को केवल दिखाया गया संदर्भ भेजता है और समीक्षा के बिना किसी प्रस्ताव को लागू नहीं करता।",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML के रूप में निर्यात करें…",
+  "fileTypeHtml": "HTML दस्तावेज़",
+  "exportingHtml": "HTML निर्यात हो रहा है…",
+  "htmlExported": "HTML निर्यात पूरा हुआ",
+  "htmlExportFailed": "HTML निर्यात विफल हुआ",
+  "htmlKeepAssetsTogether": "इस निर्यात को कॉपी करते समय HTML फ़ाइल और उसके संसाधन फ़ोल्डर को साथ रखें।",
+  "htmlInstanceDescription": "एक इंस्टेंस को लिंक किए गए ऑफ़लाइन पृष्ठों के रूप में निर्यात करें। एक अलग आउटपुट फ़ोल्डर का नाम चुनें।",
+  "htmlInstance": "इंस्टेंस",
+  "htmlOwnedDirectoryOnly": "केवल BusyMark HTML निर्यात द्वारा बनाया गया फ़ोल्डर बदला जा सकता है। बदली गई या असंबंधित फ़ाइलें सुरक्षित रहेंगी।",
+  "showInFolder": "फ़ोल्डर में दिखाएँ",
+  "goToDeclaration": "घोषणा पर जाएँ",
+  "findUsages": "उपयोग खोजें",
+  "cannotRenameSymbol": "प्रतीक का नाम सुरक्षित रूप से नहीं बदला जा सकता। नाम जाँचें और दोबारा प्रयास करने से पहले संदर्भ रीफ़्रेश करें।",
+  "keyboardLayout": "कीबोर्ड लेआउट",
+  "diagnosticWritersideUnsupported": "असमर्थित या गलत प्रारूप वाली सामग्री स्रोत के रूप में दिखाई जाती है।",
+  "diagnosticWritersideSource": "स्रोत “{reference}” हल नहीं किया जा सकता: {reason}",
+  "diagnosticWritersideLink": "इस इंस्टेंस में लिंक का लक्ष्य उपलब्ध नहीं है: {destination}",
+  "diagnosticWritersideSchema": "अमान्य Writerside मार्कअप: {element}, {attribute}। {reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> या <llms-txt>false</llms-txt> का उपयोग करें; single-file अब समर्थित नहीं है।",
+  "diagnosticWritersideReference": "{kind} हल नहीं किया जा सकता: {reference}",
+  "sortTableColumn": "{column} क्रमबद्ध करें"
 }

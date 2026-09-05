@@ -3709,30 +3709,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String get displayMath => 'Wiskunde weergeven';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Ga naar declaratie';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Gebruik zoeken';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Het symbool kan niet veilig worden hernoemd. Controleer de naam en vernieuw de verwijzing voordat u het opnieuw probeert.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Toetsenbordindeling';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Niet-ondersteunde of ongeldige inhoud wordt als broncode getoond.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'Bron ‘$reference’ kan niet worden gevonden: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Het linkdoel is niet beschikbaar in deze instantie: $destination';
   }
 
   @override
@@ -3741,15 +3741,53 @@ class AppLocalizationsNl extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Ongeldige Writerside-opmaak: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'Gebruik <llms-txt>true</llms-txt> of <llms-txt>false</llms-txt>; single-file wordt niet meer ondersteund.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind kan niet worden gevonden: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Exporteren als HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML-document';
+
+  @override
+  String get exportingHtml => 'HTML exporteren…';
+
+  @override
+  String get htmlExported => 'HTML-export voltooid';
+
+  @override
+  String get htmlExportFailed => 'HTML-export mislukt';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Houd het HTML-bestand en de bijbehorende middelenmap bij elkaar wanneer u deze export kopieert.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Exporteer één instantie als gekoppelde offline pagina’s. Kies een naam voor een aparte uitvoermap.';
+
+  @override
+  String get htmlInstance => 'Instantie';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Alleen een map die door BusyMark HTML-export is gemaakt kan worden vervangen. Gewijzigde of andere bestanden blijven behouden.';
+
+  @override
+  String get showInFolder => 'Tonen in map';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column sorteren';
   }
 }

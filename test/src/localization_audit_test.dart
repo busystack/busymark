@@ -715,6 +715,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'htmlInstance', // Instance is also the French technical term.
     'actions',
     'source',
     'validation',

@@ -3562,30 +3562,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get displayMath => '수학 표시';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => '선언으로 이동';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => '사용 위치 찾기';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      '기호 이름을 안전하게 바꿀 수 없습니다. 이름을 확인하고 참조를 새로 고친 후 다시 시도하세요.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => '키보드 배열';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      '지원하지 않거나 잘못된 형식의 내용은 소스로 표시됩니다.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return '소스 “$reference”를 확인할 수 없습니다: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return '이 인스턴스에서 링크 대상을 사용할 수 없습니다: $destination';
   }
 
   @override
@@ -3594,15 +3594,53 @@ class AppLocalizationsKo extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return '잘못된 Writerside 마크업: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      '<llms-txt>true</llms-txt> 또는 <llms-txt>false</llms-txt>를 사용하세요. single-file은 더 이상 지원되지 않습니다.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind을(를) 확인할 수 없습니다: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML로 내보내기…';
+
+  @override
+  String get fileTypeHtml => 'HTML 문서';
+
+  @override
+  String get exportingHtml => 'HTML 내보내는 중…';
+
+  @override
+  String get htmlExported => 'HTML 내보내기 완료';
+
+  @override
+  String get htmlExportFailed => 'HTML 내보내기 실패';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      '내보낸 결과를 복사할 때 HTML 파일과 관련 리소스 폴더를 함께 유지하세요.';
+
+  @override
+  String get htmlInstanceDescription =>
+      '인스턴스 하나를 연결된 오프라인 페이지로 내보냅니다. 전용 출력 폴더의 이름을 선택하세요.';
+
+  @override
+  String get htmlInstance => '인스턴스';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'BusyMark HTML 내보내기로 만든 폴더만 교체할 수 있습니다. 수정되거나 관련 없는 파일은 보존됩니다.';
+
+  @override
+  String get showInFolder => '폴더에서 보기';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column 정렬';
   }
 }

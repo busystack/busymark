@@ -3725,30 +3725,30 @@ class AppLocalizationsUk extends AppLocalizations {
   String get displayMath => 'Формула окремим блоком';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Перейти до оголошення';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Знайти використання';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Розкладка клавіатури';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Непідтримуваний або некоректний вміст показано як джерело.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'Не вдалося знайти джерело «$reference»: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Ціль посилання недоступна в цьому екземплярі: $destination';
   }
 
   @override
@@ -3757,15 +3757,53 @@ class AppLocalizationsUk extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Некоректна розмітка Writerside: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return 'Не вдалося знайти $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Експортувати в HTML…';
+
+  @override
+  String get fileTypeHtml => 'Документ HTML';
+
+  @override
+  String get exportingHtml => 'Експорт HTML…';
+
+  @override
+  String get htmlExported => 'Експорт HTML завершено';
+
+  @override
+  String get htmlExportFailed => 'Не вдалося експортувати HTML';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.';
+
+  @override
+  String get htmlInstance => 'Екземпляр';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.';
+
+  @override
+  String get showInFolder => 'Показати в папці';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Сортувати $column';
   }
 }

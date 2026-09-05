@@ -3711,30 +3711,30 @@ class AppLocalizationsFa extends AppLocalizations {
   String get displayMath => 'ریاضی نمایشی';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'رفتن به اعلان';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'یافتن کاربردها';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'نمی‌توان نام نماد را با اطمینان تغییر داد. نام را بررسی و ارجاع را تازه‌سازی کنید، سپس دوباره تلاش کنید.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'چیدمان صفحه‌کلید';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'محتوای پشتیبانی‌نشده یا نامعتبر به‌صورت منبع نمایش داده می‌شود.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'منبع «$reference» قابل حل نیست: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'مقصد پیوند در این نمونه در دسترس نیست: $destination';
   }
 
   @override
@@ -3743,15 +3743,53 @@ class AppLocalizationsFa extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'نشانه‌گذاری نامعتبر Writerside: $element، $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'از <llms-txt>true</llms-txt> یا <llms-txt>false</llms-txt> استفاده کنید؛ single-file دیگر پشتیبانی نمی‌شود.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '$kind قابل حل نیست: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'خروجی به‌صورت HTML…';
+
+  @override
+  String get fileTypeHtml => 'سند HTML';
+
+  @override
+  String get exportingHtml => 'در حال ایجاد خروجی HTML…';
+
+  @override
+  String get htmlExported => 'خروجی HTML کامل شد';
+
+  @override
+  String get htmlExportFailed => 'ایجاد خروجی HTML ناموفق بود';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'هنگام کپی کردن خروجی، فایل HTML و پوشهٔ منابع همراه آن را کنار هم نگه دارید.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'یک نمونه را به‌صورت صفحه‌های آفلاین پیوندخورده خروجی بگیرید. نامی برای پوشهٔ خروجی اختصاصی انتخاب کنید.';
+
+  @override
+  String get htmlInstance => 'نمونه';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'فقط پوشه‌ای که با خروجی HTML در BusyMark ایجاد شده باشد قابل جایگزینی است. فایل‌های تغییریافته یا نامرتبط حفظ می‌شوند.';
+
+  @override
+  String get showInFolder => 'نمایش در پوشه';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'مرتب‌سازی $column';
   }
 }

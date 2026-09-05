@@ -56,9 +56,43 @@ class VisualizationCoordinator {
     return result;
   }
 
+  /// Freeze renderer dependencies before a long-running export starts. The
+  /// opaque result can only be rendered by this coordinator.
+  Future<CapturedVisualizationRequest> capture(
+    VisualizationRenderRequest request,
+    VisualizationCancellationToken token,
+  ) async {
+    if (_disposed) {
+      throw StateError('VisualizationCoordinator has been disposed.');
+    }
+    final renderer = _renderers[request.kind];
+    if (renderer == null) {
+      throw StateError('The visualization renderer is unavailable.');
+    }
+    final prepared = await renderer.prepare(request, token);
+    token.throwIfCancelled();
+    return CapturedVisualizationRequest._(this, prepared);
+  }
+
+  Future<VisualizationRenderResult> renderCaptured(
+    CapturedVisualizationRequest captured,
+  ) {
+    if (!identical(captured._owner, this)) {
+      throw ArgumentError(
+        'The captured request belongs to another coordinator.',
+      );
+    }
+    return _render(captured.request, captured: true);
+  }
+
   Future<VisualizationRenderResult> render(
     VisualizationRenderRequest request,
-  ) async {
+  ) => _render(request);
+
+  Future<VisualizationRenderResult> _render(
+    VisualizationRenderRequest request, {
+    bool captured = false,
+  }) async {
     if (_disposed) {
       throw StateError('VisualizationCoordinator has been disposed.');
     }
@@ -84,7 +118,9 @@ class VisualizationCoordinator {
     }
 
     try {
-      final prepared = await renderer.prepare(request, token);
+      final prepared = captured
+          ? request
+          : await renderer.prepare(request, token);
       _throwIfSuperseded(prepared, token);
       final cached = await cache.get(prepared.cacheKey);
       _throwIfSuperseded(prepared, token);
@@ -254,3 +290,10 @@ int _priority(VisualizationRenderPriority priority) => switch (priority) {
   VisualizationRenderPriority.nearVisible => 1,
   VisualizationRenderPriority.background => 2,
 };
+
+/// An in-memory snapshot of validated renderer inputs and local dependencies.
+class CapturedVisualizationRequest {
+  const CapturedVisualizationRequest._(this._owner, this.request);
+  final VisualizationCoordinator _owner;
+  final VisualizationRenderRequest request;
+}

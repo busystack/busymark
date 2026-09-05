@@ -58,6 +58,7 @@ import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../export/markdown_pdf_export_ui.dart';
+import '../../export/html_export_ui.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
@@ -661,6 +662,7 @@ class WorkspaceScreen extends ConsumerWidget {
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     final canExportPdf = canExportWorkspacePdf(state);
+    final canExportHtml = canExportWorkspaceHtml(state);
     final canGenerateMarkdownToc =
         _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
         false;
@@ -671,6 +673,7 @@ class WorkspaceScreen extends ConsumerWidget {
           searchQuery: searchState.query,
           canRefresh: true,
           canExportPdf: canExportPdf,
+          canExportHtml: canExportHtml,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
@@ -844,6 +847,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                         BusyMarkMainMenuButton(
                           canExportPdf: canExportPdf,
+                          canExportHtml: canExportHtml,
                           canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
@@ -974,6 +978,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
+      case HeaderBarAction.exportHtml:
+        execute(BusyMarkCommandIds.exportHtml);
       case HeaderBarAction.exportPdf:
         execute(BusyMarkCommandIds.exportPdf);
       case HeaderBarAction.fullScreen:
@@ -1021,6 +1027,8 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.exportHtml:
+        unawaited(exportWorkspaceToHtml(context, ref));
       case BusyMarkMainMenuAction.exportPdf:
         unawaited(exportWorkspaceToPdf(context, ref));
       case BusyMarkMainMenuAction.generateMarkdownToc:

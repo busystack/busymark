@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "A edição com IA é iniciada apenas de forma explícita. O BusyMark envia somente o contexto exibido ao provedor selecionado e nunca aplica uma proposta sem revisão.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exportar como HTML…",
+  "fileTypeHtml": "Documento HTML",
+  "exportingHtml": "Exportando HTML…",
+  "htmlExported": "Exportação HTML concluída",
+  "htmlExportFailed": "Falha na exportação HTML",
+  "htmlKeepAssetsTogether": "Ao copiar esta exportação, mantenha juntos o arquivo HTML e a pasta de recursos associada.",
+  "htmlInstanceDescription": "Exporte uma instância como páginas vinculadas offline. Escolha um nome para uma pasta de destino exclusiva.",
+  "htmlInstance": "Instância",
+  "htmlOwnedDirectoryOnly": "Só é possível substituir uma pasta criada pela exportação HTML do BusyMark. Os arquivos modificados ou alheios serão preservados.",
+  "showInFolder": "Mostrar na pasta",
+  "goToDeclaration": "Ir para a declaração",
+  "findUsages": "Encontrar usos",
+  "cannotRenameSymbol": "Não é possível renomear o símbolo com segurança. Verifique o nome e atualize a referência antes de tentar novamente.",
+  "keyboardLayout": "Layout do teclado",
+  "diagnosticWritersideUnsupported": "O conteúdo não compatível ou malformado é exibido como código-fonte.",
+  "diagnosticWritersideSource": "Não é possível resolver a origem “{reference}”: {reason}",
+  "diagnosticWritersideLink": "O destino do link não está disponível nesta instância: {destination}",
+  "diagnosticWritersideSchema": "Marcação Writerside inválida: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Use <llms-txt>true</llms-txt> ou <llms-txt>false</llms-txt>; single-file não é mais compatível.",
+  "diagnosticWritersideReference": "Não é possível resolver {kind}: {reference}",
+  "sortTableColumn": "Ordenar {column}"
 }

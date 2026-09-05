@@ -1,3 +1,4 @@
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/writerside/writerside_tabs_view.dart';
 import 'package:busymark/src/writerside/writerside_table_view.dart';
@@ -32,6 +33,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: WritersidePreviewScope(
             child: Column(
@@ -107,6 +110,8 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: WritersideTableView(
@@ -197,6 +202,8 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             height: 300,

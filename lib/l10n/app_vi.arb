@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Xuất dưới dạng HTML…",
+  "fileTypeHtml": "Tài liệu HTML",
+  "exportingHtml": "Đang xuất HTML…",
+  "htmlExported": "Xuất HTML hoàn tất",
+  "htmlExportFailed": "Xuất HTML thất bại",
+  "htmlKeepAssetsTogether": "Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.",
+  "htmlInstanceDescription": "Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.",
+  "htmlInstance": "Phiên bản",
+  "htmlOwnedDirectoryOnly": "Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.",
+  "showInFolder": "Hiển thị trong thư mục",
+  "goToDeclaration": "Đi đến khai báo",
+  "findUsages": "Tìm nơi sử dụng",
+  "cannotRenameSymbol": "Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.",
+  "keyboardLayout": "Bố cục bàn phím",
+  "diagnosticWritersideUnsupported": "Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.",
+  "diagnosticWritersideSource": "Không thể phân giải nguồn “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Đích liên kết không khả dụng trong phiên bản này: {destination}",
+  "diagnosticWritersideSchema": "Đánh dấu Writerside không hợp lệ: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.",
+  "diagnosticWritersideReference": "Không thể phân giải {kind}: {reference}",
+  "sortTableColumn": "Sắp xếp {column}"
 }

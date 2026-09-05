@@ -11,6 +11,7 @@ import 'window_control_service.dart';
 
 enum BusyMarkMainMenuAction {
   exportPdf,
+  exportHtml,
   generateMarkdownToc,
   fullScreen,
   settings,
@@ -26,11 +27,13 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
     super.key,
     required this.onSelected,
     this.canExportPdf = false,
+    this.canExportHtml = false,
     this.canGenerateMarkdownToc = false,
   });
 
   final ValueChanged<BusyMarkMainMenuAction> onSelected;
   final bool canExportPdf;
+  final bool canExportHtml;
   final bool canGenerateMarkdownToc;
 
   @override
@@ -53,6 +56,13 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           icon: BusyMarkGlyphs.exportPdf,
           shortcut: command(BusyMarkCommandIds.exportPdf).shortcut?.label,
           enabled: canExportPdf,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.exportHtml,
+          label: command(BusyMarkCommandIds.exportHtml).label(context),
+          icon: BusyMarkGlyphs.exportPdf,
+          shortcut: command(BusyMarkCommandIds.exportHtml).shortcut?.label,
+          enabled: canExportHtml,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.generateMarkdownToc,
@@ -109,6 +119,7 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
       onSelected: (action) {
         final commandId = switch (action) {
           BusyMarkMainMenuAction.exportPdf => BusyMarkCommandIds.exportPdf,
+          BusyMarkMainMenuAction.exportHtml => BusyMarkCommandIds.exportHtml,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
           BusyMarkMainMenuAction.keyboardShortcuts =>

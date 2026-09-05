@@ -3100,5 +3100,26 @@
   "aiExplicitEditingDescription": "Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Экспортировать в HTML…",
+  "fileTypeHtml": "Документ HTML",
+  "exportingHtml": "Экспорт HTML…",
+  "htmlExported": "Экспорт HTML завершён",
+  "htmlExportFailed": "Не удалось экспортировать HTML",
+  "htmlKeepAssetsTogether": "При копировании сохраняйте файл HTML вместе с папкой его ресурсов.",
+  "htmlInstanceDescription": "Экспортируйте один экземпляр как связанные автономные страницы. Выберите имя отдельной папки вывода.",
+  "htmlInstance": "Экземпляр",
+  "htmlOwnedDirectoryOnly": "Можно заменить только папку, созданную экспортом HTML BusyMark. Изменённые и посторонние файлы будут сохранены.",
+  "showInFolder": "Показать в папке",
+  "goToDeclaration": "Перейти к объявлению",
+  "findUsages": "Найти использования",
+  "cannotRenameSymbol": "Невозможно безопасно переименовать символ. Проверьте имя и обновите ссылку перед повторной попыткой.",
+  "keyboardLayout": "Раскладка клавиатуры",
+  "diagnosticWritersideUnsupported": "Неподдерживаемое или некорректное содержимое показано как исходный код.",
+  "diagnosticWritersideSource": "Не удалось разрешить источник «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Цель ссылки недоступна в этом экземпляре: {destination}",
+  "diagnosticWritersideSchema": "Некорректная разметка Writerside: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Используйте <llms-txt>true</llms-txt> или <llms-txt>false</llms-txt>; single-file больше не поддерживается.",
+  "diagnosticWritersideReference": "Не удалось разрешить {kind}: {reference}",
+  "sortTableColumn": "Сортировать {column}"
 }

@@ -318,6 +318,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.exportHtml:
       case HeaderBarAction.exportPdf:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
@@ -339,6 +340,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.exportHtml:
       case BusyMarkMainMenuAction.exportPdf:
       case BusyMarkMainMenuAction.generateMarkdownToc:
         break;

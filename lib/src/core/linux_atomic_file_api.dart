@@ -94,7 +94,11 @@ final class LinuxAtomicFileApi {
   /// Publishes [oldPath] at [newPath] without replacing an existing entity.
   ///
   /// Returns `null` on success, otherwise the Linux errno value.
-  int? publishNoReplace(String oldPath, String newPath) {
+  int? publishNoReplace(
+    String oldPath,
+    String newPath, {
+    bool directory = false,
+  }) {
     final errnoLocation = _errnoLocation;
     final link = _link;
     if (errnoLocation == null || link == null) {
@@ -122,6 +126,7 @@ final class LinuxAtomicFileApi {
           return errorNumber;
         }
       }
+      if (directory) return _operationNotSupportedError;
       final result = link(nativeOldPath, nativeNewPath);
       return result == 0 ? null : errnoLocation().value;
     } finally {

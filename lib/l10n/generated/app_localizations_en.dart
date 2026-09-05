@@ -3737,4 +3737,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String diagnosticWritersideReference(String kind, String reference) {
     return 'Cannot resolve $kind: $reference';
   }
+
+  @override
+  String get exportAsHtml => 'Export as HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML document';
+
+  @override
+  String get exportingHtml => 'Exporting HTML…';
+
+  @override
+  String get htmlExported => 'HTML export complete';
+
+  @override
+  String get htmlExportFailed => 'HTML export failed';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Keep the HTML file and its companion assets directory together when copying this export.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Export one instance as linked offline pages. Choose a name for a dedicated output directory.';
+
+  @override
+  String get htmlInstance => 'Instance';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Only a directory created by BusyMark HTML export can be replaced. Modified or unrelated files will be preserved.';
+
+  @override
+  String get showInFolder => 'Show in Folder';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sort $column';
+  }
 }

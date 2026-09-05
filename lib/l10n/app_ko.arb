@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "AI 편집은 명시적입니다. BusyMark는 선택한 공급자에 대해 표시된 컨텍스트만 보내고 검토 없이 제안을 적용하지 않습니다.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML로 내보내기…",
+  "fileTypeHtml": "HTML 문서",
+  "exportingHtml": "HTML 내보내는 중…",
+  "htmlExported": "HTML 내보내기 완료",
+  "htmlExportFailed": "HTML 내보내기 실패",
+  "htmlKeepAssetsTogether": "내보낸 결과를 복사할 때 HTML 파일과 관련 리소스 폴더를 함께 유지하세요.",
+  "htmlInstanceDescription": "인스턴스 하나를 연결된 오프라인 페이지로 내보냅니다. 전용 출력 폴더의 이름을 선택하세요.",
+  "htmlInstance": "인스턴스",
+  "htmlOwnedDirectoryOnly": "BusyMark HTML 내보내기로 만든 폴더만 교체할 수 있습니다. 수정되거나 관련 없는 파일은 보존됩니다.",
+  "showInFolder": "폴더에서 보기",
+  "goToDeclaration": "선언으로 이동",
+  "findUsages": "사용 위치 찾기",
+  "cannotRenameSymbol": "기호 이름을 안전하게 바꿀 수 없습니다. 이름을 확인하고 참조를 새로 고친 후 다시 시도하세요.",
+  "keyboardLayout": "키보드 배열",
+  "diagnosticWritersideUnsupported": "지원하지 않거나 잘못된 형식의 내용은 소스로 표시됩니다.",
+  "diagnosticWritersideSource": "소스 “{reference}”를 확인할 수 없습니다: {reason}",
+  "diagnosticWritersideLink": "이 인스턴스에서 링크 대상을 사용할 수 없습니다: {destination}",
+  "diagnosticWritersideSchema": "잘못된 Writerside 마크업: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> 또는 <llms-txt>false</llms-txt>를 사용하세요. single-file은 더 이상 지원되지 않습니다.",
+  "diagnosticWritersideReference": "{kind}을(를) 확인할 수 없습니다: {reference}",
+  "sortTableColumn": "{column} 정렬"
 }

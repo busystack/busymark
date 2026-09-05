@@ -3100,5 +3100,26 @@
   "aiExplicitEditingDescription": "Edycja z użyciem SI jest uruchamiana wyłącznie jawnie. BusyMark wysyła do wybranego dostawcy tylko pokazany kontekst i nigdy nie stosuje propozycji bez jej sprawdzenia.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Eksportuj jako HTML…",
+  "fileTypeHtml": "Dokument HTML",
+  "exportingHtml": "Eksportowanie HTML…",
+  "htmlExported": "Eksport HTML zakończony",
+  "htmlExportFailed": "Eksport HTML nie powiódł się",
+  "htmlKeepAssetsTogether": "Podczas kopiowania zachowaj razem plik HTML i towarzyszący mu katalog zasobów.",
+  "htmlInstanceDescription": "Wyeksportuj jedną instancję jako połączone strony offline. Wybierz nazwę osobnego katalogu wyjściowego.",
+  "htmlInstance": "Instancja",
+  "htmlOwnedDirectoryOnly": "Można zastąpić tylko katalog utworzony przez eksport HTML BusyMark. Zmienione lub obce pliki zostaną zachowane.",
+  "showInFolder": "Pokaż w folderze",
+  "goToDeclaration": "Przejdź do deklaracji",
+  "findUsages": "Znajdź użycia",
+  "cannotRenameSymbol": "Nie można bezpiecznie zmienić nazwy symbolu. Sprawdź nazwę i odśwież odwołanie przed ponowną próbą.",
+  "keyboardLayout": "Układ klawiatury",
+  "diagnosticWritersideUnsupported": "Nieobsługiwana lub nieprawidłowa treść jest wyświetlana jako źródło.",
+  "diagnosticWritersideSource": "Nie można rozwiązać źródła „{reference}”: {reason}",
+  "diagnosticWritersideLink": "Cel odnośnika jest niedostępny w tej instancji: {destination}",
+  "diagnosticWritersideSchema": "Nieprawidłowy znacznik Writerside: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Użyj <llms-txt>true</llms-txt> lub <llms-txt>false</llms-txt>; single-file nie jest już obsługiwane.",
+  "diagnosticWritersideReference": "Nie można rozwiązać {kind}: {reference}",
+  "sortTableColumn": "Sortuj {column}"
 }

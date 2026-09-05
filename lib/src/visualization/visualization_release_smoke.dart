@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:path/path.dart' as p;
 
 import '../export/markdown_pdf_export_service.dart';
+import '../export/html_release_smoke.dart';
 import '../export/markdown_pdf_models.dart';
 import '../export/markdown_math_export.dart';
 import '../export/markdown_visualization_export.dart';
@@ -289,6 +290,16 @@ Future<int> runVisualizationReleaseSmoke(String reportPath) async {
     checks['typstPdf'] = true;
     checks['pdfEmbeddedImages'] = embeddedImages;
     checks['pdfPath'] = pdfPath;
+
+    await checkpoint('exporting offline HTML documents');
+    checks.addAll(
+      await runHtmlReleaseSmoke(
+        sourceRoot: workingDirectory,
+        outputRoot: reportFile.parent,
+        math: mathCoordinator,
+        visualization: coordinator,
+      ),
+    );
 
     await _writeReport(reportFile, {'ok': true, 'checks': checks});
     return 0;

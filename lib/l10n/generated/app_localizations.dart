@@ -6220,6 +6220,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot resolve {kind}: {reference}'**
   String diagnosticWritersideReference(String kind, String reference);
+
+  /// No description provided for @exportAsHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as HTML…'**
+  String get exportAsHtml;
+
+  /// No description provided for @fileTypeHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML document'**
+  String get fileTypeHtml;
+
+  /// No description provided for @exportingHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting HTML…'**
+  String get exportingHtml;
+
+  /// No description provided for @htmlExported.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML export complete'**
+  String get htmlExported;
+
+  /// No description provided for @htmlExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML export failed'**
+  String get htmlExportFailed;
+
+  /// No description provided for @htmlKeepAssetsTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the HTML file and its companion assets directory together when copying this export.'**
+  String get htmlKeepAssetsTogether;
+
+  /// No description provided for @htmlInstanceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Export one instance as linked offline pages. Choose a name for a dedicated output directory.'**
+  String get htmlInstanceDescription;
+
+  /// No description provided for @htmlInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance'**
+  String get htmlInstance;
+
+  /// No description provided for @htmlOwnedDirectoryOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a directory created by BusyMark HTML export can be replaced. Modified or unrelated files will be preserved.'**
+  String get htmlOwnedDirectoryOnly;
+
+  /// No description provided for @showInFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Folder'**
+  String get showInFolder;
+
+  /// No description provided for @sortTableColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort {column}'**
+  String sortTableColumn(String column);
 }
 
 class _AppLocalizationsDelegate

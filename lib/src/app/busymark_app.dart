@@ -11,6 +11,7 @@ import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../export/markdown_pdf_export_ui.dart';
+import '../export/html_export_ui.dart';
 import '../git/application/git_controller.dart';
 import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
@@ -40,6 +41,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
     BusyMarkCommandIds.save: const _SaveActiveIntent(),
     BusyMarkCommandIds.exportPdf: const _ExportPdfIntent(),
+    BusyMarkCommandIds.exportHtml: const _ExportHtmlIntent(),
     BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
     BusyMarkCommandIds.back: const _BackIntent(),
     BusyMarkCommandIds.search: const _OpenSearchIntent(),
@@ -78,6 +80,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     enabled: {
       BusyMarkCommandIds.save: () =>
           ref.read(workspaceControllerProvider).workspace != null,
+      BusyMarkCommandIds.exportHtml: () =>
+          canExportWorkspaceHtml(ref.read(workspaceControllerProvider)),
       BusyMarkCommandIds.exportPdf: () =>
           canExportWorkspacePdf(ref.read(workspaceControllerProvider)),
       BusyMarkCommandIds.search: () =>
@@ -208,6 +212,17 @@ class BusyMarkApp extends ConsumerWidget {
                       if (navigatorContext != null &&
                           canExportWorkspacePdf(state)) {
                         unawaited(exportWorkspaceToPdf(navigatorContext, ref));
+                      }
+                      return null;
+                    },
+                  ),
+                  _ExportHtmlIntent: CallbackAction<_ExportHtmlIntent>(
+                    onInvoke: (intent) {
+                      final state = ref.read(workspaceControllerProvider);
+                      final navigatorContext = rootNavigatorKey.currentContext;
+                      if (navigatorContext != null &&
+                          canExportWorkspaceHtml(state)) {
+                        unawaited(exportWorkspaceToHtml(navigatorContext, ref));
                       }
                       return null;
                     },
@@ -818,6 +833,7 @@ class BusyMarkApp extends ConsumerWidget {
       backShortcut: shortcut(BusyMarkCommandIds.back),
       save: label(BusyMarkCommandIds.save),
       exportPdf: label(BusyMarkCommandIds.exportPdf),
+      exportHtml: label(BusyMarkCommandIds.exportHtml),
       exportPdfShortcut: shortcut(BusyMarkCommandIds.exportPdf),
       exportPdfGtkAccelerator: accelerator(BusyMarkCommandIds.exportPdf),
       fullScreen: label(BusyMarkCommandIds.fullScreen),
@@ -1098,6 +1114,10 @@ final class _CreateWritersideProject extends _NewChooserChoice {
 
 class _SaveActiveIntent extends Intent {
   const _SaveActiveIntent();
+}
+
+class _ExportHtmlIntent extends Intent {
+  const _ExportHtmlIntent();
 }
 
 class _ExportPdfIntent extends Intent {

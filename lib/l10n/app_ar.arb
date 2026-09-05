@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "تصدير بتنسيق HTML…",
+  "fileTypeHtml": "مستند HTML",
+  "exportingHtml": "جارٍ تصدير HTML…",
+  "htmlExported": "اكتمل تصدير HTML",
+  "htmlExportFailed": "فشل تصدير HTML",
+  "htmlKeepAssetsTogether": "عند نسخ التصدير، احتفظ بملف HTML ومجلد الموارد المرافق له معًا.",
+  "htmlInstanceDescription": "صدّر نسخة واحدة على هيئة صفحات مترابطة تعمل دون اتصال. اختر اسمًا لمجلد إخراج مخصص.",
+  "htmlInstance": "النسخة",
+  "htmlOwnedDirectoryOnly": "يمكن استبدال مجلد أنشأه تصدير HTML في BusyMark فقط. ستُحفظ الملفات المعدّلة أو غير المرتبطة.",
+  "showInFolder": "إظهار في المجلد",
+  "goToDeclaration": "الانتقال إلى التصريح",
+  "findUsages": "البحث عن الاستخدامات",
+  "cannotRenameSymbol": "لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.",
+  "keyboardLayout": "تخطيط لوحة المفاتيح",
+  "diagnosticWritersideUnsupported": "يُعرض المحتوى غير المدعوم أو المشوّه كنص مصدر.",
+  "diagnosticWritersideSource": "تعذّر حل المصدر «{reference}»: {reason}",
+  "diagnosticWritersideLink": "هدف الرابط غير متاح في هذه النسخة: {destination}",
+  "diagnosticWritersideSchema": "ترميز Writerside غير صالح: {element}، {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "استخدم <llms-txt>true</llms-txt> أو <llms-txt>false</llms-txt>؛ لم يعد single-file مدعومًا.",
+  "diagnosticWritersideReference": "تعذّر حل {kind}: {reference}",
+  "sortTableColumn": "فرز {column}"
 }

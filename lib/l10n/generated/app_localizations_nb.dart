@@ -3666,30 +3666,30 @@ class AppLocalizationsNb extends AppLocalizations {
   String get displayMath => 'Matematikkblokk';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => 'Gå til deklarasjon';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => 'Finn bruk';
 
   @override
   String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+      'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => 'Tastaturoppsett';
 
   @override
   String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+      'Innhold som ikke støttes eller er feilformet, vises som kildekode.';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return 'Kan ikke løse kilden «$reference»: $reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return 'Lenkemålet er ikke tilgjengelig i denne instansen: $destination';
   }
 
   @override
@@ -3698,15 +3698,53 @@ class AppLocalizationsNb extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return 'Ugyldig Writerside-markering: $element, $attribute. $reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      'Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return 'Kan ikke løse $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Eksporter som HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML-dokument';
+
+  @override
+  String get exportingHtml => 'Eksporterer HTML…';
+
+  @override
+  String get htmlExported => 'HTML-eksport fullført';
+
+  @override
+  String get htmlExportFailed => 'HTML-eksport mislyktes';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.';
+
+  @override
+  String get htmlInstance => 'Instans';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.';
+
+  @override
+  String get showInFolder => 'Vis i mappe';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sorter $column';
   }
 }

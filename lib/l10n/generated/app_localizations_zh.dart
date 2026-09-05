@@ -3688,30 +3688,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get displayMath => 'Display math';
 
   @override
-  String get goToDeclaration => 'Go to Declaration';
+  String get goToDeclaration => '转到声明';
 
   @override
-  String get findUsages => 'Find Usages';
+  String get findUsages => '查找用法';
 
   @override
-  String get cannotRenameSymbol =>
-      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+  String get cannotRenameSymbol => '无法安全地重命名此符号。请检查名称并刷新引用，然后重试。';
 
   @override
-  String get keyboardLayout => 'Keyboard layout';
+  String get keyboardLayout => '键盘布局';
 
   @override
-  String get diagnosticWritersideUnsupported =>
-      'Unsupported or malformed content is displayed as source.';
+  String get diagnosticWritersideUnsupported => '不支持或格式错误的内容将显示为源代码。';
 
   @override
   String diagnosticWritersideSource(String reference, String reason) {
-    return 'Cannot resolve source “$reference”: $reason';
+    return '无法解析源“$reference”：$reason';
   }
 
   @override
   String diagnosticWritersideLink(String destination) {
-    return 'Link target is unavailable in this instance: $destination';
+    return '此实例中无法使用链接目标：$destination';
   }
 
   @override
@@ -3720,16 +3718,52 @@ class AppLocalizationsZh extends AppLocalizations {
     String attribute,
     String reason,
   ) {
-    return 'Invalid Writerside markup: $element, $attribute. $reason';
+    return '无效的 Writerside 标记：$element，$attribute。$reason';
   }
 
   @override
   String get diagnosticWritersideLlmsTxt =>
-      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+      '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
 
   @override
   String diagnosticWritersideReference(String kind, String reference) {
-    return 'Cannot resolve $kind: $reference';
+    return '无法解析 $kind：$reference';
+  }
+
+  @override
+  String get exportAsHtml => '导出为 HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML 文档';
+
+  @override
+  String get exportingHtml => '正在导出 HTML…';
+
+  @override
+  String get htmlExported => 'HTML 导出完成';
+
+  @override
+  String get htmlExportFailed => 'HTML 导出失败';
+
+  @override
+  String get htmlKeepAssetsTogether => '复制导出结果时，请将 HTML 文件及其配套资源文件夹放在一起。';
+
+  @override
+  String get htmlInstanceDescription => '将一个实例导出为相互链接的离线页面。请选择专用输出文件夹的名称。';
+
+  @override
+  String get htmlInstance => '实例';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
+
+  @override
+  String get showInFolder => '在文件夹中显示';
+
+  @override
+  String sortTableColumn(String column) {
+    return '排序 $column';
   }
 }
 
@@ -7230,4 +7264,83 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get displayMath => '显示数学';
+
+  @override
+  String get goToDeclaration => '转到声明';
+
+  @override
+  String get findUsages => '查找用法';
+
+  @override
+  String get cannotRenameSymbol => '无法安全地重命名此符号。请检查名称并刷新引用，然后重试。';
+
+  @override
+  String get keyboardLayout => '键盘布局';
+
+  @override
+  String get diagnosticWritersideUnsupported => '不支持或格式错误的内容将显示为源代码。';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return '无法解析源“$reference”：$reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return '此实例中无法使用链接目标：$destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return '无效的 Writerside 标记：$element，$attribute。$reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      '请使用 <llms-txt>true</llms-txt> 或 <llms-txt>false</llms-txt>；不再支持 single-file。';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '无法解析 $kind：$reference';
+  }
+
+  @override
+  String get exportAsHtml => '导出为 HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML 文档';
+
+  @override
+  String get exportingHtml => '正在导出 HTML…';
+
+  @override
+  String get htmlExported => 'HTML 导出完成';
+
+  @override
+  String get htmlExportFailed => 'HTML 导出失败';
+
+  @override
+  String get htmlKeepAssetsTogether => '复制导出结果时，请将 HTML 文件及其配套资源文件夹放在一起。';
+
+  @override
+  String get htmlInstanceDescription => '将一个实例导出为相互链接的离线页面。请选择专用输出文件夹的名称。';
+
+  @override
+  String get htmlInstance => '实例';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      '只能替换由 BusyMark HTML 导出创建的文件夹。已修改或无关的文件将被保留。';
+
+  @override
+  String get showInFolder => '在文件夹中显示';
+
+  @override
+  String sortTableColumn(String column) {
+    return '排序 $column';
+  }
 }

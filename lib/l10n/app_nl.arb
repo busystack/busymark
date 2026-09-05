@@ -4633,5 +4633,26 @@
   "aiExplicitEditingDescription": "AI-bewerking is expliciet. BusyMark stuurt alleen de weergegeven context naar de geselecteerde provider en past nooit een voorstel toe zonder beoordeling.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exporteren als HTML…",
+  "fileTypeHtml": "HTML-document",
+  "exportingHtml": "HTML exporteren…",
+  "htmlExported": "HTML-export voltooid",
+  "htmlExportFailed": "HTML-export mislukt",
+  "htmlKeepAssetsTogether": "Houd het HTML-bestand en de bijbehorende middelenmap bij elkaar wanneer u deze export kopieert.",
+  "htmlInstanceDescription": "Exporteer één instantie als gekoppelde offline pagina’s. Kies een naam voor een aparte uitvoermap.",
+  "htmlInstance": "Instantie",
+  "htmlOwnedDirectoryOnly": "Alleen een map die door BusyMark HTML-export is gemaakt kan worden vervangen. Gewijzigde of andere bestanden blijven behouden.",
+  "showInFolder": "Tonen in map",
+  "goToDeclaration": "Ga naar declaratie",
+  "findUsages": "Gebruik zoeken",
+  "cannotRenameSymbol": "Het symbool kan niet veilig worden hernoemd. Controleer de naam en vernieuw de verwijzing voordat u het opnieuw probeert.",
+  "keyboardLayout": "Toetsenbordindeling",
+  "diagnosticWritersideUnsupported": "Niet-ondersteunde of ongeldige inhoud wordt als broncode getoond.",
+  "diagnosticWritersideSource": "Bron ‘{reference}’ kan niet worden gevonden: {reason}",
+  "diagnosticWritersideLink": "Het linkdoel is niet beschikbaar in deze instantie: {destination}",
+  "diagnosticWritersideSchema": "Ongeldige Writerside-opmaak: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Gebruik <llms-txt>true</llms-txt> of <llms-txt>false</llms-txt>; single-file wordt niet meer ondersteund.",
+  "diagnosticWritersideReference": "{kind} kan niet worden gevonden: {reference}",
+  "sortTableColumn": "{column} sorteren"
 }

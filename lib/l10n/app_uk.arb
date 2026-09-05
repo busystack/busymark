@@ -3100,5 +3100,26 @@
   "aiExplicitEditingDescription": "Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Експортувати в HTML…",
+  "fileTypeHtml": "Документ HTML",
+  "exportingHtml": "Експорт HTML…",
+  "htmlExported": "Експорт HTML завершено",
+  "htmlExportFailed": "Не вдалося експортувати HTML",
+  "htmlKeepAssetsTogether": "Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.",
+  "htmlInstanceDescription": "Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.",
+  "htmlInstance": "Екземпляр",
+  "htmlOwnedDirectoryOnly": "Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.",
+  "showInFolder": "Показати в папці",
+  "goToDeclaration": "Перейти до оголошення",
+  "findUsages": "Знайти використання",
+  "cannotRenameSymbol": "Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.",
+  "keyboardLayout": "Розкладка клавіатури",
+  "diagnosticWritersideUnsupported": "Непідтримуваний або некоректний вміст показано як джерело.",
+  "diagnosticWritersideSource": "Не вдалося знайти джерело «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Ціль посилання недоступна в цьому екземплярі: {destination}",
+  "diagnosticWritersideSchema": "Некоректна розмітка Writerside: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.",
+  "diagnosticWritersideReference": "Не вдалося знайти {kind}: {reference}",
+  "sortTableColumn": "Сортувати {column}"
 }

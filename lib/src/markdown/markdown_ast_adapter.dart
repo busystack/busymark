@@ -35,6 +35,7 @@ class MarkdownAstAdapter {
     required String source,
     required MarkdownMode mode,
     String? title,
+    bool preserveHtmlSemantics = false,
   }) {
     final frontMatter = _extractFrontMatter(source);
     final imageAttributes = _imageAttributeBlocks(source);
@@ -51,7 +52,7 @@ class MarkdownAstAdapter {
           preserveRaw: true,
           attributes: frontMatter.values,
         ),
-      ..._blocksFromMarkdownSource(
+      ...(preserveHtmlSemantics ? _blocksForHtml : _blocksFromMarkdownSource)(
         markdownSource,
         nextId: () => 'b${blockIndex++}',
         mode: mode,
@@ -66,6 +67,97 @@ class MarkdownAstAdapter {
       rawFrontMatter: frontMatter?.raw,
       source: source,
     );
+  }
+
+  /// Use the existing grammar in two phases so definitions on either side of
+  /// a raw HTML block share one reference context. No source text is changed.
+  List<BusyBlock> _blocksForHtml(
+    String source, {
+    required String Function() nextId,
+    required MarkdownMode mode,
+  }) {
+    final document = busyMarkMarkdownDocument(mode);
+    final nodes = <md.Node>[];
+    for (final segment in _rawHtmlAwareSegments(source, mode)) {
+      if (segment.rawHtml) {
+        nodes.add(
+          md.Element.empty('busymark-export-raw')
+            ..attributes['source'] = segment.text,
+        );
+      } else {
+        final text = _protectProseHyphenLines(
+          _protectImageDestinationsWithSpaces(segment.text),
+        );
+        nodes.addAll(
+          md.BlockParser(
+            text.split('\n').map(md.Line.new).toList(),
+            document,
+          ).parseLines(),
+        );
+      }
+    }
+    void parseInlines(List<md.Node> children) {
+      for (var i = 0; i < children.length; i++) {
+        final node = children[i];
+        if (node is md.UnparsedContent) {
+          final parsed = document.parseInline(node.textContent);
+          children.replaceRange(i, i + 1, parsed);
+          i += parsed.length - 1;
+        } else if (node is md.Element && node.children != null) {
+          parseInlines(node.children!);
+        }
+      }
+    }
+
+    parseInlines(nodes);
+    final footnotes = <md.Element>[];
+    final body = <md.Node>[];
+    for (final node in nodes) {
+      if (node is md.Element && node.footnoteLabel != null) {
+        final label = node.footnoteLabel!;
+        final count = document.footnoteReferences[label] ?? 0;
+        if (count == 0) continue;
+        final returns = md.Element('p', [
+          for (var i = 0; i < count; i++)
+            md.Element.text('a', i == 0 ? '↩' : '↩${i + 1}')
+              ..attributes['href'] =
+                  '#fnref-${Uri.encodeComponent(label)}${i == 0 ? '' : '-${i + 1}'}',
+        ]);
+        node.children?.add(returns);
+        footnotes.add(node);
+      } else {
+        body.add(node);
+      }
+    }
+    footnotes.sort(
+      (a, b) => document.footnoteLabels
+          .indexOf(a.footnoteLabel!.toLowerCase())
+          .compareTo(
+            document.footnoteLabels.indexOf(b.footnoteLabel!.toLowerCase()),
+          ),
+    );
+    if (footnotes.isNotEmpty) {
+      body.add(
+        md.Element('section', [md.Element('ol', footnotes)])
+          ..attributes['class'] = 'footnotes',
+      );
+    }
+    final blocks = [
+      for (final node in body)
+        if (node is md.Element && node.tag == 'busymark-export-raw')
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.htmlBlock,
+            rawSource: node.attributes['source'],
+            preserveRaw: true,
+            attributes: const {'sourceFormat': 'html'},
+          )
+        else
+          ..._blocksFromNode(node, nextId: nextId, mode: mode),
+    ];
+    return mode == MarkdownMode.writersideMarkdown
+        ? _attachWritersideCodeAttributes(blocks)
+        : blocks;
   }
 
   List<BusyBlock> _blocksFromMarkdownSource(
@@ -411,6 +503,11 @@ class MarkdownAstAdapter {
           kind: BusyBlockKind.unknown,
           inlines: _inlinesFromNodes(children),
           rawSource: node.textContent,
+          // Retain the parser-generated structure for semantic HTML export.
+          // Source serialization and preview continue to use the existing fields.
+          attributes: {
+            'html-footnotes': md.renderToHtml([node]),
+          },
           preserveRaw: true,
           isGenerated: true,
         ),

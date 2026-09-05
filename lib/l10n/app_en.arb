@@ -2378,5 +2378,23 @@
         "type": "String"
       }
     }
+  },
+  "exportAsHtml": "Export as HTML…",
+  "fileTypeHtml": "HTML document",
+  "exportingHtml": "Exporting HTML…",
+  "htmlExported": "HTML export complete",
+  "htmlExportFailed": "HTML export failed",
+  "htmlKeepAssetsTogether": "Keep the HTML file and its companion assets directory together when copying this export.",
+  "htmlInstanceDescription": "Export one instance as linked offline pages. Choose a name for a dedicated output directory.",
+  "htmlInstance": "Instance",
+  "htmlOwnedDirectoryOnly": "Only a directory created by BusyMark HTML export can be replaced. Modified or unrelated files will be preserved.",
+  "showInFolder": "Show in Folder",
+  "sortTableColumn": "Sort {column}",
+  "@sortTableColumn": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      }
+    }
   }
 }

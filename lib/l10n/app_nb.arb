@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Eksporter som HTML…",
+  "fileTypeHtml": "HTML-dokument",
+  "exportingHtml": "Eksporterer HTML…",
+  "htmlExported": "HTML-eksport fullført",
+  "htmlExportFailed": "HTML-eksport mislyktes",
+  "htmlKeepAssetsTogether": "Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.",
+  "htmlInstanceDescription": "Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.",
+  "htmlInstance": "Instans",
+  "htmlOwnedDirectoryOnly": "Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.",
+  "showInFolder": "Vis i mappe",
+  "goToDeclaration": "Gå til deklarasjon",
+  "findUsages": "Finn bruk",
+  "cannotRenameSymbol": "Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.",
+  "keyboardLayout": "Tastaturoppsett",
+  "diagnosticWritersideUnsupported": "Innhold som ikke støttes eller er feilformet, vises som kildekode.",
+  "diagnosticWritersideSource": "Kan ikke løse kilden «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Lenkemålet er ikke tilgjengelig i denne instansen: {destination}",
+  "diagnosticWritersideSchema": "Ugyldig Writerside-markering: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.",
+  "diagnosticWritersideReference": "Kan ikke løse {kind}: {reference}",
+  "sortTableColumn": "Sorter {column}"
 }

@@ -3534,5 +3534,26 @@
   "aiExplicitEditingDescription": "Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Ekspordi HTML-ina…",
+  "fileTypeHtml": "HTML-dokument",
+  "exportingHtml": "HTML-i eksportimine…",
+  "htmlExported": "HTML-i eksport on valmis",
+  "htmlExportFailed": "HTML-i eksport ebaõnnestus",
+  "htmlKeepAssetsTogether": "Hoia eksporti kopeerides HTML-fail ja selle ressursikaust koos.",
+  "htmlInstanceDescription": "Ekspordi üks eksemplar lingitud võrguühenduseta lehtedena. Vali eraldi väljundkaustale nimi.",
+  "htmlInstance": "Eksemplar",
+  "htmlOwnedDirectoryOnly": "Asendada saab ainult BusyMarki HTML-ekspordiga loodud kausta. Muudetud ja kõrvalised failid säilitatakse.",
+  "showInFolder": "Näita kaustas",
+  "goToDeclaration": "Mine deklaratsiooni juurde",
+  "findUsages": "Otsi kasutusi",
+  "cannotRenameSymbol": "Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.",
+  "keyboardLayout": "Klaviatuuripaigutus",
+  "diagnosticWritersideUnsupported": "Toetamata või vigane sisu kuvatakse lähtekoodina.",
+  "diagnosticWritersideSource": "Allikat „{reference}” ei saa lahendada: {reason}",
+  "diagnosticWritersideLink": "Lingi siht pole selles eksemplaris saadaval: {destination}",
+  "diagnosticWritersideSchema": "Vigane Writerside’i märgistus: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Kasuta <llms-txt>true</llms-txt> või <llms-txt>false</llms-txt>; single-file ei ole enam toetatud.",
+  "diagnosticWritersideReference": "{kind} ei saa lahendada: {reference}",
+  "sortTableColumn": "Sordi {column}"
 }

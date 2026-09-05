@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Esporta come HTML…",
+  "fileTypeHtml": "Documento HTML",
+  "exportingHtml": "Esportazione HTML…",
+  "htmlExported": "Esportazione HTML completata",
+  "htmlExportFailed": "Esportazione HTML non riuscita",
+  "htmlKeepAssetsTogether": "Durante la copia, mantieni insieme il file HTML e la relativa cartella delle risorse.",
+  "htmlInstanceDescription": "Esporta un’istanza come pagine collegate offline. Scegli un nome per una cartella di destinazione dedicata.",
+  "htmlInstance": "Istanza",
+  "htmlOwnedDirectoryOnly": "È possibile sostituire solo una cartella creata dall’esportazione HTML di BusyMark. I file modificati o estranei verranno conservati.",
+  "showInFolder": "Mostra nella cartella",
+  "goToDeclaration": "Vai alla dichiarazione",
+  "findUsages": "Trova utilizzi",
+  "cannotRenameSymbol": "Impossibile rinominare il simbolo in sicurezza. Verifica il nome e aggiorna il riferimento prima di riprovare.",
+  "keyboardLayout": "Disposizione della tastiera",
+  "diagnosticWritersideUnsupported": "Il contenuto non supportato o malformato viene mostrato come sorgente.",
+  "diagnosticWritersideSource": "Impossibile risolvere la sorgente «{reference}»: {reason}",
+  "diagnosticWritersideLink": "La destinazione del collegamento non è disponibile in questa istanza: {destination}",
+  "diagnosticWritersideSchema": "Markup Writerside non valido: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Usa <llms-txt>true</llms-txt> o <llms-txt>false</llms-txt>; single-file non è più supportato.",
+  "diagnosticWritersideReference": "Impossibile risolvere {kind}: {reference}",
+  "sortTableColumn": "Ordina {column}"
 }

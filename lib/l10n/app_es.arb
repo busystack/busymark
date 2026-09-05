@@ -3074,5 +3074,26 @@
   "aiExplicitEditingDescription": "La edición con IA solo se ejecuta de forma explícita. BusyMark envía únicamente el contexto mostrado al proveedor seleccionado y nunca aplica una propuesta sin revisarla.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exportar como HTML…",
+  "fileTypeHtml": "Documento HTML",
+  "exportingHtml": "Exportando HTML…",
+  "htmlExported": "Exportación HTML completada",
+  "htmlExportFailed": "Error al exportar HTML",
+  "htmlKeepAssetsTogether": "Al copiar esta exportación, mantenga juntos el archivo HTML y su carpeta de recursos.",
+  "htmlInstanceDescription": "Exporte una instancia como páginas enlazadas sin conexión. Elija un nombre para una carpeta de salida exclusiva.",
+  "htmlInstance": "Instancia",
+  "htmlOwnedDirectoryOnly": "Solo se puede reemplazar una carpeta creada por la exportación HTML de BusyMark. Se conservarán los archivos modificados o ajenos.",
+  "showInFolder": "Mostrar en carpeta",
+  "goToDeclaration": "Ir a la declaración",
+  "findUsages": "Buscar usos",
+  "cannotRenameSymbol": "No se puede cambiar el nombre del símbolo de forma segura. Compruebe el nombre y actualice la referencia antes de volver a intentarlo.",
+  "keyboardLayout": "Distribución del teclado",
+  "diagnosticWritersideUnsupported": "El contenido no compatible o mal formado se muestra como código fuente.",
+  "diagnosticWritersideSource": "No se puede resolver el origen «{reference}»: {reason}",
+  "diagnosticWritersideLink": "El destino del enlace no está disponible en esta instancia: {destination}",
+  "diagnosticWritersideSchema": "Marcado Writerside no válido: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Use <llms-txt>true</llms-txt> o <llms-txt>false</llms-txt>; single-file ya no es compatible.",
+  "diagnosticWritersideReference": "No se puede resolver {kind}: {reference}",
+  "sortTableColumn": "Ordenar {column}"
 }
