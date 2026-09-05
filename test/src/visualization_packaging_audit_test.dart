@@ -159,6 +159,9 @@ void main() {
     expect(workflow, contains('tools/visualization_smoke.py'));
     expect(workflow, contains('GDK_BACKEND=wayland'));
     expect(workflow, contains('snapcore/action-build@v1'));
+    expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
+    expect(workflow, contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}'));
+    expect(workflow, contains('steps.snap-artifact.outputs.snap'));
     expect(workflow, contains('sudo snap install --dangerous'));
     expect(workflow, isNot(contains('--dangerous --classic')));
     expect(workflow, contains('snap run busymark'));

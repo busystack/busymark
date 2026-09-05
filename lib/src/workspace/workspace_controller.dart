@@ -2571,9 +2571,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (hasNewerEdits) {
         if (state.activeBufferId == savedBuffer.id &&
             _settingsController.state.validateOnEdit) {
-          unawaited(
-            _validateActive(rebuildPreview: _activeModeShowsPreview),
-          );
+          unawaited(_validateActive(rebuildPreview: _activeModeShowsPreview));
         }
         _scheduleAutoSave(savedBuffer.id);
       } else if (state.activeBufferId == savedBuffer.id) {

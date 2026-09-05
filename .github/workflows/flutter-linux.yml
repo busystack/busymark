@@ -166,15 +166,32 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Build strict Snap from a clean core24 environment
+      - name: Build strict Snap from a clean core24 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
+        continue-on-error: true
+
+      - name: Retry strict Snap build after an infrastructure failure
+        id: snapcraft-retry
+        if: steps.snapcraft.outcome == 'failure'
+        uses: snapcore/action-build@v1
+
+      - name: Select built Snap
+        id: snap-artifact
+        env:
+          PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
+          RETRY_SNAP: ${{ steps.snapcraft-retry.outputs.snap }}
+        run: |
+          snap_path="${PRIMARY_SNAP:-$RETRY_SNAP}"
+          test -n "$snap_path"
+          test -f "$snap_path"
+          echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload Snap artifact
         uses: actions/upload-artifact@v7
         with:
           name: busymark-snap
-          path: ${{ steps.snapcraft.outputs.snap }}
+          path: ${{ steps.snap-artifact.outputs.snap }}
 
       - name: Install desktop smoke dependencies
         run: |
@@ -184,7 +201,7 @@ jobs:
       - name: Install strict Snap
         run: >-
           sudo snap install --dangerous
-          "${{ steps.snapcraft.outputs.snap }}"
+          "${{ steps.snap-artifact.outputs.snap }}"
 
       - name: Verify GTK SVG icon loader
         run: |
