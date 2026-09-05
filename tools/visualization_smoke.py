@@ -216,9 +216,13 @@ return JSON.stringify(await window.{function}(JSON.parse({payload})))
                 raise AssertionError(
                     f"Raster snapshot was too small: {surface.get_width()}x{surface.get_height()}"
                 )
-            if opaque_pixels < 1000 or len(colors) < 8:
+            if opaque_pixels < 1000:
                 raise AssertionError(
-                    f"Raster snapshot was visually empty: {opaque_pixels} pixels, {len(colors)} colors"
+                    f"Raster snapshot was transparent: {opaque_pixels} opaque pixels"
+                )
+            if len(colors) < 8:
+                raise AssertionError(
+                    f"Raster snapshot lacked visual variation: {len(colors)} colors"
                 )
             print(f"PASS {case['name']} visual snapshot")
         except Exception as error:  # noqa: BLE001
@@ -699,7 +703,13 @@ def main() -> int:
                 "svg": (
                     '<svg xmlns="http://www.w3.org/2000/svg" width="100%" '
                     'style="max-width:600px" viewBox="0 0 600 400">'
-                    '<rect width="600" height="400" fill="#1a73e8"/></svg>'
+                    '<defs><linearGradient id="smoke-responsive-gradient" '
+                    'x1="0%" y1="0%" x2="100%" y2="100%">'
+                    '<stop offset="0" stop-color="#1a73e8"/>'
+                    '<stop offset="1" stop-color="#34a853"/>'
+                    '</linearGradient></defs>'
+                    '<rect width="600" height="400" '
+                    'fill="url(#smoke-responsive-gradient)"/></svg>'
                 ),
                 "width": 600,
                 "height": 400,

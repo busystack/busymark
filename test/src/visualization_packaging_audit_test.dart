@@ -171,6 +171,8 @@ void main() {
     final smoke = File('tools/visualization_smoke.py').readAsStringSync();
     expect(smoke, contains('terminate_web_process'));
     expect(smoke, contains('WebKit process termination and recovery'));
+    expect(smoke, contains('smoke-responsive-gradient'));
+    expect(smoke, contains('Raster snapshot lacked visual variation'));
   });
 
   test(
