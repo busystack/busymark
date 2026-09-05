@@ -9621,24 +9621,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _wysiwygSearchRange = null;
       _wysiwygScrollRequest = 0;
     }
-    if (oldWidget.viewMode == DocumentViewModePreference.editor &&
-        widget.viewMode != DocumentViewModePreference.editor &&
-        widget.state.workspace != null &&
-        widget.state.isDirty) {
-      final workspaceId = widget.state.workspace!.id;
-      final sourceFilePath = _activeEditorPath();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted ||
-            widget.viewMode == DocumentViewModePreference.editor ||
-            widget.state.workspace?.id != workspaceId ||
-            _activeEditorPath() != sourceFilePath) {
-          return;
-        }
-        ref
-            .read(workspaceControllerProvider.notifier)
-            .refreshActivePreview(sourceFilePath: sourceFilePath);
-      });
-    }
   }
 
   void _handlePreviewVisibleItemsChanged() {

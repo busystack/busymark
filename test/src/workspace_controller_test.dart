@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -743,6 +744,82 @@ void main() {
         controller.state.message?.code,
         isNot(WorkspaceMessageCode.saveBlockedFileChangedOnDisk),
       );
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test('Source defers preview work until a preview mode is visible', () async {
+    final service = _PreviewTrackingWorkspaceService();
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+    await settingsController.setAutoSave(false);
+    await settingsController.setValidateOnEdit(false);
+    await controller.openPath('test/fixtures/markdown/basic.md');
+    controller.updateActiveEditorMode(DocumentViewModePreference.source);
+    service.resetCounts();
+
+    controller.updateActiveSourceText('# Source edit one\n');
+    controller.updateActiveSourceText('# Source edit two\n');
+    controller.updateActiveText('# Source discrete edit\n');
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    expect(service.reparseCount, 0);
+    expect(service.asyncPreviewBuildCount, 0);
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.preview);
+    await _waitFor(
+      () => controller.state.preview?.title == 'Source discrete edit',
+    );
+
+    expect(service.reparseCount, 1);
+    expect(controller.state.activeText, '# Source discrete edit\n');
+
+    service.resetCounts();
+    controller.updateActiveEditorMode(DocumentViewModePreference.split);
+    controller.updateActiveSourceText('# Live split edit\n');
+    await _waitFor(() => controller.state.preview?.title == 'Live split edit');
+
+    expect(service.reparseCount, 1);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test(
+    'Source-only validation still runs when validate-on-edit is enabled',
+    () async {
+      final service = _PreviewTrackingWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+      await settingsController.setAutoSave(false);
+      await settingsController.setValidateOnEdit(true);
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      controller.updateActiveEditorMode(DocumentViewModePreference.source);
+      service.resetCounts();
+
+      controller.updateActiveSourceText('# Validate this Source edit\n');
+      await _waitFor(
+        () =>
+            controller.state.workspace?.markdown?.source ==
+            '# Validate this Source edit\n',
+      );
+
+      expect(service.reparseCount, 1);
+      expect(service.synchronousPreviewBuildCount, 0);
+      expect(service.asyncPreviewBuildCount, 0);
+
+      controller.updateActiveEditorMode(DocumentViewModePreference.preview);
+      await _waitFor(
+        () => controller.state.preview?.title == 'Validate this Source edit',
+      );
+
+      expect(service.reparseCount, 2);
+      expect(service.synchronousPreviewBuildCount, 1);
+      expect(service.asyncPreviewBuildCount, 0);
 
       controller.dispose();
       settingsController.dispose();
@@ -2013,6 +2090,19 @@ class _WorkspaceControllerDriver {
     _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
   }
 
+  void updateActiveSourceText(String text) {
+    final selection = state.activeBuffer!.editorState.selection;
+    _notifier.updateActiveSourceText(
+      text,
+      previousSelection: selection,
+      selection: selection,
+    );
+  }
+
+  void updateActiveEditorMode(DocumentViewModePreference mode) {
+    _notifier.updateActiveEditorMode(mode);
+  }
+
   void updateActiveWysiwygText(
     String text, {
     required BusyDocument document,
@@ -2155,6 +2245,39 @@ class _DelayedSaveAsWorkspaceService extends WorkspaceService {
     if (!_releaseOpen.isCompleted) {
       _releaseOpen.complete();
     }
+  }
+}
+
+class _PreviewTrackingWorkspaceService extends WorkspaceService {
+  int reparseCount = 0;
+  int synchronousPreviewBuildCount = 0;
+  int asyncPreviewBuildCount = 0;
+
+  void resetCounts() {
+    reparseCount = 0;
+    synchronousPreviewBuildCount = 0;
+    asyncPreviewBuildCount = 0;
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) {
+    reparseCount++;
+    return super.reparseActive(workspace, source);
+  }
+
+  @override
+  PreviewDocument? buildPreview(Workspace workspace, String source) {
+    synchronousPreviewBuildCount++;
+    return super.buildPreview(workspace, source);
+  }
+
+  @override
+  Future<PreviewDocument?> buildPreviewAsync(
+    Workspace workspace,
+    String source,
+  ) {
+    asyncPreviewBuildCount++;
+    return super.buildPreviewAsync(workspace, source);
   }
 }
 
