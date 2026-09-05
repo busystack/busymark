@@ -12,7 +12,7 @@ projects.
 </p>
 
 <p align="center">
-  <sub>Split view with a Writerside project tree, Markdown editor, and rendered preview.</sub>
+  <sub>Split view with Markdown source, outline navigation, and locally rendered diagrams.</sub>
 </p>
 
 ## Features
@@ -51,14 +51,14 @@ projects.
     <td width="50%">
       <img src="docs/screenshots/busymark-editor-view.png" alt="BusyMark editor view">
       <br>
-      <sub><b>Editor view</b> with formatting tools and document outline navigation.</sub>
+      <sub><b>Editor view</b> with formatting tools, outline navigation, and offline diagrams.</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
       <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark reading view">
       <br>
-      <sub><b>Reading view</b> for rendered Markdown documentation.</sub>
+      <sub><b>Reading view</b> with locally rendered Mermaid and PlantUML content.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">

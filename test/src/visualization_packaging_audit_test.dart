@@ -4,6 +4,24 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('README screenshot references resolve to checked-in images', () {
+    final readme = File('README.md').readAsStringSync();
+    final screenshotPaths = RegExp(
+      r'<img src="(docs/screenshots/[^"]+)"',
+    ).allMatches(readme).map((match) => match.group(1)!).toSet();
+
+    expect(screenshotPaths, hasLength(5));
+    for (final path in screenshotPaths) {
+      final screenshot = File(path);
+      expect(screenshot.existsSync(), isTrue, reason: '$path is missing');
+      expect(
+        screenshot.lengthSync(),
+        greaterThan(1024),
+        reason: '$path is not a usable screenshot',
+      );
+    }
+  });
+
   test('release metadata is consistent and production-grade', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
