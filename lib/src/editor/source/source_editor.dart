@@ -22,11 +22,21 @@ import 'source_commands.dart';
 import 'source_controller.dart';
 import 'source_autocomplete.dart';
 import 'source_diagnostics.dart';
+import 'source_document.dart';
 import 'source_gutter.dart';
 import 'source_search.dart';
 
 typedef BusyMarkSourceChanged =
     void Function(String fullText, String? sourceFilePath);
+
+typedef BusyMarkSourceTransactionalChanged =
+    void Function(
+      String fullText,
+      String? sourceFilePath,
+      TextSelection previousSelection,
+      TextSelection selection,
+      String? undoGroup,
+    );
 
 typedef BusyMarkSourceSessionChanged =
     void Function(
@@ -51,6 +61,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.searchReplacement = '',
     this.onSearchReplacementChanged,
     required this.onChanged,
+    this.onTransactionalChanged,
     this.onUndo,
     this.onRedo,
     required this.onOpenSearch,
@@ -78,8 +89,9 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final String searchReplacement;
   final ValueChanged<String>? onSearchReplacementChanged;
   final BusyMarkSourceChanged onChanged;
-  final String? Function()? onUndo;
-  final String? Function()? onRedo;
+  final BusyMarkSourceTransactionalChanged? onTransactionalChanged;
+  final TextEditingValue? Function()? onUndo;
+  final TextEditingValue? Function()? onRedo;
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
@@ -117,6 +129,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   bool _contentShrinkCorrectionScheduled = false;
   Timer? _searchDebounce;
   Timer? _foldRefreshDebounce;
+  _ContinuousSourceEdit? _continuousSourceEdit;
+  var _undoGroupSequence = 0;
 
   @override
   void initState() {
@@ -160,6 +174,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       });
     } else if (widget.text != _controller.fullText || languageChanged) {
       authoritativeDocumentChanged = true;
+      _continuousSourceEdit = null;
       _withoutSessionPublication(() {
         _controller.replaceFullTextAndLanguage(
           text: widget.text,
@@ -336,9 +351,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       event,
       keyboard,
     )) {
-      final text = widget.onUndo?.call();
-      if (text != null) {
-        _applyOwnedUndoText(text);
+      final value = widget.onUndo?.call();
+      if (value != null) {
+        _applyOwnedUndoValue(value);
         return KeyEventResult.handled;
       }
     }
@@ -347,9 +362,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       event,
       keyboard,
     )) {
-      final text = widget.onRedo?.call();
-      if (text != null) {
-        _applyOwnedUndoText(text);
+      final value = widget.onRedo?.call();
+      if (value != null) {
+        _applyOwnedUndoValue(value);
         return KeyEventResult.handled;
       }
     }
@@ -1021,6 +1036,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   void _handleSourceChanged() {
     _replacementWorker.cancel();
     final visibleEdit = _controller.lastVisibleEdit;
+    final selection = _controller.fullSelection;
+    final previousSelection =
+        _controller.lastFullSelectionBeforeEdit ?? selection;
+    final undoGroup = _undoGroupForSourceEdit(
+      visibleEdit,
+      previousSelection: previousSelection,
+      selection: selection,
+    );
     final currentSearchIndex = _searchController.result.currentMatchIndex;
     final firstMatchIndex = _searchController.result.firstMatchIndex;
     _scheduleFoldRefresh();
@@ -1028,7 +1051,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       currentIndex: currentSearchIndex,
       firstMatchIndex: firstMatchIndex,
     );
-    widget.onChanged(_controller.fullText, widget.filePath);
+    final transactionalCallback = widget.onTransactionalChanged;
+    if (transactionalCallback == null) {
+      widget.onChanged(_controller.fullText, widget.filePath);
+    } else {
+      transactionalCallback(
+        _controller.fullText,
+        widget.filePath,
+        previousSelection,
+        selection,
+        undoGroup,
+      );
+    }
     if (_autocompleteSuggestions.isNotEmpty) {
       _refreshAutocomplete();
     }
@@ -1212,14 +1246,87 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _handleSourceChanged();
   }
 
-  void _applyOwnedUndoText(String text) {
-    _controller.replaceFullTextAndLanguage(
-      text: text,
-      language: widget.language,
-    );
+  void _applyOwnedUndoValue(TextEditingValue value) {
+    _continuousSourceEdit = null;
+    _controller.setFullEditingValue(value);
     _recomputeFoldRegions();
     _refreshSearch();
     setState(() {});
+  }
+
+  String? _undoGroupForSourceEdit(
+    SourceVisibleEdit? edit, {
+    required TextSelection previousSelection,
+    required TextSelection selection,
+  }) {
+    if (edit == null ||
+        !previousSelection.isValid ||
+        !previousSelection.isCollapsed ||
+        !selection.isValid ||
+        !selection.isCollapsed) {
+      _continuousSourceEdit = null;
+      return null;
+    }
+    final insertedLength = edit.replacement.length;
+    final removedLength = edit.replacedFullText.length;
+    final kind = switch ((insertedLength, removedLength)) {
+      (1, 0) => _SourceSimpleEditKind.typing,
+      (0, 1) => _SourceSimpleEditKind.deletion,
+      _ => null,
+    };
+    if (kind == null ||
+        !_sourceEditSelectionIsContinuous(
+          kind,
+          edit,
+          previousSelection,
+          selection,
+        )) {
+      _continuousSourceEdit = null;
+      return null;
+    }
+    final currentText = _controller.fullText;
+    final oldText = currentText.replaceRange(
+      edit.fullStart,
+      edit.fullStart + insertedLength,
+      edit.replacedFullText,
+    );
+    final now = DateTime.now();
+    final previous = _continuousSourceEdit;
+    final continuous =
+        previous != null &&
+        previous.kind == kind &&
+        previous.newText == oldText &&
+        previous.selection == previousSelection &&
+        now.difference(previous.timestamp) < const Duration(seconds: 2);
+    final group = continuous
+        ? previous.group
+        : 'source-${widget.documentId ?? widget.filePath ?? 'document'}-'
+              '${++_undoGroupSequence}';
+    _continuousSourceEdit = _ContinuousSourceEdit(
+      kind: kind,
+      newText: currentText,
+      selection: selection,
+      timestamp: now,
+      group: group,
+    );
+    return group;
+  }
+
+  bool _sourceEditSelectionIsContinuous(
+    _SourceSimpleEditKind kind,
+    SourceVisibleEdit edit,
+    TextSelection previousSelection,
+    TextSelection selection,
+  ) {
+    final previousCaret = previousSelection.extentOffset;
+    final caret = selection.extentOffset;
+    return switch (kind) {
+      _SourceSimpleEditKind.typing =>
+        previousCaret == edit.fullStart && caret == edit.fullStart + 1,
+      _SourceSimpleEditKind.deletion =>
+        (previousCaret == edit.fullStart || previousCaret == edit.fullEnd) &&
+            caret == edit.fullStart,
+    };
   }
 
   void _applyShortcutAction(BusyMarkEditorShortcutAction action) {
@@ -1416,6 +1523,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required String text,
     required SourceSyntaxLanguage language,
   }) {
+    _continuousSourceEdit = null;
     final previous = _controller;
     _controller = BusyMarkSourceController(text: text, language: language);
     _controller.addListener(_handleControllerActivity);
@@ -2314,6 +2422,24 @@ class _SourceLargeFileBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _SourceSimpleEditKind { typing, deletion }
+
+class _ContinuousSourceEdit {
+  const _ContinuousSourceEdit({
+    required this.kind,
+    required this.newText,
+    required this.selection,
+    required this.timestamp,
+    required this.group,
+  });
+
+  final _SourceSimpleEditKind kind;
+  final String newText;
+  final TextSelection selection;
+  final DateTime timestamp;
+  final String group;
 }
 
 class _SourceEditorShortcutIntent extends Intent {

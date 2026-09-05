@@ -533,7 +533,10 @@ void main() {
                   }
                   undoText = null;
                   setState(() => currentText = previous);
-                  return previous;
+                  return TextEditingValue(
+                    text: previous,
+                    selection: const TextSelection.collapsed(offset: 0),
+                  );
                 },
                 onOpenSearch: () {},
                 onCloseSearch: () {},

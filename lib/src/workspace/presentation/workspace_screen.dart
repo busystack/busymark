@@ -9940,21 +9940,40 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           .request(),
                       onVisibleLineChanged: _handleSourceVisibleLineChanged,
                       onChanged: _handleSourceChanged,
+                      onTransactionalChanged: _handleTransactionalSourceChanged,
                       onUndo: () {
                         final controller = ref.read(
                           workspaceControllerProvider.notifier,
                         );
-                        return controller.undoActiveBuffer()
-                            ? ref.read(workspaceControllerProvider).activeText
-                            : null;
+                        if (!controller.undoActiveBuffer()) {
+                          return null;
+                        }
+                        final buffer = ref
+                            .read(workspaceControllerProvider)
+                            .activeBuffer;
+                        return buffer == null
+                            ? null
+                            : TextEditingValue(
+                                text: buffer.text,
+                                selection: buffer.editorState.selection,
+                              );
                       },
                       onRedo: () {
                         final controller = ref.read(
                           workspaceControllerProvider.notifier,
                         );
-                        return controller.redoActiveBuffer()
-                            ? ref.read(workspaceControllerProvider).activeText
-                            : null;
+                        if (!controller.redoActiveBuffer()) {
+                          return null;
+                        }
+                        final buffer = ref
+                            .read(workspaceControllerProvider)
+                            .activeBuffer;
+                        return buffer == null
+                            ? null
+                            : TextEditingValue(
+                                text: buffer.text,
+                                selection: buffer.editorState.selection,
+                              );
                       },
                       editRevision: ref
                           .read(workspaceControllerProvider.notifier)
@@ -10122,6 +10141,29 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     ref
         .read(workspaceControllerProvider.notifier)
         .updateActiveText(value, sourceFilePath: sourceFilePath ?? activePath);
+  }
+
+  void _handleTransactionalSourceChanged(
+    String value,
+    String? sourceFilePath,
+    TextSelection previousSelection,
+    TextSelection selection,
+    String? undoGroup,
+  ) {
+    final activePath = _activeEditorPath();
+    if (sourceFilePath != null && sourceFilePath != activePath) {
+      return;
+    }
+    _clearWysiwygCache();
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveSourceText(
+          value,
+          sourceFilePath: sourceFilePath ?? activePath,
+          previousSelection: previousSelection,
+          selection: selection,
+          undoGroup: undoGroup,
+        );
   }
 
   void _handleWysiwygSourceChanged(

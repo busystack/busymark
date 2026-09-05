@@ -4028,6 +4028,159 @@ void main() {
     expect(service.savedText, '# Edited Introduction\n');
   });
 
+  testWidgets('Source groups typing and deletion undo with historical carets', (
+    tester,
+  ) async {
+    const source = 'abc';
+    const startupPath = '/tmp/source-grouped-undo.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    await tester.tap(sourceField);
+    await tester.showKeyboard(sourceField);
+    final textController = tester.widget<TextField>(sourceField).controller!;
+    textController.selection = const TextSelection.collapsed(offset: 1);
+    await tester.pump();
+
+    for (final (text, caret) in const [
+      ('awbc', 2),
+      ('awobc', 3),
+      ('aworbc', 4),
+      ('awordbc', 5),
+    ]) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: caret),
+        ),
+      );
+      await tester.pump();
+    }
+
+    final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    expect(buffer.editorState.undoState.undo.map((state) => state.text), [
+      source,
+    ]);
+    expect(buffer.text, 'awordbc');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, source);
+    expect(textController.selection, const TextSelection.collapsed(offset: 1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, 'awordbc');
+    expect(textController.selection, const TextSelection.collapsed(offset: 5));
+
+    for (final (text, caret) in const [('aworbc', 4), ('awobc', 3)]) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: caret),
+        ),
+      );
+      await tester.pump();
+    }
+
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .map((state) => state.text),
+      [source, 'awordbc'],
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(textController.text, 'awordbc');
+    expect(textController.selection, const TextSelection.collapsed(offset: 5));
+
+    textController.selection = const TextSelection.collapsed(offset: 1);
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'aXwordbc',
+        selection: TextSelection.collapsed(offset: 2),
+      ),
+    );
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'aXYZwordbc',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .map((state) => state.text),
+      [source, 'awordbc', 'aXwordbc'],
+    );
+
+    for (final (text, caret) in const [('aXwordbc', 2), ('awordbc', 1)]) {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(textController.text, text);
+      expect(textController.selection, TextSelection.collapsed(offset: caret));
+    }
+  });
+
   testWidgets('source view supports editor formatting shortcuts', (
     tester,
   ) async {

@@ -12,6 +12,13 @@ const Object _bufferUnset = Object();
 
 enum DocumentDiskState { present, changed, deleted, conflict }
 
+class DocumentHistoryState {
+  const DocumentHistoryState({required this.text, required this.selection});
+
+  final String text;
+  final TextSelection selection;
+}
+
 class DocumentUndoState {
   const DocumentUndoState({
     this.undo = const [],
@@ -21,38 +28,40 @@ class DocumentUndoState {
 
   static const historyLimit = 100;
 
-  final List<String> undo;
-  final List<String> redo;
+  final List<DocumentHistoryState> undo;
+  final List<DocumentHistoryState> redo;
   final String? activeGroup;
 
-  DocumentUndoState push(String text, {String? group}) {
+  DocumentUndoState push(DocumentHistoryState state, {String? group}) {
     if (group != null && group == activeGroup && undo.isNotEmpty) {
       return DocumentUndoState(undo: undo, redo: const [], activeGroup: group);
     }
     return DocumentUndoState(
       undo: List.unmodifiable(
-        [...undo, text].skip(math.max(0, undo.length + 1 - historyLimit)),
+        [...undo, state].skip(math.max(0, undo.length + 1 - historyLimit)),
       ),
       redo: const [],
       activeGroup: group,
     );
   }
 
-  DocumentUndoState afterUndo(String currentText) => DocumentUndoState(
-    undo: List.unmodifiable(undo.take(undo.length - 1)),
-    redo: List.unmodifiable(
-      [...redo, currentText].skip(math.max(0, redo.length + 1 - historyLimit)),
-    ),
-    activeGroup: null,
-  );
+  DocumentUndoState afterUndo(DocumentHistoryState current) =>
+      DocumentUndoState(
+        undo: List.unmodifiable(undo.take(undo.length - 1)),
+        redo: List.unmodifiable(
+          [...redo, current].skip(math.max(0, redo.length + 1 - historyLimit)),
+        ),
+        activeGroup: null,
+      );
 
-  DocumentUndoState afterRedo(String currentText) => DocumentUndoState(
-    undo: List.unmodifiable(
-      [...undo, currentText].skip(math.max(0, undo.length + 1 - historyLimit)),
-    ),
-    redo: List.unmodifiable(redo.take(redo.length - 1)),
-    activeGroup: null,
-  );
+  DocumentUndoState afterRedo(DocumentHistoryState current) =>
+      DocumentUndoState(
+        undo: List.unmodifiable(
+          [...undo, current].skip(math.max(0, undo.length + 1 - historyLimit)),
+        ),
+        redo: List.unmodifiable(redo.take(redo.length - 1)),
+        activeGroup: null,
+      );
 }
 
 class DocumentEditorState {
@@ -229,17 +238,34 @@ class DocumentBuffer {
   String get identity => filePath ?? id;
   String get displayName => untitledName ?? filePath?.split('/').last ?? id;
 
-  DocumentBuffer edited(String nextText, {String? undoGroup}) {
+  DocumentBuffer edited(
+    String nextText, {
+    String? undoGroup,
+    TextSelection? previousSelection,
+    TextSelection? nextSelection,
+  }) {
     if (nextText == text) {
       return this;
     }
+    final historicalSelection = _selectionForText(
+      previousSelection ?? editorState.selection,
+      text,
+    );
+    final updatedSelection = _selectionForText(
+      nextSelection ?? editorState.selection,
+      nextText,
+    );
     return copyWith(
       text: nextText,
       dirty: nextText != lastSavedText || isUntitled,
       format: format.copyWith(hasFinalNewline: nextText.endsWith('\n')),
       revision: revision + 1,
       editorState: editorState.copyWith(
-        undoState: editorState.undoState.push(text, group: undoGroup),
+        selection: updatedSelection,
+        undoState: editorState.undoState.push(
+          DocumentHistoryState(text: text, selection: historicalSelection),
+          group: undoGroup,
+        ),
       ),
     );
   }
@@ -286,4 +312,14 @@ class DocumentBuffer {
       recovered: recovered ?? this.recovered,
     );
   }
+}
+
+TextSelection _selectionForText(TextSelection selection, String text) {
+  if (!selection.isValid) {
+    return TextSelection.collapsed(offset: text.length);
+  }
+  return selection.copyWith(
+    baseOffset: selection.baseOffset.clamp(0, text.length).toInt(),
+    extentOffset: selection.extentOffset.clamp(0, text.length).toInt(),
+  );
 }

@@ -101,6 +101,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
   List<SourceFoldRegion> _foldedRegions = const [];
   SourceDocument _document;
   SourceVisibleEdit? lastVisibleEdit;
+  TextSelection? lastFullSelectionBeforeEdit;
   SourceSearchResult _searchResult = SourceSearchResult.empty;
   void Function(String fullText, SourceVisibleEdit? edit)? onFullTextChanged;
   bool renderText = true;
@@ -175,6 +176,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
   }
 
   void setFullEditingValue(TextEditingValue value) {
+    lastFullSelectionBeforeEdit = fullSelection;
     _foldedRegions = _preserveFoldedRegionsForFullReplacement(
       _foldedRegions,
       _document.fullText,
@@ -290,6 +292,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
       return;
     }
 
+    lastFullSelectionBeforeEdit = fullSelection;
     final oldDocument = _document;
     final edit = oldDocument.describeVisibleEdit(newValue.text);
     final nextFullText = oldDocument.fullText.replaceRange(

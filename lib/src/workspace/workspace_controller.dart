@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -1777,14 +1778,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     final undo = buffer.editorState.undoState;
-    final text = undo.undo.last;
+    final target = undo.undo.last;
+    final current = DocumentHistoryState(
+      text: buffer.text,
+      selection: buffer.editorState.selection,
+    );
     final next = buffer.copyWith(
-      text: text,
-      dirty: text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
+      text: target.text,
+      dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(
+        hasFinalNewline: target.text.endsWith('\n'),
+      ),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
-        undoState: undo.afterUndo(buffer.text),
+        selection: target.selection,
+        undoState: undo.afterUndo(current),
       ),
     );
     state = state.copyWith(
@@ -1801,14 +1809,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     final undo = buffer.editorState.undoState;
-    final text = undo.redo.last;
+    final target = undo.redo.last;
+    final current = DocumentHistoryState(
+      text: buffer.text,
+      selection: buffer.editorState.selection,
+    );
     final next = buffer.copyWith(
-      text: text,
-      dirty: text != buffer.lastSavedText || buffer.isUntitled,
-      format: buffer.format.copyWith(hasFinalNewline: text.endsWith('\n')),
+      text: target.text,
+      dirty: target.text != buffer.lastSavedText || buffer.isUntitled,
+      format: buffer.format.copyWith(
+        hasFinalNewline: target.text.endsWith('\n'),
+      ),
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
-        undoState: undo.afterRedo(buffer.text),
+        selection: target.selection,
+        undoState: undo.afterRedo(current),
       ),
     );
     state = state.copyWith(
@@ -1824,6 +1839,23 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       text,
       sourceFilePath: sourceFilePath,
       rebuildPreview: true,
+    );
+  }
+
+  void updateActiveSourceText(
+    String text, {
+    String? sourceFilePath,
+    required TextSelection previousSelection,
+    required TextSelection selection,
+    String? undoGroup,
+  }) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: true,
+      previousSelection: previousSelection,
+      selection: selection,
+      undoGroup: undoGroup,
     );
   }
 
@@ -1945,6 +1977,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? sourceFilePath,
     List<DocumentOutlineHeading>? liveOutline,
     bool preserveFinalNewline = false,
+    TextSelection? previousSelection,
+    TextSelection? selection,
     String? undoGroup,
   }) {
     final workspace = state.workspace;
@@ -1960,7 +1994,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final effectiveText = preserveFinalNewline
         ? _withFinalNewlinePolicy(text, activeBuffer.format.hasFinalNewline)
         : text;
-    final nextBuffer = activeBuffer.edited(effectiveText, undoGroup: undoGroup);
+    final nextBuffer = activeBuffer.edited(
+      effectiveText,
+      undoGroup: undoGroup,
+      previousSelection: previousSelection,
+      nextSelection: selection,
+    );
     if (identical(nextBuffer, activeBuffer)) {
       return;
     }

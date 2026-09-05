@@ -729,9 +729,12 @@ Body.
     final second = first.edited('ab', undoGroup: 'typing-1');
     final transaction = second.edited('ab\n', undoGroup: null);
 
-    expect(first.editorState.undoState.undo, ['']);
-    expect(second.editorState.undoState.undo, ['']);
-    expect(transaction.editorState.undoState.undo, ['', 'ab']);
+    expect(first.editorState.undoState.undo.map((state) => state.text), ['']);
+    expect(second.editorState.undoState.undo.map((state) => state.text), ['']);
+    expect(transaction.editorState.undoState.undo.map((state) => state.text), [
+      '',
+      'ab',
+    ]);
   });
 
   testWidgets('external history coalesces editor typing without local copies', (
@@ -771,7 +774,9 @@ Body.
     expect(groups, hasLength(2));
     expect(groups.first, isNotNull);
     expect(groups.last, groups.first);
-    expect(buffer.editorState.undoState.undo, ['a\n']);
+    expect(buffer.editorState.undoState.undo.map((state) => state.text), [
+      'a\n',
+    ]);
     final dynamic state = tester.state(find.byType(BusyMarkWysiwygEditor));
     expect(state.debugUndoSnapshotCount, 0);
   });
