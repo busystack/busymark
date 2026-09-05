@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -160,15 +161,32 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
   _WorkspaceSearchState build() {
     _loadText = ref.read(workspaceServiceProvider).loadText;
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
-      if (previous?.activeBufferId != next.activeBufferId) {
+      final activeBufferChanged =
+          previous?.activeBufferId != next.activeBufferId;
+      var shouldRefresh = _workspaceSearchInputsChanged(previous, next);
+      if (activeBufferChanged) {
         final options = next.activeBuffer?.editorState.searchOptions;
         if (options != null) {
           state = state
               .withOptions(options)
               .copyWith(matches: const [], searching: false);
         }
+      } else {
+        final previousOptions =
+            previous?.activeBuffer?.editorState.searchOptions;
+        final nextOptions = next.activeBuffer?.editorState.searchOptions;
+        if (nextOptions != null &&
+            previousOptions != nextOptions &&
+            !_sameSourceSearchOptions(state.options, nextOptions)) {
+          state = state
+              .withOptions(nextOptions)
+              .copyWith(matches: const [], searching: false);
+          shouldRefresh = true;
+        }
       }
-      refresh(next);
+      if (shouldRefresh) {
+        refresh(next);
+      }
     });
     ref.onDispose(() {
       _disposed = true;
@@ -417,6 +435,56 @@ bool _sameSourceSearchOptions(
       first.caseSensitive == second.caseSensitive &&
       first.wholeWord == second.wholeWord &&
       first.regex == second.regex;
+}
+
+bool _workspaceSearchInputsChanged(
+  WorkspaceState? previous,
+  WorkspaceState next,
+) {
+  if (previous == null ||
+      previous.activeBufferId != next.activeBufferId ||
+      previous.activeText != next.activeText) {
+    return true;
+  }
+  final previousWorkspace = previous.workspace;
+  final nextWorkspace = next.workspace;
+  if (identical(previousWorkspace, nextWorkspace)) {
+    return false;
+  }
+  if (previousWorkspace == null || nextWorkspace == null) {
+    return previousWorkspace != nextWorkspace;
+  }
+  final previousActivePath =
+      previousWorkspace.activeFilePath ?? previousWorkspace.markdown?.filePath;
+  final nextActivePath =
+      nextWorkspace.activeFilePath ?? nextWorkspace.markdown?.filePath;
+  return previousActivePath != nextActivePath ||
+      !_sameWorkspaceSearchFiles(previousWorkspace.files, nextWorkspace.files);
+}
+
+bool _sameWorkspaceSearchFiles(
+  List<DocumentFile> first,
+  List<DocumentFile> second,
+) {
+  final firstSearchable = first.where(_isOpenableTextDocument).toList()
+    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
+  final secondSearchable = second.where(_isOpenableTextDocument).toList()
+    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
+  if (firstSearchable.length != secondSearchable.length) {
+    return false;
+  }
+  for (var index = 0; index < firstSearchable.length; index++) {
+    final left = firstSearchable[index];
+    final right = secondSearchable[index];
+    if (left.absolutePath != right.absolutePath ||
+        left.relativePath != right.relativePath ||
+        left.kind != right.kind ||
+        left.size != right.size ||
+        left.lastModified != right.lastModified) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class _SearchNavigationTarget {
@@ -9918,7 +9986,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                         candidate.id == activeBuffer.id,
                                   )
                                   .firstOrNull;
-                              if (latest == null) {
+                              if (latest == null ||
+                                  _sameSourceSession(
+                                    latest.editorState,
+                                    selection,
+                                    scrollOffset,
+                                    foldedRegionKeys,
+                                  )) {
                                 return;
                               }
                               ref
@@ -10632,6 +10706,17 @@ bool _sameWysiwygSession(
       left.extentOffset == right.extentOffset &&
       left.viewportBlockId == right.viewportBlockId &&
       (left.viewportAlignment - right.viewportAlignment).abs() < 0.001;
+}
+
+bool _sameSourceSession(
+  DocumentEditorState current,
+  TextSelection selection,
+  double scrollOffset,
+  Set<String> foldedRegionKeys,
+) {
+  return current.selection == selection &&
+      (current.scrollOffset - scrollOffset).abs() < 0.01 &&
+      setEquals(current.foldedRegionKeys, foldedRegionKeys);
 }
 
 class _ExternalFileBanner extends StatelessWidget {

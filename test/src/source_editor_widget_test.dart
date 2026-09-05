@@ -9,6 +9,8 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
+import 'package:busymark/src/editor/source_highlighter.dart'
+    show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_autocomplete.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
@@ -687,6 +689,94 @@ void main() {
       isNot(contains('Hidden')),
     );
   });
+
+  testWidgets(
+    'source sessions ignore render notifications and coalesce scrolling',
+    (tester) async {
+      final sessions =
+          <
+            ({
+              TextSelection selection,
+              double scrollOffset,
+              Set<String> foldedRegionKeys,
+            })
+          >[];
+      final source = List.generate(80, (index) => 'Line $index').join('\n');
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 200,
+              child: BusyMarkSourceEditor(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+                onSessionChanged: (selection, scrollOffset, foldedKeys) {
+                  sessions.add((
+                    selection: selection,
+                    scrollOffset: scrollOffset,
+                    foldedRegionKeys: foldedKeys,
+                  ));
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      sessions.clear();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      final controller = field.controller! as BusyMarkSourceEditingController;
+      controller.setSearchResult(
+        SourceSearchResult(
+          options: const SourceSearchOptions(query: 'Line'),
+          matches: const [],
+        ),
+      );
+      await tester.pump();
+      expect(sessions, isEmpty);
+
+      controller.selection = const TextSelection.collapsed(offset: 3);
+      controller.setSearchResult(
+        SourceSearchResult(
+          options: const SourceSearchOptions(query: 'Line'),
+          matches: const [],
+          invalidRegex: true,
+        ),
+      );
+      await tester.pump();
+      expect(sessions, hasLength(1));
+      expect(
+        sessions.single.selection,
+        const TextSelection.collapsed(offset: 3),
+      );
+
+      sessions.clear();
+      final scrollController = field.scrollController!;
+      expect(scrollController.position.maxScrollExtent, greaterThan(30));
+      scrollController
+        ..jumpTo(10)
+        ..jumpTo(20)
+        ..jumpTo(30);
+      expect(sessions, isEmpty);
+      await tester.pump();
+      expect(sessions, hasLength(1));
+      expect(sessions.single.scrollOffset, 30);
+    },
+  );
 
   testWidgets(
     'source editor gives glyphs, caret, and selection breathing room',

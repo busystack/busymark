@@ -7565,7 +7565,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       final service = _DeferredWorkspaceSearchService();
       final settingsStore = _MemorySettingsStore()
         ..value = AppSettings.defaults()
-            .copyWith(documentViewMode: DocumentViewModePreference.preview)
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.preview,
+            )
             .toJson();
       final container = ProviderContainer(
         overrides: [
@@ -7624,6 +7627,34 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
       expect(service.searchReadCount, 1);
       expect(find.text('Delayed needle result'), findsOneWidget);
+
+      final activeBuffer = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateDocumentEditorState(
+            activeBuffer.id,
+            activeBuffer.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 3),
+              scrollOffset: 24,
+            ),
+          );
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(service.searchReadCount, 1);
+      expect(find.text('Delayed needle result'), findsOneWidget);
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(
+            '# Active needle document\n',
+            sourceFilePath: _DeferredWorkspaceSearchService.activePath,
+          );
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump();
+
+      expect(service.searchReadCount, 2);
     },
   );
 

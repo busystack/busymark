@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -130,6 +131,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   Timer? _searchDebounce;
   Timer? _foldRefreshDebounce;
   _ContinuousSourceEdit? _continuousSourceEdit;
+  _SourceSessionSnapshot? _lastPublishedSession;
+  bool _sessionPublicationScheduled = false;
   var _undoGroupSequence = 0;
 
   @override
@@ -146,9 +149,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _lastPath = widget.documentId ?? widget.filePath ?? '';
     _recomputeFoldRegions(resetCollapsed: true);
     _restoreSessionState();
+    _lastPublishedSession = _sourceSessionSnapshot();
     _syncSearchOptions();
     _controller.addListener(_handleControllerActivity);
-    _scrollController.addListener(_publishSessionState);
+    _scrollController.addListener(_scheduleSessionPublication);
   }
 
   @override
@@ -172,6 +176,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         _recomputeFoldRegions(resetCollapsed: true);
         _restoreSessionState();
       });
+      _lastPublishedSession = _sourceSessionSnapshot();
     } else if (widget.text != _controller.fullText || languageChanged) {
       authoritativeDocumentChanged = true;
       _continuousSourceEdit = null;
@@ -213,7 +218,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _handleControllerActivity() {
-    _publishSessionState();
+    _scheduleSessionPublication();
     if (widget.wordWrap || _horizontalCaretScheduled) {
       return;
     }
@@ -1204,10 +1209,36 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (_suppressSessionPublication) {
       return;
     }
+    final snapshot = _sourceSessionSnapshot();
+    if (snapshot.sameAs(_lastPublishedSession)) {
+      return;
+    }
+    _lastPublishedSession = snapshot;
     widget.onSessionChanged?.call(
-      _controller.fullSelection,
-      _scrollController.hasClients ? _scrollController.offset : 0,
-      Set.unmodifiable(_foldedRegionKeys),
+      snapshot.selection,
+      snapshot.scrollOffset,
+      snapshot.foldedRegionKeys,
+    );
+  }
+
+  void _scheduleSessionPublication() {
+    if (_suppressSessionPublication || _sessionPublicationScheduled) {
+      return;
+    }
+    _sessionPublicationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sessionPublicationScheduled = false;
+      if (mounted) {
+        _publishSessionState();
+      }
+    });
+  }
+
+  _SourceSessionSnapshot _sourceSessionSnapshot() {
+    return _SourceSessionSnapshot(
+      selection: _controller.fullSelection,
+      scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0,
+      foldedRegionKeys: Set.unmodifiable(_foldedRegionKeys),
     );
   }
 
@@ -2440,6 +2471,25 @@ class _ContinuousSourceEdit {
   final TextSelection selection;
   final DateTime timestamp;
   final String group;
+}
+
+class _SourceSessionSnapshot {
+  const _SourceSessionSnapshot({
+    required this.selection,
+    required this.scrollOffset,
+    required this.foldedRegionKeys,
+  });
+
+  final TextSelection selection;
+  final double scrollOffset;
+  final Set<String> foldedRegionKeys;
+
+  bool sameAs(_SourceSessionSnapshot? other) {
+    return other != null &&
+        selection == other.selection &&
+        scrollOffset == other.scrollOffset &&
+        setEquals(foldedRegionKeys, other.foldedRegionKeys);
+  }
 }
 
 class _SourceEditorShortcutIntent extends Intent {
