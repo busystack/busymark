@@ -293,6 +293,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    if (_hasActiveComposition) {
+      // Keep Source shortcuts and focus traversal out of an active platform
+      // composition while leaving the key unhandled for the input method.
+      return KeyEventResult.skipRemainingHandlers;
+    }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     if (_autocompleteSuggestions.isNotEmpty) {
@@ -448,6 +453,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                         BusyMarkContextCommandIntent:
                             BusyMarkContextCommandAction(
                               isCommandEnabled: (commandId) =>
+                                  !_hasActiveComposition &&
                                   commandId.startsWith('editor.'),
                               onCommand: (commandId) {
                                 final name = commandId.substring(
@@ -1187,7 +1193,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return TextEditingValue(
       text: _controller.fullText,
       selection: _controller.fullSelection,
+      composing: _controller.fullComposing,
     );
+  }
+
+  bool get _hasActiveComposition {
+    final value = _controller.value;
+    final composing = value.composing;
+    return composing.isValid &&
+        composing.isNormalized &&
+        !composing.isCollapsed &&
+        composing.end <= value.text.length;
   }
 
   void _applyFullEditingValue(TextEditingValue value) {

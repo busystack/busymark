@@ -143,6 +143,10 @@ class BusyMarkSourceEditingController extends TextEditingController {
     selection = _document.fullSelectionToVisibleSelection(value);
   }
 
+  TextRange get fullComposing {
+    return _visibleComposingToFullRange(value.composing);
+  }
+
   int fullOffsetToVisibleOffset(int offset) {
     return _document.fullOffsetToVisibleOffset(offset);
   }
@@ -187,6 +191,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
         visibleSelection,
         _document.visibleText,
       ),
+      composing: _fullComposingToVisibleRange(value.composing),
     );
     onFullTextChanged?.call(_document.fullText, null);
   }

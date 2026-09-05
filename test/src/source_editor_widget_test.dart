@@ -1055,63 +1055,12 @@ void main() {
   testWidgets('Ctrl+Space opens project-aware source completion', (
     tester,
   ) async {
-    const source = '<topic><p>fea';
     String? changedText;
-    const index = WritersideProjectIndex(
-      symbols: [
-        WritersideSymbol(
-          name: 'features',
-          qualifiedName: 'docs:features',
-          kind: WritersideSymbolKind.topic,
-          moduleId: 'docs',
-          filePath: '/project/topics/features.topic',
-        ),
-      ],
-      references: [],
-      diagnostics: [],
+    await _pumpAutocompleteSourceEditor(
+      tester,
+      onChanged: (text, _) => changedText = text,
     );
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: buildBusyMarkTheme(
-          brightness: Brightness.dark,
-          accentColor: BusyMarkLinuxPalette.blueAccent,
-        ),
-        home: Scaffold(
-          body: SizedBox(
-            width: 900,
-            height: 600,
-            child: BusyMarkSourceEditor(
-              text: source,
-              language: SourceSyntaxLanguage.xml,
-              filePath: '/project/topics/current.topic',
-              diagnostics: const [],
-              editorFontSize: 14,
-              wordWrap: true,
-              searchActive: false,
-              searchOptions: const SourceSearchOptions(),
-              onSearchOptionsChanged: (_) {},
-              onChanged: (text, _) => changedText = text,
-              onOpenSearch: () {},
-              onCloseSearch: () {},
-              initialSelection: const TextSelection.collapsed(
-                offset: source.length,
-              ),
-              autocompleteContext: const SourceAutocompleteContext(
-                projectIndex: index,
-                moduleId: 'docs',
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.byType(TextField));
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.space);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pump();
+    await _pressControlSpace(tester);
 
     expect(find.byKey(const ValueKey('source-autocomplete-popup')), findsOne);
     final suggestion = find.byKey(
@@ -1219,6 +1168,65 @@ void main() {
     expect(changedText, 'に');
   });
 
+  for (final (label, key) in const [
+    ('Enter', LogicalKeyboardKey.enter),
+    ('Tab', LogicalKeyboardKey.tab),
+    ('autocomplete Escape', LogicalKeyboardKey.escape),
+  ]) {
+    testWidgets('active IME composition defers $label to the input method', (
+      tester,
+    ) async {
+      final controller = await _pumpAutocompleteSourceEditor(tester);
+      await _pressControlSpace(tester);
+      expect(
+        find.byKey(const ValueKey('source-autocomplete-popup')),
+        findsOneWidget,
+      );
+
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: _autocompleteSource,
+          selection: TextSelection.collapsed(offset: 13),
+          composing: TextRange(start: 10, end: 13),
+        ),
+      );
+      await tester.pump();
+
+      await tester.sendKeyEvent(key);
+      await tester.pump();
+
+      expect(controller.text, _autocompleteSource);
+      expect(controller.value.composing, const TextRange(start: 10, end: 13));
+      expect(
+        find.byKey(const ValueKey('source-autocomplete-popup')),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('active IME composition defers the autocomplete shortcut', (
+    tester,
+  ) async {
+    final controller = await _pumpAutocompleteSourceEditor(tester);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: _autocompleteSource,
+        selection: TextSelection.collapsed(offset: 13),
+        composing: TextRange(start: 10, end: 13),
+      ),
+    );
+    await tester.pump();
+
+    await _pressControlSpace(tester);
+
+    expect(controller.text, _autocompleteSource);
+    expect(controller.value.composing, const TextRange(start: 10, end: 13));
+    expect(
+      find.byKey(const ValueKey('source-autocomplete-popup')),
+      findsNothing,
+    );
+  });
+
   testWidgets('focused Source accepts authoritative parent text updates', (
     tester,
   ) async {
@@ -1269,6 +1277,75 @@ void main() {
     await tester.pump();
     expect(changedText, 'authoritative!');
   });
+}
+
+const _autocompleteSource = '<topic><p>fea';
+
+Future<TextEditingController> _pumpAutocompleteSourceEditor(
+  WidgetTester tester, {
+  BusyMarkSourceChanged? onChanged,
+}) async {
+  const index = WritersideProjectIndex(
+    symbols: [
+      WritersideSymbol(
+        name: 'features',
+        qualifiedName: 'docs:features',
+        kind: WritersideSymbolKind.topic,
+        moduleId: 'docs',
+        filePath: '/project/topics/features.topic',
+      ),
+    ],
+    references: [],
+    diagnostics: [],
+  );
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: BusyMarkLinuxPalette.blueAccent,
+      ),
+      home: Scaffold(
+        body: SizedBox(
+          width: 900,
+          height: 600,
+          child: BusyMarkSourceEditor(
+            text: _autocompleteSource,
+            language: SourceSyntaxLanguage.xml,
+            filePath: '/project/topics/current.topic',
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            onSearchOptionsChanged: (_) {},
+            onChanged: onChanged ?? (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+            initialSelection: const TextSelection.collapsed(
+              offset: _autocompleteSource.length,
+            ),
+            autocompleteContext: const SourceAutocompleteContext(
+              projectIndex: index,
+              moduleId: 'docs',
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  final fieldFinder = find.byType(TextField);
+  await tester.tap(fieldFinder);
+  await tester.showKeyboard(fieldFinder);
+  return tester.widget<TextField>(fieldFinder).controller!;
+}
+
+Future<void> _pressControlSpace(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.space);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
 }
 
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {

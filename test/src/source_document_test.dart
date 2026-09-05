@@ -175,6 +175,36 @@ void main() {
     expect(controller.fullText, endsWith('Done.\nTail\n'));
   });
 
+  test('full editing values preserve composing through folded projection', () {
+    const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).firstWhere((region) => region.startLine == 1);
+    final controller = BusyMarkSourceEditingController(
+      text: source,
+      language: SourceSyntaxLanguage.markdown,
+    )..setFoldedRegions([region]);
+    addTearDown(controller.dispose);
+    final fullStart = source.indexOf('Next');
+    final fullComposing = TextRange(start: fullStart, end: fullStart + 4);
+
+    controller.setFullEditingValue(
+      TextEditingValue(
+        text: source,
+        selection: TextSelection.collapsed(offset: fullComposing.end),
+        composing: fullComposing,
+      ),
+    );
+
+    final visibleStart = controller.text.indexOf('Next');
+    expect(
+      controller.value.composing,
+      TextRange(start: visibleStart, end: visibleStart + 4),
+    );
+    expect(controller.fullComposing, fullComposing);
+  });
+
   test('visible edits incrementally retain unaffected line entries', () {
     final controller = BusyMarkSourceEditingController(
       text: 'first\nsecond\nthird\nfourth\n',
