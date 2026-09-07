@@ -155,6 +155,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copy => 'कॉपी करें';
 
   @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'नाम कॉपी करें';
 
   @override

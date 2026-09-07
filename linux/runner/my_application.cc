@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
 #include "web_render_host.h"
@@ -85,6 +86,7 @@ struct _MyApplication {
   FlMethodChannel* native_menu_channel;
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
+  FlMethodChannel* rich_clipboard_channel;
   BusyMarkWebRenderHost* visualization_host;
   BusyMarkVideoPlayerHost* video_player_host;
   GtkCssProvider* header_bar_css_provider;
@@ -2994,6 +2996,7 @@ static void my_application_activate(GApplication* application) {
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
   register_asset_input_channel(self, view);
+  self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
   self->visualization_host =
@@ -3059,6 +3062,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
   g_clear_object(&self->asset_input_channel);
+  g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);
   if (self->visualization_host != nullptr) {
     busymark_web_render_host_shutdown(self->visualization_host);

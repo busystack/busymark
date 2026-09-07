@@ -153,6 +153,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copy => 'نسخ';
 
   @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'نسخ الاسم';
 
   @override

@@ -153,6 +153,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copy => 'Kopeeri';
 
   @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'Kopeeri nimi';
 
   @override

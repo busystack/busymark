@@ -154,6 +154,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'Copy name';
 
   @override

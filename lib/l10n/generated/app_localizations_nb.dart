@@ -156,6 +156,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copy => 'Kopier';
 
   @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'Kopier navn';
 
   @override

@@ -403,6 +403,12 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get copy;
 
+  /// Shown when Editor copy or cut cannot write the clipboard; cut leaves the document intact.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not copy the selection to the clipboard.'**
+  String get clipboardCopyFailed;
+
   /// Menu action that copies the selected file, folder, or workspace name.
   ///
   /// In en, this message translates to:

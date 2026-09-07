@@ -23,11 +23,13 @@ import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../core/source_span.dart';
+import '../../core/local_image_resolver.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../platform/rich_clipboard_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_collapsible.dart';
@@ -36,6 +38,8 @@ import '../document_surface.dart';
 import '../document_text_geometry.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
+import 'wysiwyg_clipboard_fragment.dart';
+import 'wysiwyg_clipboard_html.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_session_state.dart';
@@ -75,6 +79,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.assetWorkspaceKind,
     this.assetIngestionService = const AssetIngestionService(),
     this.assetInputService,
+    this.clipboardService,
     this.onAssetSaveRequired,
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
@@ -113,6 +118,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final AssetWorkspaceKind? assetWorkspaceKind;
   final AssetIngestionService assetIngestionService;
   final AssetInputService? assetInputService;
+  final RichClipboardService? clipboardService;
   final VoidCallback? onAssetSaveRequired;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
@@ -173,7 +179,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   String? _verticalCaretMovementBlockId;
   TextPosition? _verticalCaretMovementPosition;
   double? _preferredVerticalCaretX;
-  _WysiwygInternalClipboard? _internalClipboard;
   final _pendingInlineKindsByBlockId = <String, Set<BusyInlineKind>>{};
   int _preserveSelectionFocusCallbacks = 0;
   bool _internalChange = false;
@@ -183,6 +188,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _sessionReportScheduled = false;
 
   String get _documentId => widget.documentId ?? widget.document.filePath;
+
+  RichClipboardService get _clipboard =>
+      widget.clipboardService ?? busyMarkRichClipboardService;
 
   @visibleForTesting
   int get debugUndoControllerCount => _textUndoControllers.length;
@@ -3935,15 +3943,30 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   Future<void> _pasteIntoActiveBlock() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text != null && text.isNotEmpty) {
-      final internalClipboard = _internalClipboard;
-      if (internalClipboard != null &&
-          internalClipboard.text == text &&
-          _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+    final target = _captureClipboardTarget();
+    final data = await _clipboard.read();
+    if (!_isClipboardTargetCurrent(target)) return;
+    var fragment = data.fragment == null
+        ? null
+        : WysiwygClipboardFragment.decode(data.fragment!);
+    fragment ??= data.html == null
+        ? null
+        : const WysiwygClipboardHtml().decode(
+            data.html!,
+            mode: _documentController.document.mode,
+          );
+    if (fragment != null) {
+      fragment = fragment.rebase(_documentController.document.filePath);
+      if (_pasteStyledClipboardIntoActiveBlock(
+        fragment.blocks,
+        data.text ??
+            fragment.documentBlocks.map(_copyTextForBlock).join('\n\n'),
+      )) {
         return;
       }
+    }
+    final text = data.text;
+    if (text != null && text.isNotEmpty) {
       final filePath = _localFilePathFromClipboardText(text);
       if (filePath != null &&
           await _ingestExternalImageFile(
@@ -3953,11 +3976,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           )) {
         return;
       }
-      await _pastePlainTextIntoActiveBlock(textOverride: text);
+      if (_isClipboardTargetCurrent(target)) {
+        await _pastePlainTextIntoActiveBlock(textOverride: text);
+      }
       return;
     }
     final assetInput = widget.assetInputService ?? busyMarkAssetInputService;
     final clipboardFiles = await assetInput.readClipboardImageFiles();
+    if (!_isClipboardTargetCurrent(target)) return;
     if (clipboardFiles.isNotEmpty &&
         await _ingestExternalImageFile(
           clipboardFiles.first,
@@ -3966,6 +3992,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     final png = await assetInput.readClipboardImagePng();
+    if (!_isClipboardTargetCurrent(target)) return;
     if (png != null && png.isNotEmpty) {
       await _ingestExternalImageBytes(
         png,
@@ -3976,14 +4003,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
-  bool _pasteInternalClipboardIntoActiveBlock(
-    _WysiwygInternalClipboard clipboard,
+  bool _pasteStyledClipboardIntoActiveBlock(
+    List<BusyWysiwygStyledBlock> blocks,
+    String text,
   ) {
     if (_hasBlockSelection) {
-      return _replaceDocumentSelectionWithStyledBlocks(clipboard.blocks);
+      return _replaceDocumentSelectionWithStyledBlocks(blocks);
     }
     if (_activeCellId != null) {
-      return _replaceActiveTableCellSelection(clipboard.text);
+      return _replaceActiveTableCellSelection(text, styledBlocks: blocks);
     }
     final target = _activeTextTarget();
     if (target == null) {
@@ -4008,7 +4036,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId: blockId,
       selectionStart: start,
       selectionEnd: end,
-      blocks: clipboard.blocks,
+      blocks: blocks,
     );
     if (result == null) {
       return false;
@@ -4021,17 +4049,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   Future<void> _pastePlainTextIntoActiveBlock({String? textOverride}) async {
+    final captured = _captureClipboardTarget();
+    final text = textOverride ?? await _clipboard.readPlainText();
+    if (!_isClipboardTargetCurrent(captured) || text == null || text.isEmpty) {
+      return;
+    }
     final target = _activeTextTarget();
     if (target == null) {
       return;
     }
     final blockId = target.targetId;
     final controller = target.controller;
-    final text =
-        textOverride ?? (await Clipboard.getData(Clipboard.kTextPlain))?.text;
-    if (text == null || text.isEmpty) {
-      return;
-    }
     if (_activeCellId != null) {
       _replaceActiveTableCellSelection(text);
       return;
@@ -4063,7 +4091,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  bool _replaceActiveTableCellSelection(String replacement) {
+  bool _replaceActiveTableCellSelection(
+    String replacement, {
+    List<BusyWysiwygStyledBlock>? styledBlocks,
+  }) {
     final cellId = _activeCellId;
     final tableId = _activeBlockId;
     if (cellId == null || tableId == null) {
@@ -4085,6 +4116,21 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         .max(selection.start, selection.end)
         .clamp(start, controller.text.length)
         .toInt();
+    if (styledBlocks != null && !busyMarkWysiwygBlockContainsMath(cell)) {
+      final undoSnapshot = _historySnapshot();
+      final offset = _documentController.insertStyledInlinesInTableCell(
+        tableBlockId: tableId,
+        cellId: cellId,
+        selectionStart: start,
+        selectionEnd: end,
+        blocks: styledBlocks,
+      );
+      if (offset == null) return false;
+      _recordUndoSnapshot(undoSnapshot);
+      _emitMarkdown();
+      _focusTextTargetAfterFrame(cellId, offset: offset);
+      return true;
+    }
     final acceptedReplacement = busyMarkNormalizeTableCellText(replacement);
     final nextText = controller.text.replaceRange(
       start,
@@ -5724,50 +5770,199 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return _cutCurrentSelection();
   }
 
-  bool _copyCurrentSelection() {
-    if (_hasBlockSelection) {
-      return _copyDocumentSelectionToClipboard();
-    }
-    final ranges = _currentSelectionRanges();
-    if (ranges.isEmpty) {
-      return false;
-    }
-    return _copyRangesToClipboard(ranges);
-  }
+  bool _copyCurrentSelection() => _copyOrCutSelection(cut: false);
 
-  bool _cutCurrentSelection() {
-    if (_hasBlockSelection) {
-      if (!_copyDocumentSelectionToClipboard()) {
-        return false;
-      }
-      return _deleteBlockSelection();
-    }
-    final ranges = _currentSelectionRanges();
-    if (ranges.isEmpty || !_copyRangesToClipboard(ranges)) {
-      return false;
-    }
-    return _deleteActiveTextSelection(ranges.single);
-  }
+  bool _cutCurrentSelection() => _copyOrCutSelection(cut: true);
 
-  bool _copyDocumentSelectionToClipboard() {
-    final allRanges = _selectedTextRanges(null, true);
-    if (allRanges.isEmpty) {
-      return false;
-    }
-    final ranges = allRanges.any((range) => range.end > range.start)
+  bool _copyOrCutSelection({required bool cut}) {
+    final documentSelection = _hasBlockSelection;
+    final allRanges = documentSelection
+        ? _selectedTextRanges(null, true)
+        : _currentSelectionRanges();
+    if (allRanges.isEmpty) return false;
+    final ranges = documentSelection
         ? _withoutEmptySelectionEndpoints(allRanges)
-        : allRanges;
-    final clipboardText = ranges.map(_copyTextForRange).join('\n\n');
-    final clipboardBlocks = [
-      for (final range in ranges) _styledBlockForRange(range),
-    ];
-    _internalClipboard = _WysiwygInternalClipboard(
-      text: clipboardText,
-      blocks: clipboardBlocks,
+        : allRanges
+              .where((range) => _copyTextForRange(range).trim().isNotEmpty)
+              .toList();
+    if (ranges.isEmpty) return false;
+    final target = _captureClipboardTarget();
+    final blocks = _clipboardBlocksForRanges(ranges);
+    final fragment = WysiwygClipboardFragment(
+      mode: _documentController.document.mode,
+      sourcePath: _documentController.document.filePath,
+      blocks: blocks,
+      mediaPaths: _clipboardMediaPaths(blocks),
     );
-    unawaited(Clipboard.setData(ClipboardData(text: clipboardText)));
+    final text = ranges.map(_copyTextForRange).join('\n\n');
+    unawaited(
+      _writeClipboardSelection(
+        fragment: fragment,
+        text: text,
+        onWritten: () {
+          if (!cut || !_isClipboardTargetCurrent(target)) return;
+          if (documentSelection) {
+            _deleteBlockSelection();
+          } else {
+            _deleteActiveTextSelection(ranges.single);
+          }
+        },
+      ),
+    );
     return true;
   }
+
+  Future<void> _writeClipboardSelection({
+    required WysiwygClipboardFragment fragment,
+    required String text,
+    required VoidCallback onWritten,
+  }) async {
+    var success = false;
+    try {
+      String? html;
+      try {
+        html = const WysiwygClipboardHtml().encode(fragment);
+      } on FormatException {
+        // Large selections can still transfer their native structure and text.
+      }
+      success = await _clipboard.write(
+        RichClipboardData(text: text, html: html, fragment: fragment.encode()),
+      );
+    } on FormatException {
+      success = false;
+    }
+    if (!mounted) return;
+    if (success) {
+      onWritten();
+    } else {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.clipboardCopyFailed,
+      );
+    }
+  }
+
+  List<BusyWysiwygStyledBlock> _clipboardBlocksForRanges(
+    List<_SelectedTextRange> ranges,
+  ) {
+    final selected = {for (final range in ranges) range.block.id: range};
+    final editable = _editableBlocks(
+      _documentController.document.blocks,
+    ).map((block) => block.id).toSet();
+    final included = <String>{};
+    final containers = <String, BusyBlock>{};
+    void preserveQuotes(List<BusyBlock> blocks) {
+      for (final block in blocks) {
+        if (_isStructuralBlockquote(block)) {
+          final descendants = _editableBlocks(block.children);
+          if (descendants.isNotEmpty &&
+              descendants.every(
+                (child) => selected[child.id]?.coversWholeBlock == true,
+              )) {
+            for (final child in descendants) {
+              containers.putIfAbsent(child.id, () => block);
+            }
+          }
+        }
+        preserveQuotes(block.children);
+      }
+    }
+
+    preserveQuotes(_documentController.document.blocks);
+    BusyBlock? snapshot(BusyBlock block) {
+      final range = selected[block.id];
+      if (editable.contains(block.id) && range == null) return null;
+      included.add(block.id);
+      if (range != null && !range.coversWholeBlock) {
+        return busyMarkWysiwygClipboardBlock(_styledBlockForRange(range));
+      }
+      return busyMarkWysiwygImmutableBlockSnapshot(
+        block.copyWith(
+          children: [
+            for (final child in block.children)
+              if (snapshot(child) case final copied?) copied,
+          ],
+        ),
+      );
+    }
+
+    final result = <BusyWysiwygStyledBlock>[];
+    for (final range in ranges) {
+      if (included.contains(range.block.id)) continue;
+      final block = containers[range.block.id] ?? range.block;
+      if (range.coversWholeBlock) {
+        final copied = snapshot(block)!;
+        result.add(
+          BusyWysiwygStyledBlock(
+            kind: copied.kind,
+            text: copied.plainText,
+            ranges: busyInlineStyleRanges(copied.inlines),
+            attributes: copied.attributes,
+            completeBlock: copied,
+          ),
+        );
+      } else {
+        result.add(_styledBlockForRange(range));
+      }
+    }
+    return result;
+  }
+
+  Map<String, String> _clipboardMediaPaths(
+    List<BusyWysiwygStyledBlock> blocks,
+  ) {
+    final references = <String>{};
+    void inline(BusyInline value) {
+      if (value.kind == BusyInlineKind.image && value.destination != null) {
+        references.add(value.destination!);
+      }
+      value.children.forEach(inline);
+    }
+
+    void block(BusyBlock value) {
+      if ({BusyBlockKind.image, BusyBlockKind.video}.contains(value.kind) &&
+          value.attributes['src'] != null) {
+        references.add(value.attributes['src']!);
+      }
+      value.inlines.forEach(inline);
+      value.children.forEach(block);
+    }
+
+    for (final value in blocks) {
+      block(busyMarkWysiwygClipboardBlock(value));
+    }
+    final resolved = <String, String>{};
+    for (final value in references.take(256)) {
+      if (Uri.tryParse(value)?.hasScheme == true) continue;
+      final path = resolveLocalMediaPath(
+        activeFilePath: _documentController.document.filePath,
+        destination: value,
+        workspaceRoot: widget.workspaceRoot,
+        writersideRoot: widget.writersideRoot,
+        imagesDir: widget.imagesDir,
+        maxRecursiveEntries: 1000,
+      );
+      if (path != null) resolved[value] = path;
+    }
+    return resolved;
+  }
+
+  _ClipboardTarget _captureClipboardTarget() => _ClipboardTarget(
+    document: _captureDialogTarget(),
+    documentId: _documentId,
+    activeBlockId: _activeBlockId,
+    activeCellId: _activeCellId,
+    selection: _documentSelection,
+    textSelection: _activeTextTarget()?.controller.selection,
+  );
+
+  bool _isClipboardTargetCurrent(_ClipboardTarget target) =>
+      _isDialogTargetCurrent(target.document) &&
+      target.documentId == _documentId &&
+      target.activeBlockId == _activeBlockId &&
+      target.activeCellId == _activeCellId &&
+      target.selection == _documentSelection &&
+      target.textSelection == _activeTextTarget()?.controller.selection;
 
   List<_SelectedTextRange> _withoutEmptySelectionEndpoints(
     List<_SelectedTextRange> ranges,
@@ -5781,29 +5976,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       end--;
     }
     return ranges.sublist(start, end);
-  }
-
-  bool _copyRangesToClipboard(List<_SelectedTextRange> ranges) {
-    final clipboardBlocks = <BusyWysiwygStyledBlock>[];
-    final clipboardTexts = <String>[];
-    for (final range in ranges) {
-      final clipboardText = _copyTextForRange(range);
-      if (clipboardText.trim().isEmpty) {
-        continue;
-      }
-      clipboardTexts.add(clipboardText);
-      clipboardBlocks.add(_styledBlockForRange(range));
-    }
-    if (clipboardTexts.isEmpty || clipboardBlocks.isEmpty) {
-      return false;
-    }
-    final clipboardText = clipboardTexts.join('\n\n');
-    _internalClipboard = _WysiwygInternalClipboard(
-      text: clipboardText,
-      blocks: clipboardBlocks,
-    );
-    unawaited(Clipboard.setData(ClipboardData(text: clipboardText)));
-    return true;
   }
 
   List<_SelectedTextRange> _currentSelectionRanges() {
@@ -5854,7 +6026,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       attributes: range.coversWholeBlock ? range.block.attributes : const {},
       completeBlock: range.coversWholeBlock
           ? busyMarkWysiwygImmutableBlockSnapshot(range.block)
-          : null,
+          : BusyBlock(
+              id: 'clipboard-slice',
+              kind: BusyBlockKind.paragraph,
+              inlines: busyMarkWysiwygClipboardInlineSlice(
+                range.block.inlines,
+                start,
+                end,
+              ),
+              dirty: true,
+            ),
     );
   }
 
@@ -6084,11 +6265,21 @@ class _OrderedDocumentSelection {
   final _DocumentTextPosition end;
 }
 
-class _WysiwygInternalClipboard {
-  const _WysiwygInternalClipboard({required this.text, required this.blocks});
-
-  final String text;
-  final List<BusyWysiwygStyledBlock> blocks;
+class _ClipboardTarget {
+  const _ClipboardTarget({
+    required this.document,
+    required this.documentId,
+    required this.activeBlockId,
+    required this.activeCellId,
+    required this.selection,
+    required this.textSelection,
+  });
+  final _WysiwygDialogTarget document;
+  final String documentId;
+  final String? activeBlockId;
+  final String? activeCellId;
+  final _DocumentTextSelection? selection;
+  final TextSelection? textSelection;
 }
 
 class _ContinuousTextEdit {

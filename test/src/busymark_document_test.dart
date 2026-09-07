@@ -39,6 +39,8 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:yaru/yaru.dart';
 
+import '../support/memory_rich_clipboard.dart';
+
 void main() {
   const parser = MarkdownParser();
 
@@ -3030,6 +3032,7 @@ void main() {}
             width: 900,
             height: 640,
             child: BusyMarkWysiwygEditor(
+              clipboardService: MemoryRichClipboard(),
               document: parsed.busyDocument,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
@@ -3107,6 +3110,7 @@ void main() {}
             width: 900,
             height: 640,
             child: BusyMarkWysiwygEditor(
+              clipboardService: MemoryRichClipboard(),
               document: parsed.busyDocument,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
