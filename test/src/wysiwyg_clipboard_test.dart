@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -12,6 +13,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
@@ -425,6 +427,34 @@ void main() {
       expect(result, contains('> First'));
       expect(result, contains('> **Second**'));
       expect(RegExp('Second').allMatches(result), hasLength(1));
+    });
+
+    testWidgets('right-click opens the menu for a whole-document selection', (
+      tester,
+    ) async {
+      await mount(tester, 'issues', _source, (_) {});
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+
+      await tester.tap(
+        find.widgetWithText(TextField, 'When selecting all, keep formatting.'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+
+      for (final label in ['Cut', 'Copy', 'Paste', 'Select all']) {
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem && widget.label == label,
+          ),
+          findsOneWidget,
+        );
+      }
+      await tester.tap(find.text('Copy'));
+      await tester.pumpAndSettle();
+      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData['text'], contains('[ ] First task'));
     });
 
     testWidgets(

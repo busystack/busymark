@@ -175,6 +175,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   _ContinuousTextEdit? _continuousTextEdit;
   _DocumentTextSelection? _documentSelection;
   _DocumentTextPosition? _pointerSelectionAnchor;
+  int? _documentSelectionContextPointer;
+  _DocumentTextSelection? _documentSelectionContextSnapshot;
   VerticalCaretMovementRun? _verticalCaretMovement;
   String? _verticalCaretMovementBlockId;
   TextPosition? _verticalCaretMovementPosition;
@@ -518,27 +520,34 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               return Stack(
                 children: [
                   Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTap: () {
-                        _clearBlockSelection();
-                        _focusActiveOrFirstBlock();
-                      },
-                      child: Focus(
-                        focusNode: _selectionFocusNode,
-                        child: ScrollablePositionedList.builder(
-                          key: const ValueKey('wysiwyg-document-scroll'),
-                          itemScrollController: _itemScrollController,
-                          itemPositionsListener: _itemPositionsListener,
-                          padding: documentLayout.scrollPadding,
-                          itemCount: renderEntries.length,
-                          itemBuilder: (context, index) => _buildRenderEntry(
-                            context,
-                            renderEntries[index],
-                            documentLayout: documentLayout,
-                            first: index == 0,
-                            selectedBlockIds: selectedBlockIds,
-                            selectionRangesByBlockId: selectionRangesByBlockId,
+                    child: Listener(
+                      onPointerDown: _handleDocumentSelectionContextPointerDown,
+                      onPointerUp: _handleDocumentSelectionContextPointerUp,
+                      onPointerCancel:
+                          _handleDocumentSelectionContextPointerCancel,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () {
+                          _clearBlockSelection();
+                          _focusActiveOrFirstBlock();
+                        },
+                        child: Focus(
+                          focusNode: _selectionFocusNode,
+                          child: ScrollablePositionedList.builder(
+                            key: const ValueKey('wysiwyg-document-scroll'),
+                            itemScrollController: _itemScrollController,
+                            itemPositionsListener: _itemPositionsListener,
+                            padding: documentLayout.scrollPadding,
+                            itemCount: renderEntries.length,
+                            itemBuilder: (context, index) => _buildRenderEntry(
+                              context,
+                              renderEntries[index],
+                              documentLayout: documentLayout,
+                              first: index == 0,
+                              selectedBlockIds: selectedBlockIds,
+                              selectionRangesByBlockId:
+                                  selectionRangesByBlockId,
+                            ),
                           ),
                         ),
                       ),
@@ -853,6 +862,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       focusNode: _focusNodeFor(block),
       selected: selectedBlockIds.contains(block.id),
       selectionRange: selectionRangesByBlockId[block.id],
+      documentSelectionActive: _hasBlockSelection,
       onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
       onPointerMove: _handleBlockPointerMove,
       onPointerUp: _handleBlockPointerUp,
@@ -5433,6 +5443,110 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
+  void _handleDocumentSelectionContextPointerDown(PointerDownEvent event) {
+    _documentSelectionContextPointer = null;
+    _documentSelectionContextSnapshot = null;
+    if (event.buttons != kSecondaryMouseButton || !_hasBlockSelection) {
+      return;
+    }
+    _documentSelectionContextPointer = event.pointer;
+    _documentSelectionContextSnapshot = _documentSelection;
+    _preserveSelectionFocusCallbacks = math.max(
+      _preserveSelectionFocusCallbacks,
+      2,
+    );
+  }
+
+  void _handleDocumentSelectionContextPointerUp(PointerUpEvent event) {
+    if (_documentSelectionContextPointer != event.pointer) {
+      return;
+    }
+    final snapshot = _documentSelectionContextSnapshot;
+    _documentSelectionContextPointer = null;
+    _documentSelectionContextSnapshot = null;
+    if (snapshot == null || snapshot != _documentSelection) {
+      return;
+    }
+    unawaited(_showDocumentSelectionContextMenu(event.position, snapshot));
+  }
+
+  void _handleDocumentSelectionContextPointerCancel(PointerCancelEvent event) {
+    if (_documentSelectionContextPointer == event.pointer) {
+      _documentSelectionContextPointer = null;
+      _documentSelectionContextSnapshot = null;
+    }
+  }
+
+  Future<void> _showDocumentSelectionContextMenu(
+    Offset position,
+    _DocumentTextSelection snapshot,
+  ) async {
+    final commands =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
+    BusyMarkPopupMenuItem<_DocumentSelectionMenuAction> item(
+      _DocumentSelectionMenuAction action,
+      String commandId,
+      IconData icon,
+    ) {
+      final command = commands[commandId]!;
+      return BusyMarkPopupMenuItem(
+        value: action,
+        label: command.label(context),
+        icon: icon,
+        shortcut: command.shortcut?.label,
+      );
+    }
+
+    final action = await showBusyMarkContextMenu<_DocumentSelectionMenuAction>(
+      context,
+      position,
+      items: [
+        item(
+          _DocumentSelectionMenuAction.cut,
+          BusyMarkCommandIds.textCut,
+          BusyMarkGlyphs.cut,
+        ),
+        item(
+          _DocumentSelectionMenuAction.copy,
+          BusyMarkCommandIds.textCopy,
+          BusyMarkGlyphs.copy,
+        ),
+        item(
+          _DocumentSelectionMenuAction.paste,
+          BusyMarkCommandIds.textPaste,
+          BusyMarkGlyphs.paste,
+        ),
+        item(
+          _DocumentSelectionMenuAction.selectAll,
+          BusyMarkCommandIds.textSelectAll,
+          BusyMarkGlyphs.selectAll,
+        ),
+        if (widget.onAiEdit != null)
+          item(
+            _DocumentSelectionMenuAction.refineWithAi,
+            BusyMarkCommandIds.editorRefineWithAi,
+            BusyMarkGlyphs.ai,
+          ),
+      ],
+    );
+    if (!mounted || action == null || snapshot != _documentSelection) {
+      return;
+    }
+    switch (action) {
+      case _DocumentSelectionMenuAction.cut:
+        _cutBlockSelection();
+      case _DocumentSelectionMenuAction.copy:
+        _copyBlockSelection();
+      case _DocumentSelectionMenuAction.paste:
+        unawaited(_pasteIntoActiveBlock());
+      case _DocumentSelectionMenuAction.selectAll:
+        _selectWholeDocumentText();
+      case _DocumentSelectionMenuAction.refineWithAi:
+        unawaited(_runAiEdit());
+    }
+  }
+
   void _handleBlockPointerMove(PointerMoveEvent event) {
     if (_pointerSelectionAnchor == null ||
         event.buttons != kPrimaryMouseButton) {
@@ -6281,6 +6395,8 @@ class _ClipboardTarget {
   final _DocumentTextSelection? selection;
   final TextSelection? textSelection;
 }
+
+enum _DocumentSelectionMenuAction { cut, copy, paste, selectAll, refineWithAi }
 
 class _ContinuousTextEdit {
   const _ContinuousTextEdit({

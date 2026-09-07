@@ -42,10 +42,13 @@ operation, and ordinary paste uses the richest supported representation.
 
 ## Validation
 
-- 237 editor/model regression tests pass, including fresh Editor instances,
+- 238 editor/model regression tests pass, including fresh Editor instances,
   same-Editor cut/paste, partial selections, nested lists, blockquotes, tasks,
   tables, code, Writerside, images, RTL, math, undo/redo, malformed fragments,
   serialized writes, failed cut, delayed paste, and a later plain-text copy.
+- A document-wide selection has its own right-click menu for Cut, Copy, Paste,
+  Select all, and Refine with AI when available. The selected blocks stay active
+  while the menu opens, including when the pointer is over a table cell.
 - Both reported files, `issues.md` and `writerside-support.md`, passed a read-only
   codec and insertion probe. Heading, task, table, blockquote, and code content
   survived; exported HTML also imported successfully.

@@ -169,6 +169,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.editRevision = 0,
     this.selected = false,
     this.selectionRange,
+    this.documentSelectionActive = false,
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
@@ -211,6 +212,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final int editRevision;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
+  final bool documentSelectionActive;
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
@@ -383,6 +385,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           cellFocusNode: tableCellFocusNode,
           cellKey: tableCellKey,
           onCellFocused: onTableCellFocused,
+          suppressContextMenu: documentSelectionActive,
         ),
       );
     }
@@ -531,15 +534,17 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                 hoverColor: BusyMarkLinuxPalette.transparent,
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              contextMenuBuilder:
-                                  (context, editableTextState) =>
-                                      buildBusyMarkEditorTextContextMenu(
-                                        context,
-                                        editableTextState,
-                                        refineWithAiLabel:
-                                            context.l10n.aiRefineWithAi,
-                                        onRefineWithAi: onRefineWithAi,
-                                      ),
+                              contextMenuBuilder: documentSelectionActive
+                                  ? (context, editableTextState) =>
+                                        const SizedBox.shrink()
+                                  : (context, editableTextState) =>
+                                        buildBusyMarkEditorTextContextMenu(
+                                          context,
+                                          editableTextState,
+                                          refineWithAiLabel:
+                                              context.l10n.aiRefineWithAi,
+                                          onRefineWithAi: onRefineWithAi,
+                                        ),
                               onTap: onFocused,
                               onChanged: onChanged,
                             ),
@@ -1451,6 +1456,7 @@ class _TableBlockEditor extends StatelessWidget {
     this.cellFocusNode,
     this.cellKey,
     this.onCellFocused,
+    this.suppressContextMenu = false,
   });
 
   static const double _controlSize = BusyMarkSizes.tableControl;
@@ -1473,6 +1479,7 @@ class _TableBlockEditor extends StatelessWidget {
   final FocusNode Function(BusyBlock cell)? cellFocusNode;
   final GlobalKey Function(String cellId)? cellKey;
   final ValueChanged<String>? onCellFocused;
+  final bool suppressContextMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -1556,6 +1563,7 @@ class _TableBlockEditor extends StatelessWidget {
                           ? cellKey?.call(row.children[column].id)
                           : null,
                       onCellFocused: onCellFocused,
+                      suppressContextMenu: suppressContextMenu,
                     ),
                 ],
               ),
@@ -1800,6 +1808,7 @@ class _TableCellEditor extends StatefulWidget {
     this.focusNode,
     this.cellKey,
     this.onCellFocused,
+    this.suppressContextMenu = false,
   });
 
   final BusyBlock? cell;
@@ -1816,6 +1825,7 @@ class _TableCellEditor extends StatefulWidget {
   final FocusNode? focusNode;
   final GlobalKey? cellKey;
   final ValueChanged<String>? onCellFocused;
+  final bool suppressContextMenu;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
@@ -1989,6 +1999,9 @@ class _TableCellEditorState extends State<_TableCellEditor> {
             hintStyle: textStyle.copyWith(color: colors.mutedForeground),
             contentPadding: EdgeInsets.zero,
           ),
+          contextMenuBuilder: widget.suppressContextMenu
+              ? (context, editableTextState) => const SizedBox.shrink()
+              : null,
           onTap: () {
             final onCellFocused = widget.onCellFocused;
             if (onCellFocused == null) {
