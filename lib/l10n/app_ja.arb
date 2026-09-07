@@ -1498,6 +1498,10 @@
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
   },
+  "removeTocElements": "目次要素を削除",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "使用箇所を確認",
   "@reviewUsages": {
     "description": "Action that opens the Writerside topic usages review."

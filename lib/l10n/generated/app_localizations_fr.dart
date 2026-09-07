@@ -1223,6 +1223,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get removeTocElement => 'Retirer l’élément de la table des matières';
 
   @override
+  String get removeTocElements =>
+      'Retirer les éléments de la table des matières';
+
+  @override
   String get reviewUsages => 'Examiner les utilisations';
 
   @override

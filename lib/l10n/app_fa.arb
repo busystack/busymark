@@ -2517,6 +2517,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "حذف عناصر فهرست مطالب",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "مرور موارد استفاده",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."

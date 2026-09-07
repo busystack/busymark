@@ -1172,6 +1172,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get removeTocElement => '目次要素を削除';
 
   @override
+  String get removeTocElements => '目次要素を削除';
+
+  @override
   String get reviewUsages => '使用箇所を確認';
 
   @override

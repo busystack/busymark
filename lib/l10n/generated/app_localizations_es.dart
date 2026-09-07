@@ -1225,6 +1225,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get removeTocElement => 'Quitar elemento del índice';
 
   @override
+  String get removeTocElements => 'Quitar elementos del índice';
+
+  @override
   String get reviewUsages => 'Revisar usos';
 
   @override

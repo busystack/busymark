@@ -2504,6 +2504,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "Удалить элементы оглавления",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "Просмотреть использования",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."

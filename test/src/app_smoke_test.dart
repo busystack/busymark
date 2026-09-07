@@ -2059,8 +2059,6 @@ void main() {
       l10n.pasteAfterTopic,
       l10n.pasteAsChildTopic,
       l10n.removeTocElement,
-      l10n.safeDeleteTopicFile,
-      l10n.delete,
       l10n.copyName,
       l10n.copyPath,
       l10n.openInFiles,
@@ -2069,6 +2067,8 @@ void main() {
     ]) {
       expect(popupMenuItem(label), findsOneWidget);
     }
+    expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
+    expect(popupMenuItem(l10n.delete), findsNothing);
 
     await tester.tap(find.text(l10n.newChildTopic));
     await tester.pump(const Duration(milliseconds: 300));
@@ -2115,10 +2115,12 @@ void main() {
       l10n.copy,
       l10n.cut,
       l10n.aiRefineWithAi,
-      l10n.delete,
+      l10n.removeTocElements,
     ]) {
       expect(popupMenuItem(label), findsOneWidget);
     }
+    expect(popupMenuItem(l10n.delete), findsNothing);
+    expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
     expect(find.text(l10n.newSiblingTopic), findsNothing);
     expect(find.text(l10n.copyName), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);

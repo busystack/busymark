@@ -188,6 +188,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   var _toolbarVisible = true;
   var _documentGeneration = 0;
   bool _sessionReportScheduled = false;
+  double? _viewportHeight;
 
   String get _documentId => widget.documentId ?? widget.document.filePath;
 
@@ -516,6 +517,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           decoration: BoxDecoration(color: colors.view),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              _viewportHeight = constraints.maxHeight.isFinite
+                  ? constraints.maxHeight
+                  : null;
               final documentLayout = _documentLayout;
               return Stack(
                 children: [
@@ -1788,10 +1792,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
       final viewportBlockId = session.viewportBlockId;
       if (viewportBlockId != null) {
-        _jumpToBlock(
-          viewportBlockId,
-          alignment: session.viewportAlignment.clamp(0.0, 1.0),
-        );
+        var alignment = session.viewportAlignment.clamp(0.0, 1.0).toDouble();
+        final firstViewportBlockId = _editorRenderEntries(
+          _documentController.document.blocks,
+        ).firstOrNull?.block.id;
+        final viewportHeight = _viewportHeight;
+        if (viewportBlockId == firstViewportBlockId &&
+            viewportHeight != null &&
+            viewportHeight > 0) {
+          // ItemPosition includes the leading scroll padding for item zero,
+          // while jumpTo applies that padding again during restoration.
+          alignment = math.max(
+            0,
+            alignment - _documentLayout.scrollPadding.top / viewportHeight,
+          );
+        }
+        _jumpToBlock(viewportBlockId, alignment: alignment);
       }
       final activeCellId = _activeCellId;
       if (activeCellId != null) {

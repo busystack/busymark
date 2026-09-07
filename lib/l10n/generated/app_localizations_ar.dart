@@ -1212,6 +1212,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get removeTocElement => 'إزالة عنصر جدول المحتويات';
 
   @override
+  String get removeTocElements => 'إزالة عناصر جدول المحتويات';
+
+  @override
   String get reviewUsages => 'مراجعة الاستخدامات';
 
   @override

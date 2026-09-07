@@ -2299,6 +2299,12 @@ abstract class AppLocalizations {
   /// **'Remove TOC Element'**
   String get removeTocElement;
 
+  /// Action that removes multiple selected elements from one Writerside table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC Elements'**
+  String get removeTocElements;
+
   /// Action that opens the Writerside topic usages review.
   ///
   /// In en, this message translates to:

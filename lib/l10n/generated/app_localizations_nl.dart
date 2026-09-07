@@ -1211,6 +1211,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get removeTocElement => 'TOC-element verwijderen';
 
   @override
+  String get removeTocElements => 'TOC-elementen verwijderen';
+
+  @override
   String get reviewUsages => 'Gebruik controleren';
 
   @override

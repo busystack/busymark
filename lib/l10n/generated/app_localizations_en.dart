@@ -1205,6 +1205,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeTocElement => 'Remove TOC Element';
 
   @override
+  String get removeTocElements => 'Remove TOC Elements';
+
+  @override
   String get reviewUsages => 'Review Usages';
 
   @override

@@ -1206,6 +1206,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get removeTocElement => 'Remove TOC Element';
 
   @override
+  String get removeTocElements => 'Remove TOC Elements';
+
+  @override
   String get reviewUsages => 'Review Usages';
 
   @override
@@ -5127,6 +5130,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get removeTocElement => 'Remover elemento do TOC';
+
+  @override
+  String get removeTocElements => 'Remover elementos do TOC';
 
   @override
   String get reviewUsages => 'Revisar usos';

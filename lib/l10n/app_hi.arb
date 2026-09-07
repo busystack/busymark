@@ -2478,6 +2478,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "TOC तत्व हटाएँ",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "उपयोगों की समीक्षा करें",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."

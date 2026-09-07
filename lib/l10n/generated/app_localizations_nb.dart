@@ -1210,6 +1210,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get removeTocElement => 'Fjern element fra innholdsfortegnelsen';
 
   @override
+  String get removeTocElements => 'Fjern elementer fra innholdsfortegnelsen';
+
+  @override
   String get reviewUsages => 'Se gjennom bruk';
 
   @override

@@ -1498,6 +1498,10 @@
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
   },
+  "removeTocElements": "TOC-elementen verwijderen",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "Gebruik controleren",
   "@reviewUsages": {
     "description": "Action that opens the Writerside topic usages review."

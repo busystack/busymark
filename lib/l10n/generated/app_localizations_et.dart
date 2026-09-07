@@ -1210,6 +1210,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get removeTocElement => 'Eemalda sisukorraelement';
 
   @override
+  String get removeTocElements => 'Eemalda sisukorraelemendid';
+
+  @override
   String get reviewUsages => 'Vaata kasutuskohad üle';
 
   @override

@@ -1211,6 +1211,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get removeTocElement => 'Hapus elemen TOC';
 
   @override
+  String get removeTocElements => 'Hapus elemen TOC';
+
+  @override
   String get reviewUsages => 'Tinjau penggunaan';
 
   @override

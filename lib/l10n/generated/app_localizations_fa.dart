@@ -1233,6 +1233,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get removeTocElement => 'حذف عنصر فهرست مطالب';
 
   @override
+  String get removeTocElements => 'حذف عناصر فهرست مطالب';
+
+  @override
   String get reviewUsages => 'مرور موارد استفاده';
 
   @override

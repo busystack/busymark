@@ -1201,6 +1201,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get removeTocElement => 'TOC तत्व हटाएँ';
 
   @override
+  String get removeTocElements => 'TOC तत्व हटाएँ';
+
+  @override
   String get reviewUsages => 'उपयोगों की समीक्षा करें';
 
   @override

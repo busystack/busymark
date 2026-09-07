@@ -1230,6 +1230,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get removeTocElement => 'Usuń element spisu treści';
 
   @override
+  String get removeTocElements => 'Usuń elementy spisu treści';
+
+  @override
   String get reviewUsages => 'Przejrzyj użycia';
 
   @override

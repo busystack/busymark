@@ -1170,6 +1170,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get removeTocElement => 'TOC 요소 제거';
 
   @override
+  String get removeTocElements => 'TOC 요소 제거';
+
+  @override
   String get reviewUsages => '사용 검토';
 
   @override

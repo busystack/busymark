@@ -22,6 +22,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
@@ -3416,6 +3417,60 @@ void main() {}
       }
     }
   });
+
+  testWidgets(
+    'restoring the first block does not duplicate the Editor top inset',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final document = parser
+          .parse(
+            filePath: 'new-topic.md',
+            source: '''# New topic
+
+> Advice.
+{style="note"}
+''',
+            mode: MarkdownMode.writersideMarkdown,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      var session = const WysiwygEditorSessionState();
+
+      Future<double> pumpEditor(Key key) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: BusyMarkWysiwygEditor(
+                key: key,
+                document: document,
+                initialSessionState: session,
+                onSessionChanged: (_, next) => session = next,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pump();
+        return tester.getRect(find.byType(TextField).first).top;
+      }
+
+      final initialTitleTop = await pumpEditor(const ValueKey('initial'));
+      expect(session.viewportBlockId, isNotNull);
+      expect(session.viewportAlignment, greaterThan(0));
+
+      final restoredTitleTop = await pumpEditor(const ValueKey('restored'));
+
+      expect(restoredTitleTop, closeTo(initialTitleTop, 0.1));
+    },
+  );
 
   testWidgets('vertical WYSIWYG toolbar is bounded and extends from its edge', (
     tester,

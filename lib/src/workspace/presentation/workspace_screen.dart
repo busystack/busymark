@@ -5578,7 +5578,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         if (canRefineSelection) {
           await _refineTocTopicsWithAi(context, selectedTopics);
         }
-      case _TocTreeAction.deleteSelection:
+      case _TocTreeAction.removeSelection:
         if (canEditSelection) {
           await _removeTocEntries(
             context,
@@ -5737,26 +5737,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
           instanceTreePath: instanceTreePath,
           entry: entry,
         );
-      case _TocTreeAction.delete:
-        final path = topicPath;
-        if (path == null) {
-          return;
-        }
-        final result = await widget.onRequestTopicRemoval(
-          _WritersideTopicRemovalTarget(
-            mode: WritersideTopicRemovalMode.safeDeleteFile,
-            topicPath: path,
-          ),
-        );
-        if (mounted && result != null) {
-          setState(() {
-            _cutEntries = [];
-            _selectedNodePathKey = null;
-            _selectedNodePathKeys = {};
-            _selectionAnchorPathKey = null;
-          });
-          _clearGitDetailSelection(ref);
-        }
       case _TocTreeAction.addToGit:
         final relativePath = gitRelativePath;
         if (relativePath != null) {
@@ -5928,11 +5908,10 @@ enum _TocTreeAction {
   rename,
   cut,
   refineWithAi,
-  deleteSelection,
+  removeSelection,
   pasteAfter,
   pasteAsChild,
   removeFromToc,
-  delete,
   addToGit,
   copyName,
   copyPath,
@@ -5976,9 +5955,15 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         ),
         const PopupMenuDivider(height: BusyMarkSpacing.sm),
         BusyMarkPopupMenuItem(
-          value: _TocTreeAction.deleteSelection,
-          label: context.l10n.delete,
-          icon: BusyMarkGlyphs.delete,
+          value: _TocTreeAction.removeSelection,
+          label: context.l10n.removeTocElements,
+          icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+          shortcut:
+              (BusyMarkCommandRegistryScope.read(context) ??
+                      BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                      .treeDeleteSelection]
+                  ?.shortcut
+                  ?.label,
           enabled: canEditSelection,
         ),
       ] else ...[
@@ -6053,18 +6038,6 @@ Future<_TocTreeAction?> _showTocTreeMenu(
                   ?.shortcut
                   ?.label,
           enabled: canEditStructure,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.delete,
-          label: context.l10n.safeDeleteTopicFile,
-          icon: BusyMarkGlyphs.delete,
-          enabled: hasTopicFile,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.deleteSelection,
-          label: context.l10n.delete,
-          icon: BusyMarkGlyphs.delete,
-          enabled: canEditSelection,
         ),
         const PopupMenuDivider(height: BusyMarkSpacing.sm),
         BusyMarkPopupMenuItem(

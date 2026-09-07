@@ -2478,6 +2478,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "Quitar elementos del índice",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "Revisar usos",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."

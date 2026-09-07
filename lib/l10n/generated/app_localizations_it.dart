@@ -1220,6 +1220,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get removeTocElement => 'Rimuovi elemento dal TOC';
 
   @override
+  String get removeTocElements => 'Rimuovi elementi dal TOC';
+
+  @override
   String get reviewUsages => 'Esamina utilizzi';
 
   @override

@@ -1225,6 +1225,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get removeTocElement => 'Inhaltsverzeichniselement entfernen';
 
   @override
+  String get removeTocElements => 'Inhaltsverzeichniselemente entfernen';
+
+  @override
   String get reviewUsages => 'Verwendungen prüfen';
 
   @override

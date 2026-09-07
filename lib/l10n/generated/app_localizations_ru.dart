@@ -1226,6 +1226,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get removeTocElement => 'Удалить элемент оглавления';
 
   @override
+  String get removeTocElements => 'Удалить элементы оглавления';
+
+  @override
   String get reviewUsages => 'Просмотреть использования';
 
   @override

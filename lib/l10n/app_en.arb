@@ -759,6 +759,8 @@
   "@safeDeleteTopicFile": {"description": "Writerside action that safely deletes a topic after checking usages."},
   "removeTocElement": "Remove TOC Element",
   "@removeTocElement": {"description": "Writerside action and dialog title for removing a topic from one table of contents."},
+  "removeTocElements": "Remove TOC Elements",
+  "@removeTocElements": {"description": "Action that removes multiple selected elements from one Writerside table of contents."},
   "reviewUsages": "Review Usages",
   "@reviewUsages": {"description": "Action that opens the Writerside topic usages review."},
   "deleteTopicFile": "Delete Topic File",

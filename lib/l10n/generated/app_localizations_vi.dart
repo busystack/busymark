@@ -1204,6 +1204,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get removeTocElement => 'Xóa phần tử mục lục';
 
   @override
+  String get removeTocElements => 'Xóa các phần tử mục lục';
+
+  @override
   String get reviewUsages => 'Xem lại các tham chiếu';
 
   @override

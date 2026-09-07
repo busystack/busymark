@@ -1205,6 +1205,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get removeTocElement => 'Remove TOC Element';
 
   @override
+  String get removeTocElements => 'Remove TOC Elements';
+
+  @override
   String get reviewUsages => 'Review Usages';
 
   @override
@@ -5050,6 +5053,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get removeTocElement => '移除目录元素';
+
+  @override
+  String get removeTocElements => '移除目录元素';
 
   @override
   String get reviewUsages => '查看使用情况';

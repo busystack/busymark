@@ -1212,6 +1212,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get removeTocElement => 'TOC öğesini kaldır';
 
   @override
+  String get removeTocElements => 'TOC öğelerini kaldır';
+
+  @override
   String get reviewUsages => 'Kullanımları incele';
 
   @override

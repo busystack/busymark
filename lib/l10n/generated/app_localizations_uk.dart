@@ -1233,6 +1233,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get removeTocElement => 'Вилучити елемент змісту';
 
   @override
+  String get removeTocElements => 'Вилучити елементи змісту';
+
+  @override
   String get reviewUsages => 'Переглянути використання';
 
   @override
