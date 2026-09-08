@@ -387,29 +387,48 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyC);
     }
 
-    testWidgets('fresh Editor restores system clipboard formatting and undo', (
+    Future<void> copyAllAsMarkdown(
+      WidgetTester tester, {
+      String source = _source,
+    }) async {
+      await mount(tester, 'origin', source, (_) {});
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC, shift: true);
+    }
+
+    testWidgets('regular Copy stays plain when pasted into a fresh Editor', (
       tester,
     ) async {
       await copyAll(tester);
-      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData.keys, ['text']);
+      expect(systemData['text'], startsWith('Issues'));
+      expect(
+        systemData['text'],
+        contains('When selecting all, keep formatting.'),
+      );
       expect(systemData['text'], contains('[ ] First task'));
+      expect(systemData['text'], isNot(contains('# Issues')));
+      expect(systemData['text'], isNot(contains('**When**')));
       var result = '';
       await mount(tester, 'destination', 'Target\n', (value) => result = value);
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyV);
-      expect(result, contains('# Issues'));
-      expect(result, contains('**When**'));
-      expect(result, contains('- [x] Second task'));
+      expect(result, contains('Issues'));
+      expect(result, contains('When selecting all, keep formatting.'));
+      expect(result, isNot(contains('# Issues')));
+      expect(result, isNot(contains('**When**')));
+      expect(result, isNot(contains('- [x] Second task')));
       await key(tester, LogicalKeyboardKey.keyZ);
       expect(result, 'Target\n');
       await key(tester, LogicalKeyboardKey.keyZ, shift: true);
-      expect(result, contains('**When**'));
+      expect(result, contains('When selecting all, keep formatting.'));
     });
 
     testWidgets('copy all does not duplicate nested list children', (
       tester,
     ) async {
-      await copyAll(
+      await copyAllAsMarkdown(
         tester,
         source: 'Before\n\n- Parent\n  - **Child**\n\nAfter\n',
       );
@@ -424,7 +443,7 @@ void main() {
     testWidgets('whole-document copy preserves a structured blockquote', (
       tester,
     ) async {
-      await copyAll(
+      await copyAllAsMarkdown(
         tester,
         source: 'Before\n\n> First\n>\n> **Second**\n\nAfter\n',
       );
@@ -467,8 +486,9 @@ void main() {
       }
       await tester.tap(find.text('Copy'));
       await tester.pumpAndSettle();
-      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData.keys, ['text']);
       expect(systemData['text'], contains('[ ] First task'));
+      expect(systemData['text'], isNot(contains('**When**')));
     });
 
     testWidgets(
@@ -518,33 +538,33 @@ void main() {
       expect(systemData['text'], contains('**When**'));
     });
 
-    testWidgets(
-      'partial inline copy keeps formatting inside another paragraph',
-      (tester) async {
-        await mount(tester, 'origin', 'A **bold** word\n', (_) {});
-        final field = tester.widget<TextField>(find.byType(TextField).first);
-        field.controller!.selection = const TextSelection(
-          baseOffset: 2,
-          extentOffset: 6,
-        );
-        await key(tester, LogicalKeyboardKey.keyC);
-        var result = '';
-        await mount(
-          tester,
-          'destination',
-          'Before after\n',
-          (value) => result = value,
-        );
-        tester
-            .widget<TextField>(find.byType(TextField).first)
-            .controller!
-            .selection = const TextSelection.collapsed(
-          offset: 7,
-        );
-        await key(tester, LogicalKeyboardKey.keyV);
-        expect(result, 'Before **bold**after\n');
-      },
-    );
+    testWidgets('partial inline Copy remains plain inside another paragraph', (
+      tester,
+    ) async {
+      await mount(tester, 'origin', 'A **bold** word\n', (_) {});
+      final field = tester.widget<TextField>(find.byType(TextField).first);
+      field.controller!.selection = const TextSelection(
+        baseOffset: 2,
+        extentOffset: 6,
+      );
+      await key(tester, LogicalKeyboardKey.keyC);
+      expect(systemData, {'text': 'bold'});
+      var result = '';
+      await mount(
+        tester,
+        'destination',
+        'Before after\n',
+        (value) => result = value,
+      );
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!
+          .selection = const TextSelection.collapsed(
+        offset: 7,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(result, 'Before boldafter\n');
+    });
 
     testWidgets('cut transfers formatting before deleting the selection', (
       tester,
@@ -613,7 +633,7 @@ void main() {
     testWidgets(
       'plain paste and later plain copies never revive cached formatting',
       (tester) async {
-        await copyAll(tester);
+        await copyAllAsMarkdown(tester);
         var result = '';
         await mount(
           tester,
@@ -623,8 +643,8 @@ void main() {
         );
         await key(tester, LogicalKeyboardKey.keyA);
         await key(tester, LogicalKeyboardKey.keyV, shift: true);
-        expect(result, isNot(contains('# Issues')));
-        expect(result, isNot(contains('**When**')));
+        expect(result, contains(r'\# Issues'));
+        expect(result, contains(r'\*\*When\*\*'));
         final sameText = systemData['text'] as String;
         await Clipboard.setData(ClipboardData(text: sameText));
         await mount(
@@ -635,7 +655,8 @@ void main() {
         );
         await key(tester, LogicalKeyboardKey.keyA);
         await key(tester, LogicalKeyboardKey.keyV);
-        expect(result, isNot(contains('**When**')));
+        expect(result, contains(r'\# Issues'));
+        expect(result, contains(r'\*\*When\*\*'));
       },
     );
 
