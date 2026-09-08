@@ -4346,6 +4346,67 @@ Future<bool> _confirmDeleteFileTreeEntry(
 typedef _SidebarTreeMenuRequest =
     void Function(BuildContext anchorContext, Offset globalPosition);
 
+class _SidebarRowSurface extends StatelessWidget {
+  const _SidebarRowSurface({
+    super.key,
+    required this.child,
+    required this.enabled,
+    required this.clickable,
+    this.selected = false,
+    this.focusNode,
+    this.onKeyEvent,
+    this.onTap,
+    this.onSecondaryTapUp,
+    this.onHoverChanged,
+    this.onFocusChange,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final bool clickable;
+  final bool selected;
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
+  final VoidCallback? onTap;
+  final GestureTapUpCallback? onSecondaryTapUp;
+  final ValueChanged<bool>? onHoverChanged;
+  final ValueChanged<bool>? onFocusChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
+      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+        child: Material(
+          color: selected
+              ? busyMarkSelectedBackground(context)
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: Focus(
+            onKeyEvent: onKeyEvent,
+            child: InkWell(
+              focusNode: focusNode,
+              hoverColor: clickable
+                  ? busyMarkRowHoverColor(context)
+                  : BusyMarkLinuxPalette.transparent,
+              onTap: enabled ? onTap : null,
+              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
+              onFocusChange: onFocusChange,
+              child: SizedBox(
+                height: BusyMarkSizes.sidebarTreeRowHeight,
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SidebarTreeRow extends StatefulWidget {
   const _SidebarTreeRow({
     super.key,
@@ -4439,120 +4500,91 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
     final expanderGap = widget.compactHierarchyIndent
         ? 0.0
         : BusyMarkSpacing.xs;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-        child: Material(
-          color: widget.selected
-              ? busyMarkSelectedBackground(context)
-              : BusyMarkLinuxPalette.transparent,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          clipBehavior: Clip.antiAlias,
-          child: Focus(
-            onKeyEvent: _handleKeyEvent,
-            child: InkWell(
-              hoverColor: clickable
-                  ? busyMarkRowHoverColor(context)
-                  : BusyMarkLinuxPalette.transparent,
-              onTap: widget.enabled ? widget.onTap : null,
-              onSecondaryTapUp: widget.enabled
-                  ? widget.onMenuRequested == null
-                        ? null
-                        : (details) => widget.onMenuRequested!(
-                            context,
-                            details.globalPosition,
-                          )
-                  : null,
-              onFocusChange: (focused) => setState(() => _focused = focused),
-              child: SizedBox(
-                height: BusyMarkSizes.sidebarTreeRowHeight,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width:
-                          depthBase +
-                          widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
-                    ),
-                    SizedBox.square(
-                      dimension: expanderWidth,
-                      child: widget.hasChildren
-                          ? GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: widget.enabled
-                                  ? widget.onToggle ?? widget.onTap
-                                  : null,
-                              child: AnimatedRotation(
-                                turns: widget.expanded
-                                    ? direction == TextDirection.rtl
-                                          ? -0.25
-                                          : 0.25
-                                    : 0,
-                                duration: BusyMarkMotion.sidebarExpand,
-                                child: Icon(
-                                  BusyMarkGlyphs.collapsedTreeArrowFor(
-                                    direction,
-                                  ),
-                                  size: BusyMarkSizes.sidebarTreeArrow,
-                                  color: foreground,
-                                ),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    SizedBox(width: expanderGap),
-                    SizedBox.square(
-                      dimension: BusyMarkSizes.sidebarTreeControl,
-                      child: Center(
-                        child:
-                            widget.leading ??
-                            Icon(
-                              widget.icon,
-                              size: BusyMarkSizes.iconSm,
-                              color: foreground,
-                            ),
+    return _SidebarRowSurface(
+      enabled: widget.enabled,
+      clickable: clickable,
+      selected: widget.selected,
+      onKeyEvent: _handleKeyEvent,
+      onTap: widget.onTap,
+      onSecondaryTapUp: widget.onMenuRequested == null
+          ? null
+          : (details) =>
+                widget.onMenuRequested!(context, details.globalPosition),
+      onHoverChanged: (hovered) => setState(() => _hovered = hovered),
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: Row(
+        children: [
+          SizedBox(
+            width:
+                depthBase + widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
+          ),
+          SizedBox.square(
+            dimension: expanderWidth,
+            child: widget.hasChildren
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.enabled
+                        ? widget.onToggle ?? widget.onTap
+                        : null,
+                    child: AnimatedRotation(
+                      turns: widget.expanded
+                          ? direction == TextDirection.rtl
+                                ? -0.25
+                                : 0.25
+                          : 0,
+                      duration: BusyMarkMotion.sidebarExpand,
+                      child: Icon(
+                        BusyMarkGlyphs.collapsedTreeArrowFor(direction),
+                        size: BusyMarkSizes.sidebarTreeArrow,
+                        color: foreground,
                       ),
                     ),
-                    const SizedBox(width: BusyMarkSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        widget.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: titleStyle,
-                      ),
-                    ),
-                    if (widget.onMenuRequested != null)
-                      SizedBox(
-                        width: BusyMarkSizes.iconButton,
-                        child: Center(
-                          child: menuVisible
-                              ? Builder(
-                                  builder: (buttonContext) =>
-                                      BusyMarkCompactIconButton(
-                                        tooltip: context.l10n.actions,
-                                        icon: BusyMarkGlyphs.menuVertical,
-                                        onPressed: () =>
-                                            widget.onMenuRequested!(
-                                              buttonContext,
-                                              _sidebarTreeMenuAnchor(
-                                                buttonContext,
-                                              ),
-                                            ),
-                                      ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      )
-                    else
-                      const SizedBox(width: BusyMarkSpacing.xs),
-                  ],
-                ),
-              ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          SizedBox(width: expanderGap),
+          SizedBox.square(
+            dimension: BusyMarkSizes.sidebarTreeControl,
+            child: Center(
+              child:
+                  widget.leading ??
+                  Icon(
+                    widget.icon,
+                    size: BusyMarkSizes.iconSm,
+                    color: foreground,
+                  ),
             ),
           ),
-        ),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(
+            child: Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle,
+            ),
+          ),
+          if (widget.onMenuRequested != null)
+            SizedBox(
+              width: BusyMarkSizes.iconButton,
+              child: Center(
+                child: menuVisible
+                    ? Builder(
+                        builder: (buttonContext) => BusyMarkCompactIconButton(
+                          tooltip: context.l10n.actions,
+                          icon: BusyMarkGlyphs.menuVertical,
+                          onPressed: () => widget.onMenuRequested!(
+                            buttonContext,
+                            _sidebarTreeMenuAnchor(buttonContext),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            )
+          else
+            const SizedBox(width: BusyMarkSpacing.xs),
+        ],
       ),
     );
   }
@@ -6544,14 +6576,15 @@ class _WritersideInstanceSelector extends StatelessWidget {
       context,
       instanceColors[selectedPath] ?? WritersideInstanceIconColor.blue,
     );
-    return BusyMarkPopupSelector<String>(
+    final selectorEnabled = instances.isNotEmpty;
+    return BusyMarkMenuButton<String>(
       key: const ValueKey('writerside-instance-selector'),
-      value: selectedPath,
-      label: selectedLabel,
       tooltip: context.l10n.instances,
-      options: [
+      enabled: selectorEnabled,
+      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+      items: [
         for (final instance in instances)
-          BusyMarkPopupSelectorOption<String>(
+          BusyMarkPopupMenuItem<String>(
             value: instance.sourceTreePath,
             label: busyMarkLtrIsolateFor(context, instance.name),
             icon: BusyMarkGlyphs.tree,
@@ -6560,20 +6593,66 @@ class _WritersideInstanceSelector extends StatelessWidget {
               instanceColors[instance.sourceTreePath] ??
                   WritersideInstanceIconColor.blue,
             ),
+            checked: instance.sourceTreePath == selectedPath,
+            trailingCheck: true,
           ),
       ],
       onSelected: onSelected,
-      leading: Icon(
-        BusyMarkGlyphs.tree,
-        size: BusyMarkSizes.iconSm,
-        color: selectedColor,
+      triggerBuilder: (context, trigger) => trigger.anchor(
+        child: Tooltip(
+          message: context.l10n.instances,
+          child: Semantics(
+            expanded: trigger.isOpen,
+            child: _SidebarRowSurface(
+              key: const ValueKey('writerside-instance-selector-trigger'),
+              enabled: selectorEnabled,
+              clickable: selectorEnabled,
+              focusNode: trigger.focusNode,
+              onTap: trigger.onPressed,
+              child: Row(
+                children: [
+                  const SizedBox(width: BusyMarkSpacing.headerInset),
+                  Icon(
+                    BusyMarkGlyphs.tree,
+                    size: BusyMarkSizes.iconSm,
+                    color: selectedColor,
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      selectedLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: selectorEnabled
+                            ? BusyMarkSurfaceColors.of(context).foreground
+                            : BusyMarkSurfaceColors.of(
+                                context,
+                              ).disabledForeground,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: BusyMarkSizes.iconButton,
+                    child: Center(
+                      child: Icon(
+                        BusyMarkGlyphs.downArrow,
+                        size: BusyMarkSizes.iconSm,
+                        color: selectorEnabled
+                            ? BusyMarkSurfaceColors.of(context).mutedForeground
+                            : BusyMarkSurfaceColors.of(
+                                context,
+                              ).disabledForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
-      fullWidth: true,
-      contentPadding: const EdgeInsetsDirectional.only(
-        start: BusyMarkSpacing.headerInset,
-        end: BusyMarkSpacing.sm,
-      ),
-      buttonHeight: BusyMarkSizes.iconButton,
     );
   }
 }

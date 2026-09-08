@@ -79,7 +79,10 @@ abstract final class BusyMarkSizes {
   static const double aboutLogoViewport = 136;
   static const double aboutLogoAsset = 216;
   static const double sidebarSeparatorHeight = 22;
-  static const double sidebarTreeRowHeight = 30;
+  // The surrounding hairline insets bring tree rows to the same outer height
+  // as sidebar header controls.
+  static const double sidebarTreeRowHeight =
+      iconButton - BusyMarkStroke.hairline * 2;
   static const double sidebarTreeDepthBase = 4;
   static const double sidebarTreeDepthIndent = 14;
   static const double sidebarTreeControl = 18;
@@ -1853,7 +1856,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.leading,
     this.fullWidth = false,
     this.contentPadding,
-    this.buttonHeight,
   });
 
   final T? value;
@@ -1868,7 +1870,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final Widget? leading;
   final bool fullWidth;
   final EdgeInsetsGeometry? contentPadding;
-  final double? buttonHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1912,17 +1913,6 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                           padding: contentPadding == null
                               ? null
                               : WidgetStatePropertyAll(contentPadding),
-                          minimumSize: buttonHeight == null
-                              ? null
-                              : WidgetStatePropertyAll(Size(0, buttonHeight!)),
-                          maximumSize: buttonHeight == null
-                              ? null
-                              : WidgetStatePropertyAll(
-                                  Size(double.infinity, buttonHeight!),
-                                ),
-                          tapTargetSize: buttonHeight == null
-                              ? null
-                              : MaterialTapTargetSize.shrinkWrap,
                         ),
                     child: Row(
                       mainAxisSize: fullWidth

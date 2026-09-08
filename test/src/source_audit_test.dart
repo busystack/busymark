@@ -1423,9 +1423,10 @@ void main() {
       contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
-    expect(tocHeader, contains('BusyMarkPopupSelector<String>'));
-    expect(tocHeader, contains('fullWidth: true'));
-    expect(tocHeader, contains('contentPadding: const EdgeInsetsDirectional'));
+    expect(tocHeader, contains('BusyMarkMenuButton<String>'));
+    expect(tocHeader, contains('_SidebarRowSurface'));
+    expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
+    expect(tocHeader, isNot(contains('FilledButton')));
     expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
     expect(tocHeader, contains("ValueKey('writerside-instance-selector')"));
     expect(

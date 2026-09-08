@@ -1946,25 +1946,56 @@ void main() {
       const ValueKey('writerside-instance-selector'),
     );
     expect(instanceSelector, findsOneWidget);
-    final instanceSelectorButton = find.descendant(
-      of: instanceSelector,
-      matching: find.byType(FilledButton),
+    final instanceSelectorTrigger = find.byKey(
+      const ValueKey('writerside-instance-selector-trigger'),
     );
-    expect(instanceSelectorButton, findsOneWidget);
+    expect(instanceSelectorTrigger, findsOneWidget);
     expect(
-      tester
-          .widget<FilledButton>(instanceSelectorButton)
-          .style
-          ?.backgroundColor
-          ?.resolve({}),
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byType(FilledButton),
+      ),
+      findsNothing,
+    );
+    final instanceSelectorSurface = find.descendant(
+      of: instanceSelectorTrigger,
+      matching: find.byType(Material),
+    );
+    final instanceSelectorInkWell = find.descendant(
+      of: instanceSelectorTrigger,
+      matching: find.byType(InkWell),
+    );
+    expect(instanceSelectorSurface, findsOneWidget);
+    expect(instanceSelectorInkWell, findsOneWidget);
+    expect(
+      tester.widget<Material>(instanceSelectorSurface).color,
       BusyMarkLinuxPalette.transparent,
     );
-    final instanceSelectorRect = tester.getRect(instanceSelectorButton);
+    final instanceSelectorRect = tester.getRect(instanceSelectorTrigger);
     final tocHeaderRowRect = tester.getRect(
       find.byKey(const ValueKey('workspace-sidebar-first-content')),
     );
-    final firstTocRowRect = tester.getRect(
-      find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+    final firstTocRow = find.byKey(
+      const ValueKey('workspace-sidebar-toc-row-0'),
+    );
+    final firstTocRowRect = tester.getRect(firstTocRow);
+    final firstTocRowSurface = find.descendant(
+      of: firstTocRow,
+      matching: find.byType(Material),
+    );
+    final firstTocRowInkWell = find.descendant(
+      of: firstTocRow,
+      matching: find.byType(InkWell),
+    );
+    expect(firstTocRowSurface, findsOneWidget);
+    expect(firstTocRowInkWell, findsOneWidget);
+    expect(
+      tester.widget<Material>(instanceSelectorSurface).borderRadius,
+      tester.widget<Material>(firstTocRowSurface).borderRadius,
+    );
+    expect(
+      tester.widget<InkWell>(instanceSelectorInkWell).hoverColor,
+      tester.widget<InkWell>(firstTocRowInkWell).hoverColor,
     );
     final primaryIconRect = tester.getRect(
       find.descendant(
@@ -2005,6 +2036,7 @@ void main() {
     );
     expect(instanceSelectorRect.height, tocMenuRect.height);
     expect(instanceSelectorRect.center.dy, tocMenuRect.center.dy);
+    expect(instanceSelectorRect.height, firstTocRowRect.height);
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(mouse.removePointer);
     await mouse.addPointer(location: Offset.zero);

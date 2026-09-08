@@ -481,6 +481,124 @@ void main() {
     expect(chinese.workspaceRecoveryRestored(3), '已恢复 3 个未保存的文档。请在保存或放弃前逐一检查。');
   });
 
+  test('Russian and Ukrainian count messages preserve the supplied count', () {
+    const counts = <int>[1, 2, 5, 11, 21, 22, 31];
+    final localizations = <String, AppLocalizations>{
+      'ru': lookupAppLocalizations(const Locale('ru')),
+      'uk': lookupAppLocalizations(const Locale('uk')),
+    };
+
+    for (final localeEntry in localizations.entries) {
+      final l10n = localeEntry.value;
+      for (final count in counts) {
+        final messages = <String, String>{
+          'unsavedChangesMultipleMessage': l10n.unsavedChangesMultipleMessage(
+            count,
+          ),
+          'childTopicsPromoted': l10n.childTopicsPromoted(count),
+          'usageCount': l10n.usageCount(count),
+          'workspaceRecoveryRestored': l10n.workspaceRecoveryRestored(count),
+          'workspaceRecoveryDamaged': l10n.workspaceRecoveryDamaged(count),
+          'gitStagedFileCount': l10n.gitStagedFileCount(count),
+          'pdfExportedWithWarnings': l10n.pdfExportedWithWarnings(
+            'document.pdf',
+            count,
+          ),
+          'gitConfirmDiscardTracked': l10n.gitConfirmDiscardTracked(count),
+          'gitConfirmDiscardUntracked': l10n.gitConfirmDiscardUntracked(count),
+          'gitConfirmDiscardMixed': l10n.gitConfirmDiscardMixed(count),
+        };
+        for (final messageEntry in messages.entries) {
+          expect(
+            messageEntry.value,
+            contains('$count'),
+            reason:
+                '${localeEntry.key}.${messageEntry.key} must display $count',
+          );
+        }
+        expect(
+          l10n.unsavedChangesMultipleMessage(count),
+          endsWith('?'),
+          reason: '${localeEntry.key} must preserve the save question',
+        );
+      }
+    }
+
+    final russian = localizations['ru']!;
+    expect(russian.usageCount(1), '1 использование');
+    expect(russian.usageCount(2), '2 использования');
+    expect(russian.usageCount(5), '5 использований');
+    expect(russian.usageCount(11), '11 использований');
+    expect(russian.usageCount(21), '21 использование');
+    expect(russian.usageCount(22), '22 использования');
+    expect(russian.usageCount(31), '31 использование');
+
+    final ukrainian = localizations['uk']!;
+    expect(ukrainian.usageCount(1), '1 використання');
+    expect(ukrainian.usageCount(2), '2 використання');
+    expect(ukrainian.usageCount(5), '5 використань');
+    expect(ukrainian.usageCount(11), '11 використань');
+    expect(ukrainian.usageCount(21), '21 використання');
+    expect(ukrainian.usageCount(22), '22 використання');
+    expect(ukrainian.usageCount(31), '31 використання');
+  });
+
+  test('Portuguese count messages distinguish singular and plural', () {
+    final locales = <String, AppLocalizations>{
+      'pt': lookupAppLocalizations(const Locale('pt')),
+      'pt-BR': lookupAppLocalizations(const Locale('pt', 'BR')),
+    };
+
+    for (final localeEntry in locales.entries) {
+      final l10n = localeEntry.value;
+      expect(l10n.markdownTocUpdated(0), 'Sumário atualizado com 0 entradas.');
+      expect(l10n.markdownTocUpdated(1), 'Sumário atualizado com 1 entrada.');
+      expect(l10n.markdownTocUpdated(2), 'Sumário atualizado com 2 entradas.');
+      expect(
+        l10n.aiGenerationVerified('BusyAI', 0),
+        'Geração verificada com BusyAI. Há 0 modelos compatíveis disponíveis.',
+      );
+      expect(
+        l10n.aiGenerationVerified('BusyAI', 1),
+        'Geração verificada com BusyAI. Há 1 modelo compatível disponível.',
+      );
+      expect(
+        l10n.aiGenerationVerified('BusyAI', 2),
+        'Geração verificada com BusyAI. Há 2 modelos compatíveis disponíveis.',
+      );
+    }
+
+    final portuguese = locales['pt']!;
+    expect(
+      portuguese.aiContextDisclosure(1),
+      'O fornecedor selecionado receberá 1 caráter do contexto apresentado.',
+    );
+    expect(
+      portuguese.aiContextDisclosure(2),
+      'O fornecedor selecionado receberá 2 carateres do contexto apresentado.',
+    );
+
+    final brazilian = locales['pt-BR']!;
+    expect(
+      brazilian.aiContextDisclosure(1),
+      'O provedor selecionado receberá 1 caractere do contexto exibido.',
+    );
+    expect(
+      brazilian.aiContextDisclosure(2),
+      'O provedor selecionado receberá 2 caracteres do contexto exibido.',
+    );
+  });
+
+  test('Hindi unsaved-document prompt uses saved-state terminology', () {
+    final hindi = lookupAppLocalizations(const Locale('hi'));
+    for (final count in <int>[1, 2]) {
+      final message = hindi.unsavedChangesMultipleMessage(count);
+      expect(message, contains('न सहेजे गए बदलाव'));
+      expect(message, isNot(contains('असुरक्षित बदलाव')));
+      expect(message, endsWith('?'));
+    }
+  });
+
   test('RTL translations isolate technical interpolations', () {
     const fsi = '\u2068';
     const pdi = '\u2069';
