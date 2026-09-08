@@ -64,7 +64,7 @@ parts:
     flutter-target: lib/main.dart
     flutter-channel: stable
     build-environment:
-      - BUSYMARK_FLUTTER_VERSION: "3.47.0"
+      - BUSYMARK_FLUTTER_VERSION: "3.47.2"
     build-snaps:
       - node/24/stable
     build-packages:
