@@ -546,6 +546,42 @@ void main() {
       },
     );
 
+    testWidgets('cut transfers formatting before deleting the selection', (
+      tester,
+    ) async {
+      var origin = 'A **bold** word\n';
+      await mount(tester, 'origin', origin, (value) => origin = value);
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!
+          .selection = const TextSelection(
+        baseOffset: 2,
+        extentOffset: 6,
+      );
+
+      await key(tester, LogicalKeyboardKey.keyX);
+      expect(origin, 'A  word\n');
+      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData['text'], 'bold');
+      expect(systemData['html'], contains('<strong>bold</strong>'));
+
+      var destination = '';
+      await mount(
+        tester,
+        'destination',
+        'Before after\n',
+        (value) => destination = value,
+      );
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!
+          .selection = const TextSelection.collapsed(
+        offset: 7,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(destination, 'Before **bold**after\n');
+    });
+
     testWidgets('malformed native fragment falls back to HTML', (tester) async {
       systemData = {
         'fragment': '{"version":99}',

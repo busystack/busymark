@@ -11,6 +11,7 @@ Widget buildBusyMarkEditorTextContextMenu(
   EditableTextState editableTextState, {
   required String refineWithAiLabel,
   VoidCallback? onRefineWithAi,
+  VoidCallback? onCut,
   VoidCallback? onCopy,
   VoidCallback? onCopyAsMarkdown,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
@@ -19,6 +20,7 @@ Widget buildBusyMarkEditorTextContextMenu(
     editableTextState: editableTextState,
     refineWithAiLabel: refineWithAiLabel,
     onRefineWithAi: onRefineWithAi,
+    onCut: onCut,
     onCopy: onCopy,
     onCopyAsMarkdown: onCopyAsMarkdown,
     additionalItems: additionalItems,
@@ -30,6 +32,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.editableTextState,
     required this.refineWithAiLabel,
     required this.onRefineWithAi,
+    required this.onCut,
     required this.onCopy,
     required this.onCopyAsMarkdown,
     required this.additionalItems,
@@ -38,6 +41,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final EditableTextState editableTextState;
   final String refineWithAiLabel;
   final VoidCallback? onRefineWithAi;
+  final VoidCallback? onCut;
   final VoidCallback? onCopy;
   final VoidCallback? onCopyAsMarkdown;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
@@ -107,9 +111,11 @@ class _BusyMarkEditorTextContextMenuState
     final hasSelection = selection.isValid && !selection.isCollapsed;
     final items = <PopupMenuEntry<VoidCallback>>[];
     for (final item in editable.contextMenuButtonItems) {
-      final callback = item.type == ContextMenuButtonType.copy
-          ? widget.onCopy ?? item.onPressed
-          : item.onPressed;
+      final callback = switch (item.type) {
+        ContextMenuButtonType.cut => widget.onCut ?? item.onPressed,
+        ContextMenuButtonType.copy => widget.onCopy ?? item.onPressed,
+        _ => item.onPressed,
+      };
       if (_commandIdFor(item.type) case final commandId?) {
         items.add(
           BusyMarkPopupMenuItem<VoidCallback>(

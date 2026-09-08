@@ -872,6 +872,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onPointerMove: _handleBlockPointerMove,
       onPointerUp: _handleBlockPointerUp,
       onFocused: () => _handleBlockFocused(block.id),
+      onCut: _cutCurrentSelection,
       onCopy: _copyCurrentSelection,
       onCopyAsMarkdown: _copyCurrentSelectionAsMarkdown,
       onRefineWithAi: widget.onAiEdit == null
