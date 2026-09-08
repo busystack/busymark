@@ -1,7 +1,6 @@
 # BusyMark
 
-BusyMark is a Markdown editor for Linux with support for Writerside-compatible documentation 
-projects.
+Markdown and Writerside editor for Linux.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
@@ -11,166 +10,141 @@ projects.
   <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
 </p>
 
-<p align="center">
-  <sub>Split view with Markdown source, outline navigation, and locally rendered diagrams.</sub>
-</p>
-
 ## Features
 
-- Open individual Markdown files.
-- Open Markdown documentation folders.
-- Open Writerside-compatible project folders.
-- Create Writerside-compatible starter projects.
-- Create Writerside Markdown and XML topics from the TOC.
-- Create, select, import, edit, and reuse Writerside instances and TOC libraries.
-- Edit and save local files.
-- Read rendered Markdown without editing it.
-- Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
-- Typeset inline and display mathematics locally and offline with bundled
-  MathJax, including Writerside math forms and vector PDF output.
-- Edit Markdown with free-form AI instructions, an explicit change target, and
-  explicitly selected context through Ollama, OpenAI, or Gemini, with
-  diff-before-apply review.
-- Export Markdown documents as accessible, tagged PDF files.
-- Export the current Markdown document or a Writerside instance as portable, offline HTML. See [HTML export](docs/html-export.md).
-- Navigate project files, table of contents, and document outline.
-- Review, stage, commit, branch, synchronize, and inspect history in Git-backed
-  documentation workspaces using the user's normal Git configuration and tools.
-- Run basic diagnostics.
-- Reopen recent workspaces.
-- Use native Linux desktop chrome with a GTK headerbar.
+* **Markdown editing** — Source, Editor, Reading, and Split views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
+* **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
+* **Project navigation and search** — Files, TOC, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed workspace-wide replacement, and Markdown TOC generation.
+* **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
+* **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
+* **Git integration** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
+* **AI-assisted editing** — Optional Ollama, OpenAI, and Gemini integration with explicit edit scope and shared context, proposal review before changes are applied, and AI-assisted Git commit-message drafting.
+* **Workspace reliability** — Detect files changed outside BusyMark, recover unsaved documents, restore previous workspace sessions, manage remote-image permissions, and protect Git operations behind workspace trust.
 
 ## Screenshots
 
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/busymark-welcome.png" alt="BusyMark welcome screen">
+      <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view">
       <br>
-      <sub><b>Welcome screen</b> for creating or opening Markdown and Writerside workspaces.</sub>
+      <sub><b>Split view</b> with Markdown source and rendered document.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-editor-view.png" alt="BusyMark editor view">
       <br>
-      <sub><b>Editor view</b> with formatting tools, outline navigation, and offline diagrams.</sub>
+      <sub><b>Editor view</b> with formatting tools and document navigation.</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
       <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark reading view">
       <br>
-      <sub><b>Reading view</b> with locally rendered Mermaid and PlantUML content.</sub>
+      <sub><b>Reading view</b> for rendered documentation.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
       <br>
-      <sub><b>Keyboard shortcuts</b> shown in the built-in shortcut reference.</sub>
+      <sub><b>Keyboard shortcuts</b> reference.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-mermaid-plantuml.png" alt="Mermaid and PlantUML diagrams rendered in BusyMark">
+      <br>
+      <sub><b>Mermaid and PlantUML</b> diagrams rendered directly in the document.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-d2.png" alt="D2 diagram rendered in BusyMark">
+      <br>
+      <sub><b>D2</b> diagram rendering.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-openapi.png" alt="OpenAPI documentation rendered in BusyMark">
+      <br>
+      <sub><b>OpenAPI</b> documentation rendering.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-writerside-toc.png" alt="Writerside table of contents in BusyMark">
+      <br>
+      <sub><b>Writerside</b> project and table-of-contents editing.</sub>
     </td>
   </tr>
 </table>
 
-## Supported platforms
+## Markdown and Writerside
 
-BusyMark is currently developed and tested for Linux desktop, especially GNOME
-and Ubuntu-style GTK environments.
+BusyMark opens Markdown files using `.md` and `.markdown` extensions and can work with ordinary documentation folders.
 
-## Supported files and projects
+Writerside-compatible projects are recognized through `writerside.cfg` and the older `project.ihp` format. BusyMark supports Markdown and XML topics, Writerside instances, tables of contents, reusable content, project configuration, and other commonly used Writerside documentation features.
 
-BusyMark can open Markdown files such as `.md` and `.markdown`.
+More information:
 
-BusyMark opens Writerside help modules whose root contains `writerside.cfg` or
-the equivalent older `project.ihp` file. Writerside support includes documented
-configuration locations for topics, images, variables, categories, instances,
-snippets, build configuration, API specifications, instance groups, and selected
-settings metadata. Topic support includes Markdown topics, XML `.topic` files,
-TOC registration, instance-specific topic titles, and custom web file names.
-Instance support includes local selection and icon colors, version/web-path and
-build settings, Markdown import, status, ID refactoring, instance groups,
-conditional and reusable TOC sections, and cross-instance topic references.
-See [Writerside instances](docs/writerside-instances.md) for behavior, safety
-rules, an openable example, and the authoritative JetBrains references.
-Writerside `<video>` elements are recognized in Markdown and XML topics, with
-local preview images plus HTTPS YouTube and Vimeo sources. See
-[Writerside videos](docs/videos.md) for syntax and preview/export behavior.
-Writerside tip, note, warning, and quote blocks render as native document
-callouts and can be inserted from the WYSIWYG toolbar. See
-[Writerside admonitions](docs/admonitions.md) for supported syntax.
-Writerside chapters, procedures, code blocks, and definition lists support
-documented collapsed and expanded states in Preview and WYSIWYG views. See
-[Writerside collapsible elements](docs/collapsible-elements.md) for syntax and
-the ordinary-Markdown boundary.
+* [Writerside instances](docs/writerside-instances.md)
+* [Writerside videos](docs/videos.md)
+* [Admonitions](docs/admonitions.md)
+* [Collapsible elements](docs/collapsible-elements.md)
 
-Folder workspaces show all files and directories, including hidden project
-files such as `.gitignore`. Unsupported and binary files remain visible but are
-disabled in the text editor. Version-control metadata directories such as
-`.git` are excluded, and traversal remains bounded for safety.
+## Diagrams and mathematics
 
-## PDF export
+BusyMark renders Mermaid, PlantUML, D2, and fenced OpenAPI content locally. Mathematical expressions are rendered with the bundled MathJax environment.
 
-Use **Main menu → Export as PDF** or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
-to export either the active Markdown document or the opened Writerside module.
-Markdown export uses the current editor contents, including unsaved changes,
-and offers A4, Letter, Legal or custom paper, orientation and independent margins,
-Noto typography, accent colors, title headers/footers, positioned page numbers,
-and optional TOC and heading numbering. Settings are remembered separately for
-PDF and HTML; **Reset to defaults** restores each format’s defaults. See
-[PDF export settings](docs/pdf-export.md).
+See:
 
-Markdown PDF generation is local and offline. BusyMark bundles the pinned Typst
-compiler; users do not install or configure a separate program. Local PNG,
-JPEG, GIF, and safe SVG images are included. Remote images are deliberately not
-downloaded during export and are represented by their alternative text.
+* [Offline visualizations](docs/visualizations.md)
+* [Mathematical expressions](docs/math.md)
 
-Inline and display equations use the same bundled MathJax semantics in preview
-and PDF export. Safe generated equations remain self-contained vector SVG, with
-inline baseline metrics carried into Typst. See [mathematical expressions](docs/math.md)
-for supported Markdown and Writerside forms, the scientific TeX package profile,
-editing behavior, and offline security boundaries.
+## Export
 
-Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
-SVG where possible and a local high-resolution raster fallback for browser-only
-labels. OpenAPI fences become static, selectable API reference content. Failed
-visualizations fall back to their original source and produce an export warning.
+BusyMark can export the current Markdown document or a Writerside instance to PDF and portable offline HTML.
 
-See [offline visualizations](docs/visualizations.md) for supported fences,
-security policy, pinned engines, architecture, and verification. Working
-examples are in [demo/visualizations.md](demo/visualizations.md),
-[demo/openapi-local-reference.md](demo/openapi-local-reference.md), and
-[demo/plantuml-conformance.md](demo/plantuml-conformance.md).
+PDF export supports configurable paper size, orientation, margins, typography, headers and footers, page numbering, table of contents, and heading numbering.
 
-Writerside PDF export builds one selected output instance with BusyMark's
-bundled native Typst, MathJax, and diagram pipeline. It follows the resolved
-instance TOC and supports Writerside Markdown and `.topic` XML without Docker,
-a Writerside installation, a daemon, or a network connection. See
-[Writerside PDF export](docs/writerside-pdf-export.md) for supported layout
-options, security boundaries, and native-export scope. An exportable example is
-included in [demo/writerside-instances](demo/writerside-instances).
+See:
+
+* [PDF export settings](docs/pdf-export.md)
+* [Writerside PDF export](docs/writerside-pdf-export.md)
+* [HTML export](docs/html-export.md)
 
 ## AI editing
 
-BusyMark's optional AI editing is disabled by default and supports loopback
-Ollama, OpenAI, and Google Gemini. In Source and Editor views, select text and
-choose **Refine with AI** from its context menu, or press **Ctrl+G**. The user
-then writes the instruction and independently chooses what may change and what
-document context may be shared. Staged-diff commit-message drafting is
-available separately in Git Changes. BusyMark discloses the exact context,
-streams into a temporary proposal, reparses and validates the complete
-candidate Markdown document, shows a unified diff, and never applies a proposal
-without confirmation. Cloud
-keys are stored in the operating-system credential service and cloud use
-requires explicit consent; provider routing never crosses provider boundaries.
+AI-assisted editing is optional and disabled by default.
 
-See [AI editing](docs/local-ai.md) for configuration, privacy and security
-boundaries, model routing, release qualification, and authoritative protocol
-references. An interactive exercise is available in
-[demo/ai-editing.md](demo/ai-editing.md).
+BusyMark supports Ollama, OpenAI, and Google Gemini. Proposed edits are presented for review before changes are applied.
 
-## Run From Source
+See [AI editing](docs/local-ai.md) for configuration, privacy, provider behavior, and security information.
 
-1. [Install Flutter 3.47.0](https://docs.flutter.dev/install). The exact
-   project version is declared in `pubspec.yaml` and shared with CI.
+## Installation
 
-2. Run the application:
+Install BusyMark from the Snap Store:
+
+```bash
+sudo snap install busymark --beta
+```
+
+The Snap uses strict confinement. See [Snap confinement notes](docs/snap-confinement.md) for details about filesystem and Git integration.
+
+## Run from source
+
+BusyMark currently uses Flutter 3.47.0.
+
+Install the required Linux development packages:
+
+```bash
+sudo apt-get install \
+  curl \
+  libhandy-1-dev \
+  xz-utils \
+  libwebkit2gtk-4.1-dev \
+  fonts-noto-core \
+  fonts-noto-mono
+```
+
+Node.js 22 or newer with npm is also required when building the bundled web components.
+
+Prepare and run the application:
 
 ```bash
 flutter doctor
@@ -178,61 +152,21 @@ flutter pub get
 flutter run -d linux
 ```
 
-Open a file or folder from the command line:
+A Markdown file or documentation folder can be opened directly from the command line:
 
 ```bash
-flutter run -d linux -- /path/to/README.md
-flutter run -d linux -- /path/to/docs
+flutter run -d linux
 ```
 
-## Feedback API
+## Build
 
-The **Main menu → Report an issue** form
-submits JSON to `https://busystack.org/api/feedback`. BusyMark sends no private
-credentials or other API secrets; storage is handled by BusyStack.org.
-
-Every request contains a newly generated submission UUID, `app: "busymark"`,
-the application version and build number read from the current package's
-generated build metadata (including Flutter build overrides),
-`platform: "linux"`, the selected category, subject, detailed message, and the
-optional reply email. The optional `technicalDetails` object is included after
-user explicitly selects the checkbox. It contains exactly the Linux
-operating-system version and the BusyMark application locale; logs, files,
-document content, paths, account data, tokens, screenshots, and attachments are
-never added.
-
-```json
-{
-  "submissionId": "b3f44f5f-dae4-4c6e-bf56-657f35f3450a",
-  "app": "busymark",
-  "appVersion": "0.2.2",
-  "buildNumber": "0",
-  "platform": "linux",
-  "category": "problem",
-  "subject": "Example subject",
-  "message": "Detailed feedback message",
-  "replyEmail": null,
-  "technicalDetails": {
-    "osVersion": "Linux version string",
-    "locale": "en"
-  }
-}
-```
-
-The endpoint returns HTTP 201 and `{"id":"<server reference ID>"}` after it
-accepts a report. Validation failures, connection failures, timeouts, rate
-limits, and server failures are shown without clearing the entered form.
-
-For local development, override only the endpoint at build time. For example,
-when the BusyStack.org backend is listening on port 8090:
+Build the Linux desktop application with:
 
 ```bash
-flutter run -d linux \
-  --dart-define=BUSYSTACK_FEEDBACK_ENDPOINT=http://127.0.0.1:8090/api/feedback
+flutter build linux
 ```
 
-Production builds use the HTTPS endpoint by default. No credential belongs in
-the Dart define or in the desktop application.
+The build assembles the runtime components required by BusyMark. Packaged users do not need separate Typst, Java, Node.js, or Chromium installations.
 
 ## Test
 
@@ -241,109 +175,14 @@ flutter analyze
 flutter test
 ```
 
-## Localization
-
-BusyMark has ARB localization files for:
-
-- Arabic (ar)
-- Dutch (nl)
-- English (en)
-- Estonian (et)
-- French (fr)
-- German (de)
-- Hindi (hi)
-- Indonesian (id)
-- Italian (it)
-- Japanese (ja)
-- Korean (ko)
-- Norwegian Bokmål (nb)
-- Persian (fa)
-- Polish (pl)
-- Portuguese (pt)
-- Russian (ru)
-- Simplified Chinese (zh-CN)
-- Spanish (es)
-- Turkish (tr)
-- Ukrainian (uk)
-- Vietnamese (vi)
-
-English in `lib/l10n/app_en.arb` is the source of truth for app strings.
-
-Every base and regional ARB catalog must contain the complete current English
-message-key set. Language-only catalogs such as `app_pt.arb` and `app_zh.arb`
-are required alongside their regional catalogs; they are not partial fallback
-stubs. Catalogs are audited for structure, parity, placeholders, plurals, and
-reviewed terminology.
-
-When changing user-facing text, update `app_en.arb`, keep every target ARB in
-sync, then run:
-
-```bash
-flutter gen-l10n
-flutter test test/src/localization_audit_test.dart
-flutter analyze
-flutter test
-```
-
-Linux `.desktop` and AppStream metadata are localized in the repository. Snap
-Store listing translations are managed outside `snap/snapcraft.yaml`.
-
-The Snap uses strict confinement and bundles Git and OpenSSH. If Git cannot
-find an author identity while committing, BusyMark opens a native form, saves
-the chosen repository or BusyMark-wide identity, and retries the commit. Install
-it with:
-
-```bash
-sudo snap install busymark
-```
-
-The [Snap confinement notes](docs/snap-confinement.md) document supported
-interfaces and the limits of host Git integration.
-
-## Build Linux Locally
-
-Source builds require the libhandy and WebKitGTK 4.1 development headers,
-`curl`, `xz-utils`, and Node.js 22 or newer with npm. Node.js is used only to
-assemble the checksum-pinned web bundle. Packaged users receive every runtime
-component with BusyMark and do not install development packages, Node.js, Java,
-or Chromium.
-
-```bash
-sudo apt-get install curl libhandy-1-dev xz-utils libwebkit2gtk-4.1-dev fonts-noto-core fonts-noto-mono
-# Install Node.js 22 or newer from https://nodejs.org/en/download
-node --version
-npm --version
-flutter build linux
-```
-
-The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary, the
-Linux amd64 D2 0.7.1 release, and exact JavaScript packages, then verifies the
-pinned artifacts before bundling them. D2 visualization is currently packaged
-only for amd64. To reuse already downloaded official Typst and D2 archives,
-point the build at them:
-
-```bash
-BUSYMARK_TYPST_ARCHIVE=/path/to/typst-x86_64-unknown-linux-musl.tar.xz \
-BUSYMARK_D2_ARCHIVE=/path/to/d2-v0.7.1-linux-amd64.tar.gz \
-  flutter build linux
-```
-
-A clean source build still assembles the checksum-pinned JavaScript packages.
-The resulting BusyMark application is self-contained and performs no runtime
-downloads for visualization.
-
-The Linux desktop file uses the application id `io.busystack.busymark` and
-installs the app icon from `assets/branding/busymark_logo.svg`.
-
 ## Contributing
 
-Issues and small focused pull requests are welcome. Please keep changes aligned
-with the current beta scope: local editing, Linux desktop quality, safe file
-handling, and clear user-facing behavior.
+Issues and focused pull requests are welcome.
+
+Changes should remain consistent with BusyMark's current scope as a desktop Markdown and Writerside documentation editor.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE). Bundled Typst and D2 licenses and notices are
-installed under `share/licenses`; visualization JavaScript licenses, package
-metadata, the exact lock file, and consolidated notices are installed with the
-offline web bundle.
+BusyMark is licensed under the Apache License 2.0. See [LICENSE](LICENSE).
+
+Licenses and notices for bundled third-party components are distributed with the application.
