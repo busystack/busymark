@@ -3534,7 +3534,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'O fornecedor selecionado receberá $count carateres do contexto apresentado.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count carateres',
+      one: '1 caráter',
+      zero: '0 carateres',
+    );
+    return 'O fornecedor selecionado receberá $_temp0 do contexto apresentado.';
   }
 
   @override
@@ -3638,7 +3645,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String aiGenerationVerified(String model, int count) {
-    return 'Geração verificada com $model. Há $count modelos compatíveis disponíveis.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Há $count modelos compatíveis disponíveis',
+      one: 'Há 1 modelo compatível disponível',
+      zero: 'Há 0 modelos compatíveis disponíveis',
+    );
+    return 'Geração verificada com $model. $_temp0.';
   }
 
   @override
@@ -3669,7 +3683,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String markdownTocUpdated(int count) {
-    return 'Sumário atualizado com $count entradas.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entradas',
+      one: '1 entrada',
+      zero: '0 entradas',
+    );
+    return 'Sumário atualizado com $_temp0.';
   }
 
   @override
@@ -7453,7 +7474,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'O provedor selecionado receberá $count caracteres do contexto exibido.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count caracteres',
+      one: '1 caractere',
+      zero: '0 caracteres',
+    );
+    return 'O provedor selecionado receberá $_temp0 do contexto exibido.';
   }
 
   @override
@@ -7557,7 +7585,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String aiGenerationVerified(String model, int count) {
-    return 'Geração verificada com $model. Há $count modelos compatíveis disponíveis.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Há $count modelos compatíveis disponíveis',
+      one: 'Há 1 modelo compatível disponível',
+      zero: 'Há 0 modelos compatíveis disponíveis',
+    );
+    return 'Geração verificada com $model. $_temp0.';
   }
 
   @override
@@ -7588,7 +7623,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String markdownTocUpdated(int count) {
-    return 'Sumário atualizado com $count entradas.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entradas',
+      one: '1 entrada',
+      zero: '0 entradas',
+    );
+    return 'Sumário atualizado com $_temp0.';
   }
 
   @override
