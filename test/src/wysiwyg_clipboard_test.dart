@@ -250,6 +250,14 @@ void main() {
     expect(_insert(decoded), contains('- [x] Second task'));
   });
 
+  test('clipboard fragment serializes its selected structure as Markdown', () {
+    final markdown = _fragment(_source).markdown;
+    expect(markdown, contains('# Issues'));
+    expect(markdown, contains('**When**'));
+    expect(markdown, contains('- [ ] First task'));
+    expect(markdown, contains('- [x] Second task'));
+  });
+
   test('HTML normalization preserves supported CSS and checkbox state safely', () {
     const source =
         '<html><head><style>p{color:red}</style></head><body>'
@@ -442,7 +450,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      for (final label in ['Cut', 'Copy', 'Paste', 'Select all']) {
+      for (final label in [
+        'Cut',
+        'Copy',
+        'Copy as Markdown',
+        'Paste',
+        'Select all',
+      ]) {
         expect(
           find.byWidgetPredicate(
             (widget) =>
@@ -455,6 +469,35 @@ void main() {
       await tester.pumpAndSettle();
       expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
       expect(systemData['text'], contains('[ ] First task'));
+    });
+
+    testWidgets('Copy as Markdown writes only Markdown source', (tester) async {
+      await mount(tester, 'issues', _source, (_) {});
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC, shift: true);
+
+      expect(systemData.keys, ['text']);
+      expect(systemData['text'], startsWith('# Issues'));
+      expect(systemData['text'], contains('**When**'));
+      expect(systemData['text'], contains('- [ ] First task'));
+    });
+
+    testWidgets('document selection menu can copy as Markdown', (tester) async {
+      await mount(tester, 'issues', _source, (_) {});
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await tester.tap(
+        find.widgetWithText(TextField, 'When selecting all, keep formatting.'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Copy as Markdown'));
+      await tester.pumpAndSettle();
+      expect(systemData.keys, ['text']);
+      expect(systemData['text'], startsWith('# Issues'));
+      expect(systemData['text'], contains('**When**'));
     });
 
     testWidgets(

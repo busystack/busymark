@@ -265,6 +265,7 @@ abstract final class BusyMarkCommandIds {
   static const textSelectAll = 'text.selectAll';
   static const textCut = 'text.cut';
   static const textCopy = 'text.copy';
+  static const editorCopyAsMarkdown = 'editor.copyAsMarkdown';
   static const textPaste = 'text.paste';
   static const textPastePlainText = 'text.pastePlainText';
   static const textUndo = 'text.undo';
@@ -512,6 +513,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkEditorShortcutAction action,
   ) => switch (action) {
     BusyMarkEditorShortcutAction.refineWithAi => context.l10n.aiRefineWithAi,
+    BusyMarkEditorShortcutAction.copyAsMarkdown => context.l10n.copyAsMarkdown,
     BusyMarkEditorShortcutAction.bold => context.l10n.bold,
     BusyMarkEditorShortcutAction.italic => context.l10n.italic,
     BusyMarkEditorShortcutAction.underline => context.l10n.underline,
@@ -611,6 +613,9 @@ abstract final class BusyMarkCommandCatalog {
     BuildContext context,
     BusyMarkEditorShortcutAction action,
   ) => switch (action) {
+    BusyMarkEditorShortcutAction.copyAsMarkdown ||
+    BusyMarkEditorShortcutAction.pastePlainText =>
+      context.l10n.shortcutGroupTextEditing,
     BusyMarkEditorShortcutAction.bold ||
     BusyMarkEditorShortcutAction.italic ||
     BusyMarkEditorShortcutAction.underline ||

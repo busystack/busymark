@@ -72,6 +72,7 @@ abstract final class BusyMarkSizes {
   static const double dialogCompact = 460;
   static const double dialogWide = 560;
   static const double popupMenuMinWidth = 180;
+  static const double editorContextMenuWidth = 260;
   static const double languagePopupMinWidth = 220;
   static const double languagePopupMaxWidth = 280;
   static const double languageButtonMaxWidth = 256;

@@ -178,6 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Salin",
+  "copyAsMarkdown": "Salin sebagai Markdown",
   "@copy": {
     "description": "Copy command label."
   },

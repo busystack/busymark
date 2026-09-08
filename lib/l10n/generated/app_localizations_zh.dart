@@ -154,6 +154,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
+  String get copyAsMarkdown => 'Copy as Markdown';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 
@@ -4046,6 +4049,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get copy => '复制';
+
+  @override
+  String get copyAsMarkdown => '复制为 Markdown';
 
   @override
   String get copyName => '复制名称';

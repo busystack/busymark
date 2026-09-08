@@ -178,6 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "복사",
+  "copyAsMarkdown": "Markdown으로 복사",
   "@copy": {
     "description": "Copy command label."
   },

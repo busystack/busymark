@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 
 import '../../markdown/busymark_document.dart';
+import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../platform/rich_clipboard_service.dart';
 import 'wysiwyg_document_controller.dart';
@@ -27,6 +28,10 @@ class WysiwygClipboardFragment {
   List<BusyBlock> get documentBlocks => [
     for (final block in blocks) busyMarkWysiwygClipboardBlock(block),
   ];
+
+  String get markdown => const BusyMarkMarkdownSerializer().serialize(
+    BusyDocument(filePath: sourcePath, mode: mode, blocks: documentBlocks),
+  );
 
   String encode() => jsonEncode({
     'version': 1,

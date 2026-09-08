@@ -149,6 +149,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copy => '복사';
 
   @override
+  String get copyAsMarkdown => 'Markdown으로 복사';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 

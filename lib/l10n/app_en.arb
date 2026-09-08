@@ -90,6 +90,8 @@
   "chooseLocation": "Choose location",
   "@chooseLocation": {"description": "File picker confirmation label for choosing a directory."},
   "copy": "Copy",
+  "copyAsMarkdown": "Copy as Markdown",
+  "@copyAsMarkdown": {"description": "Copies the Editor selection as Markdown source."},
   "clipboardCopyFailed": "Could not copy the selection to the clipboard.",
   "@clipboardCopyFailed": {"description": "Shown when Editor copy or cut cannot write the clipboard; cut leaves the document intact."},
   "@copy": {"description": "Copy command label."},

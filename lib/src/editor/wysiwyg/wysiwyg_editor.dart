@@ -871,6 +871,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onPointerMove: _handleBlockPointerMove,
       onPointerUp: _handleBlockPointerUp,
       onFocused: () => _handleBlockFocused(block.id),
+      onCopy: _copyCurrentSelection,
+      onCopyAsMarkdown: _copyCurrentSelectionAsMarkdown,
       onRefineWithAi: widget.onAiEdit == null
           ? null
           : () => unawaited(_runAiEdit(blockId: block.id)),
@@ -3528,6 +3530,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       case BusyMarkEditorShortcutAction.refineWithAi:
         unawaited(_runAiEdit());
         break;
+      case BusyMarkEditorShortcutAction.copyAsMarkdown:
+        _copyCurrentSelectionAsMarkdown();
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(BusyWysiwygInlineCommand.bold);
         break;
@@ -5517,6 +5522,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final action = await showBusyMarkContextMenu<_DocumentSelectionMenuAction>(
       context,
       position,
+      width: BusyMarkSizes.editorContextMenuWidth,
       items: [
         item(
           _DocumentSelectionMenuAction.cut,
@@ -5526,6 +5532,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         item(
           _DocumentSelectionMenuAction.copy,
           BusyMarkCommandIds.textCopy,
+          BusyMarkGlyphs.copy,
+        ),
+        item(
+          _DocumentSelectionMenuAction.copyAsMarkdown,
+          BusyMarkCommandIds.editorCopyAsMarkdown,
           BusyMarkGlyphs.copy,
         ),
         item(
@@ -5554,6 +5565,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _cutBlockSelection();
       case _DocumentSelectionMenuAction.copy:
         _copyBlockSelection();
+      case _DocumentSelectionMenuAction.copyAsMarkdown:
+        _copyCurrentSelectionAsMarkdown();
       case _DocumentSelectionMenuAction.paste:
         unawaited(_pasteIntoActiveBlock());
       case _DocumentSelectionMenuAction.selectAll:
@@ -5902,6 +5915,29 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   bool _copyCurrentSelection() => _copyOrCutSelection(cut: false);
 
+  bool _copyCurrentSelectionAsMarkdown() {
+    final documentSelection = _hasBlockSelection;
+    final allRanges = documentSelection
+        ? _selectedTextRanges(null, true)
+        : _currentSelectionRanges();
+    if (allRanges.isEmpty) return false;
+    final ranges = documentSelection
+        ? _withoutEmptySelectionEndpoints(allRanges)
+        : allRanges
+              .where((range) => _copyTextForRange(range).trim().isNotEmpty)
+              .toList();
+    if (ranges.isEmpty) return false;
+    final fragment = WysiwygClipboardFragment(
+      mode: _documentController.document.mode,
+      sourcePath: _documentController.document.filePath,
+      blocks: _clipboardBlocksForRanges(ranges),
+    );
+    final markdown = fragment.markdown;
+    if (markdown.isEmpty) return false;
+    unawaited(_writeMarkdownClipboard(markdown));
+    return true;
+  }
+
   bool _cutCurrentSelection() => _copyOrCutSelection(cut: true);
 
   bool _copyOrCutSelection({required bool cut}) {
@@ -5970,6 +6006,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         message: context.l10n.clipboardCopyFailed,
       );
     }
+  }
+
+  Future<void> _writeMarkdownClipboard(String markdown) async {
+    final success = await _clipboard.write(RichClipboardData(text: markdown));
+    if (!mounted || success) return;
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.clipboardCopyFailed,
+    );
   }
 
   List<BusyWysiwygStyledBlock> _clipboardBlocksForRanges(
@@ -6412,7 +6457,14 @@ class _ClipboardTarget {
   final TextSelection? textSelection;
 }
 
-enum _DocumentSelectionMenuAction { cut, copy, paste, selectAll, refineWithAi }
+enum _DocumentSelectionMenuAction {
+  cut,
+  copy,
+  copyAsMarkdown,
+  paste,
+  selectAll,
+  refineWithAi,
+}
 
 class _ContinuousTextEdit {
   const _ContinuousTextEdit({

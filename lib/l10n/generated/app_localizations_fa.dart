@@ -153,6 +153,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copy => 'کپی';
 
   @override
+  String get copyAsMarkdown => 'کپی به‌صورت Markdown';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 

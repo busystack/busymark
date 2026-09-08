@@ -11,12 +11,16 @@ Widget buildBusyMarkEditorTextContextMenu(
   EditableTextState editableTextState, {
   required String refineWithAiLabel,
   VoidCallback? onRefineWithAi,
+  VoidCallback? onCopy,
+  VoidCallback? onCopyAsMarkdown,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
   return _BusyMarkEditorTextContextMenu(
     editableTextState: editableTextState,
     refineWithAiLabel: refineWithAiLabel,
     onRefineWithAi: onRefineWithAi,
+    onCopy: onCopy,
+    onCopyAsMarkdown: onCopyAsMarkdown,
     additionalItems: additionalItems,
   );
 }
@@ -26,12 +30,16 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.editableTextState,
     required this.refineWithAiLabel,
     required this.onRefineWithAi,
+    required this.onCopy,
+    required this.onCopyAsMarkdown,
     required this.additionalItems,
   });
 
   final EditableTextState editableTextState;
   final String refineWithAiLabel;
   final VoidCallback? onRefineWithAi;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyAsMarkdown;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
   @override
@@ -79,7 +87,9 @@ class _BusyMarkEditorTextContextMenuState
       anchorPoint: widget.editableTextState.contextMenuAnchors.primaryAnchor,
       items: _menuItems(context),
       session: _menuSession,
-      width: BusyMarkSizes.popupMenuMinWidth,
+      width: widget.onCopyAsMarkdown == null
+          ? BusyMarkSizes.popupMenuMinWidth
+          : BusyMarkSizes.editorContextMenuWidth,
     );
     if (!mounted || _menuSession.dismissed) {
       return;
@@ -93,28 +103,50 @@ class _BusyMarkEditorTextContextMenuState
     final commands =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
         BusyMarkCommandCatalog.metadata;
-    final items = <PopupMenuEntry<VoidCallback>>[
-      for (final item in editable.contextMenuButtonItems) ...[
-        if (_commandIdFor(item.type) case final commandId?)
+    final selection = editable.textEditingValue.selection;
+    final hasSelection = selection.isValid && !selection.isCollapsed;
+    final items = <PopupMenuEntry<VoidCallback>>[];
+    for (final item in editable.contextMenuButtonItems) {
+      final callback = item.type == ContextMenuButtonType.copy
+          ? widget.onCopy ?? item.onPressed
+          : item.onPressed;
+      if (_commandIdFor(item.type) case final commandId?) {
+        items.add(
           BusyMarkPopupMenuItem<VoidCallback>(
-            value: item.onPressed ?? () {},
+            value: callback ?? () {},
             label: commands[commandId]!.label(context),
             icon: _iconFor(item.type),
             shortcut: commands[commandId]!.shortcut?.label,
-            enabled: item.onPressed != null,
-          )
-        else
+            enabled: callback != null,
+          ),
+        );
+      } else {
+        items.add(
           BusyMarkPopupMenuItem<VoidCallback>(
-            value: item.onPressed ?? () {},
+            value: callback ?? () {},
             label: AdaptiveTextSelectionToolbar.getButtonLabel(context, item),
             icon: _iconFor(item.type),
-            enabled: item.onPressed != null,
+            enabled: callback != null,
           ),
-      ],
-    ];
-    final selection = editable.textEditingValue.selection;
+        );
+      }
+      final copyAsMarkdown = widget.onCopyAsMarkdown;
+      if (item.type == ContextMenuButtonType.copy &&
+          copyAsMarkdown != null &&
+          hasSelection) {
+        final command = commands[BusyMarkCommandIds.editorCopyAsMarkdown]!;
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: copyAsMarkdown,
+            label: command.label(context),
+            icon: BusyMarkGlyphs.copy,
+            shortcut: command.shortcut?.label,
+          ),
+        );
+      }
+    }
     final refineWithAi = widget.onRefineWithAi;
-    if (refineWithAi != null && selection.isValid && !selection.isCollapsed) {
+    if (refineWithAi != null && hasSelection) {
       items.add(
         BusyMarkPopupMenuItem<VoidCallback>(
           value: refineWithAi,

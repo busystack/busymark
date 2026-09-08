@@ -403,6 +403,12 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get copy;
 
+  /// Copies the Editor selection as Markdown source.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy as Markdown'**
+  String get copyAsMarkdown;
+
   /// Shown when Editor copy or cut cannot write the clipboard; cut leaves the document intact.
   ///
   /// In en, this message translates to:

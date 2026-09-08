@@ -1414,6 +1414,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       case BusyMarkEditorShortcutAction.refineWithAi:
         unawaited(_runAiEdit());
         break;
+      case BusyMarkEditorShortcutAction.copyAsMarkdown:
+        final value = _fullEditingValue();
+        final selection = value.selection;
+        if (selection.isValid && !selection.isCollapsed) {
+          unawaited(
+            Clipboard.setData(
+              ClipboardData(text: selection.textInside(value.text)),
+            ),
+          );
+        }
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(SourceInlineCommand.bold);
         break;

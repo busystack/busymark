@@ -155,6 +155,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get copy => 'Salin';
 
   @override
+  String get copyAsMarkdown => 'Salin sebagai Markdown';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 

@@ -94,6 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "कॉपी करें",
+  "copyAsMarkdown": "Markdown के रूप में कॉपी करें",
   "@copy": {
     "description": "Copy command label."
   },

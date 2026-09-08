@@ -153,6 +153,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copy => 'Kopeeri';
 
   @override
+  String get copyAsMarkdown => 'Kopeeri Markdownina';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 

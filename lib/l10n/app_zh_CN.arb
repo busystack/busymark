@@ -178,6 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "复制",
+  "copyAsMarkdown": "复制为 Markdown",
   "@copy": {
     "description": "Copy command label."
   },

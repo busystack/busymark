@@ -154,6 +154,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
+  String get copyAsMarkdown => 'Copy as Markdown';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 
@@ -4070,6 +4073,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get copy => 'Copiar';
+
+  @override
+  String get copyAsMarkdown => 'Copiar como Markdown';
 
   @override
   String get copyName => 'Copiar nome';

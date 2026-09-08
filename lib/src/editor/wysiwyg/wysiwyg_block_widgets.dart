@@ -165,6 +165,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onHtmlEditRequested,
     required this.onTaskChanged,
     required this.onFocused,
+    this.onCopy,
+    this.onCopyAsMarkdown,
     this.onRefineWithAi,
     this.editRevision = 0,
     this.selected = false,
@@ -208,6 +210,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onHtmlEditRequested;
   final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyAsMarkdown;
   final VoidCallback? onRefineWithAi;
   final int editRevision;
   final bool selected;
@@ -386,6 +390,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           cellKey: tableCellKey,
           onCellFocused: onTableCellFocused,
           suppressContextMenu: documentSelectionActive,
+          onCopy: onCopy,
+          onCopyAsMarkdown: onCopyAsMarkdown,
         ),
       );
     }
@@ -544,6 +550,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                           refineWithAiLabel:
                                               context.l10n.aiRefineWithAi,
                                           onRefineWithAi: onRefineWithAi,
+                                          onCopy: onCopy,
+                                          onCopyAsMarkdown: onCopyAsMarkdown,
                                         ),
                               onTap: onFocused,
                               onChanged: onChanged,
@@ -1457,6 +1465,8 @@ class _TableBlockEditor extends StatelessWidget {
     this.cellKey,
     this.onCellFocused,
     this.suppressContextMenu = false,
+    this.onCopy,
+    this.onCopyAsMarkdown,
   });
 
   static const double _controlSize = BusyMarkSizes.tableControl;
@@ -1480,6 +1490,8 @@ class _TableBlockEditor extends StatelessWidget {
   final GlobalKey Function(String cellId)? cellKey;
   final ValueChanged<String>? onCellFocused;
   final bool suppressContextMenu;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyAsMarkdown;
 
   @override
   Widget build(BuildContext context) {
@@ -1564,6 +1576,8 @@ class _TableBlockEditor extends StatelessWidget {
                           : null,
                       onCellFocused: onCellFocused,
                       suppressContextMenu: suppressContextMenu,
+                      onCopy: onCopy,
+                      onCopyAsMarkdown: onCopyAsMarkdown,
                     ),
                 ],
               ),
@@ -1809,6 +1823,8 @@ class _TableCellEditor extends StatefulWidget {
     this.cellKey,
     this.onCellFocused,
     this.suppressContextMenu = false,
+    this.onCopy,
+    this.onCopyAsMarkdown,
   });
 
   final BusyBlock? cell;
@@ -1826,6 +1842,8 @@ class _TableCellEditor extends StatefulWidget {
   final GlobalKey? cellKey;
   final ValueChanged<String>? onCellFocused;
   final bool suppressContextMenu;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyAsMarkdown;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
@@ -2001,7 +2019,14 @@ class _TableCellEditorState extends State<_TableCellEditor> {
           ),
           contextMenuBuilder: widget.suppressContextMenu
               ? (context, editableTextState) => const SizedBox.shrink()
-              : null,
+              : (context, editableTextState) =>
+                    buildBusyMarkEditorTextContextMenu(
+                      context,
+                      editableTextState,
+                      refineWithAiLabel: context.l10n.aiRefineWithAi,
+                      onCopy: widget.onCopy,
+                      onCopyAsMarkdown: widget.onCopyAsMarkdown,
+                    ),
           onTap: () {
             final onCellFocused = widget.onCellFocused;
             if (onCellFocused == null) {

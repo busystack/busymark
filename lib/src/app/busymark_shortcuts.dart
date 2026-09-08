@@ -502,6 +502,7 @@ abstract final class BusyMarkTextEditingShortcutActivators {
 
 enum BusyMarkEditorShortcutAction {
   refineWithAi,
+  copyAsMarkdown,
   bold,
   italic,
   underline,
@@ -537,6 +538,7 @@ abstract final class BusyMarkEditorShortcuts {
   const BusyMarkEditorShortcuts._();
 
   static const refineWithAiLabel = 'Ctrl+G';
+  static const copyAsMarkdownLabel = 'Ctrl+Shift+C';
   static const textStyleLabel = 'Ctrl+Alt+0-6';
   static const boldLabel = 'Ctrl+B';
   static const italicLabel = 'Ctrl+I';
@@ -564,6 +566,14 @@ abstract final class BusyMarkEditorShortcuts {
   static const refineWithAi = BusyMarkShortcutDefinition(
     label: refineWithAiLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyG, control: true),
+  );
+  static const copyAsMarkdown = BusyMarkShortcutDefinition(
+    label: copyAsMarkdownLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyC,
+      control: true,
+      shift: true,
+    ),
   );
   static const bold = BusyMarkShortcutDefinition(
     label: boldLabel,
@@ -718,6 +728,7 @@ abstract final class BusyMarkEditorShortcuts {
   static const definitions =
       <BusyMarkEditorShortcutAction, BusyMarkShortcutDefinition>{
         BusyMarkEditorShortcutAction.refineWithAi: refineWithAi,
+        BusyMarkEditorShortcutAction.copyAsMarkdown: copyAsMarkdown,
         BusyMarkEditorShortcutAction.bold: bold,
         BusyMarkEditorShortcutAction.italic: italic,
         BusyMarkEditorShortcutAction.underline: underline,
@@ -748,6 +759,7 @@ abstract final class BusyMarkEditorShortcutLabels {
   const BusyMarkEditorShortcutLabels._();
 
   static const refineWithAi = BusyMarkEditorShortcuts.refineWithAiLabel;
+  static const copyAsMarkdown = BusyMarkEditorShortcuts.copyAsMarkdownLabel;
   static const textStyle = BusyMarkEditorShortcuts.textStyleLabel;
   static const bold = BusyMarkEditorShortcuts.boldLabel;
   static const italic = BusyMarkEditorShortcuts.italicLabel;

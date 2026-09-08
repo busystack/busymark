@@ -178,6 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Sao chép",
+  "copyAsMarkdown": "Sao chép dưới dạng Markdown",
   "@copy": {
     "description": "Copy command label."
   },

@@ -154,6 +154,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get copy => 'Sao chép';
 
   @override
+  String get copyAsMarkdown => 'Sao chép dưới dạng Markdown';
+
+  @override
   String get clipboardCopyFailed =>
       'Could not copy the selection to the clipboard.';
 
