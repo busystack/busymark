@@ -2720,6 +2720,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _setActiveTableCell(tableBlockId, cellId);
     final keyboard = HardwareKeyboard.instance;
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.tab &&
+        !_hasCommandModifierPressed()) {
+      return _moveTableCellFocus(
+        tableBlockId,
+        cellId,
+        backwards: keyboard.isShiftPressed,
+      );
+    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
@@ -2792,6 +2801,62 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
+  }
+
+  KeyEventResult _moveTableCellFocus(
+    String tableBlockId,
+    String cellId, {
+    required bool backwards,
+  }) {
+    final table = _documentController.blockById(tableBlockId);
+    if (table == null || table.kind != BusyBlockKind.table) {
+      return KeyEventResult.ignored;
+    }
+    final cells = [
+      for (final row in table.children)
+        for (final cell in row.children) cell,
+    ];
+    final currentIndex = cells.indexWhere((cell) => cell.id == cellId);
+    if (currentIndex < 0) {
+      return KeyEventResult.ignored;
+    }
+
+    final targetIndex = currentIndex + (backwards ? -1 : 1);
+    if (targetIndex >= 0 && targetIndex < cells.length) {
+      final target = cells[targetIndex];
+      final controller = _tableCellControllers[target.id];
+      final focusNode = _tableCellFocusNodes[target.id];
+      if (controller == null || focusNode == null) {
+        return KeyEventResult.ignored;
+      }
+      _setActiveTableCell(tableBlockId, target.id);
+      controller.selection = TextSelection.collapsed(
+        offset: backwards ? controller.text.length : 0,
+      );
+      focusNode.requestFocus();
+      return KeyEventResult.handled;
+    }
+    if (backwards || table.children.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+
+    _clearBlockSelection();
+    _recordUndoSnapshot();
+    _documentController.insertTableRow(
+      tableBlockId,
+      table.children.length - 1,
+      after: true,
+    );
+    final updatedTable = _documentController.blockById(tableBlockId);
+    final newRow = updatedTable?.children.lastOrNull;
+    final firstNewCell = newRow?.children.firstOrNull;
+    if (firstNewCell == null) {
+      return KeyEventResult.ignored;
+    }
+    _setActiveTableCell(tableBlockId, firstNewCell.id);
+    _emitMarkdown();
+    _focusTextTargetAfterFrame(firstNewCell.id, offset: 0);
+    return KeyEventResult.handled;
   }
 
   bool _hasCommandModifierPressed() {

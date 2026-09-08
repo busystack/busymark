@@ -6228,6 +6228,78 @@ void main() {}
     }
   });
 
+  testWidgets('Tab travels through WYSIWYG table cells and extends the table', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final table = parsed.busyDocument.blocks.single;
+    final cellIds = [
+      for (final row in table.children)
+        for (final cell in row.children) cell.id,
+    ];
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField cellField(String cellId) =>
+        tester.widget<TextField>(find.byKey(ValueKey(cellId)));
+
+    cellField(cellIds[0]).focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(cellField(cellIds[1]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(cellField(cellIds[2]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(cellField(cellIds[1]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    cellField(cellIds.last).focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.pump();
+
+    final tableFields = tester
+        .widgetList<TextField>(
+          find.descendant(
+            of: find.byType(Table),
+            matching: find.byType(TextField),
+          ),
+        )
+        .toList();
+    expect(tableFields, hasLength(6));
+    expect(tableFields[4].focusNode!.hasFocus, isTrue);
+    expect(tableFields[5].focusNode!.hasFocus, isFalse);
+    expect(markdown, contains('|  |  |'));
+    expect(tester.takeException(), isNull);
+  });
+
   test('WYSIWYG list indent outdent and task toggle commands serialize', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
