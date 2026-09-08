@@ -5965,11 +5965,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               .where((range) => _copyTextForRange(range).trim().isNotEmpty)
               .toList();
     if (ranges.isEmpty) return false;
-    final text = ranges.map(_copyTextForRange).join('\n\n');
-    if (!cut) {
-      unawaited(_writePlainClipboard(text));
-      return true;
-    }
     final target = _captureClipboardTarget();
     final blocks = _clipboardBlocksForRanges(ranges);
     final fragment = WysiwygClipboardFragment(
@@ -5978,12 +5973,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blocks: blocks,
       mediaPaths: _clipboardMediaPaths(blocks),
     );
+    final text = ranges.map(_copyTextForRange).join('\n\n');
     unawaited(
       _writeClipboardSelection(
         fragment: fragment,
         text: text,
         onWritten: () {
-          if (!_isClipboardTargetCurrent(target)) return;
+          if (!cut || !_isClipboardTargetCurrent(target)) return;
           if (documentSelection) {
             _deleteBlockSelection();
           } else {
@@ -5993,15 +5989,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       ),
     );
     return true;
-  }
-
-  Future<void> _writePlainClipboard(String text) async {
-    final success = await _clipboard.write(RichClipboardData(text: text));
-    if (!mounted || success) return;
-    BusyMarkToastOverlay.show(
-      context,
-      message: context.l10n.clipboardCopyFailed,
-    );
   }
 
   Future<void> _writeClipboardSelection({
