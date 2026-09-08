@@ -2462,6 +2462,41 @@ static gboolean parse_native_menu_anchor(FlValue* args,
   return TRUE;
 }
 
+static GIcon* create_native_menu_icon(const gchar* icon_name, FlValue* entry) {
+  if (icon_name == nullptr || icon_name[0] == '\0') {
+    return nullptr;
+  }
+
+  FlValue* packed_color = fl_value_lookup_string(entry, "iconColor");
+  if (packed_color != nullptr &&
+      fl_value_get_type(packed_color) == FL_VALUE_TYPE_INT) {
+    const guint32 argb = static_cast<guint32>(fl_value_get_int(packed_color));
+    const GdkRGBA foreground = {
+        static_cast<gdouble>((argb >> 16) & 0xff) / 255.0,
+        static_cast<gdouble>((argb >> 8) & 0xff) / 255.0,
+        static_cast<gdouble>(argb & 0xff) / 255.0,
+        static_cast<gdouble>((argb >> 24) & 0xff) / 255.0,
+    };
+    GtkIconInfo* icon_info = gtk_icon_theme_lookup_icon(
+        gtk_icon_theme_get_default(), icon_name, 16,
+        static_cast<GtkIconLookupFlags>(GTK_ICON_LOOKUP_FORCE_SIZE |
+                                        GTK_ICON_LOOKUP_FORCE_SYMBOLIC));
+    if (icon_info != nullptr) {
+      gboolean was_symbolic = FALSE;
+      g_autoptr(GError) error = nullptr;
+      GdkPixbuf* pixbuf = gtk_icon_info_load_symbolic(
+          icon_info, &foreground, nullptr, nullptr, nullptr, &was_symbolic,
+          &error);
+      g_object_unref(icon_info);
+      if (pixbuf != nullptr) {
+        return G_ICON(pixbuf);
+      }
+    }
+  }
+
+  return g_themed_icon_new(icon_name);
+}
+
 static void show_native_menu(NativeMenuHandlerData* data,
                              FlMethodCall* method_call,
                              FlValue* args) {
@@ -2528,6 +2563,9 @@ static void show_native_menu(NativeMenuHandlerData* data,
   gboolean in_checkable_run = FALSE;
   for (size_t index = 0; index < fl_value_get_length(entries); index++) {
     FlValue* entry = fl_value_get_list_value(entries, index);
+    FlValue* icon_color = entry == nullptr
+                              ? nullptr
+                              : fl_value_lookup_string(entry, "iconColor");
     gboolean separator = FALSE;
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
@@ -2545,6 +2583,11 @@ static void show_native_menu(NativeMenuHandlerData* data,
         (fl_value_lookup_string(entry, "icon") != nullptr &&
          fl_value_get_type(fl_value_lookup_string(entry, "icon")) !=
              FL_VALUE_TYPE_STRING) ||
+        (icon_color != nullptr &&
+         (fl_value_get_type(icon_color) != FL_VALUE_TYPE_INT ||
+          fl_value_get_int(icon_color) < 0 ||
+          fl_value_get_int(icon_color) >
+              static_cast<gint64>(G_MAXUINT32))) ||
         (selected && !checkable)) {
       respond_native_menu_argument_error(
           method_call,
@@ -2690,7 +2733,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
         g_menu_item_set_action_and_target_value(
             item, detailed_group_action, g_variant_new_string(target));
         if (run_icon != nullptr && run_icon[0] != '\0') {
-          g_autoptr(GIcon) icon = g_themed_icon_new(run_icon);
+          g_autoptr(GIcon) icon =
+              create_native_menu_icon(run_icon, run_entry);
           g_menu_item_set_icon(item, icon);
         }
         if (run_shortcut != nullptr && run_shortcut[0] != '\0') {
@@ -2718,7 +2762,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
         g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
     g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
     if (icon_name != nullptr && icon_name[0] != '\0') {
-      g_autoptr(GIcon) icon = g_themed_icon_new(icon_name);
+      g_autoptr(GIcon) icon = create_native_menu_icon(icon_name, entry);
       g_menu_item_set_icon(item, icon);
     }
     if (shortcut != nullptr && shortcut[0] != '\0') {

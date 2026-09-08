@@ -4358,6 +4358,7 @@ class _SidebarTreeRow extends StatefulWidget {
     this.selected = false,
     this.enabled = true,
     this.muted = false,
+    this.compactHierarchyIndent = false,
     this.vcsColor,
     this.onToggle,
     this.onTap,
@@ -4373,6 +4374,7 @@ class _SidebarTreeRow extends StatefulWidget {
   final bool selected;
   final bool enabled;
   final bool muted;
+  final bool compactHierarchyIndent;
   final BusyMarkVcsFileColor? vcsColor;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
@@ -4428,6 +4430,15 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
         widget.enabled &&
         widget.onMenuRequested != null &&
         (widget.selected || _hovered || _focused);
+    final depthBase = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSizes.sidebarTreeDepthBase;
+    final expanderWidth = widget.compactHierarchyIndent
+        ? BusyMarkSizes.sidebarTreeArrow
+        : BusyMarkSizes.sidebarTreeControl;
+    final expanderGap = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSpacing.xs;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -4461,11 +4472,11 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
                   children: [
                     SizedBox(
                       width:
-                          BusyMarkSizes.sidebarTreeDepthBase +
+                          depthBase +
                           widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
                     ),
                     SizedBox.square(
-                      dimension: BusyMarkSizes.sidebarTreeControl,
+                      dimension: expanderWidth,
                       child: widget.hasChildren
                           ? GestureDetector(
                               behavior: HitTestBehavior.opaque,
@@ -4490,7 +4501,7 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
                             )
                           : const SizedBox.shrink(),
                     ),
-                    const SizedBox(width: BusyMarkSpacing.xs),
+                    SizedBox(width: expanderGap),
                     SizedBox.square(
                       dimension: BusyMarkSizes.sidebarTreeControl,
                       child: Center(
@@ -4513,21 +4524,26 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
                       ),
                     ),
                     if (widget.onMenuRequested != null)
-                      SizedBox.square(
-                        dimension: BusyMarkSizes.compactIconButton,
-                        child: menuVisible
-                            ? Builder(
-                                builder: (buttonContext) =>
-                                    BusyMarkCompactIconButton(
-                                      tooltip: context.l10n.actions,
-                                      icon: BusyMarkGlyphs.menuVertical,
-                                      onPressed: () => widget.onMenuRequested!(
-                                        buttonContext,
-                                        _sidebarTreeMenuAnchor(buttonContext),
+                      SizedBox(
+                        width: BusyMarkSizes.iconButton,
+                        child: Center(
+                          child: menuVisible
+                              ? Builder(
+                                  builder: (buttonContext) =>
+                                      BusyMarkCompactIconButton(
+                                        tooltip: context.l10n.actions,
+                                        icon: BusyMarkGlyphs.menuVertical,
+                                        onPressed: () =>
+                                            widget.onMenuRequested!(
+                                              buttonContext,
+                                              _sidebarTreeMenuAnchor(
+                                                buttonContext,
+                                              ),
+                                            ),
                                       ),
-                                    ),
-                              )
-                            : const SizedBox.shrink(),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                       )
                     else
                       const SizedBox(width: BusyMarkSpacing.xs),
@@ -5273,6 +5289,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   hasChildren: hasChildren,
                   expanded: expanded,
                   muted: node.hidden,
+                  compactHierarchyIndent: true,
                   onToggle: hasChildren ? toggle : null,
                   onTap: topicPath != null
                       ? () async {
@@ -6390,40 +6407,45 @@ class _TocHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (modules.length > 1) ...[
-            _SidebarHeaderRow(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      modules
-                              .where((module) => module.id == activeModuleId)
-                              .map((module) => module.label)
-                              .firstOrNull ??
-                          modules.first.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.ltr,
-                      style: busyMarkSectionHeaderStyle(context),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: BusyMarkSpacing.sm,
+              ),
+              child: _SidebarHeaderRow(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        modules
+                                .where((module) => module.id == activeModuleId)
+                                .map((module) => module.label)
+                                .firstOrNull ??
+                            modules.first.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textDirection: TextDirection.ltr,
+                        style: busyMarkSectionHeaderStyle(context),
+                      ),
                     ),
-                  ),
-                  BusyMarkHeaderPopupMenuButton<String>(
-                    key: const ValueKey('writerside-module-selector'),
-                    tooltip: context.l10n.workspaceKindWritersideModule,
-                    icon: BusyMarkGlyphs.menuVertical,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: (context) => [
-                      for (final module in modules)
-                        BusyMarkPopupMenuItem<String>(
-                          value: module.id,
-                          label: module.label,
-                          icon: BusyMarkGlyphs.folder,
-                        ),
-                    ],
-                    onSelected: onSelectModule,
-                  ),
-                ],
+                    BusyMarkHeaderPopupMenuButton<String>(
+                      key: const ValueKey('writerside-module-selector'),
+                      tooltip: context.l10n.workspaceKindWritersideModule,
+                      icon: BusyMarkGlyphs.menuVertical,
+                      transparent: true,
+                      borderRadius: BusyMarkRadius.nativeHeaderButton,
+                      highlightWhenOpen: false,
+                      itemBuilder: (context) => [
+                        for (final module in modules)
+                          BusyMarkPopupMenuItem<String>(
+                            value: module.id,
+                            label: module.label,
+                            icon: BusyMarkGlyphs.folder,
+                          ),
+                      ],
+                      onSelected: onSelectModule,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
@@ -6433,11 +6455,11 @@ class _TocHeader extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    context.l10n.instances,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: busyMarkSectionHeaderStyle(context),
+                  child: _WritersideInstanceSelector(
+                    instances: instances,
+                    selectedInstance: selectedInstance,
+                    instanceColors: instanceColors,
+                    onSelected: onSelectInstance,
                   ),
                 ),
                 BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
@@ -6494,32 +6516,62 @@ class _TocHeader extends StatelessWidget {
               ],
             ),
           ),
-          for (final instance in instances)
-            _SidebarTreeRow(
-              key: ValueKey('writerside-instance-${instance.id}'),
-              title: busyMarkLtrIsolateFor(context, instance.name),
-              depth: 0,
-              icon: BusyMarkGlyphs.tree,
-              leading: Icon(
-                BusyMarkGlyphs.tree,
-                size: BusyMarkSizes.iconSm,
-                color: writersideInstanceIconColorValue(
-                  context,
-                  instanceColors[instance.sourceTreePath] ??
-                      WritersideInstanceIconColor.blue,
-                ),
-              ),
-              hasChildren: false,
-              expanded: false,
-              selected: p.equals(
-                instance.sourceTreePath,
-                selectedInstance.sourceTreePath,
-              ),
-              enabled: true,
-              onTap: () => onSelectInstance(instance.sourceTreePath),
-            ),
           const Divider(height: BusyMarkSpacing.md),
         ],
+      ),
+    );
+  }
+}
+
+class _WritersideInstanceSelector extends StatelessWidget {
+  const _WritersideInstanceSelector({
+    required this.instances,
+    required this.selectedInstance,
+    required this.instanceColors,
+    required this.onSelected,
+  });
+
+  final List<WritersideInstance> instances;
+  final WritersideInstance selectedInstance;
+  final Map<String, WritersideInstanceIconColor> instanceColors;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPath = selectedInstance.sourceTreePath;
+    final selectedLabel = busyMarkLtrIsolateFor(context, selectedInstance.name);
+    final selectedColor = writersideInstanceIconColorValue(
+      context,
+      instanceColors[selectedPath] ?? WritersideInstanceIconColor.blue,
+    );
+    return BusyMarkPopupSelector<String>(
+      key: const ValueKey('writerside-instance-selector'),
+      value: selectedPath,
+      label: selectedLabel,
+      tooltip: context.l10n.instances,
+      options: [
+        for (final instance in instances)
+          BusyMarkPopupSelectorOption<String>(
+            value: instance.sourceTreePath,
+            label: busyMarkLtrIsolateFor(context, instance.name),
+            icon: BusyMarkGlyphs.tree,
+            iconColor: writersideInstanceIconColorValue(
+              context,
+              instanceColors[instance.sourceTreePath] ??
+                  WritersideInstanceIconColor.blue,
+            ),
+          ),
+      ],
+      onSelected: onSelected,
+      leading: Icon(
+        BusyMarkGlyphs.tree,
+        size: BusyMarkSizes.iconSm,
+        color: selectedColor,
+      ),
+      fullWidth: true,
+      contentPadding: const EdgeInsetsDirectional.only(
+        start: BusyMarkSpacing.headerInset,
+        end: BusyMarkSpacing.sm,
       ),
     );
   }

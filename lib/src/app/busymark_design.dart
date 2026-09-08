@@ -303,7 +303,7 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.smPlus,
   );
   static const tocHeader = EdgeInsetsDirectional.fromSTEB(
-    BusyMarkSpacing.sm,
+    0,
     0,
     0,
     BusyMarkSpacing.sm,
@@ -1401,6 +1401,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
         NativeMenuEntry.command(
           label: item.label,
           iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon),
+          iconColorArgb: item.iconColor?.toARGB32(),
           shortcut: item.shortcut,
           enabled: item.enabled,
           checkable: item.trailingCheck,
@@ -1484,6 +1485,7 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
           value: item.menuValue,
           label: item.label,
           icon: item.icon,
+          iconColor: item.iconColor,
           shortcut: item.shortcut,
           enabled: item.enabled,
           checked: item.checked,
@@ -1528,6 +1530,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     required T value,
     required String label,
     IconData? icon,
+    Color? iconColor,
     String? shortcut,
     super.enabled = true,
     bool checked = false,
@@ -1537,6 +1540,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   }) : label = label,
        menuValue = value,
        icon = icon,
+       iconColor = iconColor,
        shortcut = shortcut,
        checked = checked,
        trailingCheck = trailingCheck,
@@ -1548,6 +1552,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
            child: _BusyMarkPopupMenuItemContent(
              label: label,
              icon: icon,
+             iconColor: iconColor,
              shortcut: shortcut,
              checked: checked,
              trailingCheck: trailingCheck,
@@ -1559,6 +1564,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final String label;
   final T menuValue;
   final IconData? icon;
+  final Color? iconColor;
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
@@ -1569,6 +1575,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
   const _BusyMarkPopupMenuItemContent({
     required this.label,
     required this.icon,
+    required this.iconColor,
     required this.shortcut,
     required this.checked,
     required this.trailingCheck,
@@ -1577,6 +1584,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
 
   final String label;
   final IconData? icon;
+  final Color? iconColor;
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
@@ -1605,7 +1613,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon),
+              Icon(icon, color: iconColor),
               const SizedBox(width: BusyMarkSpacing.sm),
             ],
             Expanded(child: labelText),
@@ -1820,11 +1828,13 @@ class BusyMarkPopupSelectorOption<T> {
     required this.value,
     required this.label,
     this.icon,
+    this.iconColor,
   });
 
   final T value;
   final String label;
   final IconData? icon;
+  final Color? iconColor;
 }
 
 /// The shared desktop selector used by Settings-style control rows.
@@ -1840,6 +1850,9 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
     this.popupMinWidth = BusyMarkSizes.languagePopupMinWidth,
     this.popupMaxWidth = BusyMarkSizes.languagePopupMaxWidth,
     this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
+    this.leading,
+    this.fullWidth = false,
+    this.contentPadding,
   });
 
   final T? value;
@@ -1851,18 +1864,21 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   final double popupMinWidth;
   final double popupMaxWidth;
   final double buttonMaxWidth;
+  final Widget? leading;
+  final bool fullWidth;
+  final EdgeInsetsGeometry? contentPadding;
 
   @override
   Widget build(BuildContext context) {
     final selectorEnabled = enabled && options.isNotEmpty;
-    final fallbackMenuWidth = buttonMaxWidth.clamp(
-      popupMinWidth,
-      popupMaxWidth,
-    );
+    final fallbackMenuWidth = (fullWidth ? popupMaxWidth : buttonMaxWidth)
+        .clamp(popupMinWidth, popupMaxWidth);
     return Align(
       alignment: AlignmentDirectional.centerEnd,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: buttonMaxWidth),
+        constraints: BoxConstraints(
+          maxWidth: fullWidth ? double.infinity : buttonMaxWidth,
+        ),
         child: BusyMarkMenuButton<T>(
           tooltip: tooltip,
           enabled: selectorEnabled,
@@ -1874,6 +1890,7 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 value: option.value,
                 label: option.label,
                 icon: option.icon,
+                iconColor: option.iconColor,
                 checked: option.value == value,
                 trailingCheck: true,
               ),
@@ -1890,28 +1907,47 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                     style: Theme.of(context).outlinedButtonTheme.style
                         ?.copyWith(
                           side: const WidgetStatePropertyAll(BorderSide.none),
+                          padding: contentPadding == null
+                              ? null
+                              : WidgetStatePropertyAll(contentPadding),
                         ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: fullWidth
+                          ? MainAxisSize.max
+                          : MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: math.max(
-                                0,
-                                buttonMaxWidth -
-                                    BusyMarkSizes.iconButton -
-                                    BusyMarkSpacing.smPlus,
-                              ),
-                            ),
+                        if (leading != null) ...[
+                          leading!,
+                          const SizedBox(width: BusyMarkSpacing.sm),
+                        ],
+                        if (fullWidth)
+                          Expanded(
                             child: Text(
                               label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               softWrap: false,
                             ),
+                          )
+                        else
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: math.max(
+                                  0,
+                                  buttonMaxWidth -
+                                      BusyMarkSizes.iconButton -
+                                      BusyMarkSpacing.smPlus,
+                                ),
+                              ),
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                              ),
+                            ),
                           ),
-                        ),
                         const SizedBox(width: BusyMarkSpacing.sm),
                         const Icon(
                           BusyMarkGlyphs.downArrow,
