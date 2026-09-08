@@ -254,7 +254,7 @@
   if kind == "heading" {
     let element = heading(
       level: value-or(block-data, "level", 1),
-      outlined: true,
+      outlined: value-or(block-data, "outlined", true),
       render-inlines(inlines),
     )
     let anchor = value-or(block-data, "id", "")

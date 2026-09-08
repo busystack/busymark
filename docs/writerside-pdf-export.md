@@ -28,8 +28,9 @@ Generated TOC and heading numbering use the exported heading structure without
 changing topic source. Custom typography also controls heading and equation
 sizing; custom dimensions and margins determine the available content width.
 
-The instance's resolved TOC determines topic order. Hidden and work-in-progress
-TOC entries are omitted unless a work-in-progress topic is the configured start
+The instance's resolved TOC determines topic order. Hidden topics remain in the
+PDF but do not appear in its generated table of contents. Work-in-progress TOC
+entries are omitted unless a work-in-progress topic is the configured start
 page. Reused TOC sections already resolved by BusyMark participate in the same
 ordering. Project variables are substituted in recognized variable tokens.
 
@@ -72,4 +73,6 @@ native export.
 BusyMark is not the JetBrains Writerside publication builder. The native export
 targets a reliable offline PDF of the syntax BusyMark understands; teams that
 need byte-for-byte parity with JetBrains website artifacts can still run
-JetBrains' separate CI tooling outside BusyMark.
+JetBrains' separate CI tooling outside BusyMark. BusyMark does not import
+`cfg/PDF.xml`; configure the cover-free page layout, generated table of contents,
+running text, and page numbers in BusyMark's export dialog.

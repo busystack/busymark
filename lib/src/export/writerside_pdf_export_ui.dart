@@ -140,9 +140,12 @@ Future<void> exportWritersideModuleToPdf(
   }
   final result = outcome.result!;
   final fileName = p.basename(result.destinationPath);
+  final message = result.warnings.isEmpty
+      ? context.l10n.pdfExported(fileName)
+      : context.l10n.pdfExportedWithWarnings(fileName, result.warnings.length);
   BusyMarkToastOverlay.show(
     context,
-    message: context.l10n.pdfExported(fileName),
+    message: message,
     actionLabel: context.l10n.open,
     onAction: () => unawaited(
       launchUrl(

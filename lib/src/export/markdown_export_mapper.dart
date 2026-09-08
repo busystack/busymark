@@ -247,6 +247,7 @@ class MarkdownExportMapper {
       attributes: {
         'level': level,
         if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
+        if (block.attributes['pdf-outline'] == 'false') 'outlined': false,
       },
     );
   }

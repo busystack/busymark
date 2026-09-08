@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
-  const compiler = 'build/linux/x64/release/bundle/libexec/busymark/typst';
+  final compiler = _bundledTypstCompiler();
   test(
     'bundled Typst compiles semantic tables, anchors and glossary footnotes',
     () async {
@@ -55,7 +55,7 @@ void main() {
         'assets/export/markdown.typ',
       ).copy(p.join(fixture.root.path, 'main.typ'));
       final pdf = p.join(fixture.root.path, 'semantic.pdf');
-      final result = await Process.run(p.absolute(compiler), [
+      final result = await Process.run(compiler!, [
         'compile',
         p.join(fixture.root.path, 'main.typ'),
         pdf,
@@ -63,7 +63,7 @@ void main() {
       expect(result.exitCode, 0, reason: '${result.stderr}');
       expect(await File(pdf).length(), greaterThan(1000));
     },
-    skip: !File(compiler).existsSync(),
+    skip: compiler == null,
   );
 
   test(
@@ -120,6 +120,46 @@ void main() {
       expect(anchors, contains(destination.substring(1)));
     },
   );
+
+  test('Markdown topic links retain their PDF destinations', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    await File(p.join(fixture.module.path, 'topics', 'intro.md')).writeAsString(
+      '# Introduction\n\n[Advanced details](advanced.topic#details)\n',
+    );
+    await File(
+      p.join(fixture.module.path, 'topics', 'advanced.topic'),
+    ).writeAsString(
+      '<topic id="advanced" title="Advanced">'
+      '<p id="details">Detailed instructions.</p>'
+      '</topic>',
+    );
+    final exporter = _RecordingMarkdownExporter();
+
+    await WritersidePdfExportService(markdownExporter: exporter).export(
+      WritersidePdfExportRequest(
+        moduleRoot: fixture.module.path,
+        projectRoot: fixture.root.path,
+        instanceId: 'guide',
+        destinationPath: p.join(fixture.root.path, 'markdown-link.pdf'),
+        overwrite: false,
+      ),
+    );
+
+    final document = const MarkdownExportMapper().map(
+      exporter.request!.document!,
+    );
+    final blocks = _allExportBlocks(document.blocks).toList();
+    final link = blocks
+        .expand((block) => block.inlines)
+        .singleWhere((inline) => inline.text == 'Advanced details');
+    expect(link.kind, MarkdownExportInlineKind.link);
+    expect(link.destination, startsWith('#ws-'));
+    expect(
+      blocks.map((block) => block.attributes['anchor']),
+      contains(link.destination!.substring(1)),
+    );
+  });
 
   test(
     'native export composes the selected instance without a container runtime',
@@ -208,6 +248,61 @@ void main() {
           allOf(startsWith('file://'), contains('/Shared/images/shared.png')),
         ),
       );
+    },
+  );
+
+  test(
+    'hidden topics remain content and toc-title stays navigation-only',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      await File(p.join(fixture.module.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" name="Guide" start-page="intro.md">
+  <toc-element topic="intro.md" toc-title="Short navigation title"/>
+  <toc-element topic="hidden.md" hidden="true"/>
+  <toc-element topic="draft.md" wip="true"/>
+</instance-profile>
+''');
+      await File(
+        p.join(fixture.module.path, 'topics', 'hidden.md'),
+      ).writeAsString('# Legal information\n\nRequired legal notice.\n');
+      await File(
+        p.join(fixture.module.path, 'topics', 'draft.md'),
+      ).writeAsString('# Draft\n\nUnreleased instructions.\n');
+      final exporter = _RecordingMarkdownExporter();
+
+      await WritersidePdfExportService(markdownExporter: exporter).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'hidden.pdf'),
+          overwrite: false,
+        ),
+      );
+
+      final blocks = _allBlocks(exporter.request!.document!.blocks).toList();
+      final headings = blocks
+          .where((block) => block.kind == BusyBlockKind.heading)
+          .map((block) => block.plainText)
+          .toList();
+      final text = blocks.map((block) => block.plainText).join('\n');
+      expect(
+        headings,
+        containsAllInOrder(['BusyMark Guide', 'Legal information']),
+      );
+      expect(headings, isNot(contains('Short navigation title')));
+      expect(text, contains('Required legal notice.'));
+      expect(text, isNot(contains('Unreleased instructions.')));
+      final mapped = const MarkdownExportMapper().map(
+        exporter.request!.document!,
+      );
+      final legalHeading = mapped.blocks.singleWhere(
+        (block) =>
+            block.kind == MarkdownExportBlockKind.heading &&
+            block.inlines.any((inline) => inline.text == 'Legal information'),
+      );
+      expect(legalHeading.attributes['outlined'], isFalse);
     },
   );
 
@@ -344,6 +439,81 @@ void main() {
     expect(exporter.request, isNull);
   });
 
+  test('module validation errors prevent PDF compilation', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    await File(p.join(fixture.module.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" name="Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="missing.topic"/>
+</instance-profile>
+''');
+    final exporter = _RecordingMarkdownExporter();
+
+    await expectLater(
+      WritersidePdfExportService(markdownExporter: exporter).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'invalid-module.pdf'),
+          overwrite: false,
+        ),
+      ),
+      throwsA(
+        isA<WritersidePdfExportException>()
+            .having(
+              (error) => error.code,
+              'code',
+              WritersidePdfFailureCode.invalidRequest,
+            )
+            .having(
+              (error) => error.detail,
+              'detail',
+              contains('writerside.tree.missing-topic'),
+            ),
+      ),
+    );
+    expect(exporter.request, isNull);
+  });
+
+  test('module validation warnings are returned to the caller', () async {
+    final fixture = await _WritersideFixture.create();
+    addTearDown(fixture.dispose);
+    await File(
+      p.join(fixture.module.path, 'topics', 'unused.topic'),
+    ).writeAsString('<topic id="unused"><p>Untitled topic.</p></topic>');
+    final exporter = _RecordingMarkdownExporter();
+
+    final result = await WritersidePdfExportService(markdownExporter: exporter)
+        .export(
+          WritersidePdfExportRequest(
+            moduleRoot: fixture.module.path,
+            projectRoot: fixture.root.path,
+            instanceId: 'guide',
+            destinationPath: p.join(fixture.root.path, 'module-warning.pdf'),
+            overwrite: false,
+          ),
+        );
+
+    expect(
+      result.warnings,
+      contains(
+        isA<MarkdownPdfWarning>()
+            .having(
+              (warning) => warning.code,
+              'code',
+              MarkdownPdfWarningCode.writersideResolution,
+            )
+            .having(
+              (warning) => warning.destination,
+              'diagnostic',
+              'writerside.topic.missing-title',
+            ),
+      ),
+    );
+  });
+
   test(
     'nonfatal resolution diagnostics are returned as PDF warnings',
     () async {
@@ -422,7 +592,7 @@ void main() {
   });
 
   test(
-    'native Writerside demo runs through the bundled PDF pipeline',
+    'native Writerside demo compiles end to end with bundled Typst',
     () async {
       final output = await Directory.systemTemp.createTemp(
         'busymark-writerside-native-pdf-',
@@ -430,12 +600,11 @@ void main() {
       addTearDown(() => output.delete(recursive: true));
       final module = Directory('demo/writerside-instances').absolute;
       final destination = p.join(output.path, 'writerside-demo.pdf');
-      const service = WritersidePdfExportService(
+      final service = WritersidePdfExportService(
         markdownExporter: MarkdownPdfExportService(
           compilerLocator: TypstCompilerLocator(
-            environment: {'BUSYMARK_TYPST_PATH': '/bin/true'},
+            environment: {'BUSYMARK_TYPST_PATH': compiler!},
           ),
-          commandRunner: _PdfWritingTypstRunner(),
         ),
       );
 
@@ -449,15 +618,36 @@ void main() {
       );
 
       expect(await File(destination).length(), greaterThan(1024));
-      expect(result.pageCount, isNotNull);
+      expect(result.destinationPath, p.normalize(p.absolute(destination)));
     },
+    skip: compiler == null,
   );
+}
+
+String? _bundledTypstCompiler() {
+  for (final candidate in [
+    'build/linux/x64/release/bundle/libexec/busymark/typst',
+    'build/linux/x64/debug/bundle/libexec/busymark/typst',
+  ]) {
+    final absolute = p.absolute(candidate);
+    if (File(absolute).existsSync()) return absolute;
+  }
+  return null;
 }
 
 Iterable<BusyBlock> _allBlocks(Iterable<BusyBlock> blocks) sync* {
   for (final block in blocks) {
     yield block;
     yield* _allBlocks(block.children);
+  }
+}
+
+Iterable<MarkdownExportBlock> _allExportBlocks(
+  Iterable<MarkdownExportBlock> blocks,
+) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _allExportBlocks(block.children);
   }
 }
 
@@ -573,28 +763,5 @@ class _RecordingMarkdownExporter extends MarkdownPdfExportService {
       pageCount: 3,
       warnings: const [],
     );
-  }
-}
-
-class _PdfWritingTypstRunner implements TypstCommandRunner {
-  const _PdfWritingTypstRunner();
-
-  @override
-  Future<TypstProcessResult> compile({
-    required String executable,
-    required Directory workingDirectory,
-    required Duration timeout,
-    required MarkdownPdfCancellationToken cancellationToken,
-  }) async {
-    cancellationToken.throwIfCancelled();
-    final bytes = <int>[
-      ...'%PDF-1.7\n1 0 obj\n<< /Type /Page >>\nendobj\n'.codeUnits,
-      ...List<int>.filled(1200, 0x20),
-      ...'\n%%EOF\n'.codeUnits,
-    ];
-    await File(
-      p.join(workingDirectory.path, 'output.pdf'),
-    ).writeAsBytes(bytes, flush: true);
-    return const TypstProcessResult(exitCode: 0, stdout: '', stderr: '');
   }
 }

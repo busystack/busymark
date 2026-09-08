@@ -968,10 +968,8 @@ class _ResolveState {
 
   String? titleFor(WritersideDocument document) {
     final root = document.rootElement;
-    if (root == null) {
-      return context.topic.title;
-    }
-    final conditional = root.children
+    final titleScope = root?.children ?? document.nodes;
+    final conditional = titleScope
         .whereType<WritersideElementNode>()
         .where(
           (element) => element.semanticKind == WritersideSemanticKind.title,
@@ -979,7 +977,20 @@ class _ResolveState {
         .map((element) => element.plainText.trim())
         .where((title) => title.isNotEmpty)
         .firstOrNull;
-    return conditional ?? root.attributes['title']?.trim();
+    if (conditional != null) return conditional;
+    final rootTitle = root?.attributes['title']?.trim();
+    if (rootTitle?.isNotEmpty == true) return rootTitle;
+    final markdownTitle = document.nodes
+        .whereType<WritersideMarkdownBlockNode>()
+        .where(
+          (node) =>
+              node.block.kind == BusyBlockKind.heading &&
+              node.block.attributes['level'] == '1',
+        )
+        .map((node) => node.block.plainText.trim())
+        .where((title) => title.isNotEmpty)
+        .firstOrNull;
+    return markdownTitle ?? context.topic.title;
   }
 
   void _referenceDiagnostic({

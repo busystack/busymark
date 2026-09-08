@@ -19,8 +19,13 @@ class WritersideDocumentRenderer {
     bool includeTitleHeading = false,
     int titleHeadingLevel = 1,
   }) {
+    final hasGeneratedTitle =
+        includeTitleHeading && title?.trim().isNotEmpty == true;
+    final contentNodes = hasGeneratedTitle
+        ? _withoutMarkdownTopicTitle(document)
+        : document.nodes;
     var blocks = <BusyBlock>[
-      if (includeTitleHeading && title?.trim().isNotEmpty == true)
+      if (hasGeneratedTitle)
         BusyBlock(
           id: 'writerside-document-title',
           kind: BusyBlockKind.heading,
@@ -32,7 +37,7 @@ class WritersideDocumentRenderer {
           },
           isGenerated: true,
         ),
-      ..._blocks(document.nodes, headingLevel: titleHeadingLevel + 1),
+      ..._blocks(contentNodes, headingLevel: titleHeadingLevel + 1),
     ];
     final keys = <String>{};
     void inlineKeys(Iterable<BusyInline> values) {
@@ -152,6 +157,27 @@ class WritersideDocumentRenderer {
                       '',
       },
     );
+  }
+
+  List<WritersideDocumentNode> _withoutMarkdownTopicTitle(
+    WritersideDocument document,
+  ) {
+    if (document.format != WritersideDocumentFormat.markdown) {
+      return document.nodes;
+    }
+    final nodes = <WritersideDocumentNode>[];
+    var removed = false;
+    for (final node in document.nodes) {
+      if (!removed &&
+          node is WritersideMarkdownBlockNode &&
+          node.block.kind == BusyBlockKind.heading &&
+          node.block.attributes['level'] == '1') {
+        removed = true;
+        continue;
+      }
+      nodes.add(node);
+    }
+    return nodes;
   }
 
   List<BusyBlock> _blocks(
