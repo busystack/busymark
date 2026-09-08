@@ -109,6 +109,7 @@ abstract final class BusyMarkSizes {
       BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.sm;
   static const double wysiwygPrefixWidth = 30;
   static const double tableDialogWidth = 360;
+  static const double tablePickerHeight = 224;
   static const double tableMinWidth = 360;
   static const double markerDot = 6;
   static const double listMarkerTopInset = 7;
@@ -2036,6 +2037,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.autofocus = false,
     this.focusNode,
     this.keyboardType,
+    this.inputFormatters,
     this.minLines = 1,
     this.maxLines = 1,
     this.textInputAction,
@@ -2061,6 +2063,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
   final bool autofocus;
   final FocusNode? focusNode;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final int minLines;
   final int maxLines;
   final TextInputAction? textInputAction;
@@ -2110,6 +2113,7 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
         autofocus: widget.autofocus,
         focusNode: widget.focusNode,
         keyboardType: widget.keyboardType,
+        inputFormatters: widget.inputFormatters,
         minLines: widget.minLines,
         maxLines: widget.maxLines,
         textInputAction: widget.textInputAction,

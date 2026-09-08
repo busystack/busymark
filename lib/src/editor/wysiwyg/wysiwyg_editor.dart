@@ -4792,6 +4792,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }) {
     return _showEditorDialog<_TableDialogResult>(
       context,
+      maxWidth: BusyMarkSizes.tableDialogWidth,
       builder: (context) => _TableDialog(
         initialColumns: initialColumns,
         initialRows: initialRows,
@@ -7045,6 +7046,16 @@ class _TableDialogResult {
   final int rows;
 }
 
+abstract final class BusyMarkTableDialogKeys {
+  static const grid = ValueKey<String>('wysiwyg-table-size-grid');
+  static const columns = ValueKey<String>('wysiwyg-table-columns-field');
+  static const rows = ValueKey<String>('wysiwyg-table-rows-field');
+  static const submit = ValueKey<String>('wysiwyg-table-submit');
+
+  static ValueKey<String> gridCell({required int columns, required int rows}) =>
+      ValueKey<String>('wysiwyg-table-size-$columns-$rows');
+}
+
 class _TableDialog extends StatefulWidget {
   const _TableDialog({required this.initialColumns, required this.initialRows});
 
@@ -7058,53 +7069,105 @@ class _TableDialog extends StatefulWidget {
 class _TableDialogState extends State<_TableDialog> {
   late final TextEditingController _columnsController;
   late final TextEditingController _rowsController;
+  late final FocusNode _rowsFocusNode;
+  late final FocusNode _gridFocusNode;
+  late final ScrollController _gridScrollController;
+  late int _selectedColumns;
+  late int _selectedRows;
+  int? _hoveredColumns;
+  int? _hoveredRows;
+  bool _gridFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _columnsController = TextEditingController(
-      text:
-          '${widget.initialColumns.clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)}',
-    );
-    _rowsController = TextEditingController(
-      text:
-          '${widget.initialRows.clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)}',
-    );
+    _selectedColumns = widget.initialColumns
+        .clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)
+        .toInt();
+    _selectedRows = widget.initialRows
+        .clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)
+        .toInt();
+    _columnsController = TextEditingController(text: '$_selectedColumns');
+    _rowsController = TextEditingController(text: '$_selectedRows');
+    _rowsFocusNode = FocusNode(debugLabel: 'BusyMark table rows');
+    _gridFocusNode = FocusNode(debugLabel: 'BusyMark table size grid');
+    _gridScrollController = ScrollController();
   }
 
   @override
   void dispose() {
     _columnsController.dispose();
     _rowsController.dispose();
+    _rowsFocusNode.dispose();
+    _gridFocusNode.dispose();
+    _gridScrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final columns = _validDimension(
+      _columnsController,
+      min: BusyMarkSizes.tableMinColumns,
+      max: BusyMarkSizes.tableMaxColumns,
+    );
+    final rows = _validDimension(
+      _rowsController,
+      min: BusyMarkSizes.tableMinRows,
+      max: BusyMarkSizes.tableMaxRows,
+    );
+    final previewColumns = _hoveredColumns ?? _selectedColumns;
+    final previewRows = _hoveredRows ?? _selectedRows;
     return BusyMarkModalEditorScaffold(
       title: context.l10n.table,
       cancelLabel: context.l10n.cancel,
       saveLabel: context.l10n.insert,
       onCancel: () => Navigator.pop(context),
-      onSave: _submit,
+      saveKey: BusyMarkTableDialogKeys.submit,
+      onSave: columns != null && rows != null ? _submit : null,
       children: [
+        _buildSizeGrid(
+          context,
+          previewColumns: previewColumns,
+          previewRows: previewRows,
+        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
         BusyMarkGroupedList(
           filled: true,
           children: [
             BusyMarkGroupedTextEntry(
+              key: BusyMarkTableDialogKeys.columns,
               label: context.l10n.columns,
               controller: _columnsController,
               autofocus: true,
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               hintText: '2',
-              onSubmitted: (_) => _submit(),
+              errorText: columns == null
+                  ? '${BusyMarkSizes.tableMinColumns}–${BusyMarkSizes.tableMaxColumns}'
+                  : null,
+              textInputAction: TextInputAction.next,
+              onChanged: _handleColumnsChanged,
+              onSubmitted: (_) => _rowsFocusNode.requestFocus(),
             ),
             BusyMarkGroupedTextEntry(
+              key: BusyMarkTableDialogKeys.rows,
               label: context.l10n.rows,
               controller: _rowsController,
+              focusNode: _rowsFocusNode,
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               hintText: '2',
-              onSubmitted: (_) => _submit(),
+              errorText: rows == null
+                  ? '${BusyMarkSizes.tableMinRows}–${BusyMarkSizes.tableMaxRows}'
+                  : null,
+              textInputAction: TextInputAction.done,
+              onChanged: _handleRowsChanged,
+              onSubmitted: (_) {
+                if (_canSubmit) {
+                  _submit();
+                }
+              },
             ),
           ],
         ),
@@ -7113,19 +7176,242 @@ class _TableDialogState extends State<_TableDialog> {
     );
   }
 
-  void _submit() {
-    final columns = int.tryParse(_columnsController.text.trim()) ?? 2;
-    final rows = int.tryParse(_rowsController.text.trim()) ?? 2;
-    Navigator.pop(
-      context,
-      _TableDialogResult(
-        columns: columns
-            .clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)
-            .toInt(),
-        rows: rows
-            .clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)
-            .toInt(),
+  Widget _buildSizeGrid(
+    BuildContext context, {
+    required int previewColumns,
+    required int previewRows,
+  }) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Semantics(
+      label: context.l10n.table,
+      value:
+          '${context.l10n.columns}: $_selectedColumns, '
+          '${context.l10n.rows}: $_selectedRows',
+      child: Focus(
+        focusNode: _gridFocusNode,
+        onFocusChange: (focused) => setState(() => _gridFocused = focused),
+        onKeyEvent: _handleGridKeyEvent,
+        child: MouseRegion(
+          onExit: (_) => _clearGridPreview(),
+          child: DecoratedBox(
+            key: BusyMarkTableDialogKeys.grid,
+            decoration: BoxDecoration(
+              color: busyMarkGroupedSurfaceColor(context),
+              border: Border.all(
+                color: _gridFocused ? theme.colorScheme.primary : colors.border,
+                width: _gridFocused
+                    ? BusyMarkStroke.focus
+                    : BusyMarkStroke.hairline,
+              ),
+              borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+              child: SizedBox(
+                height: BusyMarkSizes.tablePickerHeight,
+                child: Scrollbar(
+                  controller: _gridScrollController,
+                  thumbVisibility: true,
+                  child: GridView.builder(
+                    controller: _gridScrollController,
+                    primary: false,
+                    padding: const EdgeInsetsDirectional.only(
+                      end: BusyMarkSpacing.sm,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: BusyMarkSizes.tableMaxColumns,
+                          mainAxisSpacing: BusyMarkSpacing.xs,
+                          crossAxisSpacing: BusyMarkSpacing.xs,
+                        ),
+                    itemCount:
+                        BusyMarkSizes.tableMaxColumns *
+                        BusyMarkSizes.tableMaxRows,
+                    itemBuilder: (context, index) {
+                      final row = index ~/ BusyMarkSizes.tableMaxColumns + 1;
+                      final column = index % BusyMarkSizes.tableMaxColumns + 1;
+                      final highlighted =
+                          column <= previewColumns && row <= previewRows;
+                      final selected =
+                          column == _selectedColumns && row == _selectedRows;
+                      final label =
+                          '${context.l10n.columns}: $column, '
+                          '${context.l10n.rows}: $row';
+                      return Semantics(
+                        button: true,
+                        selected: selected,
+                        label: label,
+                        onTap: () => _selectGridSize(column, row),
+                        child: ExcludeSemantics(
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            onEnter: (_) => _previewGridSize(column, row),
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                _gridFocusNode.requestFocus();
+                                _selectGridSize(column, row);
+                              },
+                              child: DecoratedBox(
+                                key: BusyMarkTableDialogKeys.gridCell(
+                                  columns: column,
+                                  rows: row,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: highlighted
+                                      ? theme.colorScheme.primary
+                                      : colors.dialog,
+                                  border: Border.all(
+                                    color: highlighted
+                                        ? theme.colorScheme.primary
+                                        : colors.border,
+                                    width: BusyMarkStroke.hairline,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    BusyMarkRadius.sm,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  int? _validDimension(
+    TextEditingController controller, {
+    required int min,
+    required int max,
+  }) {
+    final value = int.tryParse(controller.text.trim());
+    return value != null && value >= min && value <= max ? value : null;
+  }
+
+  bool get _canSubmit =>
+      _validDimension(
+            _columnsController,
+            min: BusyMarkSizes.tableMinColumns,
+            max: BusyMarkSizes.tableMaxColumns,
+          ) !=
+          null &&
+      _validDimension(
+            _rowsController,
+            min: BusyMarkSizes.tableMinRows,
+            max: BusyMarkSizes.tableMaxRows,
+          ) !=
+          null;
+
+  void _handleColumnsChanged(String _) {
+    final columns = _validDimension(
+      _columnsController,
+      min: BusyMarkSizes.tableMinColumns,
+      max: BusyMarkSizes.tableMaxColumns,
+    );
+    setState(() {
+      _hoveredColumns = null;
+      _hoveredRows = null;
+      if (columns != null) {
+        _selectedColumns = columns;
+      }
+    });
+  }
+
+  void _handleRowsChanged(String _) {
+    final rows = _validDimension(
+      _rowsController,
+      min: BusyMarkSizes.tableMinRows,
+      max: BusyMarkSizes.tableMaxRows,
+    );
+    setState(() {
+      _hoveredColumns = null;
+      _hoveredRows = null;
+      if (rows != null) {
+        _selectedRows = rows;
+      }
+    });
+  }
+
+  void _previewGridSize(int columns, int rows) {
+    if (_hoveredColumns == columns && _hoveredRows == rows) {
+      return;
+    }
+    setState(() {
+      _hoveredColumns = columns;
+      _hoveredRows = rows;
+    });
+  }
+
+  void _clearGridPreview() {
+    if (_hoveredColumns == null && _hoveredRows == null) {
+      return;
+    }
+    setState(() {
+      _hoveredColumns = null;
+      _hoveredRows = null;
+    });
+  }
+
+  void _selectGridSize(int columns, int rows) {
+    _columnsController.text = '$columns';
+    _rowsController.text = '$rows';
+    setState(() {
+      _selectedColumns = columns;
+      _selectedRows = rows;
+      _hoveredColumns = null;
+      _hoveredRows = null;
+    });
+  }
+
+  KeyEventResult _handleGridKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    var columns = _selectedColumns;
+    var rows = _selectedRows;
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      columns = math.max(BusyMarkSizes.tableMinColumns, columns - 1);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      columns = math.min(BusyMarkSizes.tableMaxColumns, columns + 1);
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      rows = math.max(BusyMarkSizes.tableMinRows, rows - 1);
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      rows = math.min(BusyMarkSizes.tableMaxRows, rows + 1);
+    } else if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.space) {
+      return KeyEventResult.handled;
+    } else {
+      return KeyEventResult.ignored;
+    }
+    _selectGridSize(columns, rows);
+    return KeyEventResult.handled;
+  }
+
+  void _submit() {
+    final columns = _validDimension(
+      _columnsController,
+      min: BusyMarkSizes.tableMinColumns,
+      max: BusyMarkSizes.tableMaxColumns,
+    );
+    final rows = _validDimension(
+      _rowsController,
+      min: BusyMarkSizes.tableMinRows,
+      max: BusyMarkSizes.tableMaxRows,
+    );
+    if (columns == null || rows == null) {
+      return;
+    }
+    Navigator.pop(context, _TableDialogResult(columns: columns, rows: rows));
   }
 }

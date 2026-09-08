@@ -5864,6 +5864,141 @@ void main() {}
     expect(controller.markdown, '');
   });
 
+  testWidgets('WYSIWYG table dialog validates and synchronizes its size grid', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 700,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    tester
+        .widget<IconButton>(
+          find.ancestor(
+            of: find.byIcon(BusyMarkGlyphs.table),
+            matching: find.byType(IconButton),
+          ),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    final columnsField = find.descendant(
+      of: find.byKey(BusyMarkTableDialogKeys.columns),
+      matching: find.byType(EditableText),
+    );
+    final rowsField = find.descendant(
+      of: find.byKey(BusyMarkTableDialogKeys.rows),
+      matching: find.byType(EditableText),
+    );
+    ElevatedButton submitButton() => tester.widget<ElevatedButton>(
+      find.byKey(BusyMarkTableDialogKeys.submit),
+    );
+    String fieldText(Finder finder) =>
+        tester.widget<EditableText>(finder).controller.text;
+
+    expect(find.byKey(BusyMarkTableDialogKeys.grid), findsOneWidget);
+    expect(fieldText(columnsField), '2');
+    expect(fieldText(rowsField), '2');
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(
+        find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Columns: 4  ·  Rows: 3'), findsNothing);
+    expect(fieldText(columnsField), '2');
+    expect(fieldText(rowsField), '2');
+    await mouse.moveTo(const Offset(1, 1));
+    await tester.pump();
+
+    await tester.enterText(columnsField, 'letters');
+    await tester.pump();
+    expect(fieldText(columnsField), isEmpty);
+    expect(find.text('1–12'), findsOneWidget);
+    expect(submitButton().onPressed, isNull);
+
+    await tester.enterText(columnsField, '13');
+    await tester.pump();
+    expect(fieldText(columnsField), '13');
+    expect(find.text('1–12'), findsOneWidget);
+    expect(submitButton().onPressed, isNull);
+
+    await tester.tap(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+    );
+    await tester.pump();
+    expect(fieldText(columnsField), '4');
+    expect(fieldText(rowsField), '3');
+    expect(find.text('1–12'), findsNothing);
+    expect(submitButton().onPressed, isNotNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldText(columnsField), '5');
+    expect(fieldText(rowsField), '4');
+
+    await tester.enterText(columnsField, '6');
+    await tester.enterText(rowsField, '4');
+    await tester.pump();
+    final selectedCell = tester.widget<DecoratedBox>(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 6, rows: 4)),
+    );
+    final unselectedCell = tester.widget<DecoratedBox>(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 7, rows: 4)),
+    );
+    final dialogScheme = Theme.of(
+      tester.element(find.byKey(BusyMarkTableDialogKeys.grid)),
+    ).colorScheme;
+    expect(
+      (selectedCell.decoration as BoxDecoration).color,
+      dialogScheme.primary,
+    );
+    expect(
+      (unselectedCell.decoration as BoxDecoration).color,
+      isNot(dialogScheme.primary),
+    );
+
+    await tester.tap(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(BusyMarkTableDialogKeys.submit));
+    await tester.pumpAndSettle();
+
+    final inserted = parser
+        .parse(filePath: 'topic.md', source: markdown)
+        .busyDocument
+        .blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table);
+    expect(inserted.children, hasLength(4));
+    for (final row in inserted.children) {
+      expect(row.children, hasLength(4));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   test('table alignment survives parsing, edits, and structural changes', () {
     const source =
         '| Left | Center | Right | Default |\n'
