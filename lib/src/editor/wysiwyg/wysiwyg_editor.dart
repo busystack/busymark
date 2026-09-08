@@ -6,6 +6,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:path/path.dart' as p;
@@ -1885,19 +1886,27 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       viewportBlockId = _viewportBlockIds[positions.first.index];
       viewportAlignment = positions.first.itemLeadingEdge.clamp(0.0, 1.0);
     }
-    report(
-      documentId ?? _documentId,
-      WysiwygEditorSessionState(
-        activeBlockId: _activeBlockId,
-        activeCellId: _activeCellId,
-        anchorBlockId: anchorBlockId,
-        anchorOffset: anchorOffset,
-        extentBlockId: extentBlockId,
-        extentOffset: extentOffset,
-        viewportBlockId: viewportBlockId,
-        viewportAlignment: viewportAlignment,
-      ),
+    final targetDocumentId = documentId ?? _documentId;
+    final session = WysiwygEditorSessionState(
+      activeBlockId: _activeBlockId,
+      activeCellId: _activeCellId,
+      anchorBlockId: anchorBlockId,
+      anchorOffset: anchorOffset,
+      extentBlockId: extentBlockId,
+      extentOffset: extentOffset,
+      viewportBlockId: viewportBlockId,
+      viewportAlignment: viewportAlignment,
     );
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          report(targetDocumentId, session);
+        }
+      });
+      return;
+    }
+    report(targetDocumentId, session);
   }
 
   void _scheduleHeadingScroll() {
@@ -2445,6 +2454,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   KeyEventResult _handleBlockKeyEvent(String blockId, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     final commands =
