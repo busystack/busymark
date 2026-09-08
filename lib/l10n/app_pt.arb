@@ -3008,7 +3008,7 @@
   "aiCloudConsentTitle": "Enviar conteúdo para {provider}?",
   "aiCloudConsentEnable": "Ativar {provider}",
   "aiCloudConsentMessage": "Apenas o conteúdo apresentado em cada caixa de diálogo de revisão de IA é enviado. Os pedidos não mantêm estado, as propostas exigem revisão e a chave de API é guardada no cofre de credenciais do sistema Linux.",
-  "aiCloudConsentRequired": "Primeiro, confirme o partilha de dados com {provider} em Definições → IA.",
+  "aiCloudConsentRequired": "Primeiro, confirme a partilha de dados com {provider} em Definições → IA.",
   "aiGenerationVerified": "Geração verificada com {model}. {count, plural, =0{Há 0 modelos compatíveis disponíveis} =1{Há 1 modelo compatível disponível} other{Há {count} modelos compatíveis disponíveis}}.",
   "aiColdStartObserved": "Foi detetado um arranque a frio do modelo local.",
   "aiNoCompatibleModels": "Não há nenhum modelo compatível de geração de texto disponível.",

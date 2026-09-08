@@ -3640,7 +3640,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String aiCloudConsentRequired(String provider) {
-    return 'Primeiro, confirme o partilha de dados com $provider em Definições → IA.';
+    return 'Primeiro, confirme a partilha de dados com $provider em Definições → IA.';
   }
 
   @override
