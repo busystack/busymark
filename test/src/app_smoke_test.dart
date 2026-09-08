@@ -1889,12 +1889,90 @@ void main() {
     await tester.tap(find.text(l10n.toc));
     await tester.pump(const Duration(milliseconds: 300));
 
-    final guideInstance = find.byKey(
-      const ValueKey('writerside-instance-guide'),
+    final instanceSelector = find.byKey(
+      const ValueKey('writerside-instance-selector'),
     );
-    final apiInstance = find.byKey(const ValueKey('writerside-instance-api'));
-    expect(guideInstance, findsOneWidget);
-    expect(apiInstance, findsOneWidget);
+    expect(instanceSelector, findsOneWidget);
+    final instanceSelectorButton = find.descendant(
+      of: instanceSelector,
+      matching: find.byType(FilledButton),
+    );
+    expect(instanceSelectorButton, findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(instanceSelectorButton)
+          .style
+          ?.backgroundColor
+          ?.resolve({}),
+      BusyMarkLinuxPalette.transparent,
+    );
+    final instanceSelectorRect = tester.getRect(instanceSelectorButton);
+    final tocHeaderRowRect = tester.getRect(
+      find.byKey(const ValueKey('workspace-sidebar-first-content')),
+    );
+    final firstTocRowRect = tester.getRect(
+      find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+    );
+    final primaryIconRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.byType(Icon),
+      ),
+    );
+    final instanceIconRect = tester.getRect(
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    final firstTocIconRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        matching: find.byIcon(BusyMarkGlyphs.document),
+      ),
+    );
+    expect(instanceIconRect.left, primaryIconRect.left);
+    expect(firstTocIconRect.left, greaterThan(primaryIconRect.left));
+    expect(
+      firstTocIconRect.left - primaryIconRect.left,
+      lessThanOrEqualTo(BusyMarkSpacing.smPlus),
+    );
+    expect(tocHeaderRowRect.left, firstTocRowRect.left);
+    expect(tocHeaderRowRect.right, firstTocRowRect.right);
+    expect(instanceSelectorRect.left, tocHeaderRowRect.left);
+    expect(instanceSelectorRect.right, lessThan(tocHeaderRowRect.right));
+    final primaryMenuRect = tester.getRect(
+      find.byTooltip(l10n.sidebarViewMenu),
+    );
+    final tocMenuRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(
+      tester.getCenter(
+        find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+      ),
+    );
+    await tester.pump();
+    final tocRowMenuRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(tocMenuRect.center.dx, primaryMenuRect.center.dx);
+    expect(tocRowMenuRect.center.dx, primaryMenuRect.center.dx);
+    expect(find.text(l10n.instances), findsNothing);
+    expect(
+      find.byKey(const ValueKey('writerside-instance-guide')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('writerside-instance-api')), findsNothing);
     expect(
       find.byKey(const ValueKey('writerside-module-selector')),
       findsOneWidget,
@@ -1903,26 +1981,56 @@ void main() {
     await tester.tap(find.text('shared-docs'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(controller.selectedWritersideModuleId, 'shared-docs');
-    await tester.tap(apiInstance);
-    await tester.pump(const Duration(milliseconds: 200));
-    expect(controller.selectedWritersideInstanceId, 'api');
-    await tester.tap(guideInstance);
-    await tester.pump(const Duration(milliseconds: 200));
     final guideIcon = tester.widget<Icon>(
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    await openPopup(instanceSelector);
+    final apiInstance = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<String> &&
+          widget.label.contains('API Reference'),
+    );
+    final guideInstance = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<String> &&
+          widget.label.contains('Guide'),
+    );
+    expect(apiInstance, findsOneWidget);
+    expect(guideInstance, findsOneWidget);
+    final guideOptionIcon = tester.widget<Icon>(
       find.descendant(
         of: guideInstance,
         matching: find.byIcon(BusyMarkGlyphs.tree),
       ),
     );
-    final apiIcon = tester.widget<Icon>(
+    final apiOptionIcon = tester.widget<Icon>(
       find.descendant(
         of: apiInstance,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    expect(guideOptionIcon.color, guideIcon.color);
+    expect(apiOptionIcon.color, isNotNull);
+    expect(apiOptionIcon.color, isNot(guideOptionIcon.color));
+    await tester.tap(apiInstance);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.selectedWritersideInstanceId, 'api');
+    final apiIcon = tester.widget<Icon>(
+      find.descendant(
+        of: instanceSelector,
         matching: find.byIcon(BusyMarkGlyphs.tree),
       ),
     );
     expect(guideIcon.color, isNotNull);
     expect(apiIcon.color, isNotNull);
     expect(guideIcon.color, isNot(apiIcon.color));
+    await openPopup(instanceSelector);
+    expect(guideInstance, findsOneWidget);
+    await tester.tap(guideInstance);
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Nested entry'), findsOneWidget);
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
@@ -2019,6 +2127,7 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, isNull);
     expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
+    await openPopup(instanceSelector);
     await tester.tap(apiInstance);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
@@ -2036,6 +2145,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
+    await openPopup(instanceSelector);
     await tester.tap(guideInstance);
     await tester.pump(const Duration(milliseconds: 300));
 

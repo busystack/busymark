@@ -28,6 +28,7 @@ void main() {
           NativeMenuEntry.command(
             label: 'Open',
             iconName: 'document-open-symbolic',
+            iconColorArgb: 0xff3584e4,
             shortcut: 'Ctrl+O',
             checkable: true,
             selected: true,
@@ -49,6 +50,7 @@ void main() {
           {
             'label': 'Open',
             'icon': 'document-open-symbolic',
+            'iconColor': 0xff3584e4,
             'shortcut': 'Ctrl+O',
             'enabled': true,
             'checkable': true,

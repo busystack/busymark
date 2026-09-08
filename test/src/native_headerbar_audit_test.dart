@@ -1611,7 +1611,9 @@ void main() {
     expect(nativeMenu, isNot(contains('wl_display_')));
     expect(service, contains('final String? shortcut'));
     expect(service, contains('final String? iconName'));
+    expect(service, contains('final int? iconColorArgb'));
     expect(service, contains("'icon': iconName!"));
+    expect(service, contains("'iconColor': iconColorArgb!"));
     expect(service, contains("'shortcut': shortcut!"));
     expect(service, contains('this.checkable = false'));
     expect(service, contains('separator = false'));
@@ -1621,6 +1623,9 @@ void main() {
       design,
       contains('iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon)'),
     );
+    expect(design, contains('iconColorArgb: item.iconColor?.toARGB32()'));
+    expect(nativeMenu, contains('create_native_menu_icon('));
+    expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
     expect(design, contains('checkable: item.trailingCheck'));
     expect(design, contains('class BusyMarkMenuButton<T>'));

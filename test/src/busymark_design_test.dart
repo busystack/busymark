@@ -168,10 +168,10 @@ void main() {
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
     expect(tocLtr.top, 0);
-    expect(tocLtr.left, BusyMarkSpacing.sm);
+    expect(tocLtr.left, 0);
     expect(tocLtr.right, 0);
     expect(tocRtl.left, 0);
-    expect(tocRtl.right, BusyMarkSpacing.sm);
+    expect(tocRtl.right, 0);
   });
 
   testWidgets('header controls delegate geometry and elevation to Yaru', (
@@ -616,6 +616,59 @@ void main() {
       });
     },
   );
+
+  testWidgets('colored popup icons stay on the native menu path', (
+    tester,
+  ) async {
+    const channel = MethodChannel('busymark/test/colored-popup-menu');
+    MethodCall? showCall;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'show') {
+            showCall = call;
+            return 0;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    String? selection;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BusyMarkHeaderPopupMenuButton<String>(
+            tooltip: 'Colored menu',
+            icon: BusyMarkGlyphs.menuVertical,
+            nativeMenuService: const NativeMenuService(channel: channel),
+            itemBuilder: (_) => [
+              BusyMarkPopupMenuItem<String>(
+                value: 'guide',
+                label: 'Guide',
+                icon: BusyMarkGlyphs.tree,
+                iconColor: Colors.orange,
+              ),
+            ],
+            onSelected: (value) => selection = value,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Colored menu'));
+    await tester.pumpAndSettle();
+
+    expect(selection, 'guide');
+    expect(showCall?.method, 'show');
+    final arguments = showCall?.arguments as Map<Object?, Object?>;
+    expect(
+      (arguments['entries'] as List<Object?>).single,
+      containsPair('iconColor', Colors.orange.toARGB32()),
+    );
+    expect(find.text('Guide'), findsNothing);
+  });
 
   testWidgets('header popup preserves asynchronous menu loading', (
     tester,
