@@ -1782,7 +1782,11 @@ void main() {
     final tableControlMenu = RegExp(
       r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',
     ).firstMatch(blockWidgets)!.group(0)!;
-    expect(tableControlMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(
+      tableControlMenu,
+      contains('BusyMarkHeaderPopupMenuButton<_TableControlAction>'),
+    );
+    expect(tableControlMenu, isNot(contains('BusyMarkCompactIconButton(')));
     expect(tableControlMenu, isNot(contains('theme.copyWith')));
     expect(tableControlMenu, isNot(contains('color: colors.popover')));
     expect(tableControlMenu, isNot(contains('elevation: BusyMarkElevation')));

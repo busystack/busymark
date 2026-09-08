@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 
 import '../markdown/preview_model.dart';
 import '../app/localization.dart';
+import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../markdown/table_grid.dart';
 
@@ -73,7 +74,9 @@ class _WritersideTableViewState extends State<WritersideTableView> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: _TableLayout(
         grid: grid,
-        fixed: widget.block.attributes['column-width'] == 'fixed',
+        fixed:
+            widget.block.attributes['element'] != 'table' ||
+            widget.block.attributes['column-width'] == 'fixed',
         sticky:
             widget.block.attributes['sticky-header'] == 'true' &&
             rows.first.attributes['header'] == 'true',
@@ -97,10 +100,13 @@ class _WritersideTableViewState extends State<WritersideTableView> {
                   color: header
                       ? scheme.surfaceContainerHighest
                       : scheme.surface,
-                  border: Border.all(color: scheme.outlineVariant, width: 0.5),
+                  border: Border.all(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: BusyMarkInsets.documentTableCell,
                   child: sortable
                       ? InkWell(
                           onTap: () => setState(() {

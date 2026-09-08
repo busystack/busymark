@@ -145,6 +145,118 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Markdown table keeps empty columns equal width', (tester) async {
+    final block = PreviewBlock(
+      kind: PreviewBlockKind.table,
+      text: '',
+      children: [
+        const PreviewBlock(
+          kind: PreviewBlockKind.table,
+          text: '',
+          attributes: {'header': 'true'},
+          children: [
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: 'Short',
+              attributes: {'test-id': 'first'},
+            ),
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: '',
+              attributes: {'test-id': 'empty'},
+            ),
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: 'A much longer heading',
+              attributes: {'test-id': 'last'},
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: WritersideTableView(
+              block: block,
+              cellBuilder: (cell, _) => SizedBox(
+                key: ValueKey<String>(cell.attributes['test-id']!),
+                width: double.infinity,
+                child: Text(cell.text),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final widths = [
+      for (final id in ['first', 'empty', 'last'])
+        tester.getSize(find.byKey(ValueKey(id))).width,
+    ];
+    expect(widths[1], closeTo(widths[0], 0.01));
+    expect(widths[2], closeTo(widths[0], 0.01));
+  });
+
+  testWidgets('Writerside table preserves declared column width', (
+    tester,
+  ) async {
+    const block = PreviewBlock(
+      kind: PreviewBlockKind.table,
+      text: '',
+      attributes: {'element': 'table', 'column-width': 'fixed'},
+      children: [
+        PreviewBlock(
+          kind: PreviewBlockKind.table,
+          text: '',
+          attributes: {'header': 'true'},
+          children: [
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: 'Fixed',
+              attributes: {'width': '120', 'test-id': 'fixed'},
+            ),
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: 'Remaining',
+              attributes: {'test-id': 'remaining'},
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 600,
+            child: WritersideTableView(
+              block: block,
+              cellBuilder: (cell, _) => SizedBox(
+                key: ValueKey<String>(cell.attributes['test-id']!),
+                width: double.infinity,
+                child: Text(cell.text),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('fixed'))).width,
+      lessThan(tester.getSize(find.byKey(const ValueKey('remaining'))).width),
+    );
+  });
+
   testWidgets('table spans preserve geometry and sticky header position', (
     tester,
   ) async {

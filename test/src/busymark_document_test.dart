@@ -5998,6 +5998,7 @@ void main() {}
     final widgetTable = parsed.busyDocument.blocks.singleWhere(
       (block) => block.kind == BusyBlockKind.table,
     );
+    final introBlockId = parsed.busyDocument.blocks.first.id;
     final headerCellId = widgetTable.children.first.children.first.id;
     final bodyCellId = widgetTable.children[1].children.first.id;
 
@@ -6027,8 +6028,31 @@ void main() {}
     expect(deleteTableFinder, findsOneWidget);
     expect(
       find.descendant(of: tableFinder, matching: deleteTableFinder),
-      findsOneWidget,
+      findsNothing,
     );
+    final tableWidget = tester.widget<Table>(tableFinder);
+    final tableSizeBeforeControls = tester.getSize(tableFinder);
+    expect(tableWidget.children, hasLength(2));
+    for (final row in tableWidget.children) {
+      expect(row.children, hasLength(2));
+    }
+    expect(
+      tester.getSize(tableFinder).width,
+      tester
+          .getSize(find.byKey(ValueKey('wysiwyg-field-topic.md-$introBlockId')))
+          .width,
+    );
+    final tableScheme = Theme.of(tester.element(tableFinder)).colorScheme;
+    expect(
+      (tableWidget.children.first.decoration! as BoxDecoration).color,
+      tableScheme.surfaceContainerHighest,
+    );
+    expect(
+      (tableWidget.children.last.decoration! as BoxDecoration).color,
+      tableScheme.surface,
+    );
+    expect(tableWidget.border!.top.color, tableScheme.outlineVariant);
+    expect(tableWidget.border!.top.width, BusyMarkStroke.tableGrid);
     final framedTableAncestors = <DecoratedBox>[];
     tester.element(tableFinder).visitAncestorElements((element) {
       if (element.widget is BusyMarkWysiwygBlockField) {
@@ -6041,10 +6065,10 @@ void main() {}
     });
     expect(framedTableAncestors, isEmpty);
     expect(busyMarkWysiwygContentPadding(widgetTable), EdgeInsets.zero);
-    expect(find.byTooltip('Column 1'), findsOneWidget);
-    expect(find.byTooltip('Column 2'), findsOneWidget);
-    expect(find.byTooltip('Row 1'), findsOneWidget);
-    expect(find.byTooltip('Row 2'), findsOneWidget);
+    expect(find.byTooltip('Column 1'), findsNothing);
+    expect(find.byTooltip('Column 2'), findsNothing);
+    expect(find.byTooltip('Row 1'), findsNothing);
+    expect(find.byTooltip('Row 2'), findsNothing);
 
     final headerField = tester.widget<TextField>(
       find.byKey(ValueKey(headerCellId)),
@@ -6063,8 +6087,51 @@ void main() {}
       BusyMarkDocumentTextGeometry.selectionHeightStyle,
     );
 
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(find.byKey(ValueKey(headerCellId))),
+    );
+    await tester.pump();
+    expect(find.byTooltip('Column 1'), findsOneWidget);
+    expect(find.byTooltip('Row 1'), findsOneWidget);
+    expect(find.byTooltip('Column 2'), findsNothing);
+    expect(find.byTooltip('Row 2'), findsNothing);
+    expect(tester.getSize(tableFinder), tableSizeBeforeControls);
+    for (final tooltip in ['Delete table', 'Column 1', 'Row 1']) {
+      expect(
+        tester.getSize(find.byTooltip(tooltip)),
+        const Size.square(BusyMarkSizes.iconButton),
+      );
+    }
+    final tableRect = tester.getRect(tableFinder);
+    final deleteRect = tester.getRect(find.byTooltip('Delete table'));
+    final columnRect = tester.getRect(find.byTooltip('Column 1'));
+    final rowRect = tester.getRect(find.byTooltip('Row 1'));
+    expect(
+      deleteRect.left,
+      greaterThanOrEqualTo(tableRect.right + BusyMarkSpacing.xs),
+    );
+    expect(
+      deleteRect.bottom,
+      lessThanOrEqualTo(tableRect.top - BusyMarkSpacing.xs),
+    );
+    expect(
+      columnRect.bottom,
+      lessThanOrEqualTo(tableRect.top - BusyMarkSpacing.xs),
+    );
+    expect(
+      rowRect.right,
+      lessThanOrEqualTo(tableRect.left - BusyMarkSpacing.xs),
+    );
+
+    await mouse.moveTo(tester.getCenter(find.byTooltip('Column 1')));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Column 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
     headerField.onChanged!('Name');
     await tester.pump();
+    expect(tester.takeException(), isNull);
     bodyField.onChanged!('Alice');
     await tester.pump();
 
@@ -6099,6 +6166,66 @@ void main() {}
 
     expect(find.byType(Table), findsNothing);
     expect(markdown, 'Intro\n');
+  });
+
+  testWidgets('WYSIWYG table overlay menus survive structural rebuilds', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final headerCellId =
+        parsed.busyDocument.blocks.single.children.first.children.first.id;
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(find.byKey(ValueKey(headerCellId))),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Row 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Insert row below'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(TextField), findsNWidgets(6));
+
+    await mouse.moveTo(const Offset(1, 1));
+    await mouse.moveTo(tester.getCenter(find.byKey(ValueKey(headerCellId))));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Column 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Insert column right'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(TextField), findsNWidgets(9));
+    expect(markdown, contains('| A |  | B |'));
+    final columnWidths = tester.widget<Table>(find.byType(Table)).columnWidths!;
+    expect(columnWidths, hasLength(3));
+    for (final width in columnWidths.values) {
+      expect(width, isA<FlexColumnWidth>());
+      expect((width as FlexColumnWidth).value, 1);
+    }
   });
 
   test('WYSIWYG list indent outdent and task toggle commands serialize', () {

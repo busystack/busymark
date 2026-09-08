@@ -109,10 +109,7 @@ abstract final class BusyMarkSizes {
       BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.sm;
   static const double wysiwygPrefixWidth = 30;
   static const double tableDialogWidth = 360;
-  static const double tableColumnBaseWidth = 164;
   static const double tableMinWidth = 360;
-  static const double tableMaxWidth = 980;
-  static const double tableControl = 34;
   static const double markerDot = 6;
   static const double listMarkerTopInset = 7;
   static const double thematicBreakHandleWidth = 44;
@@ -138,6 +135,7 @@ abstract final class BusyMarkElevation {
 
 abstract final class BusyMarkStroke {
   static const double hairline = 1;
+  static const double tableGrid = 0.5;
   static const double focus = kYaruFocusBorderWidth;
   static const double sourceCursor = 1.4;
   static const double thematicBreak = 1.6;
@@ -319,10 +317,7 @@ abstract final class BusyMarkInsets {
     vertical: BusyMarkSpacing.sm,
   );
   static const documentCalloutContent = EdgeInsets.all(BusyMarkSpacing.md);
-  static const documentTableCell = EdgeInsets.symmetric(
-    horizontal: BusyMarkSpacing.sm,
-    vertical: BusyMarkSpacing.xs,
-  );
+  static const documentTableCell = EdgeInsets.all(BusyMarkSpacing.smPlus);
   static const sectionLabel = EdgeInsets.fromLTRB(
     BusyMarkSpacing.md,
     BusyMarkSpacing.mdPlus,
@@ -344,7 +339,7 @@ abstract final class BusyMarkInsets {
   );
   static const wysiwygContainerBlock = documentCalloutBlock;
   static const wysiwygTableBlock = EdgeInsets.symmetric(
-    vertical: BusyMarkSpacing.smPlus,
+    vertical: BusyMarkSpacing.md,
   );
   static const wysiwygDefaultBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.xs,

@@ -447,6 +447,10 @@ void main() {
     expect(portuguese.file, 'Ficheiro');
     expect(portuguese.link, 'Ligação');
     expect(portuguese.exportReset, 'Restaurar predefinições');
+    expect(
+      portuguese.aiCloudConsentRequired('Acme AI'),
+      'Primeiro, confirme a partilha de dados com Acme AI em Definições → IA.',
+    );
     final brazilian = lookupAppLocalizations(const Locale('pt', 'BR'));
     expect(brazilian.file, 'Arquivo');
     expect(brazilian.link, 'Link');
@@ -481,17 +485,23 @@ void main() {
     expect(chinese.workspaceRecoveryRestored(3), '已恢复 3 个未保存的文档。请在保存或放弃前逐一检查。');
   });
 
-  test('Russian and Ukrainian count messages preserve the supplied count', () {
-    const counts = <int>[1, 2, 5, 11, 21, 22, 31];
-    final localizations = <String, AppLocalizations>{
-      'ru': lookupAppLocalizations(const Locale('ru')),
-      'uk': lookupAppLocalizations(const Locale('uk')),
+  test('Russian and Ukrainian count messages render every reviewed form', () {
+    const counts = <int>[1, 2, 5, 11, 21, 22, 31, 101];
+    final localizations = <String, (AppLocalizations, _ExpectedMessages)>{
+      'ru': (
+        lookupAppLocalizations(const Locale('ru')),
+        _expectedRussianMessages,
+      ),
+      'uk': (
+        lookupAppLocalizations(const Locale('uk')),
+        _expectedUkrainianMessages,
+      ),
     };
 
     for (final localeEntry in localizations.entries) {
-      final l10n = localeEntry.value;
+      final (l10n, expectedMessages) = localeEntry.value;
       for (final count in counts) {
-        final messages = <String, String>{
+        final actual = <String, String>{
           'unsavedChangesMultipleMessage': l10n.unsavedChangesMultipleMessage(
             count,
           ),
@@ -508,39 +518,13 @@ void main() {
           'gitConfirmDiscardUntracked': l10n.gitConfirmDiscardUntracked(count),
           'gitConfirmDiscardMixed': l10n.gitConfirmDiscardMixed(count),
         };
-        for (final messageEntry in messages.entries) {
-          expect(
-            messageEntry.value,
-            contains('$count'),
-            reason:
-                '${localeEntry.key}.${messageEntry.key} must display $count',
-          );
-        }
         expect(
-          l10n.unsavedChangesMultipleMessage(count),
-          endsWith('?'),
-          reason: '${localeEntry.key} must preserve the save question',
+          actual,
+          expectedMessages(count),
+          reason: '${localeEntry.key} messages for count $count',
         );
       }
     }
-
-    final russian = localizations['ru']!;
-    expect(russian.usageCount(1), '1 использование');
-    expect(russian.usageCount(2), '2 использования');
-    expect(russian.usageCount(5), '5 использований');
-    expect(russian.usageCount(11), '11 использований');
-    expect(russian.usageCount(21), '21 использование');
-    expect(russian.usageCount(22), '22 использования');
-    expect(russian.usageCount(31), '31 использование');
-
-    final ukrainian = localizations['uk']!;
-    expect(ukrainian.usageCount(1), '1 використання');
-    expect(ukrainian.usageCount(2), '2 використання');
-    expect(ukrainian.usageCount(5), '5 використань');
-    expect(ukrainian.usageCount(11), '11 використань');
-    expect(ukrainian.usageCount(21), '21 використання');
-    expect(ukrainian.usageCount(22), '22 використання');
-    expect(ukrainian.usageCount(31), '31 використання');
   });
 
   test('Portuguese count messages distinguish singular and plural', () {
@@ -570,6 +554,10 @@ void main() {
 
     final portuguese = locales['pt']!;
     expect(
+      portuguese.aiContextDisclosure(0),
+      'O fornecedor selecionado receberá 0 carateres do contexto apresentado.',
+    );
+    expect(
       portuguese.aiContextDisclosure(1),
       'O fornecedor selecionado receberá 1 caráter do contexto apresentado.',
     );
@@ -579,6 +567,10 @@ void main() {
     );
 
     final brazilian = locales['pt-BR']!;
+    expect(
+      brazilian.aiContextDisclosure(0),
+      'O provedor selecionado receberá 0 caracteres do contexto exibido.',
+    );
     expect(
       brazilian.aiContextDisclosure(1),
       'O provedor selecionado receberá 1 caractere do contexto exibido.',
@@ -591,12 +583,18 @@ void main() {
 
   test('Hindi unsaved-document prompt uses saved-state terminology', () {
     final hindi = lookupAppLocalizations(const Locale('hi'));
-    for (final count in <int>[1, 2]) {
-      final message = hindi.unsavedChangesMultipleMessage(count);
-      expect(message, contains('न सहेजे गए बदलाव'));
-      expect(message, isNot(contains('असुरक्षित बदलाव')));
-      expect(message, endsWith('?'));
-    }
+    expect(
+      hindi.unsavedChangesMultipleMessage(0),
+      '0 दस्तावेज़ों में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?',
+    );
+    expect(
+      hindi.unsavedChangesMultipleMessage(1),
+      '1 दस्तावेज़ में न सहेजे गए बदलाव हैं। जारी रखने से पहले इसे सहेजें?',
+    );
+    expect(
+      hindi.unsavedChangesMultipleMessage(2),
+      '2 दस्तावेज़ों में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?',
+    );
   });
 
   test('RTL translations isolate technical interpolations', () {
@@ -760,6 +758,159 @@ void main() {
 
     expect(localized, l10n.diagnosticMarkdownHeadingDuplicateId('intro'));
   });
+}
+
+typedef _ExpectedMessages = Map<String, String> Function(int count);
+
+enum _SlavicPluralForm { one, few, many }
+
+_SlavicPluralForm _reviewedSlavicForm(int count) {
+  if (const <int>{1, 21, 31, 101}.contains(count)) {
+    return _SlavicPluralForm.one;
+  }
+  if (const <int>{2, 22}.contains(count)) {
+    return _SlavicPluralForm.few;
+  }
+  if (const <int>{5, 11}.contains(count)) {
+    return _SlavicPluralForm.many;
+  }
+  throw ArgumentError.value(count, 'count', 'No reviewed expected form');
+}
+
+Map<String, String> _expectedRussianMessages(int count) {
+  switch (_reviewedSlavicForm(count)) {
+    case _SlavicPluralForm.one:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документ содержит несохранённые изменения. Сохранить каждый перед продолжением?',
+        'childTopicsPromoted':
+            '$count дочерняя тема будет перемещена на уровень выше.',
+        'usageCount': '$count использование',
+        'workspaceRecoveryRestored':
+            'Восстановлен $count несохранённый документ. Проверьте каждый документ, прежде чем сохранить или отбросить его.',
+        'workspaceRecoveryDamaged':
+            'Не удалось восстановить $count повреждённую запись восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.',
+        'gitStagedFileCount': '$count файл в индексе',
+        'pdfExportedWithWarnings':
+            'document.pdf экспортирован с $count предупреждением.',
+        'gitConfirmDiscardTracked':
+            'Все проиндексированные и непроиндексированные изменения в $count выбранном отслеживаемом файле будут отменены, а содержимое будет восстановлено до состояния HEAD.',
+        'gitConfirmDiscardUntracked':
+            'Будет удалён $count выбранный неотслеживаемый файл.',
+        'gitConfirmDiscardMixed':
+            '$count выбранный файл будет восстановлен или удалён в зависимости от статуса Git.',
+      };
+    case _SlavicPluralForm.few:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документа содержат несохранённые изменения. Сохранить каждый перед продолжением?',
+        'childTopicsPromoted':
+            '$count дочерние темы будут перемещены на уровень выше.',
+        'usageCount': '$count использования',
+        'workspaceRecoveryRestored':
+            'Восстановлено $count несохранённых документа. Проверьте каждый документ, прежде чем сохранить или отбросить его.',
+        'workspaceRecoveryDamaged':
+            'Не удалось восстановить $count повреждённые записи восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.',
+        'gitStagedFileCount': '$count файла в индексе',
+        'pdfExportedWithWarnings':
+            'document.pdf экспортирован с $count предупреждениями.',
+        'gitConfirmDiscardTracked':
+            'Все проиндексированные и непроиндексированные изменения в $count выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.',
+        'gitConfirmDiscardUntracked':
+            'Будут удалены $count выбранных неотслеживаемых файла.',
+        'gitConfirmDiscardMixed':
+            '$count выбранных файла будут восстановлены или удалены в зависимости от их статуса Git.',
+      };
+    case _SlavicPluralForm.many:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документов содержат несохранённые изменения. Сохранить каждый перед продолжением?',
+        'childTopicsPromoted':
+            '$count дочерних тем будут перемещены на уровень выше.',
+        'usageCount': '$count использований',
+        'workspaceRecoveryRestored':
+            'Восстановлено $count несохранённых документов. Проверьте каждый документ, прежде чем сохранить или отбросить его.',
+        'workspaceRecoveryDamaged':
+            'Не удалось восстановить $count повреждённых записей восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.',
+        'gitStagedFileCount': '$count файлов в индексе',
+        'pdfExportedWithWarnings':
+            'document.pdf экспортирован с $count предупреждениями.',
+        'gitConfirmDiscardTracked':
+            'Все проиндексированные и непроиндексированные изменения в $count выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.',
+        'gitConfirmDiscardUntracked':
+            'Будут удалены $count выбранных неотслеживаемых файлов.',
+        'gitConfirmDiscardMixed':
+            '$count выбранных файлов будут восстановлены или удалены в зависимости от их статуса Git.',
+      };
+  }
+}
+
+Map<String, String> _expectedUkrainianMessages(int count) {
+  switch (_reviewedSlavicForm(count)) {
+    case _SlavicPluralForm.one:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документ має незбережені зміни. Зберегти кожен перед продовженням?',
+        'childTopicsPromoted':
+            '$count дочірню тему буде переміщено на рівень вище.',
+        'usageCount': '$count використання',
+        'workspaceRecoveryRestored':
+            'Відновлено $count незбережений документ. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+        'workspaceRecoveryDamaged':
+            'Не вдалося відновити $count пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+        'gitStagedFileCount': '$count проіндексований файл',
+        'pdfExportedWithWarnings':
+            'document.pdf експортовано з $count попередженням.',
+        'gitConfirmDiscardTracked':
+            'Усі індексовані та неіндексовані зміни в $count вибраному файлі з відстеженням буде скасовано, а вміст буде відновлено до стану HEAD.',
+        'gitConfirmDiscardUntracked':
+            '$count вибраний невідстежуваний файл буде видалено.',
+        'gitConfirmDiscardMixed':
+            '$count вибраний файл буде відновлено або видалено залежно від статусу Git.',
+      };
+    case _SlavicPluralForm.few:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документи мають незбережені зміни. Зберегти кожен перед продовженням?',
+        'childTopicsPromoted':
+            '$count дочірні теми буде переміщено на рівень вище.',
+        'usageCount': '$count використання',
+        'workspaceRecoveryRestored':
+            'Відновлено $count незбережені документи. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+        'workspaceRecoveryDamaged':
+            'Не вдалося відновити $count пошкоджені записи відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+        'gitStagedFileCount': '$count проіндексовані файли',
+        'pdfExportedWithWarnings':
+            'document.pdf експортовано з $count попередженнями.',
+        'gitConfirmDiscardTracked':
+            'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+        'gitConfirmDiscardUntracked':
+            '$count вибрані невідстежувані файли буде видалено.',
+        'gitConfirmDiscardMixed':
+            '$count вибрані файли буде відновлено або видалено залежно від їхнього статусу Git.',
+      };
+    case _SlavicPluralForm.many:
+      return <String, String>{
+        'unsavedChangesMultipleMessage':
+            '$count документів мають незбережені зміни. Зберегти кожен перед продовженням?',
+        'childTopicsPromoted':
+            '$count дочірніх тем буде переміщено на рівень вище.',
+        'usageCount': '$count використань',
+        'workspaceRecoveryRestored':
+            'Відновлено $count незбережених документів. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
+        'workspaceRecoveryDamaged':
+            'Не вдалося відновити $count пошкоджених записів відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
+        'gitStagedFileCount': '$count проіндексованих файлів',
+        'pdfExportedWithWarnings':
+            'document.pdf експортовано з $count попередженнями.',
+        'gitConfirmDiscardTracked':
+            'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+        'gitConfirmDiscardUntracked':
+            '$count вибраних невідстежуваних файлів буде видалено.',
+        'gitConfirmDiscardMixed':
+            '$count вибраних файлів буде відновлено або видалено залежно від їхнього статусу Git.',
+      };
+  }
 }
 
 class _LiteralPattern {
