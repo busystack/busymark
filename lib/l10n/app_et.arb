@@ -179,6 +179,7 @@
   },
   "copy": "Kopeeri",
   "copyPlainText": "Kopeeri lihttekstina",
+  "clipboardCopyFailed": "Valikut ei saanud lõikelauale kopeerida.",
   "@copy": {
     "description": "Copy command label."
   },

@@ -95,6 +95,7 @@
   },
   "copy": "कॉपी करें",
   "copyPlainText": "सादे पाठ के रूप में कॉपी करें",
+  "clipboardCopyFailed": "चयनित सामग्री को क्लिपबोर्ड पर कॉपी नहीं किया जा सका।",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2304,7 +2305,7 @@
   "gitBinaryFile": "बाइनरी फ़ाइल। BusyMark बाइनरी पैच रेंडर नहीं करता है।",
   "gitUnsavedChangesBanner": "संपादक के न सहेजे गए बदलाव सहेजे जाने तक शामिल नहीं किए जाते।",
   "gitConfirmDiscardTitle": "Git बदलाव त्यागें?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{चयनित ट्रैक की गई फ़ाइल के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।} other{चयनित ट्रैक की गई फ़ाइलों के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{चयनित ट्रैक की गई फ़ाइल के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।} other{चयनित ट्रैक की गई फ़ाइलों के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{चयनित अनट्रैक की गई फ़ाइल हटा दी जाएगी।} other{चयनित अनट्रैक की गई फ़ाइलें हटा दी जाएँगी।}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{चयनित फ़ाइल को उसकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।} other{चयनित फ़ाइलों को उनकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।}}",
   "gitConfirmSwitchBranchTitle": "{branch} पर स्विच करें?",

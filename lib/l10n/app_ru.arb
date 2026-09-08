@@ -95,6 +95,7 @@
   },
   "copy": "Копировать",
   "copyPlainText": "Копировать как обычный текст",
+  "clipboardCopyFailed": "Не удалось скопировать выделенный фрагмент в буфер обмена.",
   "@copy": {
     "description": "Copy command label."
   },

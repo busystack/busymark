@@ -153,8 +153,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get copyPlainText => 'プレーンテキストとしてコピー';
 
   @override
-  String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+  String get clipboardCopyFailed => '選択内容をクリップボードにコピーできませんでした。';
 
   @override
   String get copyName => '名前をコピー';

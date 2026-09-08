@@ -53,8 +53,10 @@ refresh could invalidate a foreground Writerside operation. A controlled regress
 test reproduced that failure. Monitor refreshes now wait for active loading to
 finish, and stale/disposed refreshes stop before changing controller state.
 
-Base `pt` and `zh` localization templates remain partial as before. The shipped
-`pt_BR` and `zh_CN` locales have complete messages and pass the localization audit.
+Historical note: at the time of this HTML-export verification, the base `pt`
+and `zh` catalogs were still partial while `pt_BR` and `zh_CN` were complete.
+That limitation has since been superseded: localization policy now requires
+both base and regional catalogs to contain the complete English message-key set.
 
 ## Browser and output verification
 

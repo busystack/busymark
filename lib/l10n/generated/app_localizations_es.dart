@@ -160,7 +160,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'No se pudo copiar la selección al portapapeles.';
 
   @override
   String get copyName => 'Copiar nombre';
@@ -2437,9 +2437,9 @@ class AppLocalizationsEs extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Se restaurarán en HEAD todos los cambios staged y no staged de los archivos rastreados seleccionados.',
+          'Se restaurarán en HEAD todos los cambios preparados y sin preparar de los archivos rastreados seleccionados.',
       one:
-          'Se restaurarán en HEAD todos los cambios staged y no staged del archivo rastreado seleccionado.',
+          'Se restaurarán en HEAD todos los cambios preparados y sin preparar del archivo rastreado seleccionado.',
     );
     return '$_temp0';
   }

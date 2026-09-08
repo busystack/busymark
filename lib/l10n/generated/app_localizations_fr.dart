@@ -160,7 +160,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Impossible de copier la sélection dans le presse-papiers.';
 
   @override
   String get copyName => 'Copier le nom';
@@ -2437,9 +2437,9 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Toutes les modifications staged et unstaged des fichiers suivis sélectionnés seront restaurées vers HEAD.',
+          'Toutes les modifications indexées et non indexées des fichiers suivis sélectionnés seront restaurées vers HEAD.',
       one:
-          'Toutes les modifications staged et unstaged du fichier suivi sélectionné seront restaurées vers HEAD.',
+          'Toutes les modifications indexées et non indexées du fichier suivi sélectionné seront restaurées vers HEAD.',
     );
     return '$_temp0';
   }

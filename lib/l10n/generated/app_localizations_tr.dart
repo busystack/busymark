@@ -159,8 +159,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get copyPlainText => 'Düz metin olarak kopyala';
 
   @override
-  String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+  String get clipboardCopyFailed => 'Seçili içerik panoya kopyalanamadı.';
 
   @override
   String get copyName => 'Adı kopyala';

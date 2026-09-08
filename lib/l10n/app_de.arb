@@ -95,6 +95,7 @@
   },
   "copy": "Kopieren",
   "copyPlainText": "Als Nur-Text kopieren",
+  "clipboardCopyFailed": "Die Auswahl konnte nicht in die Zwischenablage kopiert werden.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2304,7 +2305,7 @@
   "gitBinaryFile": "Binärdatei. BusyMark zeigt keine Binär-Patches an.",
   "gitUnsavedChangesBanner": "Ungespeicherte Editoränderungen werden erst nach dem Speichern berücksichtigt.",
   "gitConfirmDiscardTitle": "Git-Änderungen verwerfen?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Datei werden auf den Stand in Git zurückgesetzt.} other{Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Datei werden auf HEAD zurückgesetzt.} other{Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Dateien werden auf HEAD zurückgesetzt.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Die ausgewählte nicht versionierte Datei wird gelöscht.} other{Die ausgewählten nicht versionierten Dateien werden gelöscht.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Die ausgewählte Datei wird abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.} other{Die ausgewählten Dateien werden abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.}}",
   "gitConfirmSwitchBranchTitle": "Zu {branch} wechseln?",

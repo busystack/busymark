@@ -179,6 +179,7 @@
   },
   "copy": "Kopyala",
   "copyPlainText": "Düz metin olarak kopyala",
+  "clipboardCopyFailed": "Seçili içerik panoya kopyalanamadı.",
   "@copy": {
     "description": "Copy command label."
   },

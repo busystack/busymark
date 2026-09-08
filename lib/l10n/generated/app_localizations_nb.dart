@@ -160,7 +160,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Utvalget kunne ikke kopieres til utklippstavlen.';
 
   @override
   String get copyName => 'Kopier navn';
@@ -2412,9 +2412,9 @@ class AppLocalizationsNb extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
+          'Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
       one:
-          'Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
+          'Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
     );
     return '$_temp0';
   }

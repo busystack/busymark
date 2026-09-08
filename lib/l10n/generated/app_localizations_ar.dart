@@ -156,8 +156,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copyPlainText => 'نسخ كنص عادي';
 
   @override
-  String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+  String get clipboardCopyFailed => 'تعذّر نسخ المحتوى المحدد إلى الحافظة.';
 
   @override
   String get copyName => 'نسخ الاسم';
@@ -2442,9 +2441,9 @@ class AppLocalizationsAr extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملفات المتعقبة المحددة إلى HEAD.',
+          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملفات المتعقبة المحددة إلى HEAD.',
       one:
-          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملف المتعقب المحدد إلى HEAD.',
+          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملف المتعقب المحدد إلى HEAD.',
     );
     return '$_temp0';
   }
@@ -3658,7 +3657,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiEnableProvider => 'فعّل مزوّد ذكاء اصطناعي أولًا.';
 
   @override
-  String get aiDraftCommitMessage => 'صياغة مسودة رسالة الإيداع';
+  String get aiDraftCommitMessage => 'صياغة مسودة رسالة الالتزام';
 
   @override
   String get aiDrafting => 'جارٍ إعداد المسودة…';

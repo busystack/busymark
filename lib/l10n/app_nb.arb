@@ -95,6 +95,7 @@
   },
   "copy": "Kopier",
   "copyPlainText": "Kopier som ren tekst",
+  "clipboardCopyFailed": "Utvalget kunne ikke kopieres til utklippstavlen.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2304,7 +2305,7 @@
   "gitBinaryFile": "Binærfil. BusyMark viser ikke binære patcher.",
   "gitUnsavedChangesBanner": "Ulagrede endringer i redigereren tas ikke med før de er lagret.",
   "gitConfirmDiscardTitle": "Forkaste Git-endringer?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.} other{Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.} other{Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Den valgte usporede filen slettes.} other{De valgte usporede filene slettes.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.} other{De valgte filene gjenopprettes eller slettes ut fra Git-statusen.}}",
   "gitConfirmSwitchBranchTitle": "Bytt til {branch}?",

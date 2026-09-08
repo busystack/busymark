@@ -179,6 +179,7 @@
   },
   "copy": "Kopiëren",
   "copyPlainText": "Kopiëren als platte tekst",
+  "clipboardCopyFailed": "De selectie kon niet naar het klembord worden gekopieerd.",
   "@copy": {
     "description": "Copy command label."
   },

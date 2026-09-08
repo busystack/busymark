@@ -160,7 +160,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'De selectie kon niet naar het klembord worden gekopieerd.';
 
   @override
   String get copyName => 'Kopieer naam';

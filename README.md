@@ -269,14 +269,18 @@ BusyMark has ARB localization files for:
 
 English in `lib/l10n/app_en.arb` is the source of truth for app strings.
 
-Target ARB files are audited for catalog parity, placeholders, plurals, and
-terminology.
+Every base and regional ARB catalog must contain the complete current English
+message-key set. Language-only catalogs such as `app_pt.arb` and `app_zh.arb`
+are required alongside their regional catalogs; they are not partial fallback
+stubs. Catalogs are audited for structure, parity, placeholders, plurals, and
+reviewed terminology.
 
 When changing user-facing text, update `app_en.arb`, keep every target ARB in
 sync, then run:
 
 ```bash
 flutter gen-l10n
+flutter test test/src/localization_audit_test.dart
 flutter analyze
 flutter test
 ```

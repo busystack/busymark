@@ -161,7 +161,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Die Auswahl konnte nicht in die Zwischenablage kopiert werden.';
 
   @override
   String get copyName => 'Namen kopieren';
@@ -2436,9 +2436,9 @@ class AppLocalizationsDe extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.',
+          'Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Dateien werden auf HEAD zurückgesetzt.',
       one:
-          'Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Datei werden auf den Stand in Git zurückgesetzt.',
+          'Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Datei werden auf HEAD zurückgesetzt.',
     );
     return '$_temp0';
   }

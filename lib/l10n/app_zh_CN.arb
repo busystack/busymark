@@ -179,6 +179,7 @@
   },
   "copy": "复制",
   "copyPlainText": "复制为纯文本",
+  "clipboardCopyFailed": "无法将所选内容复制到剪贴板。",
   "@copy": {
     "description": "Copy command label."
   },

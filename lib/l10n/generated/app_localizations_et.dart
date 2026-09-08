@@ -156,8 +156,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copyPlainText => 'Kopeeri lihttekstina';
 
   @override
-  String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+  String get clipboardCopyFailed => 'Valikut ei saanud lõikelauale kopeerida.';
 
   @override
   String get copyName => 'Kopeeri nimi';

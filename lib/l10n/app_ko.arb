@@ -179,6 +179,7 @@
   },
   "copy": "복사",
   "copyPlainText": "일반 텍스트로 복사",
+  "clipboardCopyFailed": "선택한 내용을 클립보드에 복사할 수 없습니다.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -4553,7 +4554,7 @@
   "@aiEnableProvider": {
     "description": "AI settings error when no provider is enabled."
   },
-  "aiDraftCommitMessage": "초안 커밋 메시지",
+  "aiDraftCommitMessage": "커밋 메시지 초안 작성",
   "@aiDraftCommitMessage": {
     "description": "AI action that drafts a Git commit message."
   },

@@ -6573,6 +6573,7 @@ class _WritersideInstanceSelector extends StatelessWidget {
         start: BusyMarkSpacing.headerInset,
         end: BusyMarkSpacing.sm,
       ),
+      buttonHeight: BusyMarkSizes.iconButton,
     );
   }
 }

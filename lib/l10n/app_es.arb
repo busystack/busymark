@@ -95,6 +95,7 @@
   },
   "copy": "Copiar",
   "copyPlainText": "Copiar como texto sin formato",
+  "clipboardCopyFailed": "No se pudo copiar la selección al portapapeles.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2304,7 +2305,7 @@
   "gitBinaryFile": "Archivo binario. BusyMark no muestra parches binarios.",
   "gitUnsavedChangesBanner": "Los cambios sin guardar del editor no se incluyen hasta que se guarden.",
   "gitConfirmDiscardTitle": "¿Descartar los cambios de Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Se restaurarán en HEAD todos los cambios staged y no staged del archivo rastreado seleccionado.} other{Se restaurarán en HEAD todos los cambios staged y no staged de los archivos rastreados seleccionados.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Se restaurarán en HEAD todos los cambios preparados y sin preparar del archivo rastreado seleccionado.} other{Se restaurarán en HEAD todos los cambios preparados y sin preparar de los archivos rastreados seleccionados.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{El archivo seleccionado sin seguimiento se eliminará.} other{Los archivos seleccionados sin seguimiento se eliminarán.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{El archivo seleccionado se restaurará o eliminará según su estado de Git.} other{Los archivos seleccionados se restaurarán o eliminarán según su estado de Git.}}",
   "gitConfirmSwitchBranchTitle": "¿Cambiar a {branch}?",

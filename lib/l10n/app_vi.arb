@@ -179,6 +179,7 @@
   },
   "copy": "Sao chép",
   "copyPlainText": "Sao chép dưới dạng văn bản thuần",
+  "clipboardCopyFailed": "Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.",
   "@copy": {
     "description": "Copy command label."
   },

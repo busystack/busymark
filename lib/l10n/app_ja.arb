@@ -179,6 +179,7 @@
   },
   "copy": "コピー",
   "copyPlainText": "プレーンテキストとしてコピー",
+  "clipboardCopyFailed": "選択内容をクリップボードにコピーできませんでした。",
   "@copy": {
     "description": "Copy command label."
   },

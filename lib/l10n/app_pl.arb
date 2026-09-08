@@ -95,6 +95,7 @@
   },
   "copy": "Kopiuj",
   "copyPlainText": "Kopiuj jako zwykły tekst",
+  "clipboardCopyFailed": "Nie udało się skopiować zaznaczenia do schowka.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2330,7 +2331,7 @@
   "gitBinaryFile": "Plik binarny. BusyMark nie wyświetla binarnych poprawek.",
   "gitUnsavedChangesBanner": "Niezapisane zmiany w edytorze nie zostaną uwzględnione, dopóki ich nie zapiszesz.",
   "gitConfirmDiscardTitle": "Odrzucić zmiany Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Wszystkie oznaczone i nieoznaczone zmiany w wybranym śledzonym pliku zostaną przywrócone do HEAD.} other{Wszystkie oznaczone i nieoznaczone zmiany w wybranych śledzonych plikach zostaną przywrócone do HEAD.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Wszystkie zmiany w indeksie i poza indeksem w wybranym śledzonym pliku zostaną przywrócone do HEAD.} other{Wszystkie zmiany w indeksie i poza indeksem w wybranych śledzonych plikach zostaną przywrócone do HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, one{Wybrany nieśledzony plik zostanie usunięty.} few{Wybrane nieśledzone pliki zostaną usunięte.} many{Wybrane nieśledzone pliki zostaną usunięte.} other{Wybrane nieśledzone pliki zostaną usunięte.}}",
   "gitConfirmDiscardMixed": "{count, plural, one{Wybrany plik zostanie przywrócony lub usunięty zależnie od jego stanu Git.} few{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.} many{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.} other{Wybrane pliki zostaną przywrócone lub usunięte zależnie od ich stanu Git.}}",
   "gitConfirmSwitchBranchTitle": "Przełączyć na {branch}?",

@@ -158,7 +158,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.';
 
   @override
   String get copyName => 'Sao chép tên';

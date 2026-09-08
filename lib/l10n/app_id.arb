@@ -179,6 +179,7 @@
   },
   "copy": "Salin",
   "copyPlainText": "Salin sebagai teks biasa",
+  "clipboardCopyFailed": "Konten yang dipilih tidak dapat disalin ke papan klip.",
   "@copy": {
     "description": "Copy command label."
   },

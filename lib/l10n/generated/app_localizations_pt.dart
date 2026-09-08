@@ -15,300 +15,302 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Editor for Markdown files and Writerside-compatible documentation projects.';
+      'Editor para ficheiros Markdown e projetos de documentação compatíveis com o Writerside.';
 
   @override
-  String get aboutBusyMark => 'About BusyMark';
+  String get aboutBusyMark => 'Sobre BusyMark';
 
   @override
-  String get aboutTagline => 'Markdown and Writerside Editor';
+  String get aboutTagline => 'Editor de Markdown e Writerside';
 
   @override
-  String get aboutLicenseLabel => 'License';
+  String get aboutLicenseLabel => 'Licença';
 
   @override
   String get aboutLicenseName => 'Apache License 2.0';
 
   @override
-  String get aboutWebsite => 'Website';
+  String get aboutWebsite => 'Site';
 
   @override
-  String get aboutSourceCode => 'Source code';
+  String get aboutSourceCode => 'Código-fonte';
 
   @override
-  String get reportIssue => 'Report an issue';
+  String get reportIssue => 'Comunicar um problema';
 
   @override
-  String get feedbackCategory => 'Category';
+  String get feedbackCategory => 'Categoria';
 
   @override
-  String get feedbackChooseCategory => 'Choose a category';
+  String get feedbackChooseCategory => 'Escolha uma categoria';
 
   @override
-  String get feedbackCategoryProblem => 'Problem or bug';
+  String get feedbackCategoryProblem => 'Problema ou erro';
 
   @override
-  String get feedbackCategoryFeature => 'Feature request';
+  String get feedbackCategoryFeature => 'Pedido de funcionalidade';
 
   @override
-  String get feedbackCategoryPrivacySecurity => 'Privacy or security concern';
+  String get feedbackCategoryPrivacySecurity =>
+      'Preocupação com privacidade ou segurança';
 
   @override
-  String get feedbackCategoryUsability => 'Usability concern';
+  String get feedbackCategoryUsability => 'Preocupação de usabilidade';
 
   @override
-  String get feedbackCategoryOther => 'Other';
+  String get feedbackCategoryOther => 'Outro';
 
   @override
-  String get feedbackSubject => 'Subject';
+  String get feedbackSubject => 'Assunto';
 
   @override
-  String get feedbackMessage => 'Detailed message';
+  String get feedbackMessage => 'Mensagem detalhada';
 
   @override
-  String get feedbackReplyEmail => 'Email address for replies (optional)';
+  String get feedbackReplyEmail => 'E-mail para resposta (opcional)';
 
   @override
-  String get feedbackIncludeTechnicalDetails => 'Include technical details';
+  String get feedbackIncludeTechnicalDetails => 'Incluir detalhes técnicos';
 
   @override
   String get feedbackTechnicalDetailsDisclosure =>
-      'When enabled, this adds only your Linux operating-system version and BusyMark application locale. No logs, files, account data, or other diagnostics are attached.';
+      'Quando esta opção está ativada, são adicionados apenas a versão do sistema operativo Linux e o idioma da aplicação BusyMark. Não são anexados registos, ficheiros, dados de conta nem outros diagnósticos.';
 
   @override
-  String get feedbackSubmit => 'Submit';
+  String get feedbackSubmit => 'Enviar';
 
   @override
-  String get feedbackSubmitting => 'Submitting…';
+  String get feedbackSubmitting => 'A enviar…';
 
   @override
-  String get feedbackCategoryRequired => 'Choose a category.';
+  String get feedbackCategoryRequired => 'Escolha uma categoria.';
 
   @override
   String get feedbackSubjectLength =>
-      'Subject must be between 3 and 120 characters.';
+      'O assunto deve ter entre 3 e 120 carateres.';
 
   @override
   String get feedbackMessageLength =>
-      'Message must be between 10 and 5,000 characters.';
+      'A mensagem deve ter entre 10 e 5000 carateres.';
 
   @override
   String get feedbackReplyEmailInvalid =>
-      'Enter a valid email address or leave this field empty.';
+      'Introduza um endereço de e-mail válido ou deixe este campo vazio.';
 
   @override
   String get feedbackConnectionFailure =>
-      'BusyMark could not connect. Check your internet connection and try again.';
+      'O BusyMark não conseguiu estabelecer ligação. Verifique a ligação à Internet e tente novamente.';
 
   @override
-  String get feedbackTimeoutFailure => 'The request timed out. Try again.';
+  String get feedbackTimeoutFailure =>
+      'O pedido excedeu o tempo limite. Tente novamente.';
 
   @override
   String get feedbackRateLimitedFailure =>
-      'Too many reports were sent from this connection. Wait and try again.';
+      'Foram enviados demasiados relatórios a partir desta ligação. Aguarde e tente novamente.';
 
   @override
   String get feedbackRejectedFailure =>
-      'The server rejected this report. Check the form fields and try again.';
+      'O servidor rejeitou o relatório. Verifique os campos do formulário e tente novamente.';
 
   @override
   String get feedbackServerFailure =>
-      'The server could not accept the report. Try again later.';
+      'O servidor não conseguiu aceitar o relatório. Tente novamente mais tarde.';
 
   @override
   String feedbackSuccess(String id) {
-    return 'Feedback sent. Reference ID: $id';
+    return 'Comentários enviados. ID de referência: $id';
   }
 
   @override
-  String get advanced => 'Advanced';
+  String get advanced => 'Avançado';
 
   @override
-  String get addToGit => 'Add to Git';
+  String get addToGit => 'Adicionar ao Git';
 
   @override
-  String get appearance => 'Appearance';
+  String get appearance => 'Aparência';
 
   @override
-  String get apply => 'Apply';
+  String get apply => 'Aplicar';
 
   @override
-  String get back => 'Back';
+  String get back => 'Voltar';
 
   @override
-  String get bottomLeft => 'Bottom left';
+  String get bottomLeft => 'Canto inferior esquerdo';
 
   @override
-  String get bottomRight => 'Bottom right';
+  String get bottomRight => 'Canto inferior direito';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Cancelar';
 
   @override
-  String get choose => 'Choose';
+  String get choose => 'Escolher';
 
   @override
-  String get chooseLocation => 'Choose location';
+  String get chooseLocation => 'Escolher local';
 
   @override
-  String get copy => 'Copy';
+  String get copy => 'Copiar';
 
   @override
-  String get copyPlainText => 'Copy Plain Text';
+  String get copyPlainText => 'Copiar como texto simples';
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Não foi possível copiar a seleção para a área de transferência.';
 
   @override
-  String get copyName => 'Copy name';
+  String get copyName => 'Copiar nome';
 
   @override
-  String get copyFileName => 'Copy file name';
+  String get copyFileName => 'Copiar nome do ficheiro';
 
   @override
-  String get copyPath => 'Copy path';
+  String get copyPath => 'Copiar caminho';
 
   @override
-  String get create => 'Create';
+  String get create => 'Criar';
 
   @override
-  String get creating => 'Creating...';
+  String get creating => 'A criar…';
 
   @override
-  String get cut => 'Cut';
+  String get cut => 'Recortar';
 
   @override
-  String get promoteSection => 'Promote section';
+  String get promoteSection => 'Promover secção';
 
   @override
-  String get demoteSection => 'Demote section';
+  String get demoteSection => 'Rebaixar secção';
 
   @override
-  String get moveSectionUp => 'Move section up';
+  String get moveSectionUp => 'Mover secção para cima';
 
   @override
-  String get moveSectionDown => 'Move section down';
+  String get moveSectionDown => 'Mover secção para baixo';
 
   @override
-  String get confirmDeleteSectionTitle => 'Delete section?';
+  String get confirmDeleteSectionTitle => 'Eliminar secção?';
 
   @override
   String confirmDeleteSectionMessage(String name) {
-    return 'Delete “$name” and all content in its section? This cannot be undone.';
+    return 'Eliminar “$name” e todo o conteúdo da secção? Esta ação não pode ser anulada.';
   }
 
   @override
-  String get darkTheme => 'Dark';
+  String get darkTheme => 'Escuro';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Eliminar';
 
   @override
-  String get discard => 'Discard';
+  String get discard => 'Descartar';
 
   @override
   String get editor => 'Editor';
 
   @override
-  String get file => 'File';
+  String get file => 'Ficheiro';
 
   @override
-  String get fileHistory => 'File History';
+  String get fileHistory => 'Histórico do ficheiro';
 
   @override
-  String get folder => 'Folder';
+  String get folder => 'Pasta';
 
   @override
-  String get insert => 'Insert';
+  String get insert => 'Inserir';
 
   @override
-  String get keyboardShortcuts => 'Keyboard Shortcuts';
+  String get keyboardShortcuts => 'Atalhos de teclado';
 
   @override
-  String get commandPalette => 'Command Palette';
+  String get commandPalette => 'Paleta de comandos';
 
   @override
-  String get commandPaletteHint => 'Type a command';
+  String get commandPaletteHint => 'Introduza um comando';
 
   @override
-  String get commandPaletteEmpty => 'No matching commands';
+  String get commandPaletteEmpty => 'Nenhum comando correspondente';
 
   @override
   String get commandUnavailableInContext =>
-      'Unavailable in the current editor context';
+      'Este comando não está disponível no contexto atual.';
 
   @override
-  String get lightTheme => 'Light';
+  String get lightTheme => 'Claro';
 
   @override
-  String get mainMenu => 'Main menu';
+  String get mainMenu => 'Menu principal';
 
   @override
-  String get fullScreen => 'Full Screen';
+  String get fullScreen => 'Ecrã inteiro';
 
   @override
   String get markdown => 'Markdown';
 
   @override
-  String get open => 'Open';
+  String get open => 'Abrir';
 
   @override
-  String get openInFiles => 'Open in Files';
+  String get openInFiles => 'Abrir em Ficheiros';
 
   @override
-  String get pathActions => 'Path actions';
+  String get pathActions => 'Ações do caminho';
 
   @override
-  String get outline => 'Outline';
+  String get outline => 'Estrutura';
 
   @override
-  String get overwrite => 'Overwrite';
+  String get overwrite => 'Sobrescrever';
 
   @override
-  String get paste => 'Paste';
+  String get paste => 'Colar';
 
   @override
-  String get reading => 'Reading';
+  String get reading => 'Leitura';
 
   @override
-  String get removeFromRecent => 'Remove from Recent';
+  String get removeFromRecent => 'Remover dos recentes';
 
   @override
-  String get recent => 'Recent';
+  String get recent => 'Recentes';
 
   @override
-  String get redo => 'Redo';
+  String get redo => 'Refazer';
 
   @override
-  String get save => 'Save';
+  String get save => 'Guardar';
 
   @override
-  String get search => 'Search';
+  String get search => 'Pesquisar';
 
   @override
-  String get selectAll => 'Select all';
+  String get selectAll => 'Selecionar tudo';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Definições';
 
   @override
-  String get source => 'Source';
+  String get source => 'Código-fonte';
 
   @override
-  String get split => 'Split';
+  String get split => 'Vista dividida';
 
   @override
-  String get systemTheme => 'System';
+  String get systemTheme => 'Sistema';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Tema';
 
   @override
-  String get appLanguage => 'Language';
+  String get appLanguage => 'Idioma';
 
   @override
-  String get systemLanguage => 'System';
+  String get systemLanguage => 'Sistema';
 
   @override
   String get languageEnglish => 'English';
@@ -374,28 +376,28 @@ class AppLocalizationsPt extends AppLocalizations {
   String get languageSimplifiedChinese => '简体中文';
 
   @override
-  String get toggleSidebar => 'Sidebar panel';
+  String get toggleSidebar => 'Painel lateral';
 
   @override
-  String get topLeft => 'Top left';
+  String get topLeft => 'Canto superior esquerdo';
 
   @override
-  String get topRight => 'Top right';
+  String get topRight => 'Canto superior direito';
 
   @override
-  String get undo => 'Undo';
+  String get undo => 'Desfazer';
 
   @override
-  String get validate => 'Validate';
+  String get validate => 'Validar';
 
   @override
-  String get validation => 'Validation';
+  String get validation => 'Validação';
 
   @override
-  String get viewMode => 'View mode';
+  String get viewMode => 'Modo de visualização';
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'Bem-vindo';
 
   @override
   String get writerside => 'Writerside';
@@ -407,311 +409,317 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fileTypeMarkdown => 'Markdown';
 
   @override
-  String get fileTypeImages => 'Images';
+  String get fileTypeImages => 'Imagens';
 
   @override
-  String get openMarkdownFile => 'Open Markdown File';
+  String get openMarkdownFile => 'Abrir ficheiro Markdown';
 
   @override
-  String get markdownFileExtensions => '.md or .markdown';
+  String get markdownFileExtensions => '.md ou .markdown';
 
   @override
   String get openFolderOrWritersideProject =>
-      'Open Folder or Writerside Project';
+      'Abrir pasta ou projeto Writerside';
 
   @override
   String get markdownFolderOrWritersideProject =>
-      'Markdown folder or Writerside-compatible project';
+      'Pasta Markdown ou projeto compatível com Writerside';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'Nenhum ficheiro aberto';
 
   @override
   String get shortcutDeleteTreeItemDescription =>
-      'Delete the selected Files item, or remove the selected topic from the table of contents';
+      'Eliminar o item selecionado em Ficheiros ou remover o tópico selecionado do sumário';
 
   @override
-  String get shortcutGroupGeneral => 'General';
+  String get shortcutGroupGeneral => 'Geral';
 
   @override
-  String get shortcutNewDocument => 'Create';
+  String get shortcutNewDocument => 'Criar';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Create a Markdown file or Writerside project';
+      'Criar ficheiro Markdown ou projeto Writerside';
 
   @override
   String get shortcutOpenDescription =>
-      'Open a Markdown file, folder, or Writerside project';
+      'Abrir um ficheiro Markdown, uma pasta ou um projeto Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Save the current document';
+  String get shortcutSaveDescription => 'Guardar o documento atual';
 
   @override
-  String get shortcutSearchDescription => 'Search the current workspace';
+  String get shortcutSearchDescription =>
+      'Pesquisar no espaço de trabalho atual';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Show this keyboard shortcut reference';
+      'Mostrar esta referência de atalhos de teclado';
 
   @override
   String get shortcutSyntaxReferenceDescription =>
       'Abrir a referência de sintaxe';
 
   @override
-  String get shortcutSettingsDescription => 'Open BusyMark settings';
+  String get shortcutSettingsDescription => 'Abrir as definições do BusyMark';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'Próxima guia';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open tab';
+  String get shortcutNextTabDescription => 'Ir para a próxima guia aberta';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'Guia anterior';
 
   @override
-  String get shortcutPreviousTabDescription => 'Move to the previous open tab';
+  String get shortcutPreviousTabDescription => 'Ir para a guia aberta anterior';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'Fechar guia';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active tab';
+  String get shortcutCloseTabDescription => 'Fechar a guia ativa';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'Fechar todas as guias';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open tabs';
+  String get shortcutCloseAllTabsDescription => 'Fechar todas as guias abertas';
 
   @override
-  String get shortcutGroupTextEditing => 'Text Editing';
+  String get shortcutGroupTextEditing => 'Edição de texto';
 
   @override
   String get shortcutSelectAllDescription =>
-      'In Source mode, select all text; in Editor mode, press twice to select every block';
+      'No modo Código-fonte, selecionar todo o texto; no modo Editor, pressionar duas vezes para selecionar todos os blocos';
 
   @override
-  String get shortcutCutDescription => 'Cut the selected text';
+  String get shortcutCutDescription => 'Recortar o texto selecionado';
 
   @override
-  String get shortcutCopyDescription => 'Copy the selected text';
+  String get shortcutCopyDescription => 'Copiar o texto selecionado';
 
   @override
-  String get shortcutPasteDescription => 'Paste from the clipboard';
+  String get shortcutPasteDescription => 'Colar da área de transferência';
 
   @override
   String get shortcutPastePlainTextDescription =>
-      'Paste clipboard text without formatting';
+      'Colar o texto da área de transferência sem formatação';
 
   @override
-  String get shortcutUndoDescription => 'Undo the last edit';
+  String get shortcutUndoDescription => 'Desfazer a última edição';
 
   @override
-  String get shortcutRedoDescription => 'Redo the last undone edit';
+  String get shortcutRedoDescription => 'Refazer a última edição desfeita';
 
   @override
-  String get shortcutInsertIndentation => 'Insert indentation';
+  String get shortcutInsertIndentation => 'Inserir recuo';
 
   @override
   String get shortcutInsertIndentationDescription =>
-      'Insert indentation at the cursor';
+      'Inserir recuo na posição do cursor';
 
   @override
-  String get shortcutOutdentSource => 'Outdent source';
+  String get shortcutOutdentSource => 'Diminuir recuo do código-fonte';
 
   @override
   String get shortcutOutdentSourceDescription =>
-      'Remove one indentation level in Source mode';
+      'Remover um nível de recuo no modo Código-fonte';
 
   @override
-  String get shortcutEscape => 'Close search or clear block selection';
+  String get shortcutEscape =>
+      'Fechar a pesquisa ou limpar a seleção de blocos';
 
   @override
   String get shortcutEscapeDescription =>
-      'Close workspace search or clear a block selection in Editor mode';
+      'Fechar a pesquisa do espaço de trabalho ou limpar uma seleção de blocos no modo Editor';
 
   @override
-  String get shortcutGroupFormatting => 'Formatting';
+  String get shortcutGroupFormatting => 'Formatação';
 
   @override
-  String get shortcutBoldDescription => 'Toggle bold on the selected text';
+  String get shortcutBoldDescription => 'Alternar negrito no texto selecionado';
 
   @override
-  String get shortcutItalicDescription => 'Toggle italic on the selected text';
+  String get shortcutItalicDescription =>
+      'Alternar itálico no texto selecionado';
 
   @override
   String get shortcutUnderlineDescription =>
-      'Toggle underline on the selected text';
+      'Alternar sublinhado no texto selecionado';
 
   @override
-  String get shortcutLinkDescription => 'Insert or edit a link';
+  String get shortcutLinkDescription => 'Inserir ou editar uma ligação';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'Toggle inline code on the selected text';
+      'Alternar código embutido no texto selecionado';
 
   @override
   String get shortcutStrikethroughDescription =>
-      'Toggle strikethrough on the selected text';
+      'Alternar tachado no texto selecionado';
 
   @override
-  String get shortcutGroupBlocks => 'Blocks';
+  String get shortcutGroupBlocks => 'Blocos';
 
   @override
   String get shortcutParagraphDescription =>
-      'Set the current block to paragraph';
+      'Definir o bloco atual como parágrafo';
 
   @override
   String get shortcutHeading1Description =>
-      'Set the current block to Heading 1';
+      'Definir o bloco atual como Título 1';
 
   @override
   String get shortcutHeading2Description =>
-      'Set the current block to Heading 2';
+      'Definir o bloco atual como Título 2';
 
   @override
   String get shortcutHeading3Description =>
-      'Set the current block to Heading 3';
+      'Definir o bloco atual como Título 3';
 
   @override
   String get shortcutHeading4Description =>
-      'Set the current block to Heading 4';
+      'Definir o bloco atual como Título 4';
 
   @override
   String get shortcutHeading5Description =>
-      'Set the current block to Heading 5';
+      'Definir o bloco atual como Título 5';
 
   @override
   String get shortcutHeading6Description =>
-      'Set the current block to Heading 6';
+      'Definir o bloco atual como Título 6';
 
   @override
-  String get shortcutGroupLists => 'Lists';
+  String get shortcutGroupLists => 'Listas';
 
   @override
-  String get numberedList => 'Numbered list';
+  String get numberedList => 'Lista numerada';
 
   @override
   String get shortcutNumberedListDescription =>
-      'Toggle numbered list formatting';
+      'Alternar formatação de lista numerada';
 
   @override
-  String get bulletedList => 'Bulleted list';
+  String get bulletedList => 'Lista com marcadores';
 
   @override
   String get shortcutBulletedListDescription =>
-      'Toggle bulleted list formatting';
+      'Alternar formatação de lista com marcadores';
 
   @override
-  String get checklist => 'Checklist';
+  String get checklist => 'Lista de verificação';
 
   @override
-  String get shortcutChecklistDescription => 'Toggle checklist formatting';
+  String get shortcutChecklistDescription =>
+      'Alternar formatação de lista de verificação';
 
   @override
-  String get shortcutGroupSidebar => 'Sidebar';
+  String get shortcutGroupSidebar => 'Barra lateral';
 
   @override
-  String get sidebarViewMenu => 'Sidebar view';
+  String get sidebarViewMenu => 'Visualização da barra lateral';
 
   @override
-  String get createMarkdownFile => 'Create Markdown File';
+  String get createMarkdownFile => 'Criar ficheiro Markdown';
 
   @override
   String get createMarkdownFileDescription =>
-      'Start an unsaved local Markdown document';
+      'Iniciar um documento Markdown local não guardado';
 
   @override
-  String get createWritersideProject => 'Create Writerside Project';
+  String get createWritersideProject => 'Criar projeto Writerside';
 
   @override
   String get createWritersideProjectDescription =>
-      'Start a local Writerside-compatible project';
+      'Iniciar um projeto local compatível com Writerside';
 
   @override
-  String get defaultProjectName => 'Documentation';
+  String get defaultProjectName => 'Documentação';
 
   @override
-  String get defaultInstanceName => 'User Guide';
+  String get defaultInstanceName => 'Guia do utilizador';
 
   @override
-  String get defaultStartTopicTitle => 'Getting started';
+  String get defaultStartTopicTitle => 'Primeiros passos';
 
   @override
-  String get projectName => 'Project name';
+  String get projectName => 'Nome do projeto';
 
   @override
-  String get directoryName => 'Directory name';
+  String get directoryName => 'Nome do diretório';
 
   @override
-  String get instanceName => 'Instance name';
+  String get instanceName => 'Nome da instância';
 
   @override
-  String get instanceId => 'Instance ID';
+  String get instanceId => 'ID da instância';
 
   @override
-  String get startTopicTitle => 'Start topic title';
+  String get startTopicTitle => 'Título do tópico inicial';
 
   @override
-  String get location => 'Location';
+  String get location => 'Local';
 
   @override
-  String get projectNameRequired => 'Project name is required.';
+  String get projectNameRequired => 'O nome do projeto é obrigatório.';
 
   @override
-  String get directoryNameRequired => 'Directory name is required.';
+  String get directoryNameRequired => 'O nome do diretório é obrigatório.';
 
   @override
-  String get useSingleSafeDirectoryName => 'Use a single safe directory name.';
+  String get useSingleSafeDirectoryName =>
+      'Use um único nome de diretório seguro.';
 
   @override
   String get useLowercaseIdentifier =>
-      'Use a lowercase identifier with letters, numbers, underscores, or hyphens.';
+      'Use um identificador em minúsculas com letras, números, sublinhados ou hifens.';
 
   @override
-  String get startTopicTitleRequired => 'Start topic title is required.';
+  String get startTopicTitleRequired =>
+      'O título do tópico inicial é obrigatório.';
 
   @override
   String get createWritersideProjectFailed =>
-      'Could not create Writerside project.';
+      'Não foi possível criar o projeto Writerside.';
 
   @override
-  String get settingsTitle => 'BusyMark Settings';
+  String get settingsTitle => 'Definições do BusyMark';
 
   @override
-  String get autoSave => 'Auto Save';
+  String get autoSave => 'Gravação automática';
 
   @override
   String get autoSaveDescription =>
-      'Save file changes automatically after a short idle delay.';
+      'Guarda automaticamente as alterações do ficheiro após um curto período de inatividade.';
 
   @override
-  String get wordWrap => 'Word wrap';
+  String get wordWrap => 'Quebra de linha';
 
   @override
-  String get editorFontSize => 'Editor font size';
+  String get editorFontSize => 'Tamanho da fonte do editor';
 
   @override
-  String get validateOnEdit => 'Validate on edit';
+  String get validateOnEdit => 'Validar ao editar';
 
   @override
-  String get clearRecentWorkspaces => 'Clear recent workspaces';
+  String get clearRecentWorkspaces => 'Limpar espaços de trabalho recentes';
 
   @override
-  String get editingButtonsPosition => 'Editing buttons position';
+  String get editingButtonsPosition => 'Posição dos botões de edição';
 
   @override
   String get editingButtonsPositionDescription =>
-      'Choose where the floating WYSIWYG editing buttons appear.';
+      'Escolha onde os botões flutuantes de edição WYSIWYG aparecem.';
 
   @override
-  String get editingButtonsDirection => 'Editing buttons direction';
+  String get editingButtonsDirection => 'Orientação dos botões de edição';
 
   @override
   String get editingButtonsDirectionDescription =>
-      'Choose whether the floating WYSIWYG editing buttons are arranged horizontally or vertically.';
+      'Escolha se os botões flutuantes de edição WYSIWYG ficam dispostos horizontalmente ou verticalmente.';
 
   @override
   String get horizontal => 'Horizontal';
@@ -720,54 +728,56 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vertical => 'Vertical';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Privacidade';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get allowRemoteImages => 'Carregar imagens remotas';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Permitir que a pré-visualização do Markdown e o editor carreguem imagens de URLs HTTP e HTTPS.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions =>
+      'Limpar permissões de imagens remotas';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Esquecer os espaços de trabalho autorizados a carregar imagens remotas.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+  String get clearGitWorkspaceTrust =>
+      'Limpar espaços de trabalho confiáveis para o Git';
 
   @override
   String get clearGitWorkspaceTrustDescription =>
-      'Ask before enabling Git features for previously trusted workspaces.';
+      'Perguntar antes de ativar recursos do Git em espaços de trabalho considerados confiáveis anteriormente.';
 
   @override
-  String get settingsWindowSectionTitle => 'Window';
+  String get settingsWindowSectionTitle => 'Janela';
 
   @override
   String get settingsReopenWorkspaceOnStartupTitle =>
-      'Reopen previous workspace on startup';
+      'Reabrir o espaço de trabalho anterior ao iniciar';
 
   @override
   String get settingsReopenWorkspaceOnStartupDescription =>
-      'Open the workspace and tabs from the previous session when BusyMark starts.';
+      'Abra o espaço de trabalho e as abas da sessão anterior quando o BusyMark iniciar.';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'Confirm before closing with unsaved changes';
+      'Confirmar antes de fechar com alterações não guardadas';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'Ask before closing BusyMark when documents have unsaved changes.';
+      'Perguntar antes de fechar o BusyMark quando documentos tiverem alterações não guardadas.';
 
   @override
-  String get closeUnsavedChangesTitle => 'Unsaved changes';
+  String get closeUnsavedChangesTitle => 'Alterações não guardadas';
 
   @override
   String get closeUnsavedChangesSingleMessage =>
-      'This document has unsaved changes. Save changes before closing BusyMark?';
+      'Este documento tem alterações não guardadas. Guardar as alterações antes de fechar o BusyMark?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
@@ -775,32 +785,32 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count documents have unsaved changes. Save changes before closing BusyMark?',
+          '$count documentos têm alterações não guardadas. Guardar as alterações antes de fechar o BusyMark?',
       one:
-          '1 document has unsaved changes. Save changes before closing BusyMark?',
-      zero: 'Save changes before closing BusyMark?',
+          '1 documento tem alterações não guardadas. Guardar as alterações antes de fechar o BusyMark?',
+      zero: 'Guardar as alterações antes de fechar o BusyMark?',
     );
     return '$_temp0';
   }
 
   @override
-  String get closeUnsavedChangesCancel => 'Cancel';
+  String get closeUnsavedChangesCancel => 'Cancelar';
 
   @override
-  String get closeUnsavedChangesDiscard => 'Discard';
+  String get closeUnsavedChangesDiscard => 'Descartar';
 
   @override
-  String get closeUnsavedChangesSave => 'Save';
+  String get closeUnsavedChangesSave => 'Guardar';
 
   @override
-  String get currentFile => 'current file';
+  String get currentFile => 'ficheiro atual';
 
   @override
-  String get unsavedChanges => 'Unsaved changes';
+  String get unsavedChanges => 'Alterações não guardadas';
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'You have unsaved changes in $fileName. Save them before continuing?';
+    return 'Existem alterações não guardadas em $fileName. Pretende guardá-las antes de continuar?';
   }
 
   @override
@@ -809,157 +819,158 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count documents have unsaved changes. Save them before continuing?',
-      one: '1 document has unsaved changes. Save it before continuing?',
+          'Existem $count documentos com alterações não guardadas. Pretende guardá-los antes de continuar?',
+      one:
+          'Existe 1 documento com alterações não guardadas. Pretende guardá-lo antes de continuar?',
     );
     return '$_temp0';
   }
 
   @override
-  String get fileChangedOnDisk => 'File changed on disk';
+  String get fileChangedOnDisk => 'Ficheiro alterado no disco';
 
   @override
   String get fileChangedOnDiskMessage =>
-      'This file changed on disk since you opened it. Overwrite it?';
+      'Este ficheiro foi alterado no disco desde que foi aberto. Sobrescrever?';
 
   @override
-  String get untitledMarkdownFileName => 'Untitled.md';
+  String get untitledMarkdownFileName => 'Sem título.md';
 
   @override
-  String get unorderedList => 'Unordered list';
+  String get unorderedList => 'Lista não ordenada';
 
   @override
-  String get orderedList => 'Ordered list';
+  String get orderedList => 'Lista ordenada';
 
   @override
-  String get taskList => 'Task list';
+  String get taskList => 'Lista de tarefas';
 
   @override
-  String get toggleTaskChecked => 'Toggle task checked';
+  String get toggleTaskChecked => 'Marcar/desmarcar tarefa';
 
   @override
-  String get indentListItem => 'Indent list item';
+  String get indentListItem => 'Recuar item da lista';
 
   @override
-  String get outdentListItem => 'Outdent list item';
+  String get outdentListItem => 'Remover recuo do item da lista';
 
   @override
-  String get blockquote => 'Blockquote';
+  String get blockquote => 'Citação em bloco';
 
   @override
-  String get codeBlock => 'Code block';
+  String get codeBlock => 'Bloco de código';
 
   @override
-  String get codeBlockLanguage => 'Code block language';
+  String get codeBlockLanguage => 'Linguagem do bloco de código';
 
   @override
-  String get image => 'Image';
+  String get image => 'Imagem';
 
   @override
-  String get video => 'Video';
+  String get video => 'Vídeo';
 
   @override
-  String get openVideo => 'Play video';
+  String get openVideo => 'Reproduzir vídeo';
 
   @override
-  String get pauseVideo => 'Pause video';
+  String get pauseVideo => 'Pausar vídeo';
 
   @override
-  String get videoUnavailable => 'Video unavailable';
+  String get videoUnavailable => 'Vídeo indisponível';
 
   @override
-  String get videoPreview => 'Video preview';
+  String get videoPreview => 'Pré-visualização do vídeo';
 
   @override
   String get diagnosticWritersideVideoMissingSource =>
-      'Video is missing its src attribute.';
+      'O vídeo não tem o atributo src.';
 
   @override
   String diagnosticWritersideVideoUnsupportedSource(String source) {
-    return 'Unsupported video source: $source';
+    return 'Fonte de vídeo não suportada: $source';
   }
 
   @override
   String diagnosticWritersideVideoMissingFile(String source) {
-    return 'Video file does not exist: $source';
+    return 'O ficheiro de vídeo não existe: $source';
   }
 
   @override
   String diagnosticWritersideVideoMissingPreview(String preview) {
-    return 'Video preview image does not exist: $preview';
+    return 'A imagem de pré-visualização do vídeo não existe: $preview';
   }
 
   @override
-  String get inlineImage => 'Inline image';
+  String get inlineImage => 'Imagem embutida';
 
   @override
-  String get table => 'Table';
+  String get table => 'Tabela';
 
   @override
-  String get htmlBlock => 'HTML block';
+  String get htmlBlock => 'Bloco HTML';
 
   @override
-  String get htmlContentDefault => 'HTML content';
+  String get htmlContentDefault => 'Conteúdo HTML';
 
   @override
-  String get shortcutHtmlBlockDescription => 'Insert or edit an HTML block';
+  String get shortcutHtmlBlockDescription => 'Inserir ou editar um bloco HTML';
 
   @override
-  String get renderedHtml => 'Rendered HTML';
+  String get renderedHtml => 'HTML renderizado';
 
   @override
-  String get editHtml => 'Edit HTML';
+  String get editHtml => 'Editar HTML';
 
   @override
-  String get htmlSource => 'HTML source';
+  String get htmlSource => 'Código-fonte HTML';
 
   @override
-  String get thematicBreak => 'Thematic break';
+  String get thematicBreak => 'Separador temático';
 
   @override
-  String get bold => 'Bold';
+  String get bold => 'Negrito';
 
   @override
-  String get italic => 'Italic';
+  String get italic => 'Itálico';
 
   @override
-  String get underline => 'Underline';
+  String get underline => 'Sublinhado';
 
   @override
-  String get strikethrough => 'Strikethrough';
+  String get strikethrough => 'Tachado';
 
   @override
-  String get inlineCode => 'Inline code';
+  String get inlineCode => 'Código embutido';
 
   @override
-  String get link => 'Link';
+  String get link => 'Ligação';
 
   @override
-  String get hardLineBreak => 'Hard line break';
+  String get hardLineBreak => 'Quebra de linha forçada';
 
   @override
-  String get textStyle => 'Text style';
+  String get textStyle => 'Estilo de texto';
 
   @override
-  String get paragraph => 'Paragraph';
+  String get paragraph => 'Parágrafo';
 
   @override
-  String get heading1 => 'Heading 1';
+  String get heading1 => 'Título 1';
 
   @override
-  String get heading2 => 'Heading 2';
+  String get heading2 => 'Título 2';
 
   @override
-  String get heading3 => 'Heading 3';
+  String get heading3 => 'Título 3';
 
   @override
-  String get heading4 => 'Heading 4';
+  String get heading4 => 'Título 4';
 
   @override
-  String get heading5 => 'Heading 5';
+  String get heading5 => 'Título 5';
 
   @override
-  String get heading6 => 'Heading 6';
+  String get heading6 => 'Título 6';
 
   @override
   String headingLevelAbbreviation(int level) {
@@ -967,264 +978,266 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get deleteTable => 'Delete table';
+  String get deleteTable => 'Eliminar tabela';
 
   @override
   String tableColumnNumber(int columnNumber) {
-    return 'Column $columnNumber';
+    return 'Coluna $columnNumber';
   }
 
   @override
-  String get insertColumnLeft => 'Insert column left';
+  String get insertColumnLeft => 'Inserir coluna à esquerda';
 
   @override
-  String get insertColumnRight => 'Insert column right';
+  String get insertColumnRight => 'Inserir coluna à direita';
 
   @override
-  String get deleteColumn => 'Delete column';
+  String get deleteColumn => 'Eliminar coluna';
 
   @override
-  String get tableAlignmentUnspecified => 'Alignment: Unspecified';
+  String get tableAlignmentUnspecified => 'Alinhamento: não especificado';
 
   @override
-  String get tableAlignmentLeft => 'Alignment: Left';
+  String get tableAlignmentLeft => 'Alinhamento: esquerda';
 
   @override
-  String get tableAlignmentCenter => 'Alignment: Center';
+  String get tableAlignmentCenter => 'Alinhamento: centro';
 
   @override
-  String get tableAlignmentRight => 'Alignment: Right';
+  String get tableAlignmentRight => 'Alinhamento: direita';
 
   @override
   String tableRowNumber(int rowNumber) {
-    return 'Row $rowNumber';
+    return 'Linha $rowNumber';
   }
 
   @override
-  String get insertRowAbove => 'Insert row above';
+  String get insertRowAbove => 'Inserir linha acima';
 
   @override
-  String get insertRowBelow => 'Insert row below';
+  String get insertRowBelow => 'Inserir linha abaixo';
 
   @override
-  String get deleteRow => 'Delete row';
+  String get deleteRow => 'Eliminar linha';
 
   @override
-  String get tableHeaderHint => 'Header';
+  String get tableHeaderHint => 'Cabeçalho';
 
   @override
-  String get tableCellHint => 'Cell';
+  String get tableCellHint => 'Célula';
 
   @override
-  String get language => 'Language';
+  String get language => 'Linguagem';
 
   @override
-  String get hideEditingButtons => 'Hide editing buttons';
+  String get hideEditingButtons => 'Ocultar botões de edição';
 
   @override
-  String get showEditingButtons => 'Show editing buttons';
+  String get showEditingButtons => 'Mostrar botões de edição';
 
   @override
-  String get altText => 'Alt text';
+  String get altText => 'Texto alternativo';
 
   @override
-  String get editorPlaceholderText => 'text';
+  String get editorPlaceholderText => 'texto';
 
   @override
-  String get editorPlaceholderCode => 'code';
+  String get editorPlaceholderCode => 'código';
 
   @override
-  String get editorPlaceholderAltText => 'alt text';
+  String get editorPlaceholderAltText => 'texto alternativo';
 
   @override
-  String get describeTheImage => 'Describe the image';
+  String get describeTheImage => 'Descreva a imagem';
 
   @override
-  String get columns => 'Columns';
+  String get columns => 'Colunas';
 
   @override
-  String get rows => 'Rows';
+  String get rows => 'Linhas';
 
   @override
   String tableHeaderNumber(int columnNumber) {
-    return 'Header $columnNumber';
+    return 'Cabeçalho $columnNumber';
   }
 
   @override
-  String get tableCellDefault => 'Cell';
+  String get tableCellDefault => 'Célula';
 
   @override
-  String get noImageSource => 'No image source';
+  String get noImageSource => 'Nenhuma origem de imagem';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'Imagem remota bloqueada';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'Escolha se o BusyMark pode carregar imagens remotas.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'As imagens remotas estão bloqueadas';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'Este documento faz referência a imagens da Internet. Carregá-las pode revelar informações de rede ao servidor que as hospeda.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace =>
+      'Carregar neste espaço de trabalho';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'Sempre carregar imagens remotas';
 
   @override
-  String get hideSidebar => 'Hide sidebar panel';
+  String get hideSidebar => 'Ocultar painel lateral';
 
   @override
-  String get showSidebar => 'Show sidebar panel';
+  String get showSidebar => 'Mostrar painel lateral';
 
   @override
-  String get showPreview => 'Show preview';
+  String get showPreview => 'Mostrar pré-visualização';
 
   @override
-  String get hidePreview => 'Hide preview';
+  String get hidePreview => 'Ocultar pré-visualização';
 
   @override
-  String get workspaceKindUnsavedMarkdown => 'Unsaved Markdown file';
+  String get workspaceKindUnsavedMarkdown => 'Ficheiro Markdown não guardado';
 
   @override
-  String get workspaceKindSingleMarkdown => 'Single Markdown file';
+  String get workspaceKindSingleMarkdown => 'Ficheiro Markdown único';
 
   @override
-  String get workspaceKindMarkdownFolder => 'Markdown folder';
+  String get workspaceKindMarkdownFolder => 'Pasta Markdown';
 
   @override
-  String get workspaceKindWritersideModule => 'Writerside module';
+  String get workspaceKindWritersideModule => 'Módulo Writerside';
 
   @override
-  String get problems => 'Problems';
+  String get problems => 'Problemas';
 
   @override
   String diagnosticCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count diagnostics',
-      one: '1 diagnostic',
-      zero: 'No diagnostics',
+      other: '$count diagnósticos',
+      one: '1 diagnóstico',
+      zero: 'Nenhum diagnóstico',
     );
     return '$_temp0';
   }
 
   @override
-  String get files => 'Files';
+  String get files => 'Ficheiros';
 
   @override
   String get toc => 'TOC';
 
   @override
-  String get tocActions => 'TOC actions';
+  String get tocActions => 'Ações do sumário';
 
   @override
-  String get markdownUnsaved => 'Markdown - unsaved';
+  String get markdownUnsaved => 'Markdown - não guardado';
 
   @override
   String workspaceDetail(String kind, int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count files',
-      one: '1 file',
+      other: '$count ficheiros',
+      one: '1 ficheiro',
     );
     return '$kind - $_temp0';
   }
 
   @override
-  String get noFiles => 'No files';
+  String get noFiles => 'Nenhum ficheiro';
 
   @override
-  String get newFile => 'New file';
+  String get newFile => 'Novo ficheiro';
 
   @override
-  String get noWritersideToc => 'No Writerside TOC';
+  String get noWritersideToc => 'Nenhum TOC do Writerside';
 
   @override
-  String get tocSection => 'TOC section';
+  String get tocSection => 'Secção do TOC';
 
   @override
-  String get newTopic => 'New Topic';
+  String get newTopic => 'Novo tópico';
 
   @override
-  String get newChildTopic => 'New Child Topic';
+  String get newChildTopic => 'Novo subtópico';
 
   @override
-  String get newSiblingTopic => 'New Sibling Topic';
+  String get newSiblingTopic => 'Novo tópico no mesmo nível';
 
   @override
-  String get renameTopicFile => 'Rename Topic File';
+  String get renameTopicFile => 'Renomear ficheiro do tópico';
 
   @override
-  String get topicPlacement => 'TOC placement';
+  String get topicPlacement => 'Posição no TOC';
 
   @override
-  String get tocRoot => 'At TOC root';
+  String get tocRoot => 'Na raiz do TOC';
 
   @override
-  String get afterSelectedTopic => 'After selected topic';
+  String get afterSelectedTopic => 'Após o tópico selecionado';
 
   @override
-  String get insideSelectedTopic => 'Inside selected topic';
+  String get insideSelectedTopic => 'Dentro do tópico selecionado';
 
   @override
-  String get pasteAfterTopic => 'Paste After';
+  String get pasteAfterTopic => 'Colar depois';
 
   @override
-  String get pasteAsChildTopic => 'Paste as Child';
+  String get pasteAsChildTopic => 'Colar como subtópico';
 
   @override
-  String get removeFromToc => 'Remove from TOC';
+  String get removeFromToc => 'Remover do TOC';
 
   @override
-  String get confirmRemoveFromTocTitle => 'Remove from TOC?';
+  String get confirmRemoveFromTocTitle => 'Remover do TOC?';
 
   @override
   String confirmRemoveFromTocMessage(String name) {
-    return 'Remove $name from this table of contents? The topic file will be kept.';
+    return 'Remover $name deste TOC? O ficheiro do tópico será mantido.';
   }
 
   @override
-  String get confirmDeleteTopicTitle => 'Delete topic file?';
+  String get confirmDeleteTopicTitle => 'Eliminar o ficheiro do tópico?';
 
   @override
   String confirmDeleteTopicMessage(String name) {
-    return 'Delete $name and remove it from every table of contents? This cannot be undone.';
+    return 'Eliminar $name e removê-lo de todos os TOCs? Esta ação não pode ser anulada.';
   }
 
   @override
-  String get safeDeleteTopicFile => 'Safe Delete Topic File…';
+  String get safeDeleteTopicFile =>
+      'Eliminar o ficheiro do tópico com segurança…';
 
   @override
-  String get removeTocElement => 'Remove TOC Element';
+  String get removeTocElement => 'Remover elemento do TOC';
 
   @override
-  String get removeTocElements => 'Remove TOC Elements';
+  String get removeTocElements => 'Remover elementos do TOC';
 
   @override
-  String get reviewUsages => 'Review Usages';
+  String get reviewUsages => 'Rever usos';
 
   @override
-  String get deleteTopicFile => 'Delete Topic File';
+  String get deleteTopicFile => 'Eliminar ficheiro do tópico';
 
   @override
-  String get removeAction => 'Remove';
+  String get removeAction => 'Remover';
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Remove “$topic” from the selected instance. The topic file will be kept.';
+    return 'Remova “$topic” da instância selecionada. O ficheiro do tópico será mantido.';
   }
 
   @override
   String safeDeleteTopicSummary(String topic) {
-    return 'Delete “$topic” and safely update its references throughout this Writerside project.';
+    return 'Elimine “$topic” e atualize com segurança as referências a ele em todo este projeto Writerside.';
   }
 
   @override
@@ -1232,470 +1245,468 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count child topics will move up one level.',
-      one: '1 child topic will move up one level.',
+      other: 'Os $count tópicos filhos subirão um nível.',
+      one: 'O tópico filho subirá um nível.',
     );
     return '$_temp0';
   }
 
   @override
   String get topicIsStartPageRemovalWarning =>
-      'This topic is used as an instance start page. Review its usages and assign another start page before continuing.';
+      'Este tópico é usado como página inicial de uma instância. Reveja os usos dele e atribua outra página inicial antes de continuar.';
 
   @override
   String topicUsagesCount(int count) {
-    return 'Usages ($count)';
+    return 'Usos ($count)';
   }
 
   @override
   String get noBreakingTopicUsages =>
-      'No references that would be broken were found.';
+      'Não foram encontradas referências que deixariam de funcionar.';
 
   @override
   String get topicUsagesFound =>
-      'BusyMark found the following references to this topic.';
+      'O BusyMark encontrou as seguintes referências a este tópico.';
 
   @override
-  String get topicUsageTocElements => 'TOC elements';
+  String get topicUsageTocElements => 'Elementos do TOC';
 
   @override
-  String get topicUsageStartPages => 'Start pages';
+  String get topicUsageStartPages => 'Páginas iniciais';
 
   @override
-  String get topicUsageTopicLinks => 'Topic links';
+  String get topicUsageTopicLinks => 'Ligações para tópicos';
 
   @override
-  String get topicUsageIncludes => 'Includes';
+  String get topicUsageIncludes => 'Inclusões';
 
   @override
   String usageCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count usages',
-      one: '1 usage',
+      other: '$count usos',
+      one: '1 uso',
     );
     return '$_temp0';
   }
 
   @override
-  String get refactoringOptions => 'Refactoring options';
+  String get refactoringOptions => 'Opções de refatoração';
 
   @override
-  String get updateUsagesAutomatically => 'Update usages automatically';
+  String get updateUsagesAutomatically => 'Atualizar usos automaticamente';
 
   @override
   String get updateUsagesAutomaticallyDescription =>
-      'Remove TOC references and includes, and preserve link text.';
+      'Remova referências dos TOCs e inclusões e preserve o texto dos ligações.';
 
   @override
   String get manualUsageUpdatesRequired =>
-      'Some usages require manual changes before this refactoring.';
+      'Alguns usos exigem alterações manuais antes desta refatoração.';
 
   @override
-  String get setRedirectTo => 'Set redirect to';
+  String get setRedirectTo => 'Redirecionar para';
 
   @override
-  String get noRedirectDescription => 'Do not redirect the old published page.';
+  String get noRedirectDescription =>
+      'Não redirecionar a página publicada antiga.';
 
   @override
-  String get redirectTarget => 'Redirect target';
+  String get redirectTarget => 'Destino do redirecionamento';
 
   @override
   String get remainingUsagesBlockRemoval =>
-      'Review and update the remaining usages before continuing, or enable automatic updates when available.';
+      'Reveja e atualize os usos restantes antes de continuar ou ative as atualizações automáticas quando estiverem disponíveis.';
 
   @override
   String usagesOfTopic(String topic) {
-    return 'Usages of $topic';
+    return 'Usos de $topic';
   }
 
   @override
-  String get noUsagesFound => 'No usages found';
+  String get noUsagesFound => 'Nenhum uso encontrado.';
 
   @override
-  String get outsideSelectedInstance => 'outside selected instance';
+  String get outsideSelectedInstance => 'Fora da instância selecionada';
 
   @override
-  String get doRefactor => 'Do Refactor';
+  String get doRefactor => 'Refatorar';
 
   @override
-  String get orphanTopicTitle => 'Topic file is no longer used';
+  String get orphanTopicTitle => 'O ficheiro do tópico não é mais usado';
 
   @override
-  String get keepTopicFile => 'Keep Topic File';
+  String get keepTopicFile => 'Manter o ficheiro do tópico';
 
   @override
   String orphanTopicMessage(String topic) {
-    return '“$topic” is no longer used anywhere in this Writerside project. Delete the file, or keep it for use in another instance.';
+    return '“$topic” não é mais usado em nenhum lugar deste projeto Writerside. Elimine o ficheiro ou mantenha-o para uso em outra instância.';
   }
 
   @override
-  String get defaultNewTopicTitle => 'New topic';
+  String get defaultNewTopicTitle => 'Novo tópico';
 
   @override
-  String get topicTitle => 'Topic title';
+  String get topicTitle => 'Título do tópico';
 
   @override
-  String get fileName => 'File name';
+  String get fileName => 'Nome do ficheiro';
 
   @override
-  String get topicTitleRequired => 'Topic title is required.';
+  String get topicTitleRequired => 'O título do tópico é obrigatório.';
 
   @override
-  String get fileNameRequired => 'File name is required.';
+  String get fileNameRequired => 'O nome do ficheiro é obrigatório.';
 
   @override
-  String get rename => 'Rename';
+  String get rename => 'Renomear';
 
   @override
-  String get confirmDeleteFileTitle => 'Delete file?';
+  String get confirmDeleteFileTitle => 'Eliminar ficheiro?';
 
   @override
-  String get confirmDeleteFolderTitle => 'Delete folder?';
+  String get confirmDeleteFolderTitle => 'Eliminar pasta?';
 
   @override
   String confirmDeleteFileMessage(String name) {
-    return 'Delete $name? This cannot be undone.';
+    return 'Eliminar $name? Esta ação não pode ser anulada.';
   }
 
   @override
   String confirmDeleteFolderMessage(String name) {
-    return 'Delete $name and all files inside it? This cannot be undone.';
+    return 'Eliminar $name e todos os ficheiros dentro dela? Esta ação não pode ser anulada.';
   }
 
   @override
-  String get useSingleSafeFileName => 'Use a single safe file name.';
+  String get useSingleSafeFileName => 'Use um único nome de ficheiro seguro.';
 
   @override
   String useExpectedExtension(String extension) {
-    return 'Use the $extension extension for the selected format.';
+    return 'Use a extensão $extension para o formato selecionado.';
   }
 
   @override
   String get useIdentifierCharacters =>
-      'Use letters, numbers, underscores, or hyphens before the extension.';
+      'Use letras, números, sublinhados ou hifens antes da extensão.';
 
   @override
-  String get topicIdAlreadyExists => 'Topic ID already exists.';
+  String get topicIdAlreadyExists => 'O ID do tópico já existe.';
 
   @override
   String get createWritersideTopicFailed =>
-      'Could not create Writerside topic.';
+      'Não foi possível criar o tópico do Writerside.';
 
   @override
-  String get noOutline => 'No outline';
+  String get noOutline => 'Sem estrutura';
 
   @override
   String expandKind(String kind) {
-    return 'Expand $kind';
+    return 'Expandir $kind';
   }
 
   @override
   String collapseKind(String kind) {
-    return 'Collapse $kind';
+    return 'Recolher $kind';
   }
 
   @override
-  String get foldKindSection => 'section';
+  String get foldKindSection => 'secção';
 
   @override
-  String get foldKindList => 'list';
+  String get foldKindList => 'lista';
 
   @override
-  String get foldKindQuote => 'quote';
+  String get foldKindQuote => 'citação';
 
   @override
   String get foldKindTag => 'tag';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'Correspondência anterior';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'Próxima correspondência';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive =>
+      'Diferenciar maiúsculas de minúsculas';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'Palavra inteira';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'Expressão regular';
 
   @override
-  String get sourceSearchReplacement => 'Replace with';
+  String get sourceSearchReplacement => 'Substituir por';
 
   @override
-  String get sourceSearchReplaceCurrent => 'Replace current match';
+  String get sourceSearchReplaceCurrent => 'Substituir correspondência atual';
 
   @override
-  String get sourceSearchReplaceAndFindNext => 'Replace and find next';
+  String get sourceSearchReplaceAndFindNext => 'Substituir e localizar próximo';
 
   @override
-  String get sourceSearchReplaceAll => 'Replace all';
+  String get sourceSearchReplaceAll => 'Substituir tudo';
 
   @override
-  String get workspaceReplace => 'Replace in Workspace';
+  String get workspaceReplace => 'Substituir no espaço de trabalho';
 
   @override
-  String get reviewReplacements => 'Review replacements';
+  String get reviewReplacements => 'Rever substituições';
 
   @override
-  String get applyReplacements => 'Apply replacements';
+  String get applyReplacements => 'Aplicar substituições';
 
   @override
-  String get skippedFiles => 'Skipped files';
+  String get skippedFiles => 'Ficheiros ignorados';
 
   @override
-  String get workspaceReplaceDirtyBuffer => 'Unsaved editor content';
+  String get workspaceReplaceDirtyBuffer => 'Conteúdo não guardado do editor';
 
   @override
-  String get workspaceReplaceDiskContent => 'Saved disk content';
+  String get workspaceReplaceDiskContent => 'Conteúdo guardado no disco';
 
   @override
   String selectFileMatches(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Select all $count matches',
-      one: 'Select 1 match',
-    );
-    return '$_temp0';
+    return 'Selecionar todas as $count correspondências';
   }
 
   @override
   String workspaceReplaceApplied(int matches, int files, int skipped) {
-    return 'Replaced $matches matches in $files files; skipped $skipped.';
+    return 'Foram substituídas $matches correspondências em $files ficheiros; $skipped ignoradas.';
   }
 
   @override
   String documentFormatWithFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · Final newline';
+    return '$encoding · $lineEnding · Quebra de linha final';
   }
 
   @override
   String documentFormatWithoutFinalNewline(String encoding, String lineEnding) {
-    return '$encoding · $lineEnding · No final newline';
+    return '$encoding · $lineEnding · Sem quebra de linha final';
   }
 
   @override
-  String get normalizeLineEndings => 'Normalize line endings';
+  String get normalizeLineEndings => 'Normalizar finais de linha';
 
   @override
   String get mixedLineEndingsSavePrompt =>
-      'This document contains mixed line endings. Choose a format.';
+      'Este documento contém finais de linha mistos. Escolha um formato.';
 
   @override
   String workspaceReplaceMixedLineEndings(String fileName) {
-    return '$fileName uses mixed line endings. Choose the format to use before replacing.';
+    return '$fileName usa finais de linha mistos. Escolha o formato antes de substituir.';
   }
 
   @override
-  String get workspaceReplaceIssueOversized => 'Skipped an oversized file.';
+  String get workspaceReplaceIssueOversized =>
+      'Foi ignorado um ficheiro demasiado grande.';
 
   @override
   String get workspaceReplaceIssueUnreadable =>
-      'Skipped a file that could not be read.';
+      'Um ficheiro que não pôde ser lido foi ignorado.';
 
   @override
   String get workspaceReplaceIssueInvalidUtf8 =>
-      'Skipped a file that is not valid UTF-8.';
+      'Um ficheiro que não é UTF-8 válido foi ignorado.';
 
   @override
   String get workspaceReplaceIssueTruncated =>
-      'The replacement preview was truncated.';
+      'A pré-visualização de substituições foi truncada.';
 
   @override
   String get workspaceReplaceIssueFileChanged =>
-      'Skipped a file that changed after the preview.';
+      'Um ficheiro alterado após a pré-visualização foi ignorado.';
 
   @override
   String get workspaceReplaceIssueBufferChanged =>
-      'Skipped an editor buffer that changed after the preview.';
+      'Um buffer do editor alterado após a pré-visualização foi ignorado.';
 
   @override
   String get workspaceReplaceIssueNormalizationRequired =>
-      'Choose LF or CRLF normalization before replacing.';
+      'Escolha a normalização LF ou CRLF antes de substituir.';
 
   @override
   String get workspaceReplaceIssuePartialConflict =>
-      'Rollback stopped because the file changed concurrently. Some replacements may remain; displaced content was preserved at the path below.';
+      'A reversão foi interrompida porque o ficheiro foi alterado simultaneamente. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.';
 
   @override
   String get workspaceReplaceIssueApplyFailed =>
-      'The reviewed replacement could not be committed; no files were changed.';
+      'Nenhuma substituição foi aplicada porque o conjunto revisto não pôde ser guardado com segurança.';
 
   @override
   String externalChangesTitle(String fileName) {
-    return 'External changes — $fileName';
+    return 'Alterações externas — $fileName';
   }
 
   @override
-  String get externalFileDeleted => 'This file was deleted on disk.';
+  String get externalFileDeleted => 'Este ficheiro foi eliminado do disco.';
 
   @override
   String get externalFileChanged =>
-      'This file changed on disk while you have unsaved edits.';
+      'Este ficheiro foi alterado no disco enquanto existem alterações não guardadas no editor.';
 
   @override
   String recoveredDocumentReview(String fileName) {
-    return 'Recovered unsaved content for $fileName. Inspect it, then save, save as, or discard it.';
+    return 'O conteúdo não guardado de $fileName foi recuperado. Reveja-o e, em seguida, guarde-o, guarde-o como ou descarte-o.';
   }
 
   @override
-  String get compare => 'Compare';
+  String get compare => 'Comparar';
 
   @override
-  String get reloadFromDisk => 'Reload from Disk';
+  String get reloadFromDisk => 'Recarregar do disco';
 
   @override
-  String get keepMine => 'Keep Mine';
+  String get keepMine => 'Manter minha versão';
 
   @override
-  String get saveAs => 'Save As';
+  String get saveAs => 'Guardar como';
 
   @override
-  String get sourceSearchInvalidRegex => 'Invalid regular expression';
+  String get sourceSearchInvalidRegex => 'Expressão regular inválida';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'Ficheiro grande: o realce e o recolhimento estão pausados';
 
   @override
-  String get nothingToRead => 'Nothing to read';
+  String get nothingToRead => 'Nenhum conteúdo para ler';
 
   @override
-  String get admonition => 'Admonition';
+  String get admonition => 'Bloco de destaque';
 
   @override
-  String get quote => 'Quote';
+  String get quote => 'Citação';
 
   @override
-  String get note => 'Note';
+  String get note => 'Observação';
 
   @override
-  String get tip => 'Tip';
+  String get tip => 'Dica';
 
   @override
-  String get warning => 'Warning';
+  String get warning => 'Aviso';
 
   @override
-  String get tabs => 'Tabs';
+  String get tabs => 'Guias';
 
   @override
-  String get tab => 'Tab';
+  String get tab => 'Guia';
 
   @override
-  String get procedure => 'Procedure';
+  String get procedure => 'Procedimento';
 
   @override
-  String get step => 'Step';
+  String get step => 'Etapa';
 
   @override
-  String get topic => 'Topic';
+  String get topic => 'Tópico';
 
   @override
-  String get chapter => 'Chapter';
+  String get chapter => 'Capítulo';
 
   @override
   String couldNotOpenTarget(String target) {
-    return 'Could not open $target';
+    return 'Não foi possível abrir $target';
   }
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'Link target not found: $targetPath';
+    return 'Destino da ligação não encontrado: $targetPath';
   }
 
   @override
   String get cannotOpenFileTypeInEditor =>
-      'Cannot open this file type in editor';
+      'Não é possível abrir este tipo de ficheiro no editor';
 
   @override
   String anchorNotFound(String anchor) {
-    return 'Anchor not found: $anchor';
+    return 'Âncora não encontrada: $anchor';
   }
 
   @override
-  String get noProblemsFound => 'No problems found';
+  String get noProblemsFound => 'Nenhum problema encontrado';
 
   @override
-  String get noResults => 'No results';
+  String get noResults => 'Nenhum resultado';
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - Line $lineNumber';
+    return '$relativePath - linha $lineNumber';
   }
 
   @override
-  String get untitledResult => 'Untitled result';
+  String get untitledResult => 'Resultado sem título';
 
   @override
-  String get documentKindMarkdownFile => 'Markdown file';
+  String get documentKindMarkdownFile => 'Ficheiro Markdown';
 
   @override
-  String get documentKindWritersideMarkdownTopic => 'Writerside Markdown topic';
+  String get documentKindWritersideMarkdownTopic =>
+      'Tópico Markdown do Writerside';
 
   @override
-  String get documentKindWritersideXmlTopic => 'Writerside XML topic';
+  String get documentKindWritersideXmlTopic => 'Tópico XML do Writerside';
 
   @override
-  String get documentKindWritersideTree => 'Writerside tree';
+  String get documentKindWritersideTree => 'Árvore do Writerside';
 
   @override
-  String get documentKindConfigurationFile => 'Configuration file';
+  String get documentKindConfigurationFile => 'Ficheiro de configuração';
 
   @override
-  String get documentKindVariablesFile => 'Variables file';
+  String get documentKindVariablesFile => 'Ficheiro de variáveis';
 
   @override
-  String get documentKindCategoriesFile => 'Categories file';
+  String get documentKindCategoriesFile => 'Ficheiro de categorias';
 
   @override
-  String get documentKindResourceFile => 'Resource file';
+  String get documentKindResourceFile => 'Ficheiro de recursos';
 
   @override
   String workspaceErrorOpenFailed(String error) {
-    return 'Open failed: $error';
+    return 'Falha ao abrir: $error';
   }
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'Could not create Writerside project: $error';
+    return 'Não foi possível criar o projeto Writerside: $error';
   }
 
   @override
   String workspaceErrorCreateWritersideTopicFailed(String error) {
-    return 'Could not create Writerside topic: $error';
+    return 'Não foi possível criar o tópico do Writerside: $error';
   }
 
   @override
   String workspaceErrorCouldNotOpenFile(String error) {
-    return 'Could not open file: $error';
+    return 'Não foi possível abrir o ficheiro: $error';
   }
 
   @override
   String get workspaceErrorChooseWhereToSaveMarkdown =>
-      'Choose where to save this Markdown file.';
+      'Escolha onde guardar este ficheiro Markdown.';
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Save blocked: file changed on disk.';
+      'Gravação bloqueada: o ficheiro foi alterado no disco.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
-    return 'Save failed: $error';
+    return 'Falha ao guardar: $error';
   }
 
   @override
   String workspaceErrorFileOperationFailed(String error) {
-    return 'File operation failed: $error';
+    return 'Falha na operação de ficheiro: $error';
   }
 
   @override
   String workspaceErrorValidationFailed(String error) {
-    return 'Validation failed: $error';
+    return 'Falha na validação: $error';
   }
 
   @override
@@ -1704,9 +1715,9 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Recovered $count unsaved documents. Review each one before saving or discarding it.',
+          'Foram recuperados $count documentos não guardados. Reveja cada um antes de o guardar ou descartar.',
       one:
-          'Recovered 1 unsaved document. Review it before saving or discarding it.',
+          'Foi recuperado 1 documento não guardado. Reveja-o antes de o guardar ou descartar.',
     );
     return '$_temp0';
   }
@@ -1717,449 +1728,450 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count damaged recovery records could not be restored. Valid recovery records remain available.',
+          'Não foi possível restaurar $count registos de recuperação danificados. Os registos de recuperação válidos continuam disponíveis.',
       one:
-          'One damaged recovery record could not be restored. The original recovery file was preserved for inspection.',
+          'Não foi possível restaurar 1 registo de recuperação danificado. O ficheiro de recuperação original foi preservado para inspeção.',
     );
     return '$_temp0';
   }
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'Path does not exist: $path';
+    return 'O caminho não existe: $path';
   }
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'Target directory already exists and is not empty: $path';
+    return 'O diretório de destino já existe e não está vazio: $path';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'Target path already exists and is not a directory: $path';
+    return 'O caminho de destino já existe e não é um diretório: $path';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'Generated file already exists: $path';
+    return 'O ficheiro gerado já existe: $path';
   }
 
   @override
-  String get errorParentDirectoryRequired => 'Parent directory is required.';
+  String get errorParentDirectoryRequired => 'O diretório pai é obrigatório.';
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'Parent directory does not exist: $path';
+    return 'O diretório pai não existe: $path';
   }
 
   @override
   String errorDirectoryMissing(String path) {
-    return 'Directory does not exist: $path';
+    return 'O diretório não existe: $path';
   }
 
   @override
   String errorPathAlreadyExists(String path) {
-    return 'Path already exists: $path';
+    return 'O caminho já existe: $path';
   }
 
   @override
-  String get errorFileNameRequired => 'File name is required.';
+  String get errorFileNameRequired => 'O nome do ficheiro é obrigatório.';
 
   @override
   String get errorFileNameUnsafe =>
-      'File name must be a single safe path segment.';
+      'O nome do ficheiro deve ser um único segmento de caminho seguro.';
 
   @override
   String get errorFileOperationInvalidTarget =>
-      'Cannot move a folder into itself.';
+      'Não é possível mover uma pasta para dentro dela mesma.';
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'File operation must stay inside the workspace.';
+      'A operação de ficheiro deve permanecer dentro do espaço de trabalho.';
 
   @override
   String get errorFileOperationRoot =>
-      'The workspace root cannot be changed from the file tree.';
+      'A raiz do espaço de trabalho não pode ser alterada pela árvore de ficheiros.';
 
   @override
-  String get errorProjectNameRequired => 'Project name is required.';
+  String get errorProjectNameRequired => 'O nome do projeto é obrigatório.';
 
   @override
-  String get errorDirectoryNameRequired => 'Directory name is required.';
+  String get errorDirectoryNameRequired => 'O nome do diretório é obrigatório.';
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'Directory name must be a single safe path segment.';
+      'O nome do diretório deve ser um único segmento de caminho seguro.';
 
   @override
   String get errorInstanceIdInvalid =>
-      'Instance ID must start with a lowercase letter and contain only lowercase letters, numbers, underscores, and hyphens.';
+      'O ID da instância deve começar com uma letra minúscula e conter apenas letras minúsculas, números, sublinhados e hifens.';
 
   @override
   String get errorTopicFileInvalid =>
-      'Topic file name must be a Markdown file name without path separators.';
+      'O nome do ficheiro do tópico deve ser um nome de ficheiro Markdown sem separadores de caminho.';
 
   @override
-  String get errorTopicTitleRequired => 'Topic title is required.';
+  String get errorTopicTitleRequired => 'O título do tópico é obrigatório.';
 
   @override
   String errorWritersideModuleRootMissing(String path) {
-    return 'Writerside module root does not exist: $path';
+    return 'A raiz do módulo Writerside não existe: $path';
   }
 
   @override
   String get errorWritersideModuleNotOpen =>
-      'A Writerside module must be open to create a topic.';
+      'Um módulo Writerside deve estar aberto para criar um tópico.';
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'The Writerside module has no instance tree.';
+      'O módulo Writerside não tem uma árvore de instância.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'Writerside tree file does not exist: $path';
+    return 'O ficheiro de árvore do Writerside não existe: $path';
   }
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'Topic ID \"$topicId\" already exists in this help module.';
+    return 'O ID do tópico \"$topicId\" já existe neste módulo de ajuda.';
   }
 
   @override
   String errorTopicFileAlreadyExists(String path) {
-    return 'Topic file already exists: $path';
+    return 'O ficheiro do tópico já existe: $path';
   }
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'Reference topic is not present in the selected tree: $topic';
+    return 'O tópico de referência não está presente na árvore selecionada: $topic';
   }
 
   @override
   String get errorWritersideTocNodeMissing =>
-      'The selected TOC entry no longer exists.';
+      'A entrada selecionada do TOC não existe mais.';
 
   @override
   String get errorWritersideTocInvalidMove =>
-      'A TOC entry cannot be moved into itself or one of its children.';
+      'Uma entrada do TOC não pode ser movida para dentro de si mesma nem de um de seus descendentes.';
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'The start topic $topic cannot be deleted. Choose another start page first.';
+    return 'O tópico inicial $topic não pode ser eliminado. Escolha primeiro outra página inicial.';
   }
 
   @override
   String get errorWritersideSafeDeleteRequired =>
-      'Use Safe Delete for Writerside topic files.';
+      'Use a eliminação segura para ficheiros de tópicos do Writerside.';
 
   @override
   String get errorWritersideTopicUsageScanFailed =>
-      'Could not complete the topic usage scan. No files were changed.';
+      'Não foi possível concluir a verificação dos usos do tópico. Nenhum ficheiro foi alterado.';
 
   @override
   String get errorWritersideTopicUsagesRemain =>
-      'Some topic usages still require attention. Review them before continuing.';
+      'Alguns usos do tópico ainda precisam de atenção. Reveja-os antes de continuar.';
 
   @override
   String get errorWritersideRedirectInvalid =>
-      'The selected redirect target is no longer valid. Choose it again.';
+      'O destino de redirecionamento selecionado não é mais válido. Selecione-o novamente.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
-    return 'Topic removal could not be fully rolled back. Review these paths before continuing: $paths';
+    return 'Não foi possível reverter completamente a remoção do tópico. Reveja estes caminhos antes de continuar: $paths';
   }
 
   @override
   String get errorTopicsRootUnsafe =>
-      'Topics root must be a safe relative directory.';
+      'A raiz dos tópicos deve ser um diretório relativo seguro.';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'Topic file name must be a single safe path segment.';
+      'O nome do ficheiro do tópico deve ser um único segmento de caminho seguro.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
-    return 'Topic file extension must match the selected format ($extension).';
+    return 'A extensão do ficheiro do tópico deve corresponder ao formato selecionado ($extension).';
   }
 
   @override
   String get errorTopicFileNameInvalid =>
-      'Topic file name must contain only letters, numbers, underscores, and hyphens.';
+      'O nome do ficheiro do tópico deve conter apenas letras, números, sublinhados e hifens.';
 
   @override
   String errorUnknown(String code) {
-    return 'Unknown error: $code';
+    return 'Erro desconhecido: $code';
   }
 
   @override
   String diagnosticWorkspaceFileStatFailed(String error) {
-    return 'Could not read file metadata: $error';
+    return 'Não foi possível ler os metadados do ficheiro: $error';
   }
 
   @override
   String get diagnosticWorkspaceScanSkipped =>
-      'Large workspace detected. Some files were skipped to keep the app responsive.';
+      'Foi detetado um espaço de trabalho grande. Alguns ficheiros foram ignorados para manter a aplicação responsiva.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'Could not inspect workspace entry: $error';
+    return 'Não foi possível inspecionar a entrada do espaço de trabalho: $error';
   }
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'File is larger than the beta auto-parse limit.';
+      'O ficheiro excede o limite beta de análise automática.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
-    return 'Could not read Markdown file: $error';
+    return 'Não foi possível ler o ficheiro Markdown: $error';
   }
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'Malformed Writerside heading attribute block.';
+      'O bloco de atributos de título do Writerside está malformado.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'Duplicate heading ID \"$id\".';
+    return 'ID de título duplicado \"$id\".';
   }
 
   @override
   String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Additional top-level H1 headings are treated as chapters.';
+      'Títulos H1 adicionais no nível superior são tratados como capítulos.';
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown topic has no H1 or front matter title.';
+      'O tópico Markdown do Writerside não tem H1 nem título no front matter.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
-      'XML topic is missing title.';
+      'O tópico XML não tem título.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'Topic \"$fileName\" is missing a title.';
+    return 'O tópico \"$fileName\" não tem título.';
   }
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'Front matter is not closed.';
+      'O front matter não foi fechado.';
 
   @override
-  String get diagnosticMarkdownRawHtmlUnsafe => 'Unsafe HTML element.';
+  String get diagnosticMarkdownRawHtmlUnsafe => 'Elemento HTML inseguro.';
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
-    return 'Link target does not exist: $targetPath';
+    return 'O destino da ligação não existe: $targetPath';
   }
 
   @override
   String diagnosticMarkdownLinkUnresolvedAnchor(String anchor) {
-    return 'Anchor \"$anchor\" does not exist.';
+    return 'A âncora \"$anchor\" não existe.';
   }
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'Image \"$destination\" is missing alt text.';
+    return 'A imagem \"$destination\" não tem texto alternativo.';
   }
 
   @override
   String diagnosticMarkdownImageMissingFile(String destination) {
-    return 'Image does not exist: $destination';
+    return 'A imagem não existe: $destination';
   }
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'Invalid XML: $message';
+    return 'XML inválido: $message';
   }
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'writerside.cfg root must be <ihp>.';
+      'A raiz do ficheiro writerside.cfg deve ser <ihp>.';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'snippets declaration is missing src.';
+      'A declaração de snippets está sem o atributo src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'instance-groups declaration is missing src.';
+      'A declaração de instance-groups está sem o atributo src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'Unsupported keymaps mode: $mode';
+    return 'Modo de keymaps não suportado: $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Instance declaration is missing src.';
+      'A declaração de instância está sem o atributo src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg does not register an instance.';
+      'O ficheiro writerside.cfg não regista uma instância.';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree root must be <instance-profile>.';
+      'A raiz do ficheiro .tree deve ser <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId =>
-      'Instance profile is missing id.';
+      'O perfil da instância está sem o atributo id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'Tree file stem does not match instance id \"$id\".';
+    return 'O nome-base do ficheiro .tree não corresponde ao ID da instância \"$id\".';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Non-library instance is missing start-page.';
+      'A instância que não é de biblioteca não tem start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'Start page \"$startPage\" does not exist.';
+    return 'A página inicial \"$startPage\" não existe.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'Topic \"$topic\" appears more than once in this instance TOC.';
+    return 'O tópico \"$topic\" aparece mais de uma vez no TOC desta instância.';
   }
 
   @override
   String get diagnosticWritersideVariableMalformedDeclaration =>
-      'Variable declaration must have name and value.';
+      'A declaração de variável deve ter nome e valor.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'Variable \"$name\" is declared more than once.';
+    return 'A variável \"$name\" é declarada mais de uma vez.';
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId => 'Category is missing id.';
+  String get diagnosticWritersideCategoryMissingId =>
+      'A categoria está sem o atributo id.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'Category \"$id\" is declared more than once.';
+    return 'A categoria \"$id\" é declarada mais de uma vez.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'Category order \"$order\" is declared more than once.';
+    return 'A ordem da categoria \"$order\" foi declarada mais de uma vez.';
   }
 
   @override
   String get diagnosticWritersideTopicInvalidRoot =>
-      '.topic root must be <topic>.';
+      'A raiz do ficheiro .topic deve ser <topic>.';
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'XML topic is missing root id.';
+      'A raiz do tópico XML está sem o atributo id.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'XML topic root id \"$id\" must match filename \"$expectedId\".';
+    return 'O ID raiz do tópico XML \"$id\" deve corresponder ao nome do ficheiro \"$expectedId\".';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'Element id \"$elementId\" appears more than once.';
+    return 'O ID do elemento \"$elementId\" aparece mais de uma vez.';
   }
 
   @override
   String get diagnosticWritersideTopicAnchorMissingHref =>
-      '<a> is missing href.';
+      '<a> está sem o atributo href.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'Writerside mode requires writerside.cfg.';
+      'O modo Writerside requer o ficheiro writerside.cfg.';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'Configured build config directory is missing: $relativePath';
+    return 'O diretório configurado para a compilação está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'Configured API specifications directory is missing: $relativePath';
+    return 'O diretório de especificações de API configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'Configured snippets directory is missing: $relativePath';
+    return 'O diretório de snippets configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'Configured variables file is missing: $relativePath';
+    return 'O ficheiro de variáveis configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'Configured categories file is missing: $relativePath';
+    return 'O ficheiro de categorias configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'Configured instance groups file is missing: $relativePath';
+    return 'O ficheiro de grupos de instâncias configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'Registered instance tree \"$source\" does not exist.';
+    return 'A árvore de instância registada \"$source\" não existe.';
   }
 
   @override
   String diagnosticWritersideTopicReadFailed(String error) {
-    return 'Could not read topic file: $error';
+    return 'Não foi possível ler o ficheiro do tópico: $error';
   }
 
   @override
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'Default topics directory is missing: $relativePath';
+    return 'O diretório de tópicos predefinido está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'Configured topics directory is missing: $relativePath';
+    return 'O diretório de tópicos configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'Configured images directory is missing: $relativePath';
+    return 'O diretório de imagens configurado está ausente: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'Element id \"$id\" appears more than once.';
+    return 'O ID do elemento \"$id\" aparece mais de uma vez.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC references missing topic \"$topic\".';
+    return 'O TOC faz referência ao tópico ausente \"$topic\".';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'External href \"$href\" is invalid.';
+    return 'O href externo \"$href\" é inválido.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'Variable \"%$name%\" is not declared.';
+    return 'A variável \"%$name%\" não foi declarada.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'Topic link \"$destination\" does not resolve.';
+    return 'Não foi possível resolver a ligação para o tópico \"$destination\".';
   }
 
   @override
@@ -2167,16 +2179,16 @@ class AppLocalizationsPt extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'Anchor \"$anchor\" does not exist in \"$targetName\".';
+    return 'A âncora \"$anchor\" não existe em \"$targetName\".';
   }
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> is missing the from attribute.';
+      '<include> está sem o atributo from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'Include source \"$from\" does not exist.';
+    return 'A origem da inclusão \"$from\" não existe.';
   }
 
   @override
@@ -2184,94 +2196,95 @@ class AppLocalizationsPt extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'Include element \"$elementId\" does not exist in \"$from\".';
+    return 'O elemento incluído \"$elementId\" não existe em \"$from\".';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Seealso category \"$ref\" is not declared.';
+    return 'A categoria seealso \"$ref\" não foi declarada.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'Topic reference \"$reference\" is ambiguous.';
+    return 'A referência de tópico \"$reference\" é ambígua.';
   }
 
   @override
   String diagnosticUnknown(String code) {
-    return 'Unknown diagnostic: $code';
+    return 'Diagnóstico desconhecido: $code';
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Fechar';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Diff do Git';
 
   @override
-  String get gitShowDiff => 'Show diff';
+  String get gitShowDiff => 'Mostrar diff';
 
   @override
   String gitDiffHunkRange(String oldRange, String newRange) {
-    return 'old $oldRange → new $newRange';
+    return 'anterior $oldRange → novo $newRange';
   }
 
   @override
-  String get gitDiffNoLines => 'no lines';
+  String get gitDiffNoLines => 'sem linhas';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitUnavailableTitle => 'Git não está disponível';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Instale o Git ou configure o BusyMark para usar um executável do Git disponível. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+  String get gitTrustRequiredTitle =>
+      'Confiar neste espaço de trabalho para o Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+      'Os repositórios Git podem executar programas por meio de hooks, filtros e outras definições. Confie neste espaço de trabalho antes que o BusyMark leia os dados do repositório ou ative ações do Git.';
 
   @override
-  String get gitTrustWorkspace => 'Trust workspace';
+  String get gitTrustWorkspace => 'Confiar no espaço de trabalho';
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitNotRepositoryTitle => 'Não é um repositório Git';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'Este espaço de trabalho não está em um repositório Git.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'Inicializar repositório';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'HEAD desanexado';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'Desanexado em $commit';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'Sem upstream';
 
   @override
   String gitAheadCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count unpushed commits',
-      one: '1 unpushed commit',
+      other: '$count commits não enviados',
+      one: '1 commit não enviado',
     );
     return '$_temp0';
   }
@@ -2281,41 +2294,41 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count commits para obter',
+      one: '1 commit para obter',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'Limpo';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'Conflitos';
 
   @override
-  String get gitChanges => 'Changes';
+  String get gitChanges => 'Alterações';
 
   @override
-  String get gitStaged => 'Staged';
+  String get gitStaged => 'Indexadas';
 
   @override
-  String get gitUnstaged => 'Unstaged';
+  String get gitUnstaged => 'Não indexadas';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Histórico';
 
   @override
-  String get gitBranches => 'Branches';
+  String get gitBranches => 'Ramificações';
 
   @override
-  String get gitActions => 'Git actions';
+  String get gitActions => 'Ações do Git';
 
   @override
   String get gitPull => 'Pull';
 
   @override
-  String get gitFetch => 'Fetch';
+  String get gitFetch => 'Buscar';
 
   @override
   String get gitPush => 'Push';
@@ -2324,89 +2337,89 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Stage file';
+  String get gitSelectForCommit => 'Adicionar ficheiro ao índice';
 
   @override
-  String get gitRemoveFromCommit => 'Unstage file';
+  String get gitRemoveFromCommit => 'Remover ficheiro do índice';
 
   @override
-  String get gitDiscard => 'Rollback';
+  String get gitDiscard => 'Descartar';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'Abrir ficheiro';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'Marcar como resolvido';
 
   @override
-  String get gitUntracked => 'Untracked';
+  String get gitUntracked => 'Ficheiros não monitorizados';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'Mensagem de commit';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'Ficheiros selecionados';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Stage at least one file before committing.';
+      'Adicione pelo menos um ficheiro ao índice antes de criar o commit.';
 
   @override
   String gitStagedFileCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count staged files',
-      one: '1 staged file',
+      other: '$count ficheiros no índice',
+      one: '1 ficheiro no índice',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitOutsideWorkspace => 'Outside workspace';
+  String get gitOutsideWorkspace => 'Fora do espaço de trabalho';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'Introduza uma mensagem de commit.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'Criar ramificação';
 
   @override
-  String get gitNewBranch => 'New Branch';
+  String get gitNewBranch => 'Nova ramificação';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'Nome da ramificação';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'Trocar';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'Nenhuma alteração';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'Nenhum histórico';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'Nenhuma ramificação';
 
   @override
-  String get gitNoDiff => 'No diff to show';
+  String get gitNoDiff => 'Nenhuma diferença para apresentar';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'Ficheiro binário. O BusyMark não apresenta patches binários.';
 
   @override
   String gitBinaryFileInfo(int size) {
-    return 'Binary file ($size bytes). BusyMark does not render binary patches.';
+    return 'Ficheiro binário ($size bytes). O BusyMark não apresenta patches binários.';
   }
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'As alterações não guardadas do editor não são incluídas até serem guardadas.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'Descartar alterações do Git?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
@@ -2414,9 +2427,9 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'All staged and unstaged changes in the selected tracked files will be restored to HEAD.',
+          'Todas as alterações indexadas e não indexadas nos ficheiros monitorizados selecionados serão repostas para HEAD.',
       one:
-          'All staged and unstaged changes in the selected tracked file will be restored to HEAD.',
+          'Todas as alterações indexadas e não indexadas no ficheiro monitorizado selecionado serão repostas para HEAD.',
     );
     return '$_temp0';
   }
@@ -2426,8 +2439,8 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'Os ficheiros não monitorizados selecionados serão eliminados.',
+      one: 'O ficheiro não monitorizado selecionado será eliminado.',
     );
     return '$_temp0';
   }
@@ -2438,105 +2451,106 @@ class AppLocalizationsPt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
+          'Os ficheiros selecionados serão repostos ou eliminados consoante o respetivo estado no Git.',
       one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'O ficheiro selecionado será reposto ou eliminado consoante o respetivo estado no Git.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'Trocar para $branch?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'O BusyMark voltará a carregar o espaço de trabalho a partir do disco depois de o Git mudar de ramificação.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'Definir ramificação upstream?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'Esta ramificação não tem upstream. O BusyMark pode enviar $branch e definir o respetivo upstream quando existir exatamente um remoto configurado.';
   }
 
   @override
-  String get gitProjectHistory => 'Project History';
+  String get gitProjectHistory => 'Histórico do projeto';
 
   @override
-  String get gitFileHistory => 'File History';
+  String get gitFileHistory => 'Histórico do ficheiro';
 
   @override
   String get gitFileHistoryRequiresOpenFile =>
-      'File History requires an open Markdown file.';
+      'O histórico do ficheiro requer um ficheiro Markdown aberto.';
 
   @override
-  String get gitLoadMore => 'Load More';
+  String get gitLoadMore => 'Carregar mais';
 
   @override
-  String get gitChangesInCommit => 'Changes in this commit';
+  String get gitChangesInCommit => 'Alterações neste commit';
 
   @override
-  String get gitCompareWithCurrent => 'Compare with current';
+  String get gitCompareWithCurrent => 'Comparar com a versão atual';
 
   @override
-  String get gitRestoreVersion => 'Restore this version';
+  String get gitRestoreVersion => 'Restaurar esta versão';
 
   @override
-  String get gitConfirmRestoreTitle => 'Restore this file version?';
+  String get gitConfirmRestoreTitle => 'Restaurar esta versão do ficheiro?';
 
   @override
   String get gitConfirmRestoreMessage =>
-      'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.';
+      'O BusyMark substituirá o ficheiro atual da árvore de trabalho pela versão selecionada do commit. O ficheiro reposto permanecerá fora do índice.';
 
   @override
-  String get gitCommitActions => 'Commit actions';
+  String get gitCommitActions => 'Ações do commit';
 
   @override
-  String get gitResetCurrentBranchToHere => 'Reset current branch to here…';
+  String get gitResetCurrentBranchToHere =>
+      'Redefinir a ramificação atual aqui…';
 
   @override
   String gitResetCurrentBranchTitle(String branch, String commit) {
-    return 'Reset $branch to $commit?';
+    return 'Redefinir $branch para $commit?';
   }
 
   @override
   String gitResetCurrentBranchMessage(String branch, String commit) {
-    return 'This moves branch $branch to commit $commit. Choose how Git updates the index and working tree.';
+    return 'Isto move a ramificação $branch para o commit $commit. Escolha como o Git deve atualizar o índice e a árvore de trabalho.';
   }
 
   @override
-  String get gitReset => 'Reset';
+  String get gitReset => 'Redefinir';
 
   @override
   String get gitResetModeSoft => 'Soft';
 
   @override
   String get gitResetModeSoftDescription =>
-      'Move the branch only. Keep the index and working tree unchanged; differences from the selected commit remain staged.';
+      'Mover apenas a ramificação. Manter o índice e a árvore de trabalho inalterados; as diferenças em relação ao commit selecionado permanecem no índice.';
 
   @override
   String get gitResetModeMixed => 'Mixed';
 
   @override
   String get gitResetModeMixedDescription =>
-      'Move the branch and reset the index. Keep the working tree unchanged, leaving differences unstaged.';
+      'Mover a ramificação e redefinir o índice. Manter a árvore de trabalho inalterada, deixando as diferenças fora do índice.';
 
   @override
   String get gitResetModeHard => 'Hard';
 
   @override
   String get gitResetModeHardDescription =>
-      'Move the branch and reset the index and working tree. Tracked changes are discarded; obstructing untracked files may be deleted.';
+      'Mover a ramificação e redefinir o índice e a árvore de trabalho. As alterações monitorizadas são descartadas; os ficheiros não monitorizados que bloqueiam a operação podem ser eliminados.';
 
   @override
   String get gitResetModeKeep => 'Keep';
 
   @override
   String get gitResetModeKeepDescription =>
-      'Move the branch and reset tracked files while preserving local changes. Git aborts if those changes conflict with the reset.';
+      'Mover a ramificação e redefinir os ficheiros monitorizados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -2544,121 +2558,125 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get fileActions => 'File actions';
+  String get fileActions => 'Ações do ficheiro';
 
   @override
-  String get actions => 'Actions';
+  String get actions => 'Ações';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'Adicionado';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'Eliminado';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'Renomeado';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'Copiado';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'Não monitorizado';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'Em conflito';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'Ignorado';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'Tipo alterado';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'Modificado';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'Desconhecido';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git não está disponível.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository =>
+      'Este espaço de trabalho não é um repositório Git.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath =>
+      'O BusyMark bloqueou um caminho Git inseguro.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName =>
+      'Introduza um nome de ramificação válido.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'Nenhum remoto Git está configurado.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream =>
+      'Nenhuma ramificação upstream está configurada.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'Há vários remotos configurados. Escolha um upstream fora desta versão do BusyMark.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'Guarde ou descarte as alterações do editor do BusyMark antes de trocar de ramificação.';
 
   @override
   String get gitErrorResetDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before resetting the current branch.';
+      'Guarde ou descarte as alterações no editor do BusyMark antes de redefinir a ramificação atual.';
 
   @override
   String get gitErrorRestoreStagedFile =>
-      'Unstage this file before restoring a historical version.';
+      'Retire o ficheiro do índice antes de repor uma versão anterior.';
 
   @override
   String get gitErrorResetDetachedHead =>
-      'Check out a branch before resetting it.';
+      'Alterne para uma ramificação antes de redefini-la.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'A ramificação divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.';
 
   @override
   String get gitErrorAuthorIdentity =>
-      'Git needs an author name and email address before it can commit.';
+      'O Git precisa do nome e do e-mail do autor antes de criar um commit.';
 
   @override
-  String get gitAuthorIdentityTitle => 'Git Author Identity';
+  String get gitAuthorIdentityTitle => 'Identidade do autor do Git';
 
   @override
   String get gitAuthorIdentityMessage =>
-      'Enter the identity Git should record on commits. BusyMark will save it and retry this commit.';
+      'Indique a identidade que o Git deve registar nos commits. O BusyMark irá guardá-la e tentar este commit novamente.';
 
   @override
-  String get gitAuthorName => 'Name';
+  String get gitAuthorName => 'Nome';
 
   @override
-  String get gitAuthorEmail => 'Email';
+  String get gitAuthorEmail => 'E-mail';
 
   @override
-  String get gitAuthorIdentityGlobal => 'Use for all repositories';
+  String get gitAuthorIdentityGlobal => 'Usar em todos os repositórios';
 
   @override
   String get gitAuthorIdentityGlobalDescription =>
-      'When installed as a Snap, this applies to repositories opened in BusyMark.';
+      'Quando instalado como Snap, isto se aplica aos repositórios abertos no BusyMark.';
 
   @override
-  String get gitSaveIdentityAndCommit => 'Save and Commit';
+  String get gitSaveIdentityAndCommit => 'Guardar e criar commit';
 
   @override
-  String get gitErrorAuthentication => 'Git authentication failed.';
+  String get gitErrorAuthentication => 'A autenticação do Git falhou.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'A operação de rede do Git falhou.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'O Git relatou conflitos não resolvidos.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'O comando Git falhou.';
 
   @override
   String get syntaxReference => 'Referência de sintaxe';
@@ -2733,11 +2751,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceSourcePreservedDescription =>
-      'HTML bruto não editado é salvo exatamente como texto fonte.';
+      'HTML bruto não editado é guardado exatamente como texto fonte.';
 
   @override
   String get syntaxReferenceMarkdownInsideHtmlDescription =>
-      'Marcadores Markdown dentro de HTML bruto são exibidos como texto literal.';
+      'Marcadores Markdown dentro de HTML bruto são apresentados como texto literal.';
 
   @override
   String get syntaxReferenceBlockedContentDescription =>
@@ -2745,7 +2763,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceSafeUrlsDescription =>
-      'Links permitem http, https, mailto, tel, URLs relativas e fragmentos; esquemas inseguros são bloqueados.';
+      'Ligações permitem http, https, mailto, tel, URLs relativas e fragmentos; esquemas inseguros são bloqueados.';
 
   @override
   String get syntaxReferenceCategory => 'Categoria';
@@ -2776,11 +2794,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceScopeWritersideMarkdown =>
-      'Somente Markdown do Writerside';
+      'Apenas Markdown do Writerside';
 
   @override
   String get syntaxReferenceScopeWritersideMarkdownAndXml =>
-      'Somente Markdown e XML do Writerside';
+      'Apenas Markdown e XML do Writerside';
 
   @override
   String get syntaxReferenceMarkdownDescription =>
@@ -2827,7 +2845,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceSemanticDiagramLimitation =>
-      'As formas semânticas code-block e src aceitam Mermaid, PlantUML e D2, não OpenAPI, e somente em projetos Writerside.';
+      'As formas semânticas code-block e src aceitam Mermaid, PlantUML e D2, não OpenAPI, e apenas em projetos Writerside.';
 
   @override
   String get syntaxReferenceReferencedDiagramSource =>
@@ -2878,7 +2896,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syntaxReferenceWritersideDescription =>
-      'Estas extensões específicas são interpretadas somente em projetos Writerside abertos.';
+      'Estas extensões específicas são interpretadas apenas em projetos Writerside abertos.';
 
   @override
   String get syntaxReferenceAdmonitionBlockquote => 'Citação de aviso';
@@ -2920,61 +2938,61 @@ class AppLocalizationsPt extends AppLocalizations {
       'Vídeo local usa uma imagem preview-src local; fontes hospedadas devem ser URLs HTTPS compatíveis do YouTube ou Vimeo.';
 
   @override
-  String get exportAsPdf => 'Export as PDF';
+  String get exportAsPdf => 'Exportar como PDF';
 
   @override
   String get pdfExportDescription =>
-      'Choose the page layout for a polished, self-contained PDF.';
+      'Escolha o esquema da página para criar um PDF bem acabado e independente.';
 
   @override
   String get pdfRemoteImagesNote =>
-      'Remote images are not downloaded during export. Local images are included when available.';
+      'As imagens remotas não são transferidas durante a exportação. As imagens locais são incluídas quando disponíveis.';
 
   @override
-  String get pdfPageSize => 'Page size';
+  String get pdfPageSize => 'Tamanho da página';
 
   @override
   String get pdfPageSizeA4 => 'A4';
 
   @override
-  String get pdfPageSizeLetter => 'Letter';
+  String get pdfPageSizeLetter => 'Carta';
 
   @override
-  String get pdfOrientation => 'Orientation';
+  String get pdfOrientation => 'Orientação';
 
   @override
-  String get pdfPortrait => 'Portrait';
+  String get pdfPortrait => 'Vertical';
 
   @override
-  String get pdfLandscape => 'Landscape';
+  String get pdfLandscape => 'Horizontal';
 
   @override
-  String get pdfMargins => 'Margins';
+  String get pdfMargins => 'Margens';
 
   @override
-  String get pdfMarginNarrow => 'Narrow';
+  String get pdfMarginNarrow => 'Estreitas';
 
   @override
-  String get pdfMarginNormal => 'Normal';
+  String get pdfMarginNormal => 'Normais';
 
   @override
-  String get pdfMarginWide => 'Wide';
+  String get pdfMarginWide => 'Largas';
 
   @override
-  String get pdfIncludePageNumbers => 'Include page numbers';
+  String get pdfIncludePageNumbers => 'Incluir números de página';
 
   @override
-  String get export => 'Export';
+  String get export => 'Exportar';
 
   @override
-  String get exportingPdf => 'Exporting PDF…';
+  String get exportingPdf => 'A exportar PDF…';
 
   @override
-  String get fileTypePdf => 'PDF document';
+  String get fileTypePdf => 'Documento PDF';
 
   @override
   String pdfExported(String fileName) {
-    return '$fileName was exported.';
+    return '$fileName foi exportado.';
   }
 
   @override
@@ -2982,364 +3000,368 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count warnings',
-      one: '1 warning',
+      other: '$count avisos',
+      one: '1 aviso',
     );
-    return '$fileName was exported with $_temp0.';
+    return '$fileName foi exportado com $_temp0.';
   }
 
   @override
   String get pdfExportUnavailable =>
-      'The PDF export component is missing. Reinstall BusyMark and try again.';
+      'O componente de exportação para PDF está ausente. Reinstale o BusyMark e tente novamente.';
 
   @override
-  String get pdfExportTimedOut => 'PDF export took too long and was stopped.';
+  String get pdfExportTimedOut =>
+      'A exportação para PDF demorou demasiado e foi interrompida.';
 
   @override
   String get pdfExportFailed =>
-      'BusyMark could not export this document as PDF.';
+      'O BusyMark não conseguiu exportar este documento como PDF.';
 
   @override
-  String get visualizationRendering => 'Rendering…';
+  String get visualizationRendering => 'A renderizar…';
 
   @override
-  String get visualizationStale => 'Showing the last valid render';
+  String get visualizationStale => 'A apresentar a última renderização válida';
 
   @override
-  String get visualizationShowSource => 'Show source';
+  String get visualizationShowSource => 'Mostrar código-fonte';
 
   @override
-  String get visualizationShowRender => 'Show render';
+  String get visualizationShowRender => 'Mostrar renderização';
 
   @override
-  String get visualizationFitWidth => 'Fit to width';
+  String get visualizationFitWidth => 'Ajustar à largura';
 
   @override
-  String get visualizationSaveImage => 'Save image';
+  String get visualizationSaveImage => 'Guardar imagem';
 
   @override
-  String get visualizationCopyImage => 'Copy image';
+  String get visualizationCopyImage => 'Copiar imagem';
 
   @override
-  String get visualizationImageCopied => 'Image copied';
+  String get visualizationImageCopied => 'Imagem copiada';
 
   @override
-  String get visualizationOpenApiReference => 'Open API Reference';
+  String get visualizationOpenApiReference => 'Abrir referência da API';
 
   @override
-  String get visualizationValid => 'Valid';
+  String get visualizationValid => 'Válido';
 
   @override
-  String get visualizationInvalid => 'Invalid';
+  String get visualizationInvalid => 'Inválido';
 
   @override
-  String get visualizationServers => 'Servers';
+  String get visualizationServers => 'Servidores';
 
   @override
-  String get visualizationPaths => 'Paths';
+  String get visualizationPaths => 'Caminhos';
 
   @override
-  String get visualizationOperations => 'Operations';
+  String get visualizationOperations => 'Operações';
 
   @override
-  String get visualizationTags => 'Tags';
+  String get visualizationTags => 'Etiquetas';
 
   @override
-  String get visualizationNoOperations => 'No matching operations';
+  String get visualizationNoOperations => 'Nenhuma operação correspondente';
 
   @override
-  String get visualizationSearchOperations => 'Search operations';
+  String get visualizationSearchOperations => 'Pesquisar operações';
 
   @override
   String get visualizationRenderFailed =>
-      'This visualization could not be rendered.';
+      'Não foi possível renderizar esta visualização.';
 
   @override
-  String get visualizationRetry => 'Retry';
+  String get visualizationRetry => 'Tentar novamente';
 
   @override
   String visualizationSaved(String fileName) {
-    return 'Saved $fileName';
+    return '$fileName guardado';
   }
 
   @override
   String get shortcutExportPdfDescription =>
-      'Export the active document or Writerside module as a PDF.';
+      'Exportar o documento ativo ou o módulo do Writerside como PDF.';
 
   @override
-  String get instances => 'Instances';
+  String get instances => 'Instâncias';
 
   @override
-  String get newInstance => 'New instance';
+  String get newInstance => 'Nova instância';
 
   @override
-  String get newTocLibrary => 'New TOC library';
+  String get newTocLibrary => 'Nova biblioteca de sumário';
 
   @override
-  String get editInstance => 'Edit instance';
+  String get editInstance => 'Editar instância';
 
   @override
-  String get openTocFile => 'Open TOC file';
+  String get openTocFile => 'Abrir ficheiro do índice';
 
   @override
-  String get createInstance => 'Create instance';
+  String get createInstance => 'Criar instância';
 
   @override
-  String get createTocLibrary => 'Create TOC library';
+  String get createTocLibrary => 'Criar biblioteca de sumário';
 
   @override
-  String get instanceContent => 'Content';
+  String get instanceContent => 'Conteúdo';
 
   @override
-  String get instanceContentSource => 'Create from';
+  String get instanceContentSource => 'Criar a partir de';
 
   @override
-  String get emptyInstance => 'Empty instance';
+  String get emptyInstance => 'Instância vazia';
 
   @override
-  String get markdownFiles => 'Local Markdown files';
+  String get markdownFiles => 'Ficheiros Markdown locais';
 
   @override
-  String get chooseMarkdownFolder => 'Choose Markdown folder';
+  String get chooseMarkdownFolder => 'Escolher pasta de Markdown';
 
   @override
   String get errorWritersideInstanceImportSourceRequired =>
-      'Choose a folder containing Markdown files.';
+      'Escolha uma pasta que contenha ficheiros Markdown.';
 
   @override
-  String get instanceAppearance => 'Appearance';
+  String get instanceAppearance => 'Aparência';
 
   @override
-  String get instanceColor => 'Icon color';
+  String get instanceColor => 'Cor do ícone';
 
   @override
-  String get instanceVersion => 'Version';
+  String get instanceVersion => 'Versão';
 
   @override
   String instanceVersionInherited(String version) {
-    return 'The project version is $version when this field is empty.';
+    return 'Quando este campo está vazio, é usada a versão do projeto $version.';
   }
 
   @override
-  String get instanceWebPath => 'Web path';
+  String get instanceWebPath => 'Caminho web';
 
   @override
-  String get instanceStatus => 'Status';
+  String get instanceStatus => 'Estado';
 
   @override
-  String get instanceStatusRelease => 'Release';
+  String get instanceStatusRelease => 'Lançamento';
 
   @override
-  String get instanceStatusEap => 'Early access';
+  String get instanceStatusEap => 'Acesso antecipado';
 
   @override
-  String get instanceStatusDeprecated => 'Deprecated';
+  String get instanceStatusDeprecated => 'Obsoleta';
 
   @override
-  String get allowSearchEngineIndexing => 'Allow search engine indexing';
+  String get allowSearchEngineIndexing =>
+      'Permitir indexação por mecanismos de busca';
 
   @override
   String get allowSearchEngineIndexingDescription =>
-      'Allow external search engines to index this output.';
+      'Permita que mecanismos de busca externos indexem esta saída.';
 
   @override
-  String get offlineArtifact => 'Offline artifact';
+  String get offlineArtifact => 'Artefato offline';
 
   @override
   String get offlineArtifactDescription =>
-      'Bundle resources so the built documentation is self-contained.';
+      'Inclua os recursos para que a documentação gerada funcione de forma autônoma.';
 
   @override
-  String get instanceOutputSettings => 'Output settings';
+  String get instanceOutputSettings => 'Definições de saída';
 
   @override
-  String get markdownImportSource => 'Markdown source';
+  String get markdownImportSource => 'Origem Markdown';
 
   @override
-  String get markdownImportFiles => 'Markdown files';
+  String get markdownImportFiles => 'Ficheiros Markdown';
 
   @override
-  String get selectNone => 'Select none';
+  String get selectNone => 'Não selecionar nenhum';
 
   @override
   String markdownFilesFound(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count Markdown files found',
-      one: '1 Markdown file found',
+      other: 'Foram encontrados $count ficheiros Markdown',
+      one: 'Foi encontrado 1 ficheiro Markdown',
     );
     return '$_temp0';
   }
 
   @override
   String get noMarkdownFilesFound =>
-      'No Markdown files were found in this directory.';
+      'Não foram encontrados ficheiros Markdown neste diretório.';
 
   @override
-  String get copyReferencedMedia => 'Copy referenced media';
+  String get copyReferencedMedia => 'Copiar multimédia referenciada';
 
   @override
   String get copyReferencedMediaDescription =>
-      'Copy local images and video referenced by the selected files while preserving relative paths.';
+      'Copie imagens e vídeos locais referenciados pelos ficheiros selecionados, preservando os caminhos relativos.';
 
   @override
-  String get instanceIdRenameWarningTitle => 'Rename instance ID?';
+  String get instanceIdRenameWarningTitle => 'Mudar o nome do ID da instância?';
 
   @override
   String instanceIdRenameWarning(String oldId, String newId) {
-    return 'BusyMark will rename the .tree file and update Writerside project references from “$oldId” to “$newId”. Publication scripts are not changed and must be updated separately.';
+    return 'O BusyMark mudará o nome do ficheiro .tree e atualizará as referências do projeto Writerside de “$oldId” para “$newId”. Os scripts de publicação não são alterados e devem ser atualizados separadamente.';
   }
 
   @override
-  String get renameAndUpdateReferences => 'Rename and update references';
+  String get renameAndUpdateReferences =>
+      'Mudar o nome e atualizar referências';
 
   @override
   String get tocLibraryDescription =>
-      'A TOC library stores reusable sections and does not produce its own output.';
+      'Uma biblioteca de sumário armazena secções reutilizáveis e não produz uma saída própria.';
 
   @override
-  String get defaultTocLibraryName => 'Shared TOC';
+  String get defaultTocLibraryName => 'Sumário partilhado';
 
   @override
-  String get instanceColorAutomatic => 'Automatic';
+  String get instanceColorAutomatic => 'Automático';
 
   @override
-  String get instanceColorBlue => 'Blue';
+  String get instanceColorBlue => 'Azul';
 
   @override
-  String get instanceColorGreen => 'Green';
+  String get instanceColorGreen => 'Verde';
 
   @override
-  String get instanceColorOrange => 'Orange';
+  String get instanceColorOrange => 'Laranja';
 
   @override
-  String get instanceColorPurple => 'Purple';
+  String get instanceColorPurple => 'Roxo';
 
   @override
-  String get instanceColorRed => 'Red';
+  String get instanceColorRed => 'Vermelho';
 
   @override
-  String get instanceColorTeal => 'Teal';
+  String get instanceColorTeal => 'Verde-azulado';
 
   @override
-  String get instanceColorYellow => 'Yellow';
+  String get instanceColorYellow => 'Amarelo';
 
   @override
-  String get errorWritersideInstanceNameRequired => 'Enter an instance name.';
+  String get errorWritersideInstanceNameRequired =>
+      'Introduza um nome para a instância.';
 
   @override
   String errorWritersideInstanceIdExists(String id) {
-    return 'An instance with ID “$id” already exists.';
+    return 'Já existe uma instância com o ID “$id”.';
   }
 
   @override
   String errorWritersideInstanceTreeExists(String path) {
-    return 'The instance tree already exists: $path';
+    return 'A árvore da instância já existe: $path';
   }
 
   @override
   String errorWritersideInstanceImportSourceMissing(String path) {
-    return 'The Markdown source directory does not exist: $path';
+    return 'O diretório de origem Markdown não existe: $path';
   }
 
   @override
   String get errorWritersideInstanceImportSelectionRequired =>
-      'Select at least one Markdown file to import.';
+      'Selecione pelo menos um ficheiro Markdown para importar.';
 
   @override
   String errorWritersideInstanceImportFileInvalid(String path) {
-    return 'This is not a readable Markdown file inside the selected source: $path';
+    return 'Este não é um ficheiro Markdown legível dentro da origem selecionada: $path';
   }
 
   @override
   String errorWritersideInstanceImportTargetExists(String path) {
-    return 'Import would overwrite an existing project file: $path';
+    return 'A importação substituiria um ficheiro existente do projeto: $path';
   }
 
   @override
   String get errorWritersideInstanceFilesChanged =>
-      'Instance files changed on disk. Review them and try again.';
+      'Os ficheiros da instância foram alterados no disco. Reveja-os e tente novamente.';
 
   @override
   String errorWritersideInstanceRollbackFailed(String paths) {
-    return 'BusyMark could not completely roll back the instance change. Review these files before continuing: $paths';
+    return 'O BusyMark não conseguiu reverter completamente a alteração da instância. Reveja estes ficheiros antes de continuar: $paths';
   }
 
   @override
   String get errorWritersideInstanceLibraryImport =>
-      'A TOC library cannot import Markdown topics.';
+      'Uma biblioteca de sumário não pode importar tópicos Markdown.';
 
   @override
   String get errorWritersideInstanceWebPathInvalid =>
-      'The web path must be a single line.';
+      'O caminho web deve ter uma única linha.';
 
   @override
   String get errorWritersideInstanceConfigurationInvalid =>
-      'The Writerside instance configuration is invalid. Correct its diagnostics and try again.';
+      'A configuração da instância do Writerside é inválida. Corrija os diagnósticos e tente novamente.';
 
   @override
   String get errorWritersideInstanceTemporaryFile =>
-      'BusyMark could not stage the instance changes safely.';
+      'O BusyMark não conseguiu preparar com segurança as alterações da instância.';
 
   @override
   String diagnosticWritersideTreeInvalidStatus(String status) {
-    return 'Unknown instance status “$status”. Use release, eap, or deprecated.';
+    return 'Estado de instância desconhecido “$status”. Use release, eap ou deprecated.';
   }
 
   @override
   String diagnosticWritersideDuplicateInstanceId(String id) {
-    return 'The instance ID “$id” is used by more than one tree file.';
+    return 'O ID de instância “$id” é usado por mais de um ficheiro de árvore.';
   }
 
   @override
   String get diagnosticWritersideBuildProfilesInvalidRoot =>
-      'buildprofiles.xml must have a <buildprofiles> root element.';
+      'buildprofiles.xml deve ter um elemento raiz <buildprofiles>.';
 
   @override
   String diagnosticWritersideBuildProfilesInvalidBoolean(
     String name,
     String value,
   ) {
-    return 'The $name value “$value” must be true or false.';
+    return 'O valor $name “$value” deve ser true ou false.';
   }
 
   @override
   String get diagnosticWritersideBuildProfileMissingInstance =>
-      'A <build-profile> element must specify an instance ID.';
+      'Um elemento <build-profile> deve especificar um ID de instância.';
 
   @override
   String get diagnosticWritersideTreeInvalidInclude =>
-      'A tree <include> must specify both from and element-id.';
+      'Um <include> da árvore deve especificar from e element-id.';
 
   @override
   String get diagnosticWritersideTreeMissingSnippetId =>
-      'A tree <snippet> must specify an id.';
+      'Um <snippet> da árvore deve especificar um id.';
 
   @override
   String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
-      'A cross-instance TOC reference must specify both ref and in.';
+      'Uma referência de sumário entre instâncias deve especificar ref e in.';
 
   @override
   String get diagnosticWritersideTreeConflictingTargets =>
-      'A TOC element cannot target more than one topic, reference, link, or redirect.';
+      'Um elemento do sumário não pode apontar para mais do que um tópico, referência, ligação ou redirecionamento.';
 
   @override
   String diagnosticWritersideTreeDuplicateElementId(String id) {
-    return 'Tree element ID “$id” is declared more than once.';
+    return 'O ID de elemento da árvore “$id” foi declarado mais de uma vez.';
   }
 
   @override
   String get diagnosticWritersideInstanceGroupsInvalidRoot =>
-      'The instance groups file must have an <instance-groups> root element.';
+      'O ficheiro de grupos de instâncias deve ter um elemento raiz <instance-groups>.';
 
   @override
   String get diagnosticWritersideInstanceGroupInvalid =>
-      'An instance group must specify a non-empty id and instances list.';
+      'Um grupo de instâncias deve especificar um id e uma lista de instâncias não vazios.';
 
   @override
   String diagnosticWritersideInstanceGroupDuplicateId(String id) {
-    return 'Instance group ID “$id” is declared more than once.';
+    return 'O ID do grupo de instâncias “$id” foi declarado mais de uma vez.';
   }
 
   @override
@@ -3348,7 +3370,7 @@ class AppLocalizationsPt extends AppLocalizations {
     String id,
     String origin,
   ) {
-    return 'TOC include “$source#$id” belongs to external module “$origin” and cannot be expanded in this workspace.';
+    return 'A inclusão de sumário “$source#$id” pertence ao módulo externo “$origin” e não pode ser expandida neste espaço de trabalho.';
   }
 
   @override
@@ -3356,22 +3378,22 @@ class AppLocalizationsPt extends AppLocalizations {
     String source,
     String id,
   ) {
-    return 'Tree element “$id” does not exist in registered tree “$source”.';
+    return 'O elemento de árvore “$id” não existe na árvore registada “$source”.';
   }
 
   @override
   String diagnosticWritersideTreeCircularInclude(String source, String id) {
-    return 'Tree include “$source#$id” creates a cycle.';
+    return 'A inclusão de árvore “$source#$id” cria um ciclo.';
   }
 
   @override
   String diagnosticWritersideUnknownInstanceGroup(String group) {
-    return 'Instance condition references unknown group “@$group”.';
+    return 'A condição de instância referencia o grupo desconhecido “@$group”.';
   }
 
   @override
   String diagnosticWritersideReferenceInstanceMissing(String instance) {
-    return 'Cross-instance reference targets unknown instance “$instance”.';
+    return 'A referência entre instâncias aponta para a instância desconhecida “$instance”.';
   }
 
   @override
@@ -3379,329 +3401,312 @@ class AppLocalizationsPt extends AppLocalizations {
     String topic,
     String instance,
   ) {
-    return 'Topic “$topic” is not in referenced instance “$instance”.';
+    return 'O tópico “$topic” não está na instância referenciada “$instance”.';
   }
 
   @override
-  String get download => 'Download';
+  String get download => 'Transferir';
 
   @override
-  String get exportWritersideAsPdf => 'Export Writerside as PDF';
+  String get exportWritersideAsPdf => 'Exportar Writerside como PDF';
 
   @override
-  String get writersidePdfContent => 'Export content';
+  String get writersidePdfContent => 'Conteúdo da exportação';
 
   @override
-  String get writersidePdfPage => 'Page';
+  String get writersidePdfPage => 'Página';
 
   @override
-  String get exportingWritersidePdf => 'Exporting Writerside PDF…';
+  String get exportingWritersidePdf => 'A exportar PDF do Writerside…';
 
   @override
-  String get ai => 'AI';
+  String get ai => 'IA';
 
   @override
-  String get aiLocalOllama => 'Local Ollama';
+  String get aiLocalOllama => 'Ollama local';
 
   @override
-  String get aiDisabled => 'Disabled';
+  String get aiDisabled => 'Desativado';
 
   @override
   String get aiExplicitEditingDescription =>
-      'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.';
+      'A edição com IA é iniciada apenas de forma explícita. O BusyMark envia apenas o contexto apresentado ao fornecedor selecionado e nunca aplica uma proposta sem revisão.';
 
   @override
-  String get aiProvider => 'AI provider';
+  String get aiProvider => 'Fornecedor de IA';
 
   @override
-  String get aiDefaultProvider => 'Default provider';
+  String get aiDefaultProvider => 'Fornecedor predefinido';
 
   @override
-  String get aiConfigureProvider => 'Configure provider';
+  String get aiConfigureProvider => 'Configurar fornecedor';
 
   @override
-  String get aiChooseProvider => 'Choose AI provider';
+  String get aiChooseProvider => 'Escolher fornecedor de IA';
 
   @override
-  String get aiOllamaEndpoint => 'Ollama endpoint';
+  String get aiOllamaEndpoint => 'Endpoint do Ollama';
 
   @override
-  String get aiOllamaModel => 'Ollama model';
+  String get aiOllamaModel => 'Modelo do Ollama';
 
   @override
-  String get aiTestConnection => 'Test connection';
+  String get aiTestConnection => 'Testar ligação';
 
   @override
-  String get aiTestingConnection => 'Testing…';
+  String get aiTestingConnection => 'A testar…';
 
   @override
   String aiConnectionReady(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count installed models found',
-      one: '1 installed model found',
+      other: 'Foram encontrados $count modelos instalados',
+      one: 'Foi encontrado 1 modelo instalado',
     );
-    return 'Connected. $_temp0.';
+    return 'Conectado. $_temp0.';
   }
 
   @override
-  String get aiNoModels => 'No model selected.';
+  String get aiNoModels => 'Nenhum modelo selecionado.';
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark could not verify AI text generation.';
+      'O BusyMark não conseguiu verificar a geração de texto por IA.';
 
   @override
   String get aiConfigureFirst =>
-      'Enable an AI provider and verify a model in Settings → AI.';
+      'Ative um fornecedor de IA e verifique um modelo em Definições → IA.';
 
   @override
-  String get aiEditWithAi => 'Edit with AI';
+  String get aiEditWithAi => 'Editar com IA';
 
   @override
-  String get aiRefineWithAi => 'Refine with AI';
+  String get aiRefineWithAi => 'Melhorar com IA';
 
   @override
-  String get aiInstruction => 'Instruction';
+  String get aiInstruction => 'Instrução';
 
   @override
-  String get aiChangeTarget => 'What may change';
+  String get aiChangeTarget => 'O que pode ser alterado';
 
   @override
-  String get aiSharedContext => 'Context shared with AI';
+  String get aiSharedContext => 'Contexto partilhado com a IA';
 
   @override
-  String get aiTargetSelection => 'Selected content';
+  String get aiTargetSelection => 'Conteúdo selecionado';
 
   @override
-  String get aiTargetInsertAfterBlock => 'Insert after current block';
+  String get aiTargetInsertAfterBlock => 'Inserir após o bloco atual';
 
   @override
-  String get aiTargetCurrentBlock => 'Current block';
+  String get aiTargetCurrentBlock => 'Bloco atual';
 
   @override
-  String get aiTargetCurrentSection => 'Current section';
+  String get aiTargetCurrentSection => 'Secção atual';
 
   @override
-  String get aiTargetCompleteDocument => 'Complete document';
+  String get aiTargetCompleteDocument => 'Documento completo';
 
   @override
-  String get aiContextNone => 'No document context';
+  String get aiContextNone => 'Sem contexto do documento';
 
   @override
-  String get aiContextSelection => 'Selected content';
+  String get aiContextSelection => 'Conteúdo selecionado';
 
   @override
-  String get aiContextCurrentBlock => 'Current block';
+  String get aiContextCurrentBlock => 'Bloco atual';
 
   @override
-  String get aiContextCurrentSection => 'Current section';
+  String get aiContextCurrentSection => 'Secção atual';
 
   @override
-  String get aiContextCompleteDocument => 'Complete document';
+  String get aiContextCompleteDocument => 'Documento completo';
 
   @override
-  String get aiGenerating => 'Generating proposal…';
+  String get aiGenerating => 'A gerar proposta…';
 
   @override
-  String get aiProposal => 'AI proposal';
+  String get aiProposal => 'Proposta de IA';
 
   @override
-  String get aiGenerateProposal => 'Generate proposal';
+  String get aiGenerateProposal => 'Gerar proposta';
 
   @override
   String aiContextDisclosure(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count characters',
-      one: '1 character',
-    );
-    return 'The selected provider will receive $_temp0 from the displayed context.';
+    return 'O fornecedor selecionado receberá $count carateres do contexto apresentado.';
   }
 
   @override
-  String get aiOriginal => 'Original';
+  String get aiOriginal => 'Texto original';
 
   @override
-  String get aiSuggested => 'Suggested';
+  String get aiSuggested => 'Sugestão';
 
   @override
-  String get aiApplyProposal => 'Apply proposal';
+  String get aiApplyProposal => 'Aplicar proposta';
 
   @override
   String aiTokenUsage(int input, int output) {
-    return '$input input tokens · $output output tokens';
+    return '$input tokens de entrada · $output tokens de saída';
   }
 
   @override
   String get aiStaleProposal =>
-      'The document changed while this proposal was generated. Run the action again.';
+      'O documento foi alterado enquanto esta proposta era gerada. Execute a ação novamente.';
 
   @override
   String get gitAiStagedChangesChanged =>
-      'The staged changes changed while this commit message was generated. Run the action again.';
+      'As alterações no índice mudaram enquanto esta mensagem de commit era gerada. Execute a ação novamente.';
 
   @override
-  String get aiViewContext => 'View context sent';
+  String get aiViewContext => 'Ver contexto enviado';
 
   @override
-  String get aiReviewExactContent => 'Review exact content';
+  String get aiReviewExactContent => 'Rever conteúdo exato';
 
   @override
-  String get aiContentToChange => 'Content to change';
+  String get aiContentToChange => 'Conteúdo a alterar';
 
   @override
-  String get aiContentSentToAi => 'Content sent to AI';
+  String get aiContentSentToAi => 'Conteúdo enviado à IA';
 
   @override
-  String get aiApiKey => 'API key';
+  String get aiApiKey => 'Chave de API';
 
   @override
   String get aiApiKeyStoredHint =>
-      'A key is stored in the system credential store';
+      'Uma chave está armazenada no cofre de credenciais do sistema';
 
   @override
-  String get aiApiKeyEnterHint => 'Enter a provider API key';
+  String get aiApiKeyEnterHint => 'Introduza uma chave de API do fornecedor';
 
   @override
-  String get aiReplaceApiKey => 'Replace API key';
+  String get aiReplaceApiKey => 'Substituir chave de API';
 
   @override
-  String get aiSaveApiKey => 'Save API key securely';
+  String get aiSaveApiKey => 'Guardar chave de API com segurança';
 
   @override
-  String get aiRemoveApiKey => 'Remove saved API key';
+  String get aiRemoveApiKey => 'Remover chave de API guardada';
 
   @override
   String get aiCredentialSaved =>
-      'API key saved in the system credential store.';
+      'A chave de API foi guardada no cofre de credenciais do sistema.';
 
   @override
-  String get aiCredentialRemoved => 'The saved API key was removed.';
+  String get aiCredentialRemoved => 'A chave de API guardada foi removida.';
 
   @override
-  String get aiModelRouting => 'Model routing';
+  String get aiModelRouting => 'Seleção de modelo';
 
   @override
-  String get aiAutomaticRouting => 'Automatic by task';
+  String get aiAutomaticRouting => 'Automática conforme a tarefa';
 
   @override
-  String get aiFixedModelRouting => 'Use selected model';
+  String get aiFixedModelRouting => 'Usar o modelo selecionado';
 
   @override
-  String get aiPreferredModel => 'Preferred model';
+  String get aiPreferredModel => 'Modelo preferido';
 
   @override
-  String get aiModel => 'Model';
+  String get aiModel => 'Modelo';
 
   @override
   String aiUsageThisMonth(int requests, int input, int output) {
-    return '$requests requests · $input input tokens · $output output tokens';
+    return '$requests pedidos · $input tokens de entrada · $output tokens de saída';
   }
 
   @override
   String aiCloudConsentTitle(String provider) {
-    return 'Send content to $provider?';
+    return 'Enviar conteúdo para $provider?';
   }
 
   @override
   String aiCloudConsentEnable(String provider) {
-    return 'Enable $provider';
+    return 'Ativar $provider';
   }
 
   @override
   String get aiCloudConsentMessage =>
-      'Only content shown in each AI review dialog is sent. Requests are stateless, proposals require review, and the API key is stored in the Linux system credential store.';
+      'Apenas o conteúdo apresentado em cada caixa de diálogo de revisão de IA é enviado. Os pedidos não mantêm estado, as propostas exigem revisão e a chave de API é guardada no cofre de credenciais do sistema Linux.';
 
   @override
   String aiCloudConsentRequired(String provider) {
-    return 'Confirm $provider data sharing in Settings → AI first.';
+    return 'Primeiro, confirme o partilha de dados com $provider em Definições → IA.';
   }
 
   @override
   String aiGenerationVerified(String model, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count compatible models available',
-      one: '1 compatible model available',
-    );
-    return 'Generation verified with $model. $_temp0.';
+    return 'Geração verificada com $model. Há $count modelos compatíveis disponíveis.';
   }
 
   @override
-  String get aiColdStartObserved => 'A local model cold start was observed.';
+  String get aiColdStartObserved =>
+      'Foi detetado um arranque a frio do modelo local.';
 
   @override
   String get aiNoCompatibleModels =>
-      'No compatible text-generation model is available.';
+      'Não há nenhum modelo compatível de geração de texto disponível.';
 
   @override
-  String get aiEnableProvider => 'Enable an AI provider first.';
+  String get aiEnableProvider => 'Primeiro, ative um fornecedor de IA.';
 
   @override
-  String get aiDraftCommitMessage => 'Draft commit message';
+  String get aiDraftCommitMessage => 'Criar rascunho da mensagem de commit';
 
   @override
-  String get aiDrafting => 'Drafting…';
+  String get aiDrafting => 'A criar rascunho…';
 
   @override
-  String get aiDraftWithAi => 'Draft with AI';
+  String get aiDraftWithAi => 'Criar rascunho com IA';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Generate/update table of contents';
+  String get generateOrUpdateMarkdownToc => 'Gerar/atualizar sumário';
 
   @override
-  String get markdownTocTitle => 'Table of contents';
+  String get markdownTocTitle => 'Sumário';
 
   @override
   String markdownTocUpdated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count entries',
-      one: '1 entry',
-    );
-    return 'Table of contents updated with $_temp0.';
+    return 'Sumário atualizado com $count entradas.';
   }
 
   @override
   String get markdownTocNoHeadings =>
-      'Add at least one section heading before generating a table of contents.';
+      'Adicione pelo menos um título de secção antes de gerar um sumário.';
 
   @override
   String get markdownTocMalformedMarkers =>
-      'The BusyMark table-of-contents markers are missing, duplicated, or out of order.';
+      'Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.';
 
   @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
-    return 'Heading level $level follows level $previousLevel; review the section nesting.';
+    return 'O título de nível $level vem após o nível $previousLevel; reveja o aninhamento das secções.';
   }
 
   @override
   String get diagnosticMarkdownLinkEmptyText =>
-      'Link text is empty; provide an accessible name that describes its purpose.';
+      'O texto da ligação está vazio; forneça um nome acessível que descreva a respetiva finalidade.';
 
   @override
   String diagnosticMarkdownLinkReviewText(String text) {
-    return 'Review whether the link text “$text” describes its purpose in context.';
+    return 'Verifique se o texto da ligação “$text” descreve a respetiva finalidade no contexto.';
   }
 
   @override
   String get diagnosticMarkdownTableEmptyHeader =>
-      'Table header cells must identify their columns; complete each empty header.';
+      'Os cabeçalhos da tabela devem identificar suas colunas; preencha cada cabeçalho vazio.';
 
   @override
   String get mathRenderFailed =>
-      'The mathematical expression could not be rendered.';
+      'Não foi possível renderizar a expressão matemática.';
 
   @override
-  String get inlineMath => 'Inline math';
+  String get inlineMath => 'Matemática em linha';
 
   @override
-  String get displayMath => 'Display math';
+  String get displayMath => 'Matemática em bloco';
 
   @override
   String get goToDeclaration => 'Ir para a declaração';
@@ -4073,6 +4078,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get copyPlainText => 'Copiar como texto simples';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Não foi possível copiar a seleção para a área de transferência.';
 
   @override
   String get copyName => 'Copiar nome';
@@ -5628,9 +5637,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       count,
       locale: localeName,
       other:
-          '$count documentos sem salvamento recuperados. Revise cada um antes de salvar ou descartar.',
+          '$count documentos não salvos foram recuperados. Revise cada um antes de salvar ou descartar.',
       one:
-          '1 documento sem salvamento recuperado. Revise antes de salvar ou descartar.',
+          '1 documento não salvo foi recuperado. Revise-o antes de salvar ou descartar.',
     );
     return '$_temp0';
   }
@@ -6340,9 +6349,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       count,
       locale: localeName,
       other:
-          'Todas as mudanças staged e unstaged nos arquivos rastreados selecionados serão restauradas para HEAD.',
+          'Todas as alterações preparadas e não preparadas nos arquivos rastreados selecionados serão restauradas para HEAD.',
       one:
-          'Todas as mudanças staged e unstaged no arquivo selecionado rastreado serão restauradas para HEAD.',
+          'Todas as alterações preparadas e não preparadas no arquivo rastreado selecionado serão restauradas para HEAD.',
     );
     return '$_temp0';
   }

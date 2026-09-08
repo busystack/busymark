@@ -159,7 +159,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Не вдалося скопіювати виділений фрагмент до буфера обміну.';
 
   @override
   String get copyName => 'Копіювати назву';

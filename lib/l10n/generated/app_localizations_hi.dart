@@ -159,7 +159,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'चयनित सामग्री को क्लिपबोर्ड पर कॉपी नहीं किया जा सका।';
 
   @override
   String get copyName => 'नाम कॉपी करें';
@@ -2404,9 +2404,9 @@ class AppLocalizationsHi extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'चयनित ट्रैक की गई फ़ाइलों के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
+          'चयनित ट्रैक की गई फ़ाइलों के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।',
       one:
-          'चयनित ट्रैक की गई फ़ाइल के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
+          'चयनित ट्रैक की गई फ़ाइल के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।',
     );
     return '$_temp0';
   }

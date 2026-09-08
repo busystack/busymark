@@ -157,7 +157,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'امکان کپی کردن محتوای انتخاب‌شده در کلیپ‌بورد وجود نداشت.';
 
   @override
   String get copyName => 'کپی نام';

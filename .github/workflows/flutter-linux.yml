@@ -87,6 +87,9 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
+      - name: Audit localization catalogs
+        run: flutter test test/src/localization_audit_test.dart
+
       - name: Verify generated files are committed
         run: git diff --exit-code
 

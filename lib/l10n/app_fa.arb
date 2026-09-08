@@ -95,6 +95,7 @@
   },
   "copy": "کپی",
   "copyPlainText": "کپی به‌صورت متن ساده",
+  "clipboardCopyFailed": "امکان کپی کردن محتوای انتخاب‌شده در کلیپ‌بورد وجود نداشت.",
   "@copy": {
     "description": "Copy command label."
   },

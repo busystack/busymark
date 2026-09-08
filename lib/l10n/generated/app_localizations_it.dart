@@ -159,7 +159,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Impossibile copiare la selezione negli appunti.';
 
   @override
   String get copyName => 'Copia nome';
@@ -2433,9 +2433,9 @@ class AppLocalizationsIt extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Tutte le modifiche staged e non staged nei file tracciati selezionati saranno ripristinate in HEAD.',
+          'Tutte le modifiche in stage e non in stage nei file tracciati selezionati saranno ripristinate in HEAD.',
       one:
-          'Tutte le modifiche staged e non staged nel file tracciato selezionato saranno ripristinate in HEAD.',
+          'Tutte le modifiche in stage e non in stage nel file tracciato selezionato saranno ripristinate in HEAD.',
     );
     return '$_temp0';
   }

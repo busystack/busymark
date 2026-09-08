@@ -152,8 +152,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copyPlainText => '일반 텍스트로 복사';
 
   @override
-  String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+  String get clipboardCopyFailed => '선택한 내용을 클립보드에 복사할 수 없습니다.';
 
   @override
   String get copyName => '이름 복사';
@@ -3515,7 +3514,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiEnableProvider => '먼저 AI 제공자를 활성화하세요.';
 
   @override
-  String get aiDraftCommitMessage => '초안 커밋 메시지';
+  String get aiDraftCommitMessage => '커밋 메시지 초안 작성';
 
   @override
   String get aiDrafting => '작성 중…';

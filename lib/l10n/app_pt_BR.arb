@@ -95,6 +95,7 @@
   },
   "copy": "Copiar",
   "copyPlainText": "Copiar como texto simples",
+  "clipboardCopyFailed": "Não foi possível copiar a seleção para a área de transferência.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -2304,7 +2305,7 @@
   "gitBinaryFile": "Arquivo binário. O BusyMark não exibe patches binários.",
   "gitUnsavedChangesBanner": "As alterações não salvas do editor não são incluídas até serem salvas.",
   "gitConfirmDiscardTitle": "Descartar alterações do Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Todas as mudanças staged e unstaged no arquivo selecionado rastreado serão restauradas para HEAD.} other{Todas as mudanças staged e unstaged nos arquivos rastreados selecionados serão restauradas para HEAD.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Todas as alterações preparadas e não preparadas no arquivo rastreado selecionado serão restauradas para HEAD.} other{Todas as alterações preparadas e não preparadas nos arquivos rastreados selecionados serão restauradas para HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{O arquivo não rastreado selecionado será excluído.} other{Os arquivos não rastreados selecionados serão excluídos.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{O arquivo selecionado será restaurado ou excluído de acordo com o status do Git.} other{Os arquivos selecionados serão restaurados ou excluídos de acordo com o status do Git.}}",
   "gitConfirmSwitchBranchTitle": "Trocar para {branch}?",
@@ -3065,7 +3066,7 @@
   "unsavedChangesMultipleMessage": "{count, plural, =1{Há 1 documento com alterações não salvas. Deseja salvá-lo antes de continuar?} other{{count} documentos com alterações não salvas. Deseja salvá-los antes de continuar?}}",
   "workspaceReplaceIssuePartialConflict": "A reversão foi interrompida porque o arquivo foi alterado simultaneamente. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.",
   "workspaceReplaceIssueApplyFailed": "Nenhuma substituição foi aplicada porque o conjunto revisado não pôde ser salvo com segurança.",
-  "workspaceRecoveryRestored": "{count, plural, =1{1 documento sem salvamento recuperado. Revise antes de salvar ou descartar.} other{{count} documentos sem salvamento recuperados. Revise cada um antes de salvar ou descartar.}}",
+  "workspaceRecoveryRestored": "{count, plural, =1{1 documento não salvo foi recuperado. Revise-o antes de salvar ou descartar.} other{{count} documentos não salvos foram recuperados. Revise cada um antes de salvar ou descartar.}}",
   "workspaceRecoveryDamaged": "{count, plural, =1{1 registro de recuperação danificado não pôde ser restaurado. O arquivo de recuperação original foi preservado para inspeção.} other{{count} registros de recuperação danificados não puderam ser restaurados. Os registros de recuperação válidos permanecem disponíveis.}}",
   "recoveredDocumentReview": "O conteúdo não salvo de {fileName} foi recuperado. Revise-o e depois salve, salve como ou descarte-o.",
   "commandUnavailableInContext": "Este comando não está disponível no contexto atual.",

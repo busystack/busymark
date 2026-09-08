@@ -159,7 +159,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Nie udało się skopiować zaznaczenia do schowka.';
 
   @override
   String get copyName => 'Kopiuj nazwę';
@@ -2455,9 +2455,9 @@ class AppLocalizationsPl extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Wszystkie oznaczone i nieoznaczone zmiany w wybranych śledzonych plikach zostaną przywrócone do HEAD.',
+          'Wszystkie zmiany w indeksie i poza indeksem w wybranych śledzonych plikach zostaną przywrócone do HEAD.',
       one:
-          'Wszystkie oznaczone i nieoznaczone zmiany w wybranym śledzonym pliku zostaną przywrócone do HEAD.',
+          'Wszystkie zmiany w indeksie i poza indeksem w wybranym śledzonym pliku zostaną przywrócone do HEAD.',
     );
     return '$_temp0';
   }

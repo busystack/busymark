@@ -791,6 +791,59 @@ void main() {
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
+  for (final localeCase in <({String name, Locale requested, Locale expected})>[
+    (
+      name: 'European Portuguese',
+      requested: const Locale('pt', 'PT'),
+      expected: const Locale('pt'),
+    ),
+    (
+      name: 'language-only Chinese',
+      requested: const Locale('zh'),
+      expected: const Locale('zh'),
+    ),
+  ]) {
+    testWidgets(
+      '${localeCase.name} system locale renders the completed base catalog',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1;
+        tester.binding.platformDispatcher.localesTestValue = <Locale>[
+          localeCase.requested,
+        ];
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          tester.binding.platformDispatcher.clearLocalesTestValue();
+        });
+        final translated = lookupAppLocalizations(localeCase.expected);
+        final settingsStore = _MemorySettingsStore();
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+              localSettingsStoreProvider.overrideWithValue(settingsStore),
+            ],
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(translated.createMarkdownFile), findsOneWidget);
+        expect(find.text(l10n.createMarkdownFile), findsNothing);
+        await tester.tap(find.byTooltip(translated.mainMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(translated.settings));
+        await tester.pumpAndSettle();
+
+        expect(find.text(translated.appLanguage), findsOneWidget);
+        expect(find.text(l10n.appLanguage), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('Writerside project dialog syncs generated fields until edited', (
     tester,
   ) async {
@@ -1950,6 +2003,8 @@ void main() {
         matching: find.byType(IconButton),
       ),
     );
+    expect(instanceSelectorRect.height, tocMenuRect.height);
+    expect(instanceSelectorRect.center.dy, tocMenuRect.center.dy);
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(mouse.removePointer);
     await mouse.addPointer(location: Offset.zero);

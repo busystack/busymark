@@ -159,7 +159,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Konten yang dipilih tidak dapat disalin ke papan klip.';
 
   @override
   String get copyName => 'Salin nama';

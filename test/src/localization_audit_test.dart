@@ -170,7 +170,67 @@ void main() {
     }
   });
 
-  test('target ARBs match the English messages and placeholders', () {
+  test('duplicate JSON key scanning respects nested object scopes', () {
+    expect(
+      _duplicateJsonKeys(
+        '{"message":"one","message":"two",'
+        '"metadata":{"description":"one","description":"two"},'
+        '"separate":{"description":"allowed"}}',
+      ),
+      <String>[r'$.message', r'$.metadata.description'],
+    );
+  });
+
+  test('ARB catalogs have valid, unique message structure and locale IDs', () {
+    final failures = <String>[];
+
+    for (final file in _arbFiles()) {
+      final source = file.readAsStringSync();
+      Map<String, Object?> arb;
+      try {
+        arb = _arbMessages(file);
+      } on FormatException catch (error) {
+        failures.add('${file.path}: invalid JSON: ${error.message}');
+        continue;
+      }
+      for (final duplicate in _duplicateJsonKeys(source)) {
+        failures.add('${file.path}: duplicate JSON key $duplicate');
+      }
+
+      final name = file.uri.pathSegments.last;
+      final match = RegExp(r'^app_([A-Za-z_]+)\.arb$').firstMatch(name);
+      final fileLocale = match?.group(1);
+      final declaredLocale = arb['@@locale'];
+      if (fileLocale == null) {
+        failures.add('${file.path}: filename does not identify an ARB locale');
+      } else if (declaredLocale is! String || declaredLocale != fileLocale) {
+        failures.add(
+          '${file.path}: filename locale $fileLocale conflicts with '
+          '@@locale ${declaredLocale ?? '<missing>'}',
+        );
+      }
+
+      for (final entry in arb.entries) {
+        if (entry.key.startsWith('@')) {
+          continue;
+        }
+        if (entry.value is! String) {
+          failures.add(
+            '${file.path}: ${entry.key} has non-string message value '
+            '${entry.value.runtimeType}',
+          );
+          continue;
+        }
+        if ((entry.value! as String).trim().isEmpty) {
+          failures.add('${file.path}: ${entry.key} has a blank translation');
+        }
+      }
+    }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('all ARBs match the English messages and placeholders', () {
     final templateFile = File('lib/l10n/app_en.arb');
     final templateArb = _arbMessages(templateFile);
     final template = _arbMessageStrings(templateFile);
@@ -191,13 +251,25 @@ void main() {
       for (final key in template.keys.toSet().intersection(
         messages.keys.toSet(),
       )) {
-        for (final placeholder in _declaredPlaceholders(templateArb, key)) {
-          if (_usesPlaceholder(messages[key]!, placeholder)) {
-            continue;
-          }
+        final declared = _declaredPlaceholders(templateArb, key);
+        final used = _messageArguments(messages[key]!);
+        for (final placeholder in declared.difference(used).toList()..sort()) {
           failures.add(
             '${file.path}: $key is missing placeholder {$placeholder}',
           );
+        }
+        for (final placeholder in used.difference(declared).toList()..sort()) {
+          failures.add(
+            '${file.path}: $key has unexpected placeholder {$placeholder}',
+          );
+        }
+        for (final placeholder in declared) {
+          if (!_usesPlaceholder(messages[key]!, placeholder)) {
+            failures.add(
+              '${file.path}: $key does not use declared placeholder '
+              '{$placeholder}',
+            );
+          }
         }
       }
     }
@@ -205,7 +277,7 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
-  test('unsaved-changes discard actions are distinct from cancel', () {
+  test('destructive, save, and Git history actions remain distinct', () {
     for (final locale in AppLocalizations.supportedLocales) {
       final localizations = lookupAppLocalizations(locale);
       expect(
@@ -220,6 +292,18 @@ void main() {
         reason:
             '${locale.toLanguageTag()} must not translate window-close '
             'Discard as Cancel',
+      );
+      expect(
+        localizations.save,
+        isNot(localizations.gitCommit),
+        reason: '${locale.toLanguageTag()} must distinguish Save from Commit',
+      );
+      expect(
+        localizations.gitFileHistory,
+        isNot(localizations.gitProjectHistory),
+        reason:
+            '${locale.toLanguageTag()} must distinguish File History from '
+            'Project History',
       );
     }
 
@@ -284,6 +368,117 @@ void main() {
         reason: file.path,
       );
     }
+  });
+
+  test('clipboard write failures are localized in every target locale', () {
+    const expected = <String, String>{
+      'ar': 'تعذّر نسخ المحتوى المحدد إلى الحافظة.',
+      'de': 'Die Auswahl konnte nicht in die Zwischenablage kopiert werden.',
+      'es': 'No se pudo copiar la selección al portapapeles.',
+      'et': 'Valikut ei saanud lõikelauale kopeerida.',
+      'fa': 'امکان کپی کردن محتوای انتخاب‌شده در کلیپ‌بورد وجود نداشت.',
+      'fr': 'Impossible de copier la sélection dans le presse-papiers.',
+      'hi': 'चयनित सामग्री को क्लिपबोर्ड पर कॉपी नहीं किया जा सका।',
+      'id': 'Konten yang dipilih tidak dapat disalin ke papan klip.',
+      'it': 'Impossibile copiare la selezione negli appunti.',
+      'ja': '選択内容をクリップボードにコピーできませんでした。',
+      'ko': '선택한 내용을 클립보드에 복사할 수 없습니다.',
+      'nb': 'Utvalget kunne ikke kopieres til utklippstavlen.',
+      'nl': 'De selectie kon niet naar het klembord worden gekopieerd.',
+      'pl': 'Nie udało się skopiować zaznaczenia do schowka.',
+      'pt': 'Não foi possível copiar a seleção para a área de transferência.',
+      'pt-BR':
+          'Não foi possível copiar a seleção para a área de transferência.',
+      'ru': 'Не удалось скопировать выделенный фрагмент в буфер обмена.',
+      'tr': 'Seçili içerik panoya kopyalanamadı.',
+      'uk': 'Не вдалося скопіювати виділений фрагмент до буфера обміну.',
+      'vi': 'Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.',
+      'zh': '无法将所选内容复制到剪贴板。',
+      'zh-CN': '无法将所选内容复制到剪贴板。',
+    };
+
+    final locales = AppLocalizations.supportedLocales.where(
+      (locale) => locale.languageCode != 'en',
+    );
+    expect(
+      locales.map((locale) => locale.toLanguageTag()).toSet(),
+      expected.keys,
+    );
+    for (final locale in locales) {
+      expect(
+        lookupAppLocalizations(locale).clipboardCopyFailed,
+        expected[locale.toLanguageTag()],
+        reason: locale.toLanguageTag(),
+      );
+    }
+  });
+
+  test('Portuguese and Chinese base catalogs contain reviewed UI prose', () {
+    final english = lookupAppLocalizations(const Locale('en'));
+    final portuguese = lookupAppLocalizations(const Locale('pt'));
+    final chinese = lookupAppLocalizations(const Locale('zh'));
+
+    for (final translated in <String>[
+      portuguese.appSubtitle,
+      portuguese.settings,
+      portuguese.gitProjectHistory,
+      portuguese.gitFileHistory,
+      portuguese.exportAsPdf,
+      chinese.appSubtitle,
+      chinese.settings,
+      chinese.gitProjectHistory,
+      chinese.gitFileHistory,
+      chinese.exportAsPdf,
+    ]) {
+      expect(
+        translated,
+        isNot(
+          anyOf(<String>[
+            english.appSubtitle,
+            english.settings,
+            english.gitProjectHistory,
+            english.gitFileHistory,
+            english.exportAsPdf,
+          ]),
+        ),
+      );
+    }
+
+    expect(portuguese.file, 'Ficheiro');
+    expect(portuguese.link, 'Ligação');
+    expect(portuguese.exportReset, 'Restaurar predefinições');
+    final brazilian = lookupAppLocalizations(const Locale('pt', 'BR'));
+    expect(brazilian.file, 'Arquivo');
+    expect(brazilian.link, 'Link');
+    expect(brazilian.exportReset, 'Restaurar padrões');
+
+    final zh = _arbMessageStrings(File('lib/l10n/app_zh.arb'));
+    final zhCn = _arbMessageStrings(File('lib/l10n/app_zh_CN.arb'));
+    expect(zh, zhCn);
+  });
+
+  test('completed base-catalog plurals reach their supported branches', () {
+    final portuguese = lookupAppLocalizations(const Locale('pt'));
+    expect(portuguese.diagnosticCount(0), 'Nenhum diagnóstico');
+    expect(portuguese.diagnosticCount(1), '1 diagnóstico');
+    expect(portuguese.diagnosticCount(2), '2 diagnósticos');
+    expect(
+      portuguese.workspaceRecoveryRestored(1),
+      'Foi recuperado 1 documento não guardado. Reveja-o antes de o guardar '
+      'ou descartar.',
+    );
+    expect(
+      portuguese.workspaceRecoveryRestored(3),
+      'Foram recuperados 3 documentos não guardados. Reveja cada um antes '
+      'de o guardar ou descartar.',
+    );
+
+    final chinese = lookupAppLocalizations(const Locale('zh'));
+    expect(chinese.diagnosticCount(0), '没有诊断信息');
+    expect(chinese.diagnosticCount(1), '1 条诊断信息');
+    expect(chinese.diagnosticCount(2), '2 条诊断信息');
+    expect(chinese.workspaceRecoveryRestored(1), '已恢复 1 个未保存的文档。请在保存或放弃前进行检查。');
+    expect(chinese.workspaceRecoveryRestored(3), '已恢复 3 个未保存的文档。请在保存或放弃前逐一检查。');
   });
 
   test('RTL translations isolate technical interpolations', () {
@@ -378,6 +573,36 @@ void main() {
         ], AppLocalizations.supportedLocales),
         const Locale('en'),
       );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('pt'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('pt'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('pt', 'PT'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('pt'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('pt', 'BR'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('pt', 'BR'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('zh'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('zh'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('zh', 'CN'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('zh', 'CN'),
+      );
     },
   );
 
@@ -443,17 +668,10 @@ Iterable<File> _productionDartFiles() sync* {
 
 Iterable<File> _arbFiles() sync* {
   for (final entity in Directory('lib/l10n').listSync()) {
-    if (entity is File &&
-        entity.path.endsWith('.arb') &&
-        !_isFlutterFallbackArb(entity)) {
+    if (entity is File && entity.path.endsWith('.arb')) {
       yield entity;
     }
   }
-}
-
-bool _isFlutterFallbackArb(File file) {
-  final name = file.uri.pathSegments.last;
-  return name == 'app_pt.arb' || name == 'app_zh.arb';
 }
 
 Map<String, Object?> _arbMessages(File file) {
@@ -483,6 +701,132 @@ Set<String> _declaredPlaceholders(Map<String, Object?> arb, String key) {
 
 bool _usesPlaceholder(String message, String placeholder) =>
     RegExp('\\{${RegExp.escape(placeholder)}(?:\\}|\\s*,)').hasMatch(message);
+
+Set<String> _messageArguments(String message) => {
+  for (final match in RegExp(
+    r'\{([A-Za-z][A-Za-z0-9_]*)\s*(?:\}|,\s*(?:plural|select|selectordinal)\s*,)',
+  ).allMatches(message))
+    match.group(1)!,
+};
+
+List<String> _duplicateJsonKeys(String source) =>
+    _JsonKeyScanner(source).scan();
+
+class _JsonKeyScanner {
+  _JsonKeyScanner(this.source);
+
+  final String source;
+  final duplicates = <String>[];
+  var _offset = 0;
+
+  List<String> scan() {
+    _skipWhitespace();
+    _scanValue(r'$');
+    return duplicates;
+  }
+
+  void _scanValue(String path) {
+    _skipWhitespace();
+    switch (source[_offset]) {
+      case '{':
+        _scanObject(path);
+        return;
+      case '[':
+        _scanArray(path);
+        return;
+      case '"':
+        _scanString();
+        return;
+      default:
+        _scanScalar();
+        return;
+    }
+  }
+
+  void _scanObject(String path) {
+    _offset++;
+    _skipWhitespace();
+    if (source[_offset] == '}') {
+      _offset++;
+      return;
+    }
+
+    final keys = <String>{};
+    while (true) {
+      _skipWhitespace();
+      final key = _scanString();
+      final keyPath = '$path.$key';
+      if (!keys.add(key)) {
+        duplicates.add(keyPath);
+      }
+      _skipWhitespace();
+      _offset++; // Colon; jsonDecode performs the syntax validation.
+      _scanValue(keyPath);
+      _skipWhitespace();
+      if (source[_offset] == '}') {
+        _offset++;
+        return;
+      }
+      _offset++; // Comma.
+    }
+  }
+
+  void _scanArray(String path) {
+    _offset++;
+    _skipWhitespace();
+    if (source[_offset] == ']') {
+      _offset++;
+      return;
+    }
+
+    var index = 0;
+    while (true) {
+      _scanValue('$path[$index]');
+      index++;
+      _skipWhitespace();
+      if (source[_offset] == ']') {
+        _offset++;
+        return;
+      }
+      _offset++; // Comma.
+    }
+  }
+
+  String _scanString() {
+    final start = _offset;
+    _offset++;
+    while (true) {
+      final codeUnit = source.codeUnitAt(_offset++);
+      if (codeUnit == 0x5c) {
+        _offset++;
+      } else if (codeUnit == 0x22) {
+        return jsonDecode(source.substring(start, _offset)) as String;
+      }
+    }
+  }
+
+  void _scanScalar() {
+    while (_offset < source.length &&
+        !const {
+          ' ',
+          '\t',
+          '\r',
+          '\n',
+          ',',
+          ']',
+          '}',
+        }.contains(source[_offset])) {
+      _offset++;
+    }
+  }
+
+  void _skipWhitespace() {
+    while (_offset < source.length &&
+        const {' ', '\t', '\r', '\n'}.contains(source[_offset])) {
+      _offset++;
+    }
+  }
+}
 
 Iterable<File> _nativeLinuxSourceFiles() sync* {
   for (final entity in Directory('linux/runner').listSync(recursive: true)) {
@@ -758,6 +1102,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'horizontal',
     'vertical',
   },
+  'pt': {'editor', 'horizontal', 'vertical', 'toc', 'foldKindTag', 'gitCommit'},
   'hi': {'toc'},
   'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
@@ -811,4 +1156,5 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   },
   'vi': {'tab', 'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
   'zh_CN': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
+  'zh': {'gitFetch', 'gitCommit', 'gitAuthorEmail', 'pdfPageSizeLetter'},
 };

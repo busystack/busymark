@@ -160,7 +160,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clipboardCopyFailed =>
-      'Could not copy the selection to the clipboard.';
+      'Не удалось скопировать выделенный фрагмент в буфер обмена.';
 
   @override
   String get copyName => 'Копировать имя';
