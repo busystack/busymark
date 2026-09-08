@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Копировать",
-  "copyAsMarkdown": "Копировать как Markdown",
+  "copyPlainText": "Копировать как обычный текст",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "Вставить",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Вставить без форматирования",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Режим чтения",
   "@reading": {

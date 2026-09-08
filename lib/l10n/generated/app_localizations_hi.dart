@@ -155,7 +155,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copy => 'कॉपी करें';
 
   @override
-  String get copyAsMarkdown => 'Markdown के रूप में कॉपी करें';
+  String get copyPlainText => 'सादे पाठ के रूप में कॉपी करें';
 
   @override
   String get clipboardCopyFailed =>
@@ -268,9 +268,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paste => 'पेस्ट करें';
-
-  @override
-  String get pasteWithoutFormatting => 'बिना फ़ॉर्मेटिंग पेस्ट करें';
 
   @override
   String get reading => 'पठन दृश्य';

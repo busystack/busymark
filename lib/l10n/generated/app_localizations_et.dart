@@ -153,7 +153,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copy => 'Kopeeri';
 
   @override
-  String get copyAsMarkdown => 'Kopeeri Markdownina';
+  String get copyPlainText => 'Kopeeri lihttekstina';
 
   @override
   String get clipboardCopyFailed =>
@@ -266,9 +266,6 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get paste => 'Aseta';
-
-  @override
-  String get pasteWithoutFormatting => 'Aseta vorminduseta';
 
   @override
   String get reading => 'Lugemisvaade';

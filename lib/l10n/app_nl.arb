@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopiëren",
-  "copyAsMarkdown": "Kopiëren als Markdown",
+  "copyPlainText": "Kopiëren als platte tekst",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "Plakken",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Plakken zonder opmaak",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Lezen",
   "@reading": {

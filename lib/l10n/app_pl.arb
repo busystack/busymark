@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopiuj",
-  "copyAsMarkdown": "Kopiuj jako Markdown",
+  "copyPlainText": "Kopiuj jako zwykły tekst",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "Wklej",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Wklej bez formatowania",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Widok do czytania",
   "@reading": {

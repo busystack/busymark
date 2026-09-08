@@ -372,7 +372,6 @@ enum BusyMarkTextEditingShortcutAction {
   cut,
   copy,
   paste,
-  pastePlainText,
   undo,
   redo,
   insertIndentation,
@@ -387,7 +386,6 @@ abstract final class BusyMarkTextEditingShortcuts {
   static const cutLabel = 'Ctrl+X';
   static const copyLabel = 'Ctrl+C';
   static const pasteLabel = 'Ctrl+V';
-  static const pastePlainTextLabel = 'Ctrl+Shift+V';
   static const undoLabel = 'Ctrl+Z';
   static const redoLabel = 'Ctrl+Shift+Z';
   static const insertIndentationLabel = 'Tab';
@@ -409,14 +407,6 @@ abstract final class BusyMarkTextEditingShortcuts {
   static const paste = BusyMarkShortcutDefinition(
     label: pasteLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyV, control: true),
-  );
-  static const pastePlainText = BusyMarkShortcutDefinition(
-    label: pastePlainTextLabel,
-    activator: SingleActivator(
-      LogicalKeyboardKey.keyV,
-      control: true,
-      shift: true,
-    ),
   );
   static const undo = BusyMarkShortcutDefinition(
     label: undoLabel,
@@ -449,7 +439,6 @@ abstract final class BusyMarkTextEditingShortcuts {
         BusyMarkTextEditingShortcutAction.cut: cut,
         BusyMarkTextEditingShortcutAction.copy: copy,
         BusyMarkTextEditingShortcutAction.paste: paste,
-        BusyMarkTextEditingShortcutAction.pastePlainText: pastePlainText,
         BusyMarkTextEditingShortcutAction.undo: undo,
         BusyMarkTextEditingShortcutAction.redo: redo,
         BusyMarkTextEditingShortcutAction.insertIndentation: insertIndentation,
@@ -465,8 +454,6 @@ abstract final class BusyMarkTextEditingShortcutLabels {
   static const cut = BusyMarkTextEditingShortcuts.cutLabel;
   static const copy = BusyMarkTextEditingShortcuts.copyLabel;
   static const paste = BusyMarkTextEditingShortcuts.pasteLabel;
-  static const pastePlainText =
-      BusyMarkTextEditingShortcuts.pastePlainTextLabel;
   static const undo = BusyMarkTextEditingShortcuts.undoLabel;
   static const redo = BusyMarkTextEditingShortcuts.redoLabel;
   static const insertIndentation =
@@ -486,8 +473,6 @@ abstract final class BusyMarkTextEditingShortcutActivators {
       BusyMarkTextEditingShortcuts.copy.activator;
   static ShortcutActivator get paste =>
       BusyMarkTextEditingShortcuts.paste.activator;
-  static ShortcutActivator get pastePlainText =>
-      BusyMarkTextEditingShortcuts.pastePlainText.activator;
   static ShortcutActivator get undo =>
       BusyMarkTextEditingShortcuts.undo.activator;
   static ShortcutActivator get redo =>
@@ -502,7 +487,7 @@ abstract final class BusyMarkTextEditingShortcutActivators {
 
 enum BusyMarkEditorShortcutAction {
   refineWithAi,
-  copyAsMarkdown,
+  copyPlainText,
   bold,
   italic,
   underline,
@@ -531,14 +516,13 @@ enum BusyMarkEditorShortcutAction {
   htmlBlock,
   thematicBreak,
   hardLineBreak,
-  pastePlainText,
 }
 
 abstract final class BusyMarkEditorShortcuts {
   const BusyMarkEditorShortcuts._();
 
   static const refineWithAiLabel = 'Ctrl+G';
-  static const copyAsMarkdownLabel = 'Ctrl+Shift+C';
+  static const copyPlainTextLabel = 'Ctrl+Shift+C';
   static const textStyleLabel = 'Ctrl+Alt+0-6';
   static const boldLabel = 'Ctrl+B';
   static const italicLabel = 'Ctrl+I';
@@ -567,8 +551,8 @@ abstract final class BusyMarkEditorShortcuts {
     label: refineWithAiLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyG, control: true),
   );
-  static const copyAsMarkdown = BusyMarkShortcutDefinition(
-    label: copyAsMarkdownLabel,
+  static const copyPlainText = BusyMarkShortcutDefinition(
+    label: copyPlainTextLabel,
     activator: SingleActivator(
       LogicalKeyboardKey.keyC,
       control: true,
@@ -723,12 +707,10 @@ abstract final class BusyMarkEditorShortcuts {
     label: hardLineBreakLabel,
     activator: SingleActivator(LogicalKeyboardKey.enter, shift: true),
   );
-  static const pastePlainText = BusyMarkTextEditingShortcuts.pastePlainText;
-
   static const definitions =
       <BusyMarkEditorShortcutAction, BusyMarkShortcutDefinition>{
         BusyMarkEditorShortcutAction.refineWithAi: refineWithAi,
-        BusyMarkEditorShortcutAction.copyAsMarkdown: copyAsMarkdown,
+        BusyMarkEditorShortcutAction.copyPlainText: copyPlainText,
         BusyMarkEditorShortcutAction.bold: bold,
         BusyMarkEditorShortcutAction.italic: italic,
         BusyMarkEditorShortcutAction.underline: underline,
@@ -751,7 +733,6 @@ abstract final class BusyMarkEditorShortcuts {
         BusyMarkEditorShortcutAction.codeBlock: codeBlock,
         BusyMarkEditorShortcutAction.image: image,
         BusyMarkEditorShortcutAction.hardLineBreak: hardLineBreak,
-        BusyMarkEditorShortcutAction.pastePlainText: pastePlainText,
       };
 }
 
@@ -759,7 +740,7 @@ abstract final class BusyMarkEditorShortcutLabels {
   const BusyMarkEditorShortcutLabels._();
 
   static const refineWithAi = BusyMarkEditorShortcuts.refineWithAiLabel;
-  static const copyAsMarkdown = BusyMarkEditorShortcuts.copyAsMarkdownLabel;
+  static const copyPlainText = BusyMarkEditorShortcuts.copyPlainTextLabel;
   static const textStyle = BusyMarkEditorShortcuts.textStyleLabel;
   static const bold = BusyMarkEditorShortcuts.boldLabel;
   static const italic = BusyMarkEditorShortcuts.italicLabel;
@@ -783,8 +764,6 @@ abstract final class BusyMarkEditorShortcutLabels {
   static const codeBlock = BusyMarkEditorShortcuts.codeBlockLabel;
   static const image = BusyMarkEditorShortcuts.imageLabel;
   static const hardLineBreak = BusyMarkEditorShortcuts.hardLineBreakLabel;
-  static const pastePlainText =
-      BusyMarkTextEditingShortcuts.pastePlainTextLabel;
 }
 
 abstract final class BusyMarkEditorShortcutActivators {
@@ -857,8 +836,6 @@ abstract final class BusyMarkEditorShortcutActivators {
   static ShortcutActivator get image => BusyMarkEditorShortcuts.image.activator;
   static ShortcutActivator get hardLineBreak =>
       BusyMarkEditorShortcuts.hardLineBreak.activator;
-  static ShortcutActivator get pastePlainText =>
-      BusyMarkEditorShortcuts.pastePlainText.activator;
 }
 
 enum BusyMarkSidebarShortcutAction { files, toc, outline, git }

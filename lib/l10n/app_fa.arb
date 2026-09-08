@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "کپی",
-  "copyAsMarkdown": "کپی به‌صورت Markdown",
+  "copyPlainText": "کپی به‌صورت متن ساده",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "جای‌گذاری",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "جای‌گذاری بدون قالب‌بندی",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "حالت مطالعه",
   "@reading": {

@@ -156,7 +156,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copy => 'Kopier';
 
   @override
-  String get copyAsMarkdown => 'Kopier som Markdown';
+  String get copyPlainText => 'Kopier som ren tekst';
 
   @override
   String get clipboardCopyFailed =>
@@ -269,9 +269,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get paste => 'Lim inn';
-
-  @override
-  String get pasteWithoutFormatting => 'Lim inn uten formatering';
 
   @override
   String get reading => 'Lesevisning';

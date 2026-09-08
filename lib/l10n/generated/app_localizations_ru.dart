@@ -156,7 +156,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copy => 'Копировать';
 
   @override
-  String get copyAsMarkdown => 'Копировать как Markdown';
+  String get copyPlainText => 'Копировать как обычный текст';
 
   @override
   String get clipboardCopyFailed =>
@@ -269,9 +269,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paste => 'Вставить';
-
-  @override
-  String get pasteWithoutFormatting => 'Вставить без форматирования';
 
   @override
   String get reading => 'Режим чтения';

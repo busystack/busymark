@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "复制",
-  "copyAsMarkdown": "复制为 Markdown",
+  "copyPlainText": "复制为纯文本",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "粘贴",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "粘贴为无格式文本",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "阅读",
   "@reading": {

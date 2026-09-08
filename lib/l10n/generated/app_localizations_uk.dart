@@ -155,7 +155,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copy => 'Копіювати';
 
   @override
-  String get copyAsMarkdown => 'Копіювати як Markdown';
+  String get copyPlainText => 'Копіювати як звичайний текст';
 
   @override
   String get clipboardCopyFailed =>
@@ -268,9 +268,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get paste => 'Вставити';
-
-  @override
-  String get pasteWithoutFormatting => 'Вставити без форматування';
 
   @override
   String get reading => 'Режим читання';

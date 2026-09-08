@@ -80,7 +80,6 @@ class _DismissBusyMarkModalIntent extends Intent {
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final command in BusyMarkCommandCatalog.metadata.commands)
     if (command.shortcut != null &&
-        command.id != BusyMarkCommandIds.textPastePlainText &&
         command.scope != BusyMarkCommandScope.tree &&
         command.scope != BusyMarkCommandScope.textEditing)
       command.shortcut!.activator: const DoNothingAndStopPropagationIntent(),
@@ -659,14 +658,6 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.paste),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.paste,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.pasteWithoutFormatting,
-                subtitle: context.l10n.shortcutPastePlainTextDescription,
-                leading: const Icon(BusyMarkGlyphs.paste),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkTextEditingShortcutLabels.pastePlainText,
                 ),
               ),
               BusyMarkActionRow(

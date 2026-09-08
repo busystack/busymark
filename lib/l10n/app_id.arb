@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Salin",
-  "copyAsMarkdown": "Salin sebagai Markdown",
+  "copyPlainText": "Salin sebagai teks biasa",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "Tempel",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Tempel tanpa memformat",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Membaca",
   "@reading": {

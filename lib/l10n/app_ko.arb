@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "복사",
-  "copyAsMarkdown": "Markdown으로 복사",
+  "copyPlainText": "일반 텍스트로 복사",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "붙여넣기",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "서식 없이 붙여넣기",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "읽기",
   "@reading": {

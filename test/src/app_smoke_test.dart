@@ -74,7 +74,7 @@ void main() {
       },
       {
         BusyMarkEditorShortcutAction.refineWithAi: 'Ctrl+G',
-        BusyMarkEditorShortcutAction.copyAsMarkdown: 'Ctrl+Shift+C',
+        BusyMarkEditorShortcutAction.copyPlainText: 'Ctrl+Shift+C',
         BusyMarkEditorShortcutAction.bold: 'Ctrl+B',
         BusyMarkEditorShortcutAction.italic: 'Ctrl+I',
         BusyMarkEditorShortcutAction.underline: 'Ctrl+U',
@@ -97,8 +97,13 @@ void main() {
         BusyMarkEditorShortcutAction.codeBlock: 'Ctrl+Shift+K',
         BusyMarkEditorShortcutAction.image: 'Ctrl+Shift+I',
         BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
-        BusyMarkEditorShortcutAction.pastePlainText: 'Ctrl+Shift+V',
       },
+    );
+    expect(
+      BusyMarkTextEditingShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      isNot(contains('Ctrl+Shift+V')),
     );
   });
 

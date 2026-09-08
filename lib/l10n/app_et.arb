@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopeeri",
-  "copyAsMarkdown": "Kopeeri Markdownina",
+  "copyPlainText": "Kopeeri lihttekstina",
   "@copy": {
     "description": "Copy command label."
   },
@@ -287,10 +287,6 @@
   "paste": "Aseta",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Aseta vorminduseta",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Lugemisvaade",
   "@reading": {

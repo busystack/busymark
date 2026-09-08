@@ -156,7 +156,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get copy => 'Kopiëren';
 
   @override
-  String get copyAsMarkdown => 'Kopiëren als Markdown';
+  String get copyPlainText => 'Kopiëren als platte tekst';
 
   @override
   String get clipboardCopyFailed =>
@@ -269,9 +269,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get paste => 'Plakken';
-
-  @override
-  String get pasteWithoutFormatting => 'Plakken zonder opmaak';
 
   @override
   String get reading => 'Lezen';

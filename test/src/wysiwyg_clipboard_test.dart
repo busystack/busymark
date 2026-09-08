@@ -453,7 +453,7 @@ void main() {
       for (final label in [
         'Cut',
         'Copy',
-        'Copy as Markdown',
+        'Copy Plain Text',
         'Paste',
         'Select all',
       ]) {
@@ -471,36 +471,36 @@ void main() {
       expect(systemData['text'], contains('[ ] First task'));
     });
 
-    testWidgets(
-      'Copy as Markdown serves source externally and structure internally',
-      (tester) async {
-        await mount(tester, 'issues', _source, (_) {});
-        await key(tester, LogicalKeyboardKey.keyA);
-        await key(tester, LogicalKeyboardKey.keyA);
-        await key(tester, LogicalKeyboardKey.keyC, shift: true);
+    testWidgets('Copy Plain Text strips formatting in another Editor', (
+      tester,
+    ) async {
+      await mount(tester, 'issues', _source, (_) {});
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC, shift: true);
 
-        expect(systemData.keys, containsAll(['text', 'fragment']));
-        expect(systemData, isNot(contains('html')));
-        expect(systemData['text'], startsWith('# Issues'));
-        expect(systemData['text'], contains('**When**'));
-        expect(systemData['text'], contains('- [ ] First task'));
+      expect(systemData.keys, ['text']);
+      expect(systemData['text'], startsWith('Issues'));
+      expect(
+        systemData['text'],
+        contains('When selecting all, keep formatting.'),
+      );
+      expect(systemData['text'], contains('[ ] First task'));
+      expect(systemData['text'], isNot(contains('# Issues')));
+      expect(systemData['text'], isNot(contains('**When**')));
 
-        var result = '';
-        await mount(
-          tester,
-          'destination',
-          'Target\n',
-          (value) => result = value,
-        );
-        await key(tester, LogicalKeyboardKey.keyA);
-        await key(tester, LogicalKeyboardKey.keyV);
-        expect(result, contains('# Issues'));
-        expect(result, contains('**When**'));
-        expect(result, contains('- [x] Second task'));
-      },
-    );
+      var result = '';
+      await mount(tester, 'destination', 'Target\n', (value) => result = value);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(result, contains('Issues'));
+      expect(result, contains('When selecting all, keep formatting.'));
+      expect(result, isNot(contains('# Issues')));
+      expect(result, isNot(contains('**When**')));
+      expect(result, isNot(contains('- [x] Second task')));
+    });
 
-    testWidgets('document selection menu can copy as Markdown', (tester) async {
+    testWidgets('document selection menu can copy plain text', (tester) async {
       await mount(tester, 'issues', _source, (_) {});
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyA);
@@ -510,12 +510,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Copy as Markdown'));
+      await tester.tap(find.text('Copy Plain Text'));
       await tester.pumpAndSettle();
-      expect(systemData.keys, containsAll(['text', 'fragment']));
-      expect(systemData, isNot(contains('html')));
-      expect(systemData['text'], startsWith('# Issues'));
-      expect(systemData['text'], contains('**When**'));
+      expect(systemData.keys, ['text']);
+      expect(systemData['text'], startsWith('Issues'));
+      expect(systemData['text'], isNot(contains('**When**')));
     });
 
     testWidgets(
@@ -610,34 +609,14 @@ void main() {
       expect(result, contains('**Bold**'));
     });
 
-    testWidgets(
-      'plain paste and later plain copies never revive cached formatting',
-      (tester) async {
-        await copyAll(tester);
-        var result = '';
-        await mount(
-          tester,
-          'destination',
-          'Target\n',
-          (value) => result = value,
-        );
-        await key(tester, LogicalKeyboardKey.keyA);
-        await key(tester, LogicalKeyboardKey.keyV, shift: true);
-        expect(result, isNot(contains('# Issues')));
-        expect(result, isNot(contains('**When**')));
-        final sameText = systemData['text'] as String;
-        await Clipboard.setData(ClipboardData(text: sameText));
-        await mount(
-          tester,
-          'destination2',
-          'Target\n',
-          (value) => result = value,
-        );
-        await key(tester, LogicalKeyboardKey.keyA);
-        await key(tester, LogicalKeyboardKey.keyV);
-        expect(result, isNot(contains('**When**')));
-      },
-    );
+    testWidgets('Ctrl+Shift+V is not an Editor paste command', (tester) async {
+      await copyAll(tester);
+      var result = 'Target\n';
+      await mount(tester, 'destination', result, (value) => result = value);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV, shift: true);
+      expect(result, 'Target\n');
+    });
 
     testWidgets('failed clipboard write leaves cut selection intact', (
       tester,

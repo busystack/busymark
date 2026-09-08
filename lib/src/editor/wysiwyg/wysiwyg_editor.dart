@@ -874,7 +874,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onFocused: () => _handleBlockFocused(block.id),
       onCut: _cutCurrentSelection,
       onCopy: _copyCurrentSelection,
-      onCopyAsMarkdown: _copyCurrentSelectionAsMarkdown,
+      onCopyPlainText: _copyCurrentSelectionAsPlainText,
       onRefineWithAi: widget.onAiEdit == null
           ? null
           : () => unawaited(_runAiEdit(blockId: block.id)),
@@ -3543,8 +3543,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       case BusyMarkEditorShortcutAction.refineWithAi:
         unawaited(_runAiEdit());
         break;
-      case BusyMarkEditorShortcutAction.copyAsMarkdown:
-        _copyCurrentSelectionAsMarkdown();
+      case BusyMarkEditorShortcutAction.copyPlainText:
+        _copyCurrentSelectionAsPlainText();
         break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(BusyWysiwygInlineCommand.bold);
@@ -3630,9 +3630,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       case BusyMarkEditorShortcutAction.hardLineBreak:
         _applyHardBreakCommand();
         break;
-      case BusyMarkEditorShortcutAction.pastePlainText:
-        unawaited(_pastePlainTextIntoActiveBlock());
-        break;
     }
   }
 
@@ -3648,7 +3645,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyMarkCommandIds.textCut ||
       BusyMarkCommandIds.textCopy ||
       BusyMarkCommandIds.textPaste ||
-      'text.pastePlainText' ||
       'text.undo' ||
       'text.redo' => true,
       _ => false,
@@ -3675,8 +3671,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _copyCurrentSelection();
       case BusyMarkCommandIds.textPaste:
         unawaited(_pasteIntoActiveBlock());
-      case 'text.pastePlainText':
-        unawaited(_pastePlainTextIntoActiveBlock());
       case 'text.undo':
         if (widget.useExternalUndoHistory || !_undoEditorChange()) {
           widget.onUndo?.call();
@@ -5548,8 +5542,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           BusyMarkGlyphs.copy,
         ),
         item(
-          _DocumentSelectionMenuAction.copyAsMarkdown,
-          BusyMarkCommandIds.editorCopyAsMarkdown,
+          _DocumentSelectionMenuAction.copyPlainText,
+          BusyMarkCommandIds.editorCopyPlainText,
           BusyMarkGlyphs.copy,
         ),
         item(
@@ -5578,8 +5572,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _cutBlockSelection();
       case _DocumentSelectionMenuAction.copy:
         _copyBlockSelection();
-      case _DocumentSelectionMenuAction.copyAsMarkdown:
-        _copyCurrentSelectionAsMarkdown();
+      case _DocumentSelectionMenuAction.copyPlainText:
+        _copyCurrentSelectionAsPlainText();
       case _DocumentSelectionMenuAction.paste:
         unawaited(_pasteIntoActiveBlock());
       case _DocumentSelectionMenuAction.selectAll:
@@ -5928,7 +5922,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   bool _copyCurrentSelection() => _copyOrCutSelection(cut: false);
 
-  bool _copyCurrentSelectionAsMarkdown() {
+  bool _copyCurrentSelectionAsPlainText() {
     final documentSelection = _hasBlockSelection;
     final allRanges = documentSelection
         ? _selectedTextRanges(null, true)
@@ -5940,14 +5934,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               .where((range) => _copyTextForRange(range).trim().isNotEmpty)
               .toList();
     if (ranges.isEmpty) return false;
-    final fragment = WysiwygClipboardFragment(
-      mode: _documentController.document.mode,
-      sourcePath: _documentController.document.filePath,
-      blocks: _clipboardBlocksForRanges(ranges),
-    );
-    final markdown = fragment.markdown;
-    if (markdown.isEmpty) return false;
-    unawaited(_writeMarkdownClipboard(markdown, fragment));
+    final text = ranges.map(_copyTextForRange).join('\n\n');
+    if (text.isEmpty) return false;
+    unawaited(_writePlainClipboard(text));
     return true;
   }
 
@@ -5991,6 +5980,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return true;
   }
 
+  Future<void> _writePlainClipboard(String text) async {
+    final success = await _clipboard.write(RichClipboardData(text: text));
+    if (!mounted || success) return;
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.clipboardCopyFailed,
+    );
+  }
+
   Future<void> _writeClipboardSelection({
     required WysiwygClipboardFragment fragment,
     required String text,
@@ -6019,20 +6017,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         message: context.l10n.clipboardCopyFailed,
       );
     }
-  }
-
-  Future<void> _writeMarkdownClipboard(
-    String markdown,
-    WysiwygClipboardFragment fragment,
-  ) async {
-    final success = await _clipboard.write(
-      RichClipboardData(text: markdown, fragment: fragment.encode()),
-    );
-    if (!mounted || success) return;
-    BusyMarkToastOverlay.show(
-      context,
-      message: context.l10n.clipboardCopyFailed,
-    );
   }
 
   List<BusyWysiwygStyledBlock> _clipboardBlocksForRanges(
@@ -6478,7 +6462,7 @@ class _ClipboardTarget {
 enum _DocumentSelectionMenuAction {
   cut,
   copy,
-  copyAsMarkdown,
+  copyPlainText,
   paste,
   selectAll,
   refineWithAi,

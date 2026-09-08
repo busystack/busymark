@@ -154,7 +154,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
-  String get copyAsMarkdown => 'Copy as Markdown';
+  String get copyPlainText => 'Copy Plain Text';
 
   @override
   String get clipboardCopyFailed =>
@@ -267,9 +267,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get paste => 'Paste';
-
-  @override
-  String get pasteWithoutFormatting => 'Paste without formatting';
 
   @override
   String get reading => 'Reading';
@@ -4051,7 +4048,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get copy => '复制';
 
   @override
-  String get copyAsMarkdown => '复制为 Markdown';
+  String get copyPlainText => '复制为纯文本';
 
   @override
   String get copyName => '复制名称';
@@ -4159,9 +4156,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get paste => '粘贴';
-
-  @override
-  String get pasteWithoutFormatting => '粘贴为无格式文本';
 
   @override
   String get reading => '阅读';

@@ -154,7 +154,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get copy => 'Sao chép';
 
   @override
-  String get copyAsMarkdown => 'Sao chép dưới dạng Markdown';
+  String get copyPlainText => 'Sao chép dưới dạng văn bản thuần';
 
   @override
   String get clipboardCopyFailed =>
@@ -267,9 +267,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get paste => 'Dán';
-
-  @override
-  String get pasteWithoutFormatting => 'Dán không định dạng';
 
   @override
   String get reading => 'Đọc';

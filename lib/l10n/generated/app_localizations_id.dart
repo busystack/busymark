@@ -155,7 +155,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get copy => 'Salin';
 
   @override
-  String get copyAsMarkdown => 'Salin sebagai Markdown';
+  String get copyPlainText => 'Salin sebagai teks biasa';
 
   @override
   String get clipboardCopyFailed =>
@@ -268,9 +268,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paste => 'Tempel';
-
-  @override
-  String get pasteWithoutFormatting => 'Tempel tanpa memformat';
 
   @override
   String get reading => 'Membaca';

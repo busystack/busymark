@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Sao chép",
-  "copyAsMarkdown": "Sao chép dưới dạng Markdown",
+  "copyPlainText": "Sao chép dưới dạng văn bản thuần",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "Dán",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Dán không định dạng",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Đọc",
   "@reading": {

@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "نسخ",
-  "copyAsMarkdown": "نسخ كـ Markdown",
+  "copyPlainText": "نسخ كنص عادي",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "لصق",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "لصق بدون تنسيق",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "وضع القراءة",
   "@reading": {

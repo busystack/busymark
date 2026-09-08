@@ -403,11 +403,11 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get copy;
 
-  /// Copies the Editor selection as Markdown source.
+  /// Copies the Editor selection without formatting or Markdown syntax.
   ///
   /// In en, this message translates to:
-  /// **'Copy as Markdown'**
-  String get copyAsMarkdown;
+  /// **'Copy Plain Text'**
+  String get copyPlainText;
 
   /// Shown when Editor copy or cut cannot write the clipboard; cut leaves the document intact.
   ///
@@ -624,12 +624,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste'**
   String get paste;
-
-  /// Plain text paste command label.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste without formatting'**
-  String get pasteWithoutFormatting;
 
   /// Reading view label.
   ///

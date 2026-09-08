@@ -150,7 +150,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get copy => 'コピー';
 
   @override
-  String get copyAsMarkdown => 'Markdown としてコピー';
+  String get copyPlainText => 'プレーンテキストとしてコピー';
 
   @override
   String get clipboardCopyFailed =>
@@ -262,9 +262,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get paste => '貼り付け';
-
-  @override
-  String get pasteWithoutFormatting => '書式なしで貼り付け';
 
   @override
   String get reading => '閲覧';

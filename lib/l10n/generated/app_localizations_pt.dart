@@ -154,7 +154,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
-  String get copyAsMarkdown => 'Copy as Markdown';
+  String get copyPlainText => 'Copy Plain Text';
 
   @override
   String get clipboardCopyFailed =>
@@ -267,9 +267,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get paste => 'Paste';
-
-  @override
-  String get pasteWithoutFormatting => 'Paste without formatting';
 
   @override
   String get reading => 'Reading';
@@ -4075,7 +4072,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get copy => 'Copiar';
 
   @override
-  String get copyAsMarkdown => 'Copiar como Markdown';
+  String get copyPlainText => 'Copiar como texto simples';
 
   @override
   String get copyName => 'Copiar nome';
@@ -4184,9 +4181,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get paste => 'Colar';
-
-  @override
-  String get pasteWithoutFormatting => 'Colar sem formatar';
 
   @override
   String get reading => 'Leitura';

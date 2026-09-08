@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopier",
-  "copyAsMarkdown": "Kopier som Markdown",
+  "copyPlainText": "Kopier som ren tekst",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "Lim inn",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Lim inn uten formatering",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Lesevisning",
   "@reading": {

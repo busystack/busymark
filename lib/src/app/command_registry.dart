@@ -265,9 +265,8 @@ abstract final class BusyMarkCommandIds {
   static const textSelectAll = 'text.selectAll';
   static const textCut = 'text.cut';
   static const textCopy = 'text.copy';
-  static const editorCopyAsMarkdown = 'editor.copyAsMarkdown';
+  static const editorCopyPlainText = 'editor.copyPlainText';
   static const textPaste = 'text.paste';
-  static const textPastePlainText = 'text.pastePlainText';
   static const textUndo = 'text.undo';
   static const textRedo = 'text.redo';
   static const textInsertIndentation = 'text.insertIndentation';
@@ -497,8 +496,6 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkTextEditingShortcutAction.cut => context.l10n.cut,
     BusyMarkTextEditingShortcutAction.copy => context.l10n.copy,
     BusyMarkTextEditingShortcutAction.paste => context.l10n.paste,
-    BusyMarkTextEditingShortcutAction.pastePlainText =>
-      context.l10n.pasteWithoutFormatting,
     BusyMarkTextEditingShortcutAction.undo => context.l10n.undo,
     BusyMarkTextEditingShortcutAction.redo => context.l10n.redo,
     BusyMarkTextEditingShortcutAction.insertIndentation =>
@@ -513,7 +510,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkEditorShortcutAction action,
   ) => switch (action) {
     BusyMarkEditorShortcutAction.refineWithAi => context.l10n.aiRefineWithAi,
-    BusyMarkEditorShortcutAction.copyAsMarkdown => context.l10n.copyAsMarkdown,
+    BusyMarkEditorShortcutAction.copyPlainText => context.l10n.copyPlainText,
     BusyMarkEditorShortcutAction.bold => context.l10n.bold,
     BusyMarkEditorShortcutAction.italic => context.l10n.italic,
     BusyMarkEditorShortcutAction.underline => context.l10n.underline,
@@ -542,8 +539,6 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkEditorShortcutAction.htmlBlock => context.l10n.htmlBlock,
     BusyMarkEditorShortcutAction.thematicBreak => context.l10n.thematicBreak,
     BusyMarkEditorShortcutAction.hardLineBreak => context.l10n.hardLineBreak,
-    BusyMarkEditorShortcutAction.pastePlainText =>
-      context.l10n.pasteWithoutFormatting,
   };
 
   static String? _textDescription(
@@ -558,8 +553,6 @@ abstract final class BusyMarkCommandCatalog {
       context.l10n.shortcutCopyDescription,
     BusyMarkTextEditingShortcutAction.paste =>
       context.l10n.shortcutPasteDescription,
-    BusyMarkTextEditingShortcutAction.pastePlainText =>
-      context.l10n.shortcutPastePlainTextDescription,
     BusyMarkTextEditingShortcutAction.undo =>
       context.l10n.shortcutUndoDescription,
     BusyMarkTextEditingShortcutAction.redo =>
@@ -613,8 +606,7 @@ abstract final class BusyMarkCommandCatalog {
     BuildContext context,
     BusyMarkEditorShortcutAction action,
   ) => switch (action) {
-    BusyMarkEditorShortcutAction.copyAsMarkdown ||
-    BusyMarkEditorShortcutAction.pastePlainText =>
+    BusyMarkEditorShortcutAction.copyPlainText =>
       context.l10n.shortcutGroupTextEditing,
     BusyMarkEditorShortcutAction.bold ||
     BusyMarkEditorShortcutAction.italic ||

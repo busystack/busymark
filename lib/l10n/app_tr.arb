@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopyala",
-  "copyAsMarkdown": "Markdown olarak kopyala",
+  "copyPlainText": "Düz metin olarak kopyala",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "Yapıştır",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Biçimlendirmeden yapıştır",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Okuma",
   "@reading": {

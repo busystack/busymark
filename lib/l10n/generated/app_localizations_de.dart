@@ -157,7 +157,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get copy => 'Kopieren';
 
   @override
-  String get copyAsMarkdown => 'Als Markdown kopieren';
+  String get copyPlainText => 'Als Nur-Text kopieren';
 
   @override
   String get clipboardCopyFailed =>
@@ -270,9 +270,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paste => 'Einfügen';
-
-  @override
-  String get pasteWithoutFormatting => 'Ohne Formatierung einfügen';
 
   @override
   String get reading => 'Leseansicht';

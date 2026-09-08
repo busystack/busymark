@@ -1414,7 +1414,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       case BusyMarkEditorShortcutAction.refineWithAi:
         unawaited(_runAiEdit());
         break;
-      case BusyMarkEditorShortcutAction.copyAsMarkdown:
+      case BusyMarkEditorShortcutAction.copyPlainText:
         final value = _fullEditingValue();
         final selection = value.selection;
         if (selection.isValid && !selection.isCollapsed) {
@@ -1540,9 +1540,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           SourceCommands.insertBlock(_fullEditingValue(), '  \n'),
         );
         break;
-      case BusyMarkEditorShortcutAction.pastePlainText:
-        unawaited(_pastePlainText());
-        break;
     }
   }
 
@@ -1586,28 +1583,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _insertTab() {
     _applyFullEditingValue(SourceCommands.insertTab(_fullEditingValue()));
-  }
-
-  Future<void> _pastePlainText() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text == null || text.isEmpty) {
-      return;
-    }
-    final value = _fullEditingValue();
-    final selection = value.selection;
-    final nextText =
-        selection.textBefore(value.text) +
-        text +
-        selection.textAfter(value.text);
-    _applyFullEditingValue(
-      TextEditingValue(
-        text: nextText,
-        selection: TextSelection.collapsed(
-          offset: selection.start + text.length,
-        ),
-      ),
-    );
   }
 
   void _replaceController({

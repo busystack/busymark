@@ -13,7 +13,7 @@ Widget buildBusyMarkEditorTextContextMenu(
   VoidCallback? onRefineWithAi,
   VoidCallback? onCut,
   VoidCallback? onCopy,
-  VoidCallback? onCopyAsMarkdown,
+  VoidCallback? onCopyPlainText,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
   return _BusyMarkEditorTextContextMenu(
@@ -22,7 +22,7 @@ Widget buildBusyMarkEditorTextContextMenu(
     onRefineWithAi: onRefineWithAi,
     onCut: onCut,
     onCopy: onCopy,
-    onCopyAsMarkdown: onCopyAsMarkdown,
+    onCopyPlainText: onCopyPlainText,
     additionalItems: additionalItems,
   );
 }
@@ -34,7 +34,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.onRefineWithAi,
     required this.onCut,
     required this.onCopy,
-    required this.onCopyAsMarkdown,
+    required this.onCopyPlainText,
     required this.additionalItems,
   });
 
@@ -43,7 +43,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final VoidCallback? onRefineWithAi;
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
-  final VoidCallback? onCopyAsMarkdown;
+  final VoidCallback? onCopyPlainText;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
   @override
@@ -91,7 +91,7 @@ class _BusyMarkEditorTextContextMenuState
       anchorPoint: widget.editableTextState.contextMenuAnchors.primaryAnchor,
       items: _menuItems(context),
       session: _menuSession,
-      width: widget.onCopyAsMarkdown == null
+      width: widget.onCopyPlainText == null
           ? BusyMarkSizes.popupMenuMinWidth
           : BusyMarkSizes.editorContextMenuWidth,
     );
@@ -136,14 +136,14 @@ class _BusyMarkEditorTextContextMenuState
           ),
         );
       }
-      final copyAsMarkdown = widget.onCopyAsMarkdown;
+      final copyPlainText = widget.onCopyPlainText;
       if (item.type == ContextMenuButtonType.copy &&
-          copyAsMarkdown != null &&
+          copyPlainText != null &&
           hasSelection) {
-        final command = commands[BusyMarkCommandIds.editorCopyAsMarkdown]!;
+        final command = commands[BusyMarkCommandIds.editorCopyPlainText]!;
         items.add(
           BusyMarkPopupMenuItem<VoidCallback>(
-            value: copyAsMarkdown,
+            value: copyPlainText,
             label: command.label(context),
             icon: BusyMarkGlyphs.copy,
             shortcut: command.shortcut?.label,

@@ -149,7 +149,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copy => '복사';
 
   @override
-  String get copyAsMarkdown => 'Markdown으로 복사';
+  String get copyPlainText => '일반 텍스트로 복사';
 
   @override
   String get clipboardCopyFailed =>
@@ -261,9 +261,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get paste => '붙여넣기';
-
-  @override
-  String get pasteWithoutFormatting => '서식 없이 붙여넣기';
 
   @override
   String get reading => '읽기';

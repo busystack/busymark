@@ -153,7 +153,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copy => 'نسخ';
 
   @override
-  String get copyAsMarkdown => 'نسخ كـ Markdown';
+  String get copyPlainText => 'نسخ كنص عادي';
 
   @override
   String get clipboardCopyFailed =>
@@ -266,9 +266,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paste => 'لصق';
-
-  @override
-  String get pasteWithoutFormatting => 'لصق بدون تنسيق';
 
   @override
   String get reading => 'وضع القراءة';

@@ -178,7 +178,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "コピー",
-  "copyAsMarkdown": "Markdown としてコピー",
+  "copyPlainText": "プレーンテキストとしてコピー",
   "@copy": {
     "description": "Copy command label."
   },
@@ -326,10 +326,6 @@
   "paste": "貼り付け",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "書式なしで貼り付け",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "閲覧",
   "@reading": {

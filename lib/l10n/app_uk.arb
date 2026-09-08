@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Копіювати",
-  "copyAsMarkdown": "Копіювати як Markdown",
+  "copyPlainText": "Копіювати як звичайний текст",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "Вставити",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Вставити без форматування",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Режим читання",
   "@reading": {

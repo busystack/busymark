@@ -94,7 +94,7 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "कॉपी करें",
-  "copyAsMarkdown": "Markdown के रूप में कॉपी करें",
+  "copyPlainText": "सादे पाठ के रूप में कॉपी करें",
   "@copy": {
     "description": "Copy command label."
   },
@@ -199,10 +199,6 @@
   "paste": "पेस्ट करें",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "बिना फ़ॉर्मेटिंग पेस्ट करें",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "पठन दृश्य",
   "@reading": {
