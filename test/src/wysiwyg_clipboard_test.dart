@@ -471,17 +471,34 @@ void main() {
       expect(systemData['text'], contains('[ ] First task'));
     });
 
-    testWidgets('Copy as Markdown writes only Markdown source', (tester) async {
-      await mount(tester, 'issues', _source, (_) {});
-      await key(tester, LogicalKeyboardKey.keyA);
-      await key(tester, LogicalKeyboardKey.keyA);
-      await key(tester, LogicalKeyboardKey.keyC, shift: true);
+    testWidgets(
+      'Copy as Markdown serves source externally and structure internally',
+      (tester) async {
+        await mount(tester, 'issues', _source, (_) {});
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyC, shift: true);
 
-      expect(systemData.keys, ['text']);
-      expect(systemData['text'], startsWith('# Issues'));
-      expect(systemData['text'], contains('**When**'));
-      expect(systemData['text'], contains('- [ ] First task'));
-    });
+        expect(systemData.keys, containsAll(['text', 'fragment']));
+        expect(systemData, isNot(contains('html')));
+        expect(systemData['text'], startsWith('# Issues'));
+        expect(systemData['text'], contains('**When**'));
+        expect(systemData['text'], contains('- [ ] First task'));
+
+        var result = '';
+        await mount(
+          tester,
+          'destination',
+          'Target\n',
+          (value) => result = value,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyV);
+        expect(result, contains('# Issues'));
+        expect(result, contains('**When**'));
+        expect(result, contains('- [x] Second task'));
+      },
+    );
 
     testWidgets('document selection menu can copy as Markdown', (tester) async {
       await mount(tester, 'issues', _source, (_) {});
@@ -495,7 +512,8 @@ void main() {
 
       await tester.tap(find.text('Copy as Markdown'));
       await tester.pumpAndSettle();
-      expect(systemData.keys, ['text']);
+      expect(systemData.keys, containsAll(['text', 'fragment']));
+      expect(systemData, isNot(contains('html')));
       expect(systemData['text'], startsWith('# Issues'));
       expect(systemData['text'], contains('**When**'));
     });

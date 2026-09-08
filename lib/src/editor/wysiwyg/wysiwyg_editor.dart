@@ -5934,7 +5934,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
     final markdown = fragment.markdown;
     if (markdown.isEmpty) return false;
-    unawaited(_writeMarkdownClipboard(markdown));
+    unawaited(_writeMarkdownClipboard(markdown, fragment));
     return true;
   }
 
@@ -6008,8 +6008,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
-  Future<void> _writeMarkdownClipboard(String markdown) async {
-    final success = await _clipboard.write(RichClipboardData(text: markdown));
+  Future<void> _writeMarkdownClipboard(
+    String markdown,
+    WysiwygClipboardFragment fragment,
+  ) async {
+    final success = await _clipboard.write(
+      RichClipboardData(text: markdown, fragment: fragment.encode()),
+    );
     if (!mounted || success) return;
     BusyMarkToastOverlay.show(
       context,
