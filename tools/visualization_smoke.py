@@ -18,6 +18,14 @@ gi.require_version("WebKit2", "4.1")
 from gi.repository import Gio, GLib, Gtk, WebKit2  # noqa: E402
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+MARKDOWN_FIXTURE = REPOSITORY_ROOT / "test/fixtures/markdown/basic.md"
+VISUALIZATION_FIXTURES = REPOSITORY_ROOT / "test/fixtures/visualization"
+PLANTUML_FIXTURE = VISUALIZATION_FIXTURES / "plantuml-conformance.md"
+LOCAL_OPENAPI_FIXTURE = VISUALIZATION_FIXTURES / "openapi-local-reference.md"
+LOCAL_OPENAPI_DEPENDENCY = VISUALIZATION_FIXTURES / "openapi/components.yaml"
+
+
 def fenced_sources(path: Path, languages: tuple[str, ...]) -> list[str]:
     language_pattern = "|".join(re.escape(language) for language in languages)
     pattern = re.compile(
@@ -438,12 +446,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--assets", required=True, type=Path)
     parser.add_argument("--d2", required=True, type=Path)
-    parser.add_argument(
-        "--demo", default=Path("demo/visualizations.md"), type=Path
-    )
+    parser.add_argument("--demo", default=MARKDOWN_FIXTURE, type=Path)
     parser.add_argument(
         "--plantuml-corpus",
-        default=Path("demo/plantuml-conformance.md"),
+        default=PLANTUML_FIXTURE,
         type=Path,
     )
     args = parser.parse_args()
@@ -451,11 +457,9 @@ def main() -> int:
     mermaid = fenced_sources(args.demo, ("mermaid",))[0]
     openapi = fenced_sources(args.demo, ("openapi", "oas", "swagger"))[0]
     local_openapi = fenced_sources(
-        Path("demo/openapi-local-reference.md"), ("openapi", "oas", "swagger")
+        LOCAL_OPENAPI_FIXTURE, ("openapi", "oas", "swagger")
     )[0]
-    local_dependency = Path("demo/openapi/components.yaml").read_text(
-        encoding="utf-8"
-    )
+    local_dependency = LOCAL_OPENAPI_DEPENDENCY.read_text(encoding="utf-8")
     plantuml = fenced_sources(args.plantuml_corpus, ("plantuml", "puml"))
     d2_failures, d2_outputs = d2_smoke(args.d2.resolve())
     cases: list[dict[str, object]] = [
@@ -766,11 +770,11 @@ def main() -> int:
             "uri": "busymark-render://app/harness.html",
             "request": {
                 "operation": "parseOpenApi",
-                "entryId": "demo/openapi-local-reference.md",
+                "entryId": "fixtures/openapi-local-reference.md",
                 "source": local_openapi,
                 "dependencies": [
                     {
-                        "id": "demo/openapi/components.yaml",
+                        "id": "fixtures/openapi/components.yaml",
                         "source": local_dependency,
                     }
                 ],
@@ -858,11 +862,11 @@ def main() -> int:
             "name": "Scalar local circular reference",
             "uri": "busymark-render://app/reference.html",
             "request": {
-                "entryId": "demo/openapi-local-reference.md",
+                "entryId": "fixtures/openapi-local-reference.md",
                 "source": local_openapi,
                 "dependencies": [
                     {
-                        "id": "demo/openapi/components.yaml",
+                        "id": "fixtures/openapi/components.yaml",
                         "source": local_dependency,
                     }
                 ],

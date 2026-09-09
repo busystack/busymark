@@ -114,7 +114,9 @@ jobs:
             env WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
-            --d2 build/linux/x64/release/bundle/libexec/busymark/d2
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
 
       - name: Exercise the release binary visualization and PDF paths under X11
         run: |
@@ -153,7 +155,9 @@ jobs:
             LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
-            --d2 build/linux/x64/release/bundle/libexec/busymark/d2
+            --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
+            --demo test/fixtures/markdown/basic.md \
+            --plantuml-corpus test/fixtures/visualization/plantuml-conformance.md
           report="${RUNNER_TEMP}/visualization-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
