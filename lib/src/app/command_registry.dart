@@ -244,8 +244,7 @@ abstract final class BusyMarkCommandIds {
   static const newDocument = 'file.newDocument';
   static const open = 'file.open';
   static const save = 'file.save';
-  static const exportPdf = 'file.exportPdf';
-  static const exportHtml = 'file.exportHtml';
+  static const export = 'file.export';
   static const fullScreen = 'view.fullScreen';
   static const back = 'navigation.back';
   static const search = 'search.find';
@@ -320,12 +319,6 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
-      command(
-        id: BusyMarkCommandIds.exportHtml,
-        label: (context) => context.l10n.exportAsHtml,
-        category: (context) => context.l10n.export,
-        scope: BusyMarkCommandScope.application,
-      ),
       for (final action in BusyMarkAppShortcutAction.values)
         command(
           id: _appId(action),
@@ -396,7 +389,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.newDocument => BusyMarkCommandIds.newDocument,
     BusyMarkAppShortcutAction.open => BusyMarkCommandIds.open,
     BusyMarkAppShortcutAction.save => BusyMarkCommandIds.save,
-    BusyMarkAppShortcutAction.exportPdf => BusyMarkCommandIds.exportPdf,
+    BusyMarkAppShortcutAction.export => BusyMarkCommandIds.export,
     BusyMarkAppShortcutAction.fullScreen => BusyMarkCommandIds.fullScreen,
     BusyMarkAppShortcutAction.back => BusyMarkCommandIds.back,
     BusyMarkAppShortcutAction.search => BusyMarkCommandIds.search,
@@ -421,7 +414,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.newDocument => context.l10n.shortcutNewDocument,
     BusyMarkAppShortcutAction.open => context.l10n.open,
     BusyMarkAppShortcutAction.save => context.l10n.save,
-    BusyMarkAppShortcutAction.exportPdf => context.l10n.exportAsPdf,
+    BusyMarkAppShortcutAction.export => context.l10n.export,
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
     BusyMarkAppShortcutAction.search => context.l10n.search,
@@ -468,8 +461,7 @@ abstract final class BusyMarkCommandCatalog {
       context.l10n.shortcutNewDocumentDescription,
     BusyMarkAppShortcutAction.open => context.l10n.shortcutOpenDescription,
     BusyMarkAppShortcutAction.save => context.l10n.shortcutSaveDescription,
-    BusyMarkAppShortcutAction.exportPdf =>
-      context.l10n.shortcutExportPdfDescription,
+    BusyMarkAppShortcutAction.export => null,
     BusyMarkAppShortcutAction.search => context.l10n.shortcutSearchDescription,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.shortcutKeyboardShortcutsDescription,

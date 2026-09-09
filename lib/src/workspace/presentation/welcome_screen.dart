@@ -255,8 +255,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
-      case HeaderBarAction.exportHtml:
-      case HeaderBarAction.exportPdf:
+      case HeaderBarAction.export:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
@@ -286,8 +285,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.exportHtml:
-      case BusyMarkMainMenuAction.exportPdf:
+      case BusyMarkMainMenuAction.export:
       case BusyMarkMainMenuAction.generateMarkdownToc:
         break;
       case BusyMarkMainMenuAction.fullScreen:

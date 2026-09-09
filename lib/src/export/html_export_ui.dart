@@ -31,7 +31,11 @@ final htmlExportServiceProvider = Provider<HtmlExportService>(
 bool canExportWorkspaceHtml(WorkspaceState state) =>
     canExportActiveMarkdown(state) || canExportWritersidePdf(state);
 
-Future<void> exportWorkspaceToHtml(BuildContext context, WidgetRef ref) async {
+Future<void> exportWorkspaceToHtml(
+  BuildContext context,
+  WidgetRef ref, {
+  ExportOptionsSelection? configuredSelection,
+}) async {
   var snapshot = ref.read(workspaceControllerProvider);
   if (!canExportWorkspaceHtml(snapshot)) return;
   final site = snapshot.workspace?.kind == WorkspaceKind.writersideModule;
@@ -41,20 +45,25 @@ Future<void> exportWorkspaceToHtml(BuildContext context, WidgetRef ref) async {
   }
   final workspace = snapshot.workspace!;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final selection = await showExportOptions(
-    context,
-    ref,
-    pdf: false,
-    instances: site
-        ? workspace.writersideModule!.instances
-              .where((i) => !i.isLibrary)
-              .toList()
-        : const [],
-    workspaceRoot: site ? workspace.rootPath : null,
-  );
-  if (selection == null || !context.mounted) return;
-  final instance = selection.instance;
-  final options = selection.html!;
+  final configuration =
+      configuredSelection ??
+      await showExportOptions(
+        context,
+        ref,
+        initialFormat: ExportFormat.html,
+        canExportPdf: false,
+        instances: site
+            ? workspace.writersideModule!.instances
+                  .where((i) => !i.isLibrary)
+                  .toList()
+            : const [],
+        workspaceRoot: site ? workspace.rootPath : null,
+      );
+  if (configuration == null || configuration.html == null || !context.mounted) {
+    return;
+  }
+  final instance = configuration.instance;
+  final options = configuration.html!;
   final path = workspace.activeFilePath ?? workspace.markdown?.filePath ?? '';
   final name = path.isEmpty
       ? context.l10n.untitledMarkdownFileName

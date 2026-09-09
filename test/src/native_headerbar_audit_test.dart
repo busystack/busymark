@@ -253,23 +253,28 @@ void main() {
     expect(welcome, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('BusyMarkMainMenuButton('));
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(mainMenu, isNot(contains('BusyMarkPopupSubmenu')));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
-    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(
       mainMenu,
-      contains('label: command(BusyMarkCommandIds.exportPdf).label(context)'),
+      contains('label: command(BusyMarkCommandIds.export).label(context)'),
     );
+    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(
       mainMenu,
       contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
     );
-    expect(mainMenu, contains('enabled: canExportPdf'));
+    expect(mainMenu, contains('enabled: canExportPdf || canExportHtml'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
+    expect(native, isNot(contains('g_menu_item_new_submenu')));
+    expect(native, contains('localized_label_or(labels, "export", "")'));
     expect(native, contains('"header.keyboard-shortcuts"'));
-    expect(native, contains('"header.export-pdf"'));
+    expect(native, contains('"header.export"'));
+    expect(native, isNot(contains('"header.export-pdf"')));
+    expect(native, isNot(contains('"header.export-html"')));
     expect(native, contains('"header.full-screen"'));
     expect(native, contains('full_screen_gaction_activated_cb'));
     expect(native, contains('configuration.full_screen'));

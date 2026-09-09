@@ -10,6 +10,8 @@ import '../writerside/writerside_model.dart';
 import 'export_options.dart';
 import 'html_export_styles.dart';
 
+enum ExportFormat { pdf, html }
+
 class ExportOptionsSelection {
   const ExportOptionsSelection({this.pdf, this.html, this.instance});
   final PdfExportOptions? pdf;
@@ -20,10 +22,13 @@ class ExportOptionsSelection {
 Future<ExportOptionsSelection?> showExportOptions(
   BuildContext context,
   WidgetRef ref, {
-  required bool pdf,
+  ExportFormat initialFormat = ExportFormat.pdf,
+  bool canExportPdf = true,
+  bool canExportHtml = true,
   List<WritersideInstance> instances = const [],
   String? workspaceRoot,
 }) async {
+  assert(canExportPdf || canExportHtml);
   final controller = ref.read(appSettingsControllerProvider.notifier);
   await controller.waitUntilLoaded();
   if (!context.mounted) return null;
@@ -34,8 +39,11 @@ Future<ExportOptionsSelection?> showExportOptions(
     headerBarService: bar.isAvailable ? bar : null,
     maxWidth: 720,
     builder: (context) => ExportOptionsDialog(
-      pdf: pdf ? settings.pdfExportOptions : null,
-      html: pdf ? null : settings.htmlExportOptions,
+      pdf: settings.pdfExportOptions,
+      html: settings.htmlExportOptions,
+      initialFormat: initialFormat,
+      canExportPdf: canExportPdf,
+      canExportHtml: canExportHtml,
       instances: instances,
       instanceId: workspaceRoot == null
           ? null
@@ -61,13 +69,19 @@ Future<ExportOptionsSelection?> showExportOptions(
 class ExportOptionsDialog extends StatefulWidget {
   const ExportOptionsDialog({
     super.key,
-    this.pdf,
-    this.html,
+    required this.pdf,
+    required this.html,
+    required this.initialFormat,
+    this.canExportPdf = true,
+    this.canExportHtml = true,
     this.instances = const [],
     this.instanceId,
-  }) : assert((pdf == null) != (html == null));
-  final PdfExportOptions? pdf;
-  final HtmlExportOptions? html;
+  }) : assert(canExportPdf || canExportHtml);
+  final PdfExportOptions pdf;
+  final HtmlExportOptions html;
+  final ExportFormat initialFormat;
+  final bool canExportPdf;
+  final bool canExportHtml;
   final List<WritersideInstance> instances;
   final String? instanceId;
   @override
@@ -75,8 +89,9 @@ class ExportOptionsDialog extends StatefulWidget {
 }
 
 class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
-  late PdfExportOptions? _pdf = widget.pdf;
-  late HtmlExportOptions? _html = widget.html;
+  late PdfExportOptions _pdf = widget.pdf;
+  late HtmlExportOptions _html = widget.html;
+  late ExportFormat _format = _availableInitialFormat();
   late WritersideInstance? _instance =
       widget.instances.where((i) => i.id == widget.instanceId).firstOrNull ??
       widget.instances.firstOrNull;
@@ -84,16 +99,28 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
   var _saving = false;
   List<ExportOptionIssue> _fileErrors = [];
   List<ExportOptionIssue> get _issues => [
-    ...?_pdf?.validate(),
-    ...?_html?.validate(),
+    ...switch (_format) {
+      ExportFormat.pdf => _pdf.validate(),
+      ExportFormat.html => _html.validate(),
+    },
     ..._fileErrors,
   ];
+
+  ExportFormat _availableInitialFormat() {
+    if (widget.initialFormat == ExportFormat.pdf && widget.canExportPdf) {
+      return ExportFormat.pdf;
+    }
+    if (widget.initialFormat == ExportFormat.html && widget.canExportHtml) {
+      return ExportFormat.html;
+    }
+    return widget.canExportPdf ? ExportFormat.pdf : ExportFormat.html;
+  }
 
   Future<void> _submit() async {
     if (_issues.isNotEmpty) return;
     final selection = ExportOptionsSelection(
-      pdf: _pdf,
-      html: _html,
+      pdf: _format == ExportFormat.pdf ? _pdf : null,
+      html: _format == ExportFormat.html ? _html : null,
       instance: _instance,
     );
     setState(() => _saving = true);
@@ -116,20 +143,47 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
 
   @override
   Widget build(BuildContext context) => BusyMarkModalEditorScaffold(
-    title: _pdf == null ? context.l10n.exportAsHtml : context.l10n.exportAsPdf,
+    title: context.l10n.export,
     cancelLabel: context.l10n.cancel,
     saveLabel: context.l10n.export,
     onCancel: () => Navigator.pop(context),
     onSave: _issues.isEmpty && !_saving ? _submit : null,
+    saveKey: const ValueKey('export-options-submit'),
     saving: _saving,
     children: [
+      SegmentedButton<ExportFormat>(
+        showSelectedIcon: false,
+        segments: [
+          ButtonSegment(
+            value: ExportFormat.pdf,
+            label: const Text('PDF'),
+            enabled: widget.canExportPdf,
+          ),
+          ButtonSegment(
+            value: ExportFormat.html,
+            label: const Text('HTML'),
+            enabled: widget.canExportHtml,
+          ),
+        ],
+        selected: {_format},
+        onSelectionChanged: _saving
+            ? null
+            : (selection) => setState(() {
+                _format = selection.single;
+                _fileErrors = [];
+              }),
+      ),
+      const SizedBox(height: BusyMarkSpacing.md),
       BusyMarkDialogButton(
         label: context.l10n.exportReset,
         onPressed: _saving
             ? null
             : () => setState(() {
-                if (_pdf != null) _pdf = const PdfExportOptions();
-                if (_html != null) _html = const HtmlExportOptions();
+                if (_format == ExportFormat.pdf) {
+                  _pdf = const PdfExportOptions();
+                } else {
+                  _html = const HtmlExportOptions();
+                }
                 _revision++;
                 _fileErrors = [];
               }),
@@ -143,17 +197,17 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
-      if (_pdf != null)
+      if (_format == ExportFormat.pdf)
         PdfExportOptionsEditor(
-          key: ValueKey(_revision),
-          value: _pdf!,
+          key: ValueKey((_format, _revision)),
+          value: _pdf,
           instance: _instanceRow(context),
           onChanged: (value) => setState(() => _pdf = value),
         )
       else
         HtmlExportOptionsEditor(
-          key: ValueKey(_revision),
-          value: _html!,
+          key: ValueKey((_format, _revision)),
+          value: _html,
           instance: _instanceRow(context),
           onChanged: (value) => setState(() {
             _html = value;

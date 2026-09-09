@@ -58,27 +58,42 @@ bool canExportWorkspacePdf(WorkspaceState state) {
   return canExportActiveMarkdown(state) || canExportWritersidePdf(state);
 }
 
-Future<void> exportWorkspaceToPdf(BuildContext context, WidgetRef ref) {
+Future<void> exportWorkspaceToPdf(
+  BuildContext context,
+  WidgetRef ref, {
+  ExportOptionsSelection? configuredSelection,
+}) {
   final workspace = ref.read(workspaceControllerProvider).workspace;
   if (workspace?.kind == WorkspaceKind.writersideModule) {
-    return exportWritersideModuleToPdf(context, ref);
+    return exportWritersideModuleToPdf(
+      context,
+      ref,
+      configuredSelection: configuredSelection,
+    );
   }
-  return exportActiveMarkdownToPdf(context, ref);
+  return exportActiveMarkdownToPdf(
+    context,
+    ref,
+    configuredSelection: configuredSelection,
+  );
 }
 
 Future<void> exportActiveMarkdownToPdf(
   BuildContext context,
-  WidgetRef ref,
-) async {
+  WidgetRef ref, {
+  ExportOptionsSelection? configuredSelection,
+}) async {
   final snapshot = ref.read(workspaceControllerProvider);
   if (!canExportActiveMarkdown(snapshot)) {
     return;
   }
   final workspace = snapshot.workspace!;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final selection = await showExportOptions(context, ref, pdf: true);
-  if (selection == null || !context.mounted) return;
-  final options = selection.pdf!;
+  final selected =
+      configuredSelection ??
+      await showExportOptions(context, ref, canExportHtml: false);
+  if (selected == null || selected.pdf == null || !context.mounted) return;
+  final options = selected.pdf!;
 
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
   final baseName = activePath == null || activePath.isEmpty

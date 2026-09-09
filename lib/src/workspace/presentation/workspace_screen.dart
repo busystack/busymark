@@ -57,8 +57,7 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
-import '../../export/markdown_pdf_export_ui.dart';
-import '../../export/html_export_ui.dart';
+import '../../export/workspace_export_ui.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
@@ -978,10 +977,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
-      case HeaderBarAction.exportHtml:
-        execute(BusyMarkCommandIds.exportHtml);
-      case HeaderBarAction.exportPdf:
-        execute(BusyMarkCommandIds.exportPdf);
+      case HeaderBarAction.export:
+        execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
@@ -1027,10 +1024,8 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.exportHtml:
-        unawaited(exportWorkspaceToHtml(context, ref));
-      case BusyMarkMainMenuAction.exportPdf:
-        unawaited(exportWorkspaceToPdf(context, ref));
+      case BusyMarkMainMenuAction.export:
+        unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.generateMarkdownToc:
         _generateOrUpdateMarkdownToc(context, ref);
       case BusyMarkMainMenuAction.fullScreen:

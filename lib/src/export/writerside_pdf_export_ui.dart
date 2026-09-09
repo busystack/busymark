@@ -55,8 +55,9 @@ String defaultWritersideModuleName(WritersideModule module) {
 
 Future<void> exportWritersideModuleToPdf(
   BuildContext context,
-  WidgetRef ref,
-) async {
+  WidgetRef ref, {
+  ExportOptionsSelection? configuredSelection,
+}) async {
   if (!canExportWritersidePdf(ref.read(workspaceControllerProvider))) {
     return;
   }
@@ -73,14 +74,21 @@ Future<void> exportWritersideModuleToPdf(
       .where((instance) => !instance.isLibrary)
       .toList(growable: false);
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
-  final selection = await showExportOptions(
-    context,
-    ref,
-    pdf: true,
-    instances: instances,
-    workspaceRoot: workspace.rootPath,
-  );
-  if (selection == null || !context.mounted) return;
+  final selected =
+      configuredSelection ??
+      await showExportOptions(
+        context,
+        ref,
+        canExportHtml: false,
+        instances: instances,
+        workspaceRoot: workspace.rootPath,
+      );
+  if (selected == null ||
+      selected.pdf == null ||
+      selected.instance == null ||
+      !context.mounted) {
+    return;
+  }
   final location = await getSaveLocation(
     acceptedTypeGroups: [
       XTypeGroup(
@@ -89,7 +97,7 @@ Future<void> exportWritersideModuleToPdf(
         mimeTypes: const ['application/pdf'],
       ),
     ],
-    suggestedName: '${selection.instance!.id}.pdf',
+    suggestedName: '${selected.instance!.id}.pdf',
     initialDirectory: module.rootPath,
     confirmButtonText: context.l10n.export,
   );
@@ -113,10 +121,10 @@ Future<void> exportWritersideModuleToPdf(
   final request = WritersidePdfExportRequest(
     moduleRoot: module.rootPath,
     projectRoot: workspace.rootPath,
-    instanceId: selection.instance!.id,
+    instanceId: selected.instance!.id,
     destinationPath: destination,
     overwrite: overwrite,
-    options: selection.pdf!,
+    options: selected.pdf!,
   );
   final outcome = await showBusyMarkModalDialog<_WritersidePdfOutcome>(
     context,

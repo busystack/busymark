@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_main_menu.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/export/html_export_models.dart';
@@ -18,30 +19,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
-  test(
-    'HTML command has no default shortcut and PDF retains Ctrl+Shift+E',
-    () async {
-      var calls = 0;
-      var enabled = false;
-      final registry = BusyMarkCommandCatalog.create(
-        executions: {BusyMarkCommandIds.exportHtml: () => calls++},
-        enabled: {BusyMarkCommandIds.exportHtml: () => enabled},
-      );
-      expect(registry[BusyMarkCommandIds.exportHtml]!.shortcut, isNull);
-      expect(
-        registry[BusyMarkCommandIds.exportPdf]!.shortcut!.label,
-        'Ctrl+Shift+E',
-      );
-      expect(await registry.execute(BusyMarkCommandIds.exportHtml), isFalse);
-      enabled = true;
-      expect(await registry.execute(BusyMarkCommandIds.exportHtml), isTrue);
-      expect(calls, 1);
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-      expect(native, contains('"header.export-html"'));
-      expect(native, contains('configuration.can_export_html'));
-      expect(native, contains('"setCanExportHtml"'));
-    },
-  );
+  test('one Export command retains Ctrl+Shift+E', () async {
+    var calls = 0;
+    var enabled = false;
+    final registry = BusyMarkCommandCatalog.create(
+      executions: {BusyMarkCommandIds.export: () => calls++},
+      enabled: {BusyMarkCommandIds.export: () => enabled},
+    );
+    expect(
+      registry[BusyMarkCommandIds.export]!.shortcut!.label,
+      'Ctrl+Shift+E',
+    );
+    expect(await registry.execute(BusyMarkCommandIds.export), isFalse);
+    enabled = true;
+    expect(await registry.execute(BusyMarkCommandIds.export), isTrue);
+    expect(calls, 1);
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    expect(native, contains('"header.export"'));
+    expect(native, isNot(contains('"header.export-html"')));
+    expect(native, isNot(contains('"header.export-pdf"')));
+    expect(native, contains('configuration.can_export_html'));
+    expect(native, contains('"setCanExportHtml"'));
+  });
 
   testWidgets('Flutter HTML menu preserves enablement and dispatch', (
     tester,
@@ -56,7 +55,7 @@ void main() {
             body: BusyMarkMainMenuButton(
               canExportHtml: enabled,
               onSelected: (action) =>
-                  selected = action == BusyMarkMainMenuAction.exportHtml,
+                  selected = action == BusyMarkMainMenuAction.export,
             ),
           ),
         ),
@@ -65,13 +64,15 @@ void main() {
     await menu(false);
     await tester.tap(find.byType(BusyMarkMainMenuButton));
     await tester.pumpAndSettle();
-    final item = find.byWidgetPredicate(
+    final exportItem = find.byWidgetPredicate(
       (widget) =>
-          widget is PopupMenuItem<BusyMarkMainMenuAction> &&
-          widget.value == BusyMarkMainMenuAction.exportHtml,
+          widget is BusyMarkPopupMenuItem<BusyMarkMainMenuAction> &&
+          widget.value == BusyMarkMainMenuAction.export,
     );
     expect(
-      tester.widget<PopupMenuItem<BusyMarkMainMenuAction>>(item).enabled,
+      tester
+          .widget<BusyMarkPopupMenuItem<BusyMarkMainMenuAction>>(exportItem)
+          .enabled,
       isFalse,
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -80,10 +81,13 @@ void main() {
     await tester.tap(find.byType(BusyMarkMainMenuButton));
     await tester.pumpAndSettle();
     expect(
-      tester.widget<PopupMenuItem<BusyMarkMainMenuAction>>(item).enabled,
+      tester
+          .widget<BusyMarkPopupMenuItem<BusyMarkMainMenuAction>>(exportItem)
+          .enabled,
       isTrue,
     );
-    await tester.tap(find.text('Export as HTML…'));
+    expect(find.text('Ctrl+Shift+E'), findsOneWidget);
+    await tester.tap(exportItem);
     await tester.pumpAndSettle();
     expect(selected, isTrue);
   });
@@ -123,7 +127,7 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 80)),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Export'));
+      await tester.tap(find.byKey(const ValueKey('export-options-submit')));
       await tester.pumpAndSettle();
       expect(suggestion, endsWith('.html'));
       ref

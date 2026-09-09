@@ -430,6 +430,12 @@ void main() {
   });
 
   test('native header labels expose the Syntax Reference command', () {
+    expect(_labels.toMap(), containsPair('export', 'Export'));
+    expect(_labels.toMap(), containsPair('exportShortcut', 'Ctrl+Shift+E'));
+    expect(
+      _labels.toMap(),
+      containsPair('exportGtkAccelerator', '<Primary><Shift>e'),
+    );
     expect(
       _labels.toMap(),
       containsPair('syntaxReference', 'Syntax Reference'),
@@ -495,9 +501,9 @@ const _labels = HeaderBarLabels(
   back: 'Back',
   backShortcut: 'Alt+Left',
   save: 'Save',
-  exportPdf: 'Export as PDF',
-  exportPdfShortcut: 'Ctrl+Shift+E',
-  exportPdfGtkAccelerator: '<Primary><Shift>e',
+  export: 'Export',
+  exportShortcut: 'Ctrl+Shift+E',
+  exportGtkAccelerator: '<Primary><Shift>e',
   fullScreen: 'Full Screen',
   fullScreenShortcut: 'F11',
   fullScreenGtkAccelerator: 'F11',

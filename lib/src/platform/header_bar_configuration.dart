@@ -32,10 +32,9 @@ class HeaderBarLabels {
     required this.back,
     required this.backShortcut,
     required this.save,
-    required this.exportPdf,
-    this.exportHtml = '',
-    required this.exportPdfShortcut,
-    required this.exportPdfGtkAccelerator,
+    required this.export,
+    required this.exportShortcut,
+    required this.exportGtkAccelerator,
     required this.fullScreen,
     required this.fullScreenShortcut,
     required this.fullScreenGtkAccelerator,
@@ -74,10 +73,9 @@ class HeaderBarLabels {
   final String back;
   final String backShortcut;
   final String save;
-  final String exportPdf;
-  final String exportHtml;
-  final String exportPdfShortcut;
-  final String exportPdfGtkAccelerator;
+  final String export;
+  final String exportShortcut;
+  final String exportGtkAccelerator;
   final String fullScreen;
   final String fullScreenShortcut;
   final String fullScreenGtkAccelerator;
@@ -116,10 +114,9 @@ class HeaderBarLabels {
     'back': back,
     'backShortcut': backShortcut,
     'save': save,
-    'exportPdf': exportPdf,
-    'exportHtml': exportHtml,
-    'exportPdfShortcut': exportPdfShortcut,
-    'exportPdfGtkAccelerator': exportPdfGtkAccelerator,
+    'export': export,
+    'exportShortcut': exportShortcut,
+    'exportGtkAccelerator': exportGtkAccelerator,
     'fullScreen': fullScreen,
     'fullScreenShortcut': fullScreenShortcut,
     'fullScreenGtkAccelerator': fullScreenGtkAccelerator,

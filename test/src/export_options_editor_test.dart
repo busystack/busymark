@@ -50,7 +50,9 @@ void main() {
                         selected = await showExportOptions(
                           context,
                           ref,
-                          pdf: pdf,
+                          initialFormat: pdf
+                              ? ExportFormat.pdf
+                              : ExportFormat.html,
                           instances: writerside
                               ? module!.instances
                                     .where((i) => !i.isLibrary)
@@ -71,6 +73,7 @@ void main() {
           );
           await tester.pumpAndSettle();
           expect(find.byType(ExportContentOptionsEditor), findsOneWidget);
+          expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
           if (pdf) {
             expect(
               tester
@@ -123,7 +126,7 @@ void main() {
               17,
             );
           }
-          await tester.tap(find.text('Export'));
+          await tester.tap(find.byKey(const ValueKey('export-options-submit')));
           await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 40)),
           );
@@ -149,6 +152,52 @@ void main() {
       );
     }
   }
+
+  testWidgets('one Export modal switches between PDF and HTML', (tester) async {
+    final settings = _Settings(AppSettings.defaults().toJson());
+    ExportOptionsSelection? selected;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [localSettingsStoreProvider.overrideWithValue(settings)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: Colors.blue,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                child: const Text('Configure'),
+                onPressed: () async {
+                  selected = await showExportOptions(context, ref);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Configure'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 40)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(PdfExportOptionsEditor), findsOneWidget);
+    expect(find.byType(HtmlExportOptionsEditor), findsNothing);
+
+    await tester.tap(find.text('HTML'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PdfExportOptionsEditor), findsNothing);
+    expect(find.byType(HtmlExportOptionsEditor), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('export-options-submit')));
+    await tester.pumpAndSettle();
+    expect(selected?.pdf, isNull);
+    expect(selected?.html, isNotNull);
+  });
 
   testWidgets(
     'custom geometry controls, TOC enablement and invalid input at minimum size',
@@ -233,7 +282,12 @@ void main() {
                 child: const Text('Configure'),
                 onPressed: () async {
                   confirmed =
-                      await showExportOptions(context, ref, pdf: false) != null;
+                      await showExportOptions(
+                        context,
+                        ref,
+                        initialFormat: ExportFormat.html,
+                      ) !=
+                      null;
                 },
               ),
             ),

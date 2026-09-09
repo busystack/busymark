@@ -495,11 +495,10 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.exportAsPdf,
-                subtitle: context.l10n.shortcutExportPdfDescription,
+                title: context.l10n.export,
                 leading: const Icon(BusyMarkGlyphs.exportPdf),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkAppShortcutLabels.exportPdf,
+                  BusyMarkAppShortcutLabels.export,
                 ),
               ),
               BusyMarkActionRow(

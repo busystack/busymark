@@ -31,6 +31,7 @@ import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
+import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
@@ -2427,7 +2428,7 @@ void main() {
     final exportItem = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkPopupMenuItem<Object?> &&
-          widget.label == l10n.exportAsPdf,
+          widget.label == l10n.export,
     );
     expect(exportItem, findsOneWidget);
     expect(
@@ -2443,8 +2444,27 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
     expect(find.text(l10n.pdfPageSize), findsOneWidget);
     expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    for (var index = 0; index < 20; index++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkModalEditorSurface).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+    expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
+    expect(find.text('PDF'), findsOneWidget);
+    expect(find.text('HTML'), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });
