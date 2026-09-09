@@ -2957,6 +2957,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get export => 'निर्यात करें';
 
   @override
+  String get exportFormat => 'आउटपुट फ़ॉर्मैट';
+
+  @override
   String get exportingPdf => 'PDF निर्यात हो रहा है…';
 
   @override

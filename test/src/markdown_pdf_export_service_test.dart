@@ -11,6 +11,26 @@ void main() {
   final typstPath = Platform.environment['BUSYMARK_TYPST_PATH'];
   final canRunTypst = typstPath != null && File(typstPath).existsSync();
 
+  test('display images do not reserve a fixed-height letterbox', () {
+    final template = File('assets/export/markdown.typ').readAsStringSync();
+    final renderer = RegExp(
+      r'#let render-fitted-image[\s\S]*?#let render-table',
+    ).firstMatch(template)?.group(0);
+
+    expect(renderer, isNotNull);
+    expect(renderer, contains('let natural-size = measure(image(asset))'));
+    expect(
+      renderer,
+      contains(
+        'let scaled-height = natural-size.height * '
+        '(size.width / natural-size.width)',
+      ),
+    );
+    expect(renderer, contains('image(asset, width: 100%'));
+    expect(renderer, contains('image(asset, height: maximum-height'));
+    expect(renderer, isNot(contains('height: 72% * size.height')));
+  });
+
   test(
     'bundled template exports representative Markdown to a valid PDF',
     () async {

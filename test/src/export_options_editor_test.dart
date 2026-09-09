@@ -73,7 +73,8 @@ void main() {
           );
           await tester.pumpAndSettle();
           expect(find.byType(ExportContentOptionsEditor), findsOneWidget);
-          expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
+          expect(find.byType(BusyMarkComboRow<ExportFormat>), findsOneWidget);
+          expect(find.byType(SegmentedButton<ExportFormat>), findsNothing);
           if (pdf) {
             expect(
               tester
@@ -188,6 +189,8 @@ void main() {
     expect(find.byType(PdfExportOptionsEditor), findsOneWidget);
     expect(find.byType(HtmlExportOptionsEditor), findsNothing);
 
+    await tester.tap(find.byType(BusyMarkComboRow<ExportFormat>));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('HTML document'));
     await tester.pumpAndSettle();
     expect(find.byType(PdfExportOptionsEditor), findsNothing);

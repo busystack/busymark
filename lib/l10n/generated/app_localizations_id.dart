@@ -2972,6 +2972,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get export => 'Ekspor';
 
   @override
+  String get exportFormat => 'Format keluaran';
+
+  @override
   String get exportingPdf => 'Mengekspor PDF…';
 
   @override

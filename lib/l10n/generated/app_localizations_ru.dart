@@ -3014,6 +3014,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get export => 'Экспортировать';
 
   @override
+  String get exportFormat => 'Формат вывода';
+
+  @override
   String get exportingPdf => 'Экспорт PDF…';
 
   @override

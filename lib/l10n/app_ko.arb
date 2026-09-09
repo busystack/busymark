@@ -3693,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "출력 형식",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "PDF 내보내기 중…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."

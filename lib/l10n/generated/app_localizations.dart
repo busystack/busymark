@@ -4992,6 +4992,12 @@ abstract class AppLocalizations {
   /// **'Export'**
   String get export;
 
+  /// Output format selector in the export dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Output format'**
+  String get exportFormat;
+
   /// Progress dialog title while a PDF is being exported.
   ///
   /// In en, this message translates to:

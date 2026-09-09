@@ -3014,6 +3014,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get export => 'خروجی';
 
   @override
+  String get exportFormat => 'قالب خروجی';
+
+  @override
   String get exportingPdf => 'در حال تهیه PDF…';
 
   @override

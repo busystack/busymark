@@ -2874,6 +2874,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get export => '내보내기';
 
   @override
+  String get exportFormat => '출력 형식';
+
+  @override
   String get exportingPdf => 'PDF 내보내기 중…';
 
   @override

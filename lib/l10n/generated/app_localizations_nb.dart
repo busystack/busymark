@@ -2963,6 +2963,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get export => 'Eksporter';
 
   @override
+  String get exportFormat => 'Utdataformat';
+
+  @override
   String get exportingPdf => 'Eksporterer PDF…';
 
   @override

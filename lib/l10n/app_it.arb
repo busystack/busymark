@@ -2769,6 +2769,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Formato di output",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Esportazione PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."

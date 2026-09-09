@@ -2830,6 +2830,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get export => '导出';
 
   @override
+  String get exportFormat => '输出格式';
+
+  @override
   String get exportingPdf => '正在导出 PDF…';
 
   @override
@@ -6546,6 +6549,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get export => '导出';
+
+  @override
+  String get exportFormat => '输出格式';
 
   @override
   String get exportingPdf => '正在导出 PDF…';

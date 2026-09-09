@@ -2964,6 +2964,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
+  String get exportFormat => 'Output format';
+
+  @override
   String get exportingPdf => 'Exporting PDF…';
 
   @override

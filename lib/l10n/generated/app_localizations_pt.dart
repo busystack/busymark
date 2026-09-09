@@ -2985,6 +2985,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get export => 'Exportar';
 
   @override
+  String get exportFormat => 'Formato de saída';
+
+  @override
   String get exportingPdf => 'A exportar PDF…';
 
   @override
@@ -6923,6 +6926,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get export => 'Exportar';
+
+  @override
+  String get exportFormat => 'Formato de saída';
 
   @override
   String get exportingPdf => 'Exportando PDF…';

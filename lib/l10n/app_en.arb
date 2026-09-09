@@ -1959,6 +1959,8 @@
   "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
   "export": "Export",
   "@export": {"description": "Button label that starts an export."},
+  "exportFormat": "Output format",
+  "@exportFormat": {"description": "Output format selector in the export dialog."},
   "exportingPdf": "Exporting PDF…",
   "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
   "fileTypePdf": "PDF document",

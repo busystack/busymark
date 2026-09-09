@@ -2879,6 +2879,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get export => 'エクスポート';
 
   @override
+  String get exportFormat => '出力形式';
+
+  @override
   String get exportingPdf => 'PDF をエクスポート中…';
 
   @override

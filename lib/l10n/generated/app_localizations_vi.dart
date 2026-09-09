@@ -2960,6 +2960,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get export => 'Xuất';
 
   @override
+  String get exportFormat => 'Định dạng đầu ra';
+
+  @override
   String get exportingPdf => 'Đang xuất PDF…';
 
   @override

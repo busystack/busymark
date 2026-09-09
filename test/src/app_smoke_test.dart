@@ -2444,7 +2444,8 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-    expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
+    expect(find.byType(BusyMarkComboRow<ExportFormat>), findsOneWidget);
+    expect(find.byType(SegmentedButton<ExportFormat>), findsNothing);
     expect(find.text(l10n.pdfPageSize), findsOneWidget);
     expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
@@ -2462,9 +2463,12 @@ void main() {
       }
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
-    expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
-    expect(find.text(l10n.fileTypePdf), findsOneWidget);
-    expect(find.text(l10n.fileTypeHtml), findsOneWidget);
+    final formatRow = tester.widget<BusyMarkComboRow<ExportFormat>>(
+      find.byType(BusyMarkComboRow<ExportFormat>),
+    );
+    expect(formatRow.title, l10n.exportFormat);
+    expect(formatRow.values, ExportFormat.values);
+    expect(formatRow.selected, ExportFormat.pdf);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });

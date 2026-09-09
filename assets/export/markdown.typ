@@ -14,6 +14,7 @@
 #let typography = options.typography
 #let geometry = options.page
 #let margins = geometry.marginsPt
+#let content-height = (geometry.heightPt - margins.top - margins.bottom) * 1pt
 #let running-visible() = options.showHeaderFooterOnFirstPage or counter(page).get().first() > 1
 #let number-position = if options.pageNumbers == "bottomLeft" { left } else if options.pageNumbers == "bottomRight" { right } else { center }
 #set page(
@@ -152,19 +153,23 @@
   }
 }
 
+#let render-fitted-image(asset, alt: "", maximum-height: 72% * content-height) = layout(size => {
+  let natural-size = measure(image(asset))
+  let scaled-height = natural-size.height * (size.width / natural-size.width)
+  if scaled-height > maximum-height {
+    image(asset, height: maximum-height, fit: "contain", alt: alt)
+  } else {
+    image(asset, width: 100%, fit: "contain", alt: alt)
+  }
+})
+
 #let render-display-image(item) = {
   let asset = value-or(item, "asset", "")
   let alt = value-or(item, "alt", "")
   if asset == "" {
     emph(text(if alt == "" { "[Image unavailable]" } else { "[Image: " + alt + "]" }))
   } else {
-    layout(size => image(
-      asset,
-      width: 100%,
-      height: 72% * size.height,
-      fit: "contain",
-      alt: alt,
-    ))
+    render-fitted-image(asset, alt: alt)
   }
 }
 
@@ -361,13 +366,11 @@
         above: 0.8em,
         below: 0.8em,
         breakable: false,
-        align(center, layout(size => image(
+        align(center, render-fitted-image(
           asset,
-          width: 100%,
-          height: 70% * size.height,
-          fit: "contain",
           alt: alt,
-        ))),
+          maximum-height: 70% * content-height,
+        )),
       )
     }
   } else if kind == "openApiReference" {

@@ -2996,6 +2996,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get export => 'تصدير';
 
   @override
+  String get exportFormat => 'تنسيق الإخراج';
+
+  @override
   String get exportingPdf => 'جارٍ تصدير PDF…';
 
   @override

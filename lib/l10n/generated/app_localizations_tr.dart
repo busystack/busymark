@@ -2964,6 +2964,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get export => 'Dışa aktar';
 
   @override
+  String get exportFormat => 'Çıktı biçimi';
+
+  @override
   String get exportingPdf => 'PDF dışa aktarılıyor…';
 
   @override

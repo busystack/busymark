@@ -3021,6 +3021,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get export => 'Експортувати';
 
   @override
+  String get exportFormat => 'Формат виведення';
+
+  @override
   String get exportingPdf => 'Експорт PDF…';
 
   @override

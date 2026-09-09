@@ -151,27 +151,27 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
     saveKey: const ValueKey('export-options-submit'),
     saving: _saving,
     children: [
-      SegmentedButton<ExportFormat>(
-        showSelectedIcon: false,
-        segments: [
-          ButtonSegment(
-            value: ExportFormat.pdf,
-            label: Text(context.l10n.fileTypePdf),
-            enabled: widget.canExportPdf,
-          ),
-          ButtonSegment(
-            value: ExportFormat.html,
-            label: Text(context.l10n.fileTypeHtml),
-            enabled: widget.canExportHtml,
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkComboRow<ExportFormat>(
+            title: context.l10n.exportFormat,
+            values: [
+              if (widget.canExportPdf) ExportFormat.pdf,
+              if (widget.canExportHtml) ExportFormat.html,
+            ],
+            selected: _format,
+            labelFor: (format) => switch (format) {
+              ExportFormat.pdf => context.l10n.fileTypePdf,
+              ExportFormat.html => context.l10n.fileTypeHtml,
+            },
+            enabled: !_saving,
+            onSelected: (format) => setState(() {
+              _format = format;
+              _fileErrors = [];
+            }),
           ),
         ],
-        selected: {_format},
-        onSelectionChanged: _saving
-            ? null
-            : (selection) => setState(() {
-                _format = selection.single;
-                _fileErrors = [];
-              }),
       ),
       const SizedBox(height: BusyMarkSpacing.md),
       BusyMarkDialogButton(

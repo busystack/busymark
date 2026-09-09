@@ -3016,6 +3016,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get export => 'Eksportuj';
 
   @override
+  String get exportFormat => 'Format wyjściowy';
+
+  @override
   String get exportingPdf => 'Eksportowanie PDF…';
 
   @override
