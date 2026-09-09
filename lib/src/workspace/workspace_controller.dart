@@ -788,6 +788,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (oldPath == null) {
       return;
     }
+    final historyTransition = _localHistory.beginBufferPathTransition(
+      bufferId: current.id,
+      sourcePath: oldPath,
+      destinationPath: destinationPath,
+    );
+    var historyPathCommitted = false;
+    var historyTransitionFinished = false;
     try {
       final disk = await _service.loadTextWithSnapshot(destinationPath);
       if (_externalOperationBuffer(current, oldPath) == null) return;
@@ -847,22 +854,45 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           openFilePaths: remappedTabs,
         ),
       );
+      historyPathCommitted = true;
       _fileMonitor.updateOpenFilePaths(
         state.documentBuffers
             .map((buffer) => buffer.filePath)
             .whereType<String>(),
       );
-      if (active && state.workspace != null) {
+      await _localHistory.finishBufferPathTransition(
+        historyTransition,
+        committed: true,
+      );
+      historyTransitionFinished = true;
+      final derivedWorkspace = state.workspace;
+      final derivedOperationRevision = _activeDocumentRevision;
+      if (active &&
+          derivedWorkspace != null &&
+          _canPublishActiveDerivedContent(
+            operationRevision: derivedOperationRevision,
+            workspaceId: derivedWorkspace.id,
+            bufferId: remapped.id,
+            path: destinationPath,
+            revision: remapped.revision,
+            source: remapped.text,
+          )) {
         final reparsed = await _service.reparseActive(
-          state.workspace!,
+          derivedWorkspace,
           remapped.text,
         );
-        if (state.activeBufferId == latest.id &&
-            state.activeBuffer?.filePath == destinationPath) {
+        if (_canPublishActiveDerivedContent(
+          operationRevision: derivedOperationRevision,
+          workspaceId: derivedWorkspace.id,
+          bufferId: remapped.id,
+          path: destinationPath,
+          revision: remapped.revision,
+          source: remapped.text,
+        )) {
           state = state.copyWith(
             workspace: reparsed.copyWith(
               activeFileSnapshot: remapped.diskSnapshot,
-              openFilePaths: remappedTabs,
+              openFilePaths: state.workspace!.openFilePaths,
             ),
             preview: _safePreview(reparsed, remapped.text),
           );
@@ -879,6 +909,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     } on FormatException {
       // Keep the old buffer and path when the move target cannot be decoded.
+    } finally {
+      if (!historyTransitionFinished) {
+        await _localHistory.finishBufferPathTransition(
+          historyTransition,
+          committed: historyPathCommitted,
+        );
+      }
     }
   }
 
@@ -931,25 +968,35 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       recovered: false,
     );
     _updateBufferFromMonitor(reloaded);
-    if (state.activeBufferId == bufferId && state.workspace != null) {
+    final derivedWorkspace = state.workspace;
+    final derivedOperationRevision = _activeDocumentRevision;
+    if (derivedWorkspace != null &&
+        _canPublishActiveDerivedContent(
+          operationRevision: derivedOperationRevision,
+          workspaceId: derivedWorkspace.id,
+          bufferId: reloaded.id,
+          path: path,
+          revision: reloaded.revision,
+          source: reloaded.text,
+        )) {
       final workspace = await _service.reparseActive(
-        state.workspace!.copyWith(activeFileSnapshot: disk.snapshot),
+        derivedWorkspace.copyWith(activeFileSnapshot: disk.snapshot),
         disk.text,
       );
-      final current = state.documentBuffers
-          .where((candidate) => candidate.id == bufferId)
-          .firstOrNull;
-      if (current == null ||
-          current.filePath != path ||
-          current.revision != reloaded.revision ||
-          current.text != reloaded.text) {
-        return false;
+      if (_canPublishActiveDerivedContent(
+        operationRevision: derivedOperationRevision,
+        workspaceId: derivedWorkspace.id,
+        bufferId: reloaded.id,
+        path: path,
+        revision: reloaded.revision,
+        source: reloaded.text,
+      )) {
+        state = state.copyWith(
+          workspace: workspace,
+          preview: _safePreview(workspace, disk.text),
+        );
+        _recordActivePreviewRevision();
       }
-      state = state.copyWith(
-        workspace: workspace,
-        preview: _safePreview(workspace, disk.text),
-      );
-      _recordActivePreviewRevision();
     }
     return true;
   }
@@ -1406,9 +1453,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
       final target = await _service.renameEntity(workspace, path, newName);
-      _remapOpenWorkspacePaths(workspace, path, target);
-      await _localHistory.remapPath(path, target);
-      return _remapMovedPath(activeFilePath, path, target);
+      final transitions = _beginLocalHistoryPathTransitions(path, target);
+      var committed = false;
+      try {
+        await _localHistory.remapPath(path, target);
+        _remapOpenWorkspacePaths(workspace, path, target);
+        committed = true;
+        return _remapMovedPath(activeFilePath, path, target);
+      } finally {
+        await _finishLocalHistoryPathTransitions(
+          transitions,
+          committed: committed,
+        );
+      }
     });
   }
 
@@ -1423,9 +1480,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         sourcePath,
         targetDirectoryPath,
       );
-      _remapOpenWorkspacePaths(workspace, sourcePath, target);
-      await _localHistory.remapPath(sourcePath, target);
-      return _remapMovedPath(activeFilePath, sourcePath, target);
+      final transitions = _beginLocalHistoryPathTransitions(sourcePath, target);
+      var committed = false;
+      try {
+        await _localHistory.remapPath(sourcePath, target);
+        _remapOpenWorkspacePaths(workspace, sourcePath, target);
+        committed = true;
+        return _remapMovedPath(activeFilePath, sourcePath, target);
+      } finally {
+        await _finishLocalHistoryPathTransitions(
+          transitions,
+          committed: committed,
+        );
+      }
     });
   }
 
@@ -1575,8 +1642,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         topicPath,
         newFileName,
       );
-      _remapOpenWorkspacePaths(workspace, topicPath, target);
-      return _remapMovedPath(activeFilePath, topicPath, target);
+      final transitions = _beginLocalHistoryPathTransitions(topicPath, target);
+      var committed = false;
+      try {
+        await _localHistory.remapPath(topicPath, target);
+        _remapOpenWorkspacePaths(workspace, topicPath, target);
+        committed = true;
+        return _remapMovedPath(activeFilePath, topicPath, target);
+      } finally {
+        await _finishLocalHistoryPathTransitions(
+          transitions,
+          committed: committed,
+        );
+      }
     });
   }
 
@@ -2890,6 +2968,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required bool overwriteExisting,
     required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
+    LocalHistoryBufferPathTransition? historyTransition = _localHistory
+        .beginBufferPathTransition(
+          bufferId: target.bufferId,
+          sourcePath: target.path,
+          destinationPath: path,
+        );
+    var historyPathCommitted = false;
     try {
       final destinationExisted =
           overwriteExisting && await _service.pathExists(path);
@@ -2997,6 +3082,31 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffers,
         clearMessage: true,
       );
+      historyPathCommitted = true;
+      await _localHistory.captureSavedAs(
+        LocalHistoryBufferSnapshot(
+          bufferId: target.bufferId,
+          displayName: target.path == null
+              ? state.documentBuffers
+                        .where((buffer) => buffer.id == target.bufferId)
+                        .firstOrNull
+                        ?.displayName ??
+                    p.basename(path)
+              : p.basename(target.path!),
+          text: target.text,
+          format: savedFormat,
+          revision: target.editRevision,
+          path: target.path,
+          untitled: target.path == null,
+        ),
+        path,
+        destinationExisted: destinationExisted,
+      );
+      await _localHistory.finishBufferPathTransition(
+        historyTransition,
+        committed: true,
+      );
+      historyTransition = null;
       await _startMonitoring(savedWorkspace);
       if (hasNewerEdits) {
         if (state.activeBufferId == savedBuffer.id &&
@@ -3023,25 +3133,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         kind: savedWorkspace.kind.name,
       );
       _schedulePersistence();
-      await _localHistory.captureSavedAs(
-        LocalHistoryBufferSnapshot(
-          bufferId: target.bufferId,
-          displayName: target.path == null
-              ? state.documentBuffers
-                        .where((buffer) => buffer.id == target.bufferId)
-                        .firstOrNull
-                        ?.displayName ??
-                    p.basename(path)
-              : p.basename(target.path!),
-          text: target.text,
-          format: savedFormat,
-          revision: target.editRevision,
-          path: target.path,
-          untitled: target.path == null,
-        ),
-        path,
-        destinationExisted: destinationExisted,
-      );
       return true;
     } on Object catch (error) {
       if (_workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
@@ -3053,6 +3144,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
       }
       return false;
+    } finally {
+      final unfinishedTransition = historyTransition;
+      if (unfinishedTransition != null) {
+        await _localHistory.finishBufferPathTransition(
+          unfinishedTransition,
+          committed: historyPathCommitted,
+        );
+      }
     }
   }
 
@@ -3721,6 +3820,38 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
+  List<LocalHistoryBufferPathTransition> _beginLocalHistoryPathTransitions(
+    String sourcePath,
+    String targetPath,
+  ) {
+    final transitions = <LocalHistoryBufferPathTransition>[];
+    for (final buffer in state.documentBuffers) {
+      final currentPath = buffer.filePath;
+      final destination = _remapMovedPath(currentPath, sourcePath, targetPath);
+      if (currentPath == null || destination == null) continue;
+      transitions.add(
+        _localHistory.beginBufferPathTransition(
+          bufferId: buffer.id,
+          sourcePath: currentPath,
+          destinationPath: destination,
+        ),
+      );
+    }
+    return transitions;
+  }
+
+  Future<void> _finishLocalHistoryPathTransitions(
+    Iterable<LocalHistoryBufferPathTransition> transitions, {
+    required bool committed,
+  }) async {
+    for (final transition in transitions) {
+      await _localHistory.finishBufferPathTransition(
+        transition,
+        committed: committed,
+      );
+    }
+  }
+
   Future<void> validateActive() => _validateActive(rebuildPreview: true);
 
   Future<void> _validateActive({required bool rebuildPreview}) async {
@@ -3976,6 +4107,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspace != null &&
         workspace.id == workspaceId &&
         workspace.activeFilePath == activeFilePath;
+  }
+
+  bool _canPublishActiveDerivedContent({
+    required int operationRevision,
+    required String workspaceId,
+    required String bufferId,
+    required String? path,
+    required int revision,
+    required String source,
+  }) {
+    final buffer = state.activeBuffer;
+    return _isCurrentActiveDocument(
+          operationRevision,
+          workspaceId: workspaceId,
+          activeFilePath: path,
+        ) &&
+        state.activeBufferId == bufferId &&
+        buffer != null &&
+        buffer.filePath == path &&
+        buffer.revision == revision &&
+        buffer.text == source;
   }
 
   bool _workspaceContainsBuffer(String workspaceId, String bufferId) {

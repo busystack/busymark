@@ -10,10 +10,25 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../comparison/source_comparison.dart';
+import '../workspace/document_buffer.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_safety.dart';
 import 'local_history_controller.dart';
 import 'local_history_models.dart';
+
+typedef LocalHistoryComparisonComputer =
+    Future<SourceComparison> Function(
+      SourceComparisonInput oldInput,
+      SourceComparisonInput currentInput,
+    );
+
+final localHistoryComparisonComputerProvider =
+    Provider<LocalHistoryComparisonComputer>(
+      (ref) =>
+          (oldInput, currentInput) => Future<SourceComparison>(
+            () => compareSource(oldInput, currentInput),
+          ),
+    );
 
 class LocalHistoryComparisonView extends ConsumerStatefulWidget {
   const LocalHistoryComparisonView({super.key});
@@ -26,7 +41,7 @@ class LocalHistoryComparisonView extends ConsumerStatefulWidget {
 class _LocalHistoryComparisonViewState
     extends ConsumerState<LocalHistoryComparisonView> {
   Future<_ComparisonSnapshot?>? _future;
-  String? _key;
+  _ComparisonRequest? _request;
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +57,17 @@ class _LocalHistoryComparisonViewState
     final matchingBuffer = ref
         .read(workspaceControllerProvider.notifier)
         .localHistoryBufferForDocument(document, revision);
-    final key = [
-      revision.summary.id,
-      matchingBuffer?.id,
-      matchingBuffer?.revision,
-      matchingBuffer?.text.hashCode,
-      document.currentPath,
-    ].join(':');
-    if (_key != key) {
-      _key = key;
-      _future = _buildSnapshot(document, revision);
+    final request = _ComparisonRequest(
+      documentId: document.id,
+      revisionId: revision.summary.id,
+      revisionVersion: revision.summary.capturedAt.microsecondsSinceEpoch,
+      currentBufferId: matchingBuffer?.id,
+      currentSourceVersion: matchingBuffer?.revision,
+      currentPath: document.currentPath,
+    );
+    if (_request != request) {
+      _request = request;
+      _future = _buildSnapshot(document, revision, request);
     }
     return FutureBuilder<_ComparisonSnapshot?>(
       future: _future,
@@ -68,15 +84,22 @@ class _LocalHistoryComparisonViewState
         if (data == null) {
           return const Center(child: CircularProgressIndicator());
         }
+        final actionsAreCurrent =
+            snapshot.connectionState == ConnectionState.done &&
+            data.matches(
+              request: request,
+              revision: revision,
+              currentBuffer: matchingBuffer,
+            );
         return _ComparisonBody(
           snapshot: data,
           onClose: () => ref
               .read(localHistoryControllerProvider.notifier)
               .clearComparison(),
-          onRestoreAll: data.canRestore
+          onRestoreAll: actionsAreCurrent && data.canRestore
               ? () => _restore(document, revision)
               : null,
-          onRestoreChange: data.canRestoreChange
+          onRestoreChange: actionsAreCurrent && data.canRestoreChange
               ? (change) => _restore(
                   document,
                   revision,
@@ -85,7 +108,8 @@ class _LocalHistoryComparisonViewState
                 )
               : null,
           onRestoreOriginal:
-              data.missing &&
+              actionsAreCurrent &&
+                  data.missing &&
                   (document.currentPath ?? revision.summary.historicalPath) !=
                       null
               ? () => _restoreMissing(
@@ -94,7 +118,7 @@ class _LocalHistoryComparisonViewState
                   document.currentPath ?? revision.summary.historicalPath!,
                 )
               : null,
-          onRestoreNewLocation: data.missing
+          onRestoreNewLocation: actionsAreCurrent && data.missing
               ? () => _chooseRestoreLocation(document, revision)
               : null,
         );
@@ -105,6 +129,7 @@ class _LocalHistoryComparisonViewState
   Future<_ComparisonSnapshot?> _buildSnapshot(
     LocalHistoryDocument document,
     LocalHistoryRevision revision,
+    _ComparisonRequest request,
   ) async {
     final editorLabel = context.l10n.localHistoryCurrentEditor;
     final diskLabel = context.l10n.localHistoryCurrentDisk;
@@ -131,10 +156,12 @@ class _LocalHistoryComparisonViewState
       label: currentLabel,
       source: current.source,
     );
-    final comparison = await Future<SourceComparison>(
-      () => compareSource(oldInput, currentInput),
+    final comparison = await ref.read(localHistoryComparisonComputerProvider)(
+      oldInput,
+      currentInput,
     );
     return _ComparisonSnapshot(
+      request: request,
       comparison: comparison,
       missing: current.kind == LocalHistoryCurrentSourceKind.missing,
       canRestore: current.canRestore,
@@ -229,18 +256,74 @@ class _LocalHistoryComparisonViewState
   }
 }
 
+class _ComparisonRequest {
+  const _ComparisonRequest({
+    required this.documentId,
+    required this.revisionId,
+    required this.revisionVersion,
+    required this.currentBufferId,
+    required this.currentSourceVersion,
+    required this.currentPath,
+  });
+
+  final String documentId;
+  final String revisionId;
+  final int revisionVersion;
+  final String? currentBufferId;
+  final int? currentSourceVersion;
+  final String? currentPath;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ComparisonRequest &&
+      other.documentId == documentId &&
+      other.revisionId == revisionId &&
+      other.revisionVersion == revisionVersion &&
+      other.currentBufferId == currentBufferId &&
+      other.currentSourceVersion == currentSourceVersion &&
+      other.currentPath == currentPath;
+
+  @override
+  int get hashCode => Object.hash(
+    documentId,
+    revisionId,
+    revisionVersion,
+    currentBufferId,
+    currentSourceVersion,
+    currentPath,
+  );
+}
+
 class _ComparisonSnapshot {
   const _ComparisonSnapshot({
+    required this.request,
     required this.comparison,
     required this.missing,
     required this.canRestore,
     required this.canRestoreChange,
   });
 
+  final _ComparisonRequest request;
   final SourceComparison comparison;
   final bool missing;
   final bool canRestore;
   final bool canRestoreChange;
+
+  bool matches({
+    required _ComparisonRequest request,
+    required LocalHistoryRevision revision,
+    required DocumentBuffer? currentBuffer,
+  }) {
+    if (this.request != request ||
+        comparison.oldInput.id != revision.summary.id ||
+        comparison.oldInput.version !=
+            revision.summary.capturedAt.microsecondsSinceEpoch) {
+      return false;
+    }
+    if (currentBuffer == null) return request.currentBufferId == null;
+    return comparison.currentInput.id == currentBuffer.id &&
+        comparison.currentInput.version == currentBuffer.revision;
+  }
 }
 
 class _ComparisonBody extends StatelessWidget {

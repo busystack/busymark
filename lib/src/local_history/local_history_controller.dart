@@ -187,6 +187,28 @@ class LocalHistoryBufferSnapshot {
   final int revision;
   final String? path;
   final bool untitled;
+
+  LocalHistoryBufferSnapshot atPath(String destinationPath) =>
+      LocalHistoryBufferSnapshot(
+        bufferId: bufferId,
+        displayName: p.basename(destinationPath),
+        text: text,
+        format: format,
+        revision: revision,
+        path: destinationPath,
+      );
+}
+
+class LocalHistoryBufferPathTransition {
+  const LocalHistoryBufferPathTransition._({
+    required this.bufferId,
+    required this.sourcePath,
+    required this.destinationPath,
+  });
+
+  final String bufferId;
+  final String? sourcePath;
+  final String destinationPath;
 }
 
 class LocalHistoryController extends Notifier<LocalHistoryState> {
@@ -197,6 +219,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _pending = <String, LocalHistoryBufferSnapshot>{};
   final _checkpointTimers = <String, Timer>{};
   final _bufferQueues = <String, Future<void>>{};
+  final _pathTransitions = <String, LocalHistoryBufferPathTransition>{};
   var _loadGeneration = 0;
   var _searchGeneration = 0;
 
@@ -291,27 +314,49 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         }
         if (!ref.mounted) return;
         _pending[current.id] = currentSnapshot;
-        _checkpointTimers.putIfAbsent(
-          current.id,
-          () => _timerFactory(policy.checkpointInterval, () {
-            _checkpointTimers.remove(current.id);
-            if (!ref.mounted) return;
-            final latest = _pending.remove(current.id);
-            if (latest != null) {
-              unawaited(
-                _enqueue(
-                  current.id,
-                  () => _capture(
-                    latest,
-                    LocalHistoryCaptureReason.automaticCheckpoint,
-                  ),
-                ),
-              );
-            }
-          }),
-        );
+        _scheduleCheckpoint(current.id);
       }),
     );
+  }
+
+  /// Suspends automatic captures while a workspace buffer and its stable
+  /// history identity move between paths. Callers must finish the returned
+  /// transition after publishing (or abandoning) the buffer path change.
+  LocalHistoryBufferPathTransition beginBufferPathTransition({
+    required String bufferId,
+    required String? sourcePath,
+    required String destinationPath,
+  }) {
+    final transition = LocalHistoryBufferPathTransition._(
+      bufferId: bufferId,
+      sourcePath: sourcePath,
+      destinationPath: p.normalize(destinationPath),
+    );
+    _pathTransitions[bufferId] = transition;
+    _checkpointTimers.remove(bufferId)?.cancel();
+    return transition;
+  }
+
+  Future<void> finishBufferPathTransition(
+    LocalHistoryBufferPathTransition transition, {
+    required bool committed,
+  }) async {
+    while (identical(_pathTransitions[transition.bufferId], transition)) {
+      final queued = _bufferQueues[transition.bufferId];
+      if (queued == null) break;
+      await queued;
+    }
+    if (!identical(_pathTransitions[transition.bufferId], transition)) return;
+    _pathTransitions.remove(transition.bufferId);
+    final pending = _pending[transition.bufferId];
+    if (committed &&
+        pending != null &&
+        _sameOptionalPath(pending.path, transition.sourcePath)) {
+      _pending[transition.bufferId] = pending.atPath(
+        transition.destinationPath,
+      );
+    }
+    _scheduleCheckpoint(transition.bufferId);
   }
 
   Future<bool> captureSaved(LocalHistoryBufferSnapshot snapshot) async {
@@ -363,17 +408,19 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       path: destinationPath,
     );
     final captured = await _enqueue(source.bufferId, () async {
-      // A checkpoint created before Save As belongs to the source lineage.
-      // Settle it before changing this buffer's binding. Edits made after the
-      // workspace switched to the destination keep their destination snapshot
-      // and timer and will run after the binding changes below.
+      // A checkpoint included in the Save As target belongs to the source
+      // lineage. Newer edits remain suspended until the caller publishes the
+      // destination path and finishes the path transition.
       final pending = _pending[source.bufferId];
-      if (pending != null && _sameOptionalPath(pending.path, source.path)) {
+      if (pending != null &&
+          pending.revision <= source.revision &&
+          _sameOptionalPath(pending.path, source.path)) {
         _pending.remove(source.bufferId);
         _checkpointTimers.remove(source.bufferId)?.cancel();
         if (!await _capture(
           pending,
           LocalHistoryCaptureReason.automaticCheckpoint,
+          allowDuringPathTransition: true,
         )) {
           return false;
         }
@@ -382,6 +429,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         destination,
         LocalHistoryCaptureReason.saved,
         ignoreBinding: !source.untitled || destinationExisted,
+        allowPathChange: source.untitled && !destinationExisted,
       );
     });
     if (captured) {
@@ -476,6 +524,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
       final affected = <MapEntry<String, LocalHistoryBufferSnapshot>>[];
       for (final entry in _pending.entries) {
+        if (_pathTransitions.containsKey(entry.key)) continue;
         final path = entry.value.path;
         if (path != null &&
             (p.equals(path, sourcePath) || p.isWithin(sourcePath, path))) {
@@ -541,6 +590,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
     _loadGeneration++;
     state = state.copyWith(
+      loading: false,
       selectedDocumentId: documentId,
       selectedRevisionId: null,
       selectedRevision: null,
@@ -558,6 +608,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _loadGeneration++;
     _searchGeneration++;
     state = state.copyWith(
+      loading: false,
       selectedDocumentId: null,
       selectedRevisionId: null,
       selectedRevision: null,
@@ -630,7 +681,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   void clearComparison() {
     _loadGeneration++;
-    state = state.copyWith(selectedRevisionId: null, selectedRevision: null);
+    state = state.copyWith(
+      loading: false,
+      selectedRevisionId: null,
+      selectedRevision: null,
+    );
   }
 
   String? bufferIdForDocument(String documentId) => _documentIdsByBuffer.entries
@@ -700,7 +755,18 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     LocalHistoryCaptureReason reason, {
     bool force = false,
     bool ignoreBinding = false,
+    bool allowPathChange = false,
+    bool allowDuringPathTransition = false,
   }) async {
+    if (reason == LocalHistoryCaptureReason.automaticCheckpoint &&
+        !allowDuringPathTransition &&
+        _pathTransitions.containsKey(snapshot.bufferId)) {
+      final pending = _pending[snapshot.bufferId];
+      if (pending == null || pending.revision <= snapshot.revision) {
+        _pending[snapshot.bufferId] = snapshot;
+      }
+      return true;
+    }
     final currentPolicy = policy;
     if (!currentPolicy.recordingEnabled ||
         currentPolicy.excludes(snapshot.path)) {
@@ -725,6 +791,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           reason: reason,
           untitled: snapshot.untitled,
           force: force,
+          allowPathChange: allowPathChange,
         ),
         currentPolicy,
       );
@@ -763,6 +830,33 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
     _checkpointTimers.clear();
     _pending.clear();
+    _pathTransitions.clear();
+  }
+
+  void _scheduleCheckpoint(String bufferId) {
+    if (_pathTransitions.containsKey(bufferId) ||
+        !_pending.containsKey(bufferId)) {
+      return;
+    }
+    _checkpointTimers.putIfAbsent(
+      bufferId,
+      () => _timerFactory(policy.checkpointInterval, () {
+        _checkpointTimers.remove(bufferId);
+        if (!ref.mounted || _pathTransitions.containsKey(bufferId)) return;
+        final latest = _pending.remove(bufferId);
+        if (latest != null) {
+          unawaited(
+            _enqueue(
+              bufferId,
+              () => _capture(
+                latest,
+                LocalHistoryCaptureReason.automaticCheckpoint,
+              ),
+            ),
+          );
+        }
+      }),
+    );
   }
 
   void _setWarning(LocalHistoryWarningKind kind, [String? detail]) {

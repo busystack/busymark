@@ -12,6 +12,7 @@ import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -243,6 +244,47 @@ void main() {
     },
   );
 
+  test(
+    'reload reparse cannot publish after another buffer becomes active',
+    () async {
+      final aPath = p.join(root.path, 'A.md');
+      final bPath = p.join(root.path, 'B.md');
+      await File(aPath).writeAsString('# A before reload\n');
+      await File(bPath).writeAsString('# B active\n');
+      final service = _BlockingNextReparseWorkspaceService();
+      final harness = await _harness(
+        MemoryLocalHistoryStore(),
+        service: service,
+      );
+      await harness.controller.openPath(root.path);
+      expect(await harness.controller.openActiveFile(bPath), isTrue);
+      expect(await harness.controller.openActiveFile(aPath), isTrue);
+      final aId = harness.state.activeBuffer!.id;
+      await File(aPath).writeAsString('# A reloaded\n');
+
+      service.pauseNext();
+      final reload = harness.controller.reloadBufferFromDisk(aId);
+      await service.started.future;
+      expect(await harness.controller.openActiveFile(bPath), isTrue);
+      final bWorkspace = harness.state.workspace;
+      final bPreview = harness.state.preview;
+
+      service.release();
+      expect(await reload, isTrue);
+      expect(harness.state.activeBuffer!.filePath, bPath);
+      expect(harness.state.workspace?.activeFilePath, bPath);
+      expect(harness.state.workspace?.markdown?.filePath, bPath);
+      expect(harness.state.workspace, same(bWorkspace));
+      expect(harness.state.preview, same(bPreview));
+      expect(
+        harness.state.documentBuffers
+            .singleWhere((buffer) => buffer.id == aId)
+            .text,
+        '# A reloaded\n',
+      );
+    },
+  );
+
   test('delete skips binary and excluded history descendants', () async {
     final image = File(p.join(root.path, 'image.png'));
     final imageFolder = Directory(p.join(root.path, 'image-folder'));
@@ -387,6 +429,163 @@ void main() {
     },
   );
 
+  test(
+    'external move keeps edits made during history remap on the destination',
+    () async {
+      final sourcePath = p.join(root.path, 'A.md');
+      final destinationPath = p.join(root.path, 'B.md');
+      await File(sourcePath).writeAsString('Original\n');
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingRemapStore(memory);
+      final monitor = _ControlledFileMonitor();
+      final timers = <_FakeTimer>[];
+      final harness = await _harness(
+        store,
+        fileMonitor: monitor,
+        timerFactory: (delay, callback) {
+          final timer = _FakeTimer(delay, callback);
+          timers.add(timer);
+          return timer;
+        },
+      );
+      await harness.controller.openPath(sourcePath);
+      harness.controller.updateActiveText('Edit before move\n');
+      await Future<void>.delayed(Duration.zero);
+
+      await File(sourcePath).rename(destinationPath);
+      monitor.emitMove(sourcePath, destinationPath);
+      await store.started.future;
+      expect(harness.state.activeBuffer!.filePath, sourcePath);
+      harness.controller.updateActiveText('Edit while remap is paused\n');
+      await Future<void>.delayed(Duration.zero);
+      for (final timer in timers) {
+        timer.fire();
+      }
+
+      store.release.complete();
+      await _waitFor(
+        () =>
+            harness.state.activeBuffer?.filePath == destinationPath &&
+            timers.any((timer) => timer.isActive),
+      );
+      for (final timer in List<_FakeTimer>.of(timers)) {
+        timer.fire();
+      }
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents.map((document) => document.currentPath), [
+        destinationPath,
+      ]);
+      final destination = snapshot.documents.single;
+      expect(
+        await _revisionSources(memory, snapshot.revisionsFor(destination.id)),
+        contains('Edit while remap is paused\n'),
+      );
+    },
+  );
+
+  test('external move reparse cannot publish after a newer edit', () async {
+    final sourcePath = p.join(root.path, 'A.md');
+    final destinationPath = p.join(root.path, 'B.md');
+    await File(sourcePath).writeAsString('# Before move\n');
+    final monitor = _ControlledFileMonitor();
+    final service = _BlockingNextReparseWorkspaceService();
+    final harness = await _harness(
+      MemoryLocalHistoryStore(),
+      service: service,
+      fileMonitor: monitor,
+    );
+    await harness.controller.openPath(sourcePath);
+    harness.controller.updateActiveEditorMode(
+      DocumentViewModePreference.source,
+    );
+
+    service.pauseNext();
+    await File(sourcePath).rename(destinationPath);
+    monitor.emitMove(sourcePath, destinationPath);
+    await service.started.future;
+    expect(harness.state.activeBuffer!.filePath, destinationPath);
+    final revisionBeforeEdit = harness.state.activeBuffer!.revision;
+    harness.controller.updateActiveText('# Edited during reparse\n');
+    await Future<void>.delayed(Duration.zero);
+    final workspaceAfterEdit = harness.state.workspace;
+    final previewAfterEdit = harness.state.preview;
+
+    service.release();
+    await service.finished.future;
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(harness.state.activeBuffer!.filePath, destinationPath);
+    expect(harness.state.activeText, '# Edited during reparse\n');
+    expect(
+      harness.state.activeBuffer!.revision,
+      greaterThan(revisionBeforeEdit),
+    );
+    expect(harness.state.workspace, same(workspaceAfterEdit));
+    expect(harness.state.preview, same(previewAfterEdit));
+  });
+
+  test(
+    'Save As keeps edits made during destination capture out of source history',
+    () async {
+      final sourcePath = p.join(root.path, 'A.md');
+      final destinationPath = p.join(root.path, 'B.md');
+      await File(sourcePath).writeAsString('Original\n');
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingSaveAsStore(memory, destinationPath);
+      final timers = <_FakeTimer>[];
+      final harness = await _harness(
+        store,
+        timerFactory: (delay, callback) {
+          final timer = _FakeTimer(delay, callback);
+          timers.add(timer);
+          return timer;
+        },
+      );
+      await harness.controller.openPath(sourcePath);
+      harness.controller.updateActiveText('Save target\n');
+      await Future<void>.delayed(Duration.zero);
+
+      final save = harness.controller.saveActiveAs(destinationPath);
+      await store.started.future;
+      expect(harness.state.activeBuffer!.filePath, destinationPath);
+      harness.controller.updateActiveText('Newer destination edit\n');
+      await Future<void>.delayed(Duration.zero);
+      for (final timer in timers) {
+        timer.fire();
+      }
+
+      store.release.complete();
+      expect(await save, isTrue);
+      for (final timer in List<_FakeTimer>.of(timers)) {
+        timer.fire();
+      }
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+
+      final snapshot = await memory.load();
+      final source = snapshot.documents.singleWhere(
+        (document) => document.currentPath == sourcePath,
+      );
+      final destination = snapshot.documents.singleWhere(
+        (document) => document.currentPath == destinationPath,
+      );
+      expect(source.id, isNot(destination.id));
+      expect(
+        await _revisionSources(memory, snapshot.revisionsFor(source.id)),
+        isNot(contains('Newer destination edit\n')),
+      );
+      expect(
+        await _revisionSources(memory, snapshot.revisionsFor(destination.id)),
+        containsAll(['Save target\n', 'Newer destination edit\n']),
+      );
+    },
+  );
+
   testWidgets(
     'comparison renders styled intraline spans without framework errors',
     (tester) async {
@@ -437,6 +636,77 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'comparison restore actions wait for the current replacement result',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1200, 800);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      final path = p.join(root.path, 'pending-comparison.md');
+      final computer = _BlockingReplacementComparisonComputer();
+      final harness = (await tester.runAsync(() async {
+        await File(path).writeAsString('Current line\n');
+        final store = MemoryLocalHistoryStore();
+        final captured = await _capture(store, path, 'Historical line\n');
+        final harness = await _harness(
+          store,
+          comparisonComputer: computer.call,
+        );
+        await harness.controller.openPath(path);
+        final history = harness.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await history.refresh();
+        history.selectDocument(captured.document.id);
+        await history.selectRevision(captured.revision!.id);
+        return harness;
+      }))!;
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: harness.container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.blue,
+            ),
+            home: const Scaffold(body: LocalHistoryComparisonView()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final context = tester.element(find.byType(LocalHistoryComparisonView));
+      final l10n = AppLocalizations.of(context);
+      final restoreAll = find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton &&
+            widget.tooltip == l10n.localHistoryRestoreRevision,
+      );
+      final restoreChange = find.ancestor(
+        of: find.text('${l10n.localHistoryRestoreChange} 1'),
+        matching: find.byType(OutlinedButton),
+      );
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNotNull);
+      expect(tester.widget<OutlinedButton>(restoreChange).onPressed, isNotNull);
+
+      harness.controller.updateActiveText('Replacement current line\n');
+      await tester.pump();
+      await tester.runAsync(() => computer.replacementStarted.future);
+      await tester.pump();
+
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNull);
+      expect(tester.widget<OutlinedButton>(restoreChange).onPressed, isNull);
+
+      computer.completeReplacement();
+      await tester.pumpAndSettle();
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNotNull);
+      expect(tester.widget<OutlinedButton>(restoreChange).onPressed, isNotNull);
+    },
+  );
 }
 
 SourceComparison _comparison(
@@ -456,6 +726,28 @@ SourceComparison _comparison(
     source: buffer.text,
   ),
 );
+
+Future<List<String>> _revisionSources(
+  LocalHistoryStore store,
+  Iterable<LocalHistoryRevisionSummary> summaries,
+) async {
+  final sources = <String>[];
+  for (final summary in summaries) {
+    final revision = await store.readRevision(summary.id);
+    if (revision != null) sources.add(revision.source);
+  }
+  return sources;
+}
+
+Future<void> _waitFor(bool Function() condition) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 3));
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('Timed out waiting for workspace state');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+}
 
 Future<LocalHistoryCaptureResult> _capture(
   LocalHistoryStore store,
@@ -477,6 +769,9 @@ Future<LocalHistoryCaptureResult> _capture(
 Future<_Harness> _harness(
   LocalHistoryStore store, {
   WorkspaceService service = const WorkspaceService(),
+  WorkspaceFileMonitor? fileMonitor,
+  LocalHistoryTimerFactory? timerFactory,
+  LocalHistoryComparisonComputer? comparisonComputer,
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -486,6 +781,14 @@ Future<_Harness> _harness(
         () => DateTime.utc(2026, 1, 1, 0, 1),
       ),
       workspaceServiceProvider.overrideWithValue(service),
+      if (fileMonitor != null)
+        workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
+      if (timerFactory != null)
+        localHistoryTimerFactoryProvider.overrideWithValue(timerFactory),
+      if (comparisonComputer != null)
+        localHistoryComparisonComputerProvider.overrideWithValue(
+          comparisonComputer,
+        ),
     ],
   );
   addTearDown(container.dispose);
@@ -590,6 +893,147 @@ class _BlockingBeforeReloadStore extends _FailingProtectiveStore {
     }
     return delegate.capture(request, policy);
   }
+}
+
+class _BlockingNextReparseWorkspaceService extends WorkspaceService {
+  var _pauseNext = false;
+  final started = Completer<void>();
+  final finished = Completer<void>();
+  final _release = Completer<void>();
+
+  void pauseNext() => _pauseNext = true;
+
+  void release() {
+    if (!_release.isCompleted) _release.complete();
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    final reparsed = await super.reparseActive(workspace, source);
+    if (!_pauseNext) return reparsed;
+    _pauseNext = false;
+    if (!started.isCompleted) started.complete();
+    await _release.future;
+    if (!finished.isCompleted) finished.complete();
+    return reparsed;
+  }
+}
+
+class _BlockingReplacementComparisonComputer {
+  var _calls = 0;
+  final replacementStarted = Completer<void>();
+  final _replacement = Completer<SourceComparison>();
+  late SourceComparisonInput _replacementOld;
+  late SourceComparisonInput _replacementCurrent;
+
+  Future<SourceComparison> call(
+    SourceComparisonInput oldInput,
+    SourceComparisonInput currentInput,
+  ) {
+    if (_calls++ == 0) {
+      return Future.value(compareSource(oldInput, currentInput));
+    }
+    _replacementOld = oldInput;
+    _replacementCurrent = currentInput;
+    if (!replacementStarted.isCompleted) replacementStarted.complete();
+    return _replacement.future;
+  }
+
+  void completeReplacement() {
+    if (_replacement.isCompleted) return;
+    _replacement.complete(compareSource(_replacementOld, _replacementCurrent));
+  }
+}
+
+class _BlockingRemapStore extends _FailingProtectiveStore {
+  _BlockingRemapStore(super.delegate);
+
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<void> remapPath(String sourcePath, String destinationPath) async {
+    if (!started.isCompleted) started.complete();
+    await release.future;
+    await delegate.remapPath(sourcePath, destinationPath);
+  }
+}
+
+class _BlockingSaveAsStore extends _FailingProtectiveStore {
+  _BlockingSaveAsStore(super.delegate, this.destinationPath);
+
+  final String destinationPath;
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.saved &&
+        request.path != null &&
+        p.equals(request.path!, destinationPath)) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return delegate.capture(request, policy);
+  }
+}
+
+class _ControlledFileMonitor extends WorkspaceFileMonitor {
+  final _events = StreamController<WorkspaceFileMonitorEvent>.broadcast();
+
+  @override
+  Stream<WorkspaceFileMonitorEvent> get events => _events.stream;
+
+  void emitMove(String sourcePath, String destinationPath) {
+    _events.add(
+      WorkspaceFileMonitorEvent(
+        kind: WorkspaceFileEventKind.moved,
+        path: sourcePath,
+        destinationPath: destinationPath,
+      ),
+    );
+  }
+
+  @override
+  Future<void> start({
+    required String rootPath,
+    required Iterable<String> openFilePaths,
+  }) async {}
+
+  @override
+  void updateOpenFilePaths(Iterable<String> paths) {}
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() => _events.close();
+}
+
+class _FakeTimer implements Timer {
+  _FakeTimer(this.duration, this.callback);
+
+  final Duration duration;
+  final void Function() callback;
+  var _active = true;
+
+  void fire() {
+    if (!_active) return;
+    _active = false;
+    callback();
+  }
+
+  @override
+  void cancel() => _active = false;
+
+  @override
+  bool get isActive => _active;
+
+  @override
+  int get tick => _active ? 0 : 1;
 }
 
 class _DelayedSaveWorkspaceService extends WorkspaceService {

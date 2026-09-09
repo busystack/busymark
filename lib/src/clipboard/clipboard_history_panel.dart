@@ -392,7 +392,7 @@ class _ClipboardEntryTile extends StatelessWidget {
                   if (onPastePlain != null)
                     IconButton(
                       tooltip: l10n.clipboardPastePlainText,
-                      onPressed: canPaste ? onPastePlain : null,
+                      onPressed: onPastePlain,
                       icon: const Icon(BusyMarkGlyphs.text, size: 18),
                     ),
                   if (onRemove != null)

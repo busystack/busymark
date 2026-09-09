@@ -197,6 +197,14 @@ void main() {
       ).text,
       '![Logo](url)',
     );
+    expect(
+      SourceCommands.writersideImageReference(
+        alt: 'Diagram & "flow"',
+        sourceReference: 'images/a&b.png',
+      ),
+      '<img src="images/a&amp;b.png" '
+      'alt="Diagram &amp; &quot;flow&quot;"/>',
+    );
   });
 
   test('block insertion accepts localized default content', () {

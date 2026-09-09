@@ -1619,6 +1619,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _SourceClipboardOperationTarget(
         documentId: widget.documentId ?? widget.filePath ?? '',
         filePath: widget.filePath,
+        language: widget.language,
         text: _controller.fullText,
         selection: _controller.fullSelection,
       );
@@ -1627,6 +1628,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       mounted &&
       target.documentId == (widget.documentId ?? widget.filePath ?? '') &&
       target.filePath == widget.filePath &&
+      target.language == widget.language &&
       target.text == _controller.fullText &&
       target.selection == _controller.fullSelection;
 
@@ -1705,11 +1707,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     BusyMarkClipboardPayload payload, {
     required bool plainText,
   }) async {
-    if (_hasActiveComposition ||
-        payload.kind == BusyMarkClipboardContentKind.image) {
+    if (_hasActiveComposition) {
       return ClipboardPasteResult.unsupported;
     }
     final target = _captureClipboardTarget();
+    if (payload.kind == BusyMarkClipboardContentKind.image) {
+      if (plainText) {
+        final text = payload.text;
+        return text == null
+            ? ClipboardPasteResult.unsupported
+            : _insertClipboardText(target, text);
+      }
+      return _pasteHistoryImage(payload, target);
+    }
     if (!plainText && payload.richFragment != null) {
       final decoded = WysiwygClipboardFragment.decode(payload.richFragment!);
       if (decoded != null) {
@@ -1740,6 +1750,64 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final text = plainText ? payload.text : payload.preferredSourceText;
     if (text == null) return ClipboardPasteResult.unsupported;
     return _insertClipboardText(target, text);
+  }
+
+  Future<ClipboardPasteResult> _pasteHistoryImage(
+    BusyMarkClipboardPayload payload,
+    _SourceClipboardOperationTarget target,
+  ) async {
+    final bytes = payload.imageBytes;
+    if (bytes == null || bytes.isEmpty) {
+      return ClipboardPasteResult.unsupported;
+    }
+    if (target.language == SourceSyntaxLanguage.plain) {
+      return ClipboardPasteResult.unsupported;
+    }
+    final alt = context.l10n.image;
+    late final IngestedAsset asset;
+    try {
+      asset = await widget.assetIngestionService.ingestBytes(
+        bytes: bytes,
+        suggestedFileName: payload.imageDisplayName ?? 'clipboard-image.png',
+        request: _assetIngestionRequest,
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+    } on AssetSaveRequiredException {
+      if (!_isClipboardTargetCurrent(target)) {
+        return ClipboardPasteResult.staleTarget;
+      }
+      widget.onAssetSaveRequired?.call();
+      return ClipboardPasteResult.unsupported;
+    } on AssetIngestionException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    } on FileSystemException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    }
+    if (!_isClipboardTargetCurrent(target)) {
+      await _deleteUncommittedClipboardAssets([asset]);
+      return ClipboardPasteResult.staleTarget;
+    }
+    final result = _insertClipboardText(target, switch (target.language) {
+      SourceSyntaxLanguage.markdown => SourceCommands.imageReference(
+        alt: alt,
+        sourceReference: asset.markdownPath,
+      ),
+      SourceSyntaxLanguage.xml => SourceCommands.writersideImageReference(
+        alt: alt,
+        sourceReference: asset.markdownPath,
+      ),
+      SourceSyntaxLanguage.plain => throw StateError(
+        'Plain source cannot contain an image reference.',
+      ),
+    });
+    if (result != ClipboardPasteResult.inserted) {
+      await _deleteUncommittedClipboardAssets([asset]);
+    }
+    return result;
   }
 
   Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
@@ -2790,12 +2858,14 @@ class _SourceClipboardOperationTarget {
   const _SourceClipboardOperationTarget({
     required this.documentId,
     required this.filePath,
+    required this.language,
     required this.text,
     required this.selection,
   });
 
   final String documentId;
   final String? filePath;
+  final SourceSyntaxLanguage language;
   final String text;
   final TextSelection selection;
 }
@@ -2828,10 +2898,12 @@ class _SourceClipboardInsertionTarget
 
   @override
   bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
-    if (!editable || payload.kind == BusyMarkClipboardContentKind.image) {
-      return false;
-    }
+    if (!editable) return false;
     if (plainText) return payload.hasMeaningfulTextRepresentation;
+    if (payload.kind == BusyMarkClipboardContentKind.image) {
+      return state.widget.language != SourceSyntaxLanguage.plain &&
+          payload.imageBytes?.isNotEmpty == true;
+    }
     if (payload.richFragment != null) return payload.mediaComplete;
     return payload.preferredSourceText != null;
   }

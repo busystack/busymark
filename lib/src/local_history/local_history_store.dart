@@ -69,7 +69,13 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         updatedAt: request.capturedAt.toUtc(),
         untitled: request.untitled,
       );
-      document = _updatedDocument(document, request);
+      final identity = _captureIdentity(document, request);
+      document = _updatedDocument(
+        document,
+        request,
+        path: identity.path,
+        preserveIdentityMetadata: identity.pathMismatchWasRejected,
+      );
       final checksum = sourceChecksum(request.source);
       final adjacent = index.revisions
           .where((revision) => revision.documentId == document!.id)
@@ -104,7 +110,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         checksum: checksum,
         storageBytes: 0,
         sourceLength: request.source.length,
-        historicalPath: request.path,
+        historicalPath: identity.path,
       );
       final target = _revisionFile(root, document.id, revisionId);
       await target.parent.create(recursive: true);
@@ -698,19 +704,54 @@ LocalHistoryDocument? _resolveDocument(
 
 LocalHistoryDocument _updatedDocument(
   LocalHistoryDocument document,
-  LocalHistoryCaptureRequest request,
-) {
-  final path = request.path;
+  LocalHistoryCaptureRequest request, {
+  required String? path,
+  required bool preserveIdentityMetadata,
+}) {
   return document.copyWith(
-    displayName: request.displayName,
+    displayName: preserveIdentityMetadata
+        ? document.displayName
+        : request.displayName,
     currentPath: path,
     historicalPaths: path == null
         ? document.historicalPaths
         : _uniquePaths([...document.historicalPaths, path]),
     updatedAt: request.capturedAt.toUtc(),
     deleted: false,
-    untitled: request.untitled && path == null,
+    untitled: preserveIdentityMetadata
+        ? document.untitled
+        : request.untitled && path == null,
   );
+}
+
+_CaptureIdentity _captureIdentity(
+  LocalHistoryDocument document,
+  LocalHistoryCaptureRequest request,
+) {
+  final boundById =
+      request.documentId != null && request.documentId == document.id;
+  final pathMismatch = !_sameOptionalPath(document.currentPath, request.path);
+  final rejectPathChange =
+      boundById && pathMismatch && !request.allowPathChange;
+  return _CaptureIdentity(
+    path: rejectPathChange ? document.currentPath : request.path,
+    pathMismatchWasRejected: rejectPathChange,
+  );
+}
+
+class _CaptureIdentity {
+  const _CaptureIdentity({
+    required this.path,
+    required this.pathMismatchWasRejected,
+  });
+
+  final String? path;
+  final bool pathMismatchWasRejected;
+}
+
+bool _sameOptionalPath(String? first, String? second) {
+  if (first == null || second == null) return first == second;
+  return p.equals(first, second);
 }
 
 String? _remap(String current, String source, String destination) {
@@ -782,7 +823,13 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
       updatedAt: request.capturedAt.toUtc(),
       untitled: request.untitled,
     );
-    document = _updatedDocument(document, request);
+    final identity = _captureIdentity(document, request);
+    document = _updatedDocument(
+      document,
+      request,
+      path: identity.path,
+      preserveIdentityMetadata: identity.pathMismatchWasRejected,
+    );
     _documents[document.id] = document;
     final checksum = sourceChecksum(request.source);
     final adjacent = _revisions.values
@@ -816,7 +863,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
       checksum: checksum,
       storageBytes: bytes,
       sourceLength: request.source.length,
-      historicalPath: request.path,
+      historicalPath: identity.path,
     );
     _revisions[summary.id] = LocalHistoryRevision(
       summary: summary,

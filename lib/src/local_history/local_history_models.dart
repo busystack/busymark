@@ -224,6 +224,7 @@ class LocalHistoryCaptureRequest {
     this.path,
     this.untitled = false,
     this.force = false,
+    this.allowPathChange = false,
   });
 
   final String? documentId;
@@ -235,6 +236,11 @@ class LocalHistoryCaptureRequest {
   final LocalHistoryCaptureReason reason;
   final bool untitled;
   final bool force;
+
+  /// Path identity is normally immutable for an ID-bound capture. Save As
+  /// from a new untitled document is the one capture operation that promotes
+  /// that same identity to a filesystem path.
+  final bool allowPathChange;
 }
 
 @immutable

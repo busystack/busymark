@@ -291,11 +291,15 @@ abstract final class SourceCommands {
     TextEditingValue value, {
     required bool block,
     required String altPlaceholder,
+    String sourceReference = 'url',
   }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text).trim();
     final alt = selected.isEmpty ? altPlaceholder : selected;
-    final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
+    final replacement = imageReference(
+      alt: alt,
+      sourceReference: sourceReference,
+    );
     final inserted = block ? '\n$replacement\n' : replacement;
     final altStart = selection.start + (block ? 3 : 2);
     return _replaceSelection(
@@ -307,6 +311,18 @@ abstract final class SourceCommands {
       ),
     );
   }
+
+  static String imageReference({
+    required String alt,
+    required String sourceReference,
+  }) => '![${alt.replaceAll('\n', ' ')}]($sourceReference)';
+
+  static String writersideImageReference({
+    required String alt,
+    required String sourceReference,
+  }) =>
+      '<img src="${_escapeXmlAttribute(sourceReference)}" '
+      'alt="${_escapeXmlAttribute(alt.replaceAll('\n', ' '))}"/>';
 
   static TextEditingValue insertTable(
     TextEditingValue value, {
@@ -350,6 +366,12 @@ abstract final class SourceCommands {
     );
   }
 }
+
+String _escapeXmlAttribute(String value) => value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 
 ({int start, int end, List<String> lines}) _selectedLineRange(
   TextEditingValue value,

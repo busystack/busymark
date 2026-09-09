@@ -240,6 +240,33 @@ void main() {
     },
   );
 
+  test('ID-bound captures cannot implicitly move document paths', () async {
+    final first = await store.capture(
+      request('before move', DateTime.utc(2026, 1, 1), path: '/old/A.md'),
+      policy,
+    );
+    await store.remapPath('/old/A.md', '/new/B.md');
+
+    final lateCheckpoint = await store.capture(
+      LocalHistoryCaptureRequest(
+        documentId: first.document.id,
+        path: '/old/A.md',
+        displayName: 'A.md',
+        source: 'edit queued before remap completed',
+        format: TextFormatMetadata.utf8Lf,
+        capturedAt: DateTime.utc(2026, 1, 1, 0, 1),
+        reason: LocalHistoryCaptureReason.automaticCheckpoint,
+      ),
+      policy,
+    );
+
+    final snapshot = await store.load();
+    expect(snapshot.documents, hasLength(1));
+    expect(snapshot.documents.single.currentPath, '/new/B.md');
+    expect(lateCheckpoint.document.currentPath, '/new/B.md');
+    expect(lateCheckpoint.revision!.historicalPath, '/new/B.md');
+  });
+
   test('serializes concurrent captures without losing index entries', () async {
     final time = DateTime.utc(2026, 1, 1);
     await Future.wait([

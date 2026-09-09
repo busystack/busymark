@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_file_snapshot.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -201,53 +204,85 @@ void main() {
     },
   );
 
-  test('a delayed revision read cannot cross the selected document', () async {
-    final memory = MemoryLocalHistoryStore();
-    await _capturePath(memory, '/workspace/a.md', 'revision A');
-    await _capturePath(memory, '/workspace/b.md', 'revision B');
-    final initial = await memory.load();
-    final documentA = initial.documents.singleWhere(
-      (document) => document.currentPath == '/workspace/a.md',
-    );
-    final documentB = initial.documents.singleWhere(
-      (document) => document.currentPath == '/workspace/b.md',
-    );
-    final revisionA = initial.revisionsFor(documentA.id).single;
-    final store = _BlockingRevisionReadStore(memory, revisionA.id);
-    final container = ProviderContainer(
-      overrides: [
-        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-        localHistoryStoreProvider.overrideWithValue(store),
-        localHistoryClockProvider.overrideWithValue(
-          () => DateTime.utc(2026, 1, 2),
+  testWidgets(
+    'a delayed revision read cannot cross the selected document or leave loading stuck',
+    (tester) async {
+      late ProviderContainer container;
+      final state = (await tester.runAsync(() async {
+        final memory = MemoryLocalHistoryStore();
+        await _capturePath(memory, '/workspace/a.md', 'revision A');
+        await _capturePath(memory, '/workspace/b.md', 'revision B');
+        final initial = await memory.load();
+        final documentA = initial.documents.singleWhere(
+          (document) => document.currentPath == '/workspace/a.md',
+        );
+        final documentB = initial.documents.singleWhere(
+          (document) => document.currentPath == '/workspace/b.md',
+        );
+        final revisionA = initial.revisionsFor(documentA.id).single;
+        final store = _BlockingRevisionReadStore(memory, revisionA.id);
+        container = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(store),
+            localHistoryClockProvider.overrideWithValue(
+              () => DateTime.utc(2026, 1, 2),
+            ),
+          ],
+        );
+        final controller = container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await Future<void>.delayed(Duration.zero);
+        await controller.refresh();
+
+        expect(
+          container.read(localHistoryControllerProvider).snapshot.revisions,
+          hasLength(2),
+        );
+        controller.selectDocument(documentA.id);
+        expect(
+          container.read(localHistoryControllerProvider).selectedDocumentId,
+          documentA.id,
+        );
+        final selection = controller.selectRevision(revisionA.id);
+        await store.started.future;
+        controller.selectDocument(documentB.id);
+        expect(container.read(localHistoryControllerProvider).loading, isFalse);
+        store.release.complete();
+        await selection;
+        return container.read(localHistoryControllerProvider);
+      }))!;
+      addTearDown(container.dispose);
+
+      expect(state.selectedDocument?.currentPath, '/workspace/b.md');
+      expect(state.selectedRevisionId, isNull);
+      expect(state.selectedRevision, isNull);
+      expect(state.loading, isFalse);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LocalHistoryPanel()),
+          ),
         ),
-      ],
-    );
-    addTearDown(container.dispose);
-    final controller = container.read(localHistoryControllerProvider.notifier);
-    await Future<void>.delayed(Duration.zero);
-    await controller.refresh();
-
-    expect(
-      container.read(localHistoryControllerProvider).snapshot.revisions,
-      hasLength(2),
-    );
-    controller.selectDocument(documentA.id);
-    expect(
-      container.read(localHistoryControllerProvider).selectedDocumentId,
-      documentA.id,
-    );
-    final selection = controller.selectRevision(revisionA.id);
-    await store.started.future;
-    controller.selectDocument(documentB.id);
-    store.release.complete();
-    await selection;
-
-    final state = container.read(localHistoryControllerProvider);
-    expect(state.selectedDocumentId, documentB.id);
-    expect(state.selectedRevisionId, isNull);
-    expect(state.selectedRevision, isNull);
-  });
+      );
+      await tester.pump();
+      final context = tester.element(find.byType(LocalHistoryPanel));
+      final refreshLabel = MaterialLocalizations.of(
+        context,
+      ).refreshIndicatorSemanticLabel;
+      final refresh = find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == refreshLabel,
+      );
+      expect(tester.widget<IconButton>(refresh).onPressed, isNotNull);
+    },
+  );
 
   test(
     'Save As settles pending named and untitled checkpoints safely',

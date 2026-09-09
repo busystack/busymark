@@ -1628,6 +1628,129 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets(
+    'standalone image history ingests and inserts one undoable Source edit',
+    (tester) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-source-image-history-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final filePath = '${root.path}/target.md';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      const source = 'Before after';
+      var transactionCount = 0;
+      String modelText = source;
+      TextEditingValue? undoValue;
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(),
+        registry: registry,
+        filePath: filePath,
+        workspaceRoot: root.path,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+        onTransactionalChanged:
+            (value, _, previousSelection, selection, undoGroup) {
+              transactionCount++;
+              undoValue = TextEditingValue(
+                text: modelText,
+                selection: previousSelection,
+              );
+              modelText = value;
+            },
+        onUndo: () {
+          final value = undoValue;
+          if (value != null) {
+            modelText = value.text;
+            undoValue = null;
+          }
+          return value;
+        },
+      );
+      controller.selection = const TextSelection.collapsed(offset: 7);
+      final payload = BusyMarkClipboardPayload(
+        id: 'source-image-history',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.image,
+        imageBytes: Uint8List.fromList(const [
+          0x89,
+          0x50,
+          0x4e,
+          0x47,
+          0x0d,
+          0x0a,
+          0x1a,
+          0x0a,
+        ]),
+        imageMimeType: 'image/png',
+        imageDisplayName: 'screenshot.png',
+      );
+
+      expect(registry.canPaste(payload), isTrue);
+      expect(
+        await tester.runAsync(() => registry.paste(payload)),
+        ClipboardPasteResult.inserted,
+      );
+      expect(modelText, 'Before ![Image](images/screenshot.png)after');
+      expect(transactionCount, 1);
+      final asset = File('${root.path}/images/screenshot.png');
+      expect(await tester.runAsync(asset.exists), isTrue);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(modelText, source);
+      expect(transactionCount, 1);
+      expect(await tester.runAsync(asset.exists), isTrue);
+    },
+  );
+
+  testWidgets('image history asks to save an untitled Source document', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    var saveRequests = 0;
+    var changes = 0;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Untitled',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: null,
+      onChanged: (_, _) => changes++,
+      onAssetSaveRequired: () => saveRequests++,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'untitled-source-image-history',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.image,
+      imageBytes: Uint8List.fromList(const [
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+      ]),
+      imageMimeType: 'image/png',
+      imageDisplayName: 'screenshot.png',
+    );
+
+    expect(registry.canPaste(payload), isTrue);
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.unsupported,
+    );
+    expect(saveRequests, 1);
+    expect(changes, 0);
+  });
 }
 
 WysiwygClipboardFragment _structuredImageFragment(String sourcePath) {
@@ -1734,9 +1857,12 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   BusyMarkClipboardInsertionRegistry? registry,
   ValueChanged<BusyMarkClipboardCapture>? onCaptured,
   BusyMarkSourceChanged? onChanged,
-  String filePath = '/project/source.md',
+  BusyMarkSourceTransactionalChanged? onTransactionalChanged,
+  TextEditingValue? Function()? onUndo,
+  String? filePath = '/project/source.md',
   String? workspaceRoot,
   AssetWorkspaceKind? assetWorkspaceKind,
+  VoidCallback? onAssetSaveRequired,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -1764,11 +1890,14 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
             searchOptions: const SourceSearchOptions(),
             onSearchOptionsChanged: (_) {},
             onChanged: onChanged ?? (_, _) {},
+            onTransactionalChanged: onTransactionalChanged,
+            onUndo: onUndo,
             onOpenSearch: () {},
             onCloseSearch: () {},
             clipboardService: clipboard,
             clipboardInsertionRegistry: registry,
             onClipboardCaptured: onCaptured,
+            onAssetSaveRequired: onAssetSaveRequired,
           ),
         ),
       ),

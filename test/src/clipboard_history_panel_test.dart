@@ -79,6 +79,43 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
+  testWidgets(
+    'plain-text paste remains enabled when rich paste is unavailable',
+    (tester) async {
+      final container = _container();
+      container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .retain(
+            const BusyMarkClipboardCapture(
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'Readable fallback',
+              sourceText: '**Readable fallback**',
+            ),
+          );
+      final target = _PanelInsertionTarget(
+        normalPasteAvailable: false,
+        plainTextPasteAvailable: true,
+      );
+      container.read(clipboardInsertionRegistryProvider).register(target);
+      await _pumpPanel(tester, container);
+
+      final paste = find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == 'Paste',
+      );
+      final pastePlain = find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton && widget.tooltip == 'Paste as Plain Text',
+      );
+      expect(tester.widget<IconButton>(paste).onPressed, isNull);
+      expect(tester.widget<IconButton>(pastePlain).onPressed, isNotNull);
+
+      await tester.tap(pastePlain);
+      await tester.pump();
+      expect(target.pasteCalls, 1);
+      expect(target.lastPlainText, isTrue);
+    },
+  );
+
   testWidgets('failed insertion reports visible feedback', (tester) async {
     final container = _container();
     container
@@ -157,12 +194,17 @@ class _PanelInsertionTarget
         BusyMarkClipboardInsertionCapabilities {
   _PanelInsertionTarget({
     this.supportImages = true,
+    this.normalPasteAvailable,
+    this.plainTextPasteAvailable,
     this.result = ClipboardPasteResult.inserted,
   });
 
   final bool supportImages;
+  final bool? normalPasteAvailable;
+  final bool? plainTextPasteAvailable;
   final ClipboardPasteResult result;
   int pasteCalls = 0;
+  bool? lastPlainText;
 
   @override
   String get documentId => 'panel-target';
@@ -177,8 +219,13 @@ class _PanelInsertionTarget
   bool get editable => true;
 
   @override
-  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) =>
-      supportImages || payload.kind != BusyMarkClipboardContentKind.image;
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+    final configured = plainText
+        ? plainTextPasteAvailable
+        : normalPasteAvailable;
+    return configured ??
+        (supportImages || payload.kind != BusyMarkClipboardContentKind.image);
+  }
 
   @override
   Future<ClipboardPasteResult> paste(
@@ -186,6 +233,7 @@ class _PanelInsertionTarget
     required bool plainText,
   }) async {
     pasteCalls++;
+    lastPlainText = plainText;
     return result;
   }
 
