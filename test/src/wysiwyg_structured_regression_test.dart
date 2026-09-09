@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/memory_rich_clipboard.dart';
+
 void main() {
   const parser = MarkdownParser();
 
@@ -239,6 +241,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         BusyMarkWysiwygEditor(
+          clipboardService: MemoryRichClipboard(),
           document: document,
           onSourceChanged: (_, value) => markdown = value,
         ),

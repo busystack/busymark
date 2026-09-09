@@ -37,7 +37,7 @@ class AtomicFileWriter {
     }
 
     final stagingDirectory = await parent.createTemp('.busymark-export-');
-    final stagedFile = File(p.join(stagingDirectory.path, 'document.pdf'));
+    final stagedFile = File(p.join(stagingDirectory.path, 'document.bin'));
     try {
       await stagedFile.writeAsBytes(bytes, flush: true);
       if (overwrite) {
@@ -67,7 +67,7 @@ class AtomicFileWriter {
         throw AtomicFileAlreadyExistsException(absoluteTarget);
       }
       throw FileSystemException(
-        'Failed to atomically publish the exported PDF',
+        'Failed to atomically publish the exported file',
         absoluteTarget,
         OSError('no-replace publication failed', errorNumber),
       );

@@ -1,10 +1,23 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final _sessionReportProvider = NotifierProvider<_SessionReportNotifier, int>(
+  _SessionReportNotifier.new,
+);
+
+class _SessionReportNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void record() => state += 1;
+}
 
 void main() {
   const parser = MarkdownParser();
@@ -77,6 +90,39 @@ void main() {
     expect(sessions['one']?.activeBlockId, first.blocks.single.id);
     expect(sessions['one']?.anchorOffset, 4);
     expect(sessions['one']?.extentOffset, 4);
+  });
+
+  testWidgets('defers session provider updates until document rebuild ends', (
+    tester,
+  ) async {
+    final populated = parser
+        .parse(filePath: 'topic.md', source: '# Topic\n\nContent\n')
+        .busyDocument;
+    final empty = parser.parse(filePath: 'topic.md', source: '').busyDocument;
+
+    Widget editor(String id, BusyDocument document) => ProviderScope(
+      child: Consumer(
+        builder: (context, ref, _) {
+          ref.watch(_sessionReportProvider);
+          return _app(
+            BusyMarkWysiwygEditor(
+              document: document,
+              documentId: id,
+              onSessionChanged: (_, _) =>
+                  ref.read(_sessionReportProvider.notifier).record(),
+              onSourceChanged: (_, _) {},
+            ),
+          );
+        },
+      ),
+    );
+
+    await tester.pumpWidget(editor('populated', populated));
+    await tester.pump();
+    await tester.pumpWidget(editor('empty', empty));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('workspace mode delegates WYSIWYG undo to buffer history', (

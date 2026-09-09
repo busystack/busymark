@@ -156,6 +156,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copy => 'Kopier';
 
   @override
+  String get copyPlainText => 'Kopier som ren tekst';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Utvalget kunne ikke kopieres til utklippstavlen.';
+
+  @override
   String get copyName => 'Kopier navn';
 
   @override
@@ -262,9 +269,6 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get paste => 'Lim inn';
-
-  @override
-  String get pasteWithoutFormatting => 'Lim inn uten formatering';
 
   @override
   String get reading => 'Lesevisning';
@@ -1204,6 +1208,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get removeTocElement => 'Fjern element fra innholdsfortegnelsen';
+
+  @override
+  String get removeTocElements => 'Fjern elementer fra innholdsfortegnelsen';
 
   @override
   String get reviewUsages => 'Se gjennom bruk';
@@ -2405,9 +2412,9 @@ class AppLocalizationsNb extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
+          'Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.',
       one:
-          'Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
+          'Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.',
     );
     return '$_temp0';
   }
@@ -2954,6 +2961,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get export => 'Eksporter';
+
+  @override
+  String get exportFormat => 'Utdataformat';
 
   @override
   String get exportingPdf => 'Eksporterer PDF…';
@@ -3664,4 +3674,222 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get displayMath => 'Matematikkblokk';
+
+  @override
+  String get goToDeclaration => 'Gå til deklarasjon';
+
+  @override
+  String get findUsages => 'Finn bruk';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
+
+  @override
+  String get keyboardLayout => 'Tastaturoppsett';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Innhold som ikke støttes eller er feilformet, vises som kildekode.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Kan ikke løse kilden «$reference»: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Lenkemålet er ikke tilgjengelig i denne instansen: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Ugyldig Writerside-markering: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Kan ikke løse $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Eksporter som HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML-dokument';
+
+  @override
+  String get exportingHtml => 'Eksporterer HTML…';
+
+  @override
+  String get htmlExported => 'HTML-eksport fullført';
+
+  @override
+  String get htmlExportFailed => 'HTML-eksport mislyktes';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.';
+
+  @override
+  String get htmlInstance => 'Instans';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.';
+
+  @override
+  String get showInFolder => 'Vis i mappe';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sorter $column';
+  }
+
+  @override
+  String get exportReset => 'Tilbakestill til standard';
+
+  @override
+  String get exportToc => 'Ta med innholdsfortegnelse';
+
+  @override
+  String get exportTocDepth => 'Dybde på innholdsfortegnelse';
+
+  @override
+  String get exportNumberHeadings => 'Nummerer overskrifter';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Egendefinert';
+
+  @override
+  String get exportPageWidth => 'Sidebredde (mm)';
+
+  @override
+  String get exportPageHeight => 'Sidehøyde (mm)';
+
+  @override
+  String get exportMarginTop => 'Toppmarg (mm)';
+
+  @override
+  String get exportMarginRight => 'Høyremarg (mm)';
+
+  @override
+  String get exportMarginBottom => 'Bunnmarg (mm)';
+
+  @override
+  String get exportMarginLeft => 'Venstremarg (mm)';
+
+  @override
+  String get exportTypography => 'Typografi';
+
+  @override
+  String get exportSans => 'Uten seriffer';
+
+  @override
+  String get exportSerif => 'Med seriffer';
+
+  @override
+  String get exportBodySize => 'Tekststørrelse';
+
+  @override
+  String get exportCodeSize => 'Kodestørrelse';
+
+  @override
+  String get exportRunningText => 'Topp- og bunntekst';
+
+  @override
+  String get exportHeader => 'Topptekst';
+
+  @override
+  String get exportFooter => 'Bunntekst';
+
+  @override
+  String get exportNone => 'Ingen';
+
+  @override
+  String get exportDocumentTitle => 'Dokumenttittel';
+
+  @override
+  String get exportBottomLeft => 'Nederst til venstre';
+
+  @override
+  String get exportBottomCenter => 'Nederst i midten';
+
+  @override
+  String get exportBottomRight => 'Nederst til høyre';
+
+  @override
+  String get exportFirstPage => 'Vis topp- og bunntekst på første side';
+
+  @override
+  String get exportAccent => 'Aksent-/lenkefarge';
+
+  @override
+  String get exportTheme => 'Tema';
+
+  @override
+  String get exportAutomatic => 'Automatisk';
+
+  @override
+  String get exportLayout => 'Oppsett';
+
+  @override
+  String get exportContentWidth => 'Maksimal innholdsbredde';
+
+  @override
+  String get exportOutput => 'Utdata';
+
+  @override
+  String get exportPackaging => 'Pakking';
+
+  @override
+  String get exportSingleFile => 'Én HTML-fil';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + ressursmappe';
+
+  @override
+  String get exportCustomCss => 'Egendefinert stilark…';
+
+  @override
+  String get exportRemoveCss => 'Fjern egendefinert stilark';
+
+  @override
+  String get exportCssNote =>
+      'Velg en valgfri UTF-8-CSS-fil (opptil 256 KiB). Importer, ressurs-URL-er og kjørbar eller escaped CSS avvises. Stilene følger BusyMarks stilark. Eksterne ressurser hentes aldri.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside beholder separate, lenkede emnesider. Enkeltfilmodus bygger ressursene inn i hver side.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'La minst 20 mm innholdsbredde og -høyde stå igjen etter margene.';
+
+  @override
+  String get exportInvalidColor => 'Skriv inn en farge som #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: skriv inn et tall mellom $minimum og $maximum.';
+  }
 }

@@ -94,6 +94,17 @@ add_custom_target(busymark_typst ALL
 )
 add_dependencies(${BINARY_NAME} busymark_typst)
 
+# Bundle Noto families for controlled PDF typography and script fallback.
+# Font discovery at runtime is restricted to this directory, never host fonts.
+find_path(BUSYMARK_NOTO_FONT_DIR NAMES NotoSans-Regular.ttf
+  HINTS "$ENV{CRAFT_STAGE}/usr/share/fonts/truetype/noto"
+  PATHS "/usr/share/fonts/truetype/noto")
+foreach(FONT NotoSans-Regular.ttf NotoSans-Bold.ttf NotoSerif-Regular.ttf NotoSerif-Bold.ttf NotoSansMono-Regular.ttf)
+  if(NOT EXISTS "${BUSYMARK_NOTO_FONT_DIR}/${FONT}")
+    message(FATAL_ERROR "PDF fonts missing: ${FONT}. Install fonts-noto-core and fonts-noto-mono or set BUSYMARK_NOTO_FONT_DIR.")
+  endif()
+endforeach()
+
 # Offline visualization engines and the pinned D2 CLI. JavaScript is bundled
 # at build time; Node.js is not installed in or required by the application.
 set(VISUALIZATION_WEB_DIR "${CMAKE_BINARY_DIR}/visualization/web")
@@ -204,6 +215,18 @@ install(PROGRAMS "${TYPST_EXECUTABLE}"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/libexec/busymark"
   COMPONENT Runtime)
 
+install(DIRECTORY "${BUSYMARK_NOTO_FONT_DIR}/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/busymark/fonts"
+  COMPONENT Runtime FILES_MATCHING PATTERN "Noto*.ttf")
+foreach(FONT_PACKAGE fonts-noto-core fonts-noto-mono)
+  find_file(${FONT_PACKAGE}_LICENSE NAMES copyright
+    HINTS "$ENV{CRAFT_STAGE}/usr/share/doc/${FONT_PACKAGE}"
+    PATHS "/usr/share/doc/${FONT_PACKAGE}" NO_DEFAULT_PATH)
+  if(${FONT_PACKAGE}_LICENSE)
+    install(FILES "${${FONT_PACKAGE}_LICENSE}"
+      DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/${FONT_PACKAGE}" COMPONENT Runtime)
+  endif()
+endforeach()
 install(FILES "${TYPST_LICENSE}" "${TYPST_NOTICE}" "${TYPST_VERSION_FILE}"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/typst"
   COMPONENT Runtime)

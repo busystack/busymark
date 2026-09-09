@@ -90,6 +90,10 @@
   "chooseLocation": "Choose location",
   "@chooseLocation": {"description": "File picker confirmation label for choosing a directory."},
   "copy": "Copy",
+  "copyPlainText": "Copy Plain Text",
+  "@copyPlainText": {"description": "Copies the Editor selection without formatting or Markdown syntax."},
+  "clipboardCopyFailed": "Could not copy the selection to the clipboard.",
+  "@clipboardCopyFailed": {"description": "Shown when Editor copy or cut cannot write the clipboard; cut leaves the document intact."},
   "@copy": {"description": "Copy command label."},
   "copyName": "Copy name",
   "@copyName": {"description": "Menu action that copies the selected file, folder, or workspace name."},
@@ -164,8 +168,6 @@
   "@overwrite": {"description": "Button label for overwriting a changed file."},
   "paste": "Paste",
   "@paste": {"description": "Paste command label."},
-  "pasteWithoutFormatting": "Paste without formatting",
-  "@pasteWithoutFormatting": {"description": "Plain text paste command label."},
   "reading": "Reading",
   "@reading": {"description": "Reading view label."},
   "removeFromRecent": "Remove from Recent",
@@ -757,6 +759,8 @@
   "@safeDeleteTopicFile": {"description": "Writerside action that safely deletes a topic after checking usages."},
   "removeTocElement": "Remove TOC Element",
   "@removeTocElement": {"description": "Writerside action and dialog title for removing a topic from one table of contents."},
+  "removeTocElements": "Remove TOC Elements",
+  "@removeTocElements": {"description": "Action that removes multiple selected elements from one Writerside table of contents."},
   "reviewUsages": "Review Usages",
   "@reviewUsages": {"description": "Action that opens the Writerside topic usages review."},
   "deleteTopicFile": "Delete Topic File",
@@ -1955,6 +1959,8 @@
   "@pdfIncludePageNumbers": {"description": "Toggle for page numbers in an exported PDF."},
   "export": "Export",
   "@export": {"description": "Button label that starts an export."},
+  "exportFormat": "Output format",
+  "@exportFormat": {"description": "Output format selector in the export dialog."},
   "exportingPdf": "Exporting PDF…",
   "@exportingPdf": {"description": "Progress dialog title while a PDF is being exported."},
   "fileTypePdf": "PDF document",
@@ -2328,6 +2334,130 @@
   "inlineMath": "Inline math",
   "@inlineMath": {"description": "Editor action that inserts an inline mathematical expression."},
   "displayMath": "Display math",
-  "@displayMath": {"description": "Editor action that inserts a display mathematical expression."}
-
+  "@displayMath": {"description": "Editor action that inserts a display mathematical expression."},
+  "goToDeclaration": "Go to Declaration",
+  "findUsages": "Find Usages",
+  "cannotRenameSymbol": "The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.",
+  "keyboardLayout": "Keyboard layout",
+  "diagnosticWritersideUnsupported": "Unsupported or malformed content is displayed as source.",
+  "diagnosticWritersideSource": "Cannot resolve source “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Link target is unavailable in this instance: {destination}",
+  "diagnosticWritersideSchema": "Invalid Writerside markup: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.",
+  "diagnosticWritersideReference": "Cannot resolve {kind}: {reference}",
+  "@diagnosticWritersideSource": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideLink": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideSchema": {
+    "placeholders": {
+      "element": {
+        "type": "String"
+      },
+      "attribute": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "@diagnosticWritersideReference": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "exportAsHtml": "Export as HTML…",
+  "fileTypeHtml": "HTML document",
+  "exportingHtml": "Exporting HTML…",
+  "htmlExported": "HTML export complete",
+  "htmlExportFailed": "HTML export failed",
+  "htmlKeepAssetsTogether": "Keep the HTML file and its companion assets directory together when copying this export.",
+  "htmlInstanceDescription": "Export one instance as linked offline pages. Choose a name for a dedicated output directory.",
+  "htmlInstance": "Instance",
+  "htmlOwnedDirectoryOnly": "Only a directory created by BusyMark HTML export can be replaced. Modified or unrelated files will be preserved.",
+  "showInFolder": "Show in Folder",
+  "sortTableColumn": "Sort {column}",
+  "@sortTableColumn": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "exportReset": "Reset to defaults",
+  "exportToc": "Include table of contents",
+  "exportTocDepth": "TOC depth",
+  "exportNumberHeadings": "Number headings",
+  "exportLegal": "US Legal",
+  "exportCustom": "Custom",
+  "exportPageWidth": "Page width (mm)",
+  "exportPageHeight": "Page height (mm)",
+  "exportMarginTop": "Top margin (mm)",
+  "exportMarginRight": "Right margin (mm)",
+  "exportMarginBottom": "Bottom margin (mm)",
+  "exportMarginLeft": "Left margin (mm)",
+  "exportTypography": "Typography",
+  "exportSans": "Sans-serif",
+  "exportSerif": "Serif",
+  "exportBodySize": "Body font size",
+  "exportCodeSize": "Code font size",
+  "exportRunningText": "Header & Footer",
+  "exportHeader": "Header",
+  "exportFooter": "Footer",
+  "exportNone": "None",
+  "exportDocumentTitle": "Document title",
+  "exportBottomLeft": "Bottom left",
+  "exportBottomCenter": "Bottom center",
+  "exportBottomRight": "Bottom right",
+  "exportFirstPage": "Show header and footer on first page",
+  "exportAccent": "Accent / link color",
+  "exportTheme": "Theme",
+  "exportAutomatic": "Automatic",
+  "exportLayout": "Layout",
+  "exportContentWidth": "Maximum content width",
+  "exportOutput": "Output",
+  "exportPackaging": "Packaging",
+  "exportSingleFile": "Single HTML file",
+  "exportAssetsDirectory": "HTML + assets directory",
+  "exportCustomCss": "Custom stylesheet…",
+  "exportRemoveCss": "Remove custom stylesheet",
+  "exportCssNote": "Select an optional UTF-8 CSS file (up to 256 KiB). Imports, resource URLs, and executable or escaped CSS are not accepted. Styles are applied after BusyMark’s stylesheet. Remote resources are never fetched.",
+  "exportSitePackagingNote": "Writerside keeps separate linked topic pages. Single-file mode embeds resources in each page.",
+  "exportInvalidGeometry": "Leave at least 20 mm of content width and height after margins.",
+  "exportInvalidColor": "Enter a color as #RRGGBB.",
+  "exportInvalidCss": "Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.",
+  "exportInvalidRange": "{field}: enter a number between {minimum} and {maximum}.",
+  "@exportInvalidRange": {
+    "description": "Invalid numeric export setting.",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "minimum": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      }
+    }
+  }
 }

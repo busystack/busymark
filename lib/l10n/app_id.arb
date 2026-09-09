@@ -178,6 +178,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Salin",
+  "copyPlainText": "Salin sebagai teks biasa",
+  "clipboardCopyFailed": "Konten yang dipilih tidak dapat disalin ke papan klip.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -325,10 +327,6 @@
   "paste": "Tempel",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Tempel tanpa memformat",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Membaca",
   "@reading": {
@@ -1497,6 +1495,10 @@
   "removeTocElement": "Hapus elemen TOC",
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "removeTocElements": "Hapus elemen TOC",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Tinjau penggunaan",
   "@reviewUsages": {
@@ -3691,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Format keluaran",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Mengekspor PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -4633,5 +4639,69 @@
   "aiExplicitEditingDescription": "Pengeditan AI bersifat eksplisit. BusyMark hanya mengirimkan konteks yang ditampilkan untuk penyedia yang dipilih dan tidak pernah menerapkan proposal tanpa peninjauan.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Ekspor sebagai HTML…",
+  "fileTypeHtml": "Dokumen HTML",
+  "exportingHtml": "Mengekspor HTML…",
+  "htmlExported": "Ekspor HTML selesai",
+  "htmlExportFailed": "Ekspor HTML gagal",
+  "htmlKeepAssetsTogether": "Saat menyalin hasil ekspor, simpan berkas HTML bersama folder aset pendampingnya.",
+  "htmlInstanceDescription": "Ekspor satu instans sebagai halaman luring yang saling tertaut. Pilih nama untuk folder keluaran khusus.",
+  "htmlInstance": "Instans",
+  "htmlOwnedDirectoryOnly": "Hanya folder yang dibuat oleh ekspor HTML BusyMark yang dapat diganti. Berkas yang diubah atau tidak terkait akan dipertahankan.",
+  "showInFolder": "Tampilkan dalam Folder",
+  "goToDeclaration": "Buka Deklarasi",
+  "findUsages": "Cari Penggunaan",
+  "cannotRenameSymbol": "Nama simbol tidak dapat diubah dengan aman. Periksa nama dan segarkan referensi sebelum mencoba lagi.",
+  "keyboardLayout": "Tata letak papan ketik",
+  "diagnosticWritersideUnsupported": "Konten yang tidak didukung atau salah format ditampilkan sebagai sumber.",
+  "diagnosticWritersideSource": "Tidak dapat menyelesaikan sumber “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Tujuan tautan tidak tersedia dalam instans ini: {destination}",
+  "diagnosticWritersideSchema": "Markup Writerside tidak valid: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Gunakan <llms-txt>true</llms-txt> atau <llms-txt>false</llms-txt>; single-file tidak lagi didukung.",
+  "diagnosticWritersideReference": "Tidak dapat menyelesaikan {kind}: {reference}",
+  "sortTableColumn": "Urutkan {column}",
+  "exportReset": "Pulihkan nilai bawaan",
+  "exportToc": "Sertakan daftar isi",
+  "exportTocDepth": "Kedalaman daftar isi",
+  "exportNumberHeadings": "Nomori judul",
+  "exportLegal": "US Legal",
+  "exportCustom": "Khusus",
+  "exportPageWidth": "Lebar halaman (mm)",
+  "exportPageHeight": "Tinggi halaman (mm)",
+  "exportMarginTop": "Margin atas (mm)",
+  "exportMarginRight": "Margin kanan (mm)",
+  "exportMarginBottom": "Margin bawah (mm)",
+  "exportMarginLeft": "Margin kiri (mm)",
+  "exportTypography": "Tipografi",
+  "exportSans": "Tanpa serif",
+  "exportSerif": "Berserif",
+  "exportBodySize": "Ukuran huruf isi",
+  "exportCodeSize": "Ukuran huruf kode",
+  "exportRunningText": "Kepala dan kaki halaman",
+  "exportHeader": "Kepala halaman",
+  "exportFooter": "Kaki halaman",
+  "exportNone": "Tidak ada",
+  "exportDocumentTitle": "Judul dokumen",
+  "exportBottomLeft": "Kiri bawah",
+  "exportBottomCenter": "Tengah bawah",
+  "exportBottomRight": "Kanan bawah",
+  "exportFirstPage": "Tampilkan kepala dan kaki pada halaman pertama",
+  "exportAccent": "Warna aksen / tautan",
+  "exportTheme": "Tema",
+  "exportAutomatic": "Otomatis",
+  "exportLayout": "Tata letak",
+  "exportContentWidth": "Lebar isi maksimum",
+  "exportOutput": "Keluaran",
+  "exportPackaging": "Pengemasan",
+  "exportSingleFile": "Satu berkas HTML",
+  "exportAssetsDirectory": "HTML + folder aset",
+  "exportCustomCss": "Lembar gaya khusus…",
+  "exportRemoveCss": "Hapus lembar gaya khusus",
+  "exportCssNote": "Pilih berkas CSS UTF-8 opsional (hingga 256 KiB). Impor, URL sumber daya, serta CSS yang dapat dieksekusi atau memakai escape ditolak. Gaya diterapkan setelah CSS BusyMark. Sumber daya jarak jauh tidak diunduh.",
+  "exportSitePackagingNote": "Writerside mempertahankan halaman topik terpisah yang saling tertaut. Mode berkas tunggal menyematkan sumber daya di setiap halaman.",
+  "exportInvalidGeometry": "Sisakan lebar dan tinggi isi minimal 20 mm setelah margin.",
+  "exportInvalidColor": "Masukkan warna sebagai #RRGGBB.",
+  "exportInvalidCss": "Pilih berkas .css UTF-8 yang dapat dibaca hingga 256 KiB, tanpa impor, URL sumber daya, HTML, atau CSS yang dapat dieksekusi atau memakai escape.",
+  "exportInvalidRange": "{field}: masukkan angka antara {minimum} dan {maximum}."
 }

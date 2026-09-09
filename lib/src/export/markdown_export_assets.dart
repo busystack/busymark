@@ -123,7 +123,7 @@ class MarkdownExportAssetStager {
         }
         final bytes = await File(resolved).readAsBytes();
         cancellationToken.throwIfCancelled();
-        if (!_hasExpectedFormat(bytes, extension)) {
+        if (!hasExpectedFormat(bytes, extension)) {
           warnings.add(
             MarkdownPdfWarning(
               MarkdownPdfWarningCode.imageUnsupported,
@@ -163,7 +163,8 @@ class MarkdownExportAssetStager {
     }
   }
 
-  bool _hasExpectedFormat(List<int> bytes, String extension) {
+  /// Shared signature validation for offline export backends.
+  bool hasExpectedFormat(List<int> bytes, String extension) {
     bool startsWith(List<int> signature) {
       if (bytes.length < signature.length) {
         return false;

@@ -1,57 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 import '../markdown/markdown_model.dart';
+import 'export_options.dart';
 import '../markdown/busymark_document.dart';
 
-enum MarkdownPdfPageSize { a4, letter }
-
-enum MarkdownPdfOrientation { portrait, landscape }
-
-enum MarkdownPdfMargin { narrow, normal, wide }
-
-@immutable
-class MarkdownPdfOptions {
-  const MarkdownPdfOptions({
-    this.pageSize = MarkdownPdfPageSize.a4,
-    this.orientation = MarkdownPdfOrientation.portrait,
-    this.margin = MarkdownPdfMargin.normal,
-    this.pageNumbers = true,
-  });
-
-  final MarkdownPdfPageSize pageSize;
-  final MarkdownPdfOrientation orientation;
-  final MarkdownPdfMargin margin;
-  final bool pageNumbers;
-
-  MarkdownPdfOptions copyWith({
-    MarkdownPdfPageSize? pageSize,
-    MarkdownPdfOrientation? orientation,
-    MarkdownPdfMargin? margin,
-    bool? pageNumbers,
-  }) {
-    return MarkdownPdfOptions(
-      pageSize: pageSize ?? this.pageSize,
-      orientation: orientation ?? this.orientation,
-      margin: margin ?? this.margin,
-      pageNumbers: pageNumbers ?? this.pageNumbers,
-    );
-  }
-
-  Map<String, Object> toJson() {
-    final (horizontalMargin, verticalMargin) = switch (margin) {
-      MarkdownPdfMargin.narrow => (36, 36),
-      MarkdownPdfMargin.normal => (57, 57),
-      MarkdownPdfMargin.wide => (78, 72),
-    };
-    return {
-      'paper': pageSize == MarkdownPdfPageSize.a4 ? 'a4' : 'us-letter',
-      'landscape': orientation == MarkdownPdfOrientation.landscape,
-      'marginHorizontalPt': horizontalMargin,
-      'marginVerticalPt': verticalMargin,
-      'pageNumbers': pageNumbers,
-    };
-  }
-}
+export 'export_options.dart';
 
 enum MarkdownPdfWarningCode {
   remoteImageSkipped,
@@ -92,7 +45,7 @@ class MarkdownPdfExportRequest {
   final String filePath;
   final String workspaceRoot;
   final String destinationPath;
-  final MarkdownPdfOptions options;
+  final PdfExportOptions options;
   final bool overwrite;
   final MarkdownMode mode;
 

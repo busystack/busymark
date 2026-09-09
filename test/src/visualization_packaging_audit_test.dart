@@ -4,6 +4,24 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('README screenshot references resolve to checked-in images', () {
+    final readme = File('README.md').readAsStringSync();
+    final screenshotPaths = RegExp(
+      r'<img src="(docs/screenshots/[^"]+)"',
+    ).allMatches(readme).map((match) => match.group(1)!).toSet();
+
+    expect(screenshotPaths, isNotEmpty);
+    for (final path in screenshotPaths) {
+      final screenshot = File(path);
+      expect(screenshot.existsSync(), isTrue, reason: '$path is missing');
+      expect(
+        screenshot.lengthSync(),
+        greaterThan(1024),
+        reason: '$path is not a usable screenshot',
+      );
+    }
+  });
+
   test('release metadata is consistent and production-grade', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
@@ -11,10 +29,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.3\.4$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.3\.5$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.3\.4"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.3\.5"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -39,9 +57,9 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.3.4"'));
-    expect(pubspec, isNot(contains('0.3.44')));
-    expect(snapcraft, isNot(contains('0.3.44')));
+    expect(metainfo, contains('<release version="0.3.5"'));
+    expect(pubspec, isNot(contains('0.3.55')));
+    expect(snapcraft, isNot(contains('0.3.55')));
   });
 
   test(
@@ -157,6 +175,14 @@ void main() {
     expect(workflow, contains('BUSYMARK_D2_PATH:'));
     expect(workflow, contains('BUSYMARK_TYPST_PATH:'));
     expect(workflow, contains('tools/visualization_smoke.py'));
+    expect(workflow, contains('--demo test/fixtures/markdown/basic.md'));
+    expect(
+      workflow,
+      contains(
+        '--plantuml-corpus '
+        'test/fixtures/visualization/plantuml-conformance.md',
+      ),
+    );
     expect(workflow, contains('GDK_BACKEND=wayland'));
     expect(workflow, contains('snapcore/action-build@v1'));
     expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
@@ -169,6 +195,15 @@ void main() {
     expect(workflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
     expect(workflow, contains('visualization-smoke.pdf'));
     final smoke = File('tools/visualization_smoke.py').readAsStringSync();
+    expect(smoke, isNot(contains('demo/')));
+    for (final fixture in <String>[
+      'test/fixtures/markdown/basic.md',
+      'test/fixtures/visualization/openapi-local-reference.md',
+      'test/fixtures/visualization/openapi/components.yaml',
+      'test/fixtures/visualization/plantuml-conformance.md',
+    ]) {
+      expect(File(fixture).existsSync(), isTrue, reason: '$fixture must exist');
+    }
     expect(smoke, contains('terminate_web_process'));
     expect(smoke, contains('WebKit process termination and recovery'));
     expect(smoke, contains('smoke-responsive-gradient'));

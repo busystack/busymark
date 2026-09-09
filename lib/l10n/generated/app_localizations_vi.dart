@@ -154,6 +154,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get copy => 'Sao chép';
 
   @override
+  String get copyPlainText => 'Sao chép dưới dạng văn bản thuần';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.';
+
+  @override
   String get copyName => 'Sao chép tên';
 
   @override
@@ -260,9 +267,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get paste => 'Dán';
-
-  @override
-  String get pasteWithoutFormatting => 'Dán không định dạng';
 
   @override
   String get reading => 'Đọc';
@@ -1198,6 +1202,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get removeTocElement => 'Xóa phần tử mục lục';
+
+  @override
+  String get removeTocElements => 'Xóa các phần tử mục lục';
 
   @override
   String get reviewUsages => 'Xem lại các tham chiếu';
@@ -2953,6 +2960,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get export => 'Xuất';
 
   @override
+  String get exportFormat => 'Định dạng đầu ra';
+
+  @override
   String get exportingPdf => 'Đang xuất PDF…';
 
   @override
@@ -3660,4 +3670,222 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get displayMath => 'Toán hiển thị';
+
+  @override
+  String get goToDeclaration => 'Đi đến khai báo';
+
+  @override
+  String get findUsages => 'Tìm nơi sử dụng';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.';
+
+  @override
+  String get keyboardLayout => 'Bố cục bàn phím';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Không thể phân giải nguồn “$reference”: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Đích liên kết không khả dụng trong phiên bản này: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Đánh dấu Writerside không hợp lệ: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Không thể phân giải $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Xuất dưới dạng HTML…';
+
+  @override
+  String get fileTypeHtml => 'Tài liệu HTML';
+
+  @override
+  String get exportingHtml => 'Đang xuất HTML…';
+
+  @override
+  String get htmlExported => 'Xuất HTML hoàn tất';
+
+  @override
+  String get htmlExportFailed => 'Xuất HTML thất bại';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.';
+
+  @override
+  String get htmlInstance => 'Phiên bản';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.';
+
+  @override
+  String get showInFolder => 'Hiển thị trong thư mục';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sắp xếp $column';
+  }
+
+  @override
+  String get exportReset => 'Khôi phục mặc định';
+
+  @override
+  String get exportToc => 'Bao gồm mục lục';
+
+  @override
+  String get exportTocDepth => 'Độ sâu mục lục';
+
+  @override
+  String get exportNumberHeadings => 'Đánh số tiêu đề';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Tùy chỉnh';
+
+  @override
+  String get exportPageWidth => 'Chiều rộng trang (mm)';
+
+  @override
+  String get exportPageHeight => 'Chiều cao trang (mm)';
+
+  @override
+  String get exportMarginTop => 'Lề trên (mm)';
+
+  @override
+  String get exportMarginRight => 'Lề phải (mm)';
+
+  @override
+  String get exportMarginBottom => 'Lề dưới (mm)';
+
+  @override
+  String get exportMarginLeft => 'Lề trái (mm)';
+
+  @override
+  String get exportTypography => 'Kiểu chữ';
+
+  @override
+  String get exportSans => 'Không chân';
+
+  @override
+  String get exportSerif => 'Có chân';
+
+  @override
+  String get exportBodySize => 'Cỡ chữ nội dung';
+
+  @override
+  String get exportCodeSize => 'Cỡ chữ mã';
+
+  @override
+  String get exportRunningText => 'Đầu trang và chân trang';
+
+  @override
+  String get exportHeader => 'Đầu trang';
+
+  @override
+  String get exportFooter => 'Chân trang';
+
+  @override
+  String get exportNone => 'Không có';
+
+  @override
+  String get exportDocumentTitle => 'Tiêu đề tài liệu';
+
+  @override
+  String get exportBottomLeft => 'Dưới bên trái';
+
+  @override
+  String get exportBottomCenter => 'Dưới ở giữa';
+
+  @override
+  String get exportBottomRight => 'Dưới bên phải';
+
+  @override
+  String get exportFirstPage => 'Hiện đầu trang và chân trang ở trang đầu';
+
+  @override
+  String get exportAccent => 'Màu nhấn / liên kết';
+
+  @override
+  String get exportTheme => 'Giao diện';
+
+  @override
+  String get exportAutomatic => 'Tự động';
+
+  @override
+  String get exportLayout => 'Bố cục';
+
+  @override
+  String get exportContentWidth => 'Chiều rộng nội dung tối đa';
+
+  @override
+  String get exportOutput => 'Đầu ra';
+
+  @override
+  String get exportPackaging => 'Đóng gói';
+
+  @override
+  String get exportSingleFile => 'Một tệp HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + thư mục tài nguyên';
+
+  @override
+  String get exportCustomCss => 'Biểu định kiểu tùy chỉnh…';
+
+  @override
+  String get exportRemoveCss => 'Xóa biểu định kiểu tùy chỉnh';
+
+  @override
+  String get exportCssNote =>
+      'Chọn tệp CSS UTF-8 tùy chọn (tối đa 256 KiB). Không chấp nhận nhập tài nguyên, URL tài nguyên, CSS thực thi hoặc có ký tự thoát. Kiểu được áp dụng sau CSS của BusyMark. Không tải tài nguyên từ xa.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside giữ các trang chủ đề riêng có liên kết. Chế độ một tệp nhúng tài nguyên vào từng trang.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Sau khi trừ lề, hãy để nội dung rộng và cao ít nhất 20 mm.';
+
+  @override
+  String get exportInvalidColor => 'Nhập màu theo dạng #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: nhập số từ $minimum đến $maximum.';
+  }
 }

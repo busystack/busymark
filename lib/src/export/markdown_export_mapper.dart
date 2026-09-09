@@ -1,20 +1,10 @@
-import 'package:path/path.dart' as p;
+import '../markdown/table_grid.dart';
 
 import '../core/uri_utils.dart';
 import '../markdown/busymark_document.dart';
 import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
-
-const double busyMarkPdfBodyTextSize = 10.5;
-
-double busyMarkPdfHeadingTextSize(int level) => switch (level.clamp(1, 6)) {
-  1 => 22,
-  2 => 17,
-  3 => 13.5,
-  4 => 11.5,
-  5 || 6 => busyMarkPdfBodyTextSize,
-  _ => busyMarkPdfBodyTextSize,
-};
+import 'export_metadata_mapper.dart';
 
 class MarkdownExportMapper {
   const MarkdownExportMapper();
@@ -24,49 +14,8 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides = const {},
   }) {
     return MarkdownExportDocument(
-      metadata: _metadata(document),
+      metadata: const ExportMetadataMapper().map(document),
       blocks: _mapBlocks(document.blocks, blockOverrides),
-    );
-  }
-
-  MarkdownExportMetadata _metadata(BusyDocument document) {
-    final frontMatter = {
-      for (final entry in document.frontMatter.entries)
-        entry.key.toLowerCase().trim(): entry.value.trim(),
-    };
-    final title = _firstNonEmpty([
-      frontMatter['title'],
-      document.title,
-      document.filePath.isEmpty
-          ? null
-          : p.basenameWithoutExtension(document.filePath),
-      'Untitled',
-    ])!;
-    final keywords = _firstNonEmpty([
-      frontMatter['keywords'],
-      frontMatter['tags'],
-    ]);
-    return MarkdownExportMetadata(
-      title: title,
-      author:
-          _firstNonEmpty([frontMatter['author'], frontMatter['authors']]) ?? '',
-      description:
-          _firstNonEmpty([
-            frontMatter['description'],
-            frontMatter['summary'],
-          ]) ??
-          '',
-      language: _normalizedLanguage(
-        _firstNonEmpty([frontMatter['lang'], frontMatter['language']]),
-      ),
-      keywords: keywords == null
-          ? const []
-          : keywords
-                .split(RegExp(r'[,;]'))
-                .map((value) => value.trim())
-                .where((value) => value.isNotEmpty)
-                .take(32)
-                .toList(growable: false),
     );
   }
 
@@ -76,12 +25,28 @@ class MarkdownExportMapper {
   ) {
     final result = <MarkdownExportBlock>[];
     var index = 0;
+    String? currentVariant;
     while (index < blocks.length) {
       final block = blocks[index];
       if (block.isSourceOnly) {
         index++;
         continue;
       }
+      final variant = block.attributes['switcher-key'];
+      if (variant != null && variant != currentVariant) {
+        result.add(
+          MarkdownExportBlock(
+            kind: MarkdownExportBlockKind.paragraph,
+            inlines: [
+              MarkdownExportInline(
+                kind: MarkdownExportInlineKind.strong,
+                text: variant,
+              ),
+            ],
+          ),
+        );
+      }
+      currentVariant = variant;
       final override = blockOverrides[block.id];
       if (override != null) {
         result.add(override);
@@ -121,7 +86,19 @@ class MarkdownExportMapper {
       }
       final mapped = _mapBlock(block, blockOverrides);
       if (mapped != null) {
-        result.add(mapped);
+        result.add(
+          mapped.copyWith(
+            attributes: {
+              ...mapped.attributes,
+              if (block.attributes['pdf-anchor'] case final anchor?)
+                'anchor': anchor,
+            },
+          ),
+        );
+        if (block.kind == BusyBlockKind.heading ||
+            block.kind == BusyBlockKind.paragraph) {
+          result.addAll(_mapBlocks(block.children, blockOverrides));
+        }
       }
       index++;
     }
@@ -195,7 +172,22 @@ class MarkdownExportMapper {
         block,
         blockOverrides,
       ),
-      BusyBlockKind.writersideTabs ||
+      BusyBlockKind.writersideTabs
+          when block.attributes['topic-switcher'] == 'true' =>
+        null,
+      BusyBlockKind.writersideTabs => MarkdownExportBlock(
+        kind: MarkdownExportBlockKind.group,
+        children: [
+          if (block.plainText.isNotEmpty)
+            MarkdownExportBlock(
+              kind: MarkdownExportBlockKind.paragraph,
+              inlines: _mapInlines([
+                BusyInline(kind: BusyInlineKind.strong, text: block.plainText),
+              ]),
+            ),
+          ..._mapBlocks(block.children, blockOverrides),
+        ],
+      ),
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.unknown => MarkdownExportBlock(
@@ -214,6 +206,7 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
     final style = busyAdmonitionStyleFromName(block.attributes['style']);
+    final title = block.attributes['title'];
     final admonition =
         block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true' &&
         style != BusyAdmonitionStyle.quote;
@@ -223,7 +216,10 @@ class MarkdownExportMapper {
           : MarkdownExportBlockKind.blockquote,
       inlines: _mapInlines(block.inlines),
       children: _mapBlocks(block.children, blockOverrides),
-      attributes: {if (admonition) 'style': style?.name ?? 'tip'},
+      attributes: {
+        if (admonition) 'style': style?.name ?? 'tip',
+        if (admonition && title != null) 'title': title,
+      },
     );
   }
 
@@ -231,6 +227,7 @@ class MarkdownExportMapper {
     BusyBlock block,
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
+    final title = block.attributes['title'];
     final style =
         busyAdmonitionStyleFromName(
           block.attributes['style'] ?? block.attributes['element'],
@@ -242,7 +239,10 @@ class MarkdownExportMapper {
           : MarkdownExportBlockKind.admonition,
       inlines: _mapInlines(block.inlines),
       children: _mapBlocks(block.children, blockOverrides),
-      attributes: {if (style != BusyAdmonitionStyle.quote) 'style': style.name},
+      attributes: {
+        if (style != BusyAdmonitionStyle.quote) 'style': style.name,
+        if (style != BusyAdmonitionStyle.quote && title != null) 'title': title,
+      },
     );
   }
 
@@ -251,13 +251,11 @@ class MarkdownExportMapper {
         int.tryParse(block.attributes['level'] ?? '')?.clamp(1, 6) ?? 1;
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.heading,
-      inlines: _mapInlines(
-        block.inlines,
-        mathEm: busyMarkPdfHeadingTextSize(level),
-      ),
+      inlines: _mapInlines(block.inlines),
       attributes: {
         'level': level,
         if (_safeAnchor(block.attributes['id']) case final id?) 'id': id,
+        if (block.attributes['pdf-outline'] == 'false') 'outlined': false,
       },
     );
   }
@@ -266,21 +264,55 @@ class MarkdownExportMapper {
     BusyBlock table,
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
+    final grid = TableGrid.place(
+      table.children.map((row) => row.children).toList(),
+      (cell) => cell.attributes,
+    );
     return MarkdownExportBlock(
       kind: MarkdownExportBlockKind.table,
+      attributes: {
+        'columnCount': grid.columns,
+        'fixedColumns': table.attributes['column-width'] == 'fixed',
+        'columnWidths': [
+          for (var column = 0; column < grid.columns; column++)
+            grid.cells
+                    .where(
+                      (cell) =>
+                          cell.column == column &&
+                          cell.colspan == 1 &&
+                          cell.value.attributes.containsKey('width'),
+                    )
+                    .firstOrNull
+                    ?.value
+                    .attributes['width'] ??
+                '',
+        ],
+      },
       children: [
-        for (final row in table.children)
+        for (final (rowIndex, row) in table.children.indexed)
           MarkdownExportBlock(
             kind: MarkdownExportBlockKind.tableRow,
             attributes: {'header': row.attributes['header'] == 'true'},
             children: [
-              for (final cell in row.children)
+              for (final placement in grid.cells.where(
+                (cell) => cell.row == rowIndex,
+              ))
                 MarkdownExportBlock(
                   kind: MarkdownExportBlockKind.tableCell,
-                  inlines: _mapInlines(cell.inlines),
-                  children: _mapBlocks(cell.children, blockOverrides),
+                  inlines: _mapInlines(placement.value.inlines),
+                  children: _mapBlocks(
+                    placement.value.children,
+                    blockOverrides,
+                  ),
                   attributes: {
-                    if (_safeAlignment(cell.attributes['align'])
+                    'x': placement.column,
+                    'y': placement.row,
+                    'colspan': placement.colspan,
+                    'rowspan': placement.rowspan,
+                    'header':
+                        placement.value.attributes['header'] == 'true' ||
+                        row.attributes['header'] == 'true',
+                    if (_safeAlignment(placement.value.attributes['align'])
                         case final alignment?)
                       'align': alignment,
                   },
@@ -329,20 +361,12 @@ class MarkdownExportMapper {
     );
   }
 
-  List<MarkdownExportInline> _mapInlines(
-    List<BusyInline> inlines, {
-    double mathEm = busyMarkPdfBodyTextSize,
-  }) {
-    return List.unmodifiable(
-      inlines.map((inline) => _mapInline(inline, mathEm: mathEm)),
-    );
+  List<MarkdownExportInline> _mapInlines(List<BusyInline> inlines) {
+    return List.unmodifiable(inlines.map(_mapInline));
   }
 
-  MarkdownExportInline _mapInline(
-    BusyInline inline, {
-    double mathEm = busyMarkPdfBodyTextSize,
-  }) {
-    final children = _mapInlines(inline.children, mathEm: mathEm);
+  MarkdownExportInline _mapInline(BusyInline inline) {
+    final children = _mapInlines(inline.children);
     return switch (inline.kind) {
       BusyInlineKind.text => MarkdownExportInline(
         kind: MarkdownExportInlineKind.text,
@@ -362,6 +386,10 @@ class MarkdownExportMapper {
         kind: MarkdownExportInlineKind.underline,
         text: inline.text,
         children: children,
+        attributes: {
+          if (inline.attributes['summary'] case final summary?)
+            'summary': summary,
+        },
       ),
       BusyInlineKind.strikethrough => MarkdownExportInline(
         kind: MarkdownExportInlineKind.strikethrough,
@@ -378,8 +406,6 @@ class MarkdownExportMapper {
         attributes: {
           'mathId': inline.attributes['expressionId'] ?? inline.text,
           'display': 'false',
-          'renderEm': '$mathEm',
-          'renderEx': '${mathEm / 2}',
           if (inline.attributes['mathSourceForm'] case final sourceForm?)
             'sourceForm': sourceForm,
         },
@@ -387,8 +413,21 @@ class MarkdownExportMapper {
       BusyInlineKind.link => MarkdownExportInline(
         kind: MarkdownExportInlineKind.link,
         text: inline.text,
-        destination: _safeLinkDestination(inline.destination),
+        destination:
+            inline.attributes['element'] == 'resource' &&
+                inline.attributes['resolved-resource-path']?.isNotEmpty ==
+                    true &&
+                Uri.file(
+                      inline.attributes['resolved-resource-path']!,
+                    ).toString() ==
+                    inline.destination
+            ? inline.destination
+            : _safeLinkDestination(inline.destination),
         children: children,
+        attributes: {
+          if (inline.attributes['summary'] case final summary?)
+            'summary': summary,
+        },
       ),
       BusyInlineKind.image => MarkdownExportInline(
         kind: MarkdownExportInlineKind.image,
@@ -482,23 +521,5 @@ class MarkdownExportMapper {
     return const {'left', 'center', 'right'}.contains(normalized)
         ? normalized
         : null;
-  }
-
-  String _normalizedLanguage(String? value) {
-    final normalized = value?.trim().replaceAll('_', '-').toLowerCase();
-    if (normalized == null ||
-        !RegExp(r'^[a-z]{2,3}(?:-[a-z]{2})?$').hasMatch(normalized)) {
-      return 'en';
-    }
-    return normalized.split('-').first;
-  }
-
-  String? _firstNonEmpty(Iterable<String?> values) {
-    for (final value in values) {
-      if (value != null && value.trim().isNotEmpty) {
-        return value.trim();
-      }
-    }
-    return null;
   }
 }

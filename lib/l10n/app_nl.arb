@@ -178,6 +178,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopiëren",
+  "copyPlainText": "Kopiëren als platte tekst",
+  "clipboardCopyFailed": "De selectie kon niet naar het klembord worden gekopieerd.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -325,10 +327,6 @@
   "paste": "Plakken",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Plakken zonder opmaak",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Lezen",
   "@reading": {
@@ -1497,6 +1495,10 @@
   "removeTocElement": "TOC-element verwijderen",
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "removeTocElements": "TOC-elementen verwijderen",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Gebruik controleren",
   "@reviewUsages": {
@@ -3691,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Uitvoerformaat",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "PDF exporteren…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -4633,5 +4639,69 @@
   "aiExplicitEditingDescription": "AI-bewerking is expliciet. BusyMark stuurt alleen de weergegeven context naar de geselecteerde provider en past nooit een voorstel toe zonder beoordeling.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exporteren als HTML…",
+  "fileTypeHtml": "HTML-document",
+  "exportingHtml": "HTML exporteren…",
+  "htmlExported": "HTML-export voltooid",
+  "htmlExportFailed": "HTML-export mislukt",
+  "htmlKeepAssetsTogether": "Houd het HTML-bestand en de bijbehorende middelenmap bij elkaar wanneer u deze export kopieert.",
+  "htmlInstanceDescription": "Exporteer één instantie als gekoppelde offline pagina’s. Kies een naam voor een aparte uitvoermap.",
+  "htmlInstance": "Instantie",
+  "htmlOwnedDirectoryOnly": "Alleen een map die door BusyMark HTML-export is gemaakt kan worden vervangen. Gewijzigde of andere bestanden blijven behouden.",
+  "showInFolder": "Tonen in map",
+  "goToDeclaration": "Ga naar declaratie",
+  "findUsages": "Gebruik zoeken",
+  "cannotRenameSymbol": "Het symbool kan niet veilig worden hernoemd. Controleer de naam en vernieuw de verwijzing voordat u het opnieuw probeert.",
+  "keyboardLayout": "Toetsenbordindeling",
+  "diagnosticWritersideUnsupported": "Niet-ondersteunde of ongeldige inhoud wordt als broncode getoond.",
+  "diagnosticWritersideSource": "Bron ‘{reference}’ kan niet worden gevonden: {reason}",
+  "diagnosticWritersideLink": "Het linkdoel is niet beschikbaar in deze instantie: {destination}",
+  "diagnosticWritersideSchema": "Ongeldige Writerside-opmaak: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Gebruik <llms-txt>true</llms-txt> of <llms-txt>false</llms-txt>; single-file wordt niet meer ondersteund.",
+  "diagnosticWritersideReference": "{kind} kan niet worden gevonden: {reference}",
+  "sortTableColumn": "{column} sorteren",
+  "exportReset": "Standaardwaarden herstellen",
+  "exportToc": "Inhoudsopgave opnemen",
+  "exportTocDepth": "Diepte inhoudsopgave",
+  "exportNumberHeadings": "Koppen nummeren",
+  "exportLegal": "US Legal",
+  "exportCustom": "Aangepast",
+  "exportPageWidth": "Paginabreedte (mm)",
+  "exportPageHeight": "Paginahoogte (mm)",
+  "exportMarginTop": "Bovenmarge (mm)",
+  "exportMarginRight": "Rechtermarge (mm)",
+  "exportMarginBottom": "Ondermarge (mm)",
+  "exportMarginLeft": "Linkermarge (mm)",
+  "exportTypography": "Typografie",
+  "exportSans": "Schreefloos",
+  "exportSerif": "Met schreef",
+  "exportBodySize": "Tekstgrootte",
+  "exportCodeSize": "Codegrootte",
+  "exportRunningText": "Kop- en voettekst",
+  "exportHeader": "Koptekst",
+  "exportFooter": "Voettekst",
+  "exportNone": "Geen",
+  "exportDocumentTitle": "Documenttitel",
+  "exportBottomLeft": "Linksonder",
+  "exportBottomCenter": "Middenonder",
+  "exportBottomRight": "Rechtsonder",
+  "exportFirstPage": "Kop- en voettekst op de eerste pagina tonen",
+  "exportAccent": "Accent-/linkkleur",
+  "exportTheme": "Thema",
+  "exportAutomatic": "Automatisch",
+  "exportLayout": "Indeling",
+  "exportContentWidth": "Maximale inhoudsbreedte",
+  "exportOutput": "Uitvoer",
+  "exportPackaging": "Verpakking",
+  "exportSingleFile": "Eén HTML-bestand",
+  "exportAssetsDirectory": "HTML + middelenmap",
+  "exportCustomCss": "Aangepast stijlblad…",
+  "exportRemoveCss": "Aangepast stijlblad verwijderen",
+  "exportCssNote": "Kies een optioneel UTF-8-CSS-bestand (maximaal 256 KiB). Imports, bron-URL’s en uitvoerbare of ontsnapte CSS worden geweigerd. De stijlen volgen die van BusyMark. Externe bronnen worden nooit opgehaald.",
+  "exportSitePackagingNote": "Writerside behoudt aparte gekoppelde onderwerppagina’s. De enkelbestandsmodus sluit bronnen in elke pagina in.",
+  "exportInvalidGeometry": "Laat na de marges minimaal 20 mm inhoudsbreedte en -hoogte over.",
+  "exportInvalidColor": "Voer een kleur in als #RRGGBB.",
+  "exportInvalidCss": "Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.",
+  "exportInvalidRange": "{field}: voer een getal tussen {minimum} en {maximum} in."
 }

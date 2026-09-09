@@ -153,6 +153,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copy => 'کپی';
 
   @override
+  String get copyPlainText => 'کپی به‌صورت متن ساده';
+
+  @override
+  String get clipboardCopyFailed =>
+      'امکان کپی کردن محتوای انتخاب‌شده در کلیپ‌بورد وجود نداشت.';
+
+  @override
   String get copyName => 'کپی نام';
 
   @override
@@ -259,9 +266,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get paste => 'جای‌گذاری';
-
-  @override
-  String get pasteWithoutFormatting => 'جای‌گذاری بدون قالب‌بندی';
 
   @override
   String get reading => 'حالت مطالعه';
@@ -1227,6 +1231,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get removeTocElement => 'حذف عنصر فهرست مطالب';
+
+  @override
+  String get removeTocElements => 'حذف عناصر فهرست مطالب';
 
   @override
   String get reviewUsages => 'مرور موارد استفاده';
@@ -3007,6 +3014,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get export => 'خروجی';
 
   @override
+  String get exportFormat => 'قالب خروجی';
+
+  @override
   String get exportingPdf => 'در حال تهیه PDF…';
 
   @override
@@ -3709,4 +3719,222 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get displayMath => 'ریاضی نمایشی';
+
+  @override
+  String get goToDeclaration => 'رفتن به اعلان';
+
+  @override
+  String get findUsages => 'یافتن کاربردها';
+
+  @override
+  String get cannotRenameSymbol =>
+      'نمی‌توان نام نماد را با اطمینان تغییر داد. نام را بررسی و ارجاع را تازه‌سازی کنید، سپس دوباره تلاش کنید.';
+
+  @override
+  String get keyboardLayout => 'چیدمان صفحه‌کلید';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'محتوای پشتیبانی‌نشده یا نامعتبر به‌صورت منبع نمایش داده می‌شود.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'منبع «$reference» قابل حل نیست: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'مقصد پیوند در این نمونه در دسترس نیست: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'نشانه‌گذاری نامعتبر Writerside: $element، $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'از <llms-txt>true</llms-txt> یا <llms-txt>false</llms-txt> استفاده کنید؛ single-file دیگر پشتیبانی نمی‌شود.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '$kind قابل حل نیست: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'خروجی به‌صورت HTML…';
+
+  @override
+  String get fileTypeHtml => 'سند HTML';
+
+  @override
+  String get exportingHtml => 'در حال ایجاد خروجی HTML…';
+
+  @override
+  String get htmlExported => 'خروجی HTML کامل شد';
+
+  @override
+  String get htmlExportFailed => 'ایجاد خروجی HTML ناموفق بود';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'هنگام کپی کردن خروجی، فایل HTML و پوشهٔ منابع همراه آن را کنار هم نگه دارید.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'یک نمونه را به‌صورت صفحه‌های آفلاین پیوندخورده خروجی بگیرید. نامی برای پوشهٔ خروجی اختصاصی انتخاب کنید.';
+
+  @override
+  String get htmlInstance => 'نمونه';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'فقط پوشه‌ای که با خروجی HTML در BusyMark ایجاد شده باشد قابل جایگزینی است. فایل‌های تغییریافته یا نامرتبط حفظ می‌شوند.';
+
+  @override
+  String get showInFolder => 'نمایش در پوشه';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'مرتب‌سازی $column';
+  }
+
+  @override
+  String get exportReset => 'بازنشانی به پیش‌فرض‌ها';
+
+  @override
+  String get exportToc => 'افزودن فهرست مطالب';
+
+  @override
+  String get exportTocDepth => 'عمق فهرست مطالب';
+
+  @override
+  String get exportNumberHeadings => 'شماره‌گذاری عنوان‌ها';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'سفارشی';
+
+  @override
+  String get exportPageWidth => 'عرض صفحه (میلی‌متر)';
+
+  @override
+  String get exportPageHeight => 'ارتفاع صفحه (میلی‌متر)';
+
+  @override
+  String get exportMarginTop => 'حاشیهٔ بالا (میلی‌متر)';
+
+  @override
+  String get exportMarginRight => 'حاشیهٔ راست (میلی‌متر)';
+
+  @override
+  String get exportMarginBottom => 'حاشیهٔ پایین (میلی‌متر)';
+
+  @override
+  String get exportMarginLeft => 'حاشیهٔ چپ (میلی‌متر)';
+
+  @override
+  String get exportTypography => 'حروف‌چینی';
+
+  @override
+  String get exportSans => 'بدون سریف';
+
+  @override
+  String get exportSerif => 'سریف';
+
+  @override
+  String get exportBodySize => 'اندازهٔ قلم متن';
+
+  @override
+  String get exportCodeSize => 'اندازهٔ قلم کد';
+
+  @override
+  String get exportRunningText => 'سرصفحه و پاصفحه';
+
+  @override
+  String get exportHeader => 'سرصفحه';
+
+  @override
+  String get exportFooter => 'پاصفحه';
+
+  @override
+  String get exportNone => 'هیچ‌کدام';
+
+  @override
+  String get exportDocumentTitle => 'عنوان سند';
+
+  @override
+  String get exportBottomLeft => 'پایین چپ';
+
+  @override
+  String get exportBottomCenter => 'پایین وسط';
+
+  @override
+  String get exportBottomRight => 'پایین راست';
+
+  @override
+  String get exportFirstPage => 'نمایش سرصفحه و پاصفحه در صفحهٔ نخست';
+
+  @override
+  String get exportAccent => 'رنگ تأکید / پیوند';
+
+  @override
+  String get exportTheme => 'پوسته';
+
+  @override
+  String get exportAutomatic => 'خودکار';
+
+  @override
+  String get exportLayout => 'چیدمان';
+
+  @override
+  String get exportContentWidth => 'بیشترین عرض محتوا';
+
+  @override
+  String get exportOutput => 'خروجی';
+
+  @override
+  String get exportPackaging => 'بسته‌بندی';
+
+  @override
+  String get exportSingleFile => 'یک فایل HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + پوشهٔ منابع';
+
+  @override
+  String get exportCustomCss => 'شیوه‌نامهٔ سفارشی…';
+
+  @override
+  String get exportRemoveCss => 'حذف شیوه‌نامهٔ سفارشی';
+
+  @override
+  String get exportCssNote =>
+      'یک فایل CSS اختیاری با UTF-8 انتخاب کنید (تا ۲۵۶ KiB). واردسازی، نشانی منابع و CSS اجرایی یا دارای نویسهٔ گریز پذیرفته نمی‌شود. سبک‌ها پس از CSS برنامه اعمال می‌شوند. منابع راه دور دریافت نمی‌شوند.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside صفحه‌های موضوعی جدا و پیوندخورده را نگه می‌دارد. حالت تک‌فایلی منابع را در هر صفحه جاسازی می‌کند.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'پس از حاشیه‌ها دست‌کم ۲۰ میلی‌متر عرض و ارتفاع برای محتوا باقی بگذارید.';
+
+  @override
+  String get exportInvalidColor => 'رنگ را به‌صورت #RRGGBB وارد کنید.';
+
+  @override
+  String get exportInvalidCss =>
+      'یک فایل .css خوانا با UTF-8 تا ۲۵۶ KiB انتخاب کنید، بدون واردسازی، نشانی منابع، HTML یا CSS اجرایی یا دارای نویسهٔ گریز.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: عددی بین $minimum و $maximum وارد کنید.';
+  }
 }

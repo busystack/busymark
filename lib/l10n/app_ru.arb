@@ -94,6 +94,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Копировать",
+  "copyPlainText": "Копировать как обычный текст",
+  "clipboardCopyFailed": "Не удалось скопировать выделенный фрагмент в буфер обмена.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -198,10 +200,6 @@
   "paste": "Вставить",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Вставить без форматирования",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Режим чтения",
   "@reading": {
@@ -2333,9 +2331,9 @@
   "gitBinaryFile": "Двоичный файл. BusyMark не отображает двоичные патчи.",
   "gitUnsavedChangesBanner": "Несохранённые изменения в редакторе не будут включены, пока вы их не сохраните.",
   "gitConfirmDiscardTitle": "Отменить изменения Git?",
-  "gitConfirmDiscardTracked": "{count, plural, one{Все проиндексированные и непроиндексированные изменения в выбранном отслеживаемом файле будут отменены, а файл будет восстановлен до состояния HEAD.} few{Все проиндексированные и непроиндексированные изменения в выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.} many{Все проиндексированные и непроиндексированные изменения в выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.} other{Все проиндексированные и непроиндексированные изменения в выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, one{Выбранный неотслеживаемый файл будет удалён.} few{Выбранные неотслеживаемые файлы будут удалены.} many{Выбранные неотслеживаемые файлы будут удалены.} other{Выбранные неотслеживаемые файлы будут удалены.}}",
-  "gitConfirmDiscardMixed": "{count, plural, one{Выбранный файл будет восстановлен или удалён в зависимости от его статуса Git.} few{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.} many{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.} other{Выбранные файлы будут восстановлены или удалены в зависимости от их статуса Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, one{Все проиндексированные и непроиндексированные изменения в {count} выбранном отслеживаемом файле будут отменены, а содержимое будет восстановлено до состояния HEAD.} few{Все проиндексированные и непроиндексированные изменения в {count} выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.} many{Все проиндексированные и непроиндексированные изменения в {count} выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.} other{Все проиндексированные и непроиндексированные изменения в {count} выбранных отслеживаемых файлах будут отменены, а файлы будут восстановлены до состояния HEAD.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, one{Будет удалён {count} выбранный неотслеживаемый файл.} few{Будут удалены {count} выбранных неотслеживаемых файла.} many{Будут удалены {count} выбранных неотслеживаемых файлов.} other{Будут удалены {count} выбранных неотслеживаемых файла.}}",
+  "gitConfirmDiscardMixed": "{count, plural, one{{count} выбранный файл будет восстановлен или удалён в зависимости от статуса Git.} few{{count} выбранных файла будут восстановлены или удалены в зависимости от их статуса Git.} many{{count} выбранных файлов будут восстановлены или удалены в зависимости от их статуса Git.} other{{count} выбранного файла будут восстановлены или удалены в зависимости от их статуса Git.}}",
   "gitConfirmSwitchBranchTitle": "Переключиться на {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark перезагрузит рабочую область с диска после переключения ветки в Git.",
   "gitConfirmPushSetUpstreamTitle": "Настроить upstream-ветку?",
@@ -2504,6 +2502,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "Удалить элементы оглавления",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "Просмотреть использования",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."
@@ -2534,7 +2536,7 @@
       }
     }
   },
-  "childTopicsPromoted": "{count, plural, one{1 дочерняя тема будет перемещена на уровень выше.} few{{count} дочерние темы будут перемещены на уровень выше.} many{{count} дочерних тем будут перемещены на уровень выше.} other{{count} дочерней темы будут перемещены на уровень выше.}}",
+  "childTopicsPromoted": "{count, plural, one{{count} дочерняя тема будет перемещена на уровень выше.} few{{count} дочерние темы будут перемещены на уровень выше.} many{{count} дочерних тем будут перемещены на уровень выше.} other{{count} дочерней темы будут перемещены на уровень выше.}}",
   "@childTopicsPromoted": {
     "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
     "placeholders": {
@@ -2580,7 +2582,7 @@
   "@topicUsageIncludes": {
     "description": "Usage group label for topic includes."
   },
-  "usageCount": "{count, plural, one{1 использование} few{{count} использования} many{{count} использований} other{{count} использования}}",
+  "usageCount": "{count, plural, one{{count} использование} few{{count} использования} many{{count} использований} other{{count} использования}}",
   "@usageCount": {
     "description": "Compact topic usage count.",
     "placeholders": {
@@ -2793,6 +2795,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Формат вывода",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Экспорт PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -2810,7 +2816,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "{fileName} экспортирован с {count, plural, =1{1 предупреждением} other{{count} предупреждениями}}.",
+  "pdfExportedWithWarnings": "{fileName} экспортирован с {count, plural, one{{count} предупреждением} few{{count} предупреждениями} many{{count} предупреждениями} other{{count} предупреждениями}}.",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some images were omitted.",
     "placeholders": {
@@ -2861,7 +2867,7 @@
   "gitStaged": "Индексированные",
   "gitUnstaged": "Неиндексированные",
   "gitFetch": "Получить",
-  "gitStagedFileCount": "{count, plural, =1{1 файл в индексе} few{{count} файла в индексе} many{{count} файлов в индексе} other{{count} файлов в индексе}}",
+  "gitStagedFileCount": "{count, plural, one{{count} файл в индексе} few{{count} файла в индексе} many{{count} файлов в индексе} other{{count} файлов в индексе}}",
   "gitOutsideWorkspace": "Вне рабочего пространства",
   "gitFileHistoryRequiresOpenFile": "Для истории файла требуется открытый файл Markdown.",
   "gitLoadMore": "Загрузить ещё",
@@ -3087,11 +3093,11 @@
   "reloadFromDisk": "Перезагрузить с диска",
   "keepMine": "Оставить мою версию",
   "saveAs": "Сохранить как",
-  "unsavedChangesMultipleMessage": "{count, plural, one{1 документ содержит несохранённые изменения. Сохраните его перед продолжением.} few{{count} документа содержат несохранённые изменения. Сохраните их перед продолжением.} many{{count} документов содержат несохранённые изменения. Сохраните их перед продолжением.} other{{count} документа содержит несохранённые изменения. Сохраните их перед продолжением.}}",
+  "unsavedChangesMultipleMessage": "{count, plural, one{{count} документ содержит несохранённые изменения. Сохранить каждый перед продолжением?} few{{count} документа содержат несохранённые изменения. Сохранить каждый перед продолжением?} many{{count} документов содержат несохранённые изменения. Сохранить каждый перед продолжением?} other{{count} документа содержит несохранённые изменения. Сохранить каждый перед продолжением?}}",
   "workspaceReplaceIssuePartialConflict": "Откат остановлен, поскольку файл был одновременно изменён. Некоторые замены могли сохраниться; вытесненное содержимое сохранено по указанному ниже пути.",
   "workspaceReplaceIssueApplyFailed": "Замены не применены, поскольку проверенный набор не удалось безопасно сохранить.",
-  "workspaceRecoveryRestored": "{count, plural, one{Восстановлен 1 несохранённый документ. Проверьте его перед сохранением или отменой.} few{Восстановлено {count} несохранённых документа. Проверьте каждый перед сохранением или отменой.} many{Восстановлено {count} несохранённых документов. Проверьте каждый перед сохранением или отменой.} other{Восстановлено {count} несохранённого документа. Проверьте его перед сохранением или отменой.}}",
-  "workspaceRecoveryDamaged": "{count, plural, one{Не удалось восстановить 1 повреждённую запись восстановления. Оригинальный файл восстановления сохранён для проверки.} few{Не удалось восстановить {count} повреждённые записи восстановления. Корректные записи восстановления остаются доступны.} many{Не удалось восстановить {count} повреждённых записей восстановления. Корректные записи восстановления остаются доступны.} other{Не удалось восстановить {count} повреждённой записи восстановления. Корректные записи восстановления остаются доступны.}}",
+  "workspaceRecoveryRestored": "{count, plural, one{Восстановлен {count} несохранённый документ. Проверьте каждый документ, прежде чем сохранить или отбросить его.} few{Восстановлено {count} несохранённых документа. Проверьте каждый документ, прежде чем сохранить или отбросить его.} many{Восстановлено {count} несохранённых документов. Проверьте каждый документ, прежде чем сохранить или отбросить его.} other{Восстановлено {count} несохранённого документа. Проверьте каждый документ, прежде чем сохранить или отбросить его.}}",
+  "workspaceRecoveryDamaged": "{count, plural, one{Не удалось восстановить {count} повреждённую запись восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.} few{Не удалось восстановить {count} повреждённые записи восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.} many{Не удалось восстановить {count} повреждённых записей восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.} other{Не удалось восстановить {count} повреждённой записи восстановления. Исходный файл восстановления сохранён для проверки; корректные записи остаются доступны.}}",
   "recoveredDocumentReview": "Восстановлено несохранённое содержимое файла {fileName}. Проверьте его, затем сохраните, сохраните как новый файл или отбросьте.",
   "commandUnavailableInContext": "Эта команда недоступна в текущем контексте.",
   "mathRenderFailed": "Не удалось отобразить математическое выражение.",
@@ -3100,5 +3106,69 @@
   "aiExplicitEditingDescription": "Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Экспортировать в HTML…",
+  "fileTypeHtml": "Документ HTML",
+  "exportingHtml": "Экспорт HTML…",
+  "htmlExported": "Экспорт HTML завершён",
+  "htmlExportFailed": "Не удалось экспортировать HTML",
+  "htmlKeepAssetsTogether": "При копировании сохраняйте файл HTML вместе с папкой его ресурсов.",
+  "htmlInstanceDescription": "Экспортируйте один экземпляр как связанные автономные страницы. Выберите имя отдельной папки вывода.",
+  "htmlInstance": "Экземпляр",
+  "htmlOwnedDirectoryOnly": "Можно заменить только папку, созданную экспортом HTML BusyMark. Изменённые и посторонние файлы будут сохранены.",
+  "showInFolder": "Показать в папке",
+  "goToDeclaration": "Перейти к объявлению",
+  "findUsages": "Найти использования",
+  "cannotRenameSymbol": "Невозможно безопасно переименовать символ. Проверьте имя и обновите ссылку перед повторной попыткой.",
+  "keyboardLayout": "Раскладка клавиатуры",
+  "diagnosticWritersideUnsupported": "Неподдерживаемое или некорректное содержимое показано как исходный код.",
+  "diagnosticWritersideSource": "Не удалось разрешить источник «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Цель ссылки недоступна в этом экземпляре: {destination}",
+  "diagnosticWritersideSchema": "Некорректная разметка Writerside: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Используйте <llms-txt>true</llms-txt> или <llms-txt>false</llms-txt>; single-file больше не поддерживается.",
+  "diagnosticWritersideReference": "Не удалось разрешить {kind}: {reference}",
+  "sortTableColumn": "Сортировать {column}",
+  "exportReset": "Восстановить значения по умолчанию",
+  "exportToc": "Добавить оглавление",
+  "exportTocDepth": "Глубина оглавления",
+  "exportNumberHeadings": "Нумеровать заголовки",
+  "exportLegal": "US Legal",
+  "exportCustom": "Другой",
+  "exportPageWidth": "Ширина страницы (мм)",
+  "exportPageHeight": "Высота страницы (мм)",
+  "exportMarginTop": "Верхнее поле (мм)",
+  "exportMarginRight": "Правое поле (мм)",
+  "exportMarginBottom": "Нижнее поле (мм)",
+  "exportMarginLeft": "Левое поле (мм)",
+  "exportTypography": "Типографика",
+  "exportSans": "Без засечек",
+  "exportSerif": "С засечками",
+  "exportBodySize": "Размер основного шрифта",
+  "exportCodeSize": "Размер шрифта кода",
+  "exportRunningText": "Колонтитулы",
+  "exportHeader": "Верхний колонтитул",
+  "exportFooter": "Нижний колонтитул",
+  "exportNone": "Нет",
+  "exportDocumentTitle": "Название документа",
+  "exportBottomLeft": "Снизу слева",
+  "exportBottomCenter": "Снизу по центру",
+  "exportBottomRight": "Снизу справа",
+  "exportFirstPage": "Показывать колонтитулы на первой странице",
+  "exportAccent": "Цвет акцента / ссылок",
+  "exportTheme": "Тема",
+  "exportAutomatic": "Автоматически",
+  "exportLayout": "Макет",
+  "exportContentWidth": "Максимальная ширина содержимого",
+  "exportOutput": "Вывод",
+  "exportPackaging": "Упаковка",
+  "exportSingleFile": "Один файл HTML",
+  "exportAssetsDirectory": "HTML + папка ресурсов",
+  "exportCustomCss": "Свой файл стилей…",
+  "exportRemoveCss": "Удалить свой файл стилей",
+  "exportCssNote": "Выберите необязательный файл CSS в UTF-8 (до 256 КиБ). Импорты, URL ресурсов, исполняемый CSS и escape-последовательности запрещены. Стили применяются после стилей BusyMark. Удалённые ресурсы не загружаются.",
+  "exportSitePackagingNote": "Writerside сохраняет отдельные связанные страницы тем. Режим одного файла встраивает ресурсы в каждую страницу.",
+  "exportInvalidGeometry": "После вычета полей оставьте не менее 20 мм ширины и высоты содержимого.",
+  "exportInvalidColor": "Введите цвет в формате #RRGGBB.",
+  "exportInvalidCss": "Выберите читаемый файл .css в UTF-8 до 256 КиБ без импортов, URL ресурсов, HTML, исполняемого CSS и escape-последовательностей.",
+  "exportInvalidRange": "{field}: введите число от {minimum} до {maximum}."
 }

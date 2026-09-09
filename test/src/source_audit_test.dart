@@ -1422,6 +1422,27 @@ void main() {
       tocHeader,
       contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
     );
+    expect(tocHeader, contains('class _WritersideInstanceSelector'));
+    expect(tocHeader, contains('BusyMarkMenuButton<String>'));
+    expect(tocHeader, contains('_SidebarRowSurface'));
+    expect(tocHeader, isNot(contains('BusyMarkPopupSelector<String>')));
+    expect(tocHeader, isNot(contains('FilledButton')));
+    expect(tocHeader, contains('iconColor: writersideInstanceIconColorValue'));
+    expect(tocHeader, contains("ValueKey('writerside-instance-selector')"));
+    expect(
+      tocHeader,
+      isNot(
+        contains('child: Text(\n                      context.l10n.instances'),
+      ),
+    );
+    expect(
+      tocHeader,
+      isNot(
+        contains(
+          'for (final instance in instances)\n            _SidebarTreeRow',
+        ),
+      ),
+    );
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
     expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
@@ -1432,6 +1453,7 @@ void main() {
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));
     expect(workspace, contains('label: context.l10n.newChildTopic'));
+    expect(workspace, contains('compactHierarchyIndent: true'));
     expect(workspace, contains('_SidebarTab.git,'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
@@ -1760,7 +1782,11 @@ void main() {
     final tableControlMenu = RegExp(
       r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',
     ).firstMatch(blockWidgets)!.group(0)!;
-    expect(tableControlMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(
+      tableControlMenu,
+      contains('BusyMarkHeaderPopupMenuButton<_TableControlAction>'),
+    );
+    expect(tableControlMenu, isNot(contains('BusyMarkCompactIconButton(')));
     expect(tableControlMenu, isNot(contains('theme.copyWith')));
     expect(tableControlMenu, isNot(contains('color: colors.popover')));
     expect(tableControlMenu, isNot(contains('elevation: BusyMarkElevation')));

@@ -156,6 +156,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get copy => 'Copier';
 
   @override
+  String get copyPlainText => 'Copier en texte brut';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Impossible de copier la sélection dans le presse-papiers.';
+
+  @override
   String get copyName => 'Copier le nom';
 
   @override
@@ -262,9 +269,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paste => 'Coller';
-
-  @override
-  String get pasteWithoutFormatting => 'Coller sans mise en forme';
 
   @override
   String get reading => 'Lecture';
@@ -1217,6 +1221,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get removeTocElement => 'Retirer l’élément de la table des matières';
+
+  @override
+  String get removeTocElements =>
+      'Retirer les éléments de la table des matières';
 
   @override
   String get reviewUsages => 'Examiner les utilisations';
@@ -2429,9 +2437,9 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Toutes les modifications staged et unstaged des fichiers suivis sélectionnés seront restaurées vers HEAD.',
+          'Toutes les modifications indexées et non indexées des fichiers suivis sélectionnés seront restaurées vers HEAD.',
       one:
-          'Toutes les modifications staged et unstaged du fichier suivi sélectionné seront restaurées vers HEAD.',
+          'Toutes les modifications indexées et non indexées du fichier suivi sélectionné seront restaurées vers HEAD.',
     );
     return '$_temp0';
   }
@@ -2982,6 +2990,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get export => 'Exporter';
+
+  @override
+  String get exportFormat => 'Format de sortie';
 
   @override
   String get exportingPdf => 'Exportation du PDF…';
@@ -3696,4 +3707,223 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get displayMath => 'Formule en bloc';
+
+  @override
+  String get goToDeclaration => 'Aller à la déclaration';
+
+  @override
+  String get findUsages => 'Rechercher les utilisations';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Impossible de renommer ce symbole en toute sécurité. Vérifiez son nom et actualisez la référence avant de réessayer.';
+
+  @override
+  String get keyboardLayout => 'Disposition du clavier';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Le contenu non pris en charge ou mal formé est affiché sous forme de source.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Impossible de résoudre la source « $reference » : $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'La cible du lien est indisponible dans cette instance : $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Balisage Writerside invalide : $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Utilisez <llms-txt>true</llms-txt> ou <llms-txt>false</llms-txt> ; single-file n’est plus pris en charge.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Impossible de résoudre $kind : $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Exporter au format HTML…';
+
+  @override
+  String get fileTypeHtml => 'Document HTML';
+
+  @override
+  String get exportingHtml => 'Exportation HTML…';
+
+  @override
+  String get htmlExported => 'Exportation HTML terminée';
+
+  @override
+  String get htmlExportFailed => 'Échec de l’exportation HTML';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Lors de la copie, conservez le fichier HTML et son dossier de ressources ensemble.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Exportez une instance sous forme de pages liées hors ligne. Choisissez un nom pour un dossier de sortie dédié.';
+
+  @override
+  String get htmlInstance => 'Instance';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Seul un dossier créé par l’exportation HTML de BusyMark peut être remplacé. Les fichiers modifiés ou étrangers seront conservés.';
+
+  @override
+  String get showInFolder => 'Afficher dans le dossier';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Trier $column';
+  }
+
+  @override
+  String get exportReset => 'Rétablir les valeurs par défaut';
+
+  @override
+  String get exportToc => 'Inclure une table des matières';
+
+  @override
+  String get exportTocDepth => 'Profondeur de la table';
+
+  @override
+  String get exportNumberHeadings => 'Numéroter les titres';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Personnalisé';
+
+  @override
+  String get exportPageWidth => 'Largeur de page (mm)';
+
+  @override
+  String get exportPageHeight => 'Hauteur de page (mm)';
+
+  @override
+  String get exportMarginTop => 'Marge supérieure (mm)';
+
+  @override
+  String get exportMarginRight => 'Marge droite (mm)';
+
+  @override
+  String get exportMarginBottom => 'Marge inférieure (mm)';
+
+  @override
+  String get exportMarginLeft => 'Marge gauche (mm)';
+
+  @override
+  String get exportTypography => 'Typographie';
+
+  @override
+  String get exportSans => 'Sans empattement';
+
+  @override
+  String get exportSerif => 'Avec empattement';
+
+  @override
+  String get exportBodySize => 'Taille du texte';
+
+  @override
+  String get exportCodeSize => 'Taille du code';
+
+  @override
+  String get exportRunningText => 'En-tête et pied de page';
+
+  @override
+  String get exportHeader => 'En-tête';
+
+  @override
+  String get exportFooter => 'Pied de page';
+
+  @override
+  String get exportNone => 'Aucun';
+
+  @override
+  String get exportDocumentTitle => 'Titre du document';
+
+  @override
+  String get exportBottomLeft => 'En bas à gauche';
+
+  @override
+  String get exportBottomCenter => 'En bas au centre';
+
+  @override
+  String get exportBottomRight => 'En bas à droite';
+
+  @override
+  String get exportFirstPage =>
+      'Afficher l’en-tête et le pied sur la première page';
+
+  @override
+  String get exportAccent => 'Couleur d’accent / des liens';
+
+  @override
+  String get exportTheme => 'Thème';
+
+  @override
+  String get exportAutomatic => 'Automatique';
+
+  @override
+  String get exportLayout => 'Mise en page';
+
+  @override
+  String get exportContentWidth => 'Largeur maximale du contenu';
+
+  @override
+  String get exportOutput => 'Sortie';
+
+  @override
+  String get exportPackaging => 'Conditionnement';
+
+  @override
+  String get exportSingleFile => 'Fichier HTML unique';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + dossier de ressources';
+
+  @override
+  String get exportCustomCss => 'Feuille de style personnalisée…';
+
+  @override
+  String get exportRemoveCss => 'Retirer la feuille de style';
+
+  @override
+  String get exportCssNote =>
+      'Choisissez un fichier CSS UTF-8 facultatif (256 KiB maximum). Les imports, URL de ressources et CSS exécutable ou échappé sont refusés. Les styles suivent ceux de BusyMark. Aucune ressource distante n’est téléchargée.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside conserve des pages liées distinctes. Le mode fichier unique intègre les ressources dans chaque page.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Laissez au moins 20 mm de largeur et de hauteur de contenu après les marges.';
+
+  @override
+  String get exportInvalidColor => 'Saisissez une couleur au format #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Choisissez un fichier .css UTF-8 lisible de 256 KiB maximum, sans imports, URL de ressources, HTML ni CSS exécutable ou échappé.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field : saisissez un nombre entre $minimum et $maximum.';
+  }
 }

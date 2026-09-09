@@ -168,10 +168,10 @@ void main() {
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
     expect(tocLtr.top, 0);
-    expect(tocLtr.left, BusyMarkSpacing.sm);
+    expect(tocLtr.left, 0);
     expect(tocLtr.right, 0);
     expect(tocRtl.left, 0);
-    expect(tocRtl.right, BusyMarkSpacing.sm);
+    expect(tocRtl.right, 0);
   });
 
   testWidgets('header controls delegate geometry and elevation to Yaru', (
@@ -616,6 +616,59 @@ void main() {
       });
     },
   );
+
+  testWidgets('colored popup icons stay on the native menu path', (
+    tester,
+  ) async {
+    const channel = MethodChannel('busymark/test/colored-popup-menu');
+    MethodCall? showCall;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'show') {
+            showCall = call;
+            return 0;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    String? selection;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BusyMarkHeaderPopupMenuButton<String>(
+            tooltip: 'Colored menu',
+            icon: BusyMarkGlyphs.menuVertical,
+            nativeMenuService: const NativeMenuService(channel: channel),
+            itemBuilder: (_) => [
+              BusyMarkPopupMenuItem<String>(
+                value: 'guide',
+                label: 'Guide',
+                icon: BusyMarkGlyphs.tree,
+                iconColor: Colors.orange,
+              ),
+            ],
+            onSelected: (value) => selection = value,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Colored menu'));
+    await tester.pumpAndSettle();
+
+    expect(selection, 'guide');
+    expect(showCall?.method, 'show');
+    final arguments = showCall?.arguments as Map<Object?, Object?>;
+    expect(
+      (arguments['entries'] as List<Object?>).single,
+      containsPair('iconColor', Colors.orange.toARGB32()),
+    );
+    expect(find.text('Guide'), findsNothing);
+  });
 
   testWidgets('header popup preserves asynchronous menu loading', (
     tester,
@@ -1305,6 +1358,14 @@ void main() {
       );
       final colors = theme.extension<BusyMarkSurfaceColors>()!;
       final boundaryKey = GlobalKey();
+      var backdrop = colors.view;
+      var blockCommandsEnabled = true;
+      var blockCommandCalls = 0;
+      late StateSetter rebuild;
+      final disabledBackground = Color.alphaBlend(
+        colors.disabledControl,
+        colors.view,
+      );
       tester.view
         ..physicalSize = const Size(900, 240)
         ..devicePixelRatio = 1;
@@ -1318,25 +1379,31 @@ void main() {
           home: RepaintBoundary(
             key: boundaryKey,
             child: Scaffold(
-              body: ColoredBox(
-                color: colors.view,
-                child: BusyMarkWysiwygToolbar(
-                  onBlockCommand: (_) {},
-                  onAdmonitionCommand: (_) {},
-                  admonitionsEnabled: true,
-                  onInlineCommand: (_) {},
-                  onLinkCommand: () {},
-                  onInlineMathCommand: () {},
-                  onDisplayMathCommand: () {},
-                  onImageCommand: () {},
-                  onInlineImageCommand: () {},
-                  onTableCommand: () {},
-                  onHtmlCommand: () {},
-                  onIndentCommand: () {},
-                  onOutdentCommand: () {},
-                  onToggleTaskCommand: () {},
-                  onHardBreakCommand: () {},
-                ),
+              body: StatefulBuilder(
+                builder: (context, setState) {
+                  rebuild = setState;
+                  return ColoredBox(
+                    color: backdrop,
+                    child: BusyMarkWysiwygToolbar(
+                      onBlockCommand: (_) => blockCommandCalls++,
+                      isBlockCommandEnabled: (_) => blockCommandsEnabled,
+                      onAdmonitionCommand: (_) {},
+                      admonitionsEnabled: true,
+                      onInlineCommand: (_) {},
+                      onLinkCommand: () {},
+                      onInlineMathCommand: () {},
+                      onDisplayMathCommand: () {},
+                      onImageCommand: () {},
+                      onInlineImageCommand: () {},
+                      onTableCommand: () {},
+                      onHtmlCommand: () {},
+                      onIndentCommand: () {},
+                      onOutdentCommand: () {},
+                      onToggleTaskCommand: () {},
+                      onHardBreakCommand: () {},
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -1370,7 +1437,7 @@ void main() {
         popups.every(
           (popup) =>
               popup.backgroundColor?.resolve({WidgetState.disabled}) ==
-              colors.disabledControl,
+              disabledBackground,
         ),
         isTrue,
       );
@@ -1462,7 +1529,7 @@ void main() {
         actions.every(
           (button) =>
               button.backgroundColor?.resolve({WidgetState.disabled}) ==
-              colors.disabledControl,
+              disabledBackground,
         ),
         isTrue,
       );
@@ -1490,7 +1557,7 @@ void main() {
         );
         expect(
           button.style?.backgroundColor?.resolve({WidgetState.disabled}),
-          colors.disabledControl,
+          disabledBackground,
         );
       }
 
@@ -1519,6 +1586,45 @@ void main() {
       );
       _expectColorNear(hover, expectedHover);
       expect(hover, isNot(rest));
+
+      await mouse.moveTo(Offset.zero);
+      rebuild(() => blockCommandsEnabled = false);
+      await tester.pumpAndSettle();
+      expect(tester.widget<IconButton>(actionButton).onPressed, isNull);
+      final disabledPixels = await _capturePixels(tester, boundaryKey);
+      final disabled = _pixelAtLocal(
+        tester,
+        disabledPixels,
+        actionButton,
+        probe,
+      );
+
+      // Selection or text beneath the floating toolbar must not show through
+      // a disabled button's background.
+      rebuild(() {
+        backdrop = Color.alphaBlend(
+          accent.withValues(alpha: 0.25),
+          colors.view,
+        );
+      });
+      await tester.pumpAndSettle();
+      final selectedPixels = await _capturePixels(tester, boundaryKey);
+      _expectColorNear(
+        _pixelAtLocal(tester, selectedPixels, actionButton, probe),
+        disabled,
+      );
+      await tester.tap(actionButton);
+      expect(blockCommandCalls, 0);
+
+      rebuild(() => blockCommandsEnabled = true);
+      await tester.pumpAndSettle();
+      final restoredPixels = await _capturePixels(tester, boundaryKey);
+      _expectColorNear(
+        _pixelAtLocal(tester, restoredPixels, actionButton, probe),
+        accent,
+      );
+      await tester.tap(actionButton);
+      expect(blockCommandCalls, 1);
     });
   }
 

@@ -155,6 +155,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copy => 'कॉपी करें';
 
   @override
+  String get copyPlainText => 'सादे पाठ के रूप में कॉपी करें';
+
+  @override
+  String get clipboardCopyFailed =>
+      'चयनित सामग्री को क्लिपबोर्ड पर कॉपी नहीं किया जा सका।';
+
+  @override
   String get copyName => 'नाम कॉपी करें';
 
   @override
@@ -261,9 +268,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paste => 'पेस्ट करें';
-
-  @override
-  String get pasteWithoutFormatting => 'बिना फ़ॉर्मेटिंग पेस्ट करें';
 
   @override
   String get reading => 'पठन दृश्य';
@@ -800,8 +804,11 @@ class AppLocalizationsHi extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count दस्तावेज़ों में असुरक्षित बदलाव हैं। इन्हें जारी रखने से पहले सहेजें।',
-      one: '1 दस्तावेज़ में असुरक्षित बदलाव हैं। इसे जारी रखने से पहले सहेजें।',
+          '$count दस्तावेज़ों में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?',
+      one:
+          '1 दस्तावेज़ में न सहेजे गए बदलाव हैं। जारी रखने से पहले इसे सहेजें?',
+      zero:
+          '0 दस्तावेज़ों में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?',
     );
     return '$_temp0';
   }
@@ -1195,6 +1202,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get removeTocElement => 'TOC तत्व हटाएँ';
+
+  @override
+  String get removeTocElements => 'TOC तत्व हटाएँ';
 
   @override
   String get reviewUsages => 'उपयोगों की समीक्षा करें';
@@ -2397,9 +2407,9 @@ class AppLocalizationsHi extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'चयनित ट्रैक की गई फ़ाइलों के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
+          'चयनित ट्रैक की गई फ़ाइलों के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।',
       one:
-          'चयनित ट्रैक की गई फ़ाइल के सभी चरणबद्ध और अचयनित परिवर्तन HEAD पर वापस लाए जाएँगे।',
+          'चयनित ट्रैक की गई फ़ाइल के सभी स्टेज किए गए और स्टेज नहीं किए गए बदलाव HEAD पर वापस लाए जाएँगे।',
     );
     return '$_temp0';
   }
@@ -2945,6 +2955,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get export => 'निर्यात करें';
+
+  @override
+  String get exportFormat => 'आउटपुट फ़ॉर्मैट';
 
   @override
   String get exportingPdf => 'PDF निर्यात हो रहा है…';
@@ -3654,4 +3667,222 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get displayMath => 'डिस्प्ले गणित';
+
+  @override
+  String get goToDeclaration => 'घोषणा पर जाएँ';
+
+  @override
+  String get findUsages => 'उपयोग खोजें';
+
+  @override
+  String get cannotRenameSymbol =>
+      'प्रतीक का नाम सुरक्षित रूप से नहीं बदला जा सकता। नाम जाँचें और दोबारा प्रयास करने से पहले संदर्भ रीफ़्रेश करें।';
+
+  @override
+  String get keyboardLayout => 'कीबोर्ड लेआउट';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'असमर्थित या गलत प्रारूप वाली सामग्री स्रोत के रूप में दिखाई जाती है।';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'स्रोत “$reference” हल नहीं किया जा सकता: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'इस इंस्टेंस में लिंक का लक्ष्य उपलब्ध नहीं है: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'अमान्य Writerside मार्कअप: $element, $attribute। $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      '<llms-txt>true</llms-txt> या <llms-txt>false</llms-txt> का उपयोग करें; single-file अब समर्थित नहीं है।';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '$kind हल नहीं किया जा सकता: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML के रूप में निर्यात करें…';
+
+  @override
+  String get fileTypeHtml => 'HTML दस्तावेज़';
+
+  @override
+  String get exportingHtml => 'HTML निर्यात हो रहा है…';
+
+  @override
+  String get htmlExported => 'HTML निर्यात पूरा हुआ';
+
+  @override
+  String get htmlExportFailed => 'HTML निर्यात विफल हुआ';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'इस निर्यात को कॉपी करते समय HTML फ़ाइल और उसके संसाधन फ़ोल्डर को साथ रखें।';
+
+  @override
+  String get htmlInstanceDescription =>
+      'एक इंस्टेंस को लिंक किए गए ऑफ़लाइन पृष्ठों के रूप में निर्यात करें। एक अलग आउटपुट फ़ोल्डर का नाम चुनें।';
+
+  @override
+  String get htmlInstance => 'इंस्टेंस';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'केवल BusyMark HTML निर्यात द्वारा बनाया गया फ़ोल्डर बदला जा सकता है। बदली गई या असंबंधित फ़ाइलें सुरक्षित रहेंगी।';
+
+  @override
+  String get showInFolder => 'फ़ोल्डर में दिखाएँ';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column क्रमबद्ध करें';
+  }
+
+  @override
+  String get exportReset => 'डिफ़ॉल्ट पर रीसेट करें';
+
+  @override
+  String get exportToc => 'विषय-सूची शामिल करें';
+
+  @override
+  String get exportTocDepth => 'विषय-सूची की गहराई';
+
+  @override
+  String get exportNumberHeadings => 'शीर्षकों को क्रमांक दें';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'कस्टम';
+
+  @override
+  String get exportPageWidth => 'पृष्ठ की चौड़ाई (mm)';
+
+  @override
+  String get exportPageHeight => 'पृष्ठ की ऊँचाई (mm)';
+
+  @override
+  String get exportMarginTop => 'ऊपरी मार्जिन (mm)';
+
+  @override
+  String get exportMarginRight => 'दायाँ मार्जिन (mm)';
+
+  @override
+  String get exportMarginBottom => 'निचला मार्जिन (mm)';
+
+  @override
+  String get exportMarginLeft => 'बायाँ मार्जिन (mm)';
+
+  @override
+  String get exportTypography => 'टाइपोग्राफ़ी';
+
+  @override
+  String get exportSans => 'बिना सेरिफ़';
+
+  @override
+  String get exportSerif => 'सेरिफ़';
+
+  @override
+  String get exportBodySize => 'मुख्य पाठ का फ़ॉन्ट आकार';
+
+  @override
+  String get exportCodeSize => 'कोड का फ़ॉन्ट आकार';
+
+  @override
+  String get exportRunningText => 'शीर्षलेख और पादलेख';
+
+  @override
+  String get exportHeader => 'शीर्षलेख';
+
+  @override
+  String get exportFooter => 'पादलेख';
+
+  @override
+  String get exportNone => 'कोई नहीं';
+
+  @override
+  String get exportDocumentTitle => 'दस्तावेज़ का शीर्षक';
+
+  @override
+  String get exportBottomLeft => 'नीचे बाएँ';
+
+  @override
+  String get exportBottomCenter => 'नीचे बीच में';
+
+  @override
+  String get exportBottomRight => 'नीचे दाएँ';
+
+  @override
+  String get exportFirstPage => 'पहले पृष्ठ पर शीर्षलेख और पादलेख दिखाएँ';
+
+  @override
+  String get exportAccent => 'हाइलाइट / लिंक का रंग';
+
+  @override
+  String get exportTheme => 'थीम';
+
+  @override
+  String get exportAutomatic => 'स्वचालित';
+
+  @override
+  String get exportLayout => 'लेआउट';
+
+  @override
+  String get exportContentWidth => 'सामग्री की अधिकतम चौड़ाई';
+
+  @override
+  String get exportOutput => 'आउटपुट';
+
+  @override
+  String get exportPackaging => 'पैकेजिंग';
+
+  @override
+  String get exportSingleFile => 'एक HTML फ़ाइल';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + संसाधन फ़ोल्डर';
+
+  @override
+  String get exportCustomCss => 'कस्टम स्टाइलशीट…';
+
+  @override
+  String get exportRemoveCss => 'कस्टम स्टाइलशीट हटाएँ';
+
+  @override
+  String get exportCssNote =>
+      'वैकल्पिक UTF-8 CSS फ़ाइल चुनें (256 KiB तक)। इंपोर्ट, संसाधन URL और निष्पादन योग्य या एस्केप वाला CSS स्वीकार नहीं किया जाता। शैलियाँ BusyMark CSS के बाद लागू होती हैं। दूरस्थ संसाधन डाउनलोड नहीं किए जाते।';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside अलग-अलग लिंक किए गए विषय पृष्ठ रखता है। एकल फ़ाइल मोड हर पृष्ठ में संसाधन एम्बेड करता है।';
+
+  @override
+  String get exportInvalidGeometry =>
+      'मार्जिन के बाद सामग्री के लिए कम से कम 20 mm चौड़ाई और ऊँचाई छोड़ें।';
+
+  @override
+  String get exportInvalidColor => 'रंग #RRGGBB के रूप में दर्ज करें।';
+
+  @override
+  String get exportInvalidCss =>
+      '256 KiB तक की पढ़ने योग्य UTF-8 .css फ़ाइल चुनें, जिसमें इंपोर्ट, संसाधन URL, HTML और निष्पादन योग्य या एस्केप वाला CSS न हो।';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
+  }
 }

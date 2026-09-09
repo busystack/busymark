@@ -47,6 +47,8 @@ typedef BusyMarkSourceSessionChanged =
       Set<String> foldedRegionKeys,
     );
 
+enum SourceSymbolAction { declaration, usages, rename }
+
 var _sourceEditorUndoSessionSequence = 0;
 
 class BusyMarkSourceEditor extends StatefulWidget {
@@ -78,6 +80,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.initialFoldedRegionKeys = const {},
     this.onSessionChanged,
     this.autocompleteContext = const SourceAutocompleteContext(),
+    this.onSymbolAction,
   });
 
   final String text;
@@ -106,6 +109,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final Set<String> initialFoldedRegionKeys;
   final BusyMarkSourceSessionChanged? onSessionChanged;
   final SourceAutocompleteContext autocompleteContext;
+  final void Function(SourceSymbolAction action, int offset)? onSymbolAction;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -348,6 +352,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _showAutocomplete();
       return KeyEventResult.handled;
     }
+    if (widget.onSymbolAction != null) {
+      final action = key == LogicalKeyboardKey.keyB && keyboard.isControlPressed
+          ? SourceSymbolAction.declaration
+          : key == LogicalKeyboardKey.f7 && keyboard.isAltPressed
+          ? SourceSymbolAction.usages
+          : key == LogicalKeyboardKey.f6 && keyboard.isShiftPressed
+          ? SourceSymbolAction.rename
+          : null;
+      if (action != null) {
+        widget.onSymbolAction!(action, _controller.fullSelection.extentOffset);
+        return KeyEventResult.handled;
+      }
+    }
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
@@ -547,6 +564,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                 context,
                                 editableTextState,
                                 refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                additionalItems: [
+                                  if (widget.onSymbolAction != null)
+                                    for (final action
+                                        in SourceSymbolAction.values)
+                                      BusyMarkPopupMenuItem<VoidCallback>(
+                                        value: () => widget.onSymbolAction!(
+                                          action,
+                                          _controller
+                                              .fullSelection
+                                              .extentOffset,
+                                        ),
+                                        label: switch (action) {
+                                          SourceSymbolAction.declaration =>
+                                            'Go to Declaration',
+                                          SourceSymbolAction.usages =>
+                                            'Find Usages',
+                                          SourceSymbolAction.rename =>
+                                            context.l10n.rename,
+                                        },
+                                        shortcut: switch (action) {
+                                          SourceSymbolAction.declaration =>
+                                            'Ctrl+B',
+                                          SourceSymbolAction.usages => 'Alt+F7',
+                                          SourceSymbolAction.rename =>
+                                            'Shift+F6',
+                                        },
+                                      ),
+                                ],
                                 onRefineWithAi: widget.onAiEdit == null
                                     ? null
                                     : () => unawaited(_runAiEdit()),
@@ -1369,6 +1414,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       case BusyMarkEditorShortcutAction.refineWithAi:
         unawaited(_runAiEdit());
         break;
+      case BusyMarkEditorShortcutAction.copyPlainText:
+        final value = _fullEditingValue();
+        final selection = value.selection;
+        if (selection.isValid && !selection.isCollapsed) {
+          unawaited(
+            Clipboard.setData(
+              ClipboardData(text: selection.textInside(value.text)),
+            ),
+          );
+        }
+        break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(SourceInlineCommand.bold);
         break;
@@ -1484,9 +1540,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           SourceCommands.insertBlock(_fullEditingValue(), '  \n'),
         );
         break;
-      case BusyMarkEditorShortcutAction.pastePlainText:
-        unawaited(_pastePlainText());
-        break;
     }
   }
 
@@ -1530,28 +1583,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _insertTab() {
     _applyFullEditingValue(SourceCommands.insertTab(_fullEditingValue()));
-  }
-
-  Future<void> _pastePlainText() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text == null || text.isEmpty) {
-      return;
-    }
-    final value = _fullEditingValue();
-    final selection = value.selection;
-    final nextText =
-        selection.textBefore(value.text) +
-        text +
-        selection.textAfter(value.text);
-    _applyFullEditingValue(
-      TextEditingValue(
-        text: nextText,
-        selection: TextSelection.collapsed(
-          offset: selection.start + text.length,
-        ),
-      ),
-    );
   }
 
   void _replaceController({

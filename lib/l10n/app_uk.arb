@@ -94,6 +94,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Копіювати",
+  "copyPlainText": "Копіювати як звичайний текст",
+  "clipboardCopyFailed": "Не вдалося скопіювати виділений фрагмент до буфера обміну.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -198,10 +200,6 @@
   "paste": "Вставити",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Вставити без форматування",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Режим читання",
   "@reading": {
@@ -2333,9 +2331,9 @@
   "gitBinaryFile": "Двійковий файл. BusyMark не відображає двійкові патчі.",
   "gitUnsavedChangesBanner": "Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.",
   "gitConfirmDiscardTitle": "Відкинути зміни Git?",
-  "gitConfirmDiscardTracked": "{count, plural, one{Усі індексовані та неіндексовані зміни у вибраному файлі з відстеженням буде скасовано, а файл буде відновлено до стану HEAD.} few{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} many{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} other{Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, one{Вибраний невідстежуваний файл буде видалено.} few{Вибрані невідстежувані файли буде видалено.} many{Вибрані невідстежувані файли буде видалено.} other{Вибрані невідстежувані файли буде видалено.}}",
-  "gitConfirmDiscardMixed": "{count, plural, one{Вибраний файл буде відновлено або видалено залежно від його стану Git.} few{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} many{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} other{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, one{Усі індексовані та неіндексовані зміни в {count} вибраному файлі з відстеженням буде скасовано, а вміст буде відновлено до стану HEAD.} few{Усі індексовані та неіндексовані зміни у {count} вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} many{Усі індексовані та неіндексовані зміни у {count} вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.} other{Усі індексовані та неіндексовані зміни у {count} вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, one{{count} вибраний невідстежуваний файл буде видалено.} few{{count} вибрані невідстежувані файли буде видалено.} many{{count} вибраних невідстежуваних файлів буде видалено.} other{{count} вибраного невідстежуваного файла буде видалено.}}",
+  "gitConfirmDiscardMixed": "{count, plural, one{{count} вибраний файл буде відновлено або видалено залежно від статусу Git.} few{{count} вибрані файли буде відновлено або видалено залежно від їхнього статусу Git.} many{{count} вибраних файлів буде відновлено або видалено залежно від їхнього статусу Git.} other{{count} вибраного файла буде відновлено або видалено залежно від його статусу Git.}}",
   "gitConfirmSwitchBranchTitle": "Перемкнутися на {branch}?",
   "gitConfirmSwitchBranchMessage": "BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.",
   "gitConfirmPushSetUpstreamTitle": "Налаштувати upstream-гілку?",
@@ -2504,6 +2502,10 @@
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
   },
+  "removeTocElements": "Вилучити елементи змісту",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
+  },
   "reviewUsages": "Переглянути використання",
   "@reviewUsages": {
     "description": "Action that opens the topic usage review."
@@ -2534,7 +2536,7 @@
       }
     }
   },
-  "childTopicsPromoted": "{count, plural, one{1 дочірню тему буде переміщено на рівень вище.} few{{count} дочірні теми буде переміщено на рівень вище.} many{{count} дочірніх тем буде переміщено на рівень вище.} other{{count} дочірньої теми буде переміщено на рівень вище.}}",
+  "childTopicsPromoted": "{count, plural, one{{count} дочірню тему буде переміщено на рівень вище.} few{{count} дочірні теми буде переміщено на рівень вище.} many{{count} дочірніх тем буде переміщено на рівень вище.} other{{count} дочірньої теми буде переміщено на рівень вище.}}",
   "@childTopicsPromoted": {
     "description": "Explains that direct child topics will be promoted when their parent TOC element is removed.",
     "placeholders": {
@@ -2580,7 +2582,7 @@
   "@topicUsageIncludes": {
     "description": "Usage group label for topic includes."
   },
-  "usageCount": "{count, plural, one{1 використання} few{{count} використання} many{{count} використань} other{{count} використання}}",
+  "usageCount": "{count, plural, one{{count} використання} few{{count} використання} many{{count} використань} other{{count} використання}}",
   "@usageCount": {
     "description": "Compact topic usage count.",
     "placeholders": {
@@ -2793,6 +2795,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Формат виведення",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Експорт PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -2810,7 +2816,7 @@
       }
     }
   },
-  "pdfExportedWithWarnings": "{fileName} експортовано з {count, plural, =1{1 попередженням} other{{count} попередженнями}}.",
+  "pdfExportedWithWarnings": "{fileName} експортовано з {count, plural, one{{count} попередженням} few{{count} попередженнями} many{{count} попередженнями} other{{count} попередженнями}}.",
   "@pdfExportedWithWarnings": {
     "description": "PDF export success message when some images were omitted.",
     "placeholders": {
@@ -2861,7 +2867,7 @@
   "gitStaged": "Індексовані",
   "gitUnstaged": "Неіндексовані",
   "gitFetch": "Отримати",
-  "gitStagedFileCount": "{count, plural, =1{1 проіндексований файл} few{{count} проіндексовані файли} many{{count} проіндексованих файлів} other{{count} проіндексованих файлів}}",
+  "gitStagedFileCount": "{count, plural, one{{count} проіндексований файл} few{{count} проіндексовані файли} many{{count} проіндексованих файлів} other{{count} проіндексованих файлів}}",
   "gitOutsideWorkspace": "Поза робочим простором",
   "gitFileHistoryRequiresOpenFile": "Для історії файлу потрібен відкритий файл Markdown.",
   "gitLoadMore": "Завантажити ще",
@@ -3087,11 +3093,11 @@
   "reloadFromDisk": "Перезавантажити з диска",
   "keepMine": "Залишити мою версію",
   "saveAs": "Зберегти як",
-  "unsavedChangesMultipleMessage": "{count, plural, one{1 документ має незбережені зміни. Збережіть його перед продовженням.} few{{count} документи мають незбережені зміни. Збережіть їх перед продовженням.} many{{count} документів мають незбережені зміни. Збережіть їх перед продовженням.} other{{count} документа має незбережені зміни. Збережіть їх перед продовженням.}}",
+  "unsavedChangesMultipleMessage": "{count, plural, one{{count} документ має незбережені зміни. Зберегти кожен перед продовженням?} few{{count} документи мають незбережені зміни. Зберегти кожен перед продовженням?} many{{count} документів мають незбережені зміни. Зберегти кожен перед продовженням?} other{{count} документа має незбережені зміни. Зберегти кожен перед продовженням?}}",
   "workspaceReplaceIssuePartialConflict": "Відкат зупинено, оскільки файл було одночасно змінено. Деякі заміни могли залишитися; витіснений вміст збережено за шляхом нижче.",
   "workspaceReplaceIssueApplyFailed": "Заміни не застосовано, оскільки перевірений набір не вдалося безпечно зберегти.",
-  "workspaceRecoveryRestored": "{count, plural, one{Відновлено 1 незбережений документ. Перегляньте його перед збереженням або відхиленням.} few{Відновлено {count} незбережені документи. Перегляньте кожен перед збереженням або відхиленням.} many{Відновлено {count} незбережених документів. Перегляньте кожен перед збереженням або відхиленням.} other{Відновлено {count} незбереженого документа. Перегляньте його перед збереженням або відхиленням.}}",
-  "workspaceRecoveryDamaged": "{count, plural, one{Не вдалося відновити 1 пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перегляду.} few{Не вдалося відновити {count} пошкоджені записи відновлення. Дійсні записи відновлення залишаються доступними.} many{Не вдалося відновити {count} пошкоджених записів відновлення. Дійсні записи відновлення залишаються доступними.} other{Не вдалося відновити {count} пошкодженого запису відновлення. Дійсні записи відновлення залишаються доступними.}}",
+  "workspaceRecoveryRestored": "{count, plural, one{Відновлено {count} незбережений документ. Перегляньте кожен документ, перш ніж зберегти або відхилити його.} few{Відновлено {count} незбережені документи. Перегляньте кожен документ, перш ніж зберегти або відхилити його.} many{Відновлено {count} незбережених документів. Перегляньте кожен документ, перш ніж зберегти або відхилити його.} other{Відновлено {count} незбереженого документа. Перегляньте кожен документ, перш ніж зберегти або відхилити його.}}",
+  "workspaceRecoveryDamaged": "{count, plural, one{Не вдалося відновити {count} пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.} few{Не вдалося відновити {count} пошкоджені записи відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.} many{Не вдалося відновити {count} пошкоджених записів відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.} other{Не вдалося відновити {count} пошкодженого запису відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.}}",
   "recoveredDocumentReview": "Відновлено незбережений вміст файлу {fileName}. Перегляньте його, потім збережіть, збережіть як новий файл або відкиньте.",
   "commandUnavailableInContext": "Ця команда недоступна в поточному контексті.",
   "mathRenderFailed": "Не вдалося відобразити математичний вираз.",
@@ -3100,5 +3106,69 @@
   "aiExplicitEditingDescription": "Редагування за допомогою ШІ запускається лише явно. BusyMark надсилає вибраному постачальнику тільки показаний контекст і ніколи не застосовує пропозицію без перевірки.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Експортувати в HTML…",
+  "fileTypeHtml": "Документ HTML",
+  "exportingHtml": "Експорт HTML…",
+  "htmlExported": "Експорт HTML завершено",
+  "htmlExportFailed": "Не вдалося експортувати HTML",
+  "htmlKeepAssetsTogether": "Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.",
+  "htmlInstanceDescription": "Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.",
+  "htmlInstance": "Екземпляр",
+  "htmlOwnedDirectoryOnly": "Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.",
+  "showInFolder": "Показати в папці",
+  "goToDeclaration": "Перейти до оголошення",
+  "findUsages": "Знайти використання",
+  "cannotRenameSymbol": "Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.",
+  "keyboardLayout": "Розкладка клавіатури",
+  "diagnosticWritersideUnsupported": "Непідтримуваний або некоректний вміст показано як джерело.",
+  "diagnosticWritersideSource": "Не вдалося знайти джерело «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Ціль посилання недоступна в цьому екземплярі: {destination}",
+  "diagnosticWritersideSchema": "Некоректна розмітка Writerside: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.",
+  "diagnosticWritersideReference": "Не вдалося знайти {kind}: {reference}",
+  "sortTableColumn": "Сортувати {column}",
+  "exportReset": "Відновити типові значення",
+  "exportToc": "Додати зміст",
+  "exportTocDepth": "Глибина змісту",
+  "exportNumberHeadings": "Нумерувати заголовки",
+  "exportLegal": "US Legal",
+  "exportCustom": "Власний",
+  "exportPageWidth": "Ширина сторінки (мм)",
+  "exportPageHeight": "Висота сторінки (мм)",
+  "exportMarginTop": "Верхнє поле (мм)",
+  "exportMarginRight": "Праве поле (мм)",
+  "exportMarginBottom": "Нижнє поле (мм)",
+  "exportMarginLeft": "Ліве поле (мм)",
+  "exportTypography": "Типографіка",
+  "exportSans": "Без зарубок",
+  "exportSerif": "Із зарубками",
+  "exportBodySize": "Розмір основного шрифту",
+  "exportCodeSize": "Розмір шрифту коду",
+  "exportRunningText": "Колонтитули",
+  "exportHeader": "Верхній колонтитул",
+  "exportFooter": "Нижній колонтитул",
+  "exportNone": "Немає",
+  "exportDocumentTitle": "Назва документа",
+  "exportBottomLeft": "Знизу ліворуч",
+  "exportBottomCenter": "Знизу по центру",
+  "exportBottomRight": "Знизу праворуч",
+  "exportFirstPage": "Показувати колонтитули на першій сторінці",
+  "exportAccent": "Колір акценту / посилань",
+  "exportTheme": "Тема",
+  "exportAutomatic": "Автоматично",
+  "exportLayout": "Макет",
+  "exportContentWidth": "Максимальна ширина вмісту",
+  "exportOutput": "Вивід",
+  "exportPackaging": "Пакування",
+  "exportSingleFile": "Один файл HTML",
+  "exportAssetsDirectory": "HTML + папка ресурсів",
+  "exportCustomCss": "Власний файл стилів…",
+  "exportRemoveCss": "Вилучити власний файл стилів",
+  "exportCssNote": "Виберіть необов’язковий файл CSS у UTF-8 (до 256 КіБ). Імпорти, URL ресурсів, виконуваний CSS і escape-послідовності заборонені. Стилі застосовуються після стилів BusyMark. Віддалені ресурси не завантажуються.",
+  "exportSitePackagingNote": "Writerside зберігає окремі пов’язані сторінки тем. Режим одного файлу вбудовує ресурси в кожну сторінку.",
+  "exportInvalidGeometry": "Після віднімання полів залиште щонайменше 20 мм ширини й висоти вмісту.",
+  "exportInvalidColor": "Введіть колір у форматі #RRGGBB.",
+  "exportInvalidCss": "Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.",
+  "exportInvalidRange": "{field}: введіть число від {minimum} до {maximum}."
 }

@@ -24,7 +24,11 @@ const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
 const int _backgroundParseThresholdBytes = 64 * 1024;
 
 class MarkdownParser {
-  const MarkdownParser();
+  const MarkdownParser({this.preserveHtmlSemantics = false});
+
+  /// Keeps cross-block reference context for the HTML export projection. The
+  /// editor and source serializer retain their existing projection by default.
+  final bool preserveHtmlSemantics;
 
   List<BusyInline> parseInlineFragment({
     required String source,
@@ -266,6 +270,7 @@ class MarkdownParser {
       source: source,
       mode: mode,
       title: title,
+      preserveHtmlSemantics: preserveHtmlSemantics,
     );
     var busyDocument = _withScannedSourceMetadata(
       renderedDocument,
@@ -1226,22 +1231,7 @@ class MarkdownParser {
       r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
     ).firstMatch(lines[startIndex].line);
     final tag = match?.group(1)?.toLowerCase();
-    if (tag == null ||
-        !{
-          'note',
-          'tip',
-          'warning',
-          'quote',
-          'tabs',
-          'tab',
-          'procedure',
-          'step',
-          'chapter',
-          'code-block',
-          'deflist',
-          'def',
-          'video',
-        }.contains(tag)) {
+    if (tag == null || !WritersideSchema.isMarkdownSemanticBlock(tag)) {
       return null;
     }
     var balance = 0;

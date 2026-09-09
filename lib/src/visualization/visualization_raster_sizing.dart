@@ -23,12 +23,14 @@ class VisualizationRasterSizingPolicy {
   const VisualizationRasterSizingPolicy({
     this.previewScale = 2,
     this.pdfScale = 3,
+    this.htmlScale = 2,
     this.maximumDimension = 8192,
     this.maximumPixels = 64000000,
   });
 
   final double previewScale;
   final double pdfScale;
+  final double htmlScale;
   final int maximumDimension;
   final int maximumPixels;
 
@@ -48,6 +50,7 @@ class VisualizationRasterSizingPolicy {
     final preferredScale = switch (profile) {
       VisualizationRenderProfile.preview => previewScale,
       VisualizationRenderProfile.pdf => pdfScale,
+      VisualizationRenderProfile.html => htmlScale,
     };
     if (!preferredScale.isFinite || preferredScale <= 0) {
       throw ArgumentError.value(

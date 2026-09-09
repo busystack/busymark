@@ -155,6 +155,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copy => 'Копіювати';
 
   @override
+  String get copyPlainText => 'Копіювати як звичайний текст';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Не вдалося скопіювати виділений фрагмент до буфера обміну.';
+
+  @override
   String get copyName => 'Копіювати назву';
 
   @override
@@ -261,9 +268,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get paste => 'Вставити';
-
-  @override
-  String get pasteWithoutFormatting => 'Вставити без форматування';
 
   @override
   String get reading => 'Режим читання';
@@ -820,13 +824,13 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count документа має незбережені зміни. Збережіть їх перед продовженням.',
+          '$count документа має незбережені зміни. Зберегти кожен перед продовженням?',
       many:
-          '$count документів мають незбережені зміни. Збережіть їх перед продовженням.',
+          '$count документів мають незбережені зміни. Зберегти кожен перед продовженням?',
       few:
-          '$count документи мають незбережені зміни. Збережіть їх перед продовженням.',
+          '$count документи мають незбережені зміни. Зберегти кожен перед продовженням?',
       one:
-          '1 документ має незбережені зміни. Збережіть його перед продовженням.',
+          '$count документ має незбережені зміни. Зберегти кожен перед продовженням?',
     );
     return '$_temp0';
   }
@@ -1229,6 +1233,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get removeTocElement => 'Вилучити елемент змісту';
 
   @override
+  String get removeTocElements => 'Вилучити елементи змісту';
+
+  @override
   String get reviewUsages => 'Переглянути використання';
 
   @override
@@ -1255,7 +1262,7 @@ class AppLocalizationsUk extends AppLocalizations {
       other: '$count дочірньої теми буде переміщено на рівень вище.',
       many: '$count дочірніх тем буде переміщено на рівень вище.',
       few: '$count дочірні теми буде переміщено на рівень вище.',
-      one: '1 дочірню тему буде переміщено на рівень вище.',
+      one: '$count дочірню тему буде переміщено на рівень вище.',
     );
     return '$_temp0';
   }
@@ -1297,7 +1304,7 @@ class AppLocalizationsUk extends AppLocalizations {
       other: '$count використання',
       many: '$count використань',
       few: '$count використання',
-      one: '1 використання',
+      one: '$count використання',
     );
     return '$_temp0';
   }
@@ -1724,13 +1731,13 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Відновлено $count незбереженого документа. Перегляньте його перед збереженням або відхиленням.',
+          'Відновлено $count незбереженого документа. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
       many:
-          'Відновлено $count незбережених документів. Перегляньте кожен перед збереженням або відхиленням.',
+          'Відновлено $count незбережених документів. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
       few:
-          'Відновлено $count незбережені документи. Перегляньте кожен перед збереженням або відхиленням.',
+          'Відновлено $count незбережені документи. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
       one:
-          'Відновлено 1 незбережений документ. Перегляньте його перед збереженням або відхиленням.',
+          'Відновлено $count незбережений документ. Перегляньте кожен документ, перш ніж зберегти або відхилити його.',
     );
     return '$_temp0';
   }
@@ -1741,13 +1748,13 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Не вдалося відновити $count пошкодженого запису відновлення. Дійсні записи відновлення залишаються доступними.',
+          'Не вдалося відновити $count пошкодженого запису відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
       many:
-          'Не вдалося відновити $count пошкоджених записів відновлення. Дійсні записи відновлення залишаються доступними.',
+          'Не вдалося відновити $count пошкоджених записів відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
       few:
-          'Не вдалося відновити $count пошкоджені записи відновлення. Дійсні записи відновлення залишаються доступними.',
+          'Не вдалося відновити $count пошкоджені записи відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
       one:
-          'Не вдалося відновити 1 пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перегляду.',
+          'Не вдалося відновити $count пошкоджений запис відновлення. Оригінальний файл відновлення збережено для перевірки; дійсні записи залишаються доступними.',
     );
     return '$_temp0';
   }
@@ -2394,7 +2401,7 @@ class AppLocalizationsUk extends AppLocalizations {
       other: '$count проіндексованих файлів',
       many: '$count проіндексованих файлів',
       few: '$count проіндексовані файли',
-      one: '1 проіндексований файл',
+      one: '$count проіндексований файл',
     );
     return '$_temp0';
   }
@@ -2451,13 +2458,13 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
       many:
-          'Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
       few:
-          'Усі індексовані та неіндексовані зміни у вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
+          'Усі індексовані та неіндексовані зміни у $count вибраних файлах з відстеженням буде скасовано, а файли буде відновлено до стану HEAD.',
       one:
-          'Усі індексовані та неіндексовані зміни у вибраному файлі з відстеженням буде скасовано, а файл буде відновлено до стану HEAD.',
+          'Усі індексовані та неіндексовані зміни в $count вибраному файлі з відстеженням буде скасовано, а вміст буде відновлено до стану HEAD.',
     );
     return '$_temp0';
   }
@@ -2467,10 +2474,10 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Вибрані невідстежувані файли буде видалено.',
-      many: 'Вибрані невідстежувані файли буде видалено.',
-      few: 'Вибрані невідстежувані файли буде видалено.',
-      one: 'Вибраний невідстежуваний файл буде видалено.',
+      other: '$count вибраного невідстежуваного файла буде видалено.',
+      many: '$count вибраних невідстежуваних файлів буде видалено.',
+      few: '$count вибрані невідстежувані файли буде видалено.',
+      one: '$count вибраний невідстежуваний файл буде видалено.',
     );
     return '$_temp0';
   }
@@ -2481,13 +2488,13 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
+          '$count вибраного файла буде відновлено або видалено залежно від його статусу Git.',
       many:
-          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
+          '$count вибраних файлів буде відновлено або видалено залежно від їхнього статусу Git.',
       few:
-          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
+          '$count вибрані файли буде відновлено або видалено залежно від їхнього статусу Git.',
       one:
-          'Вибраний файл буде відновлено або видалено залежно від його стану Git.',
+          '$count вибраний файл буде відновлено або видалено залежно від статусу Git.',
     );
     return '$_temp0';
   }
@@ -3014,6 +3021,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get export => 'Експортувати';
 
   @override
+  String get exportFormat => 'Формат виведення';
+
+  @override
   String get exportingPdf => 'Експорт PDF…';
 
   @override
@@ -3030,7 +3040,9 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count попередженнями',
-      one: '1 попередженням',
+      many: '$count попередженнями',
+      few: '$count попередженнями',
+      one: '$count попередженням',
     );
     return '$fileName експортовано з $_temp0.';
   }
@@ -3723,4 +3735,222 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get displayMath => 'Формула окремим блоком';
+
+  @override
+  String get goToDeclaration => 'Перейти до оголошення';
+
+  @override
+  String get findUsages => 'Знайти використання';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
+
+  @override
+  String get keyboardLayout => 'Розкладка клавіатури';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Непідтримуваний або некоректний вміст показано як джерело.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Не вдалося знайти джерело «$reference»: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Ціль посилання недоступна в цьому екземплярі: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Некоректна розмітка Writerside: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Використовуйте <llms-txt>true</llms-txt> або <llms-txt>false</llms-txt>; single-file більше не підтримується.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Не вдалося знайти $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Експортувати в HTML…';
+
+  @override
+  String get fileTypeHtml => 'Документ HTML';
+
+  @override
+  String get exportingHtml => 'Експорт HTML…';
+
+  @override
+  String get htmlExported => 'Експорт HTML завершено';
+
+  @override
+  String get htmlExportFailed => 'Не вдалося експортувати HTML';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Під час копіювання зберігайте файл HTML разом із папкою його ресурсів.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Експортуйте один екземпляр як пов’язані автономні сторінки. Виберіть назву окремої вихідної папки.';
+
+  @override
+  String get htmlInstance => 'Екземпляр';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Можна замінити лише папку, створену експортом HTML BusyMark. Змінені та сторонні файли буде збережено.';
+
+  @override
+  String get showInFolder => 'Показати в папці';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Сортувати $column';
+  }
+
+  @override
+  String get exportReset => 'Відновити типові значення';
+
+  @override
+  String get exportToc => 'Додати зміст';
+
+  @override
+  String get exportTocDepth => 'Глибина змісту';
+
+  @override
+  String get exportNumberHeadings => 'Нумерувати заголовки';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Власний';
+
+  @override
+  String get exportPageWidth => 'Ширина сторінки (мм)';
+
+  @override
+  String get exportPageHeight => 'Висота сторінки (мм)';
+
+  @override
+  String get exportMarginTop => 'Верхнє поле (мм)';
+
+  @override
+  String get exportMarginRight => 'Праве поле (мм)';
+
+  @override
+  String get exportMarginBottom => 'Нижнє поле (мм)';
+
+  @override
+  String get exportMarginLeft => 'Ліве поле (мм)';
+
+  @override
+  String get exportTypography => 'Типографіка';
+
+  @override
+  String get exportSans => 'Без зарубок';
+
+  @override
+  String get exportSerif => 'Із зарубками';
+
+  @override
+  String get exportBodySize => 'Розмір основного шрифту';
+
+  @override
+  String get exportCodeSize => 'Розмір шрифту коду';
+
+  @override
+  String get exportRunningText => 'Колонтитули';
+
+  @override
+  String get exportHeader => 'Верхній колонтитул';
+
+  @override
+  String get exportFooter => 'Нижній колонтитул';
+
+  @override
+  String get exportNone => 'Немає';
+
+  @override
+  String get exportDocumentTitle => 'Назва документа';
+
+  @override
+  String get exportBottomLeft => 'Знизу ліворуч';
+
+  @override
+  String get exportBottomCenter => 'Знизу по центру';
+
+  @override
+  String get exportBottomRight => 'Знизу праворуч';
+
+  @override
+  String get exportFirstPage => 'Показувати колонтитули на першій сторінці';
+
+  @override
+  String get exportAccent => 'Колір акценту / посилань';
+
+  @override
+  String get exportTheme => 'Тема';
+
+  @override
+  String get exportAutomatic => 'Автоматично';
+
+  @override
+  String get exportLayout => 'Макет';
+
+  @override
+  String get exportContentWidth => 'Максимальна ширина вмісту';
+
+  @override
+  String get exportOutput => 'Вивід';
+
+  @override
+  String get exportPackaging => 'Пакування';
+
+  @override
+  String get exportSingleFile => 'Один файл HTML';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + папка ресурсів';
+
+  @override
+  String get exportCustomCss => 'Власний файл стилів…';
+
+  @override
+  String get exportRemoveCss => 'Вилучити власний файл стилів';
+
+  @override
+  String get exportCssNote =>
+      'Виберіть необов’язковий файл CSS у UTF-8 (до 256 КіБ). Імпорти, URL ресурсів, виконуваний CSS і escape-послідовності заборонені. Стилі застосовуються після стилів BusyMark. Віддалені ресурси не завантажуються.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside зберігає окремі пов’язані сторінки тем. Режим одного файлу вбудовує ресурси в кожну сторінку.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Після віднімання полів залиште щонайменше 20 мм ширини й висоти вмісту.';
+
+  @override
+  String get exportInvalidColor => 'Введіть колір у форматі #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: введіть число від $minimum до $maximum.';
+  }
 }

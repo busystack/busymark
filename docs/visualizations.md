@@ -58,11 +58,11 @@ documentation for [D2](https://www.jetbrains.com/help/writerside/d2-diagrams.htm
 [PlantUML](https://www.jetbrains.com/help/writerside/plantuml-diagrams.html),
 and [Mermaid](https://www.jetbrains.com/help/writerside/mermaid-diagrams.html).
 
-Demonstrations are available in:
+The automated conformance corpus is stored in:
 
-- [`demo/visualizations.md`](../demo/visualizations.md)
-- [`demo/openapi-local-reference.md`](../demo/openapi-local-reference.md)
-- [`demo/plantuml-conformance.md`](../demo/plantuml-conformance.md)
+- [`test/fixtures/markdown/basic.md`](../test/fixtures/markdown/basic.md)
+- [`test/fixtures/visualization/openapi-local-reference.md`](../test/fixtures/visualization/openapi-local-reference.md)
+- [`test/fixtures/visualization/plantuml-conformance.md`](../test/fixtures/visualization/plantuml-conformance.md)
 
 ## Runtime design
 
@@ -221,7 +221,7 @@ cancellation, stale-result rejection, timeout wiring, sanitization and external
 resources, traversal and symlink escapes, circular OpenAPI references, input
 limits, both themes, cache-version invalidation, D2 raster snapshots, and a
 rasterized visual assertion of generated SVG content in the PDF. Human release
-review should still inspect the demo documents and PDF for visual quality; it
+review should still inspect the fixture documents and PDF for visual quality; it
 is not a substitute for these automated product-path checks.
 
 ## Authoritative references

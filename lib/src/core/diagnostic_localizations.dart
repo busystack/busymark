@@ -252,6 +252,40 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
       l10n.diagnosticWritersideCategoryUnresolved(value('ref')),
     'writerside.topic.ambiguous-reference' =>
       l10n.diagnosticWritersideTopicAmbiguousReference(value('reference')),
+    'writerside.content.unsupported' => l10n.diagnosticWritersideUnsupported,
+    'writerside.source.invalid' ||
+    'writerside.api.unresolved' ||
+    'writerside.api.invalid-selection' => l10n.diagnosticWritersideSource(
+      value('reference'),
+      value('reason'),
+    ),
+    'writerside.link.unavailable' => l10n.diagnosticWritersideLink(
+      value('destination'),
+    ),
+    'writerside.schema.invalid-parent' ||
+    'writerside.schema.invalid-attribute-value' ||
+    'writerside.schema.unknown-attribute' ||
+    'writerside.schema.missing-required-attribute' ||
+    'writerside.schema.invalid-sortable-style' =>
+      l10n.diagnosticWritersideSchema(
+        value('element'),
+        value('attribute'),
+        value('reason'),
+      ),
+    'writerside.build-profiles.invalid-llms-txt' =>
+      l10n.diagnosticWritersideLlmsTxt,
+    'writerside.shortcut.unresolved' => l10n.diagnosticWritersideReference(
+      'shortcut',
+      value('key'),
+    ),
+    'writerside.tooltip.unresolved' => l10n.diagnosticWritersideReference(
+      'glossary term',
+      value('term'),
+    ),
+    'writerside.resource.unresolved' => l10n.diagnosticWritersideReference(
+      'resource',
+      value('src'),
+    ),
     _ => l10n.diagnosticUnknown(code),
   };
 }

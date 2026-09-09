@@ -417,7 +417,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.disabled)) {
-        return colors.disabledControl;
+        // The floating toolbar has no surface beneath its translucent fills.
+        return Color.alphaBlend(colors.disabledControl, colors.view);
       }
       return theme.colorScheme.primary;
     });

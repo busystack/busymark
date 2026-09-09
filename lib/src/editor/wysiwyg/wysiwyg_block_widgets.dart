@@ -165,10 +165,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onHtmlEditRequested,
     required this.onTaskChanged,
     required this.onFocused,
+    this.onCut,
+    this.onCopy,
+    this.onCopyPlainText,
     this.onRefineWithAi,
     this.editRevision = 0,
     this.selected = false,
     this.selectionRange,
+    this.documentSelectionActive = false,
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
@@ -207,10 +211,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onHtmlEditRequested;
   final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
+  final VoidCallback? onCut;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyPlainText;
   final VoidCallback? onRefineWithAi;
   final int editRevision;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
+  final bool documentSelectionActive;
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
@@ -383,6 +391,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           cellFocusNode: tableCellFocusNode,
           cellKey: tableCellKey,
           onCellFocused: onTableCellFocused,
+          suppressContextMenu: documentSelectionActive,
+          onCut: onCut,
+          onCopy: onCopy,
+          onCopyPlainText: onCopyPlainText,
         ),
       );
     }
@@ -531,15 +543,20 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                 hoverColor: BusyMarkLinuxPalette.transparent,
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              contextMenuBuilder:
-                                  (context, editableTextState) =>
-                                      buildBusyMarkEditorTextContextMenu(
-                                        context,
-                                        editableTextState,
-                                        refineWithAiLabel:
-                                            context.l10n.aiRefineWithAi,
-                                        onRefineWithAi: onRefineWithAi,
-                                      ),
+                              contextMenuBuilder: documentSelectionActive
+                                  ? (context, editableTextState) =>
+                                        const SizedBox.shrink()
+                                  : (context, editableTextState) =>
+                                        buildBusyMarkEditorTextContextMenu(
+                                          context,
+                                          editableTextState,
+                                          refineWithAiLabel:
+                                              context.l10n.aiRefineWithAi,
+                                          onRefineWithAi: onRefineWithAi,
+                                          onCut: onCut,
+                                          onCopy: onCopy,
+                                          onCopyPlainText: onCopyPlainText,
+                                        ),
                               onTap: onFocused,
                               onChanged: onChanged,
                             ),
@@ -1432,7 +1449,7 @@ String _directionalText(BusyBlock block) {
   ].join(' ');
 }
 
-class _TableBlockEditor extends StatelessWidget {
+class _TableBlockEditor extends StatefulWidget {
   const _TableBlockEditor({
     required this.block,
     required this.onFocused,
@@ -1451,9 +1468,11 @@ class _TableBlockEditor extends StatelessWidget {
     this.cellFocusNode,
     this.cellKey,
     this.onCellFocused,
+    this.suppressContextMenu = false,
+    this.onCut,
+    this.onCopy,
+    this.onCopyPlainText,
   });
-
-  static const double _controlSize = BusyMarkSizes.tableControl;
 
   final BusyBlock block;
   final VoidCallback onFocused;
@@ -1473,96 +1492,306 @@ class _TableBlockEditor extends StatelessWidget {
   final FocusNode Function(BusyBlock cell)? cellFocusNode;
   final GlobalKey Function(String cellId)? cellKey;
   final ValueChanged<String>? onCellFocused;
+  final bool suppressContextMenu;
+  final VoidCallback? onCut;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyPlainText;
+
+  @override
+  State<_TableBlockEditor> createState() => _TableBlockEditorState();
+}
+
+class _TableBlockEditorState extends State<_TableBlockEditor> {
+  final _overlayController = OverlayPortalController();
+  BuildContext? _tableRenderContext;
+  final _rowAnchorContexts = <BuildContext?>[];
+  final _columnAnchorContexts = <BuildContext?>[];
+  ({int row, int column})? _activeCell;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncControlAnchors();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _overlayController.show();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _TableBlockEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncControlAnchors();
+    final active = _activeCell;
+    final rows = widget.block.children;
+    if (active != null &&
+        (active.row >= rows.length || active.column >= _columnCount(rows))) {
+      _activeCell = rows.isEmpty
+          ? null
+          : (
+              row: active.row.clamp(0, rows.length - 1),
+              column: active.column.clamp(0, _columnCount(rows) - 1),
+            );
+    }
+  }
+
+  void _syncControlAnchors() {
+    final rowCount = widget.block.children.length;
+    final columnCount = _columnCount(widget.block.children);
+    while (_rowAnchorContexts.length < rowCount) {
+      _rowAnchorContexts.add(null);
+    }
+    while (_rowAnchorContexts.length > rowCount) {
+      _rowAnchorContexts.removeLast();
+    }
+    while (_columnAnchorContexts.length < columnCount) {
+      _columnAnchorContexts.add(null);
+    }
+    while (_columnAnchorContexts.length > columnCount) {
+      _columnAnchorContexts.removeLast();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final rows = block.children;
+    final scheme = Theme.of(context).colorScheme;
+    final rows = widget.block.children;
     final columnCount = _columnCount(rows);
-    final dataWidth = (columnCount * BusyMarkSizes.tableColumnBaseWidth)
-        .clamp(BusyMarkSizes.tableMinWidth, BusyMarkSizes.tableMaxWidth)
-        .toDouble();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: dataWidth + _controlSize),
-        child: Table(
-          border: TableBorder(
-            horizontalInside: BorderSide(color: colors.subtleBorder),
-            verticalInside: BorderSide(color: colors.subtleBorder),
-            top: BorderSide(color: colors.subtleBorder),
-            right: BorderSide(color: colors.subtleBorder),
-            bottom: BorderSide(color: colors.subtleBorder),
-            left: BorderSide(color: colors.subtleBorder),
-            borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          ),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          columnWidths: {
-            0: const FixedColumnWidth(_controlSize),
-            for (var index = 0; index < columnCount; index++)
-              index + 1: const FlexColumnWidth(),
-          },
-          children: [
-            TableRow(
-              decoration: BoxDecoration(color: colors.controlHover),
-              children: [
-                _TableCornerCell(onTableDeleted: onTableDeleted),
-                for (var column = 0; column < columnCount; column++)
-                  _TableColumnControlCell(
-                    columnIndex: column,
-                    alignment: _alignmentForColumn(rows, column),
-                    onInserted: onColumnInserted,
-                    onDeleted: onColumnDeleted,
-                    onAlignmentChanged: onColumnAlignmentChanged,
+    return OverlayPortal.overlayChildLayoutBuilder(
+      controller: _overlayController,
+      overlayChildBuilder: _buildContextControls,
+      child: SizedBox(
+        width: double.infinity,
+        child: KeyedSubtree(
+          key: ValueKey('wysiwyg-table-grid-${widget.block.id}'),
+          child: Builder(
+            builder: (tableContext) {
+              _tableRenderContext = tableContext;
+              return Table(
+                border: TableBorder(
+                  horizontalInside: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
                   ),
-              ],
-            ),
-            for (final (rowIndex, row) in rows.indexed)
-              TableRow(
-                decoration: BoxDecoration(
-                  color: _isHeaderRow(row, rowIndex)
-                      ? colors.control
-                      : BusyMarkLinuxPalette.transparent,
+                  verticalInside: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
+                  top: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
+                  right: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
+                  bottom: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
+                  left: BorderSide(
+                    color: scheme.outlineVariant,
+                    width: BusyMarkStroke.tableGrid,
+                  ),
+                  borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
                 ),
-                children: [
-                  _TableRowControlCell(
-                    rowIndex: rowIndex,
-                    onInserted: onRowInserted,
-                    onDeleted: onRowDeleted,
-                  ),
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                columnWidths: {
                   for (var column = 0; column < columnCount; column++)
-                    _TableCellEditor(
-                      cell: column < row.children.length
-                          ? row.children[column]
-                          : null,
-                      header: _isHeaderRow(row, rowIndex),
-                      style: busyMarkDocumentBodyTextStyle(context),
-                      onFocused: onFocused,
-                      onChanged: onCellChanged,
-                      onSourceChanged: onCellSourceChanged,
-                      editRevision: editRevision,
-                      sourceSpan: block.sourceSpan,
-                      onMathDiagnostic: onMathDiagnostic,
-                      controller: column < row.children.length
-                          ? cellController?.call(row.children[column])
-                          : null,
-                      undoController: column < row.children.length
-                          ? cellUndoController?.call(row.children[column])
-                          : null,
-                      focusNode: column < row.children.length
-                          ? cellFocusNode?.call(row.children[column])
-                          : null,
-                      cellKey: column < row.children.length
-                          ? cellKey?.call(row.children[column].id)
-                          : null,
-                      onCellFocused: onCellFocused,
+                    column: const FlexColumnWidth(),
+                },
+                children: [
+                  for (final (rowIndex, row) in rows.indexed)
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: _isHeaderRow(row, rowIndex)
+                            ? scheme.surfaceContainerHighest
+                            : scheme.surface,
+                      ),
+                      children: [
+                        for (var column = 0; column < columnCount; column++)
+                          _cell(
+                            context,
+                            row: row,
+                            rowIndex: rowIndex,
+                            column: column,
+                          ),
+                      ],
                     ),
                 ],
-              ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
+  }
+
+  Widget _cell(
+    BuildContext context, {
+    required BusyBlock row,
+    required int rowIndex,
+    required int column,
+  }) {
+    final cell = column < row.children.length ? row.children[column] : null;
+    Widget editor = MouseRegion(
+      onEnter: (_) => _activateCell(rowIndex, column),
+      child: _TableCellEditor(
+        cell: cell,
+        header: _isHeaderRow(row, rowIndex),
+        style: busyMarkDocumentBodyTextStyle(context),
+        onFocused: widget.onFocused,
+        onChanged: widget.onCellChanged,
+        onSourceChanged: widget.onCellSourceChanged,
+        editRevision: widget.editRevision,
+        sourceSpan: widget.block.sourceSpan,
+        onMathDiagnostic: widget.onMathDiagnostic,
+        controller: cell == null ? null : widget.cellController?.call(cell),
+        undoController: cell == null
+            ? null
+            : widget.cellUndoController?.call(cell),
+        focusNode: cell == null ? null : widget.cellFocusNode?.call(cell),
+        cellKey: cell == null ? null : widget.cellKey?.call(cell.id),
+        onCellFocused: cell == null
+            ? null
+            : (cellId) {
+                _activateCell(rowIndex, column);
+                final onCellFocused = widget.onCellFocused;
+                if (onCellFocused == null) {
+                  widget.onFocused();
+                } else {
+                  onCellFocused(cellId);
+                }
+              },
+        suppressContextMenu: widget.suppressContextMenu,
+        onCut: widget.onCut,
+        onCopy: widget.onCopy,
+        onCopyPlainText: widget.onCopyPlainText,
+      ),
+    );
+    if (rowIndex == 0) {
+      final child = editor;
+      editor = Builder(
+        builder: (anchorContext) {
+          _columnAnchorContexts[column] = anchorContext;
+          return child;
+        },
+      );
+    }
+    if (column == 0) {
+      final child = editor;
+      editor = Builder(
+        builder: (anchorContext) {
+          _rowAnchorContexts[rowIndex] = anchorContext;
+          return child;
+        },
+      );
+    }
+    return editor;
+  }
+
+  Widget _buildContextControls(
+    BuildContext context,
+    OverlayChildLayoutInfo layoutInfo,
+  ) {
+    final active = _activeCell;
+    final textDirection = Directionality.of(context);
+    final tableRect = MatrixUtils.transformRect(
+      layoutInfo.childPaintTransform,
+      Offset.zero & layoutInfo.childSize,
+    );
+    final controlSize = BusyMarkSizes.iconButton;
+    final rowRect = active == null || active.row >= _rowAnchorContexts.length
+        ? null
+        : _anchorRectInOverlay(_rowAnchorContexts[active.row], layoutInfo);
+    final columnRect =
+        active == null || active.column >= _columnAnchorContexts.length
+        ? null
+        : _anchorRectInOverlay(
+            _columnAnchorContexts[active.column],
+            layoutInfo,
+          );
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: textDirection == TextDirection.ltr
+              ? tableRect.right + BusyMarkSpacing.xs
+              : tableRect.left - controlSize - BusyMarkSpacing.xs,
+          top: tableRect.top - controlSize - BusyMarkSpacing.xs,
+          width: controlSize,
+          height: controlSize,
+          child: _TableDeleteControl(
+            key: ValueKey('wysiwyg-table-delete-${widget.block.id}'),
+            onTableDeleted: widget.onTableDeleted,
+          ),
+        ),
+        if (active != null && rowRect != null)
+          Positioned(
+            left: textDirection == TextDirection.ltr
+                ? tableRect.left - controlSize - BusyMarkSpacing.xs
+                : tableRect.right + BusyMarkSpacing.xs,
+            top: rowRect.center.dy - controlSize / 2,
+            width: controlSize,
+            height: controlSize,
+            child: _TableRowControl(
+              rowIndex: active.row,
+              onInserted: widget.onRowInserted,
+              onDeleted: widget.onRowDeleted,
+            ),
+          ),
+        if (active != null && columnRect != null)
+          Positioned(
+            left: columnRect.center.dx - controlSize / 2,
+            top: tableRect.top - controlSize - BusyMarkSpacing.xs,
+            width: controlSize,
+            height: controlSize,
+            child: _TableColumnControl(
+              columnIndex: active.column,
+              alignment: _alignmentForColumn(
+                widget.block.children,
+                active.column,
+              ),
+              onInserted: widget.onColumnInserted,
+              onDeleted: widget.onColumnDeleted,
+              onAlignmentChanged: widget.onColumnAlignmentChanged,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Rect? _anchorRectInOverlay(
+    BuildContext? anchorContext,
+    OverlayChildLayoutInfo layoutInfo,
+  ) {
+    final anchor = anchorContext?.findRenderObject();
+    final table = _tableRenderContext?.findRenderObject();
+    if (anchor is! RenderBox ||
+        table is! RenderBox ||
+        !anchor.hasSize ||
+        !table.hasSize ||
+        !anchor.attached ||
+        !table.attached) {
+      return null;
+    }
+    final rectInTable = MatrixUtils.transformRect(
+      anchor.getTransformTo(table),
+      Offset.zero & anchor.size,
+    );
+    return MatrixUtils.transformRect(
+      layoutInfo.childPaintTransform,
+      rectInTable,
+    );
+  }
+
+  void _activateCell(int row, int column) {
+    final next = (row: row, column: column);
+    if (_activeCell == next) {
+      return;
+    }
+    setState(() => _activeCell = next);
   }
 
   int _columnCount(List<BusyBlock> rows) {
@@ -1604,29 +1833,25 @@ enum _TableControlAction {
   delete,
 }
 
-class _TableCornerCell extends StatelessWidget {
-  const _TableCornerCell({required this.onTableDeleted});
+class _TableDeleteControl extends StatelessWidget {
+  const _TableDeleteControl({super.key, required this.onTableDeleted});
 
   final VoidCallback onTableDeleted;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return SizedBox.square(
-      dimension: _TableBlockEditor._controlSize,
-      child: BusyMarkHeaderIconButton(
-        tooltip: context.l10n.deleteTable,
-        icon: BusyMarkGlyphs.delete,
-        foregroundColor: colors.mutedForeground,
-        borderRadius: BusyMarkRadius.sm,
-        onPressed: onTableDeleted,
-      ),
+    return BusyMarkHeaderIconButton(
+      tooltip: context.l10n.deleteTable,
+      icon: BusyMarkGlyphs.delete,
+      foregroundColor: colors.mutedForeground,
+      onPressed: onTableDeleted,
     );
   }
 }
 
-class _TableColumnControlCell extends StatelessWidget {
-  const _TableColumnControlCell({
+class _TableColumnControl extends StatelessWidget {
+  const _TableColumnControl({
     required this.columnIndex,
     required this.alignment,
     required this.onInserted,
@@ -1678,8 +1903,8 @@ class _TableColumnControlCell extends StatelessWidget {
   }
 }
 
-class _TableRowControlCell extends StatelessWidget {
-  const _TableRowControlCell({
+class _TableRowControl extends StatelessWidget {
+  const _TableRowControl({
     required this.rowIndex,
     required this.onInserted,
     required this.onDeleted,
@@ -1740,45 +1965,46 @@ class _TableControlMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = <PopupMenuEntry<_TableControlAction>>[
+      BusyMarkPopupMenuItem(
+        value: _TableControlAction.insertBefore,
+        label: beforeLabel,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _TableControlAction.insertAfter,
+        label: afterLabel,
+      ),
+      if (alignmentLabels case final labels?) ...[
+        BusyMarkPopupMenuItem(
+          value: _TableControlAction.alignUnspecified,
+          label: labels.unspecified,
+          checked: alignment == BusyTableAlignment.unspecified,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TableControlAction.alignLeft,
+          label: labels.left,
+          checked: alignment == BusyTableAlignment.left,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TableControlAction.alignCenter,
+          label: labels.center,
+          checked: alignment == BusyTableAlignment.center,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _TableControlAction.alignRight,
+          label: labels.right,
+          checked: alignment == BusyTableAlignment.right,
+        ),
+      ],
+      BusyMarkPopupMenuItem(
+        value: _TableControlAction.delete,
+        label: deleteLabel,
+      ),
+    ];
     return BusyMarkHeaderPopupMenuButton<_TableControlAction>(
       tooltip: tooltip,
       icon: icon,
-      itemBuilder: (context) => [
-        BusyMarkPopupMenuItem(
-          value: _TableControlAction.insertBefore,
-          label: beforeLabel,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TableControlAction.insertAfter,
-          label: afterLabel,
-        ),
-        if (alignmentLabels case final labels?) ...[
-          BusyMarkPopupMenuItem(
-            value: _TableControlAction.alignUnspecified,
-            label: labels.unspecified,
-            checked: alignment == BusyTableAlignment.unspecified,
-          ),
-          BusyMarkPopupMenuItem(
-            value: _TableControlAction.alignLeft,
-            label: labels.left,
-            checked: alignment == BusyTableAlignment.left,
-          ),
-          BusyMarkPopupMenuItem(
-            value: _TableControlAction.alignCenter,
-            label: labels.center,
-            checked: alignment == BusyTableAlignment.center,
-          ),
-          BusyMarkPopupMenuItem(
-            value: _TableControlAction.alignRight,
-            label: labels.right,
-            checked: alignment == BusyTableAlignment.right,
-          ),
-        ],
-        BusyMarkPopupMenuItem(
-          value: _TableControlAction.delete,
-          label: deleteLabel,
-        ),
-      ],
+      itemBuilder: (_) => items,
       onSelected: onSelected,
     );
   }
@@ -1800,6 +2026,10 @@ class _TableCellEditor extends StatefulWidget {
     this.focusNode,
     this.cellKey,
     this.onCellFocused,
+    this.suppressContextMenu = false,
+    this.onCut,
+    this.onCopy,
+    this.onCopyPlainText,
   });
 
   final BusyBlock? cell;
@@ -1816,14 +2046,18 @@ class _TableCellEditor extends StatefulWidget {
   final FocusNode? focusNode;
   final GlobalKey? cellKey;
   final ValueChanged<String>? onCellFocused;
+  final bool suppressContextMenu;
+  final VoidCallback? onCut;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyPlainText;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
 }
 
 class _TableCellEditorState extends State<_TableCellEditor> {
-  late final TextEditingController _controller;
-  late final FocusNode _focusNode;
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
   late bool _ownsController;
   late bool _ownsFocusNode;
   bool _sourceEditing = false;
@@ -1989,6 +2223,17 @@ class _TableCellEditorState extends State<_TableCellEditor> {
             hintStyle: textStyle.copyWith(color: colors.mutedForeground),
             contentPadding: EdgeInsets.zero,
           ),
+          contextMenuBuilder: widget.suppressContextMenu
+              ? (context, editableTextState) => const SizedBox.shrink()
+              : (context, editableTextState) =>
+                    buildBusyMarkEditorTextContextMenu(
+                      context,
+                      editableTextState,
+                      refineWithAiLabel: context.l10n.aiRefineWithAi,
+                      onCut: widget.onCut,
+                      onCopy: widget.onCopy,
+                      onCopyPlainText: widget.onCopyPlainText,
+                    ),
           onTap: () {
             final onCellFocused = widget.onCellFocused;
             if (onCellFocused == null) {

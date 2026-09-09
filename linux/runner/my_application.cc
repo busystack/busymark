@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
 #include "web_render_host.h"
@@ -85,6 +86,7 @@ struct _MyApplication {
   FlMethodChannel* native_menu_channel;
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
+  FlMethodChannel* rich_clipboard_channel;
   BusyMarkWebRenderHost* visualization_host;
   BusyMarkVideoPlayerHost* video_player_host;
   GtkCssProvider* header_bar_css_provider;
@@ -107,6 +109,8 @@ struct _MyApplication {
   GtkWidget* search_entry;
   gboolean document_controls_visible;
   gboolean search_visible;
+  gboolean can_export_pdf;
+  gboolean can_export_html;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_icon;
@@ -154,6 +158,7 @@ struct HeaderBarConfiguration {
   const gchar* view_mode;
   gboolean can_refresh;
   gboolean can_export_pdf;
+  gboolean can_export_html;
   gboolean document_controls_visible;
   gboolean search_active;
   gboolean search_visible;
@@ -1322,7 +1327,7 @@ static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
 }
 
 static const gchar* main_menu_icon_name(const gchar* action) {
-  if (g_strcmp0(action, "exportPdf") == 0) {
+  if (g_strcmp0(action, "export") == 0) {
     return "document-save-as-symbolic";
   }
   if (g_strcmp0(action, "settings") == 0) {
@@ -1378,9 +1383,9 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
   g_menu_remove_all(self->main_menu_model);
   append_action_menu_item(
       self->main_menu_model,
-      localized_label_or(labels, "exportPdf", ""), "header.export-pdf",
-      main_menu_icon_name("exportPdf"),
-      fl_lookup_string_arg(labels, "exportPdfGtkAccelerator"));
+      localized_label_or(labels, "export", ""), "header.export",
+      main_menu_icon_name("export"),
+      fl_lookup_string_arg(labels, "exportGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "fullScreen", ""), "header.full-screen",
@@ -1552,8 +1557,8 @@ static void set_header_action_enabled(MyApplication* self,
 
 static void setup_header_actions(MyApplication* self) {
   self->header_action_group = g_simple_action_group_new();
-  add_header_gaction(self, "export-pdf", "exportPdf");
-  set_header_action_enabled(self, "export-pdf", FALSE);
+  add_header_gaction(self, "export", "export");
+  set_header_action_enabled(self, "export", FALSE);
   add_header_gaction(self, "settings", "settings");
   add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
   add_header_gaction(self, "syntax-reference", "syntaxReference");
@@ -1870,6 +1875,7 @@ static gboolean decode_header_bar_configuration(
       configuration->sidebar_width <= 0 ||
       !fl_lookup_optional_bool_arg(args, "canRefresh",
                                    &configuration->can_refresh) ||
+      !fl_lookup_optional_bool_arg(args, "canExportHtml", &configuration->can_export_html) ||
       !fl_lookup_optional_bool_arg(args, "canExportPdf",
                                    &configuration->can_export_pdf) ||
       !fl_lookup_optional_bool_arg(
@@ -1916,8 +1922,10 @@ static void apply_header_bar_configuration(
     gtk_label_set_text(GTK_LABEL(self->title_label), configuration.title);
   }
   set_widget_sensitive(self->refresh_button, configuration.can_refresh);
-  set_header_action_enabled(self, "export-pdf",
-                            configuration.can_export_pdf);
+  self->can_export_pdf = configuration.can_export_pdf;
+  self->can_export_html = configuration.can_export_html;
+  set_header_action_enabled(
+      self, "export", self->can_export_pdf || self->can_export_html);
   set_sidebar_width(self, configuration.sidebar_width);
   set_text_direction(self, configuration.text_direction);
   set_sidebar_visible(self, configuration.sidebar_visible);
@@ -2157,8 +2165,15 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
+  } else if (strcmp(method, "setCanExportHtml") == 0) {
+    self->can_export_html = fl_method_bool_arg(args);
+    set_header_action_enabled(
+        self, "export", self->can_export_pdf || self->can_export_html);
+    respond_success(method_call);
   } else if (strcmp(method, "setCanExportPdf") == 0) {
-    set_header_action_enabled(self, "export-pdf", fl_method_bool_arg(args));
+    self->can_export_pdf = fl_method_bool_arg(args);
+    set_header_action_enabled(
+        self, "export", self->can_export_pdf || self->can_export_html);
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
@@ -2447,6 +2462,41 @@ static gboolean parse_native_menu_anchor(FlValue* args,
   return TRUE;
 }
 
+static GIcon* create_native_menu_icon(const gchar* icon_name, FlValue* entry) {
+  if (icon_name == nullptr || icon_name[0] == '\0') {
+    return nullptr;
+  }
+
+  FlValue* packed_color = fl_value_lookup_string(entry, "iconColor");
+  if (packed_color != nullptr &&
+      fl_value_get_type(packed_color) == FL_VALUE_TYPE_INT) {
+    const guint32 argb = static_cast<guint32>(fl_value_get_int(packed_color));
+    const GdkRGBA foreground = {
+        static_cast<gdouble>((argb >> 16) & 0xff) / 255.0,
+        static_cast<gdouble>((argb >> 8) & 0xff) / 255.0,
+        static_cast<gdouble>(argb & 0xff) / 255.0,
+        static_cast<gdouble>((argb >> 24) & 0xff) / 255.0,
+    };
+    GtkIconInfo* icon_info = gtk_icon_theme_lookup_icon(
+        gtk_icon_theme_get_default(), icon_name, 16,
+        static_cast<GtkIconLookupFlags>(GTK_ICON_LOOKUP_FORCE_SIZE |
+                                        GTK_ICON_LOOKUP_FORCE_SYMBOLIC));
+    if (icon_info != nullptr) {
+      gboolean was_symbolic = FALSE;
+      g_autoptr(GError) error = nullptr;
+      GdkPixbuf* pixbuf = gtk_icon_info_load_symbolic(
+          icon_info, &foreground, nullptr, nullptr, nullptr, &was_symbolic,
+          &error);
+      g_object_unref(icon_info);
+      if (pixbuf != nullptr) {
+        return G_ICON(pixbuf);
+      }
+    }
+  }
+
+  return g_themed_icon_new(icon_name);
+}
+
 static void show_native_menu(NativeMenuHandlerData* data,
                              FlMethodCall* method_call,
                              FlValue* args) {
@@ -2513,6 +2563,9 @@ static void show_native_menu(NativeMenuHandlerData* data,
   gboolean in_checkable_run = FALSE;
   for (size_t index = 0; index < fl_value_get_length(entries); index++) {
     FlValue* entry = fl_value_get_list_value(entries, index);
+    FlValue* icon_color = entry == nullptr
+                              ? nullptr
+                              : fl_value_lookup_string(entry, "iconColor");
     gboolean separator = FALSE;
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
@@ -2530,6 +2583,11 @@ static void show_native_menu(NativeMenuHandlerData* data,
         (fl_value_lookup_string(entry, "icon") != nullptr &&
          fl_value_get_type(fl_value_lookup_string(entry, "icon")) !=
              FL_VALUE_TYPE_STRING) ||
+        (icon_color != nullptr &&
+         (fl_value_get_type(icon_color) != FL_VALUE_TYPE_INT ||
+          fl_value_get_int(icon_color) < 0 ||
+          fl_value_get_int(icon_color) >
+              static_cast<gint64>(G_MAXUINT32))) ||
         (selected && !checkable)) {
       respond_native_menu_argument_error(
           method_call,
@@ -2675,7 +2733,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
         g_menu_item_set_action_and_target_value(
             item, detailed_group_action, g_variant_new_string(target));
         if (run_icon != nullptr && run_icon[0] != '\0') {
-          g_autoptr(GIcon) icon = g_themed_icon_new(run_icon);
+          g_autoptr(GIcon) icon =
+              create_native_menu_icon(run_icon, run_entry);
           g_menu_item_set_icon(item, icon);
         }
         if (run_shortcut != nullptr && run_shortcut[0] != '\0') {
@@ -2703,7 +2762,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
         g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
     g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
     if (icon_name != nullptr && icon_name[0] != '\0') {
-      g_autoptr(GIcon) icon = g_themed_icon_new(icon_name);
+      g_autoptr(GIcon) icon = create_native_menu_icon(icon_name, entry);
       g_menu_item_set_icon(item, icon);
     }
     if (shortcut != nullptr && shortcut[0] != '\0') {
@@ -2981,6 +3040,7 @@ static void my_application_activate(GApplication* application) {
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
   register_asset_input_channel(self, view);
+  self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
       busymark_secure_credential_channel_new(view);
   self->visualization_host =
@@ -3046,6 +3106,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
   g_clear_object(&self->asset_input_channel);
+  g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);
   if (self->visualization_host != nullptr) {
     busymark_web_render_host_shutdown(self->visualization_host);

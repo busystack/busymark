@@ -10,7 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../export/markdown_pdf_export_ui.dart';
+import '../export/workspace_export_ui.dart';
 import '../git/application/git_controller.dart';
 import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
@@ -39,7 +39,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.newDocument: const _NewWorkspaceIntent(),
     BusyMarkCommandIds.open: const _OpenWorkspaceIntent(),
     BusyMarkCommandIds.save: const _SaveActiveIntent(),
-    BusyMarkCommandIds.exportPdf: const _ExportPdfIntent(),
+    BusyMarkCommandIds.export: const _ExportIntent(),
     BusyMarkCommandIds.fullScreen: const _ToggleFullScreenIntent(),
     BusyMarkCommandIds.back: const _BackIntent(),
     BusyMarkCommandIds.search: const _OpenSearchIntent(),
@@ -78,8 +78,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     enabled: {
       BusyMarkCommandIds.save: () =>
           ref.read(workspaceControllerProvider).workspace != null,
-      BusyMarkCommandIds.exportPdf: () =>
-          canExportWorkspacePdf(ref.read(workspaceControllerProvider)),
+      BusyMarkCommandIds.export: () =>
+          canExportWorkspace(ref.read(workspaceControllerProvider)),
       BusyMarkCommandIds.search: () =>
           ref.read(workspaceControllerProvider).workspace != null,
     },
@@ -201,13 +201,13 @@ class BusyMarkApp extends ConsumerWidget {
                       return null;
                     },
                   ),
-                  _ExportPdfIntent: CallbackAction<_ExportPdfIntent>(
+                  _ExportIntent: CallbackAction<_ExportIntent>(
                     onInvoke: (intent) {
                       final state = ref.read(workspaceControllerProvider);
                       final navigatorContext = rootNavigatorKey.currentContext;
                       if (navigatorContext != null &&
-                          canExportWorkspacePdf(state)) {
-                        unawaited(exportWorkspaceToPdf(navigatorContext, ref));
+                          canExportWorkspace(state)) {
+                        unawaited(exportWorkspace(navigatorContext, ref));
                       }
                       return null;
                     },
@@ -817,9 +817,9 @@ class BusyMarkApp extends ConsumerWidget {
       back: material.backButtonTooltip,
       backShortcut: shortcut(BusyMarkCommandIds.back),
       save: label(BusyMarkCommandIds.save),
-      exportPdf: label(BusyMarkCommandIds.exportPdf),
-      exportPdfShortcut: shortcut(BusyMarkCommandIds.exportPdf),
-      exportPdfGtkAccelerator: accelerator(BusyMarkCommandIds.exportPdf),
+      export: label(BusyMarkCommandIds.export),
+      exportShortcut: shortcut(BusyMarkCommandIds.export),
+      exportGtkAccelerator: accelerator(BusyMarkCommandIds.export),
       fullScreen: label(BusyMarkCommandIds.fullScreen),
       fullScreenShortcut: shortcut(BusyMarkCommandIds.fullScreen),
       fullScreenGtkAccelerator: accelerator(BusyMarkCommandIds.fullScreen),
@@ -1100,8 +1100,8 @@ class _SaveActiveIntent extends Intent {
   const _SaveActiveIntent();
 }
 
-class _ExportPdfIntent extends Intent {
-  const _ExportPdfIntent();
+class _ExportIntent extends Intent {
+  const _ExportIntent();
 }
 
 class _ToggleFullScreenIntent extends Intent {

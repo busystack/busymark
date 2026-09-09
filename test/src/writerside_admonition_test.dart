@@ -353,6 +353,8 @@ Helpful advice.
 
 > Quoted.
 {style="quote"}
+
+<note title="Known issue">Named.</note>
 ''',
       mode: MarkdownMode.writersideMarkdown,
       validateLocalReferences: false,
@@ -363,8 +365,11 @@ Helpful advice.
       MarkdownExportBlockKind.admonition,
       MarkdownExportBlockKind.admonition,
       MarkdownExportBlockKind.blockquote,
+      MarkdownExportBlockKind.admonition,
     ]);
     expect(exported.blocks[0].attributes['style'], 'tip');
     expect(exported.blocks[1].attributes['style'], 'note');
+    expect(exported.blocks[3].attributes['style'], 'note');
+    expect(exported.blocks[3].attributes['title'], 'Known issue');
   });
 }

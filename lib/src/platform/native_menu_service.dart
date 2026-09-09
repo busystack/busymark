@@ -23,6 +23,7 @@ final class NativeMenuEntry {
   const NativeMenuEntry.command({
     required this.label,
     this.iconName,
+    this.iconColorArgb,
     this.shortcut,
     this.enabled = true,
     this.checkable = false,
@@ -32,6 +33,7 @@ final class NativeMenuEntry {
   const NativeMenuEntry.separator()
     : label = '',
       iconName = null,
+      iconColorArgb = null,
       shortcut = null,
       enabled = false,
       checkable = false,
@@ -40,6 +42,7 @@ final class NativeMenuEntry {
 
   final String label;
   final String? iconName;
+  final int? iconColorArgb;
   final String? shortcut;
   final bool enabled;
   final bool checkable;
@@ -50,6 +53,7 @@ final class NativeMenuEntry {
     return <String, Object>{
       'label': label,
       if (iconName != null && iconName!.isNotEmpty) 'icon': iconName!,
+      if (iconColorArgb != null) 'iconColor': iconColorArgb!,
       if (shortcut != null && shortcut!.isNotEmpty) 'shortcut': shortcut!,
       'enabled': enabled,
       'checkable': checkable,

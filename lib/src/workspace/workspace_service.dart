@@ -1,3 +1,5 @@
+import '../writerside/writerside_source_loader.dart';
+import '../writerside/writerside_reference_data.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -1295,6 +1297,36 @@ class WorkspaceService {
     }
   }
 
+  Future<Workspace> withWritersideSources(
+    Workspace workspace,
+    Map<String, String> sources,
+  ) async {
+    final project = workspace.writersideProject;
+    if (project == null) return workspace;
+    var updated = project;
+    for (final module in project.modules) {
+      final overrides = {
+        for (final entry in sources.entries)
+          if (p.isWithin(module.rootPath, entry.key) &&
+              module.sourceOverrides[entry.key] != entry.value)
+            entry.key: entry.value,
+      };
+      if (overrides.isEmpty) continue;
+      updated = updated.withModule(
+        await writersideService.load(
+          module.rootPath,
+          options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+          sourceOverrides: {...module.sourceOverrides, ...overrides},
+        ),
+      );
+    }
+    return workspace.copyWith(
+      writersideProject: updated,
+      writersideModule: updated.activeModule,
+      diagnostics: updated.diagnostics,
+    );
+  }
+
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
     final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (active == null) {
@@ -1365,14 +1397,14 @@ class WorkspaceService {
     );
   }
 
-  Workspace _workspaceWithReparsedWritersideTopic(
+  Future<Workspace> _workspaceWithReparsedWritersideTopic(
     Workspace workspace,
     WritersideModule module,
     WritersideTopic previousTopic,
     WritersideTopic parsedTopic,
-  ) {
+  ) async {
     final activePath = parsedTopic.filePath;
-    final updatedModule = module.copyWith(
+    var updatedModule = module.copyWith(
       topics: List.unmodifiable([
         for (final topic in module.topics)
           if (p.equals(topic.filePath, activePath)) parsedTopic else topic,
@@ -1386,6 +1418,12 @@ class WorkspaceService {
         ...module.sourceOverrides,
         normalizePath(activePath): parsedTopic.document.source,
       },
+    );
+    updatedModule = updatedModule.copyWith(
+      sourceFiles: await const WritersideSourceLoader().loadModule(
+        updatedModule,
+      ),
+      referenceData: await WritersideReferenceData.load(updatedModule),
     );
     final previousProject = workspace.writersideProject;
     final updatedProject = previousProject?.withModule(updatedModule);
@@ -1468,6 +1506,10 @@ class WorkspaceService {
     final config = module.config;
     final candidates = <String>{
       config.filePath,
+      for (final source in module.sourceFiles.values)
+        if (source.path case final path?) path,
+      for (final source in module.referenceData.sources.values)
+        if (source.path case final path?) path,
       for (final instance in module.instances) instance.sourceTreePath,
       for (final instance in config.instances)
         _moduleConfiguredPath(module.rootPath, instance.src),

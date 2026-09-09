@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -87,6 +89,18 @@ class WritersidePdfExportService {
         detail: 'Unknown or non-exportable instance: ${request.instanceId}',
       );
     }
+    final moduleDiagnostics = _moduleDiagnosticsForExport(module);
+    final moduleErrors = moduleDiagnostics.where(
+      (diagnostic) => diagnostic.severity == DiagnosticSeverity.error,
+    );
+    if (moduleErrors.isNotEmpty) {
+      throw WritersidePdfExportException(
+        WritersidePdfFailureCode.invalidRequest,
+        detail:
+            'Writerside module validation failed: '
+            '${moduleErrors.map((diagnostic) => diagnostic.code).toSet().join(', ')}',
+      );
+    }
     final composition = await _composeInstanceDocument(
       module,
       instance,
@@ -131,6 +145,12 @@ class WritersidePdfExportService {
         destinationPath: result.destinationPath,
         pageCount: result.pageCount,
         warnings: [
+          ...moduleDiagnostics.map(
+            (diagnostic) => MarkdownPdfWarning(
+              MarkdownPdfWarningCode.writersideResolution,
+              diagnostic.code,
+            ),
+          ),
           ...composition.diagnostics.map(
             (diagnostic) => MarkdownPdfWarning(
               MarkdownPdfWarningCode.writersideResolution,
@@ -191,35 +211,67 @@ class WritersidePdfExportService {
     Map<String, WritersideModule> modulesByOrigin,
     WritersidePdfCancellationToken token,
   ) async {
-    final selected = <({WritersideTopic topic, String? title})>[];
-    final seen = <String>{};
+    final selected = <({WritersideTopic topic, bool hidden})>[];
+    final selectedIndices = <String, int>{};
 
-    void addReference(String? reference, String? title) {
+    void addReference(String? reference, {required bool hidden}) {
       if (reference == null) {
         return;
       }
       final topic = module.topicByReference(reference);
-      if (topic != null && seen.add(topic.filePath)) {
-        selected.add((topic: topic, title: title));
+      if (topic == null) return;
+      final existingIndex = selectedIndices[topic.filePath];
+      if (existingIndex == null) {
+        selectedIndices[topic.filePath] = selected.length;
+        selected.add((topic: topic, hidden: hidden));
+      } else if (selected[existingIndex].hidden && !hidden) {
+        selected[existingIndex] = (topic: topic, hidden: false);
       }
     }
 
     void addNode(TocNode node) {
-      if (!node.hidden && !node.workInProgress) {
-        addReference(node.topicReference, node.tocTitle);
+      if (!node.workInProgress) {
+        addReference(node.topicReference, hidden: node.hidden);
       }
       for (final child in node.children) {
         addNode(child);
       }
     }
 
-    addReference(instance.startPage, null);
     for (final root in instance.navigationTocRoots) {
       addNode(root);
     }
+    final startTopic = instance.startPage == null
+        ? null
+        : module.topicByReference(instance.startPage!);
+    if (startTopic != null) {
+      final startNodes = instance.navigationTocRoots
+          .expand((root) => root.flatten())
+          .where(
+            (node) =>
+                node.topicReference != null &&
+                module.topicByReference(node.topicReference!)?.filePath ==
+                    startTopic.filePath,
+          )
+          .toList(growable: false);
+      final startHidden =
+          startNodes.isNotEmpty && startNodes.every((node) => node.hidden);
+      final existingIndex = selectedIndices[startTopic.filePath];
+      final start = existingIndex == null
+          ? (topic: startTopic, hidden: startHidden)
+          : selected.removeAt(existingIndex);
+      selected.insert(0, start);
+      selectedIndices
+        ..clear()
+        ..addEntries(
+          selected.indexed.map(
+            (entry) => MapEntry(entry.$2.topic.filePath, entry.$1),
+          ),
+        );
+    }
     if (selected.isEmpty) {
       for (final reference in instance.topicFileSet) {
-        addReference(reference, null);
+        addReference(reference, hidden: false);
       }
     }
     if (selected.length > maximumTopics) {
@@ -284,14 +336,16 @@ class WritersidePdfExportService {
           ),
         );
       }
-      final rendered = documentRenderer.toBusyDocument(
+      var rendered = documentRenderer.toBusyDocument(
         resolved.document,
-        title:
-            selection.title ??
-            resolved.title ??
-            _topicTitle(parsedTopic, instance.id),
+        title: resolved.title ?? _topicTitle(parsedTopic, instance.id),
         includeTitleHeading: true,
       );
+      if (selection.hidden) {
+        rendered = rendered.copyWith(
+          blocks: rendered.blocks.map(_excludeHeadingsFromPdfOutline).toList(),
+        );
+      }
       final assets = await _resolveBusyAssets(
         module,
         parsedTopic,
@@ -319,6 +373,50 @@ class WritersidePdfExportService {
         topic.title;
   }
 
+  BusyBlock _excludeHeadingsFromPdfOutline(BusyBlock block) {
+    return block.copyWith(
+      attributes: {
+        ...block.attributes,
+        if (block.kind == BusyBlockKind.heading) 'pdf-outline': 'false',
+      },
+      children: block.children
+          .map(_excludeHeadingsFromPdfOutline)
+          .toList(growable: false),
+    );
+  }
+
+  List<Diagnostic> _moduleDiagnosticsForExport(WritersideModule module) {
+    return [
+      for (final diagnostic in module.diagnostics)
+        if (!_isDeferredCrossModuleDiagnostic(module, diagnostic)) diagnostic,
+    ];
+  }
+
+  bool _isDeferredCrossModuleDiagnostic(
+    WritersideModule module,
+    Diagnostic diagnostic,
+  ) {
+    if (!{
+      'writerside.include.unresolved-source',
+      'writerside.include.unresolved-element',
+    }.contains(diagnostic.code)) {
+      return false;
+    }
+    final span = diagnostic.sourceSpan;
+    if (span == null) return false;
+    final topic = module.topics
+        .where((candidate) => p.equals(candidate.filePath, diagnostic.filePath))
+        .firstOrNull;
+    if (topic == null) return false;
+    return topic.document.elements.any(
+      (element) =>
+          element.name == 'include' &&
+          element.attributes['origin']?.trim().isNotEmpty == true &&
+          element.span.startOffset <= span.startOffset &&
+          element.span.endOffset >= span.endOffset,
+    );
+  }
+
   Future<BusyDocument> _resolveBusyAssets(
     WritersideModule module,
     WritersideTopic topic,
@@ -326,6 +424,9 @@ class WritersidePdfExportService {
     Map<String, WritersideModule> modulesByOrigin,
   ) async {
     final modules = {module, ...modulesByOrigin.values};
+    final seenAnchors = <String>{};
+    String anchor(String path, String id) =>
+        'ws-${sha256.convert(utf8.encode('$path#$id')).toString().substring(0, 24)}';
 
     ({WritersideModule module, WritersideTopic topic}) sourceContext(
       Map<String, String> attributes,
@@ -362,6 +463,19 @@ class WritersidePdfExportService {
             destination;
       }
       final attributes = {...inline.attributes};
+      if (inline.kind == BusyInlineKind.link &&
+          destination != null &&
+          !(Uri.tryParse(destination)?.hasScheme ?? false)) {
+        final hash = destination.indexOf('#');
+        final path = hash < 0 ? destination : destination.substring(0, hash);
+        final id = hash < 0 ? '' : destination.substring(hash + 1);
+        final target = path.isEmpty ? topic.filePath : path;
+        if (modules.any(
+          (module) => module.topics.any((topic) => topic.filePath == target),
+        )) {
+          destination = '#${anchor(target, id)}';
+        }
+      }
       for (final name in ['src', 'preview-src']) {
         final value = attributes[name];
         if (value == null || value.trim().isEmpty) {
@@ -371,17 +485,44 @@ class WritersidePdfExportService {
             await _resolvedAssetUri(source.module, source.topic, value) ??
             value;
       }
+      var text = inline.text;
+      var children = await Future.wait(inline.children.map(resolveInline));
+      if (attributes['shortcut-layouts'] case final layoutsJson?) {
+        final layouts = (jsonDecode(layoutsJson) as Map).cast<String, String>();
+        if (layouts.length > 1) {
+          text = layouts.entries
+              .map((entry) => '${entry.key}: ${entry.value}')
+              .join('; ');
+          children = const [];
+        }
+      }
+      if (attributes['switcher-key'] case final key?) {
+        text = '[$key] ${inline.plainText}';
+        children = const [];
+      }
       return inline.copyWith(
+        text: text,
         destination: destination,
         attributes: attributes,
-        children: await Future.wait(inline.children.map(resolveInline)),
+        children: children,
       );
     }
 
     Future<BusyBlock> resolveBlock(BusyBlock block) async {
       final attributes = {...block.attributes};
       final source = sourceContext(attributes);
+      final id = attributes['id'];
+      final candidate = block.id == 'writerside-document-title'
+          ? anchor(topic.filePath, '')
+          : id == null
+          ? null
+          : anchor(topic.filePath, id);
+      if (candidate != null && seenAnchors.add(candidate)) {
+        attributes['pdf-anchor'] = candidate;
+      }
+      if (id != null) attributes.remove('id');
       for (final name in ['src', 'preview-src']) {
+        if (name == 'src' && block.kind == BusyBlockKind.codeBlock) continue;
         final value = attributes[name];
         if (value == null || value.trim().isEmpty) {
           continue;

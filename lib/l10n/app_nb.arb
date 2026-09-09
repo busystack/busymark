@@ -94,6 +94,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopier",
+  "copyPlainText": "Kopier som ren tekst",
+  "clipboardCopyFailed": "Utvalget kunne ikke kopieres til utklippstavlen.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -198,10 +200,6 @@
   "paste": "Lim inn",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Lim inn uten formatering",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Lesevisning",
   "@reading": {
@@ -2307,7 +2305,7 @@
   "gitBinaryFile": "Binærfil. BusyMark viser ikke binære patcher.",
   "gitUnsavedChangesBanner": "Ulagrede endringer i redigereren tas ikke med før de er lagret.",
   "gitConfirmDiscardTitle": "Forkaste Git-endringer?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Alle staged- og ikke-staged-endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.} other{Alle staged- og ikke-staged-endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle indekserte og ikke-indekserte endringer i den valgte sporede filen vil bli gjenopprettet til HEAD.} other{Alle indekserte og ikke-indekserte endringer i de valgte sporede filene vil bli gjenopprettet til HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Den valgte usporede filen slettes.} other{De valgte usporede filene slettes.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.} other{De valgte filene gjenopprettes eller slettes ut fra Git-statusen.}}",
   "gitConfirmSwitchBranchTitle": "Bytt til {branch}?",
@@ -2477,6 +2475,10 @@
   "removeTocElement": "Fjern element fra innholdsfortegnelsen",
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
+  },
+  "removeTocElements": "Fjern elementer fra innholdsfortegnelsen",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Se gjennom bruk",
   "@reviewUsages": {
@@ -2766,6 +2768,10 @@
   "export": "Eksporter",
   "@export": {
     "description": "Button label that starts an export."
+  },
+  "exportFormat": "Utdataformat",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
   },
   "exportingPdf": "Eksporterer PDF…",
   "@exportingPdf": {
@@ -3074,5 +3080,69 @@
   "aiExplicitEditingDescription": "KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Eksporter som HTML…",
+  "fileTypeHtml": "HTML-dokument",
+  "exportingHtml": "Eksporterer HTML…",
+  "htmlExported": "HTML-eksport fullført",
+  "htmlExportFailed": "HTML-eksport mislyktes",
+  "htmlKeepAssetsTogether": "Hold HTML-filen og den tilhørende ressursmappen sammen når du kopierer eksporten.",
+  "htmlInstanceDescription": "Eksporter én instans som lenkede frakoblede sider. Velg et navn for en egen utdatamappe.",
+  "htmlInstance": "Instans",
+  "htmlOwnedDirectoryOnly": "Bare en mappe opprettet av BusyMarks HTML-eksport kan erstattes. Endrede eller uvedkommende filer beholdes.",
+  "showInFolder": "Vis i mappe",
+  "goToDeclaration": "Gå til deklarasjon",
+  "findUsages": "Finn bruk",
+  "cannotRenameSymbol": "Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.",
+  "keyboardLayout": "Tastaturoppsett",
+  "diagnosticWritersideUnsupported": "Innhold som ikke støttes eller er feilformet, vises som kildekode.",
+  "diagnosticWritersideSource": "Kan ikke løse kilden «{reference}»: {reason}",
+  "diagnosticWritersideLink": "Lenkemålet er ikke tilgjengelig i denne instansen: {destination}",
+  "diagnosticWritersideSchema": "Ugyldig Writerside-markering: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Bruk <llms-txt>true</llms-txt> eller <llms-txt>false</llms-txt>; single-file støttes ikke lenger.",
+  "diagnosticWritersideReference": "Kan ikke løse {kind}: {reference}",
+  "sortTableColumn": "Sorter {column}",
+  "exportReset": "Tilbakestill til standard",
+  "exportToc": "Ta med innholdsfortegnelse",
+  "exportTocDepth": "Dybde på innholdsfortegnelse",
+  "exportNumberHeadings": "Nummerer overskrifter",
+  "exportLegal": "US Legal",
+  "exportCustom": "Egendefinert",
+  "exportPageWidth": "Sidebredde (mm)",
+  "exportPageHeight": "Sidehøyde (mm)",
+  "exportMarginTop": "Toppmarg (mm)",
+  "exportMarginRight": "Høyremarg (mm)",
+  "exportMarginBottom": "Bunnmarg (mm)",
+  "exportMarginLeft": "Venstremarg (mm)",
+  "exportTypography": "Typografi",
+  "exportSans": "Uten seriffer",
+  "exportSerif": "Med seriffer",
+  "exportBodySize": "Tekststørrelse",
+  "exportCodeSize": "Kodestørrelse",
+  "exportRunningText": "Topp- og bunntekst",
+  "exportHeader": "Topptekst",
+  "exportFooter": "Bunntekst",
+  "exportNone": "Ingen",
+  "exportDocumentTitle": "Dokumenttittel",
+  "exportBottomLeft": "Nederst til venstre",
+  "exportBottomCenter": "Nederst i midten",
+  "exportBottomRight": "Nederst til høyre",
+  "exportFirstPage": "Vis topp- og bunntekst på første side",
+  "exportAccent": "Aksent-/lenkefarge",
+  "exportTheme": "Tema",
+  "exportAutomatic": "Automatisk",
+  "exportLayout": "Oppsett",
+  "exportContentWidth": "Maksimal innholdsbredde",
+  "exportOutput": "Utdata",
+  "exportPackaging": "Pakking",
+  "exportSingleFile": "Én HTML-fil",
+  "exportAssetsDirectory": "HTML + ressursmappe",
+  "exportCustomCss": "Egendefinert stilark…",
+  "exportRemoveCss": "Fjern egendefinert stilark",
+  "exportCssNote": "Velg en valgfri UTF-8-CSS-fil (opptil 256 KiB). Importer, ressurs-URL-er og kjørbar eller escaped CSS avvises. Stilene følger BusyMarks stilark. Eksterne ressurser hentes aldri.",
+  "exportSitePackagingNote": "Writerside beholder separate, lenkede emnesider. Enkeltfilmodus bygger ressursene inn i hver side.",
+  "exportInvalidGeometry": "La minst 20 mm innholdsbredde og -høyde stå igjen etter margene.",
+  "exportInvalidColor": "Skriv inn en farge som #RRGGBB.",
+  "exportInvalidCss": "Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.",
+  "exportInvalidRange": "{field}: skriv inn et tall mellom {minimum} og {maximum}."
 }

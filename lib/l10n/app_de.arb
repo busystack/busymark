@@ -94,6 +94,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopieren",
+  "copyPlainText": "Als Nur-Text kopieren",
+  "clipboardCopyFailed": "Die Auswahl konnte nicht in die Zwischenablage kopiert werden.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -198,10 +200,6 @@
   "paste": "Einfügen",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Ohne Formatierung einfügen",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Leseansicht",
   "@reading": {
@@ -2307,7 +2305,7 @@
   "gitBinaryFile": "Binärdatei. BusyMark zeigt keine Binär-Patches an.",
   "gitUnsavedChangesBanner": "Ungespeicherte Editoränderungen werden erst nach dem Speichern berücksichtigt.",
   "gitConfirmDiscardTitle": "Git-Änderungen verwerfen?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Datei werden auf den Stand in Git zurückgesetzt.} other{Alle gestageten und nicht gestageten Änderungen der ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Datei werden auf HEAD zurückgesetzt.} other{Alle vorgemerkten und nicht vorgemerkten Änderungen der ausgewählten versionierten Dateien werden auf HEAD zurückgesetzt.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{Die ausgewählte nicht versionierte Datei wird gelöscht.} other{Die ausgewählten nicht versionierten Dateien werden gelöscht.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{Die ausgewählte Datei wird abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.} other{Die ausgewählten Dateien werden abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.}}",
   "gitConfirmSwitchBranchTitle": "Zu {branch} wechseln?",
@@ -2477,6 +2475,10 @@
   "removeTocElement": "Inhaltsverzeichniselement entfernen",
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
+  },
+  "removeTocElements": "Inhaltsverzeichniselemente entfernen",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Verwendungen prüfen",
   "@reviewUsages": {
@@ -2766,6 +2768,10 @@
   "export": "Exportieren",
   "@export": {
     "description": "Button label that starts an export."
+  },
+  "exportFormat": "Ausgabeformat",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
   },
   "exportingPdf": "PDF wird exportiert…",
   "@exportingPdf": {
@@ -3074,5 +3080,69 @@
   "aiExplicitEditingDescription": "KI-Bearbeitung erfolgt nur auf ausdrücklichen Befehl. BusyMark sendet ausschließlich den angezeigten Kontext an den ausgewählten Anbieter und übernimmt keinen Vorschlag ohne Prüfung.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Als HTML exportieren…",
+  "fileTypeHtml": "HTML-Dokument",
+  "exportingHtml": "HTML wird exportiert…",
+  "htmlExported": "HTML-Export abgeschlossen",
+  "htmlExportFailed": "HTML-Export fehlgeschlagen",
+  "htmlKeepAssetsTogether": "Lassen Sie beim Kopieren die HTML-Datei und den zugehörigen Ressourcenordner zusammen.",
+  "htmlInstanceDescription": "Exportieren Sie eine Instanz als verknüpfte Offline-Seiten. Wählen Sie einen Namen für einen eigenen Ausgabeordner.",
+  "htmlInstance": "Instanz",
+  "htmlOwnedDirectoryOnly": "Nur ein vom BusyMark-HTML-Export erstellter Ordner kann ersetzt werden. Geänderte oder fremde Dateien bleiben erhalten.",
+  "showInFolder": "Im Ordner anzeigen",
+  "goToDeclaration": "Zur Deklaration wechseln",
+  "findUsages": "Verwendungen suchen",
+  "cannotRenameSymbol": "Das Symbol kann nicht sicher umbenannt werden. Prüfen Sie den Namen und aktualisieren Sie die Referenz, bevor Sie es erneut versuchen.",
+  "keyboardLayout": "Tastaturbelegung",
+  "diagnosticWritersideUnsupported": "Nicht unterstützter oder fehlerhafter Inhalt wird als Quelltext angezeigt.",
+  "diagnosticWritersideSource": "Quelle „{reference}“ kann nicht aufgelöst werden: {reason}",
+  "diagnosticWritersideLink": "Das Linkziel ist in dieser Instanz nicht verfügbar: {destination}",
+  "diagnosticWritersideSchema": "Ungültiges Writerside-Markup: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Verwenden Sie <llms-txt>true</llms-txt> oder <llms-txt>false</llms-txt>; single-file wird nicht mehr unterstützt.",
+  "diagnosticWritersideReference": "{kind} kann nicht aufgelöst werden: {reference}",
+  "sortTableColumn": "{column} sortieren",
+  "exportReset": "Auf Standardwerte zurücksetzen",
+  "exportToc": "Inhaltsverzeichnis einfügen",
+  "exportTocDepth": "Gliederungstiefe",
+  "exportNumberHeadings": "Überschriften nummerieren",
+  "exportLegal": "US Legal",
+  "exportCustom": "Benutzerdefiniert",
+  "exportPageWidth": "Seitenbreite (mm)",
+  "exportPageHeight": "Seitenhöhe (mm)",
+  "exportMarginTop": "Oberer Rand (mm)",
+  "exportMarginRight": "Rechter Rand (mm)",
+  "exportMarginBottom": "Unterer Rand (mm)",
+  "exportMarginLeft": "Linker Rand (mm)",
+  "exportTypography": "Typografie",
+  "exportSans": "Serifenlos",
+  "exportSerif": "Mit Serifen",
+  "exportBodySize": "Schriftgröße des Texts",
+  "exportCodeSize": "Schriftgröße für Code",
+  "exportRunningText": "Kopf- und Fußzeile",
+  "exportHeader": "Kopfzeile",
+  "exportFooter": "Fußzeile",
+  "exportNone": "Keine",
+  "exportDocumentTitle": "Dokumenttitel",
+  "exportBottomLeft": "Unten links",
+  "exportBottomCenter": "Unten mittig",
+  "exportBottomRight": "Unten rechts",
+  "exportFirstPage": "Kopf- und Fußzeile auf der ersten Seite anzeigen",
+  "exportAccent": "Akzent-/Linkfarbe",
+  "exportTheme": "Design",
+  "exportAutomatic": "Automatisch",
+  "exportLayout": "Layout",
+  "exportContentWidth": "Maximale Inhaltsbreite",
+  "exportOutput": "Ausgabe",
+  "exportPackaging": "Verpackung",
+  "exportSingleFile": "Einzelne HTML-Datei",
+  "exportAssetsDirectory": "HTML + Ressourcenordner",
+  "exportCustomCss": "Eigenes Stylesheet…",
+  "exportRemoveCss": "Eigenes Stylesheet entfernen",
+  "exportCssNote": "Wählen Sie eine optionale UTF-8-CSS-Datei (bis 256 KiB). Importe, Ressourcen-URLs sowie ausführbares oder maskiertes CSS werden abgelehnt. Die Regeln folgen dem BusyMark-Stylesheet. Entfernte Ressourcen werden nie abgerufen.",
+  "exportSitePackagingNote": "Writerside behält getrennte, verknüpfte Themenseiten. Der Einzeldateimodus bettet Ressourcen in jede Seite ein.",
+  "exportInvalidGeometry": "Nach Abzug der Ränder müssen mindestens 20 mm Inhaltsbreite und -höhe bleiben.",
+  "exportInvalidColor": "Geben Sie eine Farbe als #RRGGBB ein.",
+  "exportInvalidCss": "Wählen Sie eine lesbare UTF-8-CSS-Datei bis 256 KiB ohne Importe, Ressourcen-URLs, HTML sowie ausführbares oder maskiertes CSS.",
+  "exportInvalidRange": "{field}: Geben Sie eine Zahl zwischen {minimum} und {maximum} ein."
 }

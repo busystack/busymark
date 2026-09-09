@@ -22,6 +22,60 @@ import 'package:xml/xml.dart';
 
 void main() {
   test(
+    'Writerside rename stages verified edits across unsaved tabs with undo',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-rename-');
+      addTearDown(() => root.delete(recursive: true));
+      for (final entry in {
+        'writerside.cfg':
+            '<ihp><module name="docs"/><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+        'guide.tree':
+            '<instance-profile id="guide" name="Guide" start-page="a.topic"><toc-element topic="a.topic"/></instance-profile>',
+        'topics/a.topic':
+            '<topic id="a" title="A"><p id="anchor">Original</p></topic>',
+        'topics/b.topic':
+            '<topic id="b" title="B"><a href="a.topic#anchor"/></topic>',
+      }.entries) {
+        final file = File(p.join(root.path, entry.key));
+        await file.parent.create(recursive: true);
+        await file.writeAsString(entry.value);
+      }
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final aPath = p.join(root.path, 'topics/a.topic');
+      final bPath = p.join(root.path, 'topics/b.topic');
+      await controller.openActiveFile(bPath);
+      controller.updateActiveText(
+        '<topic id="b" title="B"><p>Unsaved</p><a href="a.topic#anchor"/></topic>',
+        sourceFilePath: bPath,
+      );
+      await controller.openActiveFile(aPath);
+      final index = (await controller.writersideEditorIndex())!;
+      final symbol = index
+          .definitions('a.topic#anchor', moduleId: 'docs')
+          .single;
+      final edits = index.safeRenameEdits(symbol, 'renamed');
+      expect(await controller.applyWritersideRename(edits), isTrue);
+      final state = harness.controller.state;
+      expect(
+        state.documentBuffers
+            .singleWhere((buffer) => buffer.filePath == bPath)
+            .text,
+        '<topic id="b" title="B"><p>Unsaved</p><a href="a.topic#renamed"/></topic>',
+      );
+      expect(
+        state.documentBuffers.where((buffer) => buffer.dirty),
+        hasLength(2),
+      );
+      expect(await File(bPath).readAsString(), isNot(contains('renamed')));
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(harness.controller.state.activeText, contains('id="anchor"'));
+      expect(await controller.applyWritersideRename(edits), isFalse);
+    },
+  );
+
+  test(
     'records opened Markdown files by file path in recent workspaces',
     () async {
       final harness = await _createControllerHarness();
@@ -1564,6 +1618,36 @@ void main() {
     },
   );
 
+  test('monitor refresh waits for an active foreground refresh', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-refresh-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    File(p.join(directory.path, 'a.md')).writeAsStringSync('# Original\n');
+    final monitor = _ControlledFileMonitor();
+    addTearDown(monitor.dispose);
+    final service = _GatedRefreshWorkspaceService();
+    final harness = await _createControllerHarness(
+      service: service,
+      fileMonitor: monitor,
+    );
+    await harness.controller.openPath(directory.path);
+    service.gate = Completer<void>();
+    final refresh = harness.controller.refreshWorkspaceFromDisk();
+    await _waitFor(() => service.refreshStarts == 1);
+    monitor.emit(directory.path);
+    // Cross the controller's debounce while the foreground operation is held.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    final startsWhileLoading = service.refreshStarts;
+    service.gate!.complete();
+    service.gate = null;
+    final succeeded = await refresh;
+    await _waitFor(() => !harness.controller.state.isLoading);
+    expect(startsWhileLoading, 1);
+    expect(succeeded, isTrue);
+    expect(harness.controller.state.activeText, '# Original\n');
+  });
+
   test('external file moves remap the open document buffer', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-external-move-',
@@ -2488,3 +2572,38 @@ WorkspaceFileSnapshot _delayedSnapshot(String text, [int revision = 0]) {
 
 final _autosaveInitialModifiedAt = DateTime(2026);
 final _delayedInitialModifiedAt = DateTime(2026, 2);
+
+class _ControlledFileMonitor extends WorkspaceFileMonitor {
+  final _events = StreamController<WorkspaceFileMonitorEvent>.broadcast();
+  @override
+  Stream<WorkspaceFileMonitorEvent> get events => _events.stream;
+  void emit(String path) => _events.add(
+    WorkspaceFileMonitorEvent(
+      kind: WorkspaceFileEventKind.workspaceChanged,
+      path: path,
+    ),
+  );
+  @override
+  Future<void> start({
+    required String rootPath,
+    required Iterable<String> openFilePaths,
+  }) async {}
+  @override
+  void updateOpenFilePaths(Iterable<String> paths) {}
+  @override
+  Future<void> dispose() => _events.close();
+}
+
+class _GatedRefreshWorkspaceService extends WorkspaceService {
+  Completer<void>? gate;
+  var refreshStarts = 0;
+  @override
+  Future<Workspace> openPath(String path) async {
+    final pending = gate;
+    if (pending != null) {
+      refreshStarts++;
+      await pending.future;
+    }
+    return super.openPath(path);
+  }
+}

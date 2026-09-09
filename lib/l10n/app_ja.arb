@@ -178,6 +178,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "コピー",
+  "copyPlainText": "プレーンテキストとしてコピー",
+  "clipboardCopyFailed": "選択内容をクリップボードにコピーできませんでした。",
   "@copy": {
     "description": "Copy command label."
   },
@@ -325,10 +327,6 @@
   "paste": "貼り付け",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "書式なしで貼り付け",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "閲覧",
   "@reading": {
@@ -1497,6 +1495,10 @@
   "removeTocElement": "目次要素を削除",
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "removeTocElements": "目次要素を削除",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "使用箇所を確認",
   "@reviewUsages": {
@@ -3691,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "出力形式",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "PDF をエクスポート中…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -4633,5 +4639,69 @@
   "aiExplicitEditingDescription": "AI による編集は明示的に実行されます。BusyMark は選択したプロバイダーに表示されたコンテキストのみを送信し、確認なしに提案を適用することはありません。",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML としてエクスポート…",
+  "fileTypeHtml": "HTML ドキュメント",
+  "exportingHtml": "HTML をエクスポート中…",
+  "htmlExported": "HTML のエクスポートが完了しました",
+  "htmlExportFailed": "HTML のエクスポートに失敗しました",
+  "htmlKeepAssetsTogether": "コピーするときは、HTML ファイルと付属のアセットフォルダーを一緒に移動してください。",
+  "htmlInstanceDescription": "1 つのインスタンスを、リンクでつながるオフラインページとしてエクスポートします。専用の出力フォルダー名を選んでください。",
+  "htmlInstance": "インスタンス",
+  "htmlOwnedDirectoryOnly": "BusyMark の HTML エクスポートで作成されたフォルダーのみ置き換えられます。変更されたファイルや無関係なファイルは保持されます。",
+  "showInFolder": "フォルダーで表示",
+  "goToDeclaration": "宣言へ移動",
+  "findUsages": "使用箇所を検索",
+  "cannotRenameSymbol": "シンボル名を安全に変更できません。名前を確認し、参照を更新してから再試行してください。",
+  "keyboardLayout": "キーボード配列",
+  "diagnosticWritersideUnsupported": "未対応または不正な形式の内容はソースとして表示されます。",
+  "diagnosticWritersideSource": "ソース「{reference}」を解決できません: {reason}",
+  "diagnosticWritersideLink": "このインスタンスではリンク先を利用できません: {destination}",
+  "diagnosticWritersideSchema": "無効な Writerside マークアップ: {element}、{attribute}。{reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> または <llms-txt>false</llms-txt> を使用してください。single-file はサポートされなくなりました。",
+  "diagnosticWritersideReference": "{kind} を解決できません: {reference}",
+  "sortTableColumn": "{column} を並べ替え",
+  "exportReset": "既定値に戻す",
+  "exportToc": "目次を含める",
+  "exportTocDepth": "目次の深さ",
+  "exportNumberHeadings": "見出しに番号を付ける",
+  "exportLegal": "US Legal",
+  "exportCustom": "カスタム",
+  "exportPageWidth": "ページ幅 (mm)",
+  "exportPageHeight": "ページ高さ (mm)",
+  "exportMarginTop": "上余白 (mm)",
+  "exportMarginRight": "右余白 (mm)",
+  "exportMarginBottom": "下余白 (mm)",
+  "exportMarginLeft": "左余白 (mm)",
+  "exportTypography": "書体",
+  "exportSans": "サンセリフ",
+  "exportSerif": "セリフ",
+  "exportBodySize": "本文の文字サイズ",
+  "exportCodeSize": "コードの文字サイズ",
+  "exportRunningText": "ヘッダーとフッター",
+  "exportHeader": "ヘッダー",
+  "exportFooter": "フッター",
+  "exportNone": "なし",
+  "exportDocumentTitle": "文書タイトル",
+  "exportBottomLeft": "左下",
+  "exportBottomCenter": "中央下",
+  "exportBottomRight": "右下",
+  "exportFirstPage": "最初のページにもヘッダーとフッターを表示",
+  "exportAccent": "アクセント／リンクの色",
+  "exportTheme": "テーマ",
+  "exportAutomatic": "自動",
+  "exportLayout": "レイアウト",
+  "exportContentWidth": "コンテンツの最大幅",
+  "exportOutput": "出力",
+  "exportPackaging": "パッケージ形式",
+  "exportSingleFile": "単一の HTML ファイル",
+  "exportAssetsDirectory": "HTML + アセットフォルダー",
+  "exportCustomCss": "カスタムスタイルシート…",
+  "exportRemoveCss": "カスタムスタイルシートを削除",
+  "exportCssNote": "任意の UTF-8 CSS ファイルを選択できます（最大 256 KiB）。インポート、リソース URL、実行可能な CSS、エスケープを含む CSS は拒否されます。BusyMark のスタイルの後に適用されます。外部リソースは取得しません。",
+  "exportSitePackagingNote": "Writerside はリンクされた個別のトピックページを保持します。単一ファイルモードでは各ページにリソースを埋め込みます。",
+  "exportInvalidGeometry": "余白を除いたコンテンツの幅と高さをそれぞれ 20 mm 以上にしてください。",
+  "exportInvalidColor": "色を #RRGGBB 形式で入力してください。",
+  "exportInvalidCss": "読み取り可能な UTF-8 .css ファイル（最大 256 KiB）を選択してください。インポート、リソース URL、HTML、実行可能な CSS、エスケープを含む CSS は使用できません。",
+  "exportInvalidRange": "{field}: {minimum} から {maximum} の数値を入力してください。"
 }

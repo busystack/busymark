@@ -156,6 +156,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get copy => 'Kopiëren';
 
   @override
+  String get copyPlainText => 'Kopiëren als platte tekst';
+
+  @override
+  String get clipboardCopyFailed =>
+      'De selectie kon niet naar het klembord worden gekopieerd.';
+
+  @override
   String get copyName => 'Kopieer naam';
 
   @override
@@ -262,9 +269,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get paste => 'Plakken';
-
-  @override
-  String get pasteWithoutFormatting => 'Plakken zonder opmaak';
 
   @override
   String get reading => 'Lezen';
@@ -1205,6 +1209,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get removeTocElement => 'TOC-element verwijderen';
+
+  @override
+  String get removeTocElements => 'TOC-elementen verwijderen';
 
   @override
   String get reviewUsages => 'Gebruik controleren';
@@ -2969,6 +2976,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get export => 'Exporteren';
 
   @override
+  String get exportFormat => 'Uitvoerformaat';
+
+  @override
   String get exportingPdf => 'PDF exporteren…';
 
   @override
@@ -3707,4 +3717,222 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get displayMath => 'Wiskunde weergeven';
+
+  @override
+  String get goToDeclaration => 'Ga naar declaratie';
+
+  @override
+  String get findUsages => 'Gebruik zoeken';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Het symbool kan niet veilig worden hernoemd. Controleer de naam en vernieuw de verwijzing voordat u het opnieuw probeert.';
+
+  @override
+  String get keyboardLayout => 'Toetsenbordindeling';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Niet-ondersteunde of ongeldige inhoud wordt als broncode getoond.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Bron ‘$reference’ kan niet worden gevonden: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Het linkdoel is niet beschikbaar in deze instantie: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Ongeldige Writerside-opmaak: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Gebruik <llms-txt>true</llms-txt> of <llms-txt>false</llms-txt>; single-file wordt niet meer ondersteund.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '$kind kan niet worden gevonden: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Exporteren als HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML-document';
+
+  @override
+  String get exportingHtml => 'HTML exporteren…';
+
+  @override
+  String get htmlExported => 'HTML-export voltooid';
+
+  @override
+  String get htmlExportFailed => 'HTML-export mislukt';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Houd het HTML-bestand en de bijbehorende middelenmap bij elkaar wanneer u deze export kopieert.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Exporteer één instantie als gekoppelde offline pagina’s. Kies een naam voor een aparte uitvoermap.';
+
+  @override
+  String get htmlInstance => 'Instantie';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Alleen een map die door BusyMark HTML-export is gemaakt kan worden vervangen. Gewijzigde of andere bestanden blijven behouden.';
+
+  @override
+  String get showInFolder => 'Tonen in map';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column sorteren';
+  }
+
+  @override
+  String get exportReset => 'Standaardwaarden herstellen';
+
+  @override
+  String get exportToc => 'Inhoudsopgave opnemen';
+
+  @override
+  String get exportTocDepth => 'Diepte inhoudsopgave';
+
+  @override
+  String get exportNumberHeadings => 'Koppen nummeren';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Aangepast';
+
+  @override
+  String get exportPageWidth => 'Paginabreedte (mm)';
+
+  @override
+  String get exportPageHeight => 'Paginahoogte (mm)';
+
+  @override
+  String get exportMarginTop => 'Bovenmarge (mm)';
+
+  @override
+  String get exportMarginRight => 'Rechtermarge (mm)';
+
+  @override
+  String get exportMarginBottom => 'Ondermarge (mm)';
+
+  @override
+  String get exportMarginLeft => 'Linkermarge (mm)';
+
+  @override
+  String get exportTypography => 'Typografie';
+
+  @override
+  String get exportSans => 'Schreefloos';
+
+  @override
+  String get exportSerif => 'Met schreef';
+
+  @override
+  String get exportBodySize => 'Tekstgrootte';
+
+  @override
+  String get exportCodeSize => 'Codegrootte';
+
+  @override
+  String get exportRunningText => 'Kop- en voettekst';
+
+  @override
+  String get exportHeader => 'Koptekst';
+
+  @override
+  String get exportFooter => 'Voettekst';
+
+  @override
+  String get exportNone => 'Geen';
+
+  @override
+  String get exportDocumentTitle => 'Documenttitel';
+
+  @override
+  String get exportBottomLeft => 'Linksonder';
+
+  @override
+  String get exportBottomCenter => 'Middenonder';
+
+  @override
+  String get exportBottomRight => 'Rechtsonder';
+
+  @override
+  String get exportFirstPage => 'Kop- en voettekst op de eerste pagina tonen';
+
+  @override
+  String get exportAccent => 'Accent-/linkkleur';
+
+  @override
+  String get exportTheme => 'Thema';
+
+  @override
+  String get exportAutomatic => 'Automatisch';
+
+  @override
+  String get exportLayout => 'Indeling';
+
+  @override
+  String get exportContentWidth => 'Maximale inhoudsbreedte';
+
+  @override
+  String get exportOutput => 'Uitvoer';
+
+  @override
+  String get exportPackaging => 'Verpakking';
+
+  @override
+  String get exportSingleFile => 'Eén HTML-bestand';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + middelenmap';
+
+  @override
+  String get exportCustomCss => 'Aangepast stijlblad…';
+
+  @override
+  String get exportRemoveCss => 'Aangepast stijlblad verwijderen';
+
+  @override
+  String get exportCssNote =>
+      'Kies een optioneel UTF-8-CSS-bestand (maximaal 256 KiB). Imports, bron-URL’s en uitvoerbare of ontsnapte CSS worden geweigerd. De stijlen volgen die van BusyMark. Externe bronnen worden nooit opgehaald.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside behoudt aparte gekoppelde onderwerppagina’s. De enkelbestandsmodus sluit bronnen in elke pagina in.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Laat na de marges minimaal 20 mm inhoudsbreedte en -hoogte over.';
+
+  @override
+  String get exportInvalidColor => 'Voer een kleur in als #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: voer een getal tussen $minimum en $maximum in.';
+  }
 }

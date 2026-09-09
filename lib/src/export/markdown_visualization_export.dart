@@ -1,3 +1,4 @@
+import '../writerside/writerside_source_loader.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -151,7 +152,8 @@ class MarkdownVisualizationExportRenderer {
     try {
       var source = block.plainText;
       final sourceReference = block.attributes['src']?.trim() ?? '';
-      if (sourceReference.isNotEmpty) {
+      if (sourceReference.isNotEmpty &&
+          !block.attributes.containsKey(writersideResolvedSourceAttribute)) {
         source = await diagramSourceLoader.load(
           reference: sourceReference,
           documentPath: documentPath,

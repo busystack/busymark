@@ -153,6 +153,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copy => 'نسخ';
 
   @override
+  String get copyPlainText => 'نسخ كنص عادي';
+
+  @override
+  String get clipboardCopyFailed => 'تعذّر نسخ المحتوى المحدد إلى الحافظة.';
+
+  @override
   String get copyName => 'نسخ الاسم';
 
   @override
@@ -259,9 +265,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paste => 'لصق';
-
-  @override
-  String get pasteWithoutFormatting => 'لصق بدون تنسيق';
 
   @override
   String get reading => 'وضع القراءة';
@@ -1206,6 +1209,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get removeTocElement => 'إزالة عنصر جدول المحتويات';
+
+  @override
+  String get removeTocElements => 'إزالة عناصر جدول المحتويات';
 
   @override
   String get reviewUsages => 'مراجعة الاستخدامات';
@@ -2435,9 +2441,9 @@ class AppLocalizationsAr extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملفات المتعقبة المحددة إلى HEAD.',
+          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملفات المتعقبة المحددة إلى HEAD.',
       one:
-          'ستتم استعادة جميع تغييرات المرحلة وغير المرحلة في الملف المتعقب المحدد إلى HEAD.',
+          'ستتم استعادة جميع التغييرات المُرحَّلة وغير المُرحَّلة في الملف المتعقب المحدد إلى HEAD.',
     );
     return '$_temp0';
   }
@@ -2988,6 +2994,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get export => 'تصدير';
+
+  @override
+  String get exportFormat => 'تنسيق الإخراج';
 
   @override
   String get exportingPdf => 'جارٍ تصدير PDF…';
@@ -3651,7 +3660,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiEnableProvider => 'فعّل مزوّد ذكاء اصطناعي أولًا.';
 
   @override
-  String get aiDraftCommitMessage => 'صياغة مسودة رسالة الإيداع';
+  String get aiDraftCommitMessage => 'صياغة مسودة رسالة الالتزام';
 
   @override
   String get aiDrafting => 'جارٍ إعداد المسودة…';
@@ -3704,4 +3713,222 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get displayMath => 'رياضيات معروضة';
+
+  @override
+  String get goToDeclaration => 'الانتقال إلى التصريح';
+
+  @override
+  String get findUsages => 'البحث عن الاستخدامات';
+
+  @override
+  String get cannotRenameSymbol =>
+      'لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.';
+
+  @override
+  String get keyboardLayout => 'تخطيط لوحة المفاتيح';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'يُعرض المحتوى غير المدعوم أو المشوّه كنص مصدر.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'تعذّر حل المصدر «$reference»: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'هدف الرابط غير متاح في هذه النسخة: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'ترميز Writerside غير صالح: $element، $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'استخدم <llms-txt>true</llms-txt> أو <llms-txt>false</llms-txt>؛ لم يعد single-file مدعومًا.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'تعذّر حل $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'تصدير بتنسيق HTML…';
+
+  @override
+  String get fileTypeHtml => 'مستند HTML';
+
+  @override
+  String get exportingHtml => 'جارٍ تصدير HTML…';
+
+  @override
+  String get htmlExported => 'اكتمل تصدير HTML';
+
+  @override
+  String get htmlExportFailed => 'فشل تصدير HTML';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'عند نسخ التصدير، احتفظ بملف HTML ومجلد الموارد المرافق له معًا.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'صدّر نسخة واحدة على هيئة صفحات مترابطة تعمل دون اتصال. اختر اسمًا لمجلد إخراج مخصص.';
+
+  @override
+  String get htmlInstance => 'النسخة';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'يمكن استبدال مجلد أنشأه تصدير HTML في BusyMark فقط. ستُحفظ الملفات المعدّلة أو غير المرتبطة.';
+
+  @override
+  String get showInFolder => 'إظهار في المجلد';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'فرز $column';
+  }
+
+  @override
+  String get exportReset => 'استعادة الإعدادات الافتراضية';
+
+  @override
+  String get exportToc => 'تضمين جدول المحتويات';
+
+  @override
+  String get exportTocDepth => 'عمق جدول المحتويات';
+
+  @override
+  String get exportNumberHeadings => 'ترقيم العناوين';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'مخصص';
+
+  @override
+  String get exportPageWidth => 'عرض الصفحة (مم)';
+
+  @override
+  String get exportPageHeight => 'ارتفاع الصفحة (مم)';
+
+  @override
+  String get exportMarginTop => 'الهامش العلوي (مم)';
+
+  @override
+  String get exportMarginRight => 'الهامش الأيمن (مم)';
+
+  @override
+  String get exportMarginBottom => 'الهامش السفلي (مم)';
+
+  @override
+  String get exportMarginLeft => 'الهامش الأيسر (مم)';
+
+  @override
+  String get exportTypography => 'الخطوط';
+
+  @override
+  String get exportSans => 'بلا زوائد';
+
+  @override
+  String get exportSerif => 'بزوائد';
+
+  @override
+  String get exportBodySize => 'حجم خط النص';
+
+  @override
+  String get exportCodeSize => 'حجم خط الشيفرة';
+
+  @override
+  String get exportRunningText => 'رأس الصفحة وتذييلها';
+
+  @override
+  String get exportHeader => 'رأس الصفحة';
+
+  @override
+  String get exportFooter => 'تذييل الصفحة';
+
+  @override
+  String get exportNone => 'بلا';
+
+  @override
+  String get exportDocumentTitle => 'عنوان المستند';
+
+  @override
+  String get exportBottomLeft => 'أسفل اليسار';
+
+  @override
+  String get exportBottomCenter => 'أسفل الوسط';
+
+  @override
+  String get exportBottomRight => 'أسفل اليمين';
+
+  @override
+  String get exportFirstPage => 'إظهار الرأس والتذييل في الصفحة الأولى';
+
+  @override
+  String get exportAccent => 'لون التمييز / الروابط';
+
+  @override
+  String get exportTheme => 'المظهر';
+
+  @override
+  String get exportAutomatic => 'تلقائي';
+
+  @override
+  String get exportLayout => 'التخطيط';
+
+  @override
+  String get exportContentWidth => 'العرض الأقصى للمحتوى';
+
+  @override
+  String get exportOutput => 'الإخراج';
+
+  @override
+  String get exportPackaging => 'التجميع';
+
+  @override
+  String get exportSingleFile => 'ملف HTML واحد';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + مجلد موارد';
+
+  @override
+  String get exportCustomCss => 'ورقة أنماط مخصصة…';
+
+  @override
+  String get exportRemoveCss => 'إزالة ورقة الأنماط المخصصة';
+
+  @override
+  String get exportCssNote =>
+      'اختر ملف CSS اختياريًا بترميز UTF-8 (حتى 256 KiB). تُرفض عمليات الاستيراد وعناوين الموارد وCSS القابل للتنفيذ أو المحتوي على محارف هروب. تُطبق الأنماط بعد أنماط BusyMark. لا تُجلب موارد بعيدة.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'يحتفظ Writerside بصفحات مواضيع منفصلة ومترابطة. يضمّن وضع الملف الواحد الموارد في كل صفحة.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'اترك عرضًا وارتفاعًا للمحتوى لا يقلان عن 20 مم بعد الهوامش.';
+
+  @override
+  String get exportInvalidColor => 'أدخل لونًا بصيغة #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'اختر ملف .css مقروءًا بترميز UTF-8 حتى 256 KiB، دون استيراد أو عناوين موارد أو HTML أو CSS قابل للتنفيذ أو يحتوي على محارف هروب.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: أدخل رقمًا بين $minimum و$maximum.';
+  }
 }

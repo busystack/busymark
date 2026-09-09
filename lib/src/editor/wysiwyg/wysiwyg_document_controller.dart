@@ -467,6 +467,67 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
+  /// A table cell accepts inline formatting; block boundaries become spaces.
+  int? insertStyledInlinesInTableCell({
+    required String tableBlockId,
+    required String cellId,
+    required int selectionStart,
+    required int selectionEnd,
+    required List<BusyWysiwygStyledBlock> blocks,
+  }) {
+    final cell = blockById(cellId);
+    final table = blockById(tableBlockId);
+    if (cell == null || table?.kind != BusyBlockKind.table || blocks.isEmpty) {
+      return null;
+    }
+    BusyInline normalize(BusyInline inline) =>
+        inline.kind == BusyInlineKind.hardBreak ||
+            inline.kind == BusyInlineKind.softBreak
+        ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
+        : inline.copyWith(
+            text: busyMarkNormalizeTableCellText(inline.text),
+            children: [for (final child in inline.children) normalize(child)],
+          );
+    final inserted = <BusyInline>[];
+    void append(BusyBlock block) {
+      if (inserted.isNotEmpty) {
+        inserted.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
+      }
+      inserted.addAll(block.inlines.map(normalize));
+      for (final child in block.children) {
+        append(child);
+      }
+    }
+
+    for (final block in blocks) {
+      append(busyMarkWysiwygClipboardBlock(block));
+    }
+    final start = selectionStart.clamp(0, cell.plainText.length);
+    final end = selectionEnd.clamp(start, cell.plainText.length);
+    final partition = _partitionInlinesForReplacement(cell.inlines, start, end);
+    _replaceBlock(
+      tableBlockId,
+      (table) => table.copyWith(
+        children: _replaceInBlocks(
+          table.children,
+          cellId,
+          (cell) => cell.copyWith(
+            inlines: [...partition.before, ...inserted, ...partition.after],
+            preserveRaw: false,
+            dirty: true,
+          ),
+        ),
+        preserveRaw: false,
+        dirty: true,
+      ),
+    );
+    return start +
+        inserted.fold<int>(
+          0,
+          (length, inline) => length + inline.plainText.length,
+        );
+  }
+
   void _updateTableCellText(
     String tableBlockId,
     String cellId,
@@ -1680,11 +1741,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final text = block.plainText;
     final start = selectionStart.clamp(0, text.length).toInt();
     final end = selectionEnd.clamp(start, text.length).toInt();
-    final oldRanges = busyInlineStyleRanges(block.inlines);
     final beforeText = text.substring(0, start);
     final afterText = text.substring(end);
-    final beforeRanges = _styleRangesForSlice(oldRanges, 0, start);
-    final afterRanges = _styleRangesForSlice(oldRanges, end, text.length);
+    final partition = _partitionInlinesForReplacement(
+      block.inlines,
+      start,
+      end,
+    );
 
     if (blocks.any(_requiresCompleteBlockInsertion)) {
       return _insertCompleteBlocksAtSelection(
@@ -1692,8 +1755,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         blockId: blockId,
         beforeText: beforeText,
         afterText: afterText,
-        beforeRanges: beforeRanges,
-        afterRanges: afterRanges,
+        beforeInlines: partition.before,
+        afterInlines: partition.after,
         blocks: blocks,
       );
     }
@@ -1701,15 +1764,6 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final replacements = <BusyBlock>[];
     if (blocks.length == 1) {
       final inserted = blocks.single;
-      final nextText = beforeText + inserted.text + afterText;
-      final nextRanges = [
-        ...beforeRanges,
-        ..._shiftStyleRanges(inserted.ranges, beforeText.length),
-        ..._shiftStyleRanges(
-          afterRanges,
-          beforeText.length + inserted.text.length,
-        ),
-      ];
       replacements.add(
         block.copyWith(
           kind: beforeText.isEmpty && afterText.isEmpty
@@ -1718,7 +1772,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           attributes: beforeText.isEmpty && afterText.isEmpty
               ? inserted.attributes
               : block.attributes,
-          inlines: _inlinesFromStyleRanges(nextText, nextRanges),
+          inlines: [
+            ...partition.before,
+            ...busyMarkWysiwygClipboardBlock(inserted).inlines,
+            ...partition.after,
+          ],
           preserveRaw: false,
           dirty: true,
         ),
@@ -1734,15 +1792,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
 
     final first = blocks.first;
-    final firstText = beforeText + first.text;
     replacements.add(
       block.copyWith(
         kind: beforeText.isEmpty ? first.kind : block.kind,
         attributes: beforeText.isEmpty ? first.attributes : block.attributes,
-        inlines: _inlinesFromStyleRanges(firstText, [
-          ...beforeRanges,
-          ..._shiftStyleRanges(first.ranges, beforeText.length),
-        ]),
+        inlines: [
+          ...partition.before,
+          ...busyMarkWysiwygClipboardBlock(first).inlines,
+        ],
         preserveRaw: false,
         dirty: true,
       ),
@@ -1753,14 +1810,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
 
     final last = blocks.last;
-    final lastText = last.text + afterText;
-    final lastBlock = _styledBlockToBusyBlock(
-      last,
-      text: lastText,
-      ranges: [
-        ...last.ranges,
-        ..._shiftStyleRanges(afterRanges, last.text.length),
+    final lastBlock = _styledBlockToBusyBlock(last).copyWith(
+      inlines: [
+        ...busyMarkWysiwygClipboardBlock(last).inlines,
+        ...partition.after,
       ],
+      dirty: true,
     );
     replacements.add(lastBlock);
 
@@ -1779,8 +1834,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String blockId,
     required String beforeText,
     required String afterText,
-    required List<BusyInlineStyleRange> beforeRanges,
-    required List<BusyInlineStyleRange> afterRanges,
+    required List<BusyInline> beforeInlines,
+    required List<BusyInline> afterInlines,
     required List<BusyWysiwygStyledBlock> blocks,
   }) {
     final replacements = <BusyBlock>[];
@@ -1788,7 +1843,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (beforeText.isNotEmpty) {
       replacements.add(
         block.copyWith(
-          inlines: _inlinesFromStyleRanges(beforeText, beforeRanges),
+          inlines: beforeInlines,
           attributes: _attributesForText(
             block.attributes,
             block.kind,
@@ -1814,7 +1869,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       focusBlock = BusyBlock(
         id: originalIdAvailable ? block.id : _nextGeneratedBlockId('paragraph'),
         kind: BusyBlockKind.paragraph,
-        inlines: _inlinesFromStyleRanges(afterText, afterRanges),
+        inlines: afterInlines,
         dirty: true,
       );
       replacements.add(focusBlock);
@@ -2140,7 +2195,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String? rootId,
   }) {
     final completeBlock = styled.completeBlock;
-    if (completeBlock != null && _requiresCompleteBlockInsertion(styled)) {
+    if (completeBlock != null && text == null && ranges == null) {
       return _cloneClipboardBlock(completeBlock, rootId: rootId);
     }
     final kind = styled.kind;
@@ -2198,6 +2253,31 @@ class BusyWysiwygStyledBlock {
   final List<BusyInlineStyleRange> ranges;
   final Map<String, String> attributes;
   final BusyBlock? completeBlock;
+}
+
+/// Materializes a clipboard slice without inserting it into a document.
+BusyBlock busyMarkWysiwygClipboardBlock(BusyWysiwygStyledBlock styled) {
+  return styled.completeBlock ??
+      BusyBlock(
+        id: 'clipboard-slice',
+        kind: styled.kind,
+        inlines: _inlinesFromStyleRanges(styled.text, styled.ranges),
+        attributes: styled.attributes,
+        dirty: true,
+      );
+}
+
+List<BusyInline> busyMarkWysiwygClipboardInlineSlice(
+  List<BusyInline> inlines,
+  int start,
+  int end,
+) {
+  final afterStart = _partitionInlinesForReplacement(inlines, 0, start).after;
+  return _partitionInlinesForReplacement(
+    afterStart,
+    end - start,
+    end - start,
+  ).before;
 }
 
 bool _requiresCompleteBlockInsertion(BusyWysiwygStyledBlock styled) {
@@ -3496,24 +3576,6 @@ List<BusyInlineStyleRange> _styleRangesForSlice(
           kind: range.kind,
           destination: range.destination,
         ),
-  ];
-}
-
-List<BusyInlineStyleRange> _shiftStyleRanges(
-  List<BusyInlineStyleRange> ranges,
-  int offset,
-) {
-  if (offset == 0) {
-    return ranges;
-  }
-  return [
-    for (final range in ranges)
-      BusyInlineStyleRange(
-        start: range.start + offset,
-        end: range.end + offset,
-        kind: range.kind,
-        destination: range.destination,
-      ),
   ];
 }
 

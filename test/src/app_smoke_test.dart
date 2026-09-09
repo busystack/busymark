@@ -31,6 +31,7 @@ import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
+import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
@@ -74,6 +75,7 @@ void main() {
       },
       {
         BusyMarkEditorShortcutAction.refineWithAi: 'Ctrl+G',
+        BusyMarkEditorShortcutAction.copyPlainText: 'Ctrl+Shift+C',
         BusyMarkEditorShortcutAction.bold: 'Ctrl+B',
         BusyMarkEditorShortcutAction.italic: 'Ctrl+I',
         BusyMarkEditorShortcutAction.underline: 'Ctrl+U',
@@ -96,8 +98,13 @@ void main() {
         BusyMarkEditorShortcutAction.codeBlock: 'Ctrl+Shift+K',
         BusyMarkEditorShortcutAction.image: 'Ctrl+Shift+I',
         BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
-        BusyMarkEditorShortcutAction.pastePlainText: 'Ctrl+Shift+V',
       },
+    );
+    expect(
+      BusyMarkTextEditingShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      isNot(contains('Ctrl+Shift+V')),
     );
   });
 
@@ -784,6 +791,59 @@ void main() {
 
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
+
+  for (final localeCase in <({String name, Locale requested, Locale expected})>[
+    (
+      name: 'European Portuguese',
+      requested: const Locale('pt', 'PT'),
+      expected: const Locale('pt'),
+    ),
+    (
+      name: 'language-only Chinese',
+      requested: const Locale('zh'),
+      expected: const Locale('zh'),
+    ),
+  ]) {
+    testWidgets(
+      '${localeCase.name} system locale renders the completed base catalog',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1;
+        tester.binding.platformDispatcher.localesTestValue = <Locale>[
+          localeCase.requested,
+        ];
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          tester.binding.platformDispatcher.clearLocalesTestValue();
+        });
+        final translated = lookupAppLocalizations(localeCase.expected);
+        final settingsStore = _MemorySettingsStore();
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+              localSettingsStoreProvider.overrideWithValue(settingsStore),
+            ],
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(translated.createMarkdownFile), findsOneWidget);
+        expect(find.text(l10n.createMarkdownFile), findsNothing);
+        await tester.tap(find.byTooltip(translated.mainMenu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(translated.settings));
+        await tester.pumpAndSettle();
+
+        expect(find.text(translated.appLanguage), findsOneWidget);
+        expect(find.text(l10n.appLanguage), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('Writerside project dialog syncs generated fields until edited', (
     tester,
@@ -1883,12 +1943,124 @@ void main() {
     await tester.tap(find.text(l10n.toc));
     await tester.pump(const Duration(milliseconds: 300));
 
-    final guideInstance = find.byKey(
-      const ValueKey('writerside-instance-guide'),
+    final instanceSelector = find.byKey(
+      const ValueKey('writerside-instance-selector'),
     );
-    final apiInstance = find.byKey(const ValueKey('writerside-instance-api'));
-    expect(guideInstance, findsOneWidget);
-    expect(apiInstance, findsOneWidget);
+    expect(instanceSelector, findsOneWidget);
+    final instanceSelectorTrigger = find.byKey(
+      const ValueKey('writerside-instance-selector-trigger'),
+    );
+    expect(instanceSelectorTrigger, findsOneWidget);
+    expect(
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byType(FilledButton),
+      ),
+      findsNothing,
+    );
+    final instanceSelectorSurface = find.descendant(
+      of: instanceSelectorTrigger,
+      matching: find.byType(Material),
+    );
+    final instanceSelectorInkWell = find.descendant(
+      of: instanceSelectorTrigger,
+      matching: find.byType(InkWell),
+    );
+    expect(instanceSelectorSurface, findsOneWidget);
+    expect(instanceSelectorInkWell, findsOneWidget);
+    expect(
+      tester.widget<Material>(instanceSelectorSurface).color,
+      BusyMarkLinuxPalette.transparent,
+    );
+    final instanceSelectorRect = tester.getRect(instanceSelectorTrigger);
+    final tocHeaderRowRect = tester.getRect(
+      find.byKey(const ValueKey('workspace-sidebar-first-content')),
+    );
+    final firstTocRow = find.byKey(
+      const ValueKey('workspace-sidebar-toc-row-0'),
+    );
+    final firstTocRowRect = tester.getRect(firstTocRow);
+    final firstTocRowSurface = find.descendant(
+      of: firstTocRow,
+      matching: find.byType(Material),
+    );
+    final firstTocRowInkWell = find.descendant(
+      of: firstTocRow,
+      matching: find.byType(InkWell),
+    );
+    expect(firstTocRowSurface, findsOneWidget);
+    expect(firstTocRowInkWell, findsOneWidget);
+    expect(
+      tester.widget<Material>(instanceSelectorSurface).borderRadius,
+      tester.widget<Material>(firstTocRowSurface).borderRadius,
+    );
+    expect(
+      tester.widget<InkWell>(instanceSelectorInkWell).hoverColor,
+      tester.widget<InkWell>(firstTocRowInkWell).hoverColor,
+    );
+    final primaryIconRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.byType(Icon),
+      ),
+    );
+    final instanceIconRect = tester.getRect(
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    final firstTocIconRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        matching: find.byIcon(BusyMarkGlyphs.document),
+      ),
+    );
+    expect(instanceIconRect.left, primaryIconRect.left);
+    expect(firstTocIconRect.left, greaterThan(primaryIconRect.left));
+    expect(
+      firstTocIconRect.left - primaryIconRect.left,
+      lessThanOrEqualTo(BusyMarkSpacing.smPlus),
+    );
+    expect(tocHeaderRowRect.left, firstTocRowRect.left);
+    expect(tocHeaderRowRect.right, firstTocRowRect.right);
+    expect(instanceSelectorRect.left, tocHeaderRowRect.left);
+    expect(instanceSelectorRect.right, lessThan(tocHeaderRowRect.right));
+    final primaryMenuRect = tester.getRect(
+      find.byTooltip(l10n.sidebarViewMenu),
+    );
+    final tocMenuRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(instanceSelectorRect.height, tocMenuRect.height);
+    expect(instanceSelectorRect.center.dy, tocMenuRect.center.dy);
+    expect(instanceSelectorRect.height, firstTocRowRect.height);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(
+      tester.getCenter(
+        find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+      ),
+    );
+    await tester.pump();
+    final tocRowMenuRect = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(tocMenuRect.center.dx, primaryMenuRect.center.dx);
+    expect(tocRowMenuRect.center.dx, primaryMenuRect.center.dx);
+    expect(find.text(l10n.instances), findsNothing);
+    expect(
+      find.byKey(const ValueKey('writerside-instance-guide')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('writerside-instance-api')), findsNothing);
     expect(
       find.byKey(const ValueKey('writerside-module-selector')),
       findsOneWidget,
@@ -1897,26 +2069,56 @@ void main() {
     await tester.tap(find.text('shared-docs'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(controller.selectedWritersideModuleId, 'shared-docs');
-    await tester.tap(apiInstance);
-    await tester.pump(const Duration(milliseconds: 200));
-    expect(controller.selectedWritersideInstanceId, 'api');
-    await tester.tap(guideInstance);
-    await tester.pump(const Duration(milliseconds: 200));
     final guideIcon = tester.widget<Icon>(
+      find.descendant(
+        of: instanceSelector,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    await openPopup(instanceSelector);
+    final apiInstance = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<String> &&
+          widget.label.contains('API Reference'),
+    );
+    final guideInstance = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<String> &&
+          widget.label.contains('Guide'),
+    );
+    expect(apiInstance, findsOneWidget);
+    expect(guideInstance, findsOneWidget);
+    final guideOptionIcon = tester.widget<Icon>(
       find.descendant(
         of: guideInstance,
         matching: find.byIcon(BusyMarkGlyphs.tree),
       ),
     );
-    final apiIcon = tester.widget<Icon>(
+    final apiOptionIcon = tester.widget<Icon>(
       find.descendant(
         of: apiInstance,
+        matching: find.byIcon(BusyMarkGlyphs.tree),
+      ),
+    );
+    expect(guideOptionIcon.color, guideIcon.color);
+    expect(apiOptionIcon.color, isNotNull);
+    expect(apiOptionIcon.color, isNot(guideOptionIcon.color));
+    await tester.tap(apiInstance);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.selectedWritersideInstanceId, 'api');
+    final apiIcon = tester.widget<Icon>(
+      find.descendant(
+        of: instanceSelector,
         matching: find.byIcon(BusyMarkGlyphs.tree),
       ),
     );
     expect(guideIcon.color, isNotNull);
     expect(apiIcon.color, isNotNull);
     expect(guideIcon.color, isNot(apiIcon.color));
+    await openPopup(instanceSelector);
+    expect(guideInstance, findsOneWidget);
+    await tester.tap(guideInstance);
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Nested entry'), findsOneWidget);
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
@@ -2013,6 +2215,7 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, isNull);
     expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
+    await openPopup(instanceSelector);
     await tester.tap(apiInstance);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
@@ -2030,6 +2233,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
+    await openPopup(instanceSelector);
     await tester.tap(guideInstance);
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -2059,8 +2263,6 @@ void main() {
       l10n.pasteAfterTopic,
       l10n.pasteAsChildTopic,
       l10n.removeTocElement,
-      l10n.safeDeleteTopicFile,
-      l10n.delete,
       l10n.copyName,
       l10n.copyPath,
       l10n.openInFiles,
@@ -2069,6 +2271,8 @@ void main() {
     ]) {
       expect(popupMenuItem(label), findsOneWidget);
     }
+    expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
+    expect(popupMenuItem(l10n.delete), findsNothing);
 
     await tester.tap(find.text(l10n.newChildTopic));
     await tester.pump(const Duration(milliseconds: 300));
@@ -2115,10 +2319,12 @@ void main() {
       l10n.copy,
       l10n.cut,
       l10n.aiRefineWithAi,
-      l10n.delete,
+      l10n.removeTocElements,
     ]) {
       expect(popupMenuItem(label), findsOneWidget);
     }
+    expect(popupMenuItem(l10n.delete), findsNothing);
+    expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
     expect(find.text(l10n.newSiblingTopic), findsNothing);
     expect(find.text(l10n.copyName), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -2222,7 +2428,7 @@ void main() {
     final exportItem = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkPopupMenuItem<Object?> &&
-          widget.label == l10n.exportAsPdf,
+          widget.label == l10n.export,
     );
     expect(exportItem, findsOneWidget);
     expect(
@@ -2238,8 +2444,31 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkComboRow<ExportFormat>), findsOneWidget);
+    expect(find.byType(SegmentedButton<ExportFormat>), findsNothing);
     expect(find.text(l10n.pdfPageSize), findsOneWidget);
     expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    for (var index = 0; index < 20; index++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkModalEditorSurface).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+    final formatRow = tester.widget<BusyMarkComboRow<ExportFormat>>(
+      find.byType(BusyMarkComboRow<ExportFormat>),
+    );
+    expect(formatRow.title, l10n.exportFormat);
+    expect(formatRow.values, ExportFormat.values);
+    expect(formatRow.selected, ExportFormat.pdf);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });

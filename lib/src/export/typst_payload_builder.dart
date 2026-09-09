@@ -6,13 +6,32 @@ class TypstPayloadBuilder {
 
   Map<String, Object> build({
     required MarkdownExportDocument document,
-    required MarkdownPdfOptions options,
+    required PdfExportOptions options,
     required Map<String, String> assets,
   }) {
+    options.validateOrThrow();
     return {
-      'schemaVersion': 1,
+      'schemaVersion': 2,
       'metadata': document.metadata.toJson(),
-      'options': options.toJson(),
+      'options': {
+        'page': options.geometry.toJson(),
+        'typography': {
+          'bodyFont': options.bodyFont,
+          'codeFont': options.codeFont,
+          'bodySizePt': options.bodyFontSize,
+          'codeSizePt': options.codeFontSize,
+          'headingSizesPt': [
+            for (var level = 1; level <= 6; level++)
+              options.headingFontSize(level),
+          ],
+        },
+        'content': options.content.toJson(),
+        'header': options.header.name,
+        'footer': options.footer.name,
+        'pageNumbers': options.pageNumbers.name,
+        'showHeaderFooterOnFirstPage': options.showHeaderFooterOnFirstPage,
+        'accentColor': options.accentColor.toLowerCase(),
+      },
       'blocks': [for (final block in document.blocks) _block(block, assets)],
     };
   }

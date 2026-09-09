@@ -253,23 +253,28 @@ void main() {
     expect(welcome, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('BusyMarkMainMenuButton('));
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(mainMenu, isNot(contains('BusyMarkPopupSubmenu')));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
-    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(
       mainMenu,
-      contains('label: command(BusyMarkCommandIds.exportPdf).label(context)'),
+      contains('label: command(BusyMarkCommandIds.export).label(context)'),
     );
+    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(
       mainMenu,
       contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
     );
-    expect(mainMenu, contains('enabled: canExportPdf'));
+    expect(mainMenu, contains('enabled: canExportPdf || canExportHtml'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
+    expect(native, isNot(contains('g_menu_item_new_submenu')));
+    expect(native, contains('localized_label_or(labels, "export", "")'));
     expect(native, contains('"header.keyboard-shortcuts"'));
-    expect(native, contains('"header.export-pdf"'));
+    expect(native, contains('"header.export"'));
+    expect(native, isNot(contains('"header.export-pdf"')));
+    expect(native, isNot(contains('"header.export-html"')));
     expect(native, contains('"header.full-screen"'));
     expect(native, contains('full_screen_gaction_activated_cb'));
     expect(native, contains('configuration.full_screen'));
@@ -1080,10 +1085,9 @@ void main() {
       );
       expect(snapcraft, contains('- libhandy-1-dev'));
       expect(snapcraft, contains('- libhandy-1-0'));
-      expect(
-        readme,
-        contains('sudo apt-get install curl libhandy-1-dev xz-utils'),
-      );
+      expect(readme, contains('sudo apt-get install'));
+      expect(readme, contains('libhandy-1-dev'));
+      expect(readme, contains('xz-utils'));
       expect(native, isNot(contains('kHeaderWindowRadius')));
       expect(native, isNot(contains('create_rounded_window_region')));
       expect(native, isNot(contains('gdk_window_shape_combine_region')));
@@ -1611,7 +1615,9 @@ void main() {
     expect(nativeMenu, isNot(contains('wl_display_')));
     expect(service, contains('final String? shortcut'));
     expect(service, contains('final String? iconName'));
+    expect(service, contains('final int? iconColorArgb'));
     expect(service, contains("'icon': iconName!"));
+    expect(service, contains("'iconColor': iconColorArgb!"));
     expect(service, contains("'shortcut': shortcut!"));
     expect(service, contains('this.checkable = false'));
     expect(service, contains('separator = false'));
@@ -1621,6 +1627,9 @@ void main() {
       design,
       contains('iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon)'),
     );
+    expect(design, contains('iconColorArgb: item.iconColor?.toARGB32()'));
+    expect(nativeMenu, contains('create_native_menu_icon('));
+    expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
     expect(design, contains('checkable: item.trailingCheck'));
     expect(design, contains('class BusyMarkMenuButton<T>'));

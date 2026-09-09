@@ -44,7 +44,7 @@ void main() {
       r'class _RenderedHtmlBlock[\s\S]*?class _RenderedHtmlBlocks',
     ).firstMatch(widgets)!.group(0)!;
     final tableEditor = RegExp(
-      r'class _TableBlockEditor[\s\S]*?class _TableColumnControlCell',
+      r'class _TableBlockEditor[\s\S]*?enum _TableControlAction',
     ).firstMatch(widgets)!.group(0)!;
     final tableMenu = RegExp(
       r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',
@@ -52,8 +52,17 @@ void main() {
 
     expect(htmlBlock, contains('BusyMarkHeaderIconButton('));
     expect(htmlBlock, isNot(matches(RegExp(r'(?<![A-Za-z])IconButton\('))));
-    expect(tableEditor, contains('BusyMarkHeaderIconButton('));
-    expect(tableMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(tableEditor, contains('OverlayPortal.overlayChildLayoutBuilder('));
+    expect(tableEditor, isNot(contains('CompositedTransformFollower(')));
+    expect(tableEditor, isNot(contains('GlobalKey()')));
+    expect(tableEditor, contains('_TableDeleteControl('));
+    expect(tableEditor, isNot(contains('SingleChildScrollView(')));
+    expect(tableEditor, isNot(contains('FixedColumnWidth(')));
+    expect(
+      tableMenu,
+      contains('BusyMarkHeaderPopupMenuButton<_TableControlAction>'),
+    );
+    expect(tableMenu, isNot(contains('BusyMarkCompactIconButton(')));
     expect(RegExp(r'BusyMarkPopupMenuItem\(').allMatches(tableMenu).length, 7);
     expect(tableMenu, contains('_TableControlAction.alignUnspecified'));
     expect(tableMenu, contains('_TableControlAction.alignLeft'));

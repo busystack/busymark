@@ -1,6 +1,20 @@
+import 'writerside_schema_data.dart';
+
+enum WritersideAttributeReferenceKind {
+  topic,
+  element,
+  variable,
+  instance,
+  resource,
+  apiSpecification,
+  image,
+  category,
+  module,
+}
+
 /// Writerside builder version against which BusyMark's semantic capabilities
 /// are defined and tested.
-const writersideDefaultBuilderVersion = '2026.07.8925';
+const writersideDefaultBuilderVersion = '2026.08.0328';
 
 enum WritersideSemanticKind {
   topic,
@@ -42,6 +56,12 @@ enum WritersideSemanticKind {
   lineBreak,
   metadata,
   container,
+  startingPage,
+  section,
+  card,
+  seealso,
+  category,
+  api,
 }
 
 class WritersideElementCapability {
@@ -101,7 +121,12 @@ class WritersideSchema {
     'topic': WritersideElementCapability(
       name: 'topic',
       kind: WritersideSemanticKind.topic,
-      attributes: {'id', 'title'},
+      attributes: {
+        ...commonConditionalAttributes,
+        'title',
+        'switcher-label',
+        'is-library',
+      },
       requiredAttributes: {'id'},
     ),
     'p': WritersideElementCapability(
@@ -148,6 +173,7 @@ class WritersideSchema {
         'column-width',
         'style',
         'sticky-header',
+        'sortable',
       },
     ),
     'tr': WritersideElementCapability(
@@ -164,6 +190,8 @@ class WritersideSchema {
         'align',
         'colspan',
         'rowspan',
+        'width',
+        'sortable',
       },
       parents: {'tr'},
     ),
@@ -174,6 +202,7 @@ class WritersideSchema {
         ...commonConditionalAttributes,
         'anchor',
         'as',
+        'nullable',
         'href',
         'origin',
         'summary',
@@ -287,7 +316,7 @@ class WritersideSchema {
     'tab': WritersideElementCapability(
       name: 'tab',
       kind: WritersideSemanticKind.tab,
-      attributes: {...commonConditionalAttributes, 'title'},
+      attributes: {...commonConditionalAttributes, 'title', 'group-key'},
       requiredAttributes: {'title'},
       parents: {'tabs'},
     ),
@@ -330,7 +359,7 @@ class WritersideSchema {
     'shortcut': WritersideElementCapability(
       name: 'shortcut',
       kind: WritersideSemanticKind.shortcut,
-      attributes: commonConditionalAttributes,
+      attributes: {...commonConditionalAttributes, 'key'},
       block: false,
     ),
     'code': WritersideElementCapability(
@@ -417,6 +446,219 @@ class WritersideSchema {
       kind: WritersideSemanticKind.lineBreak,
       block: false,
     ),
+    'link-summary': WritersideElementCapability(
+      name: 'link-summary',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'card-summary': WritersideElementCapability(
+      name: 'card-summary',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'web-summary': WritersideElementCapability(
+      name: 'web-summary',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'search-keyword': WritersideElementCapability(
+      name: 'search-keyword',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'help-id': WritersideElementCapability(
+      name: 'help-id',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'contribute-url': WritersideElementCapability(
+      name: 'contribute-url',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'include-in-head': WritersideElementCapability(
+      name: 'include-in-head',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'show-structure': WritersideElementCapability(
+      name: 'show-structure',
+      kind: WritersideSemanticKind.metadata,
+      attributes: {...commonConditionalAttributes, 'rel'},
+      rendered: false,
+    ),
+    'section-starting-page': WritersideElementCapability(
+      name: 'section-starting-page',
+      kind: WritersideSemanticKind.startingPage,
+      parents: {'topic'},
+    ),
+    'spotlight': WritersideElementCapability(
+      name: 'spotlight',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'primary': WritersideElementCapability(
+      name: 'primary',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'secondary': WritersideElementCapability(
+      name: 'secondary',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'misc': WritersideElementCapability(
+      name: 'misc',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'cards': WritersideElementCapability(
+      name: 'cards',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'links': WritersideElementCapability(
+      name: 'links',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'group': WritersideElementCapability(
+      name: 'group',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'compare': WritersideElementCapability(
+      name: 'compare',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'tldr': WritersideElementCapability(
+      name: 'tldr',
+      kind: WritersideSemanticKind.section,
+      attributes: {...commonConditionalAttributes, 'title', 'narrow'},
+    ),
+    'description': WritersideElementCapability(
+      name: 'description',
+      kind: WritersideSemanticKind.paragraph,
+    ),
+    'card': WritersideElementCapability(
+      name: 'card',
+      kind: WritersideSemanticKind.card,
+      attributes: {
+        ...commonConditionalAttributes,
+        'href',
+        'anchor',
+        'origin',
+        'summary',
+        'image',
+        'icon',
+        'badge',
+        'nullable',
+      },
+    ),
+    'seealso': WritersideElementCapability(
+      name: 'seealso',
+      kind: WritersideSemanticKind.seealso,
+      attributes: {...commonConditionalAttributes, 'title', 'style'},
+    ),
+    'category': WritersideElementCapability(
+      name: 'category',
+      kind: WritersideSemanticKind.category,
+      attributes: {...commonConditionalAttributes, 'ref', 'sorted'},
+      parents: {'seealso'},
+    ),
+    'api-doc': WritersideElementCapability(
+      name: 'api-doc',
+      kind: WritersideSemanticKind.api,
+      attributes: {
+        ...commonConditionalAttributes,
+        'openapi-path',
+        'tag',
+        'endpoint',
+        'method',
+        'name',
+        'webhook',
+        'display',
+        'depth',
+        'generate-samples',
+      },
+    ),
+    'api-endpoint': WritersideElementCapability(
+      name: 'api-endpoint',
+      kind: WritersideSemanticKind.api,
+      attributes: {
+        ...commonConditionalAttributes,
+        'openapi-path',
+        'tag',
+        'endpoint',
+        'method',
+        'name',
+        'webhook',
+        'display',
+        'depth',
+        'generate-samples',
+      },
+    ),
+    'api-schema': WritersideElementCapability(
+      name: 'api-schema',
+      kind: WritersideSemanticKind.api,
+      attributes: {
+        ...commonConditionalAttributes,
+        'openapi-path',
+        'tag',
+        'endpoint',
+        'method',
+        'name',
+        'webhook',
+        'display',
+        'depth',
+        'generate-samples',
+      },
+    ),
+    'api-webhook': WritersideElementCapability(
+      name: 'api-webhook',
+      kind: WritersideSemanticKind.api,
+      attributes: {
+        ...commonConditionalAttributes,
+        'openapi-path',
+        'tag',
+        'endpoint',
+        'method',
+        'name',
+        'webhook',
+        'display',
+        'depth',
+        'generate-samples',
+      },
+    ),
+    'request': WritersideElementCapability(
+      name: 'request',
+      kind: WritersideSemanticKind.section,
+      attributes: {'type'},
+    ),
+    'response': WritersideElementCapability(
+      name: 'response',
+      kind: WritersideSemanticKind.section,
+      attributes: {'type'},
+    ),
+    'sample': WritersideElementCapability(
+      name: 'sample',
+      kind: WritersideSemanticKind.codeBlock,
+      attributes: {
+        ...commonConditionalAttributes,
+        'src',
+        'include-lines',
+        'lang',
+        'title',
+      },
+    ),
     'web-file-name': WritersideElementCapability(
       name: 'web-file-name',
       kind: WritersideSemanticKind.metadata,
@@ -476,14 +718,21 @@ class WritersideSchema {
 
   static bool isKnownElement(String name) =>
       elements.containsKey(name.toLowerCase()) ||
-      genericElementNames.contains(name.toLowerCase());
+      genericElementNames.contains(name.toLowerCase()) ||
+      writersideOfficialRules.containsKey(name.toLowerCase());
 
   static WritersideElementCapability? capabilityFor(String name) =>
       elements[name.toLowerCase()];
 
   static Iterable<String> childElementNames(String? parent) {
     final normalizedParent = parent?.toLowerCase();
-    return {...elements.keys, ...genericElementNames}.where((name) {
+    return {
+      ...elements.keys,
+      ...genericElementNames,
+      ...writersideOfficialRules.keys,
+    }.where((name) {
+      final official = writersideOfficialRules[normalizedParent];
+      if (official != null) return official.children.contains(name);
       final allowedParents = elements[name]?.parents ?? const <String>{};
       return allowedParents.isEmpty ||
           allowedParents.contains(normalizedParent);
@@ -491,7 +740,84 @@ class WritersideSchema {
   }
 
   static Iterable<String> attributesFor(String element) => {
-    ...commonConditionalAttributes,
+    ...?writersideOfficialRules[element.toLowerCase()]?.attributes.keys,
     ...?elements[element.toLowerCase()]?.attributes,
+  };
+
+  static Set<String> requiredAttributesFor(String element) => {
+    ...?writersideOfficialRules[element]?.required,
+    ...?elements[element]?.requiredAttributes,
+  };
+
+  static Set<String> valuesFor(String element, String attribute) {
+    if (attribute == 'sortable') return const {'true', 'false'};
+    if (attribute == 'generate-samples') {
+      return const {'all', 'request', 'response', 'none'};
+    }
+    if (element == 'api-doc' && attribute == 'display') {
+      return const {'all', 'endpoints', 'operations', 'webhooks'};
+    }
+    final rule = writersideOfficialRules[element];
+    if (rule?.attributes[attribute] == 'boolean') {
+      return const {'true', 'false'};
+    }
+    return rule?.values[attribute] ?? const {};
+  }
+
+  static String? invalidAttributeValue(
+    String element,
+    String attribute,
+    String value,
+  ) {
+    if (value.contains('%')) return null;
+    final values = valuesFor(element, attribute);
+    if (values.isNotEmpty && !values.contains(value)) {
+      return 'allowed: ${values.join(', ')}';
+    }
+    final type = writersideOfficialRules[element]?.attributes[attribute];
+    if ({
+          'integer',
+          'int',
+          'positiveInteger',
+          'nonNegativeInteger',
+        }.contains(type) ||
+        {'colspan', 'rowspan'}.contains(attribute)) {
+      final number = int.tryParse(value);
+      if (number == null ||
+          ((type == 'positiveInteger' ||
+                  {'colspan', 'rowspan'}.contains(attribute)) &&
+              number < 1) ||
+          (type == 'nonNegativeInteger' && number < 0)) {
+        return 'invalid integer';
+      }
+    }
+    if (attribute == 'width' &&
+        element == 'td' &&
+        (double.tryParse(value) == null || double.parse(value) <= 0)) {
+      return 'expected positive pixel width';
+    }
+    return null;
+  }
+
+  static WritersideAttributeReferenceKind? referenceKind(
+    String element,
+    String attribute,
+  ) => switch (attribute) {
+    'href' || 'from' => WritersideAttributeReferenceKind.topic,
+    'anchor' ||
+    'element-id' ||
+    'rel' => WritersideAttributeReferenceKind.element,
+    'instance' => WritersideAttributeReferenceKind.instance,
+    'origin' => WritersideAttributeReferenceKind.module,
+    'openapi-path' => WritersideAttributeReferenceKind.apiSpecification,
+    'name' when element == 'var' => WritersideAttributeReferenceKind.variable,
+    'ref' when element == 'category' =>
+      WritersideAttributeReferenceKind.category,
+    'src' when element == 'resource' =>
+      WritersideAttributeReferenceKind.resource,
+    'src' || 'preview-src' || 'dark-src'
+        when element == 'img' || element == 'video' =>
+      WritersideAttributeReferenceKind.image,
+    _ => null,
   };
 }

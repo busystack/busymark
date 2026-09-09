@@ -94,6 +94,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Copiar",
+  "copyPlainText": "Copiar como texto simples",
+  "clipboardCopyFailed": "Não foi possível copiar a seleção para a área de transferência.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -198,10 +200,6 @@
   "paste": "Colar",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Colar sem formatar",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Leitura",
   "@reading": {
@@ -2307,7 +2305,7 @@
   "gitBinaryFile": "Arquivo binário. O BusyMark não exibe patches binários.",
   "gitUnsavedChangesBanner": "As alterações não salvas do editor não são incluídas até serem salvas.",
   "gitConfirmDiscardTitle": "Descartar alterações do Git?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{Todas as mudanças staged e unstaged no arquivo selecionado rastreado serão restauradas para HEAD.} other{Todas as mudanças staged e unstaged nos arquivos rastreados selecionados serão restauradas para HEAD.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Todas as alterações preparadas e não preparadas no arquivo rastreado selecionado serão restauradas para HEAD.} other{Todas as alterações preparadas e não preparadas nos arquivos rastreados selecionados serão restauradas para HEAD.}}",
   "gitConfirmDiscardUntracked": "{count, plural, =1{O arquivo não rastreado selecionado será excluído.} other{Os arquivos não rastreados selecionados serão excluídos.}}",
   "gitConfirmDiscardMixed": "{count, plural, =1{O arquivo selecionado será restaurado ou excluído de acordo com o status do Git.} other{Os arquivos selecionados serão restaurados ou excluídos de acordo com o status do Git.}}",
   "gitConfirmSwitchBranchTitle": "Trocar para {branch}?",
@@ -2477,6 +2475,10 @@
   "removeTocElement": "Remover elemento do TOC",
   "@removeTocElement": {
     "description": "Action that removes a topic element from the selected table of contents."
+  },
+  "removeTocElements": "Remover elementos do TOC",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Revisar usos",
   "@reviewUsages": {
@@ -2767,6 +2769,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Formato de saída",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Exportando PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -2978,7 +2984,7 @@
   "aiGenerating": "Gerando proposta…",
   "aiProposal": "Proposta de IA",
   "aiGenerateProposal": "Gerar proposta",
-  "aiContextDisclosure": "O provedor selecionado receberá {count} caracteres do contexto exibido.",
+  "aiContextDisclosure": "O provedor selecionado receberá {count, plural, =0{0 caracteres} =1{1 caractere} other{{count} caracteres}} do contexto exibido.",
   "aiOriginal": "Texto original",
   "aiSuggested": "Sugestão",
   "aiApplyProposal": "Aplicar proposta",
@@ -3007,7 +3013,7 @@
   "aiCloudConsentEnable": "Ativar {provider}",
   "aiCloudConsentMessage": "Somente o conteúdo exibido em cada caixa de diálogo de revisão de IA é enviado. As solicitações não mantêm estado, as propostas exigem revisão e a chave de API é armazenada no cofre de credenciais do sistema Linux.",
   "aiCloudConsentRequired": "Primeiro, confirme o compartilhamento de dados com {provider} em Configurações → IA.",
-  "aiGenerationVerified": "Geração verificada com {model}. Há {count} modelos compatíveis disponíveis.",
+  "aiGenerationVerified": "Geração verificada com {model}. {count, plural, =0{Há 0 modelos compatíveis disponíveis} =1{Há 1 modelo compatível disponível} other{Há {count} modelos compatíveis disponíveis}}.",
   "aiColdStartObserved": "Foi detetado um arranque a frio do modelo local.",
   "aiNoCompatibleModels": "Não há nenhum modelo compatível de geração de texto disponível.",
   "aiEnableProvider": "Primeiro, ative um provedor de IA.",
@@ -3016,7 +3022,7 @@
   "aiDraftWithAi": "Criar rascunho com IA",
   "generateOrUpdateMarkdownToc": "Gerar/atualizar sumário",
   "markdownTocTitle": "Sumário",
-  "markdownTocUpdated": "Sumário atualizado com {count} entradas.",
+  "markdownTocUpdated": "Sumário atualizado com {count, plural, =0{0 entradas} =1{1 entrada} other{{count} entradas}}.",
   "markdownTocNoHeadings": "Adicione pelo menos um título de seção antes de gerar um sumário.",
   "markdownTocMalformedMarkers": "Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.",
   "diagnosticMarkdownHeadingSkippedLevel": "O título de nível {level} vem após o nível {previousLevel}; revise o aninhamento das seções.",
@@ -3064,7 +3070,7 @@
   "unsavedChangesMultipleMessage": "{count, plural, =1{Há 1 documento com alterações não salvas. Deseja salvá-lo antes de continuar?} other{{count} documentos com alterações não salvas. Deseja salvá-los antes de continuar?}}",
   "workspaceReplaceIssuePartialConflict": "A reversão foi interrompida porque o arquivo foi alterado simultaneamente. Algumas substituições podem permanecer; o conteúdo deslocado foi preservado no caminho abaixo.",
   "workspaceReplaceIssueApplyFailed": "Nenhuma substituição foi aplicada porque o conjunto revisado não pôde ser salvo com segurança.",
-  "workspaceRecoveryRestored": "{count, plural, =1{1 documento sem salvamento recuperado. Revise antes de salvar ou descartar.} other{{count} documentos sem salvamento recuperados. Revise cada um antes de salvar ou descartar.}}",
+  "workspaceRecoveryRestored": "{count, plural, =1{1 documento não salvo foi recuperado. Revise-o antes de salvar ou descartar.} other{{count} documentos não salvos foram recuperados. Revise cada um antes de salvar ou descartar.}}",
   "workspaceRecoveryDamaged": "{count, plural, =1{1 registro de recuperação danificado não pôde ser restaurado. O arquivo de recuperação original foi preservado para inspeção.} other{{count} registros de recuperação danificados não puderam ser restaurados. Os registros de recuperação válidos permanecem disponíveis.}}",
   "recoveredDocumentReview": "O conteúdo não salvo de {fileName} foi recuperado. Revise-o e depois salve, salve como ou descarte-o.",
   "commandUnavailableInContext": "Este comando não está disponível no contexto atual.",
@@ -3074,5 +3080,69 @@
   "aiExplicitEditingDescription": "A edição com IA é iniciada apenas de forma explícita. O BusyMark envia somente o contexto exibido ao provedor selecionado e nunca aplica uma proposta sem revisão.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Exportar como HTML…",
+  "fileTypeHtml": "Documento HTML",
+  "exportingHtml": "Exportando HTML…",
+  "htmlExported": "Exportação HTML concluída",
+  "htmlExportFailed": "Falha na exportação HTML",
+  "htmlKeepAssetsTogether": "Ao copiar esta exportação, mantenha juntos o arquivo HTML e a pasta de recursos associada.",
+  "htmlInstanceDescription": "Exporte uma instância como páginas vinculadas offline. Escolha um nome para uma pasta de destino exclusiva.",
+  "htmlInstance": "Instância",
+  "htmlOwnedDirectoryOnly": "Só é possível substituir uma pasta criada pela exportação HTML do BusyMark. Os arquivos modificados ou alheios serão preservados.",
+  "showInFolder": "Mostrar na pasta",
+  "goToDeclaration": "Ir para a declaração",
+  "findUsages": "Encontrar usos",
+  "cannotRenameSymbol": "Não é possível renomear o símbolo com segurança. Verifique o nome e atualize a referência antes de tentar novamente.",
+  "keyboardLayout": "Layout do teclado",
+  "diagnosticWritersideUnsupported": "O conteúdo não compatível ou malformado é exibido como código-fonte.",
+  "diagnosticWritersideSource": "Não é possível resolver a origem “{reference}”: {reason}",
+  "diagnosticWritersideLink": "O destino do link não está disponível nesta instância: {destination}",
+  "diagnosticWritersideSchema": "Marcação Writerside inválida: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Use <llms-txt>true</llms-txt> ou <llms-txt>false</llms-txt>; single-file não é mais compatível.",
+  "diagnosticWritersideReference": "Não é possível resolver {kind}: {reference}",
+  "sortTableColumn": "Ordenar {column}",
+  "exportReset": "Restaurar padrões",
+  "exportToc": "Incluir índice",
+  "exportTocDepth": "Profundidade do índice",
+  "exportNumberHeadings": "Numerar títulos",
+  "exportLegal": "US Legal",
+  "exportCustom": "Personalizado",
+  "exportPageWidth": "Largura da página (mm)",
+  "exportPageHeight": "Altura da página (mm)",
+  "exportMarginTop": "Margem superior (mm)",
+  "exportMarginRight": "Margem direita (mm)",
+  "exportMarginBottom": "Margem inferior (mm)",
+  "exportMarginLeft": "Margem esquerda (mm)",
+  "exportTypography": "Tipografia",
+  "exportSans": "Sem serifas",
+  "exportSerif": "Com serifas",
+  "exportBodySize": "Tamanho do texto",
+  "exportCodeSize": "Tamanho do código",
+  "exportRunningText": "Cabeçalho e rodapé",
+  "exportHeader": "Cabeçalho",
+  "exportFooter": "Rodapé",
+  "exportNone": "Nenhum",
+  "exportDocumentTitle": "Título do documento",
+  "exportBottomLeft": "Embaixo à esquerda",
+  "exportBottomCenter": "Embaixo ao centro",
+  "exportBottomRight": "Embaixo à direita",
+  "exportFirstPage": "Mostrar cabeçalho e rodapé na primeira página",
+  "exportAccent": "Cor de destaque / links",
+  "exportTheme": "Tema",
+  "exportAutomatic": "Automático",
+  "exportLayout": "Layout",
+  "exportContentWidth": "Largura máxima do conteúdo",
+  "exportOutput": "Saída",
+  "exportPackaging": "Empacotamento",
+  "exportSingleFile": "Um único arquivo HTML",
+  "exportAssetsDirectory": "HTML + pasta de recursos",
+  "exportCustomCss": "Folha de estilo personalizada…",
+  "exportRemoveCss": "Remover folha de estilo",
+  "exportCssNote": "Escolha um arquivo CSS UTF-8 opcional (até 256 KiB). Importações, URL de recursos e CSS executável ou com escapes são rejeitados. Os estilos seguem os do BusyMark. Nunca são baixados recursos remotos.",
+  "exportSitePackagingNote": "O Writerside mantém páginas de tópicos separadas e vinculadas. O modo de arquivo único incorpora os recursos em cada página.",
+  "exportInvalidGeometry": "Deixe pelo menos 20 mm de largura e altura de conteúdo após as margens.",
+  "exportInvalidColor": "Insira uma cor como #RRGGBB.",
+  "exportInvalidCss": "Escolha um arquivo .css UTF-8 legível até 256 KiB, sem importações, URL de recursos, HTML ou CSS executável ou com escapes.",
+  "exportInvalidRange": "{field}: insira um número entre {minimum} e {maximum}."
 }

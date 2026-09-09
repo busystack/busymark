@@ -2,6 +2,8 @@ import 'package:xml/xml_events.dart';
 
 import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
+import '../markdown/markdown_model.dart';
+import '../markdown/markdown_parser.dart';
 import 'writerside_document.dart';
 import 'writerside_schema.dart';
 
@@ -54,14 +56,15 @@ class WritersideDocumentParser {
             source: raw,
             sourceOffset: span.startOffset,
             completeSource: source,
+            markdownContent: true,
           );
           if (parsed.whereType<WritersideElementNode>().isNotEmpty) {
             nodes.addAll(parsed);
             continue;
           }
         } on Object {
-          // Retain the original Markdown block when an in-progress XML
-          // fragment is temporarily malformed.
+          nodes.add(WritersideRawNode(span: span, rawSource: raw));
+          continue;
         }
       }
       nodes.add(
@@ -81,6 +84,7 @@ class WritersideDocumentParser {
     required String source,
     int sourceOffset = 0,
     String? completeSource,
+    bool markdownContent = false,
   }) {
     final fullSource = completeSource ?? source;
     final roots = <WritersideDocumentNode>[];
@@ -95,7 +99,7 @@ class WritersideDocumentParser {
     }
 
     for (final event in parseEvents(
-      source,
+      markdownContent ? _maskMarkdownCode(source) : source,
       withLocation: true,
       validateNesting: true,
       validateDocument: false,
@@ -142,13 +146,60 @@ class WritersideDocumentParser {
           continue;
         }
         final frame = stack.removeLast();
+        if (markdownContent && _markdownContainers.contains(frame.name)) {
+          final inner = fullSource.substring(frame.openingEndOffset, start);
+          if (RegExp(r'^\s*\n\s*\n').hasMatch(inner) &&
+              RegExp(r'\n\s*\n\s*$').hasMatch(inner)) {
+            final literals = frame.children
+                .whereType<WritersideTextNode>()
+                .where((node) => node.rawSource.startsWith('<![CDATA['))
+                .toList();
+            final mixedChildren = <WritersideDocumentNode>[];
+            var segmentStart = frame.openingEndOffset;
+            void markdownSegment(int end) {
+              final segment = fullSource.substring(segmentStart, end);
+              if (segment.trim().isEmpty) return;
+              final parsed = const MarkdownParser().parse(
+                filePath: filePath,
+                source: segment,
+                mode: MarkdownMode.writersideMarkdown,
+                validateLocalReferences: false,
+              );
+              final mixed = parseMarkdown(
+                filePath: filePath,
+                source: segment,
+                markdown: parsed.busyDocument,
+              );
+              mixedChildren.addAll(
+                mixed.nodes.map(
+                  (node) =>
+                      _rebaseNode(node, segmentStart, filePath, fullSource),
+                ),
+              );
+            }
+
+            for (final literal in literals) {
+              markdownSegment(literal.span.startOffset);
+              mixedChildren.add(literal);
+              segmentStart = literal.span.endOffset;
+            }
+            markdownSegment(start);
+            frame.children
+              ..clear()
+              ..addAll(mixedChildren);
+          }
+        }
         append(frame.build(filePath: filePath, source: fullSource, end: end));
         continue;
       }
       if (event is XmlTextEvent) {
         append(
           WritersideTextNode(
-            text: event.value,
+            text: markdownContent
+                ? event.value
+                      .replaceAll('\uE000', '<')
+                      .replaceAll('\uE001', '&')
+                : event.value,
             span: SourceSpan.fromOffsets(
               filePath: filePath,
               source: fullSource,
@@ -207,6 +258,81 @@ class WritersideDocumentParser {
         block.kind == BusyBlockKind.htmlBlock ||
         block.kind == BusyBlockKind.unknown;
   }
+}
+
+const _markdownContainers = {
+  'snippet',
+  'tab',
+  'chapter',
+  'note',
+  'tip',
+  'warning',
+  'quote',
+  'step',
+  'li',
+  'def',
+  'td',
+  'if',
+  'description',
+  'card',
+  'section-starting-page',
+};
+
+WritersideDocumentNode _rebaseNode(
+  WritersideDocumentNode node,
+  int offset,
+  String filePath,
+  String source,
+) {
+  SourceSpan span(SourceSpan original) => SourceSpan.fromOffsets(
+    filePath: filePath,
+    source: source,
+    startOffset: offset + original.startOffset,
+    endOffset: offset + original.endOffset,
+  );
+  BusyBlock block(BusyBlock original) => original.copyWith(
+    sourceSpan: original.sourceSpan == null ? null : span(original.sourceSpan!),
+    children: original.children.map(block).toList(),
+  );
+  if (node is WritersideMarkdownBlockNode) {
+    return WritersideMarkdownBlockNode(
+      block: block(node.block),
+      span: span(node.span),
+      rawSource: node.rawSource,
+    );
+  }
+  if (node is WritersideTextNode) {
+    return WritersideTextNode(
+      text: node.text,
+      span: span(node.span),
+      rawSource: node.rawSource,
+    );
+  }
+  if (node is WritersideRawNode) {
+    return WritersideRawNode(span: span(node.span), rawSource: node.rawSource);
+  }
+  final element = node as WritersideElementNode;
+  final frame = _ElementFrame(
+    name: element.name,
+    qualifiedName: element.qualifiedName,
+    attributes: element.attributes,
+    qualifiedAttributes: element.qualifiedAttributes,
+    attributeSpans: element.attributeSpans.map(
+      (key, value) => MapEntry(key, span(value)),
+    ),
+    startOffset: offset + element.span.startOffset,
+    openingEndOffset: offset + element.span.startOffset,
+  );
+  frame.children.addAll(
+    element.children.map(
+      (child) => _rebaseNode(child, offset, filePath, source),
+    ),
+  );
+  return frame.build(
+    filePath: filePath,
+    source: source,
+    end: offset + element.span.endOffset,
+  );
 }
 
 class _ElementFrame {
@@ -306,4 +432,32 @@ String? _safeSubstring(String value, int start, int end) {
     return null;
   }
   return value.substring(start, end);
+}
+
+// XML events still own element boundaries. Mask only fenced Markdown bodies
+// for that scan; the Markdown parser subsequently reads the original source.
+String _maskMarkdownCode(String source) {
+  final chars = source.split('');
+  String? fence;
+  var minimum = 0;
+  var offset = 0;
+  for (final line in source.split('\n')) {
+    final match = RegExp(r'^ {0,3}(`{3,}|~{3,})').firstMatch(line);
+    if (fence == null && match != null) {
+      fence = match[1]![0];
+      minimum = match[1]!.length;
+    } else if (fence != null &&
+        match != null &&
+        match[1]![0] == fence &&
+        match[1]!.length >= minimum) {
+      fence = null;
+    } else if (fence != null) {
+      for (var index = offset; index < offset + line.length; index++) {
+        if (chars[index] == '<') chars[index] = '\uE000';
+        if (chars[index] == '&') chars[index] = '\uE001';
+      }
+    }
+    offset += line.length + 1;
+  }
+  return chars.join();
 }

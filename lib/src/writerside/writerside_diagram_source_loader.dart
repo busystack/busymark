@@ -1,9 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:path/path.dart' as p;
-
-import '../core/anchored_path_guard.dart';
+import 'writerside_source_loader.dart';
 
 enum WritersideDiagramSourceFailure {
   invalidReference,
@@ -31,61 +26,19 @@ class WritersideDiagramSourceLoader {
     required String documentPath,
     required String workspaceRoot,
   }) async {
-    final source = reference.trim();
-    final parsed = Uri.tryParse(source);
-    if (source.isEmpty ||
-        source.contains('\u0000') ||
-        p.isAbsolute(source) ||
-        (parsed?.hasScheme ?? false) ||
-        documentPath.trim().isEmpty ||
-        workspaceRoot.trim().isEmpty) {
-      throw const WritersideDiagramSourceException(
-        WritersideDiagramSourceFailure.invalidReference,
-      );
-    }
-
-    try {
-      final anchor = await captureCanonicalDirectoryAnchor(workspaceRoot);
-      final candidate = p.normalize(p.join(p.dirname(documentPath), source));
-      final resolved = await resolveAnchoredPath(
-        anchor,
-        candidate,
-        allowRoot: false,
-      );
-      if (resolved.type != FileSystemEntityType.file) {
-        throw const WritersideDiagramSourceException(
-          WritersideDiagramSourceFailure.missing,
+    final result = await WritersideSourceLoader(maximumBytes: maximumBytes)
+        .load(
+          reference: reference,
+          documentPath: documentPath,
+          workspaceRoot: workspaceRoot,
         );
-      }
-      final file = File(resolved.path);
-      if (await file.length() > maximumBytes) {
-        throw const WritersideDiagramSourceException(
-          WritersideDiagramSourceFailure.tooLarge,
-        );
-      }
-      final bytes = await file.readAsBytes();
-      if (bytes.length > maximumBytes) {
-        throw const WritersideDiagramSourceException(
-          WritersideDiagramSourceFailure.tooLarge,
-        );
-      }
-      try {
-        return utf8.decode(bytes, allowMalformed: false);
-      } on FormatException {
-        throw const WritersideDiagramSourceException(
-          WritersideDiagramSourceFailure.invalidUtf8,
-        );
-      }
-    } on WritersideDiagramSourceException {
-      rethrow;
-    } on AnchoredPathViolation {
-      throw const WritersideDiagramSourceException(
-        WritersideDiagramSourceFailure.outsideWorkspace,
-      );
-    } on FileSystemException {
-      throw const WritersideDiagramSourceException(
-        WritersideDiagramSourceFailure.missing,
-      );
-    }
+    if (result.text case final text?) return text;
+    throw WritersideDiagramSourceException(switch (result.failure) {
+      'invalid-reference' => WritersideDiagramSourceFailure.invalidReference,
+      'outside-workspace' => WritersideDiagramSourceFailure.outsideWorkspace,
+      'too-large' => WritersideDiagramSourceFailure.tooLarge,
+      'invalid-utf8' => WritersideDiagramSourceFailure.invalidUtf8,
+      _ => WritersideDiagramSourceFailure.missing,
+    });
   }
 }

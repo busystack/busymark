@@ -53,7 +53,7 @@ void main() {
         references: [],
         diagnostics: [],
       );
-      const source = '<topic><chapter><fea';
+      const source = '<topic><chapter><a href="fea';
       final caret = writersideXmlCaretContext(source, source.length);
       final suggestions = const SourceAutocompleteProvider().suggestions(
         document: SourceDocument(fullText: source),
@@ -65,7 +65,7 @@ void main() {
       );
 
       expect(caret.parentElement, 'chapter');
-      expect(caret.currentElement, 'fea');
+      expect(caret.currentElement, 'a');
       expect(
         suggestions
             .where(

@@ -178,6 +178,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Sao chép",
+  "copyPlainText": "Sao chép dưới dạng văn bản thuần",
+  "clipboardCopyFailed": "Không thể sao chép nội dung đã chọn vào bảng nhớ tạm.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -325,10 +327,6 @@
   "paste": "Dán",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Dán không định dạng",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Đọc",
   "@reading": {
@@ -1497,6 +1495,10 @@
   "removeTocElement": "Xóa phần tử mục lục",
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "removeTocElements": "Xóa các phần tử mục lục",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Xem lại các tham chiếu",
   "@reviewUsages": {
@@ -3691,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Định dạng đầu ra",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "Đang xuất PDF…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -4633,5 +4639,69 @@
   "aiExplicitEditingDescription": "Chỉnh sửa bằng AI chỉ được thực hiện theo yêu cầu rõ ràng. BusyMark chỉ gửi ngữ cảnh được hiển thị cho nhà cung cấp đã chọn và không bao giờ áp dụng đề xuất khi chưa xem lại.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "Xuất dưới dạng HTML…",
+  "fileTypeHtml": "Tài liệu HTML",
+  "exportingHtml": "Đang xuất HTML…",
+  "htmlExported": "Xuất HTML hoàn tất",
+  "htmlExportFailed": "Xuất HTML thất bại",
+  "htmlKeepAssetsTogether": "Khi sao chép bản xuất, hãy giữ tệp HTML và thư mục tài nguyên đi kèm ở cùng nhau.",
+  "htmlInstanceDescription": "Xuất một phiên bản thành các trang ngoại tuyến có liên kết. Chọn tên cho thư mục đầu ra riêng.",
+  "htmlInstance": "Phiên bản",
+  "htmlOwnedDirectoryOnly": "Chỉ có thể thay thế thư mục được tạo bởi chức năng xuất HTML của BusyMark. Các tệp đã sửa đổi hoặc không liên quan sẽ được giữ lại.",
+  "showInFolder": "Hiển thị trong thư mục",
+  "goToDeclaration": "Đi đến khai báo",
+  "findUsages": "Tìm nơi sử dụng",
+  "cannotRenameSymbol": "Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.",
+  "keyboardLayout": "Bố cục bàn phím",
+  "diagnosticWritersideUnsupported": "Nội dung không được hỗ trợ hoặc sai định dạng được hiển thị dưới dạng mã nguồn.",
+  "diagnosticWritersideSource": "Không thể phân giải nguồn “{reference}”: {reason}",
+  "diagnosticWritersideLink": "Đích liên kết không khả dụng trong phiên bản này: {destination}",
+  "diagnosticWritersideSchema": "Đánh dấu Writerside không hợp lệ: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "Dùng <llms-txt>true</llms-txt> hoặc <llms-txt>false</llms-txt>; single-file không còn được hỗ trợ.",
+  "diagnosticWritersideReference": "Không thể phân giải {kind}: {reference}",
+  "sortTableColumn": "Sắp xếp {column}",
+  "exportReset": "Khôi phục mặc định",
+  "exportToc": "Bao gồm mục lục",
+  "exportTocDepth": "Độ sâu mục lục",
+  "exportNumberHeadings": "Đánh số tiêu đề",
+  "exportLegal": "US Legal",
+  "exportCustom": "Tùy chỉnh",
+  "exportPageWidth": "Chiều rộng trang (mm)",
+  "exportPageHeight": "Chiều cao trang (mm)",
+  "exportMarginTop": "Lề trên (mm)",
+  "exportMarginRight": "Lề phải (mm)",
+  "exportMarginBottom": "Lề dưới (mm)",
+  "exportMarginLeft": "Lề trái (mm)",
+  "exportTypography": "Kiểu chữ",
+  "exportSans": "Không chân",
+  "exportSerif": "Có chân",
+  "exportBodySize": "Cỡ chữ nội dung",
+  "exportCodeSize": "Cỡ chữ mã",
+  "exportRunningText": "Đầu trang và chân trang",
+  "exportHeader": "Đầu trang",
+  "exportFooter": "Chân trang",
+  "exportNone": "Không có",
+  "exportDocumentTitle": "Tiêu đề tài liệu",
+  "exportBottomLeft": "Dưới bên trái",
+  "exportBottomCenter": "Dưới ở giữa",
+  "exportBottomRight": "Dưới bên phải",
+  "exportFirstPage": "Hiện đầu trang và chân trang ở trang đầu",
+  "exportAccent": "Màu nhấn / liên kết",
+  "exportTheme": "Giao diện",
+  "exportAutomatic": "Tự động",
+  "exportLayout": "Bố cục",
+  "exportContentWidth": "Chiều rộng nội dung tối đa",
+  "exportOutput": "Đầu ra",
+  "exportPackaging": "Đóng gói",
+  "exportSingleFile": "Một tệp HTML",
+  "exportAssetsDirectory": "HTML + thư mục tài nguyên",
+  "exportCustomCss": "Biểu định kiểu tùy chỉnh…",
+  "exportRemoveCss": "Xóa biểu định kiểu tùy chỉnh",
+  "exportCssNote": "Chọn tệp CSS UTF-8 tùy chọn (tối đa 256 KiB). Không chấp nhận nhập tài nguyên, URL tài nguyên, CSS thực thi hoặc có ký tự thoát. Kiểu được áp dụng sau CSS của BusyMark. Không tải tài nguyên từ xa.",
+  "exportSitePackagingNote": "Writerside giữ các trang chủ đề riêng có liên kết. Chế độ một tệp nhúng tài nguyên vào từng trang.",
+  "exportInvalidGeometry": "Sau khi trừ lề, hãy để nội dung rộng và cao ít nhất 20 mm.",
+  "exportInvalidColor": "Nhập màu theo dạng #RRGGBB.",
+  "exportInvalidCss": "Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.",
+  "exportInvalidRange": "{field}: nhập số từ {minimum} đến {maximum}."
 }

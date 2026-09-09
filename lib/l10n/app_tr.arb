@@ -178,6 +178,8 @@
     "description": "File picker confirmation label for choosing a directory."
   },
   "copy": "Kopyala",
+  "copyPlainText": "Düz metin olarak kopyala",
+  "clipboardCopyFailed": "Seçili içerik panoya kopyalanamadı.",
   "@copy": {
     "description": "Copy command label."
   },
@@ -325,10 +327,6 @@
   "paste": "Yapıştır",
   "@paste": {
     "description": "Paste command label."
-  },
-  "pasteWithoutFormatting": "Biçimlendirmeden yapıştır",
-  "@pasteWithoutFormatting": {
-    "description": "Plain text paste command label."
   },
   "reading": "Okuma",
   "@reading": {
@@ -1497,6 +1495,10 @@
   "removeTocElement": "TOC öğesini kaldır",
   "@removeTocElement": {
     "description": "Writerside action and dialog title for removing a topic from one table of contents."
+  },
+  "removeTocElements": "TOC öğelerini kaldır",
+  "@removeTocElements": {
+    "description": "Action that removes multiple selected elements from one Writerside table of contents."
   },
   "reviewUsages": "Kullanımları incele",
   "@reviewUsages": {
@@ -3691,6 +3693,10 @@
   "@export": {
     "description": "Button label that starts an export."
   },
+  "exportFormat": "Çıktı biçimi",
+  "@exportFormat": {
+    "description": "Output format selector in the export dialog."
+  },
   "exportingPdf": "PDF dışa aktarılıyor…",
   "@exportingPdf": {
     "description": "Progress dialog title while a PDF is being exported."
@@ -4633,5 +4639,69 @@
   "aiExplicitEditingDescription": "AI düzenleme açıkça kullanıcının isteğiyle başlatılır. BusyMark yalnızca seçili sağlayıcı için gösterilen bağlamı gönderir ve bir öneriyi hiçbiri onaylama olmadan uygulamaz.",
   "@aiExplicitEditingDescription": {
     "description": "Privacy disclosure for explicit AI editing with selected-provider context visibility."
-  }
+  },
+  "exportAsHtml": "HTML olarak dışa aktar…",
+  "fileTypeHtml": "HTML belgesi",
+  "exportingHtml": "HTML dışa aktarılıyor…",
+  "htmlExported": "HTML dışa aktarımı tamamlandı",
+  "htmlExportFailed": "HTML dışa aktarılamadı",
+  "htmlKeepAssetsTogether": "Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.",
+  "htmlInstanceDescription": "Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.",
+  "htmlInstance": "Örnek",
+  "htmlOwnedDirectoryOnly": "Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.",
+  "showInFolder": "Klasörde Göster",
+  "goToDeclaration": "Bildirime git",
+  "findUsages": "Kullanımları bul",
+  "cannotRenameSymbol": "Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.",
+  "keyboardLayout": "Klavye düzeni",
+  "diagnosticWritersideUnsupported": "Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.",
+  "diagnosticWritersideSource": "“{reference}” kaynağı çözümlenemiyor: {reason}",
+  "diagnosticWritersideLink": "Bağlantı hedefi bu örnekte kullanılamıyor: {destination}",
+  "diagnosticWritersideSchema": "Geçersiz Writerside işaretlemesi: {element}, {attribute}. {reason}",
+  "diagnosticWritersideLlmsTxt": "<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.",
+  "diagnosticWritersideReference": "{kind} çözümlenemiyor: {reference}",
+  "sortTableColumn": "{column} sırala",
+  "exportReset": "Varsayılanlara sıfırla",
+  "exportToc": "İçindekiler tablosunu ekle",
+  "exportTocDepth": "İçindekiler derinliği",
+  "exportNumberHeadings": "Başlıkları numaralandır",
+  "exportLegal": "US Legal",
+  "exportCustom": "Özel",
+  "exportPageWidth": "Sayfa genişliği (mm)",
+  "exportPageHeight": "Sayfa yüksekliği (mm)",
+  "exportMarginTop": "Üst kenar boşluğu (mm)",
+  "exportMarginRight": "Sağ kenar boşluğu (mm)",
+  "exportMarginBottom": "Alt kenar boşluğu (mm)",
+  "exportMarginLeft": "Sol kenar boşluğu (mm)",
+  "exportTypography": "Tipografi",
+  "exportSans": "Serifsiz",
+  "exportSerif": "Serifli",
+  "exportBodySize": "Gövde yazı tipi boyutu",
+  "exportCodeSize": "Kod yazı tipi boyutu",
+  "exportRunningText": "Üst bilgi ve alt bilgi",
+  "exportHeader": "Üst bilgi",
+  "exportFooter": "Alt bilgi",
+  "exportNone": "Yok",
+  "exportDocumentTitle": "Belge başlığı",
+  "exportBottomLeft": "Sol alt",
+  "exportBottomCenter": "Alt orta",
+  "exportBottomRight": "Sağ alt",
+  "exportFirstPage": "İlk sayfada üst ve alt bilgiyi göster",
+  "exportAccent": "Vurgu / bağlantı rengi",
+  "exportTheme": "Tema",
+  "exportAutomatic": "Otomatik",
+  "exportLayout": "Düzen",
+  "exportContentWidth": "En fazla içerik genişliği",
+  "exportOutput": "Çıktı",
+  "exportPackaging": "Paketleme",
+  "exportSingleFile": "Tek HTML dosyası",
+  "exportAssetsDirectory": "HTML + kaynak klasörü",
+  "exportCustomCss": "Özel stil sayfası…",
+  "exportRemoveCss": "Özel stil sayfasını kaldır",
+  "exportCssNote": "İsteğe bağlı UTF-8 CSS dosyası seçin (en fazla 256 KiB). İçe aktarımlar, kaynak URL’leri ve çalıştırılabilir veya kaçışlı CSS reddedilir. Stiller BusyMark CSS’inden sonra uygulanır. Uzak kaynaklar indirilmez.",
+  "exportSitePackagingNote": "Writerside ayrı bağlantılı konu sayfalarını korur. Tek dosya modu kaynakları her sayfaya gömer.",
+  "exportInvalidGeometry": "Kenar boşluklarından sonra en az 20 mm içerik genişliği ve yüksekliği bırakın.",
+  "exportInvalidColor": "#RRGGBB biçiminde bir renk girin.",
+  "exportInvalidCss": "İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).",
+  "exportInvalidRange": "{field}: {minimum} ile {maximum} arasında bir sayı girin."
 }

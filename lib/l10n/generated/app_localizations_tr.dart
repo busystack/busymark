@@ -156,6 +156,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get copy => 'Kopyala';
 
   @override
+  String get copyPlainText => 'Düz metin olarak kopyala';
+
+  @override
+  String get clipboardCopyFailed => 'Seçili içerik panoya kopyalanamadı.';
+
+  @override
   String get copyName => 'Adı kopyala';
 
   @override
@@ -262,9 +268,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get paste => 'Yapıştır';
-
-  @override
-  String get pasteWithoutFormatting => 'Biçimlendirmeden yapıştır';
 
   @override
   String get reading => 'Okuma';
@@ -1206,6 +1209,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get removeTocElement => 'TOC öğesini kaldır';
+
+  @override
+  String get removeTocElements => 'TOC öğelerini kaldır';
 
   @override
   String get reviewUsages => 'Kullanımları incele';
@@ -2958,6 +2964,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get export => 'Dışa aktar';
 
   @override
+  String get exportFormat => 'Çıktı biçimi';
+
+  @override
   String get exportingPdf => 'PDF dışa aktarılıyor…';
 
   @override
@@ -3666,4 +3675,222 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get displayMath => 'Blok matematik';
+
+  @override
+  String get goToDeclaration => 'Bildirime git';
+
+  @override
+  String get findUsages => 'Kullanımları bul';
+
+  @override
+  String get cannotRenameSymbol =>
+      'Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.';
+
+  @override
+  String get keyboardLayout => 'Klavye düzeni';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Desteklenmeyen veya hatalı içerik kaynak olarak gösterilir.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return '“$reference” kaynağı çözümlenemiyor: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Bağlantı hedefi bu örnekte kullanılamıyor: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Geçersiz Writerside işaretlemesi: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      '<llms-txt>true</llms-txt> veya <llms-txt>false</llms-txt> kullanın; single-file artık desteklenmiyor.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '$kind çözümlenemiyor: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML olarak dışa aktar…';
+
+  @override
+  String get fileTypeHtml => 'HTML belgesi';
+
+  @override
+  String get exportingHtml => 'HTML dışa aktarılıyor…';
+
+  @override
+  String get htmlExported => 'HTML dışa aktarımı tamamlandı';
+
+  @override
+  String get htmlExportFailed => 'HTML dışa aktarılamadı';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Bu dışa aktarımı kopyalarken HTML dosyasını ve ilgili kaynak klasörünü bir arada tutun.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Bir örneği bağlantılı çevrimdışı sayfalar olarak dışa aktarın. Ayrı bir çıktı klasörü için ad seçin.';
+
+  @override
+  String get htmlInstance => 'Örnek';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Yalnızca BusyMark HTML dışa aktarımıyla oluşturulan bir klasör değiştirilebilir. Değiştirilmiş veya ilgisiz dosyalar korunur.';
+
+  @override
+  String get showInFolder => 'Klasörde Göster';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column sırala';
+  }
+
+  @override
+  String get exportReset => 'Varsayılanlara sıfırla';
+
+  @override
+  String get exportToc => 'İçindekiler tablosunu ekle';
+
+  @override
+  String get exportTocDepth => 'İçindekiler derinliği';
+
+  @override
+  String get exportNumberHeadings => 'Başlıkları numaralandır';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Özel';
+
+  @override
+  String get exportPageWidth => 'Sayfa genişliği (mm)';
+
+  @override
+  String get exportPageHeight => 'Sayfa yüksekliği (mm)';
+
+  @override
+  String get exportMarginTop => 'Üst kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginRight => 'Sağ kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginBottom => 'Alt kenar boşluğu (mm)';
+
+  @override
+  String get exportMarginLeft => 'Sol kenar boşluğu (mm)';
+
+  @override
+  String get exportTypography => 'Tipografi';
+
+  @override
+  String get exportSans => 'Serifsiz';
+
+  @override
+  String get exportSerif => 'Serifli';
+
+  @override
+  String get exportBodySize => 'Gövde yazı tipi boyutu';
+
+  @override
+  String get exportCodeSize => 'Kod yazı tipi boyutu';
+
+  @override
+  String get exportRunningText => 'Üst bilgi ve alt bilgi';
+
+  @override
+  String get exportHeader => 'Üst bilgi';
+
+  @override
+  String get exportFooter => 'Alt bilgi';
+
+  @override
+  String get exportNone => 'Yok';
+
+  @override
+  String get exportDocumentTitle => 'Belge başlığı';
+
+  @override
+  String get exportBottomLeft => 'Sol alt';
+
+  @override
+  String get exportBottomCenter => 'Alt orta';
+
+  @override
+  String get exportBottomRight => 'Sağ alt';
+
+  @override
+  String get exportFirstPage => 'İlk sayfada üst ve alt bilgiyi göster';
+
+  @override
+  String get exportAccent => 'Vurgu / bağlantı rengi';
+
+  @override
+  String get exportTheme => 'Tema';
+
+  @override
+  String get exportAutomatic => 'Otomatik';
+
+  @override
+  String get exportLayout => 'Düzen';
+
+  @override
+  String get exportContentWidth => 'En fazla içerik genişliği';
+
+  @override
+  String get exportOutput => 'Çıktı';
+
+  @override
+  String get exportPackaging => 'Paketleme';
+
+  @override
+  String get exportSingleFile => 'Tek HTML dosyası';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + kaynak klasörü';
+
+  @override
+  String get exportCustomCss => 'Özel stil sayfası…';
+
+  @override
+  String get exportRemoveCss => 'Özel stil sayfasını kaldır';
+
+  @override
+  String get exportCssNote =>
+      'İsteğe bağlı UTF-8 CSS dosyası seçin (en fazla 256 KiB). İçe aktarımlar, kaynak URL’leri ve çalıştırılabilir veya kaçışlı CSS reddedilir. Stiller BusyMark CSS’inden sonra uygulanır. Uzak kaynaklar indirilmez.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside ayrı bağlantılı konu sayfalarını korur. Tek dosya modu kaynakları her sayfaya gömer.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Kenar boşluklarından sonra en az 20 mm içerik genişliği ve yüksekliği bırakın.';
+
+  @override
+  String get exportInvalidColor => '#RRGGBB biçiminde bir renk girin.';
+
+  @override
+  String get exportInvalidCss =>
+      'İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum ile $maximum arasında bir sayı girin.';
+  }
 }

@@ -36,15 +36,21 @@ class MarkdownMathExportRenderer {
   final int maximumExpressions;
   final int maximumGeneratedBytes;
   static const _svgPreprocessor = MathSvgPreprocessor();
+  // Bundled Noto Sans and Noto Serif OS/2 sxHeight=536, unitsPerEm=1000.
+  static const _notoXHeightRatio = 0.536;
 
   Future<MarkdownMathExportPreparation> prepare({
     required MarkdownExportDocument document,
     required Directory exportRoot,
-    required double containerWidth,
+    required PdfExportOptions options,
     required MarkdownPdfCancellationToken cancellationToken,
   }) async {
+    options.validateOrThrow();
     final annotated = _annotate(document);
-    final candidates = _mathCandidates(annotated).toList(growable: false);
+    final candidates = _mathCandidates(
+      annotated,
+      options,
+    ).toList(growable: false);
     if (candidates.isEmpty) {
       return MarkdownMathExportPreparation(
         document: document,
@@ -74,7 +80,7 @@ class MarkdownMathExportRenderer {
             editRevision: 0,
             em: item.em,
             ex: item.ex,
-            containerWidth: containerWidth,
+            containerWidth: options.geometry.contentWidthPt,
             renderProfile: 'pdf',
           ),
       ]);
@@ -215,9 +221,11 @@ class MarkdownMathExportRenderer {
 
   Iterable<_MathExportCandidate> _mathCandidates(
     MarkdownExportDocument document,
+    PdfExportOptions options,
   ) sync* {
     Iterable<_MathExportCandidate> inlines(
       List<MarkdownExportInline> values,
+      double size,
     ) sync* {
       for (final value in values) {
         if (value.kind == MarkdownExportInlineKind.math) {
@@ -225,11 +233,11 @@ class MarkdownMathExportRenderer {
             renderKey: value.attributes['mathRenderKey']!,
             expression: value.text,
             display: false,
-            em: double.tryParse(value.attributes['renderEm'] ?? '') ?? 10.5,
-            ex: double.tryParse(value.attributes['renderEx'] ?? '') ?? 5.25,
+            em: size,
+            ex: size * _notoXHeightRatio,
           );
         }
-        yield* inlines(value.children);
+        yield* inlines(value.children, size);
       }
     }
 
@@ -237,16 +245,19 @@ class MarkdownMathExportRenderer {
       List<MarkdownExportBlock> values,
     ) sync* {
       for (final value in values) {
+        final size = value.kind == MarkdownExportBlockKind.heading
+            ? options.headingFontSize((value.attributes['level'] as int?) ?? 1)
+            : options.bodyFontSize;
         if (value.kind == MarkdownExportBlockKind.math) {
           yield _MathExportCandidate(
             renderKey: value.attributes['mathRenderKey']! as String,
             expression: value.text,
             display: true,
-            em: 10.5,
-            ex: 5.25,
+            em: size,
+            ex: size * _notoXHeightRatio,
           );
         }
-        yield* inlines(value.inlines);
+        yield* inlines(value.inlines, size);
         yield* blocks(value.children);
       }
     }

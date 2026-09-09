@@ -154,6 +154,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
+  String get copyPlainText => 'Copy Plain Text';
+
+  @override
+  String get clipboardCopyFailed =>
+      'Could not copy the selection to the clipboard.';
+
+  @override
   String get copyName => 'Copy name';
 
   @override
@@ -260,9 +267,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paste => 'Paste';
-
-  @override
-  String get pasteWithoutFormatting => 'Paste without formatting';
 
   @override
   String get reading => 'Reading';
@@ -1199,6 +1203,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeTocElement => 'Remove TOC Element';
+
+  @override
+  String get removeTocElements => 'Remove TOC Elements';
 
   @override
   String get reviewUsages => 'Review Usages';
@@ -2957,6 +2964,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
+  String get exportFormat => 'Output format';
+
+  @override
   String get exportingPdf => 'Exporting PDF…';
 
   @override
@@ -3692,4 +3702,222 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get displayMath => 'Display math';
+
+  @override
+  String get goToDeclaration => 'Go to Declaration';
+
+  @override
+  String get findUsages => 'Find Usages';
+
+  @override
+  String get cannotRenameSymbol =>
+      'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+
+  @override
+  String get keyboardLayout => 'Keyboard layout';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      'Unsupported or malformed content is displayed as source.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return 'Cannot resolve source “$reference”: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return 'Link target is unavailable in this instance: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return 'Invalid Writerside markup: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      'Use <llms-txt>true</llms-txt> or <llms-txt>false</llms-txt>; single-file is no longer supported.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return 'Cannot resolve $kind: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'Export as HTML…';
+
+  @override
+  String get fileTypeHtml => 'HTML document';
+
+  @override
+  String get exportingHtml => 'Exporting HTML…';
+
+  @override
+  String get htmlExported => 'HTML export complete';
+
+  @override
+  String get htmlExportFailed => 'HTML export failed';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      'Keep the HTML file and its companion assets directory together when copying this export.';
+
+  @override
+  String get htmlInstanceDescription =>
+      'Export one instance as linked offline pages. Choose a name for a dedicated output directory.';
+
+  @override
+  String get htmlInstance => 'Instance';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'Only a directory created by BusyMark HTML export can be replaced. Modified or unrelated files will be preserved.';
+
+  @override
+  String get showInFolder => 'Show in Folder';
+
+  @override
+  String sortTableColumn(String column) {
+    return 'Sort $column';
+  }
+
+  @override
+  String get exportReset => 'Reset to defaults';
+
+  @override
+  String get exportToc => 'Include table of contents';
+
+  @override
+  String get exportTocDepth => 'TOC depth';
+
+  @override
+  String get exportNumberHeadings => 'Number headings';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => 'Custom';
+
+  @override
+  String get exportPageWidth => 'Page width (mm)';
+
+  @override
+  String get exportPageHeight => 'Page height (mm)';
+
+  @override
+  String get exportMarginTop => 'Top margin (mm)';
+
+  @override
+  String get exportMarginRight => 'Right margin (mm)';
+
+  @override
+  String get exportMarginBottom => 'Bottom margin (mm)';
+
+  @override
+  String get exportMarginLeft => 'Left margin (mm)';
+
+  @override
+  String get exportTypography => 'Typography';
+
+  @override
+  String get exportSans => 'Sans-serif';
+
+  @override
+  String get exportSerif => 'Serif';
+
+  @override
+  String get exportBodySize => 'Body font size';
+
+  @override
+  String get exportCodeSize => 'Code font size';
+
+  @override
+  String get exportRunningText => 'Header & Footer';
+
+  @override
+  String get exportHeader => 'Header';
+
+  @override
+  String get exportFooter => 'Footer';
+
+  @override
+  String get exportNone => 'None';
+
+  @override
+  String get exportDocumentTitle => 'Document title';
+
+  @override
+  String get exportBottomLeft => 'Bottom left';
+
+  @override
+  String get exportBottomCenter => 'Bottom center';
+
+  @override
+  String get exportBottomRight => 'Bottom right';
+
+  @override
+  String get exportFirstPage => 'Show header and footer on first page';
+
+  @override
+  String get exportAccent => 'Accent / link color';
+
+  @override
+  String get exportTheme => 'Theme';
+
+  @override
+  String get exportAutomatic => 'Automatic';
+
+  @override
+  String get exportLayout => 'Layout';
+
+  @override
+  String get exportContentWidth => 'Maximum content width';
+
+  @override
+  String get exportOutput => 'Output';
+
+  @override
+  String get exportPackaging => 'Packaging';
+
+  @override
+  String get exportSingleFile => 'Single HTML file';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + assets directory';
+
+  @override
+  String get exportCustomCss => 'Custom stylesheet…';
+
+  @override
+  String get exportRemoveCss => 'Remove custom stylesheet';
+
+  @override
+  String get exportCssNote =>
+      'Select an optional UTF-8 CSS file (up to 256 KiB). Imports, resource URLs, and executable or escaped CSS are not accepted. Styles are applied after BusyMark’s stylesheet. Remote resources are never fetched.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside keeps separate linked topic pages. Single-file mode embeds resources in each page.';
+
+  @override
+  String get exportInvalidGeometry =>
+      'Leave at least 20 mm of content width and height after margins.';
+
+  @override
+  String get exportInvalidColor => 'Enter a color as #RRGGBB.';
+
+  @override
+  String get exportInvalidCss =>
+      'Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: enter a number between $minimum and $maximum.';
+  }
 }

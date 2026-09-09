@@ -265,14 +265,18 @@ void main() {
     );
     final editableState = tester.state<EditableTextState>(editableFinder);
     editableState.clipboardStatus.value = ClipboardStatus.pasteable;
-    final expectedSelectionActions = editableState.contextMenuButtonItems
-        .map(
-          (item) => AdaptiveTextSelectionToolbar.getButtonLabel(
-            tester.element(editableFinder),
-            item,
-          ),
-        )
-        .toList();
+    final expectedSelectionActions = <String>[];
+    for (final item in editableState.contextMenuButtonItems) {
+      expectedSelectionActions.add(
+        AdaptiveTextSelectionToolbar.getButtonLabel(
+          tester.element(editableFinder),
+          item,
+        ),
+      );
+      if (item.type == ContextMenuButtonType.copy) {
+        expectedSelectionActions.add('Copy Plain Text');
+      }
+    }
 
     expect(paragraph.controller!.selection.isCollapsed, isFalse);
     expect(paragraph.contextMenuBuilder, isNotNull);
@@ -295,11 +299,16 @@ void main() {
     );
     expect(_nativeShortcut(nativeEntries!, 'Cut'), 'Ctrl+X');
     expect(_nativeShortcut(nativeEntries!, 'Copy'), 'Ctrl+C');
+    expect(_nativeShortcut(nativeEntries!, 'Copy Plain Text'), 'Ctrl+Shift+C');
     expect(_nativeShortcut(nativeEntries!, 'Paste'), 'Ctrl+V');
     expect(_nativeShortcut(nativeEntries!, 'Select all'), 'Ctrl+A');
     expect(_nativeShortcut(nativeEntries!, 'Refine with AI'), 'Ctrl+G');
     expect(_nativeIcon(nativeEntries!, 'Cut'), 'edit-cut-symbolic');
     expect(_nativeIcon(nativeEntries!, 'Copy'), 'edit-copy-symbolic');
+    expect(
+      _nativeIcon(nativeEntries!, 'Copy Plain Text'),
+      'edit-copy-symbolic',
+    );
     expect(_nativeIcon(nativeEntries!, 'Paste'), 'edit-paste-symbolic');
     expect(
       _nativeIcon(nativeEntries!, 'Select all'),

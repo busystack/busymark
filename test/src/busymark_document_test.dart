@@ -22,6 +22,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
@@ -38,6 +39,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:yaru/yaru.dart';
+
+import '../support/memory_rich_clipboard.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -3030,6 +3033,7 @@ void main() {}
             width: 900,
             height: 640,
             child: BusyMarkWysiwygEditor(
+              clipboardService: MemoryRichClipboard(),
               document: parsed.busyDocument,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
@@ -3107,6 +3111,7 @@ void main() {}
             width: 900,
             height: 640,
             child: BusyMarkWysiwygEditor(
+              clipboardService: MemoryRichClipboard(),
               document: parsed.busyDocument,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
@@ -3412,6 +3417,60 @@ void main() {}
       }
     }
   });
+
+  testWidgets(
+    'restoring the first block does not duplicate the Editor top inset',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final document = parser
+          .parse(
+            filePath: 'new-topic.md',
+            source: '''# New topic
+
+> Advice.
+{style="note"}
+''',
+            mode: MarkdownMode.writersideMarkdown,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      var session = const WysiwygEditorSessionState();
+
+      Future<double> pumpEditor(Key key) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: BusyMarkWysiwygEditor(
+                key: key,
+                document: document,
+                initialSessionState: session,
+                onSessionChanged: (_, next) => session = next,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pump();
+        return tester.getRect(find.byType(TextField).first).top;
+      }
+
+      final initialTitleTop = await pumpEditor(const ValueKey('initial'));
+      expect(session.viewportBlockId, isNotNull);
+      expect(session.viewportAlignment, greaterThan(0));
+
+      final restoredTitleTop = await pumpEditor(const ValueKey('restored'));
+
+      expect(restoredTitleTop, closeTo(initialTitleTop, 0.1));
+    },
+  );
 
   testWidgets('vertical WYSIWYG toolbar is bounded and extends from its edge', (
     tester,
@@ -5805,6 +5864,141 @@ void main() {}
     expect(controller.markdown, '');
   });
 
+  testWidgets('WYSIWYG table dialog validates and synchronizes its size grid', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 700,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    tester
+        .widget<IconButton>(
+          find.ancestor(
+            of: find.byIcon(BusyMarkGlyphs.table),
+            matching: find.byType(IconButton),
+          ),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    final columnsField = find.descendant(
+      of: find.byKey(BusyMarkTableDialogKeys.columns),
+      matching: find.byType(EditableText),
+    );
+    final rowsField = find.descendant(
+      of: find.byKey(BusyMarkTableDialogKeys.rows),
+      matching: find.byType(EditableText),
+    );
+    ElevatedButton submitButton() => tester.widget<ElevatedButton>(
+      find.byKey(BusyMarkTableDialogKeys.submit),
+    );
+    String fieldText(Finder finder) =>
+        tester.widget<EditableText>(finder).controller.text;
+
+    expect(find.byKey(BusyMarkTableDialogKeys.grid), findsOneWidget);
+    expect(fieldText(columnsField), '2');
+    expect(fieldText(rowsField), '2');
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(
+        find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Columns: 4  ·  Rows: 3'), findsNothing);
+    expect(fieldText(columnsField), '2');
+    expect(fieldText(rowsField), '2');
+    await mouse.moveTo(const Offset(1, 1));
+    await tester.pump();
+
+    await tester.enterText(columnsField, 'letters');
+    await tester.pump();
+    expect(fieldText(columnsField), isEmpty);
+    expect(find.text('1–12'), findsOneWidget);
+    expect(submitButton().onPressed, isNull);
+
+    await tester.enterText(columnsField, '13');
+    await tester.pump();
+    expect(fieldText(columnsField), '13');
+    expect(find.text('1–12'), findsOneWidget);
+    expect(submitButton().onPressed, isNull);
+
+    await tester.tap(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+    );
+    await tester.pump();
+    expect(fieldText(columnsField), '4');
+    expect(fieldText(rowsField), '3');
+    expect(find.text('1–12'), findsNothing);
+    expect(submitButton().onPressed, isNotNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldText(columnsField), '5');
+    expect(fieldText(rowsField), '4');
+
+    await tester.enterText(columnsField, '6');
+    await tester.enterText(rowsField, '4');
+    await tester.pump();
+    final selectedCell = tester.widget<DecoratedBox>(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 6, rows: 4)),
+    );
+    final unselectedCell = tester.widget<DecoratedBox>(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 7, rows: 4)),
+    );
+    final dialogScheme = Theme.of(
+      tester.element(find.byKey(BusyMarkTableDialogKeys.grid)),
+    ).colorScheme;
+    expect(
+      (selectedCell.decoration as BoxDecoration).color,
+      dialogScheme.primary,
+    );
+    expect(
+      (unselectedCell.decoration as BoxDecoration).color,
+      isNot(dialogScheme.primary),
+    );
+
+    await tester.tap(
+      find.byKey(BusyMarkTableDialogKeys.gridCell(columns: 4, rows: 3)),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(BusyMarkTableDialogKeys.submit));
+    await tester.pumpAndSettle();
+
+    final inserted = parser
+        .parse(filePath: 'topic.md', source: markdown)
+        .busyDocument
+        .blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table);
+    expect(inserted.children, hasLength(4));
+    for (final row in inserted.children) {
+      expect(row.children, hasLength(4));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   test('table alignment survives parsing, edits, and structural changes', () {
     const source =
         '| Left | Center | Right | Default |\n'
@@ -5939,6 +6133,7 @@ void main() {}
     final widgetTable = parsed.busyDocument.blocks.singleWhere(
       (block) => block.kind == BusyBlockKind.table,
     );
+    final introBlockId = parsed.busyDocument.blocks.first.id;
     final headerCellId = widgetTable.children.first.children.first.id;
     final bodyCellId = widgetTable.children[1].children.first.id;
 
@@ -5968,8 +6163,31 @@ void main() {}
     expect(deleteTableFinder, findsOneWidget);
     expect(
       find.descendant(of: tableFinder, matching: deleteTableFinder),
-      findsOneWidget,
+      findsNothing,
     );
+    final tableWidget = tester.widget<Table>(tableFinder);
+    final tableSizeBeforeControls = tester.getSize(tableFinder);
+    expect(tableWidget.children, hasLength(2));
+    for (final row in tableWidget.children) {
+      expect(row.children, hasLength(2));
+    }
+    expect(
+      tester.getSize(tableFinder).width,
+      tester
+          .getSize(find.byKey(ValueKey('wysiwyg-field-topic.md-$introBlockId')))
+          .width,
+    );
+    final tableScheme = Theme.of(tester.element(tableFinder)).colorScheme;
+    expect(
+      (tableWidget.children.first.decoration! as BoxDecoration).color,
+      tableScheme.surfaceContainerHighest,
+    );
+    expect(
+      (tableWidget.children.last.decoration! as BoxDecoration).color,
+      tableScheme.surface,
+    );
+    expect(tableWidget.border!.top.color, tableScheme.outlineVariant);
+    expect(tableWidget.border!.top.width, BusyMarkStroke.tableGrid);
     final framedTableAncestors = <DecoratedBox>[];
     tester.element(tableFinder).visitAncestorElements((element) {
       if (element.widget is BusyMarkWysiwygBlockField) {
@@ -5982,10 +6200,10 @@ void main() {}
     });
     expect(framedTableAncestors, isEmpty);
     expect(busyMarkWysiwygContentPadding(widgetTable), EdgeInsets.zero);
-    expect(find.byTooltip('Column 1'), findsOneWidget);
-    expect(find.byTooltip('Column 2'), findsOneWidget);
-    expect(find.byTooltip('Row 1'), findsOneWidget);
-    expect(find.byTooltip('Row 2'), findsOneWidget);
+    expect(find.byTooltip('Column 1'), findsNothing);
+    expect(find.byTooltip('Column 2'), findsNothing);
+    expect(find.byTooltip('Row 1'), findsNothing);
+    expect(find.byTooltip('Row 2'), findsNothing);
 
     final headerField = tester.widget<TextField>(
       find.byKey(ValueKey(headerCellId)),
@@ -6004,8 +6222,51 @@ void main() {}
       BusyMarkDocumentTextGeometry.selectionHeightStyle,
     );
 
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(find.byKey(ValueKey(headerCellId))),
+    );
+    await tester.pump();
+    expect(find.byTooltip('Column 1'), findsOneWidget);
+    expect(find.byTooltip('Row 1'), findsOneWidget);
+    expect(find.byTooltip('Column 2'), findsNothing);
+    expect(find.byTooltip('Row 2'), findsNothing);
+    expect(tester.getSize(tableFinder), tableSizeBeforeControls);
+    for (final tooltip in ['Delete table', 'Column 1', 'Row 1']) {
+      expect(
+        tester.getSize(find.byTooltip(tooltip)),
+        const Size.square(BusyMarkSizes.iconButton),
+      );
+    }
+    final tableRect = tester.getRect(tableFinder);
+    final deleteRect = tester.getRect(find.byTooltip('Delete table'));
+    final columnRect = tester.getRect(find.byTooltip('Column 1'));
+    final rowRect = tester.getRect(find.byTooltip('Row 1'));
+    expect(
+      deleteRect.left,
+      greaterThanOrEqualTo(tableRect.right + BusyMarkSpacing.xs),
+    );
+    expect(
+      deleteRect.bottom,
+      lessThanOrEqualTo(tableRect.top - BusyMarkSpacing.xs),
+    );
+    expect(
+      columnRect.bottom,
+      lessThanOrEqualTo(tableRect.top - BusyMarkSpacing.xs),
+    );
+    expect(
+      rowRect.right,
+      lessThanOrEqualTo(tableRect.left - BusyMarkSpacing.xs),
+    );
+
+    await mouse.moveTo(tester.getCenter(find.byTooltip('Column 1')));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Column 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
     headerField.onChanged!('Name');
     await tester.pump();
+    expect(tester.takeException(), isNull);
     bodyField.onChanged!('Alice');
     await tester.pump();
 
@@ -6040,6 +6301,138 @@ void main() {}
 
     expect(find.byType(Table), findsNothing);
     expect(markdown, 'Intro\n');
+  });
+
+  testWidgets('WYSIWYG table overlay menus survive structural rebuilds', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final headerCellId =
+        parsed.busyDocument.blocks.single.children.first.children.first.id;
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(
+      location: tester.getCenter(find.byKey(ValueKey(headerCellId))),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Row 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Insert row below'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(TextField), findsNWidgets(6));
+
+    await mouse.moveTo(const Offset(1, 1));
+    await mouse.moveTo(tester.getCenter(find.byKey(ValueKey(headerCellId))));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Column 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Insert column right'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(TextField), findsNWidgets(9));
+    expect(markdown, contains('| A |  | B |'));
+    final columnWidths = tester.widget<Table>(find.byType(Table)).columnWidths!;
+    expect(columnWidths, hasLength(3));
+    for (final width in columnWidths.values) {
+      expect(width, isA<FlexColumnWidth>());
+      expect((width as FlexColumnWidth).value, 1);
+    }
+  });
+
+  testWidgets('Tab travels through WYSIWYG table cells and extends the table', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '| A | B |\n| --- | --- |\n| a | b |\n',
+    );
+    final table = parsed.busyDocument.blocks.single;
+    final cellIds = [
+      for (final row in table.children)
+        for (final cell in row.children) cell.id,
+    ];
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField cellField(String cellId) =>
+        tester.widget<TextField>(find.byKey(ValueKey(cellId)));
+
+    cellField(cellIds[0]).focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(cellField(cellIds[1]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(cellField(cellIds[2]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(cellField(cellIds[1]).focusNode!.hasFocus, isTrue);
+    await tester.pump();
+
+    cellField(cellIds.last).focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.pump();
+
+    final tableFields = tester
+        .widgetList<TextField>(
+          find.descendant(
+            of: find.byType(Table),
+            matching: find.byType(TextField),
+          ),
+        )
+        .toList();
+    expect(tableFields, hasLength(6));
+    expect(tableFields[4].focusNode!.hasFocus, isTrue);
+    expect(tableFields[5].focusNode!.hasFocus, isFalse);
+    expect(markdown, contains('|  |  |'));
+    expect(tester.takeException(), isNull);
   });
 
   test('WYSIWYG list indent outdent and task toggle commands serialize', () {

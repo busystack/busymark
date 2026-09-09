@@ -10,7 +10,7 @@ class WritersidePdfExportRequest {
     required this.destinationPath,
     required this.overwrite,
     this.projectRoot,
-    this.options = const MarkdownPdfOptions(),
+    this.options = const PdfExportOptions(),
   });
 
   final String moduleRoot;
@@ -18,7 +18,7 @@ class WritersidePdfExportRequest {
   final String instanceId;
   final String destinationPath;
   final bool overwrite;
-  final MarkdownPdfOptions options;
+  final PdfExportOptions options;
 }
 
 @immutable

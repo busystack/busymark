@@ -11,13 +11,26 @@ Open a Writerside module and select **Main menu → Export as PDF** or press
 discard unsaved project changes, then lets you select:
 
 - one non-library Writerside instance;
-- A4 or US Letter page size;
-- portrait or landscape orientation;
-- narrow, normal, or wide margins; and
-- whether to include page numbers.
+- a generated table of contents with heading depth 1–6 and optional heading numbering;
+- A4, US Letter, US Legal, or custom page dimensions in millimetres;
+- portrait or landscape and preset or four independent custom margins;
+- serif or sans-serif Noto typography, body size, and code size;
+- document-title headers and footers, page-number position, and first-page visibility; and
+- an accent/link color.
 
-The instance's resolved TOC determines topic order. Hidden and work-in-progress
-TOC entries are omitted unless a work-in-progress topic is the configured start
+These are the same controls used for Markdown PDF export. Confirmed PDF settings
+are remembered globally; instance selection remains specific to the workspace.
+**Reset to defaults** restores the default settings in the dialog. Cancelling
+keeps the previously remembered settings. The editor theme does not affect PDF
+appearance. See [PDF export settings](pdf-export.md) for ranges and defaults.
+
+Generated TOC and heading numbering use the exported heading structure without
+changing topic source. Custom typography also controls heading and equation
+sizing; custom dimensions and margins determine the available content width.
+
+The instance's resolved TOC determines topic order. Hidden topics remain in the
+PDF but do not appear in its generated table of contents. Work-in-progress TOC
+entries are omitted unless a work-in-progress topic is the configured start
 page. Reused TOC sections already resolved by BusyMark participate in the same
 ordering. Project variables are substituted in recognized variable tokens.
 
@@ -26,7 +39,14 @@ admonitions, collapsible content, videos, math, Mermaid, PlantUML, and D2 use th
 same export semantics as BusyMark's editor and preview. `.topic` XML content is
 converted into the corresponding native PDF blocks for headings, paragraphs,
 procedures, steps, admonitions, code, lists, images, videos, links, and math.
-Malformed XML remains visible as source instead of disappearing.
+Preview and PDF share the Writerside resolver and renderer. XML chapters retain
+nested content, and links use unique PDF anchors. Every tab and topic variant is
+included as a labeled section. Tables preserve header styles, spans, column
+widths and nested cell content. Configured shortcuts, glossary descriptions,
+resources and API references participate in the same resolution.
+
+Unsupported markup produces a visible fallback and warning. Malformed XML or
+unresolved required content stops export with an explicit error.
 
 ## Offline and security behavior
 
@@ -53,17 +73,6 @@ native export.
 BusyMark is not the JetBrains Writerside publication builder. The native export
 targets a reliable offline PDF of the syntax BusyMark understands; teams that
 need byte-for-byte parity with JetBrains website artifacts can still run
-JetBrains' separate CI tooling outside BusyMark.
-
-## Verification
-
-Focused tests cover instance selection, TOC ordering, variables, Markdown and
-`.topic` XML composition, local asset rebasing, cancellation, failure mapping,
-and an end-to-end native PDF build of the repository's Writerside demo.
-
-Run:
-
-```bash
-flutter test test/src/writerside_pdf_export_test.dart
-flutter test test/src/markdown_pdf_export_test.dart
-```
+JetBrains' separate CI tooling outside BusyMark. BusyMark does not import
+`cfg/PDF.xml`; configure the cover-free page layout, generated table of contents,
+running text, and page numbers in BusyMark's export dialog.

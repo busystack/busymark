@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly builder_version="2026.07.8925"
+readonly builder_version="2026.08.0328"
 readonly source_root="${1:-test/fixtures/writerside/conformance_project}"
 readonly module_instance="${2:-Conformance/conformance}"
 readonly work_root="$(mktemp -d)"
@@ -27,4 +27,20 @@ if ! docker run --rm \
   exit 1
 fi
 
-find "$output_root/artifacts" -type f -size +0c -print -quit | grep -q .
+python3 - "$output_root/artifacts/report.json" <<'PYREPORT'
+import json, sys
+report = json.load(open(sys.argv[1]))
+assert report['testsErrorsCount'] == 0, report['testsErrors']
+assert report['testsWarningsCount'] == 0, report['testsWarnings']
+print(f"Official builder: {report['testsPassedCount']} checks passed")
+PYREPORT
+if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
+  python3 tools/extract_writerside_semantics.py \
+    "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" \
+    test/fixtures/writerside/conformance_semantics.json --check
+fi
+
+if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
+  mkdir -p -- "$WRITERSIDE_CONFORMANCE_OUTPUT"
+  cp -a -- "$output_root/artifacts/." "$WRITERSIDE_CONFORMANCE_OUTPUT/"
+fi

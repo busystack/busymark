@@ -1195,6 +1195,33 @@ void main() {
     expect(controller.selection.textInside(controller.text), '  one\n  two');
   });
 
+  testWidgets('source symbol shortcuts dispatch the full source caret', (
+    tester,
+  ) async {
+    final actions = <SourceSymbolAction>[];
+    final offsets = <int>[];
+    final controller = await _pumpAutocompleteSourceEditor(
+      tester,
+      onSymbolAction: (action, offset) {
+        actions.add(action);
+        offsets.add(offset);
+      },
+    );
+    controller.selection = const TextSelection.collapsed(offset: 5);
+    for (final keys in [
+      (LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyB),
+      (LogicalKeyboardKey.altLeft, LogicalKeyboardKey.f7),
+      (LogicalKeyboardKey.shiftLeft, LogicalKeyboardKey.f6),
+    ]) {
+      await tester.sendKeyDownEvent(keys.$1);
+      await tester.sendKeyEvent(keys.$2);
+      await tester.sendKeyUpEvent(keys.$1);
+    }
+    expect(actions, SourceSymbolAction.values);
+    expect(offsets, [5, 5, 5]);
+    expect(controller.text, _autocompleteSource);
+  });
+
   testWidgets('Ctrl+Space opens project-aware source completion', (
     tester,
   ) async {
@@ -1427,6 +1454,7 @@ const _autocompleteSource = '<topic><p>fea';
 Future<TextEditingController> _pumpAutocompleteSourceEditor(
   WidgetTester tester, {
   BusyMarkSourceChanged? onChanged,
+  void Function(SourceSymbolAction action, int offset)? onSymbolAction,
 }) async {
   const index = WritersideProjectIndex(
     symbols: [
@@ -1454,6 +1482,7 @@ Future<TextEditingController> _pumpAutocompleteSourceEditor(
           width: 900,
           height: 600,
           child: BusyMarkSourceEditor(
+            onSymbolAction: onSymbolAction,
             text: _autocompleteSource,
             language: SourceSyntaxLanguage.xml,
             filePath: '/project/topics/current.topic',

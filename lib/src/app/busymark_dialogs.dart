@@ -80,7 +80,6 @@ class _DismissBusyMarkModalIntent extends Intent {
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final command in BusyMarkCommandCatalog.metadata.commands)
     if (command.shortcut != null &&
-        command.id != BusyMarkCommandIds.textPastePlainText &&
         command.scope != BusyMarkCommandScope.tree &&
         command.scope != BusyMarkCommandScope.textEditing)
       command.shortcut!.activator: const DoNothingAndStopPropagationIntent(),
@@ -95,10 +94,54 @@ final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
 ///
 /// Use this around modal UI that is not presented by
 /// [showBusyMarkModalDialog], such as an in-page editor overlay.
-class BusyMarkModalShortcutBoundary extends StatelessWidget {
+class BusyMarkModalShortcutBoundary extends StatefulWidget {
   const BusyMarkModalShortcutBoundary({super.key, required this.child});
 
   final Widget child;
+
+  @override
+  State<BusyMarkModalShortcutBoundary> createState() =>
+      _BusyMarkModalShortcutBoundaryState();
+}
+
+class _BusyMarkModalShortcutBoundaryState
+    extends State<BusyMarkModalShortcutBoundary> {
+  final _fallbackFocusNode = FocusNode(
+    debugLabel: 'BusyMark modal shortcut fallback',
+  );
+  FocusScopeNode? _enclosingScope;
+
+  @override
+  void initState() {
+    super.initState();
+    // DialogRoute initially parks focus on its own scope. Wait for that focus
+    // transition, then move it below Shortcuts only when no child requested
+    // focus, so Escape works without overriding a field's autofocus.
+    FocusManager.instance.addListener(_focusFallbackIfNeeded);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusFallbackIfNeeded();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _enclosingScope = FocusScope.of(context);
+  }
+
+  @override
+  void dispose() {
+    FocusManager.instance.removeListener(_focusFallbackIfNeeded);
+    _fallbackFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _focusFallbackIfNeeded() {
+    if (!mounted || _fallbackFocusNode.context == null) return;
+    if (FocusManager.instance.primaryFocus == _enclosingScope) {
+      _fallbackFocusNode.requestFocus();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +157,12 @@ class BusyMarkModalShortcutBoundary extends StatelessWidget {
                 },
               ),
         },
-        child: child,
+        child: Focus(
+          focusNode: _fallbackFocusNode,
+          skipTraversal: true,
+          includeSemantics: false,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -496,11 +544,10 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.exportAsPdf,
-                subtitle: context.l10n.shortcutExportPdfDescription,
+                title: context.l10n.export,
                 leading: const Icon(BusyMarkGlyphs.exportPdf),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkAppShortcutLabels.exportPdf,
+                  BusyMarkAppShortcutLabels.export,
                 ),
               ),
               BusyMarkActionRow(
@@ -659,14 +706,6 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.paste),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.paste,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.pasteWithoutFormatting,
-                subtitle: context.l10n.shortcutPastePlainTextDescription,
-                leading: const Icon(BusyMarkGlyphs.paste),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkTextEditingShortcutLabels.pastePlainText,
                 ),
               ),
               BusyMarkActionRow(

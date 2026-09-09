@@ -11,11 +11,19 @@ Widget buildBusyMarkEditorTextContextMenu(
   EditableTextState editableTextState, {
   required String refineWithAiLabel,
   VoidCallback? onRefineWithAi,
+  VoidCallback? onCut,
+  VoidCallback? onCopy,
+  VoidCallback? onCopyPlainText,
+  List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
   return _BusyMarkEditorTextContextMenu(
     editableTextState: editableTextState,
     refineWithAiLabel: refineWithAiLabel,
     onRefineWithAi: onRefineWithAi,
+    onCut: onCut,
+    onCopy: onCopy,
+    onCopyPlainText: onCopyPlainText,
+    additionalItems: additionalItems,
   );
 }
 
@@ -24,11 +32,19 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.editableTextState,
     required this.refineWithAiLabel,
     required this.onRefineWithAi,
+    required this.onCut,
+    required this.onCopy,
+    required this.onCopyPlainText,
+    required this.additionalItems,
   });
 
   final EditableTextState editableTextState;
   final String refineWithAiLabel;
   final VoidCallback? onRefineWithAi;
+  final VoidCallback? onCut;
+  final VoidCallback? onCopy;
+  final VoidCallback? onCopyPlainText;
+  final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
   @override
   State<_BusyMarkEditorTextContextMenu> createState() =>
@@ -75,7 +91,9 @@ class _BusyMarkEditorTextContextMenuState
       anchorPoint: widget.editableTextState.contextMenuAnchors.primaryAnchor,
       items: _menuItems(context),
       session: _menuSession,
-      width: BusyMarkSizes.popupMenuMinWidth,
+      width: widget.onCopyPlainText == null
+          ? BusyMarkSizes.popupMenuMinWidth
+          : BusyMarkSizes.editorContextMenuWidth,
     );
     if (!mounted || _menuSession.dismissed) {
       return;
@@ -89,28 +107,52 @@ class _BusyMarkEditorTextContextMenuState
     final commands =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
         BusyMarkCommandCatalog.metadata;
-    final items = <PopupMenuEntry<VoidCallback>>[
-      for (final item in editable.contextMenuButtonItems) ...[
-        if (_commandIdFor(item.type) case final commandId?)
+    final selection = editable.textEditingValue.selection;
+    final hasSelection = selection.isValid && !selection.isCollapsed;
+    final items = <PopupMenuEntry<VoidCallback>>[];
+    for (final item in editable.contextMenuButtonItems) {
+      final callback = switch (item.type) {
+        ContextMenuButtonType.cut => widget.onCut ?? item.onPressed,
+        ContextMenuButtonType.copy => widget.onCopy ?? item.onPressed,
+        _ => item.onPressed,
+      };
+      if (_commandIdFor(item.type) case final commandId?) {
+        items.add(
           BusyMarkPopupMenuItem<VoidCallback>(
-            value: item.onPressed ?? () {},
+            value: callback ?? () {},
             label: commands[commandId]!.label(context),
             icon: _iconFor(item.type),
             shortcut: commands[commandId]!.shortcut?.label,
-            enabled: item.onPressed != null,
-          )
-        else
+            enabled: callback != null,
+          ),
+        );
+      } else {
+        items.add(
           BusyMarkPopupMenuItem<VoidCallback>(
-            value: item.onPressed ?? () {},
+            value: callback ?? () {},
             label: AdaptiveTextSelectionToolbar.getButtonLabel(context, item),
             icon: _iconFor(item.type),
-            enabled: item.onPressed != null,
+            enabled: callback != null,
           ),
-      ],
-    ];
-    final selection = editable.textEditingValue.selection;
+        );
+      }
+      final copyPlainText = widget.onCopyPlainText;
+      if (item.type == ContextMenuButtonType.copy &&
+          copyPlainText != null &&
+          hasSelection) {
+        final command = commands[BusyMarkCommandIds.editorCopyPlainText]!;
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: copyPlainText,
+            label: command.label(context),
+            icon: BusyMarkGlyphs.copy,
+            shortcut: command.shortcut?.label,
+          ),
+        );
+      }
+    }
     final refineWithAi = widget.onRefineWithAi;
-    if (refineWithAi != null && selection.isValid && !selection.isCollapsed) {
+    if (refineWithAi != null && hasSelection) {
       items.add(
         BusyMarkPopupMenuItem<VoidCallback>(
           value: refineWithAi,
@@ -123,6 +165,7 @@ class _BusyMarkEditorTextContextMenuState
         ),
       );
     }
+    items.addAll(widget.additionalItems);
     return items;
   }
 }

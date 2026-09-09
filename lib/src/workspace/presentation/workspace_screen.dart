@@ -1,3 +1,7 @@
+import 'dart:convert';
+import '../../writerside/writerside_table_view.dart';
+import '../../writerside/writerside_tabs_view.dart';
+import '../../writerside/writerside_source_loader.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -53,7 +57,7 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
-import '../../export/markdown_pdf_export_ui.dart';
+import '../../export/workspace_export_ui.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
@@ -72,6 +76,7 @@ import '../../search/search_replace_service.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_project.dart';
 import '../../writerside/writerside_toc_editor.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
@@ -656,6 +661,7 @@ class WorkspaceScreen extends ConsumerWidget {
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     final canExportPdf = canExportWorkspacePdf(state);
+    final canExportHtml = canExportWorkspaceHtml(state);
     final canGenerateMarkdownToc =
         _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
         false;
@@ -666,6 +672,7 @@ class WorkspaceScreen extends ConsumerWidget {
           searchQuery: searchState.query,
           canRefresh: true,
           canExportPdf: canExportPdf,
+          canExportHtml: canExportHtml,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
@@ -839,6 +846,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                         BusyMarkMainMenuButton(
                           canExportPdf: canExportPdf,
+                          canExportHtml: canExportHtml,
                           canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
@@ -969,8 +977,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
-      case HeaderBarAction.exportPdf:
-        execute(BusyMarkCommandIds.exportPdf);
+      case HeaderBarAction.export:
+        execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
@@ -1016,8 +1024,8 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.exportPdf:
-        unawaited(exportWorkspaceToPdf(context, ref));
+      case BusyMarkMainMenuAction.export:
+        unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.generateMarkdownToc:
         _generateOrUpdateMarkdownToc(context, ref);
       case BusyMarkMainMenuAction.fullScreen:
@@ -4333,6 +4341,67 @@ Future<bool> _confirmDeleteFileTreeEntry(
 typedef _SidebarTreeMenuRequest =
     void Function(BuildContext anchorContext, Offset globalPosition);
 
+class _SidebarRowSurface extends StatelessWidget {
+  const _SidebarRowSurface({
+    super.key,
+    required this.child,
+    required this.enabled,
+    required this.clickable,
+    this.selected = false,
+    this.focusNode,
+    this.onKeyEvent,
+    this.onTap,
+    this.onSecondaryTapUp,
+    this.onHoverChanged,
+    this.onFocusChange,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final bool clickable;
+  final bool selected;
+  final FocusNode? focusNode;
+  final FocusOnKeyEventCallback? onKeyEvent;
+  final VoidCallback? onTap;
+  final GestureTapUpCallback? onSecondaryTapUp;
+  final ValueChanged<bool>? onHoverChanged;
+  final ValueChanged<bool>? onFocusChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: onHoverChanged == null ? null : (_) => onHoverChanged!(true),
+      onExit: onHoverChanged == null ? null : (_) => onHoverChanged!(false),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+        child: Material(
+          color: selected
+              ? busyMarkSelectedBackground(context)
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: Focus(
+            onKeyEvent: onKeyEvent,
+            child: InkWell(
+              focusNode: focusNode,
+              hoverColor: clickable
+                  ? busyMarkRowHoverColor(context)
+                  : BusyMarkLinuxPalette.transparent,
+              onTap: enabled ? onTap : null,
+              onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
+              onFocusChange: onFocusChange,
+              child: SizedBox(
+                height: BusyMarkSizes.sidebarTreeRowHeight,
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SidebarTreeRow extends StatefulWidget {
   const _SidebarTreeRow({
     super.key,
@@ -4345,6 +4414,7 @@ class _SidebarTreeRow extends StatefulWidget {
     this.selected = false,
     this.enabled = true,
     this.muted = false,
+    this.compactHierarchyIndent = false,
     this.vcsColor,
     this.onToggle,
     this.onTap,
@@ -4360,6 +4430,7 @@ class _SidebarTreeRow extends StatefulWidget {
   final bool selected;
   final bool enabled;
   final bool muted;
+  final bool compactHierarchyIndent;
   final BusyMarkVcsFileColor? vcsColor;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
@@ -4415,115 +4486,100 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
         widget.enabled &&
         widget.onMenuRequested != null &&
         (widget.selected || _hovered || _focused);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
-        child: Material(
-          color: widget.selected
-              ? busyMarkSelectedBackground(context)
-              : BusyMarkLinuxPalette.transparent,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          clipBehavior: Clip.antiAlias,
-          child: Focus(
-            onKeyEvent: _handleKeyEvent,
-            child: InkWell(
-              hoverColor: clickable
-                  ? busyMarkRowHoverColor(context)
-                  : BusyMarkLinuxPalette.transparent,
-              onTap: widget.enabled ? widget.onTap : null,
-              onSecondaryTapUp: widget.enabled
-                  ? widget.onMenuRequested == null
-                        ? null
-                        : (details) => widget.onMenuRequested!(
-                            context,
-                            details.globalPosition,
-                          )
-                  : null,
-              onFocusChange: (focused) => setState(() => _focused = focused),
-              child: SizedBox(
-                height: BusyMarkSizes.sidebarTreeRowHeight,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width:
-                          BusyMarkSizes.sidebarTreeDepthBase +
-                          widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
-                    ),
-                    SizedBox.square(
-                      dimension: BusyMarkSizes.sidebarTreeControl,
-                      child: widget.hasChildren
-                          ? GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: widget.enabled
-                                  ? widget.onToggle ?? widget.onTap
-                                  : null,
-                              child: AnimatedRotation(
-                                turns: widget.expanded
-                                    ? direction == TextDirection.rtl
-                                          ? -0.25
-                                          : 0.25
-                                    : 0,
-                                duration: BusyMarkMotion.sidebarExpand,
-                                child: Icon(
-                                  BusyMarkGlyphs.collapsedTreeArrowFor(
-                                    direction,
-                                  ),
-                                  size: BusyMarkSizes.sidebarTreeArrow,
-                                  color: foreground,
-                                ),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    const SizedBox(width: BusyMarkSpacing.xs),
-                    SizedBox.square(
-                      dimension: BusyMarkSizes.sidebarTreeControl,
-                      child: Center(
-                        child:
-                            widget.leading ??
-                            Icon(
-                              widget.icon,
-                              size: BusyMarkSizes.iconSm,
-                              color: foreground,
-                            ),
+    final depthBase = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSizes.sidebarTreeDepthBase;
+    final expanderWidth = widget.compactHierarchyIndent
+        ? BusyMarkSizes.sidebarTreeArrow
+        : BusyMarkSizes.sidebarTreeControl;
+    final expanderGap = widget.compactHierarchyIndent
+        ? 0.0
+        : BusyMarkSpacing.xs;
+    return _SidebarRowSurface(
+      enabled: widget.enabled,
+      clickable: clickable,
+      selected: widget.selected,
+      onKeyEvent: _handleKeyEvent,
+      onTap: widget.onTap,
+      onSecondaryTapUp: widget.onMenuRequested == null
+          ? null
+          : (details) =>
+                widget.onMenuRequested!(context, details.globalPosition),
+      onHoverChanged: (hovered) => setState(() => _hovered = hovered),
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: Row(
+        children: [
+          SizedBox(
+            width:
+                depthBase + widget.depth * BusyMarkSizes.sidebarTreeDepthIndent,
+          ),
+          SizedBox.square(
+            dimension: expanderWidth,
+            child: widget.hasChildren
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.enabled
+                        ? widget.onToggle ?? widget.onTap
+                        : null,
+                    child: AnimatedRotation(
+                      turns: widget.expanded
+                          ? direction == TextDirection.rtl
+                                ? -0.25
+                                : 0.25
+                          : 0,
+                      duration: BusyMarkMotion.sidebarExpand,
+                      child: Icon(
+                        BusyMarkGlyphs.collapsedTreeArrowFor(direction),
+                        size: BusyMarkSizes.sidebarTreeArrow,
+                        color: foreground,
                       ),
                     ),
-                    const SizedBox(width: BusyMarkSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        widget.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: titleStyle,
-                      ),
-                    ),
-                    if (widget.onMenuRequested != null)
-                      SizedBox.square(
-                        dimension: BusyMarkSizes.compactIconButton,
-                        child: menuVisible
-                            ? Builder(
-                                builder: (buttonContext) =>
-                                    BusyMarkCompactIconButton(
-                                      tooltip: context.l10n.actions,
-                                      icon: BusyMarkGlyphs.menuVertical,
-                                      onPressed: () => widget.onMenuRequested!(
-                                        buttonContext,
-                                        _sidebarTreeMenuAnchor(buttonContext),
-                                      ),
-                                    ),
-                              )
-                            : const SizedBox.shrink(),
-                      )
-                    else
-                      const SizedBox(width: BusyMarkSpacing.xs),
-                  ],
-                ),
-              ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          SizedBox(width: expanderGap),
+          SizedBox.square(
+            dimension: BusyMarkSizes.sidebarTreeControl,
+            child: Center(
+              child:
+                  widget.leading ??
+                  Icon(
+                    widget.icon,
+                    size: BusyMarkSizes.iconSm,
+                    color: foreground,
+                  ),
             ),
           ),
-        ),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(
+            child: Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle,
+            ),
+          ),
+          if (widget.onMenuRequested != null)
+            SizedBox(
+              width: BusyMarkSizes.iconButton,
+              child: Center(
+                child: menuVisible
+                    ? Builder(
+                        builder: (buttonContext) => BusyMarkCompactIconButton(
+                          tooltip: context.l10n.actions,
+                          icon: BusyMarkGlyphs.menuVertical,
+                          onPressed: () => widget.onMenuRequested!(
+                            buttonContext,
+                            _sidebarTreeMenuAnchor(buttonContext),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            )
+          else
+            const SizedBox(width: BusyMarkSpacing.xs),
+        ],
       ),
     );
   }
@@ -5260,6 +5316,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   hasChildren: hasChildren,
                   expanded: expanded,
                   muted: node.hidden,
+                  compactHierarchyIndent: true,
                   onToggle: hasChildren ? toggle : null,
                   onTap: topicPath != null
                       ? () async {
@@ -5565,7 +5622,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         if (canRefineSelection) {
           await _refineTocTopicsWithAi(context, selectedTopics);
         }
-      case _TocTreeAction.deleteSelection:
+      case _TocTreeAction.removeSelection:
         if (canEditSelection) {
           await _removeTocEntries(
             context,
@@ -5724,26 +5781,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
           instanceTreePath: instanceTreePath,
           entry: entry,
         );
-      case _TocTreeAction.delete:
-        final path = topicPath;
-        if (path == null) {
-          return;
-        }
-        final result = await widget.onRequestTopicRemoval(
-          _WritersideTopicRemovalTarget(
-            mode: WritersideTopicRemovalMode.safeDeleteFile,
-            topicPath: path,
-          ),
-        );
-        if (mounted && result != null) {
-          setState(() {
-            _cutEntries = [];
-            _selectedNodePathKey = null;
-            _selectedNodePathKeys = {};
-            _selectionAnchorPathKey = null;
-          });
-          _clearGitDetailSelection(ref);
-        }
       case _TocTreeAction.addToGit:
         final relativePath = gitRelativePath;
         if (relativePath != null) {
@@ -5915,11 +5952,10 @@ enum _TocTreeAction {
   rename,
   cut,
   refineWithAi,
-  deleteSelection,
+  removeSelection,
   pasteAfter,
   pasteAsChild,
   removeFromToc,
-  delete,
   addToGit,
   copyName,
   copyPath,
@@ -5963,9 +5999,15 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         ),
         const PopupMenuDivider(height: BusyMarkSpacing.sm),
         BusyMarkPopupMenuItem(
-          value: _TocTreeAction.deleteSelection,
-          label: context.l10n.delete,
-          icon: BusyMarkGlyphs.delete,
+          value: _TocTreeAction.removeSelection,
+          label: context.l10n.removeTocElements,
+          icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+          shortcut:
+              (BusyMarkCommandRegistryScope.read(context) ??
+                      BusyMarkCommandCatalog.metadata)[BusyMarkCommandIds
+                      .treeDeleteSelection]
+                  ?.shortcut
+                  ?.label,
           enabled: canEditSelection,
         ),
       ] else ...[
@@ -6040,18 +6082,6 @@ Future<_TocTreeAction?> _showTocTreeMenu(
                   ?.shortcut
                   ?.label,
           enabled: canEditStructure,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.delete,
-          label: context.l10n.safeDeleteTopicFile,
-          icon: BusyMarkGlyphs.delete,
-          enabled: hasTopicFile,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.deleteSelection,
-          label: context.l10n.delete,
-          icon: BusyMarkGlyphs.delete,
-          enabled: canEditSelection,
         ),
         const PopupMenuDivider(height: BusyMarkSpacing.sm),
         BusyMarkPopupMenuItem(
@@ -6404,40 +6434,45 @@ class _TocHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (modules.length > 1) ...[
-            _SidebarHeaderRow(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      modules
-                              .where((module) => module.id == activeModuleId)
-                              .map((module) => module.label)
-                              .firstOrNull ??
-                          modules.first.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.ltr,
-                      style: busyMarkSectionHeaderStyle(context),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: BusyMarkSpacing.sm,
+              ),
+              child: _SidebarHeaderRow(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        modules
+                                .where((module) => module.id == activeModuleId)
+                                .map((module) => module.label)
+                                .firstOrNull ??
+                            modules.first.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textDirection: TextDirection.ltr,
+                        style: busyMarkSectionHeaderStyle(context),
+                      ),
                     ),
-                  ),
-                  BusyMarkHeaderPopupMenuButton<String>(
-                    key: const ValueKey('writerside-module-selector'),
-                    tooltip: context.l10n.workspaceKindWritersideModule,
-                    icon: BusyMarkGlyphs.menuVertical,
-                    transparent: true,
-                    borderRadius: BusyMarkRadius.nativeHeaderButton,
-                    highlightWhenOpen: false,
-                    itemBuilder: (context) => [
-                      for (final module in modules)
-                        BusyMarkPopupMenuItem<String>(
-                          value: module.id,
-                          label: module.label,
-                          icon: BusyMarkGlyphs.folder,
-                        ),
-                    ],
-                    onSelected: onSelectModule,
-                  ),
-                ],
+                    BusyMarkHeaderPopupMenuButton<String>(
+                      key: const ValueKey('writerside-module-selector'),
+                      tooltip: context.l10n.workspaceKindWritersideModule,
+                      icon: BusyMarkGlyphs.menuVertical,
+                      transparent: true,
+                      borderRadius: BusyMarkRadius.nativeHeaderButton,
+                      highlightWhenOpen: false,
+                      itemBuilder: (context) => [
+                        for (final module in modules)
+                          BusyMarkPopupMenuItem<String>(
+                            value: module.id,
+                            label: module.label,
+                            icon: BusyMarkGlyphs.folder,
+                          ),
+                      ],
+                      onSelected: onSelectModule,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
@@ -6447,11 +6482,11 @@ class _TocHeader extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    context.l10n.instances,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: busyMarkSectionHeaderStyle(context),
+                  child: _WritersideInstanceSelector(
+                    instances: instances,
+                    selectedInstance: selectedInstance,
+                    instanceColors: instanceColors,
+                    onSelected: onSelectInstance,
                   ),
                 ),
                 BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
@@ -6508,32 +6543,110 @@ class _TocHeader extends StatelessWidget {
               ],
             ),
           ),
-          for (final instance in instances)
-            _SidebarTreeRow(
-              key: ValueKey('writerside-instance-${instance.id}'),
-              title: busyMarkLtrIsolateFor(context, instance.name),
-              depth: 0,
-              icon: BusyMarkGlyphs.tree,
-              leading: Icon(
-                BusyMarkGlyphs.tree,
-                size: BusyMarkSizes.iconSm,
-                color: writersideInstanceIconColorValue(
-                  context,
-                  instanceColors[instance.sourceTreePath] ??
-                      WritersideInstanceIconColor.blue,
-                ),
-              ),
-              hasChildren: false,
-              expanded: false,
-              selected: p.equals(
-                instance.sourceTreePath,
-                selectedInstance.sourceTreePath,
-              ),
-              enabled: true,
-              onTap: () => onSelectInstance(instance.sourceTreePath),
-            ),
           const Divider(height: BusyMarkSpacing.md),
         ],
+      ),
+    );
+  }
+}
+
+class _WritersideInstanceSelector extends StatelessWidget {
+  const _WritersideInstanceSelector({
+    required this.instances,
+    required this.selectedInstance,
+    required this.instanceColors,
+    required this.onSelected,
+  });
+
+  final List<WritersideInstance> instances;
+  final WritersideInstance selectedInstance;
+  final Map<String, WritersideInstanceIconColor> instanceColors;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPath = selectedInstance.sourceTreePath;
+    final selectedLabel = busyMarkLtrIsolateFor(context, selectedInstance.name);
+    final selectedColor = writersideInstanceIconColorValue(
+      context,
+      instanceColors[selectedPath] ?? WritersideInstanceIconColor.blue,
+    );
+    final selectorEnabled = instances.isNotEmpty;
+    return BusyMarkMenuButton<String>(
+      key: const ValueKey('writerside-instance-selector'),
+      tooltip: context.l10n.instances,
+      enabled: selectorEnabled,
+      fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+      items: [
+        for (final instance in instances)
+          BusyMarkPopupMenuItem<String>(
+            value: instance.sourceTreePath,
+            label: busyMarkLtrIsolateFor(context, instance.name),
+            icon: BusyMarkGlyphs.tree,
+            iconColor: writersideInstanceIconColorValue(
+              context,
+              instanceColors[instance.sourceTreePath] ??
+                  WritersideInstanceIconColor.blue,
+            ),
+            checked: instance.sourceTreePath == selectedPath,
+            trailingCheck: true,
+          ),
+      ],
+      onSelected: onSelected,
+      triggerBuilder: (context, trigger) => trigger.anchor(
+        child: Tooltip(
+          message: context.l10n.instances,
+          child: Semantics(
+            expanded: trigger.isOpen,
+            child: _SidebarRowSurface(
+              key: const ValueKey('writerside-instance-selector-trigger'),
+              enabled: selectorEnabled,
+              clickable: selectorEnabled,
+              focusNode: trigger.focusNode,
+              onTap: trigger.onPressed,
+              child: Row(
+                children: [
+                  const SizedBox(width: BusyMarkSpacing.headerInset),
+                  Icon(
+                    BusyMarkGlyphs.tree,
+                    size: BusyMarkSizes.iconSm,
+                    color: selectedColor,
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      selectedLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: selectorEnabled
+                            ? BusyMarkSurfaceColors.of(context).foreground
+                            : BusyMarkSurfaceColors.of(
+                                context,
+                              ).disabledForeground,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: BusyMarkSizes.iconButton,
+                    child: Center(
+                      child: Icon(
+                        BusyMarkGlyphs.downArrow,
+                        size: BusyMarkSizes.iconSm,
+                        color: selectorEnabled
+                            ? BusyMarkSurfaceColors.of(context).mutedForeground
+                            : BusyMarkSurfaceColors.of(
+                                context,
+                              ).disabledForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -9914,6 +10027,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],
+                      onSymbolAction:
+                          widget.state.workspace?.writersideProject == null
+                          ? null
+                          : (action, offset) =>
+                                unawaited(_handleSymbolAction(action, offset)),
                       autocompleteContext: _sourceAutocompleteContext(
                         widget.state.workspace,
                       ),
@@ -10281,6 +10399,125 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     };
   }
 
+  Future<void> _handleSymbolAction(
+    SourceSymbolAction action,
+    int offset,
+  ) async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final path = widget.state.workspace?.activeFilePath;
+    if (path == null) return;
+    final index = await controller.writersideEditorIndex();
+    if (!mounted || index == null) return;
+    final symbols = index.symbolsAt(path, offset);
+    final symbol = symbols.firstOrNull;
+    if (symbol == null) {
+      await showBusyMarkModalDialog<void>(
+        context,
+        builder: (context) => AlertDialog(
+          content: Text(context.l10n.noResults),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    Future<void> navigate(String filePath, SourceSpan? span) async {
+      await controller.openActiveFile(filePath);
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sourceEditorKey.currentState?.scrollToLine(span?.startLine ?? 1);
+      });
+    }
+
+    if (action == SourceSymbolAction.declaration) {
+      await navigate(symbol.filePath, symbol.span);
+    } else if (action == SourceSymbolAction.usages) {
+      final usages = index.findUsages(symbol).toList();
+      final selected = await showBusyMarkModalDialog<WritersideReference>(
+        context,
+        builder: (context) => AlertDialog(
+          title: Text('${context.l10n.findUsages}: ${symbol.name}'),
+          content: SizedBox(
+            width: 600,
+            height: 360,
+            child: usages.isEmpty
+                ? Text(context.l10n.noResults)
+                : ListView(
+                    children: [
+                      for (final usage in usages)
+                        ListTile(
+                          title: Text(
+                            p.relative(
+                              usage.filePath,
+                              from: widget.state.workspace?.rootPath,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${usage.span.startLine}:${usage.span.startColumn}  ${usage.value}',
+                          ),
+                          onTap: () => Navigator.pop(context, usage),
+                        ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+      if (selected != null) await navigate(selected.filePath, selected.span);
+    } else {
+      var pendingName = symbol.name;
+      final newName = await showBusyMarkModalEditorDialog<String>(
+        context,
+        builder: (context) => AlertDialog(
+          title: Text('${context.l10n.rename}: ${symbol.name}'),
+          content: TextFormField(
+            initialValue: pendingName,
+            onChanged: (value) => pendingName = value,
+            autofocus: true,
+            onFieldSubmitted: (value) => Navigator.pop(context, value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, pendingName),
+              child: Text(context.l10n.rename),
+            ),
+          ],
+        ),
+      );
+      if (newName == null || !mounted) return;
+      final applied = await controller.applyWritersideRename(
+        index.safeRenameEdits(symbol, newName),
+      );
+      if (!applied && mounted) {
+        await showBusyMarkModalDialog<void>(
+          context,
+          builder: (context) => AlertDialog(
+            content: Text(context.l10n.cannotRenameSymbol),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(context.l10n.close),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   SourceAutocompleteContext _sourceAutocompleteContext(Workspace? workspace) {
     final project = workspace?.writersideProject;
     if (workspace == null || project == null) {
@@ -10290,6 +10527,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       projectFiles: [for (final file in workspace.files) file.relativePath],
       projectIndex: project.index,
       moduleId: project.activeModuleId,
+      filePath: workspace.activeFilePath,
     );
   }
 
@@ -10364,15 +10602,58 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _scrollPreviewToHeading(String headingId) {
     final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
-    final index = blocks.indexWhere(
-      (block) =>
-          block.kind == PreviewBlockKind.heading &&
-          block.attributes['id'] == headingId,
-    );
-    if (index < 0 || !_previewScrollController.isAttached) {
-      return;
-    }
-    unawaited(_scrollPreviewToIndex(index, alignment: 0.0));
+    bool contains(PreviewBlock block) =>
+        block.attributes['id'] == headingId || block.children.any(contains);
+    final index = blocks.indexWhere(contains);
+    if (index < 0 || !_previewScrollController.isAttached) return;
+    unawaited(() async {
+      await _scrollPreviewToIndex(index, alignment: 0);
+      if (!mounted) return;
+      final blockContext = _previewBlockContexts[index];
+      if (blockContext == null || !blockContext.mounted) return;
+      final selection = WritersidePreviewScope.of(blockContext);
+      void reveal(PreviewBlock block) {
+        if (!contains(block)) return;
+        if (block.attributes['switcher-key'] case final keys?) {
+          selection?.select(
+            'busymark-topic-switcher',
+            keys.split(',').first.trim(),
+          );
+        }
+        if (block.kind == PreviewBlockKind.tabs) {
+          final panel = block.children.where(contains).firstOrNull;
+          if (panel != null && block.attributes['group'] != null) {
+            selection?.select(
+              block.attributes['group']!,
+              panel.attributes['group-key'] ?? panel.text,
+            );
+          }
+        }
+        for (final child in block.children) {
+          reveal(child);
+        }
+      }
+
+      reveal(blocks[index]);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !blockContext.mounted) return;
+      BuildContext? target;
+      void find(Element element) {
+        if (element.widget.key == ValueKey('writerside-anchor-$headingId')) {
+          target = element;
+        }
+        element.visitChildElements(find);
+      }
+
+      (blockContext as Element).visitChildElements(find);
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target!,
+          alignment: 0,
+          duration: BusyMarkMotion.scroll,
+        );
+      }
+    }());
   }
 
   Future<void> _scrollPreviewToIndex(
@@ -10877,21 +11158,24 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.nothingToRead,
       );
     }
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: SelectionArea(
-        child: ScrollablePositionedList.builder(
-          key: const ValueKey('preview-document-scroll'),
-          itemScrollController: controller,
-          itemPositionsListener: itemPositionsListener,
-          padding: documentLayout.scrollPadding,
-          itemCount: document.blocks.length,
-          itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
-            layout: documentLayout,
-            contentKey: index == 0
-                ? const ValueKey('preview-document-content')
-                : null,
-            child: _keyedPreviewBlock(context, index, document.blocks[index]),
+    return WritersidePreviewScope(
+      key: ValueKey(workspace?.activeFilePath),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: colors.view),
+        child: SelectionArea(
+          child: ScrollablePositionedList.builder(
+            key: const ValueKey('preview-document-scroll'),
+            itemScrollController: controller,
+            itemPositionsListener: itemPositionsListener,
+            padding: documentLayout.scrollPadding,
+            itemCount: document.blocks.length,
+            itemBuilder: (context, index) => BusyMarkDocumentContentFrame(
+              layout: documentLayout,
+              contentKey: index == 0
+                  ? const ValueKey('preview-document-content')
+                  : null,
+              child: _keyedPreviewBlock(context, index, document.blocks[index]),
+            ),
           ),
         ),
       ),
@@ -11012,6 +11296,17 @@ class _PreviewBlockView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     final displayBlock = _localizedPreviewBlock(context, block);
+    final switcher =
+        WritersidePreviewScope.of(
+          context,
+        )?.selected('busymark-topic-switcher') ??
+        displayBlock.attributes['switcher-default'];
+    final switcherKeys = displayBlock.attributes['switcher-key'];
+    if (switcherKeys != null &&
+        switcher != null &&
+        !switcherKeys.split(',').map((key) => key.trim()).contains(switcher)) {
+      return const SizedBox.shrink();
+    }
     final inheritedDirection = Directionality.of(context);
     final blockDirection = _previewBlockTextDirection(
       displayBlock,
@@ -11148,9 +11443,9 @@ class _PreviewBlockView extends ConsumerWidget {
               )
             : _previewChildBlocks(displayBlock.children, first: true),
       ),
-      PreviewBlockKind.tabs => BusyMarkDocumentCallout(
-        icon: BusyMarkGlyphs.tab,
-        child: Text(displayBlock.text),
+      PreviewBlockKind.tabs => WritersideTabsView(
+        block: displayBlock,
+        panelBuilder: (blocks) => _previewChildBlocks(blocks, first: true),
       ),
       PreviewBlockKind.procedure
           when busyMarkWritersideIsCollapsible(displayBlock.attributes) =>
@@ -11296,7 +11591,40 @@ class _PreviewBlockView extends ConsumerWidget {
       PreviewBlockKind.table => _PreviewTable(
         block: displayBlock,
         editRevision: editRevision,
+        childrenBuilder: (blocks) => _previewChildBlocks(blocks, first: true),
       ),
+      PreviewBlockKind.container
+          when displayBlock.attributes['writerside-card'] == 'true' =>
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _previewChildBlocks(displayBlock.children, first: true),
+          ),
+        ),
+      PreviewBlockKind.container
+          when displayBlock.attributes['writerside-grid'] == 'true' =>
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth < 500
+                ? 1
+                : displayBlock.attributes['narrow'] == 'true'
+                ? 3
+                : 2;
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final child in displayBlock.children)
+                  SizedBox(
+                    width: child.kind == PreviewBlockKind.heading
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 16 * (columns - 1)) / columns,
+                    child: _previewChildBlocks([child], first: true),
+                  ),
+              ],
+            );
+          },
+        ),
       PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
         _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
@@ -11325,9 +11653,15 @@ class _PreviewBlockView extends ConsumerWidget {
         ),
       ),
     };
-    return blockDirection == inheritedDirection
+    final anchored = displayBlock.attributes['id'] == null
         ? child
-        : Directionality(textDirection: blockDirection, child: child);
+        : KeyedSubtree(
+            key: ValueKey("writerside-anchor-${displayBlock.attributes['id']}"),
+            child: child,
+          );
+    return blockDirection == inheritedDirection
+        ? anchored
+        : Directionality(textDirection: blockDirection, child: anchored);
   }
 
   void _reportMathDiagnostic(
@@ -11384,7 +11718,10 @@ class _PreviewBlockView extends ConsumerWidget {
       key: ValueKey('visualization-$documentPath-$blockIdentity'),
       descriptor: descriptor,
       source: block.text,
-      sourceReference: block.attributes['src'],
+      sourceReference:
+          block.attributes.containsKey(writersideResolvedSourceAttribute)
+          ? null
+          : block.attributes['src'],
       sourceFence: _visualizationSourceFence(block, descriptor),
       documentPath: documentPath,
       workspaceRoot: workspace?.rootPath ?? '',
@@ -11575,66 +11912,35 @@ String _previewDirectionalText(PreviewBlock block) {
 }
 
 class _PreviewTable extends StatelessWidget {
-  const _PreviewTable({required this.block, this.editRevision = 0});
-
+  const _PreviewTable({
+    required this.block,
+    required this.childrenBuilder,
+    this.editRevision = 0,
+  });
   final PreviewBlock block;
   final int editRevision;
-
+  final Widget Function(List<PreviewBlock>) childrenBuilder;
   @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final columnCount = block.children.fold<int>(
-      0,
-      (max, row) => math.max(max, row.children.length),
-    );
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
-      decoration: BoxDecoration(
-        color: colors.panel,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        border: Border.all(color: colors.subtleBorder),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        child: Table(
-          border: TableBorder.symmetric(
-            inside: BorderSide(color: colors.subtleBorder),
+  Widget build(BuildContext context) => WritersideTableView(
+    block: block,
+    cellBuilder: (cell, header) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (cell.text.trim().isNotEmpty || cell.inlines.isNotEmpty)
+          _PreviewInlineText(
+            block: cell,
+            editRevision: editRevision,
+            textAlign: _previewTableCellTextAlign(cell.attributes['align']),
+            style: header
+                ? busyMarkDocumentBodyTextStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w700)
+                : null,
           ),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            for (final row in block.children)
-              TableRow(
-                decoration: BoxDecoration(
-                  color: row.attributes['header'] == 'true'
-                      ? colors.control
-                      : BusyMarkLinuxPalette.transparent,
-                ),
-                children: [
-                  for (var index = 0; index < columnCount; index += 1)
-                    Padding(
-                      padding: BusyMarkInsets.documentTableCell,
-                      child: index < row.children.length
-                          ? _PreviewInlineText(
-                              block: row.children[index],
-                              editRevision: editRevision,
-                              textAlign: _previewTableCellTextAlign(
-                                row.children[index].attributes['align'],
-                              ),
-                              style: row.attributes['header'] == 'true'
-                                  ? busyMarkDocumentBodyTextStyle(
-                                      context,
-                                    ).copyWith(fontWeight: FontWeight.w700)
-                                  : null,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+        if (cell.children.isNotEmpty) childrenBuilder(cell.children),
+      ],
+    ),
+  );
 }
 
 class _PreviewInlineText extends ConsumerWidget {
@@ -12243,6 +12549,70 @@ InlineSpan _previewInlineSpan(
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
 }) {
+  final selected =
+      WritersidePreviewScope.of(context)?.selected('busymark-topic-switcher') ??
+      inline.attributes['switcher-default'];
+  final keys = inline.attributes['switcher-key'];
+  if (keys != null &&
+      selected != null &&
+      !keys.split(',').map((key) => key.trim()).contains(selected)) {
+    return const TextSpan(text: '');
+  }
+  final shortcutLayouts = inline.attributes['shortcut-layouts'];
+  if (shortcutLayouts != null) {
+    final layouts = (jsonDecode(shortcutLayouts) as Map).cast<String, String>();
+    final controller = WritersidePreviewScope.of(context);
+    final layout =
+        controller?.selected('busymark-keymap') ??
+        inline.attributes['shortcut-layout'];
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: PopupMenuButton<String>(
+        tooltip: context.l10n.keyboardLayout,
+        onSelected: (value) => controller?.select('busymark-keymap', value),
+        itemBuilder: (context) => [
+          for (final entry in layouts.entries)
+            PopupMenuItem(
+              value: entry.key,
+              child: Text('${entry.key}: ${entry.value}'),
+            ),
+        ],
+        child: Text(
+          layouts[layout] ?? inline.text,
+          style: busyMarkDocumentCodeTextStyle(context),
+        ),
+      ),
+    );
+  }
+  final summary = inline.attributes['summary'];
+  if (summary != null && summary.isNotEmpty) {
+    final label = Text.rich(
+      TextSpan(
+        text: inline.children.isEmpty ? inline.text : null,
+        children: [
+          for (final child in inline.children) TextSpan(text: child.text),
+        ],
+        style: inline.kind == PreviewInlineKind.link
+            ? TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              )
+            : inheritedStyle,
+      ),
+    );
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: Tooltip(
+        message: summary,
+        child:
+            inline.kind == PreviewInlineKind.link && inline.destination != null
+            ? InkWell(onTap: () => onLinkTap(inline.destination!), child: label)
+            : label,
+      ),
+    );
+  }
   final colors = BusyMarkSurfaceColors.of(context);
   final theme = Theme.of(context);
   final linkDestination = inline.kind == PreviewInlineKind.link
@@ -12589,7 +12959,28 @@ Future<void> _openPreviewLink(
   }
   final uri = parseSchemedUri(target);
   if (uri != null) {
-    if (!isLaunchableExternalUri(uri)) {
+    var isResource = false;
+    if (uri.scheme == 'file') {
+      final workspace = ref.read(workspaceControllerProvider).workspace;
+      final modules =
+          workspace?.writersideProject?.modules ??
+          [if (workspace?.writersideModule case final module?) module];
+      for (final module in modules) {
+        for (final resource in module.referenceData.resources.values) {
+          if (resource.path != null && Uri.file(resource.path!) == uri) {
+            final checked = await const WritersideSourceLoader().load(
+              reference: p.relative(resource.path!, from: module.rootPath),
+              documentPath: module.config.filePath,
+              workspaceRoot: module.rootPath,
+              readText: false,
+            );
+            isResource =
+                checked.path == resource.path && checked.failure == null;
+          }
+        }
+      }
+    }
+    if (!isResource && !isLaunchableExternalUri(uri)) {
       if (context.mounted) {
         _showPreviewLinkMessage(
           context,
@@ -12745,7 +13136,19 @@ void _navigatePreviewAnchor(
             slugForHeading(heading.text) == slug,
       )
       .firstOrNull;
-  if (heading == null) {
+  PreviewBlock? findAnchor(Iterable<PreviewBlock> blocks) {
+    for (final block in blocks) {
+      if ({normalizedAnchor, decodedAnchor}.contains(block.attributes['id'])) {
+        return block;
+      }
+      final nested = findAnchor(block.children);
+      if (nested != null) return nested;
+    }
+    return null;
+  }
+
+  final element = findAnchor(state.preview?.blocks ?? const []);
+  if (heading == null && element == null) {
     _showPreviewLinkMessage(context, context.l10n.anchorNotFound(anchor));
     return;
   }
@@ -12755,9 +13158,10 @@ void _navigatePreviewAnchor(
         _OutlineNavigationTarget(
           workspaceId: workspace.id,
           filePath: workspace.activeFilePath,
-          headingId: heading.id,
-          line: heading.sourceStartLine,
-          editorBlockId: heading.editorBlockId,
+          headingId: heading?.id ?? element!.attributes['id']!,
+          line: heading?.sourceStartLine ?? element?.sourceStartLine,
+          editorBlockId:
+              heading?.editorBlockId ?? element?.attributes['editorBlockId'],
         ),
       );
 }

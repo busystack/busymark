@@ -42,7 +42,7 @@ Text with **bold**, [safe](https://example.com), and [unsafe](javascript:alert(1
 
     expect(document.metadata.title, 'Export guide');
     expect(document.metadata.author, 'BusyMark Team');
-    expect(document.metadata.language, 'fr');
+    expect(document.metadata.language, 'fr-CA');
     expect(document.metadata.keywords, ['markdown', 'pdf']);
     expect(
       document.blocks.map((block) => block.kind),
@@ -102,7 +102,7 @@ Review [the export guide][1].
 
     final payload = const TypstPayloadBuilder().build(
       document: document,
-      options: const MarkdownPdfOptions(),
+      options: const PdfExportOptions(),
       assets: const {},
     );
     expect(jsonEncode(payload), isNot(contains('[1]:')));
@@ -118,7 +118,7 @@ Review [the export guide][1].
     final document = mapper.map(parsed.busyDocument);
     final payload = const TypstPayloadBuilder().build(
       document: document,
-      options: const MarkdownPdfOptions(),
+      options: const PdfExportOptions(),
       assets: const {'private/diagram.png': 'assets/safe.png'},
     );
     final json = jsonEncode(payload);

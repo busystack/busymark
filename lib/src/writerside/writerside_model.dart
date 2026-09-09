@@ -2,6 +2,8 @@ import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
 import 'writerside_document.dart';
+import 'writerside_source_loader.dart';
+import 'writerside_reference_data.dart';
 import 'package:path/path.dart' as p;
 
 class WritersideTopicRoot {
@@ -492,11 +494,13 @@ class WritersideVariable {
     required this.name,
     required this.value,
     required this.span,
+    this.instanceCondition,
   });
 
   final String name;
   final String value;
   final SourceSpan span;
+  final String? instanceCondition;
 }
 
 class WritersideCategory {
@@ -526,6 +530,8 @@ class WritersideModule {
     this.buildProfiles,
     this.instanceGroups,
     this.sourceOverrides = const {},
+    this.sourceFiles = const {},
+    this.referenceData = const WritersideReferenceData(),
   });
 
   final String rootPath;
@@ -542,11 +548,15 @@ class WritersideModule {
   /// Unsaved project sources that must win over their on-disk counterparts
   /// when the module is recomputed after another project-file edit.
   final Map<String, String> sourceOverrides;
+  final Map<String, WritersideSourceFile> sourceFiles;
+  final WritersideReferenceData referenceData;
 
   WritersideModule copyWith({
     List<WritersideTopic>? topics,
     List<Diagnostic>? diagnostics,
     Map<String, String>? sourceOverrides,
+    Map<String, WritersideSourceFile>? sourceFiles,
+    WritersideReferenceData? referenceData,
   }) {
     return WritersideModule(
       rootPath: rootPath,
@@ -560,6 +570,8 @@ class WritersideModule {
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
       sourceOverrides: sourceOverrides ?? this.sourceOverrides,
+      sourceFiles: sourceFiles ?? this.sourceFiles,
+      referenceData: referenceData ?? this.referenceData,
     );
   }
 

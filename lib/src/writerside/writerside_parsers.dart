@@ -298,6 +298,27 @@ class WritersideBuildProfilesParser {
       );
     }
 
+    for (final element
+        in const WritersideDocumentParser()
+            .parseXml(filePath: filePath, source: source)
+            .elements
+            .where((element) => element.name == 'llms-txt')) {
+      if (element.attributes.containsKey('single-file') ||
+          !{'true', 'false'}.contains(element.plainText.trim())) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.build-profiles.invalid-llms-txt',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            sourceSpan: element.span,
+            args: const {
+              'expected': '<llms-txt>true</llms-txt>',
+              'builderVersion': WritersideSchema.builderVersion,
+            },
+          ),
+        );
+      }
+    }
     final globalValues = _valuesFromParent(filePath, source, root, diagnostics);
     final instanceValues = <String, WritersideBuildProfileValues>{};
     for (final profile in root.childElements.where(
@@ -852,10 +873,21 @@ class WritersideVariablesParser {
       return (variables, diagnostics);
     }
     final seen = <String, SourceSpan>{};
+    final declarations = const WritersideDocumentParser()
+        .parseXml(filePath: filePath, source: source)
+        .elements
+        .where((element) => element.name == 'var')
+        .toList();
+    var declarationIndex = 0;
     for (final element in document.findAllElements('var')) {
       final name = element.getAttribute('name');
       final value = element.getAttribute('value');
-      final span = _elementSpan(filePath, source, 'var', name);
+      final semantic = declarationIndex < declarations.length
+          ? declarations[declarationIndex++]
+          : null;
+      final span =
+          semantic?.attributeSpans['name'] ??
+          _elementSpan(filePath, source, 'var', name);
       if (name == null || value == null) {
         diagnostics.add(
           Diagnostic(
@@ -867,7 +899,9 @@ class WritersideVariablesParser {
         );
         continue;
       }
-      if (seen.containsKey(name)) {
+      final condition = element.getAttribute('instance');
+      final identity = '$name:${condition ?? ''}';
+      if (seen.containsKey(identity)) {
         diagnostics.add(
           Diagnostic(
             code: 'writerside.variable.duplicate-name',
@@ -875,12 +909,19 @@ class WritersideVariablesParser {
             filePath: filePath,
             args: {'name': name},
             sourceSpan: span,
-            relatedSpans: [seen[name]!],
+            relatedSpans: [seen[identity]!],
           ),
         );
       }
-      seen[name] = span;
-      variables.add(WritersideVariable(name: name, value: value, span: span));
+      seen[identity] = span;
+      variables.add(
+        WritersideVariable(
+          name: name,
+          value: value,
+          span: span,
+          instanceCondition: condition,
+        ),
+      );
     }
     return (variables, diagnostics);
   }
@@ -906,12 +947,23 @@ class WritersideCategoriesParser {
     if (document == null) {
       return (categories, diagnostics);
     }
+    final declarations = const WritersideDocumentParser()
+        .parseXml(filePath: filePath, source: source)
+        .elements
+        .where((element) => element.name == 'category')
+        .toList();
+    var declarationIndex = 0;
     final ids = <String, SourceSpan>{};
     final orders = <int, SourceSpan>{};
     for (final element in document.findAllElements('category')) {
       final id = element.getAttribute('id') ?? '';
       final order = int.tryParse(element.getAttribute('order') ?? '');
-      final span = _elementSpan(filePath, source, 'category', id);
+      final declaration = declarationIndex < declarations.length
+          ? declarations[declarationIndex++]
+          : null;
+      final span =
+          declaration?.attributeSpans['id'] ??
+          _elementSpan(filePath, source, 'category', id);
       if (id.isEmpty) {
         diagnostics.add(
           Diagnostic(
@@ -1001,6 +1053,25 @@ class WritersideTopicParser {
         if (element.attributes['id'] case final id?)
           WritersideElementId(id: id, span: element.span),
     ];
+    void collectMarkdownIds(BusyBlock block) {
+      final id = block.attributes['id'];
+      if (id != null && !ids.any((candidate) => candidate.id == id)) {
+        ids.add(
+          WritersideElementId(
+            id: id,
+            span: block.sourceSpan ?? SourceSpan.entireFile(filePath, source),
+          ),
+        );
+      }
+      for (final child in block.children) {
+        collectMarkdownIds(child);
+      }
+    }
+
+    for (final node
+        in document.nodes.whereType<WritersideMarkdownBlockNode>()) {
+      collectMarkdownIds(node.block);
+    }
     final includes = [
       for (final element in document.elements)
         if (element.semanticKind == WritersideSemanticKind.include)
@@ -1203,7 +1274,11 @@ class WritersideTopicParser {
           case 'web-file-name':
             webFileName = element.innerText.trim();
           case 'a':
-            final href = element.getAttribute('href');
+            final href =
+                element.getAttribute('href') ??
+                (element.getAttribute('anchor') == null
+                    ? null
+                    : '#${element.getAttribute('anchor')}');
             if (href == null) {
               diagnostics.add(
                 Diagnostic(

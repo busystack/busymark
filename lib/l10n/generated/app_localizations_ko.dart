@@ -149,6 +149,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copy => '복사';
 
   @override
+  String get copyPlainText => '일반 텍스트로 복사';
+
+  @override
+  String get clipboardCopyFailed => '선택한 내용을 클립보드에 복사할 수 없습니다.';
+
+  @override
   String get copyName => '이름 복사';
 
   @override
@@ -254,9 +260,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get paste => '붙여넣기';
-
-  @override
-  String get pasteWithoutFormatting => '서식 없이 붙여넣기';
 
   @override
   String get reading => '읽기';
@@ -1164,6 +1167,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get removeTocElement => 'TOC 요소 제거';
+
+  @override
+  String get removeTocElements => 'TOC 요소 제거';
 
   @override
   String get reviewUsages => '사용 검토';
@@ -2868,6 +2874,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get export => '내보내기';
 
   @override
+  String get exportFormat => '출력 형식';
+
+  @override
   String get exportingPdf => 'PDF 내보내기 중…';
 
   @override
@@ -3508,7 +3517,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiEnableProvider => '먼저 AI 제공자를 활성화하세요.';
 
   @override
-  String get aiDraftCommitMessage => '초안 커밋 메시지';
+  String get aiDraftCommitMessage => '커밋 메시지 초안 작성';
 
   @override
   String get aiDrafting => '작성 중…';
@@ -3560,4 +3569,221 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get displayMath => '수학 표시';
+
+  @override
+  String get goToDeclaration => '선언으로 이동';
+
+  @override
+  String get findUsages => '사용 위치 찾기';
+
+  @override
+  String get cannotRenameSymbol =>
+      '기호 이름을 안전하게 바꿀 수 없습니다. 이름을 확인하고 참조를 새로 고친 후 다시 시도하세요.';
+
+  @override
+  String get keyboardLayout => '키보드 배열';
+
+  @override
+  String get diagnosticWritersideUnsupported =>
+      '지원하지 않거나 잘못된 형식의 내용은 소스로 표시됩니다.';
+
+  @override
+  String diagnosticWritersideSource(String reference, String reason) {
+    return '소스 “$reference”를 확인할 수 없습니다: $reason';
+  }
+
+  @override
+  String diagnosticWritersideLink(String destination) {
+    return '이 인스턴스에서 링크 대상을 사용할 수 없습니다: $destination';
+  }
+
+  @override
+  String diagnosticWritersideSchema(
+    String element,
+    String attribute,
+    String reason,
+  ) {
+    return '잘못된 Writerside 마크업: $element, $attribute. $reason';
+  }
+
+  @override
+  String get diagnosticWritersideLlmsTxt =>
+      '<llms-txt>true</llms-txt> 또는 <llms-txt>false</llms-txt>를 사용하세요. single-file은 더 이상 지원되지 않습니다.';
+
+  @override
+  String diagnosticWritersideReference(String kind, String reference) {
+    return '$kind을(를) 확인할 수 없습니다: $reference';
+  }
+
+  @override
+  String get exportAsHtml => 'HTML로 내보내기…';
+
+  @override
+  String get fileTypeHtml => 'HTML 문서';
+
+  @override
+  String get exportingHtml => 'HTML 내보내는 중…';
+
+  @override
+  String get htmlExported => 'HTML 내보내기 완료';
+
+  @override
+  String get htmlExportFailed => 'HTML 내보내기 실패';
+
+  @override
+  String get htmlKeepAssetsTogether =>
+      '내보낸 결과를 복사할 때 HTML 파일과 관련 리소스 폴더를 함께 유지하세요.';
+
+  @override
+  String get htmlInstanceDescription =>
+      '인스턴스 하나를 연결된 오프라인 페이지로 내보냅니다. 전용 출력 폴더의 이름을 선택하세요.';
+
+  @override
+  String get htmlInstance => '인스턴스';
+
+  @override
+  String get htmlOwnedDirectoryOnly =>
+      'BusyMark HTML 내보내기로 만든 폴더만 교체할 수 있습니다. 수정되거나 관련 없는 파일은 보존됩니다.';
+
+  @override
+  String get showInFolder => '폴더에서 보기';
+
+  @override
+  String sortTableColumn(String column) {
+    return '$column 정렬';
+  }
+
+  @override
+  String get exportReset => '기본값으로 재설정';
+
+  @override
+  String get exportToc => '목차 포함';
+
+  @override
+  String get exportTocDepth => '목차 깊이';
+
+  @override
+  String get exportNumberHeadings => '제목 번호 매기기';
+
+  @override
+  String get exportLegal => 'US Legal';
+
+  @override
+  String get exportCustom => '사용자 지정';
+
+  @override
+  String get exportPageWidth => '페이지 너비 (mm)';
+
+  @override
+  String get exportPageHeight => '페이지 높이 (mm)';
+
+  @override
+  String get exportMarginTop => '위쪽 여백 (mm)';
+
+  @override
+  String get exportMarginRight => '오른쪽 여백 (mm)';
+
+  @override
+  String get exportMarginBottom => '아래쪽 여백 (mm)';
+
+  @override
+  String get exportMarginLeft => '왼쪽 여백 (mm)';
+
+  @override
+  String get exportTypography => '글꼴';
+
+  @override
+  String get exportSans => '고딕체';
+
+  @override
+  String get exportSerif => '명조체';
+
+  @override
+  String get exportBodySize => '본문 글꼴 크기';
+
+  @override
+  String get exportCodeSize => '코드 글꼴 크기';
+
+  @override
+  String get exportRunningText => '머리글 및 바닥글';
+
+  @override
+  String get exportHeader => '머리글';
+
+  @override
+  String get exportFooter => '바닥글';
+
+  @override
+  String get exportNone => '없음';
+
+  @override
+  String get exportDocumentTitle => '문서 제목';
+
+  @override
+  String get exportBottomLeft => '왼쪽 아래';
+
+  @override
+  String get exportBottomCenter => '가운데 아래';
+
+  @override
+  String get exportBottomRight => '오른쪽 아래';
+
+  @override
+  String get exportFirstPage => '첫 페이지에 머리글과 바닥글 표시';
+
+  @override
+  String get exportAccent => '강조 / 링크 색상';
+
+  @override
+  String get exportTheme => '테마';
+
+  @override
+  String get exportAutomatic => '자동';
+
+  @override
+  String get exportLayout => '레이아웃';
+
+  @override
+  String get exportContentWidth => '최대 콘텐츠 너비';
+
+  @override
+  String get exportOutput => '출력';
+
+  @override
+  String get exportPackaging => '패키징';
+
+  @override
+  String get exportSingleFile => '단일 HTML 파일';
+
+  @override
+  String get exportAssetsDirectory => 'HTML + 리소스 폴더';
+
+  @override
+  String get exportCustomCss => '사용자 지정 스타일시트…';
+
+  @override
+  String get exportRemoveCss => '사용자 지정 스타일시트 제거';
+
+  @override
+  String get exportCssNote =>
+      '선택적으로 UTF-8 CSS 파일을 지정하세요(최대 256 KiB). 가져오기, 리소스 URL, 실행 가능하거나 이스케이프된 CSS는 허용되지 않습니다. BusyMark 스타일 뒤에 적용됩니다. 원격 리소스를 가져오지 않습니다.';
+
+  @override
+  String get exportSitePackagingNote =>
+      'Writerside는 별도로 연결된 주제 페이지를 유지합니다. 단일 파일 모드는 각 페이지에 리소스를 포함합니다.';
+
+  @override
+  String get exportInvalidGeometry => '여백을 제외한 콘텐츠 너비와 높이를 각각 20 mm 이상 확보하세요.';
+
+  @override
+  String get exportInvalidColor => '#RRGGBB 형식으로 색상을 입력하세요.';
+
+  @override
+  String get exportInvalidCss =>
+      '가져오기, 리소스 URL, HTML, 실행 가능하거나 이스케이프된 CSS가 없는 읽기 가능한 UTF-8 .css 파일(최대 256 KiB)을 선택하세요.';
+
+  @override
+  String exportInvalidRange(String field, String minimum, String maximum) {
+    return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
+  }
 }
