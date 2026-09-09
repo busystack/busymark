@@ -31,6 +31,23 @@ void main() {
     expect(renderer, isNot(contains('height: 72% * size.height')));
   });
 
+  test('quotes and admonitions use the existing callout presentation', () {
+    final template = File('assets/export/markdown.typ').readAsStringSync();
+    final callouts = RegExp(
+      r'#let render-callout[\s\S]*?else if kind == "thematicBreak"',
+    ).firstMatch(template)?.group(0);
+
+    expect(callouts, isNotNull);
+    expect(callouts, contains('stroke: (left: 2pt + accent)'));
+    expect(
+      callouts,
+      contains('title: value-or(block-data, "title", default-title)'),
+    );
+    expect(callouts, contains('fill: rgb("f5f7fa")'));
+    expect(callouts, contains('accent: rgb("4b5563")'));
+    expect(callouts, isNot(contains('quote(\n      block: true')));
+  });
+
   test(
     'bundled template exports representative Markdown to a valid PDF',
     () async {

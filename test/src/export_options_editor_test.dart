@@ -2,15 +2,56 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/export/export_options.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('Escape closes Export before a control receives focus', (
+    tester,
+  ) async {
+    late BuildContext hostContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: Colors.blue,
+        ),
+        home: Builder(
+          builder: (context) {
+            hostContext = context;
+            return const Scaffold(body: SizedBox.expand());
+          },
+        ),
+      ),
+    );
+
+    final result = showBusyMarkModalEditorDialog<ExportOptionsSelection>(
+      hostContext,
+      builder: (_) => const ExportOptionsDialog(
+        pdf: PdfExportOptions(),
+        html: HtmlExportOptions(),
+        initialFormat: ExportFormat.pdf,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ExportOptionsDialog), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExportOptionsDialog), findsNothing);
+    expect(await result, isNull);
+  });
+
   for (final pdf in [true, false]) {
     for (final writerside in [false, true]) {
       testWidgets(

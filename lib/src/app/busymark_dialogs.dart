@@ -94,10 +94,54 @@ final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
 ///
 /// Use this around modal UI that is not presented by
 /// [showBusyMarkModalDialog], such as an in-page editor overlay.
-class BusyMarkModalShortcutBoundary extends StatelessWidget {
+class BusyMarkModalShortcutBoundary extends StatefulWidget {
   const BusyMarkModalShortcutBoundary({super.key, required this.child});
 
   final Widget child;
+
+  @override
+  State<BusyMarkModalShortcutBoundary> createState() =>
+      _BusyMarkModalShortcutBoundaryState();
+}
+
+class _BusyMarkModalShortcutBoundaryState
+    extends State<BusyMarkModalShortcutBoundary> {
+  final _fallbackFocusNode = FocusNode(
+    debugLabel: 'BusyMark modal shortcut fallback',
+  );
+  FocusScopeNode? _enclosingScope;
+
+  @override
+  void initState() {
+    super.initState();
+    // DialogRoute initially parks focus on its own scope. Wait for that focus
+    // transition, then move it below Shortcuts only when no child requested
+    // focus, so Escape works without overriding a field's autofocus.
+    FocusManager.instance.addListener(_focusFallbackIfNeeded);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusFallbackIfNeeded();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _enclosingScope = FocusScope.of(context);
+  }
+
+  @override
+  void dispose() {
+    FocusManager.instance.removeListener(_focusFallbackIfNeeded);
+    _fallbackFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _focusFallbackIfNeeded() {
+    if (!mounted || _fallbackFocusNode.context == null) return;
+    if (FocusManager.instance.primaryFocus == _enclosingScope) {
+      _fallbackFocusNode.requestFocus();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +157,12 @@ class BusyMarkModalShortcutBoundary extends StatelessWidget {
                 },
               ),
         },
-        child: child,
+        child: Focus(
+          focusNode: _fallbackFocusNode,
+          skipTraversal: true,
+          includeSemantics: false,
+          child: widget.child,
+        ),
       ),
     );
   }

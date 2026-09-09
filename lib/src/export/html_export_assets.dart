@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
+import '../core/local_image_resolver.dart';
 import '../visualization/generated_svg_normalizer.dart';
 import 'markdown_export_assets.dart';
 import 'html_export_models.dart';
@@ -55,9 +56,10 @@ class HtmlExportAssets {
           'Remote or unsupported resource was not packaged.',
         );
       }
-      final path = uri.scheme == 'file'
+      final decodedPath = uri.scheme == 'file'
           ? uri.toFilePath()
           : Uri.decodeComponent(uri.path);
+      final path = expandLocalMediaHomePath(decodedPath);
       final candidates = p.isAbsolute(path)
           ? [path]
           : [

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
 import 'package:busymark/src/export/html_export_assets.dart';
@@ -207,6 +208,35 @@ Footnote[^note] and again[^note].
       );
     },
   );
+
+  test('home-relative images use the shared local-media path rules', () async {
+    final downloads = await Directory(p.join(root.path, 'Downloads')).create();
+    const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="20"><rect width="30" height="20" fill="blue"/></svg>';
+    await File(p.join(downloads.path, 'example.svg')).writeAsString(svg);
+    debugLocalImageHomeDirectoryOverride = root.path;
+    addTearDown(() => debugLocalImageHomeDirectoryOverride = null);
+
+    final result = await service.exportMarkdown(
+      MarkdownHtmlExportRequest(
+        source: '# Image\n\n![Example](~/Downloads/example.svg)',
+        filePath: p.join(downloads.path, 'source.md'),
+        workspaceRoot: downloads.path,
+        destinationPath: p.join(downloads.path, 'document.html'),
+        mode: MarkdownMode.gfm,
+      ),
+    );
+
+    final doc = html.parse(await File(result.entryPointPath).readAsString());
+    final source = doc.querySelector('img')?.attributes['src'];
+    expect(source, startsWith('document.assets/'));
+    expect(result.warnings, isEmpty);
+    expect(result.assetsPath, isNotNull);
+    expect(
+      await File(p.join(downloads.path, Uri.decodeComponent(source!))).exists(),
+      isTrue,
+    );
+  });
 
   test('untrusted metadata and data URLs cannot create active HTML', () async {
     final result = await export('''---

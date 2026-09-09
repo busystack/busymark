@@ -250,6 +250,26 @@
   }
 }
 
+#let render-callout(body, fill: none, accent: black, title: "") = {
+  let content = {
+    if title != "" {
+      strong(title)
+      linebreak()
+    }
+    body
+  }
+  block(
+    width: 100%,
+    above: 0.7em,
+    below: 0.7em,
+    fill: fill,
+    stroke: (left: 2pt + accent),
+    inset: 9pt,
+    radius: 4pt,
+    content,
+  )
+}
+
 #let render-block(block-data) = {
   let kind = block-data.kind
   let inlines = value-or(block-data, "inlines", ())
@@ -286,31 +306,47 @@
   } else if kind == "admonition" {
     let style = value-or(block-data, "style", "note")
     let fill = if style == "warning" {
-      rgb("fff4d6")
+      rgb("fff6e9")
     } else if style == "tip" {
-      rgb("e8f7ed")
+      rgb("f0faf4")
     } else {
-      rgb("eaf2fb")
+      rgb("f1f7fd")
     }
-    block(
-      width: 100%,
+    let accent = if style == "warning" {
+      rgb("a34200")
+    } else if style == "tip" {
+      rgb("247550")
+    } else {
+      rgb("2366aa")
+    }
+    let body = if children.len() > 0 {
+      for child in children { render-block(child) }
+    } else {
+      render-inlines(inlines)
+    }
+    let default-title = if style == "warning" {
+      "Warning"
+    } else if style == "tip" {
+      "Tip"
+    } else {
+      "Note"
+    }
+    render-callout(
+      body,
       fill: fill,
-      inset: 9pt,
-      radius: 4pt,
-      if children.len() > 0 {
-        for child in children { render-block(child) }
-      } else {
-        render-inlines(inlines)
-      },
+      accent: accent,
+      title: value-or(block-data, "title", default-title),
     )
   } else if kind == "blockquote" {
-    quote(
-      block: true,
-      if children.len() > 0 {
-        for child in children { render-block(child) }
-      } else {
-        render-inlines(inlines)
-      },
+    let body = if children.len() > 0 {
+      for child in children { render-block(child) }
+    } else {
+      render-inlines(inlines)
+    }
+    render-callout(
+      body,
+      fill: rgb("f5f7fa"),
+      accent: rgb("4b5563"),
     )
   } else if kind == "thematicBreak" {
     block(above: 0.8em, below: 0.8em, line(length: 100%, stroke: 0.6pt + rgb("aeb4bc")))

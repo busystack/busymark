@@ -206,6 +206,7 @@ class MarkdownExportMapper {
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
     final style = busyAdmonitionStyleFromName(block.attributes['style']);
+    final title = block.attributes['title'];
     final admonition =
         block.attributes[busyMarkWritersideAdmonitionAttribute] == 'true' &&
         style != BusyAdmonitionStyle.quote;
@@ -215,7 +216,10 @@ class MarkdownExportMapper {
           : MarkdownExportBlockKind.blockquote,
       inlines: _mapInlines(block.inlines),
       children: _mapBlocks(block.children, blockOverrides),
-      attributes: {if (admonition) 'style': style?.name ?? 'tip'},
+      attributes: {
+        if (admonition) 'style': style?.name ?? 'tip',
+        if (admonition && title != null) 'title': title,
+      },
     );
   }
 
@@ -223,6 +227,7 @@ class MarkdownExportMapper {
     BusyBlock block,
     Map<String, MarkdownExportBlock> blockOverrides,
   ) {
+    final title = block.attributes['title'];
     final style =
         busyAdmonitionStyleFromName(
           block.attributes['style'] ?? block.attributes['element'],
@@ -234,7 +239,10 @@ class MarkdownExportMapper {
           : MarkdownExportBlockKind.admonition,
       inlines: _mapInlines(block.inlines),
       children: _mapBlocks(block.children, blockOverrides),
-      attributes: {if (style != BusyAdmonitionStyle.quote) 'style': style.name},
+      attributes: {
+        if (style != BusyAdmonitionStyle.quote) 'style': style.name,
+        if (style != BusyAdmonitionStyle.quote && title != null) 'title': title,
+      },
     );
   }
 

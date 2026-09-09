@@ -23,6 +23,13 @@ String? resolveLocalImagePath({
   maxRecursiveEntries: maxRecursiveEntries,
 );
 
+/// Expands the home-directory syntax accepted by BusyMark's local-media
+/// resolver while leaving all other paths unchanged.
+///
+/// Callers must still validate the resulting path against their own allowed
+/// roots before reading it.
+String expandLocalMediaHomePath(String value) => _expandHomeDirectory(value);
+
 /// Resolves an authored local media reference inside the same roots used for
 /// Writerside images and videos.
 String? resolveLocalMediaPath({
