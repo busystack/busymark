@@ -3882,6 +3882,282 @@ class AppLocalizationsHi extends AppLocalizations {
       '256 KiB तक की पढ़ने योग्य UTF-8 .css फ़ाइल चुनें, जिसमें इंपोर्ट, संसाधन URL, HTML और निष्पादन योग्य या एस्केप वाला CSS न हो।';
 
   @override
+  String get clipboardHistory => 'क्लिपबोर्ड इतिहास';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'सत्र-विशिष्ट क्लिपबोर्ड इतिहास खोलें।';
+
+  @override
+  String get clipboardCurrent => 'वर्तमान क्लिपबोर्ड';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'किसी अन्य एप्लिकेशन से वर्तमान क्लिपबोर्ड';
+
+  @override
+  String clipboardDestination(String name) {
+    return '$name में पेस्ट करें';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'केवल इस BusyMark सत्र के लिए संग्रहीत।';
+
+  @override
+  String get clipboardNoItems => 'क्लिपबोर्ड इतिहास खाली है।';
+
+  @override
+  String get clipboardNoMatches =>
+      'कोई क्लिपबोर्ड आइटम इस खोज से मेल नहीं खाता।';
+
+  @override
+  String get clipboardDisabled =>
+      'क्लिपबोर्ड इतिहास संग्रह सेटिंग्स में अक्षम है।';
+
+  @override
+  String get clipboardUnavailable =>
+      'वर्तमान क्लिपबोर्ड सामग्री अनुपलब्ध या समर्थित नहीं है।';
+
+  @override
+  String get clipboardTooLarge =>
+      'यह क्लिपबोर्ड आइटम बहुत बड़ा है और इसे बनाए रखना संभव नहीं है।';
+
+  @override
+  String get clipboardPastePlainText => 'सादे टेक्स्ट के रूप में पेस्ट करें';
+
+  @override
+  String get clipboardClearAll => 'क्लिपबोर्ड इतिहास साफ़ करें';
+
+  @override
+  String get clipboardEntryText => 'टेक्स्ट';
+
+  @override
+  String get clipboardEntryRichText => 'रिच टेक्स्ट';
+
+  @override
+  String get clipboardEntryImage => 'इमेज';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '$name से कॉपी किया गया';
+  }
+
+  @override
+  String get localHistory => 'स्थानीय इतिहास';
+
+  @override
+  String get localHistoryEllipsis => 'स्थानीय इतिहास…';
+
+  @override
+  String get localHistoryDescription =>
+      'वर्तमान दस्तावेज़ के लिए सहेजे गए और स्वचालित स्थानीय संशोधनों को दिखाएं।';
+
+  @override
+  String get findLocalHistoryEllipsis => 'स्थानीय इतिहास में खोजें...';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'स्थानीय इतिहास में दस्तावेज़ और संशोधन सामग्री खोजें।';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'अभी तक किसी भी दस्तावेज़ में स्थानीय इतिहास नहीं है।';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'इस दस्तावेज़ में स्थानीय इतिहास में कोई संशोधन नहीं है।';
+
+  @override
+  String get localHistoryNoMatches =>
+      'यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।';
+
+  @override
+  String get localHistorySearchHint => 'संशोधन सामग्री खोजें';
+
+  @override
+  String get localHistorySelectedRevision => 'चयनित संशोधन';
+
+  @override
+  String get localHistoryCurrentEditor => 'वर्तमान संपादक सामग्री';
+
+  @override
+  String get localHistoryCurrentDisk => 'डिस्क पर वर्तमान सामग्री';
+
+  @override
+  String get localHistoryMissingFile => 'मूल फ़ाइल गायब है।';
+
+  @override
+  String get localHistoryRestoreRevision => 'पिछली स्थिति को पुनर्स्थापित करें';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'मूल स्थान पर पुनर्स्थापित करें';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'नए स्थान पर पुनर्स्थापित करें…';
+
+  @override
+  String get localHistoryRestoreChange => 'परिवर्तन को पुनर्स्थापित करें';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'इस परिवर्तन को पुनर्स्थापित नहीं किया जा सकता क्योंकि तुलना अब अद्यतित नहीं है।';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'यह बड़ा परिवर्तन सरलीकृत है। व्यक्तिगत परिवर्तनों को पुनर्स्थापित करना संभव नहीं है।';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'पुराने संस्करण में परिवर्तन: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'वर्तमान सामग्री में परिवर्तन: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'हटा दिया गया';
+
+  @override
+  String get localHistoryUntitled => 'शीर्षकहीन';
+
+  @override
+  String get localHistoryClearDocument => 'इस दस्तावेज़ का इतिहास साफ़ करें';
+
+  @override
+  String get localHistoryClearAll => 'सभी स्थानीय इतिहास साफ़ करें';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'दस्तावेज़ का इतिहास साफ़ करना?';
+
+  @override
+  String get localHistoryClearAllTitle => 'सभी स्थानीय इतिहास साफ़ करना?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'यह स्थायी रूप से संग्रहीत संशोधनों को हटा देता है। इस कार्रवाई को पूर्ववत नहीं किया जा सकता।';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'स्थानीय इतिहास इंडेक्स क्षतिग्रस्त था और बरकरार संशोधनों से फिर से बनाया गया था।';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'यह स्थानीय इतिहास स्टोर समर्थित प्रारूप $version का उपयोग करता है।';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'स्थानीय इतिहास उपलब्ध नहीं: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'रिकॉर्डिंग अक्षम है या यह पथ बाहर रखा गया है। पुनर्स्थापित करने से पहले रिकॉर्डिंग को फिर से सक्षम करें।';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'स्थानीय इतिहास ने पथ परिवर्तन रिकॉर्ड नहीं किया: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'स्थानीय इतिहास को हटाए गए पथ को सहेजने में असमर्थ: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'चयनित संशोधन गायब है या क्षतिग्रस्त है।';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'चयनित संशोधन को नहीं पढ़ा जा सकता: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'स्थानीय इतिहास इस संशोधन को कैप्चर नहीं कर सका: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'बेसलाइन';
+
+  @override
+  String get localHistoryReasonSaved => 'सहेजा गया';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'स्वचालित चेकपॉइंट';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'रीलोड करने से पहले';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'त्यागने से पहले';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'पुनर्स्थापना से पहले';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'हटाने से पहले';
+
+  @override
+  String get localHistoryReasonExternalChange => 'बाहरी परिवर्तन';
+
+  @override
+  String get settingsHistory => 'इतिहास';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'क्लिपबोर्ड इतिहास एकत्र करें';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'केवल इस BusyMark सत्र के लिए कॉपी किए गए और सफलतापूर्वक पेस्ट किए गए सामग्री को बनाए रखें।';
+
+  @override
+  String get settingsLocalHistoryTitle => 'स्थानीय इतिहास रिकॉर्ड करें';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'पुनर्प्राप्ति और तुलना के लिए इस डिवाइस पर दस्तावेज़ के संस्करणों को सहेजें।';
+
+  @override
+  String get settingsHistoryCheckpoint => 'स्वचालित चेकपॉइंट अंतराल';
+
+  @override
+  String get settingsHistoryRetention => 'प्रतिधारण आयु';
+
+  @override
+  String get settingsHistoryStorage => 'अधिकतम संग्रहण';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'बाहर किए गए पथ';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'प्रति पंक्ति एक पूर्ण पथ';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value सेकंड';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value दिन';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
   }

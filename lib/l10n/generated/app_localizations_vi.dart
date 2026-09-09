@@ -3885,6 +3885,281 @@ class AppLocalizationsVi extends AppLocalizations {
       'Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.';
 
   @override
+  String get clipboardHistory => 'Lịch sử sao chép';
+
+  @override
+  String get clipboardHistoryDescription => 'Mở lịch sử sao chép cục bộ phiên.';
+
+  @override
+  String get clipboardCurrent => 'Lịch sử sao chép hiện tại';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Lịch sử sao chép từ một ứng dụng khác';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Dán vào $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'Chỉ lưu trong phiên BusyMark này.';
+
+  @override
+  String get clipboardNoItems => 'Lịch sử sao chép trống.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Không có mục sao chép nào khớp với tìm kiếm này.';
+
+  @override
+  String get clipboardDisabled =>
+      'Bộ sưu tập Lịch sử sao chép bị vô hiệu hóa trong Cài đặt.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Nội dung sao chép hiện tại không khả dụng hoặc không được hỗ trợ.';
+
+  @override
+  String get clipboardTooLarge => 'Mục này trong clipboard quá lớn để lưu.';
+
+  @override
+  String get clipboardPastePlainText => 'Dán dưới dạng văn bản thuần túy';
+
+  @override
+  String get clipboardClearAll => 'Xóa lịch sử clipboard';
+
+  @override
+  String get clipboardEntryText => 'Văn bản';
+
+  @override
+  String get clipboardEntryRichText => 'Văn bản phong phú';
+
+  @override
+  String get clipboardEntryImage => 'Hình ảnh';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Sao chép từ $name';
+  }
+
+  @override
+  String get localHistory => 'Lịch sử cục bộ';
+
+  @override
+  String get localHistoryEllipsis => 'Lịch sử cục bộ…';
+
+  @override
+  String get localHistoryDescription =>
+      'Hiển thị các phiên bản cục bộ đã lưu và tự động cho tài liệu hiện tại.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Tìm trong Lịch sử cục bộ…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Tìm kiếm các tài liệu và nội dung phiên bản trong Lịch sử cục bộ.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Chưa có tài liệu nào có Lịch sử cục bộ.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Tài liệu này không có các phiên bản Lịch sử cục bộ.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
+
+  @override
+  String get localHistorySearchHint => 'Tìm kiếm nội dung phiên bản';
+
+  @override
+  String get localHistorySelectedRevision => 'Phiên bản đã chọn';
+
+  @override
+  String get localHistoryCurrentEditor => 'Nội dung trình soạn thảo hiện tại';
+
+  @override
+  String get localHistoryCurrentDisk => 'Nội dung hiện tại trên ổ đĩa';
+
+  @override
+  String get localHistoryMissingFile => 'Tệp gốc bị thiếu.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Khôi phục Phiên bản';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Khôi phục về Vị trí Ban đầu';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Khôi phục về Vị trí Mới…';
+
+  @override
+  String get localHistoryRestoreChange => 'Khôi phục Thay đổi';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Thay đổi này không thể khôi phục vì so sánh không còn hợp lệ.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'So sánh này rất lớn, khôi phục thay đổi riêng không khả thi.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Thay đổi phiên bản cũ: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Thay đổi nội dung hiện tại: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Xóa';
+
+  @override
+  String get localHistoryUntitled => 'Không có tiêu đề';
+
+  @override
+  String get localHistoryClearDocument => 'Xóa Lịch Sử Của Tài Liệu Này';
+
+  @override
+  String get localHistoryClearAll => 'Xóa Lịch Sử Địa Phương';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'Xóa lịch sử tài liệu?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Xóa lịch sử địa phương?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Điều này sẽ xóa vĩnh viễn các phiên bản đã lưu. Hành động này không thể hoàn tác.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Chỉ mục Lịch Sử Địa Phương bị hỏng và được xây dựng lại từ các phiên bản còn nguyên vẹn.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Kho Lịch Sử Địa Phương sử dụng định dạng không được hỗ trợ $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Lịch Sử Địa Phương không khả dụng: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Ghi âm bị tắt hoặc đường dẫn này bị loại trừ. Vui lòng bật lại ghi âm trước khi khôi phục.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Lịch Sử Địa Phương không thể ghi lại thay đổi đường dẫn: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Lịch sử cục bộ không thể lưu trữ đường dẫn đã xóa: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Phiên bản đã chọn bị thiếu hoặc bị hỏng.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Phiên bản đã chọn không thể đọc: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Lịch sử cục bộ không thể ghi lại phiên bản này: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Mốc cơ sở';
+
+  @override
+  String get localHistoryReasonSaved => 'Lưu';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Tự động lưu';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Trước khi tải lại';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Trước khi vứt';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Trước khi khôi phục';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Trước khi xóa';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Thay đổi từ bên ngoài';
+
+  @override
+  String get settingsHistory => 'Lịch sử';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Thu thập lịch sử sao chép';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Giữ nội dung đã sao chép và dán thành công chỉ cho phiên BusyMark này.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Ghi lại lịch sử cục bộ';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Lưu các phiên bản tài liệu trên thiết bị để khôi phục và so sánh.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Khoảng thời gian kiểm tra tự động';
+
+  @override
+  String get settingsHistoryRetention => 'Thời gian lưu';
+
+  @override
+  String get settingsHistoryStorage => 'Dung lượng tối đa';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Đường dẫn bị loại trừ';
+
+  @override
+  String get settingsHistoryExcludedPathsHint =>
+      'Một đường dẫn tuyệt đối trên mỗi dòng';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value giây';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value ngày';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: nhập số từ $minimum đến $maximum.';
   }

@@ -446,6 +446,15 @@ void main() {
       containsPair('syntaxReferenceGtkAccelerator', 'F1'),
     );
     expect(_labels.toMap(), isNot(contains('markdownAndHtml')));
+    expect(
+      _labels.toMap(),
+      containsPair('clipboardHistory', 'Clipboard History'),
+    );
+    expect(_labels.toMap(), containsPair('localHistory', 'Local History'));
+    expect(
+      _labels.toMap(),
+      containsPair('findLocalHistory', 'Find Local History'),
+    );
   });
 }
 
@@ -501,6 +510,9 @@ const _labels = HeaderBarLabels(
   back: 'Back',
   backShortcut: 'Alt+Left',
   save: 'Save',
+  clipboardHistory: 'Clipboard History',
+  localHistory: 'Local History',
+  findLocalHistory: 'Find Local History',
   export: 'Export',
   exportShortcut: 'Ctrl+Shift+E',
   exportGtkAccelerator: '<Primary><Shift>e',

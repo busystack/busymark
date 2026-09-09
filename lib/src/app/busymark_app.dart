@@ -11,8 +11,10 @@ import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../export/workspace_export_ui.dart';
+import '../clipboard/clipboard_history_controller.dart';
 import '../git/application/git_controller.dart';
 import '../platform/linux_header_bar_service.dart';
+import '../local_history/local_history_controller.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/presentation/welcome_screen.dart';
@@ -52,6 +54,9 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.closeTab: const _CloseTabIntent(),
     BusyMarkCommandIds.closeAllTabs: const _CloseAllTabsIntent(),
     BusyMarkCommandIds.toggleSidebar: const _ToggleSidebarIntent(),
+    BusyMarkCommandIds.clipboardHistory: const _OpenClipboardHistoryIntent(),
+    BusyMarkCommandIds.localHistory: const _OpenLocalHistoryIntent(),
+    BusyMarkCommandIds.findLocalHistory: const _FindLocalHistoryIntent(),
     BusyMarkCommandIds.viewEditor: const _DocumentViewModeIntent(
       DocumentViewModePreference.editor,
     ),
@@ -81,6 +86,12 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
       BusyMarkCommandIds.export: () =>
           canExportWorkspace(ref.read(workspaceControllerProvider)),
       BusyMarkCommandIds.search: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
+      BusyMarkCommandIds.clipboardHistory: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
+      BusyMarkCommandIds.localHistory: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
+      BusyMarkCommandIds.findLocalHistory: () =>
           ref.read(workspaceControllerProvider).workspace != null,
     },
   );
@@ -273,6 +284,35 @@ class BusyMarkApp extends ConsumerWidget {
                           if (navigatorContext != null) {
                             showBusyMarkSyntaxReferenceDialog(navigatorContext);
                           }
+                          return null;
+                        },
+                      ),
+                  _OpenClipboardHistoryIntent:
+                      CallbackAction<_OpenClipboardHistoryIntent>(
+                        onInvoke: (intent) {
+                          ref
+                              .read(
+                                clipboardHistoryOpenRequestProvider.notifier,
+                              )
+                              .request();
+                          return null;
+                        },
+                      ),
+                  _OpenLocalHistoryIntent:
+                      CallbackAction<_OpenLocalHistoryIntent>(
+                        onInvoke: (intent) {
+                          ref
+                              .read(localHistoryOpenRequestProvider.notifier)
+                              .request();
+                          return null;
+                        },
+                      ),
+                  _FindLocalHistoryIntent:
+                      CallbackAction<_FindLocalHistoryIntent>(
+                        onInvoke: (intent) {
+                          ref
+                              .read(localHistoryFindRequestProvider.notifier)
+                              .request();
                           return null;
                         },
                       ),
@@ -613,6 +653,13 @@ class BusyMarkApp extends ConsumerWidget {
       gitState: gitState,
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
+      localHistoryRevisionId: ref
+          .read(localHistoryControllerProvider)
+          .selectedRevisionId,
+      localHistoryDocumentName: ref
+          .read(localHistoryControllerProvider)
+          .selectedDocument
+          ?.displayName,
     );
     if (tabs.length < 2) {
       return;
@@ -640,6 +687,13 @@ class BusyMarkApp extends ConsumerWidget {
       gitState: gitState,
       documentBuffers: workspaceState.documentBuffers,
       activeBufferId: workspaceState.activeBufferId,
+      localHistoryRevisionId: ref
+          .read(localHistoryControllerProvider)
+          .selectedRevisionId,
+      localHistoryDocumentName: ref
+          .read(localHistoryControllerProvider)
+          .selectedDocument
+          ?.displayName,
     );
     final activeIndex = activeWorkspaceTabIndex(tabs);
     if (activeIndex < 0) {
@@ -669,6 +723,13 @@ class BusyMarkApp extends ConsumerWidget {
           gitState: gitState,
           documentBuffers: workspaceState.documentBuffers,
           activeBufferId: workspaceState.activeBufferId,
+          localHistoryRevisionId: ref
+              .read(localHistoryControllerProvider)
+              .selectedRevisionId,
+          localHistoryDocumentName: ref
+              .read(localHistoryControllerProvider)
+              .selectedDocument
+              ?.displayName,
         ).isEmpty) {
       return;
     }
@@ -686,15 +747,19 @@ class BusyMarkApp extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (tab.kind) {
       case WorkspaceTabKind.file:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(tab.bufferId!);
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (tab.path.isEmpty) {
           return;
         }
         await gitController.activateDiffFile(tab.path);
+      case WorkspaceTabKind.localHistory:
+        return;
     }
   }
 
@@ -712,6 +777,8 @@ class BusyMarkApp extends ConsumerWidget {
         } else {
           gitController.closeDiffFile(tab.path);
         }
+      case WorkspaceTabKind.localHistory:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
     }
   }
 
@@ -817,6 +884,9 @@ class BusyMarkApp extends ConsumerWidget {
       back: material.backButtonTooltip,
       backShortcut: shortcut(BusyMarkCommandIds.back),
       save: label(BusyMarkCommandIds.save),
+      clipboardHistory: label(BusyMarkCommandIds.clipboardHistory),
+      localHistory: label(BusyMarkCommandIds.localHistory),
+      findLocalHistory: label(BusyMarkCommandIds.findLocalHistory),
       export: label(BusyMarkCommandIds.export),
       exportShortcut: shortcut(BusyMarkCommandIds.export),
       exportGtkAccelerator: accelerator(BusyMarkCommandIds.export),
@@ -1146,6 +1216,18 @@ class _CloseAllTabsIntent extends Intent {
 
 class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
+}
+
+class _OpenClipboardHistoryIntent extends Intent {
+  const _OpenClipboardHistoryIntent();
+}
+
+class _OpenLocalHistoryIntent extends Intent {
+  const _OpenLocalHistoryIntent();
+}
+
+class _FindLocalHistoryIntent extends Intent {
+  const _FindLocalHistoryIntent();
 }
 
 class _ToggleSidebarIntent extends Intent {

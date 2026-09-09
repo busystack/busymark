@@ -1,18 +1,19 @@
 #include "rich_clipboard_host.h"
 
 #include <cstring>
+#include <cstdint>
 #include <memory>
 #include <string>
 
 namespace {
 constexpr char kChannel[] = "com.busymark.app/rich_clipboard";
-constexpr char kFragment[] = "application/x-busymark-fragment+json";
+constexpr char kToken[] = "application/x-busymark-token";
 constexpr gsize kMaximumBytes = 16 * 1024 * 1024;
 
 struct Payload {
   std::string text;
   std::string html;
-  std::string fragment;
+  std::string token;
 };
 
 void provide(GtkClipboard*, GtkSelectionData* selection, guint info,
@@ -23,7 +24,7 @@ void provide(GtkClipboard*, GtkSelectionData* selection, guint info,
                                 payload->text.size());
     return;
   }
-  const auto& bytes = info == 1 ? payload->html : payload->fragment;
+  const auto& bytes = info == 1 ? payload->html : payload->token;
   gtk_selection_data_set(selection, gtk_selection_data_get_target(selection),
                           8, reinterpret_cast<const guchar*>(bytes.data()),
                           bytes.size());
@@ -73,8 +74,9 @@ void write_clipboard(const SharedHost& host, FlMethodCall* call) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP ||
       !argument(args, "text", &payload->text, true) ||
       !argument(args, "html", &payload->html, false) ||
-      !argument(args, "fragment", &payload->fragment, false) ||
-      payload->text.size() + payload->html.size() + payload->fragment.size() >
+      !argument(args, "token", &payload->token, true) ||
+      payload->token.empty() ||
+      payload->text.size() + payload->html.size() + payload->token.size() >
           kMaximumBytes) {
     fl_method_call_respond_error(call, "clipboard.invalid-data",
                                  "Clipboard content is invalid or too large.",
@@ -86,9 +88,7 @@ void write_clipboard(const SharedHost& host, FlMethodCall* call) {
   if (!payload->html.empty()) {
     gtk_target_list_add(list, gdk_atom_intern_static_string("text/html"), 0, 1);
   }
-  if (!payload->fragment.empty()) {
-    gtk_target_list_add(list, gdk_atom_intern_static_string(kFragment), 0, 2);
-  }
+  gtk_target_list_add(list, gdk_atom_intern_static_string(kToken), 0, 2);
   gint count = 0;
   GtkTargetEntry* targets = gtk_target_table_new_from_list(list, &count);
   const gboolean success = gtk_clipboard_set_with_data(
@@ -136,7 +136,7 @@ void received(GtkClipboard*, GtkSelectionData* selection, gpointer data) {
     gsize size = length;
     while (size > 0 && bytes[size - 1] == 0) size--;
     if (g_utf8_validate(reinterpret_cast<const char*>(bytes), size, nullptr)) {
-      const char* key = request->step == 1 ? "fragment" : "html";
+      const char* key = request->step == 1 ? "token" : "html";
       fl_value_set_string_take(
           request->result, key,
           fl_value_new_string_sized(reinterpret_cast<const char*>(bytes), size));
@@ -163,6 +163,10 @@ void next_read(Read* request) {
     if (!request->current()) {
       fl_value_unref(request->result);
       request->result = fl_value_new_map();
+    } else {
+      fl_value_set_string_take(
+          request->result, "generation",
+          fl_value_new_int(static_cast<int64_t>(request->generation)));
     }
     fl_method_call_respond_success(request->call, request->result, nullptr);
     delete request;
@@ -171,7 +175,7 @@ void next_read(Read* request) {
   switch (request->step++) {
     case 0:
       gtk_clipboard_request_contents(request->host->clipboard,
-                                     gdk_atom_intern_static_string(kFragment),
+                                     gdk_atom_intern_static_string(kToken),
                                      received, request);
       break;
     case 1:

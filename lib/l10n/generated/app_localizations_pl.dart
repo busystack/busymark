@@ -3941,6 +3941,286 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wybierz czytelny plik .css UTF-8 do 256 KiB, bez importów, adresów zasobów, HTML oraz wykonywalnego CSS i sekwencji ucieczki.';
 
   @override
+  String get clipboardHistory => 'Historia w Koszyku';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Otwórz historię w koszyku lokalną dla sesji.';
+
+  @override
+  String get clipboardCurrent => 'Aktualny koszyk';
+
+  @override
+  String get clipboardCurrentExternal => 'Aktualny koszyk z innego programu';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Wklej do $name';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Przechowywane tylko dla tej sesji BusyMark.';
+
+  @override
+  String get clipboardNoItems => 'Historia w koszyku jest pusta.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Żadne elementy w koszyku nie pasują do tego wyszukiwania.';
+
+  @override
+  String get clipboardDisabled =>
+      'Zbiór \"Historia w koszyku\" wyłączony w Ustawieniach.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Aktualny zawartość koszyka niedostępna lub nieobsługiwana.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Ten element schowka jest zbyt duży, aby go zapisać.';
+
+  @override
+  String get clipboardPastePlainText => 'Wklej jako zwykły tekst';
+
+  @override
+  String get clipboardClearAll => 'Wyczyść historię schowka';
+
+  @override
+  String get clipboardEntryText => 'Tekst';
+
+  @override
+  String get clipboardEntryRichText => 'Bogaty tekst';
+
+  @override
+  String get clipboardEntryImage => 'Obraz';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Skopiowano z $name';
+  }
+
+  @override
+  String get localHistory => 'Lokalna historia';
+
+  @override
+  String get localHistoryEllipsis => 'Lokalna historia…';
+
+  @override
+  String get localHistoryDescription =>
+      'Pokaż zapisane i automatyczne lokalne wersje dla bieżącego dokumentu.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Znajdź w Lokalnej Historii…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Wyszukaj dokumenty i zawartość wersji w Lokalnej Historii.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Żaden dokument nie ma Lokalnej Historii.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Ten dokument nie ma wersji w Lokalnej Historii.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Żadne wersje nie pasują do tego wyszukiwania.';
+
+  @override
+  String get localHistorySearchHint => 'Wyszukaj zawartość wersji';
+
+  @override
+  String get localHistorySelectedRevision => 'Wybrana wersja';
+
+  @override
+  String get localHistoryCurrentEditor => 'Aktualny zawartość edytora';
+
+  @override
+  String get localHistoryCurrentDisk => 'Aktualna zawartość na dysku';
+
+  @override
+  String get localHistoryMissingFile => 'Oryginalny plik nie istnieje.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Przywróć Wersję';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Przywróć do Oryginalnej Lokalizacji';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Przywróć do Nowej Lokalizacji…';
+
+  @override
+  String get localHistoryRestoreChange => 'Przywróć Zmianę';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Ta zmiana nie może być przywrócona, ponieważ porównanie nie jest już aktualne.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'To duże porównanie zostało uproszczone. Przywracanie pojedynczych zmian jest niedostępne.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Stara wersja zmiany: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Aktualna zmiana zawartości: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Usunięto';
+
+  @override
+  String get localHistoryUntitled => 'Bez tytułu';
+
+  @override
+  String get localHistoryClearDocument => 'Wyczyść historię tego dokumentu';
+
+  @override
+  String get localHistoryClearAll => 'Wyczyść całą lokalną historię';
+
+  @override
+  String get localHistoryClearDocumentTitle =>
+      'Czy chcesz wyczyścić historię dokumentu?';
+
+  @override
+  String get localHistoryClearAllTitle =>
+      'Czy chcesz wyczyścić całą lokalną historię?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'To trwale usuwa zapisane wersje. Ta akcja nie może być cofnięta.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Indeks Lokalnej Historii został uszkodzony i odtworzony z nieuszkodzonych wersji.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Ta Lokalna Historia używa nieobsługiwanego formatu $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Lokalna Historia jest niedostępna: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Nagrywanie jest wyłączone lub ta ścieżka jest wykluczona. Włącz nagrywanie przed przywracaniem.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Lokalna Historia nie mogła zarejestrować zmiany ścieżki: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Lokalna historia nie mogła zachować usuniętego ścieżki: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Wybrana wersja jest nieobecna lub uszkodzona.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Wybrana wersja nie może być odczytana: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Lokalna historia nie mogła przechwycić tej wersji: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Podstawa';
+
+  @override
+  String get localHistoryReasonSaved => 'Zapisano';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Automatyczny checkpoint';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Przed ponownym załadowaniem';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Przed wyrzuceniem';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Przed przywróceniem';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Przed usunięciem';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Zmiana z zewnątrz';
+
+  @override
+  String get settingsHistory => 'Historia';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Zapisywanie historii w schowku';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Zachowaj skopiowany i pomyślnie wklejony zawartość tylko dla tej sesji BusyMark.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Zapisywanie lokalnej historii';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Przechowywanie wersji dokumentu na tym urządzeniu w celu odzyskania i porównywania.';
+
+  @override
+  String get settingsHistoryCheckpoint =>
+      'Automatyczny interwał kontrolnego zapisu';
+
+  @override
+  String get settingsHistoryRetention => 'Okres przechowywania';
+
+  @override
+  String get settingsHistoryStorage => 'Maksymalna pojemność';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Wykluczone ścieżki';
+
+  @override
+  String get settingsHistoryExcludedPathsHint =>
+      'Jedna absolutna ścieżka na linię';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value sekundy';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value dni';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: wpisz liczbę między $minimum a $maximum.';
   }

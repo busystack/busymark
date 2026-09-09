@@ -18,6 +18,7 @@ Markdown and Writerside editor for Linux.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
 * **Git integration** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
+* **Clipboard and Local History** — Reuse source, rich-text, and image fragments during the current session; compare and restore persistent on-device document revisions independently of Git.
 * **AI-assisted editing** — Optional Ollama, OpenAI, and Gemini integration with explicit edit scope and shared context, proposal review before changes are applied, and AI-assisted Git commit-message drafting.
 * **Workspace reliability** — Detect files changed outside BusyMark, recover unsaved documents, restore previous workspace sessions, manage remote-image permissions, and protect Git operations behind workspace trust.
 
@@ -116,6 +117,13 @@ BusyMark supports Ollama, OpenAI, and Google Gemini. Proposed edits are presente
 
 See [AI editing](docs/local-ai.md) for configuration, privacy, provider behavior, and security information.
 
+## History and recovery
+
+See [Clipboard History and Local History](docs/history.md) for collection scope,
+limits, retention, restoration, exclusions, and how these tools differ from
+undo, crash recovery, and Git. Implementation and verification details are in
+[the history architecture note](docs/history-architecture.md).
+
 ## Installation
 
 Install BusyMark from the Snap Store:
@@ -128,7 +136,7 @@ The Snap uses strict confinement. See [Snap confinement notes](docs/snap-confine
 
 ## Run from source
 
-BusyMark currently uses Flutter 3.47.0.
+BusyMark currently uses Flutter 3.47.2.
 
 Install the required Linux development packages:
 

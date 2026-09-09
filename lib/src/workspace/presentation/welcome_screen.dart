@@ -255,6 +255,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.clipboardHistory:
+      case HeaderBarAction.localHistory:
+      case HeaderBarAction.findLocalHistory:
       case HeaderBarAction.export:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
@@ -287,6 +290,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     switch (action) {
       case BusyMarkMainMenuAction.export:
       case BusyMarkMainMenuAction.generateMarkdownToc:
+        break;
+      case BusyMarkMainMenuAction.clipboardHistory:
+      case BusyMarkMainMenuAction.localHistory:
+      case BusyMarkMainMenuAction.findLocalHistory:
         break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());

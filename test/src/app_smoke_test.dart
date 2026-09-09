@@ -6138,7 +6138,7 @@ After break.
     );
     expect(find.text(l10n.noOutline), findsNothing);
 
-    expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.digit4);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.digit4);

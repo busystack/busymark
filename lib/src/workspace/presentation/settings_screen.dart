@@ -121,6 +121,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+      SettingsPage.history => BusyMarkGroupedList(
+        title: l10n.settingsHistory,
+        filled: true,
+        children: [
+          BusyMarkSwitchRow(
+            title: l10n.settingsClipboardHistoryTitle,
+            subtitle: l10n.settingsClipboardHistoryDescription,
+            value: settings.clipboardHistoryEnabled,
+            onChanged: controller.setClipboardHistoryEnabled,
+            leading: const Icon(BusyMarkGlyphs.copy),
+          ),
+          BusyMarkSwitchRow(
+            title: l10n.settingsLocalHistoryTitle,
+            subtitle: l10n.settingsLocalHistoryDescription,
+            value: settings.localHistoryRecordingEnabled,
+            onChanged: controller.setLocalHistoryRecordingEnabled,
+            leading: const Icon(BusyMarkGlyphs.documentHistory),
+          ),
+          _HistoryNumberRow(
+            title: l10n.settingsHistoryCheckpoint,
+            value: settings.localHistoryCheckpointSeconds,
+            choices: const [30, 60, 120, 300, 600],
+            format: l10n.settingsSecondsValue,
+            enabled: settings.localHistoryRecordingEnabled,
+            onChanged: controller.setLocalHistoryCheckpointSeconds,
+          ),
+          _HistoryNumberRow(
+            title: l10n.settingsHistoryRetention,
+            value: settings.localHistoryRetentionDays,
+            choices: const [7, 30, 90, 365],
+            format: l10n.settingsDaysValue,
+            enabled: settings.localHistoryRecordingEnabled,
+            onChanged: controller.setLocalHistoryRetentionDays,
+          ),
+          _HistoryNumberRow(
+            title: l10n.settingsHistoryStorage,
+            value: settings.localHistoryMaximumStorageMiB,
+            choices: const [128, 256, 512, 1024, 2048, 4096],
+            format: l10n.settingsMebibytesValue,
+            enabled: settings.localHistoryRecordingEnabled,
+            onChanged: controller.setLocalHistoryMaximumStorageMiB,
+          ),
+          BusyMarkActionRow(
+            title: l10n.settingsHistoryExcludedPaths,
+            subtitle: settings.localHistoryExcludedPaths.isEmpty
+                ? l10n.settingsHistoryExcludedPathsHint
+                : settings.localHistoryExcludedPaths.join('\n'),
+            leading: const Icon(BusyMarkGlyphs.folder),
+            onTap: () => _editHistoryExcludedPaths(
+              context,
+              settings.localHistoryExcludedPaths,
+              controller.setLocalHistoryExcludedPaths,
+            ),
+          ),
+        ],
+      ),
       SettingsPage.ai => const _AiSettingsPage(),
       SettingsPage.window => BusyMarkGroupedList(
         title: l10n.settingsWindowSectionTitle,
@@ -318,6 +374,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.clipboardHistory:
+      case HeaderBarAction.localHistory:
+      case HeaderBarAction.findLocalHistory:
       case HeaderBarAction.export:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
@@ -342,6 +401,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case BusyMarkMainMenuAction.export:
       case BusyMarkMainMenuAction.generateMarkdownToc:
         break;
+      case BusyMarkMainMenuAction.clipboardHistory:
+      case BusyMarkMainMenuAction.localHistory:
+      case BusyMarkMainMenuAction.findLocalHistory:
+        break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -363,10 +426,93 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+class _HistoryNumberRow extends StatelessWidget {
+  const _HistoryNumberRow({
+    required this.title,
+    required this.value,
+    required this.choices,
+    required this.format,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String title;
+  final int value;
+  final List<int> choices;
+  final String Function(int value) format;
+  final bool enabled;
+  final Future<void> Function(int value) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final values = {...choices, value}.toList()..sort();
+    return BusyMarkActionRow(
+      title: title,
+      enabled: enabled,
+      leading: const Icon(BusyMarkGlyphs.history),
+      trailing: DropdownButton<int>(
+        value: value,
+        onChanged: enabled
+            ? (next) {
+                if (next != null) unawaited(onChanged(next));
+              }
+            : null,
+        items: [
+          for (final choice in values)
+            DropdownMenuItem(value: choice, child: Text(format(choice))),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _editHistoryExcludedPaths(
+  BuildContext context,
+  List<String> current,
+  Future<void> Function(Iterable<String>) save,
+) async {
+  final controller = TextEditingController(text: current.join('\n'));
+  final result = await showBusyMarkModalDialog<String>(
+    context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(dialogContext.l10n.settingsHistoryExcludedPaths),
+      content: SizedBox(
+        width: BusyMarkSizes.settingsWidth,
+        child: TextField(
+          controller: controller,
+          autofocus: true,
+          minLines: 6,
+          maxLines: 12,
+          decoration: InputDecoration(
+            hintText: dialogContext.l10n.settingsHistoryExcludedPathsHint,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text(dialogContext.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, controller.text),
+          child: Text(dialogContext.l10n.save),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  if (result != null) {
+    await save(result.split(RegExp(r'\r?\n')));
+  }
+}
+
 enum SettingsPage {
   appearance,
   editor,
   validation,
+  history,
   ai,
   window,
   privacy,
@@ -377,6 +523,7 @@ SettingsPage settingsPageFromRouteValue(String? value) {
   return switch (value) {
     'editor' => SettingsPage.editor,
     'validation' => SettingsPage.validation,
+    'history' => SettingsPage.history,
     'ai' => SettingsPage.ai,
     'window' => SettingsPage.window,
     'privacy' => SettingsPage.privacy,
@@ -393,6 +540,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.appearance => l10n.appearance,
     SettingsPage.editor => l10n.editor,
     SettingsPage.validation => l10n.validation,
+    SettingsPage.history => l10n.settingsHistory,
     SettingsPage.ai => l10n.ai,
     SettingsPage.window => l10n.settingsWindowSectionTitle,
     SettingsPage.privacy => l10n.privacy,
@@ -405,6 +553,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.appearance => BusyMarkGlyphs.appearance,
     SettingsPage.editor => BusyMarkGlyphs.editorView,
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
+    SettingsPage.history => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
     SettingsPage.window => BusyMarkGlyphs.desktop,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,

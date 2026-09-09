@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -6,6 +7,8 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
+import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
@@ -19,6 +22,7 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -139,6 +143,9 @@ void main() {
     expect(nativeEntries!.map((entry) => entry['label']), <String>[
       ...expectedSelectionActions,
       'Refine with AI',
+      '',
+      'Clipboard History',
+      'Local History…',
     ]);
     expect(
       nativeEntries!.map((entry) => entry['label']),
@@ -1447,6 +1454,112 @@ void main() {
     await tester.pump();
     expect(changedText, 'authoritative!');
   });
+
+  testWidgets('source keyboard copy retains exact whitespace once', (
+    tester,
+  ) async {
+    const source = 'before\n \n\t\nafter\n';
+    final clipboard = _SourceTestClipboard();
+    final captures = <BusyMarkClipboardCapture>[];
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+    );
+    controller.selection = TextSelection(
+      baseOffset: source.indexOf(' \n'),
+      extentOffset: source.indexOf('after'),
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyC);
+    await tester.pump();
+
+    expect(clipboard.writes, hasLength(1));
+    expect(clipboard.writes.single.text, ' \n\t\n');
+    expect(clipboard.writes.single.sourceText, ' \n\t\n');
+    expect(captures, hasLength(1));
+    expect(captures.single.sourceText, ' \n\t\n');
+  });
+
+  testWidgets('source failed cut keeps text and does not record history', (
+    tester,
+  ) async {
+    const source = 'alpha beta gamma';
+    final clipboard = _SourceTestClipboard(writeResult: false);
+    final captures = <BusyMarkClipboardCapture>[];
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection(baseOffset: 6, extentOffset: 10);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyX);
+    await tester.pump();
+
+    expect(controller.text, source);
+    expect(changed, isNull);
+    expect(captures, isEmpty);
+  });
+
+  testWidgets('source delayed cut revalidates selection before deletion', (
+    tester,
+  ) async {
+    const source = 'alpha beta gamma';
+    final clipboard = _SourceTestClipboard(delayWrite: true);
+    final captures = <BusyMarkClipboardCapture>[];
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyX);
+    await clipboard.writeStarted.future;
+    controller.selection = const TextSelection(
+      baseOffset: 11,
+      extentOffset: 16,
+    );
+    clipboard.releaseWrite();
+    await tester.pump();
+
+    expect(controller.text, source);
+    expect(changed, isNull);
+    expect(captures.single.sourceText, 'alpha');
+  });
+
+  testWidgets('history insertion follows the latest Source selection', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'abcd',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 3);
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-history-payload',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'plain',
+      sourceText: '**rich**',
+    );
+
+    expect(await registry.paste(payload), ClipboardPasteResult.inserted);
+    expect(changed, 'abc**rich**d');
+  });
 }
 
 const _autocompleteSource = '<topic><p>fea';
@@ -1518,6 +1631,86 @@ Future<void> _pressControlSpace(WidgetTester tester) async {
   await tester.sendKeyEvent(LogicalKeyboardKey.space);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
   await tester.pump();
+}
+
+Future<TextEditingController> _pumpClipboardSourceEditor(
+  WidgetTester tester, {
+  required String source,
+  required _SourceTestClipboard clipboard,
+  BusyMarkClipboardInsertionRegistry? registry,
+  ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+  BusyMarkSourceChanged? onChanged,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: BusyMarkLinuxPalette.blueAccent,
+      ),
+      home: Scaffold(
+        body: SizedBox(
+          width: 900,
+          height: 600,
+          child: BusyMarkSourceEditor(
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: '/project/source.md',
+            documentId: 'source-document',
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            onSearchOptionsChanged: (_) {},
+            onChanged: onChanged ?? (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+            clipboardService: clipboard,
+            clipboardInsertionRegistry: registry,
+            onClipboardCaptured: onCaptured,
+          ),
+        ),
+      ),
+    ),
+  );
+  final field = find.byType(TextField);
+  await tester.tap(field);
+  await tester.showKeyboard(field);
+  return tester.widget<TextField>(field).controller!;
+}
+
+Future<void> _pressControlKey(
+  WidgetTester tester,
+  LogicalKeyboardKey key,
+) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(key);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+}
+
+class _SourceTestClipboard extends RichClipboardService {
+  _SourceTestClipboard({this.writeResult = true, this.delayWrite = false})
+    : super(channel: const MethodChannel('busymark.test/source-clipboard'));
+
+  final bool writeResult;
+  final bool delayWrite;
+  final writes = <RichClipboardData>[];
+  final writeStarted = Completer<void>();
+  final _writeRelease = Completer<void>();
+
+  void releaseWrite() {
+    if (!_writeRelease.isCompleted) _writeRelease.complete();
+  }
+
+  @override
+  Future<bool> write(RichClipboardData data) async {
+    writes.add(data);
+    if (!writeStarted.isCompleted) writeStarted.complete();
+    if (delayWrite) await _writeRelease.future;
+    return writeResult;
+  }
 }
 
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {

@@ -86,6 +86,12 @@ class AppSettings {
     required this.editorToolbarDirection,
     required this.autoSave,
     required this.validateOnEdit,
+    required this.clipboardHistoryEnabled,
+    required this.localHistoryRecordingEnabled,
+    required this.localHistoryCheckpointSeconds,
+    required this.localHistoryRetentionDays,
+    required this.localHistoryMaximumStorageMiB,
+    required this.localHistoryExcludedPaths,
     required this.aiProviderPreference,
     required this.aiOllamaEndpoint,
     required this.aiOllamaModel,
@@ -119,6 +125,12 @@ class AppSettings {
       editorToolbarDirection: EditorToolbarDirection.horizontal,
       autoSave: true,
       validateOnEdit: true,
+      clipboardHistoryEnabled: true,
+      localHistoryRecordingEnabled: true,
+      localHistoryCheckpointSeconds: 60,
+      localHistoryRetentionDays: 30,
+      localHistoryMaximumStorageMiB: 512,
+      localHistoryExcludedPaths: [],
       aiProviderPreference: AiProviderPreference.disabled,
       aiOllamaEndpoint: 'http://127.0.0.1:11434',
       aiOllamaModel: '',
@@ -176,6 +188,33 @@ class AppSettings {
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
+      clipboardHistoryEnabled:
+          json['clipboardHistoryEnabled'] as bool? ??
+          defaults.clipboardHistoryEnabled,
+      localHistoryRecordingEnabled:
+          json['localHistoryRecordingEnabled'] as bool? ??
+          defaults.localHistoryRecordingEnabled,
+      localHistoryCheckpointSeconds: _boundedInt(
+        json['localHistoryCheckpointSeconds'],
+        defaults.localHistoryCheckpointSeconds,
+        10,
+        3600,
+      ),
+      localHistoryRetentionDays: _boundedInt(
+        json['localHistoryRetentionDays'],
+        defaults.localHistoryRetentionDays,
+        1,
+        3650,
+      ),
+      localHistoryMaximumStorageMiB: _boundedInt(
+        json['localHistoryMaximumStorageMiB'],
+        defaults.localHistoryMaximumStorageMiB,
+        16,
+        4096,
+      ),
+      localHistoryExcludedPaths: _historyExclusionPathListFromJson(
+        json['localHistoryExcludedPaths'],
+      ),
       aiProviderPreference: _enumFromName(
         AiProviderPreference.values,
         json['aiProviderPreference'],
@@ -242,6 +281,12 @@ class AppSettings {
   final EditorToolbarDirection editorToolbarDirection;
   final bool autoSave;
   final bool validateOnEdit;
+  final bool clipboardHistoryEnabled;
+  final bool localHistoryRecordingEnabled;
+  final int localHistoryCheckpointSeconds;
+  final int localHistoryRetentionDays;
+  final int localHistoryMaximumStorageMiB;
+  final List<String> localHistoryExcludedPaths;
   final AiProviderPreference aiProviderPreference;
   final String aiOllamaEndpoint;
   final String aiOllamaModel;
@@ -277,6 +322,12 @@ class AppSettings {
     'editorToolbarDirection': editorToolbarDirection.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
+    'clipboardHistoryEnabled': clipboardHistoryEnabled,
+    'localHistoryRecordingEnabled': localHistoryRecordingEnabled,
+    'localHistoryCheckpointSeconds': localHistoryCheckpointSeconds,
+    'localHistoryRetentionDays': localHistoryRetentionDays,
+    'localHistoryMaximumStorageMiB': localHistoryMaximumStorageMiB,
+    'localHistoryExcludedPaths': localHistoryExcludedPaths,
     'aiProviderPreference': aiProviderPreference.name,
     'aiOllamaEndpoint': aiOllamaEndpoint,
     'aiOllamaModel': aiOllamaModel,
@@ -351,6 +402,12 @@ class AppSettings {
     EditorToolbarDirection? editorToolbarDirection,
     bool? autoSave,
     bool? validateOnEdit,
+    bool? clipboardHistoryEnabled,
+    bool? localHistoryRecordingEnabled,
+    int? localHistoryCheckpointSeconds,
+    int? localHistoryRetentionDays,
+    int? localHistoryMaximumStorageMiB,
+    List<String>? localHistoryExcludedPaths,
     AiProviderPreference? aiProviderPreference,
     String? aiOllamaEndpoint,
     String? aiOllamaModel,
@@ -386,6 +443,18 @@ class AppSettings {
           editorToolbarDirection ?? this.editorToolbarDirection,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
+      clipboardHistoryEnabled:
+          clipboardHistoryEnabled ?? this.clipboardHistoryEnabled,
+      localHistoryRecordingEnabled:
+          localHistoryRecordingEnabled ?? this.localHistoryRecordingEnabled,
+      localHistoryCheckpointSeconds:
+          localHistoryCheckpointSeconds ?? this.localHistoryCheckpointSeconds,
+      localHistoryRetentionDays:
+          localHistoryRetentionDays ?? this.localHistoryRetentionDays,
+      localHistoryMaximumStorageMiB:
+          localHistoryMaximumStorageMiB ?? this.localHistoryMaximumStorageMiB,
+      localHistoryExcludedPaths:
+          localHistoryExcludedPaths ?? this.localHistoryExcludedPaths,
       aiProviderPreference: aiProviderPreference ?? this.aiProviderPreference,
       aiOllamaEndpoint: aiOllamaEndpoint ?? this.aiOllamaEndpoint,
       aiOllamaModel: aiOllamaModel ?? this.aiOllamaModel,
@@ -578,6 +647,51 @@ class AppSettingsController extends Notifier<AppSettings> {
 
   Future<void> setValidateOnEdit(bool enabled) {
     return _mutate((settings) => settings.copyWith(validateOnEdit: enabled));
+  }
+
+  Future<void> setClipboardHistoryEnabled(bool enabled) {
+    return _mutate(
+      (settings) => settings.copyWith(clipboardHistoryEnabled: enabled),
+    );
+  }
+
+  Future<void> setLocalHistoryRecordingEnabled(bool enabled) {
+    return _mutate(
+      (settings) => settings.copyWith(localHistoryRecordingEnabled: enabled),
+    );
+  }
+
+  Future<void> setLocalHistoryCheckpointSeconds(int seconds) {
+    return _mutate(
+      (settings) => settings.copyWith(
+        localHistoryCheckpointSeconds: seconds.clamp(10, 3600),
+      ),
+    );
+  }
+
+  Future<void> setLocalHistoryRetentionDays(int days) {
+    return _mutate(
+      (settings) =>
+          settings.copyWith(localHistoryRetentionDays: days.clamp(1, 3650)),
+    );
+  }
+
+  Future<void> setLocalHistoryMaximumStorageMiB(int mebibytes) {
+    return _mutate(
+      (settings) => settings.copyWith(
+        localHistoryMaximumStorageMiB: mebibytes.clamp(16, 4096),
+      ),
+    );
+  }
+
+  Future<void> setLocalHistoryExcludedPaths(Iterable<String> paths) {
+    final normalized = {
+      for (final path in paths)
+        if (_normalizedHistoryExclusionPath(path) case final value?) value,
+    }.toList()..sort();
+    return _mutate(
+      (settings) => settings.copyWith(localHistoryExcludedPaths: normalized),
+    );
   }
 
   Future<void> setAiProviderPreference(AiProviderPreference preference) {
@@ -861,6 +975,28 @@ List<String> _workspacePathListFromJson(Object? value) {
       if (_normalizedWorkspacePath(item?.toString()) case final path?) path,
   }.toList()..sort();
   return paths;
+}
+
+int _boundedInt(Object? value, int fallback, int minimum, int maximum) {
+  final parsed = value is num ? value.toInt() : int.tryParse('$value');
+  return (parsed ?? fallback).clamp(minimum, maximum);
+}
+
+List<String> _historyExclusionPathListFromJson(Object? value) {
+  if (value is! List) return const [];
+  final paths = {
+    for (final item in value)
+      if (_normalizedHistoryExclusionPath(item?.toString()) case final path?)
+        path,
+  }.toList()..sort();
+  return paths;
+}
+
+String? _normalizedHistoryExclusionPath(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  if (!p.isAbsolute(trimmed)) return null;
+  return p.normalize(trimmed);
 }
 
 List<String> _gitWorkspacePathListFromJson(Object? value) {

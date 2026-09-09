@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "checks": {
+    "native clipboard publication": true,
+    "explicit save captured": true,
+    "exact comparison region available": true,
+    "fragment restore": true,
+    "recovery file open": true,
+    "document delete": true,
+    "deleted document recovery": true,
+    "deletedFileRecovered": true,
+    "clipboardEntries": true,
+    "revisionReasons": true
+  },
+  "screenshots": [
+    "markdown-clipboard-history-1280x800.png",
+    "markdown-local-history-1280x800.png",
+    "markdown-comparison-1920x1080.png",
+    "markdown-fragment-restored-1920x1080.png",
+    "markdown-deleted-comparison-1920x1080.png",
+    "markdown-deleted-recovered-1920x1080.png"
+  ]
+}

@@ -1333,6 +1333,13 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   if (g_strcmp0(action, "settings") == 0) {
     return "preferences-system-symbolic";
   }
+  if (g_strcmp0(action, "clipboardHistory") == 0) {
+    return "edit-paste-symbolic";
+  }
+  if (g_strcmp0(action, "localHistory") == 0 ||
+      g_strcmp0(action, "findLocalHistory") == 0) {
+    return "document-open-recent-symbolic";
+  }
   if (g_strcmp0(action, "keyboardShortcuts") == 0) {
     return "input-keyboard-symbolic";
   }
@@ -1391,6 +1398,20 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       localized_label_or(labels, "fullScreen", ""), "header.full-screen",
       main_menu_icon_name("fullScreen"),
       fl_lookup_string_arg(labels, "fullScreenGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "clipboardHistory", ""),
+      "header.clipboard-history", main_menu_icon_name("clipboardHistory"),
+      nullptr);
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "localHistory", ""),
+      "header.local-history", main_menu_icon_name("localHistory"), nullptr);
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "findLocalHistory", ""),
+      "header.find-local-history", main_menu_icon_name("findLocalHistory"),
+      nullptr);
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "settings", ""), "header.settings",
@@ -1560,6 +1581,9 @@ static void setup_header_actions(MyApplication* self) {
   add_header_gaction(self, "export", "export");
   set_header_action_enabled(self, "export", FALSE);
   add_header_gaction(self, "settings", "settings");
+  add_header_gaction(self, "clipboard-history", "clipboardHistory");
+  add_header_gaction(self, "local-history", "localHistory");
+  add_header_gaction(self, "find-local-history", "findLocalHistory");
   add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
   add_header_gaction(self, "syntax-reference", "syntaxReference");
   add_header_gaction(self, "report-issue", "reportIssue");
@@ -1926,6 +1950,12 @@ static void apply_header_bar_configuration(
   self->can_export_html = configuration.can_export_html;
   set_header_action_enabled(
       self, "export", self->can_export_pdf || self->can_export_html);
+  set_header_action_enabled(self, "clipboard-history",
+                            configuration.document_controls_visible);
+  set_header_action_enabled(self, "local-history",
+                            configuration.document_controls_visible);
+  set_header_action_enabled(self, "find-local-history",
+                            configuration.document_controls_visible);
   set_sidebar_width(self, configuration.sidebar_width);
   set_text_direction(self, configuration.text_direction);
   set_sidebar_visible(self, configuration.sidebar_visible);

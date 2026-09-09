@@ -276,6 +276,9 @@ abstract final class BusyMarkCommandIds {
   static const sidebarToc = 'sidebar.toc';
   static const sidebarOutline = 'sidebar.outline';
   static const sidebarGit = 'sidebar.git';
+  static const clipboardHistory = 'sidebar.clipboardHistory';
+  static const localHistory = 'history.local';
+  static const findLocalHistory = 'history.findLocal';
   static const treeDeleteSelection = 'tree.deleteSelection';
 }
 
@@ -381,6 +384,27 @@ abstract final class BusyMarkCommandCatalog {
           description: (context) =>
               context.l10n.shortcutDeleteTreeItemDescription,
         ),
+      command(
+        id: BusyMarkCommandIds.clipboardHistory,
+        label: (context) => context.l10n.clipboardHistory,
+        category: (context) => context.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.application,
+        description: (context) => context.l10n.clipboardHistoryDescription,
+      ),
+      command(
+        id: BusyMarkCommandIds.localHistory,
+        label: (context) => context.l10n.localHistoryEllipsis,
+        category: (context) => context.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.application,
+        description: (context) => context.l10n.localHistoryDescription,
+      ),
+      command(
+        id: BusyMarkCommandIds.findLocalHistory,
+        label: (context) => context.l10n.findLocalHistoryEllipsis,
+        category: (context) => context.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.application,
+        description: (context) => context.l10n.findLocalHistoryDescription,
+      ),
     ];
     return BusyMarkCommandRegistry(commands);
   }

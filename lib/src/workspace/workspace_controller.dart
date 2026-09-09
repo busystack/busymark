@@ -7,12 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
+import '../comparison/source_comparison.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
+import '../core/path_utils.dart' show isTextDocumentationPath;
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
+import '../local_history/local_history_controller.dart';
+import '../local_history/local_history_models.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_project.dart';
 import '../writerside/writerside_instance_service.dart';
@@ -31,6 +35,24 @@ import 'workspace_service.dart';
 final workspaceServiceProvider = Provider<WorkspaceService>(
   (ref) => const WorkspaceService(),
 );
+
+enum LocalHistoryCurrentSourceKind { editor, disk, missing }
+
+class LocalHistoryCurrentSourceSnapshot {
+  const LocalHistoryCurrentSourceSnapshot({
+    required this.kind,
+    required this.id,
+    required this.version,
+    required this.source,
+    required this.canRestore,
+  });
+
+  final LocalHistoryCurrentSourceKind kind;
+  final String id;
+  final int version;
+  final String source;
+  final bool canRestore;
+}
 
 final documentSessionStoreProvider = Provider<DocumentSessionStore>(
   (ref) => _runningUnderFlutterTest
@@ -155,6 +177,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   late DocumentSessionStore _sessionStore;
   late DocumentRecoveryStore _recoveryStore;
   late WorkspaceFileMonitor _fileMonitor;
+  late LocalHistoryController _localHistory;
   StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
   final _autoSaveDebounces = <String, Timer>{};
   final _bufferWriteQueues = <String, Future<void>>{};
@@ -215,6 +238,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _sessionStore = ref.read(documentSessionStoreProvider);
     _recoveryStore = ref.read(documentRecoveryStoreProvider);
     _fileMonitor = ref.read(workspaceFileMonitorProvider);
+    _localHistory = ref.read(localHistoryControllerProvider.notifier);
     _fileMonitorSubscription = _fileMonitor.events.listen(
       (event) => unawaited(_handleFileMonitorEvent(event)),
     );
@@ -377,6 +401,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               )
             : null,
       );
+      for (final buffer in buffers) {
+        unawaited(_localHistory.observeOpened(buffer));
+      }
       _recordActivePreviewRevision();
       _editRevision = active.revision;
       await _startMonitoring(reparsed);
@@ -555,6 +582,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> markCleanShutdown() async {
     await _settleWritesForShutdown();
+    await _localHistory.flushAll(state.documentBuffers);
     await flushPersistence();
     if (state.documentBuffers.any(
       (buffer) => buffer.isDirty || buffer.isUntitled,
@@ -567,6 +595,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> discardRecoveryForShutdown() async {
     await _settleWritesForShutdown();
+    await _localHistory.flushAll(state.documentBuffers);
     await flushPersistence();
     await _recoveryStore.clear();
   }
@@ -651,6 +680,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     if (event.kind == WorkspaceFileEventKind.deleted &&
         !await _service.pathExists(path)) {
+      await _localHistory.captureBeforeLoss(
+        LocalHistoryBufferSnapshot.fromBuffer(current),
+        LocalHistoryCaptureReason.beforeDelete,
+      );
+      await _localHistory.markDeleted(path, recursive: false);
       _updateBufferFromMonitor(
         current.copyWith(diskState: DocumentDiskState.deleted),
       );
@@ -661,7 +695,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (_sameFileSnapshot(current.diskSnapshot, disk.snapshot)) {
         return;
       }
+      await _localHistory.capturePath(
+        path: path,
+        text: disk.text,
+        format: disk.format,
+        reason: LocalHistoryCaptureReason.externalChange,
+      );
       if (current.isDirty) {
+        _localHistory.observeEdit(
+          current.copyWith(text: current.lastSavedText),
+          current,
+        );
         _updateBufferFromMonitor(
           current.copyWith(
             diskState: DocumentDiskState.conflict,
@@ -698,6 +742,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
       }
     } on FileSystemException {
+      await _localHistory.markDeleted(path, recursive: false);
       _updateBufferFromMonitor(
         current.copyWith(diskState: DocumentDiskState.deleted),
       );
@@ -720,6 +765,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         current.diskSnapshot,
         disk.snapshot,
       );
+      await _localHistory.remapPath(oldPath, destinationPath);
+      if (contentChanged) {
+        await _localHistory.capturePath(
+          path: destinationPath,
+          text: disk.text,
+          format: disk.format,
+          reason: LocalHistoryCaptureReason.externalChange,
+        );
+      }
       final remapped = current.copyWith(
         filePath: destinationPath,
         text: current.isDirty || !contentChanged ? current.text : disk.text,
@@ -812,7 +866,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (buffer == null || path == null || !await _service.pathExists(path)) {
       return false;
     }
+    if (!await _localHistory.captureBeforeLoss(
+      LocalHistoryBufferSnapshot.fromBuffer(buffer),
+      LocalHistoryCaptureReason.beforeReload,
+    )) {
+      return false;
+    }
     final disk = await _service.loadTextWithSnapshot(path);
+    await _localHistory.capturePath(
+      path: path,
+      text: disk.text,
+      format: disk.format,
+      reason: LocalHistoryCaptureReason.externalChange,
+      force: false,
+    );
     final reloaded = buffer.copyWith(
       text: disk.text,
       lastSavedText: disk.text,
@@ -930,6 +997,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       activeBufferId: buffer.id,
       isLoading: false,
     );
+    unawaited(_localHistory.observeOpened(buffer));
     _recordActivePreviewRevision();
     await _startMonitoring(workspace);
     _schedulePersistence();
@@ -937,6 +1005,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> openPath(String path) async {
+    await _localHistory.flushAll(state.documentBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     final operationRevision = _invalidateActiveDocumentOperations();
@@ -970,6 +1039,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
       );
+      if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
@@ -1003,6 +1073,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {
+    await _localHistory.flushAll(state.documentBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     final operationRevision = _invalidateActiveDocumentOperations();
@@ -1036,6 +1107,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffer == null ? const [] : [buffer],
         activeBufferId: buffer?.id,
       );
+      if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
@@ -1128,6 +1200,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffers,
         activeBufferId: buffer?.id,
       );
+      if (buffer != null && existing == null) {
+        unawaited(_localHistory.observeOpened(buffer));
+      }
       _recordActivePreviewRevision();
       await _startMonitoring(tabbedWorkspace);
       _schedulePersistence();
@@ -1252,6 +1327,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (state.hasUnsavedChanges) {
       return false;
     }
+    await _localHistory.flushAll(state.documentBuffers);
     _clearOpenFileTabs(workspace);
     return true;
   }
@@ -1274,6 +1350,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return _runWorkspaceFileOperation((workspace) async {
       final target = await _service.renameEntity(workspace, path, newName);
       _remapOpenWorkspacePaths(workspace, path, target);
+      await _localHistory.remapPath(path, target);
       return _remapMovedPath(activeFilePath, path, target);
     });
   }
@@ -1290,20 +1367,71 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         targetDirectoryPath,
       );
       _remapOpenWorkspacePaths(workspace, sourcePath, target);
+      await _localHistory.remapPath(sourcePath, target);
       return _remapMovedPath(activeFilePath, sourcePath, target);
     });
   }
 
   Future<bool> deleteWorkspaceEntity(String path) async {
+    if (!await _protectWorkspaceEntityBeforeDelete(path)) return false;
     _intentionallyRemovedPaths.add(p.normalize(path));
     try {
-      return await _runWorkspaceFileOperation((workspace) async {
+      final deleted = await _runWorkspaceFileOperation((workspace) async {
         await _service.deleteEntity(workspace, path);
         return null;
       });
+      if (deleted) {
+        await _localHistory.markDeleted(path, recursive: true);
+      }
+      return deleted;
     } finally {
       _intentionallyRemovedPaths.remove(p.normalize(path));
     }
+  }
+
+  Future<bool> _protectWorkspaceEntityBeforeDelete(String path) async {
+    final historyPolicy = _localHistory.policy;
+    if (!historyPolicy.recordingEnabled || historyPolicy.excludes(path)) {
+      return true;
+    }
+    final workspace = state.workspace;
+    if (workspace == null) return false;
+    final protectedPaths = <String>{};
+    for (final buffer in state.documentBuffers) {
+      final filePath = buffer.filePath;
+      if (filePath == null ||
+          !(p.equals(filePath, path) || p.isWithin(path, filePath))) {
+        continue;
+      }
+      if (!await _localHistory.captureBeforeLoss(
+        LocalHistoryBufferSnapshot.fromBuffer(buffer),
+        LocalHistoryCaptureReason.beforeDelete,
+      )) {
+        return false;
+      }
+      protectedPaths.add(p.normalize(filePath));
+    }
+    for (final file in workspace.files) {
+      final filePath = file.absolutePath;
+      if (protectedPaths.contains(p.normalize(filePath)) ||
+          !(p.equals(filePath, path) || p.isWithin(path, filePath))) {
+        continue;
+      }
+      try {
+        final load = await _service.loadTextWithSnapshot(filePath);
+        if (!await _localHistory.capturePath(
+          path: filePath,
+          text: load.text,
+          format: load.format,
+          reason: LocalHistoryCaptureReason.beforeDelete,
+        )) {
+          return false;
+        }
+      } on Object {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<bool> moveWritersideTocEntry({
@@ -1477,6 +1605,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (closingBuffer?.isDirty == true) {
       return false;
     }
+    if (closingBuffer != null) await _localHistory.flushBuffer(closingBuffer);
     final closedIndex = workspace.openFilePaths.indexOf(path);
     final nextOpenFilePaths = [
       for (final openPath in workspace.openFilePaths)
@@ -1539,6 +1668,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (buffer == null || (buffer.isDirty && !discard)) {
       return false;
     }
+    if (buffer.isDirty &&
+        !await _localHistory.captureBeforeLoss(
+          LocalHistoryBufferSnapshot.fromBuffer(buffer),
+          LocalHistoryCaptureReason.beforeDiscard,
+        )) {
+      return false;
+    }
+    await _localHistory.flushBuffer(buffer);
     if (buffer.filePath case final path?) {
       if (buffer.isDirty) {
         state = state.copyWith(
@@ -1676,6 +1813,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeBufferId: buffer.id,
         clearMessage: true,
       );
+      unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
       _fileMonitor.updateOpenFilePaths(
         [
@@ -1786,6 +1924,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
+    _localHistory.observeEdit(buffer, next);
     _schedulePersistence();
     return true;
   }
@@ -1920,6 +2059,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, next),
     );
+    _localHistory.observeEdit(buffer, next);
     _requestDerivedRefresh(
       rebuildPreview: _activeModeShowsPreview,
       refreshOutline: !_activeModeShowsPreview,
@@ -2122,6 +2262,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (identical(nextBuffer, activeBuffer)) {
       return;
     }
+    _localHistory.observeEdit(activeBuffer, nextBuffer);
     _editRevision = nextBuffer.revision;
     state = state.copyWith(
       workspace: workspace?.copyWith(
@@ -2455,6 +2596,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           snapshot: snapshot,
         );
       }
+      await _localHistory.captureSaved(
+        LocalHistoryBufferSnapshot(
+          bufferId: target.bufferId,
+          displayName: p.basename(active),
+          text: target.text,
+          format: savedFormat,
+          revision: target.editRevision,
+          path: active,
+        ),
+      );
       return true;
     } on Object catch (error) {
       if (_workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
@@ -2629,6 +2780,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             ? state.workspace?.copyWith(activeFileSnapshot: snapshot)
             : state.workspace,
       );
+      await _localHistory.captureSaved(
+        LocalHistoryBufferSnapshot(
+          bufferId: target.id,
+          displayName: target.displayName,
+          text: target.text,
+          format: savedFormat,
+          revision: target.revision,
+          path: path,
+        ),
+      );
       return _BufferWriteResult.saved;
     } on Object {
       return _BufferWriteResult.failed;
@@ -2669,6 +2830,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required LineEndingNormalization? mixedLineEndingNormalization,
   }) async {
     try {
+      final destinationExisted =
+          overwriteExisting && await _service.pathExists(path);
+      if (destinationExisted) {
+        try {
+          final destination = await _service.loadTextWithSnapshot(path);
+          if (!await _localHistory.capturePathBeforeLoss(
+            path: path,
+            text: destination.text,
+            format: destination.format,
+            reason: LocalHistoryCaptureReason.beforeDiscard,
+          )) {
+            return false;
+          }
+        } on Object {
+          // The save result remains truthful. Local History exposes its own
+          // persistent status warning when capture fails.
+        }
+      }
       late final WorkspaceFileSnapshot savedSnapshot;
       if (overwriteExisting) {
         savedSnapshot = await _service.saveTextReplacingPath(
@@ -2783,6 +2962,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         kind: savedWorkspace.kind.name,
       );
       _schedulePersistence();
+      await _localHistory.captureSavedAs(
+        LocalHistoryBufferSnapshot(
+          bufferId: target.bufferId,
+          displayName: target.path == null
+              ? state.documentBuffers
+                        .where((buffer) => buffer.id == target.bufferId)
+                        .firstOrNull
+                        ?.displayName ??
+                    p.basename(path)
+              : p.basename(target.path!),
+          text: target.text,
+          format: savedFormat,
+          revision: target.editRevision,
+          path: target.path,
+          untitled: target.path == null,
+        ),
+        path,
+        destinationExisted: destinationExisted,
+      );
       return true;
     } on Object catch (error) {
       if (_workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
@@ -2832,6 +3030,303 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
+  Future<bool> restoreLocalHistoryRevision({
+    required LocalHistoryDocument document,
+    required LocalHistoryRevision revision,
+    SourceComparison? comparison,
+    SourceComparisonChange? change,
+  }) async {
+    final path = document.currentPath ?? revision.summary.historicalPath;
+    var buffer = path == null ? null : state.bufferForPath(path);
+    if (buffer == null && path != null && await _service.pathExists(path)) {
+      if (!await _openActiveFile(path)) return false;
+      buffer = state.activeBuffer;
+    } else if (buffer != null && state.activeBufferId != buffer.id) {
+      if (!await activateDocumentBuffer(buffer.id)) return false;
+      buffer = state.activeBuffer;
+    }
+    if (buffer == null) return false;
+    final targetId = buffer.id;
+    final targetPath = buffer.filePath;
+    final targetRevision = buffer.revision;
+    final targetText = buffer.text;
+    final nextText = change == null
+        ? revision.source
+        : _restoredRegionText(
+            buffer: buffer,
+            revision: revision,
+            comparison: comparison,
+            change: change,
+          );
+    if (nextText == null || nextText == targetText) return nextText != null;
+    if (!await _localHistory.captureProtective(
+      LocalHistoryBufferSnapshot.fromBuffer(buffer),
+      LocalHistoryCaptureReason.beforeRestore,
+    )) {
+      return false;
+    }
+    final current = state.activeBuffer;
+    if (current == null ||
+        current.id != targetId ||
+        current.filePath != targetPath ||
+        current.revision != targetRevision ||
+        current.text != targetText) {
+      return false;
+    }
+    final nextSelection = change == null
+        ? TextSelection.collapsed(offset: nextText.length)
+        : TextSelection(
+            baseOffset: change.currentRange.start,
+            extentOffset: change.currentRange.start + change.oldText.length,
+          );
+    final restored = current
+        .edited(
+          nextText,
+          previousSelection: current.editorState.selection,
+          nextSelection: nextSelection,
+        )
+        .copyWith(format: current.format);
+    _localHistory.observeEdit(current, restored);
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, restored),
+      clearMessage: true,
+    );
+    _schedulePersistence();
+    _requestDerivedRefresh(
+      rebuildPreview: _activeModeShowsPreview,
+      refreshOutline: !_activeModeShowsPreview,
+    );
+    _scheduleAutoSave(restored.id);
+    return true;
+  }
+
+  Future<LocalHistoryCurrentSourceSnapshot> localHistoryCurrentSource(
+    LocalHistoryDocument document,
+    LocalHistoryRevision revision,
+  ) async {
+    final paths = {
+      document.currentPath,
+      revision.summary.historicalPath,
+    }.whereType<String>();
+    for (final path in paths) {
+      final buffer = state.bufferForPath(path);
+      if (buffer != null) {
+        return LocalHistoryCurrentSourceSnapshot(
+          kind: LocalHistoryCurrentSourceKind.editor,
+          id: buffer.id,
+          version: buffer.revision,
+          source: buffer.text,
+          canRestore: true,
+        );
+      }
+    }
+    final path = document.currentPath ?? revision.summary.historicalPath;
+    if (path != null && await _service.pathExists(path)) {
+      final loaded = await _service.loadTextWithSnapshot(path);
+      return LocalHistoryCurrentSourceSnapshot(
+        kind: LocalHistoryCurrentSourceKind.disk,
+        id: p.normalize(path),
+        version: loaded.snapshot.modifiedAt.microsecondsSinceEpoch,
+        source: loaded.text,
+        canRestore: document.currentPath != null,
+      );
+    }
+    return LocalHistoryCurrentSourceSnapshot(
+      kind: LocalHistoryCurrentSourceKind.missing,
+      id: 'missing:${document.id}',
+      version: 0,
+      source: '',
+      canRestore: false,
+    );
+  }
+
+  Future<bool> restoreMissingLocalHistoryRevision({
+    required LocalHistoryDocument document,
+    required LocalHistoryRevision revision,
+    required String destinationPath,
+    required bool overwriteExisting,
+  }) async {
+    final path = p.normalize(p.absolute(destinationPath));
+    final policy = _localHistory.policy;
+    if (!policy.recordingEnabled || policy.excludes(path)) {
+      await _localHistory.captureProtective(
+        LocalHistoryBufferSnapshot(
+          bufferId: 'restore-missing:$path',
+          displayName: p.basename(path),
+          text: '',
+          format: revision.format,
+          revision: 0,
+          path: path,
+        ),
+        LocalHistoryCaptureReason.beforeRestore,
+      );
+      return false;
+    }
+    final existed = await _service.pathExists(path);
+    if (existed != overwriteExisting) return false;
+    WorkspaceFileLoad? previous;
+    if (existed) {
+      try {
+        previous = await _service.loadTextWithSnapshot(path);
+      } on Object {
+        return false;
+      }
+      if (!await _localHistory.capturePathBeforeLoss(
+        path: path,
+        text: previous.text,
+        format: previous.format,
+        reason: LocalHistoryCaptureReason.beforeRestore,
+      )) {
+        return false;
+      }
+      if (await _service.fileChangedSince(path, previous.snapshot)) {
+        return false;
+      }
+    }
+    WorkspaceFileSnapshot? published;
+    try {
+      if (existed) {
+        published = await _service.saveFormattedTextReplacingPath(
+          path,
+          '',
+          format: previous!.format,
+        );
+      } else {
+        published = await _service.saveNewFormattedText(
+          path,
+          '',
+          format: revision.format,
+        );
+      }
+      final workspace = state.workspace;
+      final insideCurrentWorkspace =
+          workspace != null &&
+          workspace.rootPath.isNotEmpty &&
+          (p.equals(workspace.rootPath, path) ||
+              p.isWithin(workspace.rootPath, path));
+      if (insideCurrentWorkspace) {
+        await refreshWorkspaceFromDiskPreservingOpenTabs();
+        if (!await _openActiveFile(path)) {
+          await _rollbackMissingHistoryDestination(path, previous, published);
+          return false;
+        }
+      } else {
+        await openPath(path);
+      }
+      final destinationDocument = document.copyWith(
+        currentPath: path,
+        displayName: p.basename(path),
+        deleted: false,
+      );
+      final restored = await restoreLocalHistoryRevision(
+        document: destinationDocument,
+        revision: revision,
+      );
+      if (!restored) {
+        await _rollbackMissingHistoryDestination(path, previous, published);
+      }
+      return restored;
+    } on Object {
+      if (published != null) {
+        await _rollbackMissingHistoryDestination(path, previous, published);
+      }
+      return false;
+    }
+  }
+
+  Future<bool> localHistoryRestorePathExists(String path) {
+    return _service.pathExists(p.normalize(p.absolute(path)));
+  }
+
+  Future<void> _rollbackMissingHistoryDestination(
+    String path,
+    WorkspaceFileLoad? previous,
+    WorkspaceFileSnapshot published,
+  ) async {
+    try {
+      if (await _service.fileChangedSince(path, published)) return;
+      if (previous == null) {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } else {
+        await _service.saveFormattedTextReplacingPath(
+          path,
+          previous.text,
+          format: previous.format,
+        );
+      }
+    } on Object {
+      // The persistent warning from the failed protective/restore operation is
+      // more useful than masking the original result with cleanup failure.
+    }
+  }
+
+  Future<bool> protectPathsBeforeExternalReplacement(
+    Iterable<String> paths,
+  ) async {
+    for (final path in paths.toSet()) {
+      if (!_isEligibleLocalHistoryPath(path)) continue;
+      final buffer = state.bufferForPath(path);
+      if (buffer != null) {
+        if (!await _localHistory.captureBeforeLoss(
+          LocalHistoryBufferSnapshot.fromBuffer(buffer),
+          LocalHistoryCaptureReason.beforeDiscard,
+        )) {
+          return false;
+        }
+        continue;
+      }
+      try {
+        final loaded = await _service.loadTextWithSnapshot(path);
+        if (!await _localHistory.capturePathBeforeLoss(
+          path: path,
+          text: loaded.text,
+          format: loaded.format,
+          reason: LocalHistoryCaptureReason.beforeDiscard,
+        )) {
+          return false;
+        }
+      } on FileSystemException {
+        // A path already absent from the working tree has no current source
+        // version to protect.
+      } on FormatException {
+        // Binary or invalid text content is outside Local History's scope.
+      }
+    }
+    return true;
+  }
+
+  String? _restoredRegionText({
+    required DocumentBuffer buffer,
+    required LocalHistoryRevision revision,
+    required SourceComparison? comparison,
+    required SourceComparisonChange change,
+  }) {
+    if (comparison == null || !change.exact) return null;
+    final oldInput = comparison.oldInput;
+    final currentInput = comparison.currentInput;
+    if (oldInput.id != revision.summary.id ||
+        oldInput.version !=
+            revision.summary.capturedAt.microsecondsSinceEpoch ||
+        currentInput.id != buffer.id ||
+        currentInput.version != buffer.revision ||
+        oldInput.source != revision.source ||
+        currentInput.source != buffer.text ||
+        change.currentRange.end > buffer.text.length ||
+        buffer.text.substring(
+              change.currentRange.start,
+              change.currentRange.end,
+            ) !=
+            change.currentText) {
+      return null;
+    }
+    return buffer.text.replaceRange(
+      change.currentRange.start,
+      change.currentRange.end,
+      change.oldText,
+    );
+  }
+
   Future<bool> _discardBufferChangesNow(
     ActiveDocumentSaveTarget operationTarget,
   ) async {
@@ -2847,6 +3342,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     if (!current.isDirty) {
       return true;
+    }
+    if (current.filePath != null &&
+        !await _localHistory.captureBeforeLoss(
+          LocalHistoryBufferSnapshot.fromBuffer(current),
+          LocalHistoryCaptureReason.beforeDiscard,
+        )) {
+      return false;
     }
     final workspace = state.workspace;
     if (workspace == null || workspace.id != refreshedTarget.workspaceId) {
@@ -3516,6 +4018,14 @@ bool _sameFileSnapshot(
     return true;
   }
   return first != null && second != null && !first.differsFrom(second);
+}
+
+bool _isEligibleLocalHistoryPath(String path) {
+  final normalized = path.toLowerCase();
+  return isTextDocumentationPath(path) ||
+      p.basename(path) == '.gitignore' ||
+      normalized.endsWith('.css') ||
+      normalized.endsWith('.js');
 }
 
 List<String> _openFileTabPaths(Workspace workspace, String path) {

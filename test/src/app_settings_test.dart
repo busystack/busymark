@@ -46,6 +46,38 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
+  test('history settings have bounded privacy-preserving defaults', () {
+    final settings = AppSettings.defaults();
+
+    expect(settings.clipboardHistoryEnabled, isTrue);
+    expect(settings.localHistoryRecordingEnabled, isTrue);
+    expect(settings.localHistoryCheckpointSeconds, 60);
+    expect(settings.localHistoryRetentionDays, 30);
+    expect(settings.localHistoryMaximumStorageMiB, 512);
+    expect(settings.localHistoryExcludedPaths, isEmpty);
+    expect(settings.toJson()['clipboardHistoryEnabled'], isTrue);
+  });
+
+  test(
+    'history settings validate persisted ranges and absolute exclusions',
+    () {
+      final settings = AppSettings.fromJson(<String, Object?>{
+        'localHistoryCheckpointSeconds': 0,
+        'localHistoryRetentionDays': 99999,
+        'localHistoryMaximumStorageMiB': 0,
+        'localHistoryExcludedPaths': [
+          'relative/private',
+          '/workspace/private/../private',
+        ],
+      });
+
+      expect(settings.localHistoryCheckpointSeconds, 10);
+      expect(settings.localHistoryRetentionDays, 3650);
+      expect(settings.localHistoryMaximumStorageMiB, 16);
+      expect(settings.localHistoryExcludedPaths, ['/workspace/private']);
+    },
+  );
+
   test('AI defaults disabled and provider settings never persist secrets', () {
     final defaults = AppSettings.defaults();
     expect(defaults.aiProviderPreference, AiProviderPreference.disabled);

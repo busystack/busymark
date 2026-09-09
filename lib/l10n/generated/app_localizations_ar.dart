@@ -3928,6 +3928,278 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر ملف .css مقروءًا بترميز UTF-8 حتى 256 KiB، دون استيراد أو عناوين موارد أو HTML أو CSS قابل للتنفيذ أو يحتوي على محارف هروب.';
 
   @override
+  String get clipboardHistory => 'سجل النسخ واللصق';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'افتح سجل النسخ واللصق الخاص بالجلسة.';
+
+  @override
+  String get clipboardCurrent => 'النسخة واللصق الحالية';
+
+  @override
+  String get clipboardCurrentExternal => 'النسخة واللصق من تطبيق آخر';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'الصق في $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'مخزن فقط لهذه جلسة BusyMark.';
+
+  @override
+  String get clipboardNoItems => 'سجل النسخ واللصق فارغ.';
+
+  @override
+  String get clipboardNoMatches =>
+      'لا توجد عناصر في سجل النسخ واللصق تطابق هذا البحث.';
+
+  @override
+  String get clipboardDisabled => 'مجموعة سجل النسخ واللصق معطلة في الإعدادات.';
+
+  @override
+  String get clipboardUnavailable =>
+      'محتوى النسخة واللصق الحالي غير متاح أو غير مدعوم.';
+
+  @override
+  String get clipboardTooLarge =>
+      'هذا العنصر في النسخة واللصق كبير جدًا بحيث لا يمكن الاحتفاظ به.';
+
+  @override
+  String get clipboardPastePlainText => 'الصق كنص عادي';
+
+  @override
+  String get clipboardClearAll => 'مسح سجل النسخ واللصق';
+
+  @override
+  String get clipboardEntryText => 'نص';
+
+  @override
+  String get clipboardEntryRichText => 'نص غني';
+
+  @override
+  String get clipboardEntryImage => 'صورة';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'تم نسخها من $name';
+  }
+
+  @override
+  String get localHistory => 'سجل محلي';
+
+  @override
+  String get localHistoryEllipsis => 'سجل محلي…';
+
+  @override
+  String get localHistoryDescription =>
+      'اعرض النسخ والمراجعات المحلية المحفوظة والآلية للمستند الحالي.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'البحث في التاريخ المحلي…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'البحث في مستندات التاريخ المحلي ومحتوى الإصدارات.';
+
+  @override
+  String get localHistoryNoDocuments => 'لا توجد مستندات لديها تاريخ محلي.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'هذا المستند ليس لديه إصدارات في التاريخ المحلي.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.';
+
+  @override
+  String get localHistorySearchHint => 'البحث في محتوى الإصدار';
+
+  @override
+  String get localHistorySelectedRevision => 'الإصدار المحدد';
+
+  @override
+  String get localHistoryCurrentEditor => 'محتوى المحرر الحالي';
+
+  @override
+  String get localHistoryCurrentDisk => 'المحتوى الحالي على القرص';
+
+  @override
+  String get localHistoryMissingFile => 'الملف الأصلي مفقود.';
+
+  @override
+  String get localHistoryRestoreRevision => 'استعادة الإصدار';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => 'استعادة إلى الموقع الأصلي';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'استعادة إلى موقع جديد…';
+
+  @override
+  String get localHistoryRestoreChange => 'استعادة التغيير';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'لا يمكن استعادة هذا التغيير لأن المقارنة لم تعد حديثة.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'تم تبسيط هذا المقارنة الكبير. لا يمكن استعادة التغييرات الفردية.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'تغيير الإصدار الأقدم: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'تغيير المحتوى الحالي: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'تم الحذف';
+
+  @override
+  String get localHistoryUntitled => 'غير مُسمى';
+
+  @override
+  String get localHistoryClearDocument => 'مسح سجل هذا المستند';
+
+  @override
+  String get localHistoryClearAll => 'مسح السجل المحلي بالكامل';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'هل تريد مسح سجل المحلي؟';
+
+  @override
+  String get localHistoryClearAllTitle => 'هل تريد مسح السجل المحلي؟';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'هذا يزيل بشكل دائم النسخ المحفوظة. لا يمكن التراجع عن هذه العملية.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'تم تلف فهرس السجل المحلي وإعادة بنائه من النسخ السليمة.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'يستخدم هذا السجل المحلي تنسيقًا غير مدعوم $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'السجل المحلي غير متاح: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'تم تعطيل التسجيل أو تم استبعاد هذا المسار. قم بتفعيل التسجيل مرة أخرى قبل الاستعادة.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'لم يتمكن السجل المحلي من تسجيل تغيير المسار: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'لم يتمكن السجل المحلي من الاحتفاظ بالمسار المحذوف: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'النسخة المختارة مفقودة أو تالفة.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'لا يمكن قراءة النسخة المختارة: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'لم يتمكن السجل المحلي من التقاط هذه النسخة: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason، $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'النسخة الأساسية';
+
+  @override
+  String get localHistoryReasonSaved => 'محفوظ';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'نقطة فحص تلقائية';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'قبل إعادة التحميل';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'قبل التخلص';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'قبل الاستعادة';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'قبل الحذف';
+
+  @override
+  String get localHistoryReasonExternalChange => 'تغيير خارجي';
+
+  @override
+  String get settingsHistory => 'سجل التغييرات';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'جمع سجل الحافظة';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'احتفظ بالمحتوى المنسوخ والمُلصق بنجاح لهذه الجلسة فقط في BusyMark.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'تسجيل سجل محلي';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'حفظ إصدارات المستند على هذا الجهاز للتعافي والمقارنة.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'فترة التحقق التلقائي';
+
+  @override
+  String get settingsHistoryRetention => 'مدة الاحتفاظ';
+
+  @override
+  String get settingsHistoryStorage => 'الحد الأقصى للتخزين';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'مسارات مستبعدة';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'مسار مطلق واحد في كل سطر';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value ثوان';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value أيام';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value ميجابايت';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: أدخل رقمًا بين $minimum و$maximum.';
   }

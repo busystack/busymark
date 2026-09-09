@@ -3783,6 +3783,268 @@ class AppLocalizationsKo extends AppLocalizations {
       '가져오기, 리소스 URL, HTML, 실행 가능하거나 이스케이프된 CSS가 없는 읽기 가능한 UTF-8 .css 파일(최대 256 KiB)을 선택하세요.';
 
   @override
+  String get clipboardHistory => '클립보드 기록';
+
+  @override
+  String get clipboardHistoryDescription => '세션별 클립보드 기록을 엽니다.';
+
+  @override
+  String get clipboardCurrent => '현재 클립보드';
+
+  @override
+  String get clipboardCurrentExternal => '다른 애플리케이션의 현재 클립보드';
+
+  @override
+  String clipboardDestination(String name) {
+    return '$name에 붙여넣기';
+  }
+
+  @override
+  String get clipboardSessionOnly => '이 BusyMark 세션에만 저장됩니다.';
+
+  @override
+  String get clipboardNoItems => '클립보드 기록이 비어 있습니다.';
+
+  @override
+  String get clipboardNoMatches => '이 검색과 일치하는 클립보드 항목이 없습니다.';
+
+  @override
+  String get clipboardDisabled => '클립보드 기록 컬렉션이 설정에서 비활성화되었습니다.';
+
+  @override
+  String get clipboardUnavailable => '현재 클립보드 내용은 사용할 수 없거나 지원되지 않습니다.';
+
+  @override
+  String get clipboardTooLarge => '이 클립보드 항목은 저장할 수 없을 정도로 큽니다.';
+
+  @override
+  String get clipboardPastePlainText => '일반 텍스트로 붙여넣기';
+
+  @override
+  String get clipboardClearAll => '클립보드 기록 지우기';
+
+  @override
+  String get clipboardEntryText => '텍스트';
+
+  @override
+  String get clipboardEntryRichText => '풍부한 텍스트';
+
+  @override
+  String get clipboardEntryImage => '이미지';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '$name에서 복사됨';
+  }
+
+  @override
+  String get localHistory => '로컬 기록';
+
+  @override
+  String get localHistoryEllipsis => '로컬 기록…';
+
+  @override
+  String get localHistoryDescription => '현재 문서에 저장된 자동 로컬 변경 사항을 표시합니다.';
+
+  @override
+  String get findLocalHistoryEllipsis => '로컬 히스토리에서 찾기…';
+
+  @override
+  String get findLocalHistoryDescription => '로컬 히스토리 문서 및 수정 내용 검색.';
+
+  @override
+  String get localHistoryNoDocuments => '아직 로컬 히스토리가 있는 문서는 없습니다.';
+
+  @override
+  String get localHistoryNoRevisions => '이 문서는 로컬 히스토리 수정 사항이 없습니다.';
+
+  @override
+  String get localHistoryNoMatches => '이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.';
+
+  @override
+  String get localHistorySearchHint => '수정 내용 검색';
+
+  @override
+  String get localHistorySelectedRevision => '선택된 수정';
+
+  @override
+  String get localHistoryCurrentEditor => '현재 편집 내용';
+
+  @override
+  String get localHistoryCurrentDisk => '디스크에 있는 현재 내용';
+
+  @override
+  String get localHistoryMissingFile => '원본 파일이 없습니다.';
+
+  @override
+  String get localHistoryRestoreRevision => '이전 버전 복원';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => '원래 위치로 복원';
+
+  @override
+  String get localHistoryRestoreNewLocation => '새로운 위치로 복원…';
+
+  @override
+  String get localHistoryRestoreChange => '변경 사항 복원';
+
+  @override
+  String get localHistoryRestoreUnavailable => '이 변경 사항은 더 이상 비교가 불가능합니다.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      '이 큰 비교는 단순화되었습니다. 개별 변경 사항 복원은 불가능합니다.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return '이전 버전의 변경: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return '현재 콘텐츠의 변경: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => '삭제됨';
+
+  @override
+  String get localHistoryUntitled => '제목 없음';
+
+  @override
+  String get localHistoryClearDocument => '이 문서의 기록 삭제';
+
+  @override
+  String get localHistoryClearAll => '모든 로컬 기록 삭제';
+
+  @override
+  String get localHistoryClearDocumentTitle => '문서 기록 삭제?';
+
+  @override
+  String get localHistoryClearAllTitle => '모든 로컬 기록 삭제?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      '이로 인해 저장된 버전이 영구적으로 삭제됩니다. 이 작업은 취소할 수 없습니다.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      '로컬 기록 인덱스가 손상되어 정상적인 버전에서 재구성되었습니다.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return '이 로컬 기록 저장소는 지원되지 않는 형식 $version을 사용합니다.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return '로컬 기록은 사용할 수 없습니다: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      '녹음이 비활성화되었거나 이 경로가 제외되었습니다. 복원하기 전에 녹음을 다시 활성화하십시오.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return '로컬 기록이 경로 변경을 기록할 수 없습니다: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return '로컬 히스토리에서 삭제된 경로를 저장할 수 없습니다: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing => '선택된 버전이 누락되었거나 손상되었습니다.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return '선택된 버전을 읽을 수 없습니다: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return '로컬 히스토리가 이 버전을 캡처할 수 없습니다: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => '기본 버전';
+
+  @override
+  String get localHistoryReasonSaved => '저장됨';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => '자동 체크포인트';
+
+  @override
+  String get localHistoryReasonBeforeReload => '재로드 전';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => '버리기 전';
+
+  @override
+  String get localHistoryReasonBeforeRestore => '복원 전';
+
+  @override
+  String get localHistoryReasonBeforeDelete => '삭제 전';
+
+  @override
+  String get localHistoryReasonExternalChange => '외부 변경';
+
+  @override
+  String get settingsHistory => '버전 기록';
+
+  @override
+  String get settingsClipboardHistoryTitle => '클립보드 기록 수집';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      '이 BusyMark 세션에만 복사 및 성공적으로 붙여넣은 콘텐츠를 유지합니다.';
+
+  @override
+  String get settingsLocalHistoryTitle => '로컬 버전 기록';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      '복구 및 비교를 위해 이 장치에 문서 버전을 저장합니다.';
+
+  @override
+  String get settingsHistoryCheckpoint => '자동 체크포인트 간격';
+
+  @override
+  String get settingsHistoryRetention => '보관 기간';
+
+  @override
+  String get settingsHistoryStorage => '최대 저장 공간';
+
+  @override
+  String get settingsHistoryExcludedPaths => '제외된 경로';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => '한 줄에 하나의 절대 경로';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value 초';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value 일';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
   }

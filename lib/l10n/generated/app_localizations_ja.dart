@@ -3787,6 +3787,268 @@ class AppLocalizationsJa extends AppLocalizations {
       '読み取り可能な UTF-8 .css ファイル（最大 256 KiB）を選択してください。インポート、リソース URL、HTML、実行可能な CSS、エスケープを含む CSS は使用できません。';
 
   @override
+  String get clipboardHistory => 'コピーボード履歴';
+
+  @override
+  String get clipboardHistoryDescription => 'セッション固有のコピーボード履歴を開く。';
+
+  @override
+  String get clipboardCurrent => '現在のコピーボード';
+
+  @override
+  String get clipboardCurrentExternal => '別のアプリケーションからの現在のコピーボード';
+
+  @override
+  String clipboardDestination(String name) {
+    return '$name に貼り付け';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'このBusyMarkセッションのみに保存されます。';
+
+  @override
+  String get clipboardNoItems => 'コピーボード履歴は空です。';
+
+  @override
+  String get clipboardNoMatches => 'この検索に一致するコピーボードの項目はありません。';
+
+  @override
+  String get clipboardDisabled => 'コピーボード履歴のコレクションは設定で無効になっています。';
+
+  @override
+  String get clipboardUnavailable => '現在のコピーボードの内容は利用できませんまたはサポートされていません。';
+
+  @override
+  String get clipboardTooLarge => 'このクリップボードの項目は大きすぎて保持できません。';
+
+  @override
+  String get clipboardPastePlainText => 'テキストとして貼り付け';
+
+  @override
+  String get clipboardClearAll => 'クリップボードの履歴をクリア';
+
+  @override
+  String get clipboardEntryText => 'テキスト';
+
+  @override
+  String get clipboardEntryRichText => '豊富なテキスト';
+
+  @override
+  String get clipboardEntryImage => '画像';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '$name からコピー';
+  }
+
+  @override
+  String get localHistory => 'ローカル履歴';
+
+  @override
+  String get localHistoryEllipsis => 'ローカル履歴…';
+
+  @override
+  String get localHistoryDescription => '現在のドキュメントの保存されたおよび自動ローカルのバージョンを表示します。';
+
+  @override
+  String get findLocalHistoryEllipsis => 'ローカル履歴で検索…';
+
+  @override
+  String get findLocalHistoryDescription => 'ローカル履歴のドキュメントとリビジョンの内容を検索します。';
+
+  @override
+  String get localHistoryNoDocuments => 'まだローカル履歴を持つドキュメントはありません。';
+
+  @override
+  String get localHistoryNoRevisions => 'このドキュメントにはローカル履歴の修正はありません。';
+
+  @override
+  String get localHistoryNoMatches => 'この検索に一致するローカル履歴の修正はありません。';
+
+  @override
+  String get localHistorySearchHint => 'リビジョンの内容を検索';
+
+  @override
+  String get localHistorySelectedRevision => '選択されたリビジョン';
+
+  @override
+  String get localHistoryCurrentEditor => '現在の編集内容';
+
+  @override
+  String get localHistoryCurrentDisk => 'ディスク上の現在の内容';
+
+  @override
+  String get localHistoryMissingFile => '元のファイルが見つかりません。';
+
+  @override
+  String get localHistoryRestoreRevision => '変更を復元';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => '元の位置に復元';
+
+  @override
+  String get localHistoryRestoreNewLocation => '新しい位置に復元…';
+
+  @override
+  String get localHistoryRestoreChange => '変更を復元';
+
+  @override
+  String get localHistoryRestoreUnavailable => 'この変更は復元できません。比較が最新ではありません。';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'この大きな比較は簡略化されています。個別の変更の復元はできません。';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return '以前の変更: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return '現在の変更: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => '削除';
+
+  @override
+  String get localHistoryUntitled => 'タイトルなし';
+
+  @override
+  String get localHistoryClearDocument => 'このドキュメントの履歴をクリアする';
+
+  @override
+  String get localHistoryClearAll => 'すべてのローカル履歴をクリアする';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'ドキュメントの履歴をクリアしますか？';
+
+  @override
+  String get localHistoryClearAllTitle => 'すべてのローカル履歴をクリアしますか？';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'これにより、保存されたバージョンが完全に削除されます。この操作は取り消せません。';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'ローカル履歴のインデックスが破損し、正常なバージョンから再構築されました。';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'このローカル履歴ストアはサポートされていない形式 $version を使用しています。';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'ローカル履歴は利用できません: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      '録音が無効になっているか、このパスは除外されています。復元する前に録音を再度有効にしてください。';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'ローカル履歴がパスの変更を記録できませんでした: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'ローカル履歴は削除されたパスを保持できません: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing => '選択されたバージョンが存在しないか破損しています。';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return '選択されたバージョンを読み取ることができません: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'ローカル履歴は、このバージョンをキャプチャできません: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason・$timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'ベースライン';
+
+  @override
+  String get localHistoryReasonSaved => '保存';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => '自動チェックポイント';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'リロード前';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => '破棄前';
+
+  @override
+  String get localHistoryReasonBeforeRestore => '復元前';
+
+  @override
+  String get localHistoryReasonBeforeDelete => '削除前';
+
+  @override
+  String get localHistoryReasonExternalChange => '外部からの変更';
+
+  @override
+  String get settingsHistory => '履歴';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'コピー＆ペースト履歴を収集';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'このBusyMarkセッションでのコピー＆ペーストされたコンテンツのみを保持。';
+
+  @override
+  String get settingsLocalHistoryTitle => 'ローカル履歴を記録';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'このデバイスにドキュメントのバージョンを保存し、復元および比較。';
+
+  @override
+  String get settingsHistoryCheckpoint => '自動チェックポイント間隔';
+
+  @override
+  String get settingsHistoryRetention => '保管期間';
+
+  @override
+  String get settingsHistoryStorage => '最大ストレージ';
+
+  @override
+  String get settingsHistoryExcludedPaths => '除外されたパス';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => '1行に1つの絶対パス';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value 秒';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value 日';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum から $maximum の数値を入力してください。';
   }

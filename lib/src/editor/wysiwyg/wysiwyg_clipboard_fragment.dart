@@ -135,7 +135,10 @@ class WysiwygClipboardFragment {
   }
 
   /// Rebase authored references, without opening or fetching clipboard URLs.
-  WysiwygClipboardFragment rebase(String targetPath) {
+  WysiwygClipboardFragment rebase(
+    String targetPath, {
+    Map<String, String> mediaDestinations = const {},
+  }) {
     if (sourcePath.isEmpty ||
         targetPath.isEmpty ||
         p.equals(sourcePath, targetPath)) {
@@ -144,6 +147,8 @@ class WysiwygClipboardFragment {
     String? destination(String? value, {bool media = false}) {
       if (value == null || value.isEmpty) return value;
       if (media) {
+        final retained = mediaDestinations[value];
+        if (retained != null) return retained;
         final resolved = mediaPaths[value];
         if (resolved != null && p.isAbsolute(resolved)) {
           return Uri(path: resolved).toString();

@@ -32,6 +32,9 @@ class HeaderBarLabels {
     required this.back,
     required this.backShortcut,
     required this.save,
+    required this.clipboardHistory,
+    required this.localHistory,
+    required this.findLocalHistory,
     required this.export,
     required this.exportShortcut,
     required this.exportGtkAccelerator,
@@ -73,6 +76,9 @@ class HeaderBarLabels {
   final String back;
   final String backShortcut;
   final String save;
+  final String clipboardHistory;
+  final String localHistory;
+  final String findLocalHistory;
   final String export;
   final String exportShortcut;
   final String exportGtkAccelerator;
@@ -114,6 +120,9 @@ class HeaderBarLabels {
     'back': back,
     'backShortcut': backShortcut,
     'save': save,
+    'clipboardHistory': clipboardHistory,
+    'localHistory': localHistory,
+    'findLocalHistory': findLocalHistory,
     'export': export,
     'exportShortcut': exportShortcut,
     'exportGtkAccelerator': exportGtkAccelerator,

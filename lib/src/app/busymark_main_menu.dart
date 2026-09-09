@@ -12,6 +12,9 @@ import 'window_control_service.dart';
 enum BusyMarkMainMenuAction {
   export,
   generateMarkdownToc,
+  clipboardHistory,
+  localHistory,
+  findLocalHistory,
   fullScreen,
   settings,
   keyboardShortcuts,
@@ -72,6 +75,21 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           mutuallyExclusive: false,
         ),
         BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.clipboardHistory,
+          label: command(BusyMarkCommandIds.clipboardHistory).label(context),
+          icon: BusyMarkGlyphs.copy,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.localHistory,
+          label: command(BusyMarkCommandIds.localHistory).label(context),
+          icon: BusyMarkGlyphs.documentHistory,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.findLocalHistory,
+          label: command(BusyMarkCommandIds.findLocalHistory).label(context),
+          icon: BusyMarkGlyphs.search,
+        ),
+        BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.settings,
           label: command(BusyMarkCommandIds.settings).label(context),
           icon: BusyMarkGlyphs.settings,
@@ -112,6 +130,12 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
         final commandId = switch (action) {
           BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
+          BusyMarkMainMenuAction.clipboardHistory =>
+            BusyMarkCommandIds.clipboardHistory,
+          BusyMarkMainMenuAction.localHistory =>
+            BusyMarkCommandIds.localHistory,
+          BusyMarkMainMenuAction.findLocalHistory =>
+            BusyMarkCommandIds.findLocalHistory,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
           BusyMarkMainMenuAction.keyboardShortcuts =>
             BusyMarkCommandIds.keyboardShortcuts,

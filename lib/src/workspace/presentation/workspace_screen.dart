@@ -20,6 +20,8 @@ import 'package:yaru/yaru.dart';
 import '../../ai/ai_edit_ui.dart';
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
+import '../../clipboard/clipboard_history_controller.dart';
+import '../../clipboard/clipboard_history_panel.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
@@ -71,6 +73,9 @@ import '../../markdown/markdown_section_editor.dart';
 import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
 import '../../math/math_widget.dart';
+import '../../local_history/local_history_comparison_view.dart';
+import '../../local_history/local_history_controller.dart';
+import '../../local_history/local_history_panel.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../search/search_replace_service.dart';
 import '../../visualization/visualization_card.dart';
@@ -539,6 +544,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final documentViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
     final gitState = ref.watch(gitControllerProvider);
+    final localHistoryState = ref.watch(localHistoryControllerProvider);
     final searchResults = _workspaceSearchResults(context, searchState.matches);
 
     final colors = BusyMarkSurfaceColors.of(context);
@@ -561,10 +567,16 @@ class WorkspaceScreen extends ConsumerWidget {
     final workspaceContent = Expanded(
       child: Column(
         children: [
-          if (_shouldShowEditorTabs(state, gitState))
-            _EditorTabStrip(state: state, gitState: gitState),
+          if (_shouldShowEditorTabs(state, gitState, localHistoryState))
+            _EditorTabStrip(
+              state: state,
+              gitState: gitState,
+              localHistoryState: localHistoryState,
+            ),
           Expanded(
-            child: gitState.selectedDiffForDisplay == null
+            child: localHistoryState.selectedRevision != null
+                ? const LocalHistoryComparisonView()
+                : gitState.selectedDiffForDisplay == null
                 ? _EditorPreviewSplit(
                     state: state,
                     outline: documentOutline,
@@ -643,6 +655,32 @@ class WorkspaceScreen extends ConsumerWidget {
       if (next != previous) {
         _closeSearch(ref);
       }
+    });
+    ref.listen<int>(clipboardHistoryOpenRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.clipboard);
+      unawaited(
+        ref
+            .read(clipboardHistoryControllerProvider.notifier)
+            .refreshCurrentClipboard(),
+      );
+    });
+    ref.listen<int>(localHistoryOpenRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (buffer != null) {
+        unawaited(
+          ref
+              .read(localHistoryControllerProvider.notifier)
+              .selectDocumentForBuffer(buffer),
+        );
+      }
+    });
+    ref.listen<int>(localHistoryFindRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      ref.read(localHistoryControllerProvider.notifier).beginDocumentSearch();
     });
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
       final nextWorkspace = next.workspace;
@@ -866,6 +904,14 @@ class WorkspaceScreen extends ConsumerWidget {
                         state.message!.code,
                       ),
                     ),
+                  if (localHistoryState.warning != null)
+                    BusyMarkStatusBox(
+                      message: localizeLocalHistoryWarning(
+                        context,
+                        localHistoryState.warning!,
+                      ),
+                      kind: BusyMarkStatusKind.warning,
+                    ),
                   Expanded(
                     child: Row(
                       textDirection: TextDirection.ltr,
@@ -977,6 +1023,12 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
+      case HeaderBarAction.clipboardHistory:
+        execute(BusyMarkCommandIds.clipboardHistory);
+      case HeaderBarAction.localHistory:
+        execute(BusyMarkCommandIds.localHistory);
+      case HeaderBarAction.findLocalHistory:
+        execute(BusyMarkCommandIds.findLocalHistory);
       case HeaderBarAction.export:
         execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
@@ -1028,6 +1080,10 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.generateMarkdownToc:
         _generateOrUpdateMarkdownToc(context, ref);
+      case BusyMarkMainMenuAction.clipboardHistory:
+      case BusyMarkMainMenuAction.localHistory:
+      case BusyMarkMainMenuAction.findLocalHistory:
+        return;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -1351,7 +1407,12 @@ Future<bool> _confirmDiscardGitFiles(
       ],
     ),
   );
-  return confirmed ?? false;
+  if (confirmed != true || !context.mounted) return false;
+  return ref
+      .read(workspaceControllerProvider.notifier)
+      .protectPathsBeforeExternalReplacement(
+        files.map((file) => file.absolutePath),
+      );
 }
 
 Future<bool> _confirmSwitchGitBranch(
@@ -2057,6 +2118,17 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                       onConfirmPushSetUpstream: () =>
                           _confirmGitPushSetUpstream(context, ref),
                     ),
+                    _SidebarTab.clipboard => ClipboardHistoryPanel(
+                      onEscape: () => ref
+                          .read(clipboardInsertionRegistryProvider)
+                          .target
+                          ?.requestEditorFocus(),
+                    ),
+                    _SidebarTab.localHistory => LocalHistoryPanel(
+                      focusSearchRequest: ref.watch(
+                        localHistoryFindRequestProvider,
+                      ),
+                    ),
                     null => const SizedBox.shrink(),
                   },
           ),
@@ -2077,6 +2149,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
+    if (tab != _SidebarTab.localHistory) {
+      ref.read(localHistoryControllerProvider.notifier).clearComparison();
+    }
     if (tab == _SidebarTab.git) {
       final controller = ref.read(gitControllerProvider.notifier);
       unawaited(() async {
@@ -2464,7 +2539,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git }
+enum _SidebarTab { files, toc, outline, git, clipboard, localHistory }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2487,18 +2562,30 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
-    WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
+    WorkspaceKind.untitledMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.clipboard,
+      _SidebarTab.localHistory,
+    ],
+    WorkspaceKind.singleMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.clipboard,
+      _SidebarTab.localHistory,
+    ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.clipboard,
+      _SidebarTab.localHistory,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.clipboard,
+      _SidebarTab.localHistory,
     ],
   };
 }
@@ -2509,6 +2596,8 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
     _SidebarTab.git => context.l10n.git,
+    _SidebarTab.clipboard => context.l10n.clipboardHistory,
+    _SidebarTab.localHistory => context.l10n.localHistory,
   };
 }
 
@@ -2518,6 +2607,8 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.branch,
+    _SidebarTab.clipboard => BusyMarkGlyphs.copy,
+    _SidebarTab.localHistory => BusyMarkGlyphs.documentHistory,
   };
 }
 
@@ -2530,6 +2621,8 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
     _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
     _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
+    _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
+    _SidebarTab.localHistory => BusyMarkCommandIds.localHistory,
   };
   return commands[id]?.shortcut?.label;
 }
@@ -3925,6 +4018,13 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         if (file != null && canUseGitFileActions) {
           await widget.onShowFileHistory(file);
         }
+      case _FileTreeAction.localHistory:
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForPath(path);
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
     }
   }
 
@@ -4077,6 +4177,7 @@ enum _FileTreeAction {
   copyPath,
   openInFiles,
   fileHistory,
+  localHistory,
 }
 
 Future<_FileTreeAction?> _showFileTreeMenu(
@@ -4158,6 +4259,12 @@ Future<_FileTreeAction?> _showFileTreeMenu(
           label: context.l10n.fileHistory,
           icon: BusyMarkGlyphs.documentHistory,
           enabled: enableGitActions,
+        ),
+      if (showHistory)
+        BusyMarkPopupMenuItem(
+          value: _FileTreeAction.localHistory,
+          label: context.l10n.localHistoryEllipsis,
+          icon: BusyMarkGlyphs.history,
         ),
     ],
   );
@@ -8221,21 +8328,32 @@ class _SidebarEmptyState extends StatelessWidget {
   }
 }
 
-bool _shouldShowEditorTabs(WorkspaceState state, GitState gitState) {
+bool _shouldShowEditorTabs(
+  WorkspaceState state,
+  GitState gitState,
+  LocalHistoryState localHistoryState,
+) {
+  if (localHistoryState.selectedRevision != null) return true;
   final workspace = state.workspace!;
   return (state.documentBuffers.length > 1 ||
           workspace.kind == WorkspaceKind.markdownFolder ||
           workspace.kind == WorkspaceKind.writersideModule) &&
       (state.documentBuffers.isNotEmpty ||
           gitState.openDiffFilePaths.isNotEmpty ||
-          gitState.selectedDiffForDisplay != null);
+          gitState.selectedDiffForDisplay != null ||
+          localHistoryState.selectedRevision != null);
 }
 
 class _EditorTabStrip extends ConsumerWidget {
-  const _EditorTabStrip({required this.state, required this.gitState});
+  const _EditorTabStrip({
+    required this.state,
+    required this.gitState,
+    required this.localHistoryState,
+  });
 
   final WorkspaceState state;
   final GitState gitState;
+  final LocalHistoryState localHistoryState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -8248,6 +8366,8 @@ class _EditorTabStrip extends ConsumerWidget {
       gitState: gitState,
       documentBuffers: state.documentBuffers,
       activeBufferId: state.activeBufferId,
+      localHistoryRevisionId: localHistoryState.selectedRevisionId,
+      localHistoryDocumentName: localHistoryState.selectedDocument?.displayName,
     );
     if (entries.isEmpty) {
       return const SizedBox.shrink();
@@ -8282,6 +8402,13 @@ class _EditorTabStrip extends ConsumerWidget {
                     onSelected: () =>
                         _selectTab(context, ref, workspace, entry),
                     onClose: () => _closeTab(context, ref, workspace, entry),
+                    onSecondaryTapUp: (details) => _showTabMenu(
+                      context,
+                      ref,
+                      workspace,
+                      entry,
+                      details.globalPosition,
+                    ),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -8289,7 +8416,8 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemCount: entries.length,
               ),
             ),
-            if (gitState.selectedDiffForDisplay == null)
+            if (gitState.selectedDiffForDisplay == null &&
+                localHistoryState.selectedRevision == null)
               if (state.activeBuffer case final buffer?) ...[
                 BusyMarkDocumentFormatIndicator(format: buffer.format),
                 const SizedBox(width: BusyMarkSpacing.xs),
@@ -8310,12 +8438,17 @@ class _EditorTabStrip extends ConsumerWidget {
         entry.untitledName ?? _relativeDocumentPath(workspace, entry.path),
       WorkspaceTabKind.gitDiff =>
         entry.path.isEmpty ? context.l10n.gitDiff : _diffTabTitle(entry.path),
+      WorkspaceTabKind.localHistory =>
+        '${context.l10n.localHistory}: ${entry.path}',
     };
   }
 
   IconData? _tabIcon(Workspace workspace, WorkspaceTabEntry entry) {
     if (entry.kind == WorkspaceTabKind.gitDiff) {
       return null;
+    }
+    if (entry.kind == WorkspaceTabKind.localHistory) {
+      return BusyMarkGlyphs.documentHistory;
     }
     final file = entry.path.isEmpty
         ? null
@@ -8336,6 +8469,7 @@ class _EditorTabStrip extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (entry.kind) {
       case WorkspaceTabKind.file:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (entry.bufferId == state.activeBufferId) {
           gitController.deactivateDiffFile();
           return;
@@ -8345,10 +8479,13 @@ class _EditorTabStrip extends ConsumerWidget {
             .activateDocumentBuffer(entry.bufferId!);
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (entry.path.isEmpty) {
           return;
         }
         await gitController.activateDiffFile(entry.path);
+      case WorkspaceTabKind.localHistory:
+        return;
     }
   }
 
@@ -8380,9 +8517,57 @@ class _EditorTabStrip extends ConsumerWidget {
         } else {
           gitController.closeDiffFile(entry.path);
         }
+      case WorkspaceTabKind.localHistory:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
+    }
+  }
+
+  Future<void> _showTabMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+    Offset position,
+  ) async {
+    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
+      context,
+      position,
+      items: [
+        if (entry.kind == WorkspaceTabKind.file)
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.localHistory,
+            label: context.l10n.localHistoryEllipsis,
+            icon: BusyMarkGlyphs.documentHistory,
+          ),
+        if (entry.kind == WorkspaceTabKind.file)
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _WorkspaceTabAction.close,
+          label: MaterialLocalizations.of(context).closeButtonTooltip,
+          icon: BusyMarkGlyphs.clear,
+        ),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case _WorkspaceTabAction.localHistory:
+        final buffer = state.documentBuffers
+            .where((candidate) => candidate.id == entry.bufferId)
+            .firstOrNull;
+        if (buffer == null) return;
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForBuffer(buffer);
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
+      case _WorkspaceTabAction.close:
+        await _closeTab(context, ref, workspace, entry);
     }
   }
 }
+
+enum _WorkspaceTabAction { localHistory, close }
 
 class _WorkspaceTabButton extends StatelessWidget {
   const _WorkspaceTabButton({
@@ -8393,6 +8578,7 @@ class _WorkspaceTabButton extends StatelessWidget {
     required this.dirty,
     required this.onSelected,
     required this.onClose,
+    required this.onSecondaryTapUp,
   });
 
   final String title;
@@ -8402,6 +8588,7 @@ class _WorkspaceTabButton extends StatelessWidget {
   final bool dirty;
   final VoidCallback onSelected;
   final VoidCallback onClose;
+  final GestureTapUpCallback onSecondaryTapUp;
 
   @override
   Widget build(BuildContext context) {
@@ -8422,6 +8609,7 @@ class _WorkspaceTabButton extends StatelessWidget {
         ),
         hoverColor: colors.controlHover,
         onTap: onSelected,
+        onSecondaryTapUp: onSecondaryTapUp,
         child: Container(
           height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
           constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
@@ -9909,6 +10097,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     child: BusyMarkWysiwygEditor(
                       document: wysiwygDocument,
                       documentId: activeBuffer?.id,
+                      clipboardInsertionRegistry: ref.read(
+                        clipboardInsertionRegistryProvider,
+                      ),
+                      onClipboardCaptured: ref
+                          .read(clipboardHistoryControllerProvider.notifier)
+                          .retain,
                       initialSessionState:
                           activeBuffer?.editorState.wysiwygState ??
                           const WysiwygEditorSessionState(),
@@ -10024,6 +10218,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       language: _sourceSyntaxLanguage(widget.state.workspace),
                       filePath: activeEditorPath,
                       documentId: activeBuffer?.id,
+                      clipboardInsertionRegistry: ref.read(
+                        clipboardInsertionRegistryProvider,
+                      ),
+                      onClipboardCaptured: ref
+                          .read(clipboardHistoryControllerProvider.notifier)
+                          .retain,
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],

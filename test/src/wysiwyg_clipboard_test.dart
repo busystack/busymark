@@ -142,6 +142,17 @@ void main() {
       const WysiwygClipboardHtml().encode(decoded),
       contains('src="file:///source/images/diagram.png"'),
     );
+    expect(
+      _insert(
+        decoded.rebase(
+          '/destination/topic.md',
+          mediaDestinations: const {
+            'diagram.png': 'images/diagram-retained.png',
+          },
+        ),
+      ),
+      contains('![Alt](images/diagram-retained.png)'),
+    );
   });
 
   test('Writerside structure survives the fragment and insertion', () {
@@ -391,7 +402,8 @@ void main() {
       tester,
     ) async {
       await copyAll(tester);
-      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData.keys, containsAll(['text', 'html', 'token']));
+      expect(systemData, isNot(contains('fragment')));
       expect(systemData['text'], contains('[ ] First task'));
       var result = '';
       await mount(tester, 'destination', 'Target\n', (value) => result = value);
@@ -467,7 +479,8 @@ void main() {
       }
       await tester.tap(find.text('Copy'));
       await tester.pumpAndSettle();
-      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData.keys, containsAll(['text', 'html', 'token']));
+      expect(systemData, isNot(contains('fragment')));
       expect(systemData['text'], contains('[ ] First task'));
     });
 
@@ -479,7 +492,8 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyC, shift: true);
 
-      expect(systemData.keys, ['text']);
+      expect(systemData.keys, containsAll(['text', 'token']));
+      expect(systemData, isNot(contains('fragment')));
       expect(systemData['text'], startsWith('Issues'));
       expect(
         systemData['text'],
@@ -512,7 +526,8 @@ void main() {
 
       await tester.tap(find.text('Copy Plain Text'));
       await tester.pumpAndSettle();
-      expect(systemData.keys, ['text']);
+      expect(systemData.keys, containsAll(['text', 'token']));
+      expect(systemData, isNot(contains('fragment')));
       expect(systemData['text'], startsWith('Issues'));
       expect(systemData['text'], isNot(contains('**When**')));
     });
@@ -560,7 +575,8 @@ void main() {
 
       await key(tester, LogicalKeyboardKey.keyX);
       expect(origin, 'A  word\n');
-      expect(systemData.keys, containsAll(['text', 'html', 'fragment']));
+      expect(systemData.keys, containsAll(['text', 'html', 'token']));
+      expect(systemData, isNot(contains('fragment')));
       expect(systemData['text'], 'bold');
       expect(systemData['html'], contains('<strong>bold</strong>'));
 
