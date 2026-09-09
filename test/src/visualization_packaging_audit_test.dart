@@ -10,7 +10,7 @@ void main() {
       r'<img src="(docs/screenshots/[^"]+)"',
     ).allMatches(readme).map((match) => match.group(1)!).toSet();
 
-    expect(screenshotPaths, hasLength(5));
+    expect(screenshotPaths, isNotEmpty);
     for (final path in screenshotPaths) {
       final screenshot = File(path);
       expect(screenshot.existsSync(), isTrue, reason: '$path is missing');

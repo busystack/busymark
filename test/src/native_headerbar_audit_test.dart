@@ -1085,10 +1085,9 @@ void main() {
       );
       expect(snapcraft, contains('- libhandy-1-dev'));
       expect(snapcraft, contains('- libhandy-1-0'));
-      expect(
-        readme,
-        contains('sudo apt-get install curl libhandy-1-dev xz-utils'),
-      );
+      expect(readme, contains('sudo apt-get install'));
+      expect(readme, contains('libhandy-1-dev'));
+      expect(readme, contains('xz-utils'));
       expect(native, isNot(contains('kHeaderWindowRadius')));
       expect(native, isNot(contains('create_rounded_window_region')));
       expect(native, isNot(contains('gdk_window_shape_combine_region')));

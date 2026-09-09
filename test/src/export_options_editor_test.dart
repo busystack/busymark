@@ -188,7 +188,7 @@ void main() {
     expect(find.byType(PdfExportOptionsEditor), findsOneWidget);
     expect(find.byType(HtmlExportOptionsEditor), findsNothing);
 
-    await tester.tap(find.text('HTML'));
+    await tester.tap(find.text('HTML document'));
     await tester.pumpAndSettle();
     expect(find.byType(PdfExportOptionsEditor), findsNothing);
     expect(find.byType(HtmlExportOptionsEditor), findsOneWidget);

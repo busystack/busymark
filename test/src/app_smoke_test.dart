@@ -2463,8 +2463,8 @@ void main() {
     }
     expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
     expect(find.byType(SegmentedButton<ExportFormat>), findsOneWidget);
-    expect(find.text('PDF'), findsOneWidget);
-    expect(find.text('HTML'), findsOneWidget);
+    expect(find.text(l10n.fileTypePdf), findsOneWidget);
+    expect(find.text(l10n.fileTypeHtml), findsOneWidget);
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
   });

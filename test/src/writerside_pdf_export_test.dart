@@ -592,14 +592,16 @@ void main() {
   });
 
   test(
-    'native Writerside demo compiles end to end with bundled Typst',
+    'native Writerside fixture compiles end to end with bundled Typst',
     () async {
       final output = await Directory.systemTemp.createTemp(
         'busymark-writerside-native-pdf-',
       );
       addTearDown(() => output.delete(recursive: true));
-      final module = Directory('demo/writerside-instances').absolute;
-      final destination = p.join(output.path, 'writerside-demo.pdf');
+      final module = Directory(
+        'test/fixtures/writerside/conformance_project',
+      ).absolute;
+      final destination = p.join(output.path, 'writerside-conformance.pdf');
       final service = WritersidePdfExportService(
         markdownExporter: MarkdownPdfExportService(
           compilerLocator: TypstCompilerLocator(
@@ -611,7 +613,7 @@ void main() {
       final result = await service.export(
         WritersidePdfExportRequest(
           moduleRoot: module.path,
-          instanceId: 'guide',
+          instanceId: 'conformance',
           destinationPath: destination,
           overwrite: false,
         ),

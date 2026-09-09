@@ -993,17 +993,16 @@ void main() {
     expect(profiles.valuesFor('guide').offlineDocs, isFalse);
   });
 
-  test('instance demo is a valid openable Writerside module', () async {
-    final module = await moduleService.load('demo/writerside-instances');
+  test('conformance fixture is a valid openable Writerside module', () async {
+    final module = await moduleService.load(
+      'test/fixtures/writerside/conformance_project',
+    );
 
-    expect(module.instances.map((instance) => instance.id), [
-      'guide',
-      'admin',
-      'shared',
-    ]);
-    expect(module.instances.last.isLibrary, isTrue);
-    expect(module.instances.first.allowSearchEngineIndexing, isTrue);
-    expect(module.instances[1].offlineArtifact, isTrue);
+    expect(module.instances.map((instance) => instance.id), ['conformance']);
+    expect(
+      module.topicsByFileName.keys,
+      containsAll(['features.topic', 'semantic.md']),
+    );
     expect(module.diagnostics.where(isError), isEmpty);
   });
 }

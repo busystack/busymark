@@ -156,12 +156,12 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
         segments: [
           ButtonSegment(
             value: ExportFormat.pdf,
-            label: const Text('PDF'),
+            label: Text(context.l10n.fileTypePdf),
             enabled: widget.canExportPdf,
           ),
           ButtonSegment(
             value: ExportFormat.html,
-            label: const Text('HTML'),
+            label: Text(context.l10n.fileTypeHtml),
             enabled: widget.canExportHtml,
           ),
         ],
