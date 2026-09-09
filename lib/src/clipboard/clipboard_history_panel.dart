@@ -7,8 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_search_field.dart';
+import '../app/busymark_toast.dart';
 import '../app/localization.dart';
 import 'clipboard_history_controller.dart';
+import 'clipboard_insertion.dart';
 import 'clipboard_models.dart';
 
 class ClipboardHistoryPanel extends ConsumerStatefulWidget {
@@ -23,7 +25,9 @@ class ClipboardHistoryPanel extends ConsumerStatefulWidget {
 
 class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   final _searchController = TextEditingController();
+  final _listScrollController = ScrollController();
   final _listFocusNode = FocusNode(debugLabel: 'Clipboard History list');
+  final _entryKeys = <String, GlobalKey>{};
   String? _selectedId;
 
   @override
@@ -43,6 +47,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   @override
   void dispose() {
     _searchController.dispose();
+    _listScrollController.dispose();
     _listFocusNode.dispose();
     super.dispose();
   }
@@ -65,12 +70,13 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
         !visible.any((entry) => entry.id == _selectedId)) {
       _selectedId = visible.first.id;
     }
+    final visibleIds = visible.map((entry) => entry.id).toSet();
+    _entryKeys.removeWhere((id, _) => !visibleIds.contains(id));
     final target = registry.target;
-    final canPaste = target != null && target.editable;
 
     return Focus(
       focusNode: _listFocusNode,
-      onKeyEvent: (_, event) => _handleKey(event, visible, canPaste),
+      onKeyEvent: (_, event) => _handleKey(event, visible, registry),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -149,29 +155,39 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                         ? context.l10n.clipboardNoItems
                         : context.l10n.clipboardUnavailable,
                   )
-                : ListView.builder(
-                    itemCount: visible.length,
-                    itemBuilder: (context, index) {
-                      final payload = visible[index];
-                      final isCurrent = identical(payload, current);
-                      return _ClipboardEntryTile(
-                        payload: payload,
-                        current: isCurrent,
-                        selected: payload.id == _selectedId,
-                        canPaste: canPaste,
-                        onSelect: () {
-                          setState(() => _selectedId = payload.id);
-                          _listFocusNode.requestFocus();
-                        },
-                        onPaste: () => _paste(payload, plainText: false),
-                        onPastePlain: payload.hasMeaningfulTextRepresentation
-                            ? () => _paste(payload, plainText: true)
-                            : null,
-                        onRemove: isCurrent
-                            ? null
-                            : () => controller.remove(payload.id),
-                      );
-                    },
+                : SingleChildScrollView(
+                    key: const ValueKey('clipboard-history-list'),
+                    controller: _listScrollController,
+                    child: Column(
+                      children: [
+                        for (final payload in visible)
+                          _ClipboardEntryTile(
+                            key: _entryKeys.putIfAbsent(
+                              payload.id,
+                              () => GlobalKey(
+                                debugLabel: 'Clipboard entry ${payload.id}',
+                              ),
+                            ),
+                            payload: payload,
+                            current: identical(payload, current),
+                            selected: payload.id == _selectedId,
+                            canPaste: registry.canPaste(payload),
+                            onSelect: () {
+                              setState(() => _selectedId = payload.id);
+                              _listFocusNode.requestFocus();
+                            },
+                            onPaste: () => _paste(payload, plainText: false),
+                            onPastePlain:
+                                payload.hasMeaningfulTextRepresentation &&
+                                    registry.canPaste(payload, plainText: true)
+                                ? () => _paste(payload, plainText: true)
+                                : null,
+                            onRemove: identical(payload, current)
+                                ? null
+                                : () => controller.remove(payload.id),
+                          ),
+                      ],
+                    ),
                   ),
           ),
         ],
@@ -193,7 +209,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   KeyEventResult _handleKey(
     KeyEvent event,
     List<BusyMarkClipboardPayload> visible,
-    bool canPaste,
+    BusyMarkClipboardInsertionRegistry registry,
   ) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -205,18 +221,20 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
         event.logicalKey == LogicalKeyboardKey.arrowUp) {
       final delta = event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1;
+      final nextIndex = (index < 0 ? 0 : index + delta).clamp(
+        0,
+        visible.length - 1,
+      );
+      final nextId = visible[nextIndex].id;
       setState(() {
-        _selectedId =
-            visible[(index < 0 ? 0 : index + delta).clamp(
-                  0,
-                  visible.length - 1,
-                )]
-                .id;
+        _selectedId = nextId;
       });
+      _ensureSelectionVisible(nextId);
       return KeyEventResult.handled;
     }
     final selected = index < 0 ? visible.first : visible[index];
-    if (event.logicalKey == LogicalKeyboardKey.enter && canPaste) {
+    if (event.logicalKey == LogicalKeyboardKey.enter &&
+        registry.canPaste(selected)) {
       unawaited(_paste(selected, plainText: false));
       return KeyEventResult.handled;
     }
@@ -231,6 +249,21 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     return KeyEventResult.ignored;
   }
 
+  void _ensureSelectionVisible(String id) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final entryContext = _entryKeys[id]?.currentContext;
+      if (!mounted || entryContext == null || !entryContext.mounted) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          entryContext,
+          duration: const Duration(milliseconds: 120),
+          alignment: 0,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        ),
+      );
+    });
+  }
+
   Future<void> _paste(
     BusyMarkClipboardPayload payload, {
     required bool plainText,
@@ -242,12 +275,19 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
       ref
           .read(clipboardHistoryControllerProvider.notifier)
           .retainCurrentAfterPaste(payload);
+    } else if (result != ClipboardPasteResult.inserted && mounted) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.clipboardUnavailable,
+        priority: BusyMarkToastPriority.high,
+      );
     }
   }
 }
 
 class _ClipboardEntryTile extends StatelessWidget {
   const _ClipboardEntryTile({
+    super.key,
     required this.payload,
     required this.current,
     required this.selected,

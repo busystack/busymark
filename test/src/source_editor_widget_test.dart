@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -7,6 +9,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/core/diagnostic.dart';
@@ -21,6 +24,11 @@ import 'package:busymark/src/editor/source/source_gutter.dart'
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_language.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
@@ -1560,6 +1568,92 @@ void main() {
     expect(await registry.paste(payload), ClipboardPasteResult.inserted);
     expect(changed, 'abc**rich**d');
   });
+
+  testWidgets('structured history rebases retained media into Source', (
+    tester,
+  ) async {
+    final root = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('busymark-source-history-media-'),
+    ))!;
+    addTearDown(() async {
+      if (await root.exists()) await root.delete(recursive: true);
+    });
+    final sourceDirectory = Directory('${root.path}/source');
+    final destinationDirectory = Directory('${root.path}/destination');
+    await tester.runAsync(() async {
+      await sourceDirectory.create();
+      await destinationDirectory.create();
+    });
+    final sourcePath = '${sourceDirectory.path}/origin.md';
+    final destinationPath = '${destinationDirectory.path}/target.md';
+    final fragment = _structuredImageFragment(sourcePath);
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    String? changed;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target\n',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: destinationPath,
+      workspaceRoot: root.path,
+      assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      onChanged: (value, _) => changed = value,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-rich-media',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'Alt',
+      sourceText: '![Alt](diagram.png)\n',
+      richFragment: fragment.encode(),
+      mediaBytes: {
+        'diagram.png': Uint8List.fromList(
+          utf8.encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+          ),
+        ),
+      },
+    );
+
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.inserted,
+    );
+    expect(changed, contains('![Alt](../images/diagram.svg)'));
+    expect(
+      await tester.runAsync(
+        () => File('${root.path}/images/diagram.svg').exists(),
+      ),
+      isTrue,
+    );
+  });
+}
+
+WysiwygClipboardFragment _structuredImageFragment(String sourcePath) {
+  const parser = MarkdownParser();
+  final document = parser
+      .parse(
+        filePath: sourcePath,
+        source: '![Alt](diagram.png)\n',
+        mode: MarkdownMode.writersideMarkdown,
+      )
+      .busyDocument;
+  final block = document.blocks.single;
+  return WysiwygClipboardFragment(
+    sourcePath: sourcePath,
+    mode: document.mode,
+    mediaPaths: const {'diagram.png': '/original/assets/diagram.png'},
+    blocks: [
+      BusyWysiwygStyledBlock(
+        kind: block.kind,
+        text: block.plainText,
+        ranges: busyInlineStyleRanges(block.inlines),
+        attributes: block.attributes,
+        completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+      ),
+    ],
+  );
 }
 
 const _autocompleteSource = '<topic><p>fea';
@@ -1640,6 +1734,9 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   BusyMarkClipboardInsertionRegistry? registry,
   ValueChanged<BusyMarkClipboardCapture>? onCaptured,
   BusyMarkSourceChanged? onChanged,
+  String filePath = '/project/source.md',
+  String? workspaceRoot,
+  AssetWorkspaceKind? assetWorkspaceKind,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -1656,8 +1753,10 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
           child: BusyMarkSourceEditor(
             text: source,
             language: SourceSyntaxLanguage.markdown,
-            filePath: '/project/source.md',
+            filePath: filePath,
             documentId: 'source-document',
+            workspaceRoot: workspaceRoot,
+            assetWorkspaceKind: assetWorkspaceKind,
             diagnostics: const [],
             editorFontSize: 14,
             wordWrap: true,

@@ -299,6 +299,90 @@ void main() {
       expect(external.sessionOwned, isFalse);
     },
   );
+
+  test('rich ownership is byte bounded and shares equivalent media', () async {
+    const channel = MethodChannel('busymark.test/rich-ownership-budget');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var clipboard = <String, dynamic>{};
+    var sequence = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'write') {
+        clipboard = Map<String, dynamic>.from(call.arguments as Map);
+        clipboard['generation'] = sequence;
+        return true;
+      }
+      return clipboard;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final service = RichClipboardService(
+      channel: channel,
+      maximumOwnershipBytes: 180,
+      createToken: () => 'token-${++sequence}',
+    );
+    final sharedMedia = Uint8List.fromList(List.filled(80, 7));
+    const shared = RichClipboardData(
+      text: 'same',
+      sourceText: '![same](diagram.png)',
+      richFragment: '{"image":"diagram.png"}',
+    );
+    for (var index = 0; index < 10; index++) {
+      expect(
+        await service.write(
+          RichClipboardData(
+            text: shared.text,
+            sourceText: shared.sourceText,
+            richFragment: shared.richFragment,
+            mediaBytes: {'diagram.png': sharedMedia},
+          ),
+        ),
+        isTrue,
+      );
+    }
+    final sharedBytes = service.retainedOwnershipBytes;
+    expect(service.retainedOwnershipEntries, 10);
+    expect(sharedBytes, lessThanOrEqualTo(180));
+    final historyScope = ProviderContainer(
+      overrides: [
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        richClipboardServiceProvider.overrideWithValue(service),
+        clipboardAssetInputServiceProvider.overrideWithValue(_FakeAssetInput()),
+      ],
+    );
+    addTearDown(historyScope.dispose);
+    await Future<void>.delayed(Duration.zero);
+    final history = historyScope.read(
+      clipboardHistoryControllerProvider.notifier,
+    );
+    history.retain(text('clear ownership'));
+    history.clear();
+    expect(service.retainedOwnershipEntries, 1);
+
+    for (var index = 0; index < 10; index++) {
+      expect(
+        await service.write(
+          RichClipboardData(
+            text: 'image $index',
+            sourceText: '![image $index](diagram.png)',
+            richFragment: '{"image":$index}',
+            mediaBytes: {
+              'diagram.png': Uint8List.fromList(List.filled(80, index)),
+            },
+          ),
+        ),
+        isTrue,
+      );
+      expect(service.retainedOwnershipBytes, lessThanOrEqualTo(180));
+    }
+    expect(service.retainedOwnershipEntries, lessThan(10));
+    final current = await service.read();
+    expect(current.sessionOwned, isTrue);
+    expect(current.sourceText, contains('image 9'));
+
+    service.discardObsoleteOwnership();
+    expect(service.retainedOwnershipEntries, 1);
+    expect((await service.read()).sourceText, contains('image 9'));
+  });
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

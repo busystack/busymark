@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals;
@@ -15,6 +16,7 @@ import '../../app/busymark_shortcuts.dart';
 import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
+import '../../assets/asset_ingestion_service.dart';
 import '../../clipboard/clipboard_insertion.dart';
 import '../../clipboard/clipboard_models.dart';
 import '../../core/diagnostic.dart';
@@ -22,6 +24,7 @@ import '../../platform/rich_clipboard_service.dart';
 import '../../search/search_replace_service.dart';
 import '../document_text_geometry.dart';
 import '../editor_text_context_menu.dart';
+import '../wysiwyg/wysiwyg_clipboard_fragment.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -88,6 +91,12 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.clipboardService,
     this.clipboardInsertionRegistry,
     this.onClipboardCaptured,
+    this.workspaceRoot,
+    this.writersideRoot,
+    this.imagesDir = 'images',
+    this.assetWorkspaceKind,
+    this.assetIngestionService = const AssetIngestionService(),
+    this.onAssetSaveRequired,
   });
 
   final String text;
@@ -120,6 +129,12 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final RichClipboardService? clipboardService;
   final BusyMarkClipboardInsertionRegistry? clipboardInsertionRegistry;
   final ValueChanged<BusyMarkClipboardCapture>? onClipboardCaptured;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final AssetWorkspaceKind? assetWorkspaceKind;
+  final AssetIngestionService assetIngestionService;
+  final VoidCallback? onAssetSaveRequired;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -1695,9 +1710,111 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       return ClipboardPasteResult.unsupported;
     }
     final target = _captureClipboardTarget();
+    if (!plainText && payload.richFragment != null) {
+      final decoded = WysiwygClipboardFragment.decode(payload.richFragment!);
+      if (decoded != null) {
+        var fragment = decoded.rebase(widget.filePath ?? '');
+        var assets = const <IngestedAsset>[];
+        if (decoded.mediaPaths.isNotEmpty) {
+          if (!payload.mediaComplete) return ClipboardPasteResult.unsupported;
+          final prepared = await _prepareRetainedClipboardMedia(
+            decoded,
+            payload,
+            target,
+          );
+          if (prepared == null) {
+            return _isClipboardTargetCurrent(target)
+                ? ClipboardPasteResult.unsupported
+                : ClipboardPasteResult.staleTarget;
+          }
+          fragment = prepared.fragment;
+          assets = prepared.assets;
+        }
+        final result = _insertClipboardText(target, fragment.markdown);
+        if (result != ClipboardPasteResult.inserted) {
+          await _deleteUncommittedClipboardAssets(assets);
+        }
+        return result;
+      }
+    }
     final text = plainText ? payload.text : payload.preferredSourceText;
     if (text == null) return ClipboardPasteResult.unsupported;
     return _insertClipboardText(target, text);
+  }
+
+  Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
+  _prepareRetainedClipboardMedia(
+    WysiwygClipboardFragment fragment,
+    BusyMarkClipboardPayload payload,
+    _SourceClipboardOperationTarget target,
+  ) async {
+    final destinations = <String, String>{};
+    final assets = <IngestedAsset>[];
+    try {
+      for (final entry in fragment.mediaPaths.entries) {
+        final bytes = payload.mediaBytes[entry.key];
+        if (bytes == null || bytes.isEmpty) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        final asset = await widget.assetIngestionService.ingestBytes(
+          bytes: bytes,
+          suggestedFileName: p.basename(entry.value),
+          request: _assetIngestionRequest,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        );
+        assets.add(asset);
+        if (!_isClipboardTargetCurrent(target)) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        destinations[entry.key] = asset.markdownPath;
+      }
+      return (
+        fragment: fragment.rebase(
+          widget.filePath ?? '',
+          mediaDestinations: destinations,
+        ),
+        assets: List<IngestedAsset>.unmodifiable(assets),
+      );
+    } on AssetSaveRequiredException {
+      await _deleteUncommittedClipboardAssets(assets);
+      widget.onAssetSaveRequired?.call();
+      return null;
+    } on AssetIngestionException {
+      await _deleteUncommittedClipboardAssets(assets);
+      return null;
+    } on FileSystemException {
+      await _deleteUncommittedClipboardAssets(assets);
+      return null;
+    }
+  }
+
+  AssetIngestionRequest get _assetIngestionRequest => AssetIngestionRequest(
+    documentFilePath: widget.filePath ?? '',
+    workspaceKind:
+        widget.assetWorkspaceKind ??
+        (widget.writersideRoot != null
+            ? AssetWorkspaceKind.writerside
+            : widget.workspaceRoot != null
+            ? AssetWorkspaceKind.markdownWorkspace
+            : AssetWorkspaceKind.standalone),
+    workspaceRoot: widget.workspaceRoot,
+    writersideRoot: widget.writersideRoot,
+    imagesDir: widget.imagesDir,
+  );
+
+  Future<void> _deleteUncommittedClipboardAssets(
+    Iterable<IngestedAsset> assets,
+  ) async {
+    for (final asset in assets) {
+      if (asset.reusedExisting) continue;
+      try {
+        await File(asset.absolutePath).delete();
+      } on FileSystemException {
+        // Failed cancellation cleanup must not make the editor unusable.
+      }
+    }
   }
 
   ClipboardPasteResult _insertClipboardText(
@@ -2684,7 +2801,9 @@ class _SourceClipboardOperationTarget {
 }
 
 class _SourceClipboardInsertionTarget
-    implements BusyMarkClipboardInsertionTarget {
+    implements
+        BusyMarkClipboardInsertionTarget,
+        BusyMarkClipboardInsertionCapabilities {
   const _SourceClipboardInsertionTarget(this.state);
 
   final BusyMarkSourceEditorState state;
@@ -2706,6 +2825,16 @@ class _SourceClipboardInsertionTarget
 
   @override
   bool get editable => state.mounted && !state._hasActiveComposition;
+
+  @override
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+    if (!editable || payload.kind == BusyMarkClipboardContentKind.image) {
+      return false;
+    }
+    if (plainText) return payload.hasMeaningfulTextRepresentation;
+    if (payload.richFragment != null) return payload.mediaComplete;
+    return payload.preferredSourceText != null;
+  }
 
   @override
   Future<ClipboardPasteResult> paste(

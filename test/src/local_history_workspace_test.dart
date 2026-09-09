@@ -155,6 +155,128 @@ void main() {
   });
 
   test(
+    'restoration rejects a revision from another history document',
+    () async {
+      final aPath = p.join(root.path, 'a.md');
+      final bPath = p.join(root.path, 'b.md');
+      await File(aPath).writeAsString('A on disk\n');
+      await File(bPath).writeAsString('B on disk\n');
+      final store = MemoryLocalHistoryStore();
+      final capturedA = await _capture(store, aPath, 'A history\n');
+      final capturedB = await _capture(store, bPath, 'B history\n');
+      final harness = await _harness(store);
+      await harness.controller.openPath(bPath);
+      final revisionA = (await store.readRevision(capturedA.revision!.id))!;
+      final snapshot = await store.load();
+      final documentB = snapshot.documents.singleWhere(
+        (document) => document.id == capturedB.document.id,
+      );
+
+      expect(
+        await harness.controller.restoreLocalHistoryRevision(
+          document: documentB,
+          revision: revisionA,
+        ),
+        isFalse,
+      );
+      expect(harness.state.activeText, 'B on disk\n');
+    },
+  );
+
+  test(
+    'untitled history compares and restores through stable identity',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      final harness = await _harness(store);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Older untitled draft\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final snapshot = await store.load();
+      final document = snapshot.documents.single;
+      final revision = (await store.readRevision(
+        snapshot.revisionsFor(document.id).single.id,
+      ))!;
+      harness.controller.updateActiveText('Newer untitled draft\n');
+
+      final current = await harness.controller.localHistoryCurrentSource(
+        document,
+        revision,
+      );
+      expect(current.kind, LocalHistoryCurrentSourceKind.editor);
+      expect(current.source, 'Newer untitled draft\n');
+      expect(
+        await harness.controller.restoreLocalHistoryRevision(
+          document: document,
+          revision: revision,
+        ),
+        isTrue,
+      );
+      expect(harness.state.activeText, 'Older untitled draft\n');
+      expect(harness.state.activeBuffer!.isUntitled, isTrue);
+    },
+  );
+
+  test(
+    'editing during a delayed reload cancels the stale replacement',
+    () async {
+      final path = p.join(root.path, 'reload.md');
+      await File(path).writeAsString('Disk version\n');
+      final store = _BlockingBeforeReloadStore(MemoryLocalHistoryStore());
+      final harness = await _harness(store);
+      await harness.controller.openPath(path);
+      harness.controller.updateActiveText('Edit before reload\n');
+      await Future<void>.delayed(Duration.zero);
+
+      final reload = harness.controller.reloadBufferFromDisk(
+        harness.state.activeBuffer!.id,
+      );
+      await store.started.future;
+      harness.controller.updateActiveText('Edit made while reload waited\n');
+      store.release.complete();
+
+      expect(await reload, isFalse);
+      expect(harness.state.activeText, 'Edit made while reload waited\n');
+      expect(harness.state.activeBuffer!.isDirty, isTrue);
+    },
+  );
+
+  test('delete skips binary and excluded history descendants', () async {
+    final image = File(p.join(root.path, 'image.png'));
+    final imageFolder = Directory(p.join(root.path, 'image-folder'));
+    final excludedFolder = Directory(p.join(root.path, 'excluded-folder'));
+    await image.writeAsBytes([0x89, 0x50, 0x4e, 0x47, 0xff, 0x00]);
+    await imageFolder.create();
+    await File(
+      p.join(imageFolder.path, 'nested.png'),
+    ).writeAsBytes([0xff, 0xfe, 0xfd]);
+    await excludedFolder.create();
+    await File(
+      p.join(excludedFolder.path, 'secret.md'),
+    ).writeAsString('Excluded source\n');
+    final harness = await _harness(MemoryLocalHistoryStore());
+    await harness.controller.openPath(root.path);
+    await harness.container
+        .read(appSettingsControllerProvider.notifier)
+        .setLocalHistoryExcludedPaths([excludedFolder.path]);
+
+    expect(await harness.controller.deleteWorkspaceEntity(image.path), isTrue);
+    expect(await image.exists(), isFalse);
+    expect(
+      await harness.controller.deleteWorkspaceEntity(imageFolder.path),
+      isTrue,
+    );
+    expect(await imageFolder.exists(), isFalse);
+    expect(
+      await harness.controller.deleteWorkspaceEntity(excludedFolder.path),
+      isTrue,
+    );
+    expect(await excludedFolder.exists(), isFalse);
+  });
+
+  test(
     'deleted document restores through normal create flow without overwriting',
     () async {
       final anchor = p.join(root.path, 'anchor.md');
@@ -446,6 +568,25 @@ class _FailingSavedStore extends _FailingProtectiveStore {
   ) {
     if (request.reason == LocalHistoryCaptureReason.saved) {
       throw const LocalHistoryStorageException('Injected saved failure');
+    }
+    return delegate.capture(request, policy);
+  }
+}
+
+class _BlockingBeforeReloadStore extends _FailingProtectiveStore {
+  _BlockingBeforeReloadStore(super.delegate);
+
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeReload) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
     }
     return delegate.capture(request, policy);
   }

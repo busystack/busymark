@@ -10,9 +10,7 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../comparison/source_comparison.dart';
-import '../workspace/document_buffer.dart';
 import '../workspace/workspace_controller.dart';
-import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import 'local_history_controller.dart';
 import 'local_history_models.dart';
@@ -33,13 +31,17 @@ class _LocalHistoryComparisonViewState
   @override
   Widget build(BuildContext context) {
     final history = ref.watch(localHistoryControllerProvider);
-    final workspace = ref.watch(workspaceControllerProvider);
+    ref.watch(workspaceControllerProvider);
     final document = history.selectedDocument;
     final revision = history.selectedRevision;
-    if (document == null || revision == null) {
+    if (document == null ||
+        revision == null ||
+        revision.summary.documentId != document.id) {
       return const SizedBox.shrink();
     }
-    final matchingBuffer = _bufferForDocument(workspace, document, revision);
+    final matchingBuffer = ref
+        .read(workspaceControllerProvider.notifier)
+        .localHistoryBufferForDocument(document, revision);
     final key = [
       revision.summary.id,
       matchingBuffer?.id,
@@ -98,22 +100,6 @@ class _LocalHistoryComparisonViewState
         );
       },
     );
-  }
-
-  DocumentBuffer? _bufferForDocument(
-    WorkspaceState state,
-    LocalHistoryDocument document,
-    LocalHistoryRevision revision,
-  ) {
-    final paths = {
-      document.currentPath,
-      revision.summary.historicalPath,
-    }.whereType<String>();
-    for (final path in paths) {
-      final buffer = state.bufferForPath(path);
-      if (buffer != null) return buffer;
-    }
-    return null;
   }
 
   Future<_ComparisonSnapshot?> _buildSnapshot(

@@ -157,6 +157,7 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
   }
 
   void clear() {
+    _clipboard.discardObsoleteOwnership();
     state = state.copyWith(entries: const [], lastRetentionResult: null);
   }
 

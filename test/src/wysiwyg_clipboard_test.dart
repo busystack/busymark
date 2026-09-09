@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
+import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -152,6 +154,17 @@ void main() {
         ),
       ),
       contains('![Alt](images/diagram-retained.png)'),
+    );
+    expect(
+      _insert(
+        decoded.rebase(
+          '/source/topic.md',
+          mediaDestinations: const {
+            'diagram.png': 'images/diagram-recovered.png',
+          },
+        ),
+      ),
+      contains('![Alt](images/diagram-recovered.png)'),
     );
   });
 
@@ -362,8 +375,10 @@ void main() {
       WidgetTester tester,
       String id,
       String source,
-      ValueChanged<String> changed,
-    ) async {
+      ValueChanged<String> changed, {
+      BusyMarkClipboardInsertionRegistry? registry,
+      ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+    }) async {
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -372,6 +387,8 @@ void main() {
             body: BusyMarkWysiwygEditor(
               key: ValueKey(id),
               clipboardService: RichClipboardService(),
+              clipboardInsertionRegistry: registry,
+              onClipboardCaptured: onCaptured,
               document: _parser
                   .parse(
                     filePath: '/$id.md',
@@ -623,6 +640,66 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyV);
       expect(result, contains('# Other app'));
       expect(result, contains('**Bold**'));
+    });
+
+    testWidgets('retained external HTML preserves structure on history paste', (
+      tester,
+    ) async {
+      systemData = {
+        'html':
+            '<h1>External</h1><p><b>Bold</b> and '
+            '<a href="https://example.com">linked</a></p><ul><li>Item</li></ul>',
+        'text': 'External\nBold and linked\nItem',
+      };
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      BusyMarkClipboardCapture? capture;
+      var first = '';
+      await mount(
+        tester,
+        'first',
+        'Target\n',
+        (value) => first = value,
+        registry: registry,
+        onCaptured: (value) => capture = value,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(first, contains('**Bold**'));
+      expect(capture?.richFragment, isNotNull);
+
+      systemData = {'text': 'Replacement clipboard'};
+      var retained = '';
+      await mount(
+        tester,
+        'retained',
+        'Target\n',
+        (value) => retained = value,
+        registry: registry,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      final value = capture!;
+      expect(
+        await registry.paste(
+          BusyMarkClipboardPayload(
+            id: 'external-html',
+            acquiredAt: DateTime.utc(2026),
+            kind: value.kind,
+            text: value.text,
+            sourceText: value.sourceText,
+            html: value.html,
+            richFragment: value.richFragment,
+            origin: value.origin,
+            external: true,
+          ),
+        ),
+        ClipboardPasteResult.inserted,
+      );
+      await tester.pump();
+      expect(retained, contains('# External'));
+      expect(retained, contains('**Bold**'));
+      expect(retained, contains('[linked](https://example.com)'));
+      expect(retained, contains('- Item'));
     });
 
     testWidgets('Ctrl+Shift+V is not an Editor paste command', (tester) async {

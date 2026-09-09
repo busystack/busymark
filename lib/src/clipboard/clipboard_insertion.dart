@@ -18,6 +18,11 @@ abstract interface class BusyMarkClipboardInsertionTarget {
   void requestEditorFocus();
 }
 
+/// Optional destination-specific capability used to keep panel actions honest.
+abstract interface class BusyMarkClipboardInsertionCapabilities {
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText});
+}
+
 /// Holds only the currently mounted document surface. Registrations remove
 /// themselves by identity, so a retiring editor cannot unregister its
 /// replacement or leave a disposed controller reachable from session state.
@@ -27,6 +32,16 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
   bool _disposed = false;
 
   BusyMarkClipboardInsertionTarget? get target => _target;
+
+  bool canPaste(BusyMarkClipboardPayload payload, {bool plainText = false}) {
+    final captured = _target;
+    if (captured == null || !captured.editable) return false;
+    if (captured is BusyMarkClipboardInsertionCapabilities) {
+      final capabilities = captured as BusyMarkClipboardInsertionCapabilities;
+      return capabilities.canPaste(payload, plainText: plainText);
+    }
+    return true;
+  }
 
   void register(BusyMarkClipboardInsertionTarget target) {
     if (identical(_target, target)) return;
@@ -60,7 +75,13 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
     bool plainText = false,
   }) async {
     final captured = _target;
-    if (captured == null || !captured.editable) {
+    if (captured == null ||
+        !captured.editable ||
+        (captured is BusyMarkClipboardInsertionCapabilities &&
+            !(captured as BusyMarkClipboardInsertionCapabilities).canPaste(
+              payload,
+              plainText: plainText,
+            ))) {
       return ClipboardPasteResult.unavailable;
     }
     final result = await captured.paste(payload, plainText: plainText);

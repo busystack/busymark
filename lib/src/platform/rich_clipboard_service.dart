@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 
@@ -7,6 +11,8 @@ import '../clipboard/clipboard_models.dart';
 const richClipboardChannelName = 'com.busymark.app/rich_clipboard';
 const busyMarkClipboardTokenMimeType = 'application/x-busymark-token';
 const maxRichClipboardBytes = 16 * 1024 * 1024;
+const maxRichClipboardOwnershipBytes = 64 * 1024 * 1024;
+const maxRichClipboardOwnershipEntries = 128;
 
 class RichClipboardData {
   const RichClipboardData({
@@ -55,13 +61,33 @@ class RichClipboardService {
   RichClipboardService({
     MethodChannel channel = const MethodChannel(richClipboardChannelName),
     String Function()? createToken,
+    int maximumOwnershipBytes = maxRichClipboardOwnershipBytes,
   }) : _channel = channel,
-       _createToken = createToken ?? const Uuid().v4;
+       _createToken = createToken ?? const Uuid().v4,
+       _maximumOwnershipBytes = maximumOwnershipBytes,
+       assert(maximumOwnershipBytes > 0);
 
   final MethodChannel _channel;
   final String Function() _createToken;
-  final Map<String, RichClipboardData> _knownPayloads = {};
+  final int _maximumOwnershipBytes;
+  final Map<String, _OwnedRichClipboardData> _knownPayloads = {};
   Future<void>? _pendingWrite;
+
+  @visibleForTesting
+  int get retainedOwnershipBytes => _uniqueOwnershipBytes();
+
+  @visibleForTesting
+  int get retainedOwnershipEntries => _knownPayloads.length;
+
+  /// Releases obsolete process-owned representations while preserving the
+  /// newest token so an ordinary paste of the current clipboard remains rich.
+  void discardObsoleteOwnership() {
+    if (_knownPayloads.length <= 1) return;
+    final newest = _knownPayloads.entries.last;
+    _knownPayloads
+      ..clear()
+      ..[newest.key] = newest.value;
+  }
 
   Future<bool> write(RichClipboardData data) {
     final result = _pendingWrite?.then((_) => _write(data)) ?? _write(data);
@@ -116,7 +142,7 @@ class RichClipboardService {
           ? value!['generation'] as int
           : null;
       final token = field('token');
-      final known = token == null ? null : _knownPayloads[token];
+      final known = token == null ? null : _knownPayloads[token]?.data;
       if (known == null) {
         return RichClipboardData(
           text: field('text'),
@@ -147,22 +173,32 @@ class RichClipboardService {
   }
 
   void _remember(String token, RichClipboardData data) {
-    _knownPayloads[token] = RichClipboardData(
-      text: data.text,
-      html: data.html,
-      sourceText: data.sourceText,
-      richFragment: data.richFragment,
-      sessionOwned: true,
-      token: token,
-      origin: data.origin,
-      mediaBytes: _copyMediaBytes(data.mediaBytes),
-      mediaComplete: data.mediaComplete,
-    );
-    // Tokens only identify current-session immutable payloads. Bound stale
-    // ownership records independently from Clipboard History retention.
-    while (_knownPayloads.length > 128) {
+    _OwnedRichClipboardData? owned;
+    for (final candidate in _knownPayloads.values) {
+      if (candidate.equivalentTo(data)) {
+        owned = candidate;
+        break;
+      }
+    }
+    owned ??= _OwnedRichClipboardData.copyOf(data);
+    _knownPayloads[token] = owned;
+    // Preserve the newest/current token. Obsolete ownership data is bounded by
+    // both token count and unique payload bytes. Equivalent repeated copies
+    // share one immutable media snapshot instead of copying it per token.
+    while (_knownPayloads.length > 1 &&
+        (_knownPayloads.length > maxRichClipboardOwnershipEntries ||
+            _uniqueOwnershipBytes() > _maximumOwnershipBytes)) {
       _knownPayloads.remove(_knownPayloads.keys.first);
     }
+  }
+
+  int _uniqueOwnershipBytes() {
+    final unique = HashSet<_OwnedRichClipboardData>.identity();
+    var bytes = 0;
+    for (final value in _knownPayloads.values) {
+      if (unique.add(value)) bytes += value.accountedBytes;
+    }
+    return bytes;
   }
 
   Future<String?> readPlainText() async {
@@ -179,6 +215,65 @@ class RichClipboardService {
       return null;
     }
   }
+}
+
+class _OwnedRichClipboardData {
+  _OwnedRichClipboardData.copyOf(RichClipboardData source)
+    : data = RichClipboardData(
+        text: source.text,
+        html: source.html,
+        sourceText: source.sourceText,
+        richFragment: source.richFragment,
+        sessionOwned: true,
+        origin: source.origin,
+        mediaBytes: _copyMediaBytes(source.mediaBytes),
+        mediaComplete: source.mediaComplete,
+      ),
+      accountedBytes = _ownershipBytes(source);
+
+  final RichClipboardData data;
+  final int accountedBytes;
+
+  bool equivalentTo(RichClipboardData other) =>
+      data.text == other.text &&
+      data.html == other.html &&
+      data.sourceText == other.sourceText &&
+      data.richFragment == other.richFragment &&
+      data.origin?.documentId == other.origin?.documentId &&
+      data.origin?.documentName == other.origin?.documentName &&
+      data.origin?.documentPath == other.origin?.documentPath &&
+      data.mediaComplete == other.mediaComplete &&
+      _sameMediaBytes(data.mediaBytes, other.mediaBytes);
+}
+
+int _ownershipBytes(RichClipboardData data) {
+  var bytes = 0;
+  for (final value in [
+    data.text,
+    data.html,
+    data.sourceText,
+    data.richFragment,
+    data.origin?.documentId,
+    data.origin?.documentName,
+    data.origin?.documentPath,
+  ]) {
+    if (value != null) bytes += utf8.encode(value).length;
+  }
+  for (final entry in data.mediaBytes.entries) {
+    bytes += utf8.encode(entry.key).length + entry.value.lengthInBytes;
+  }
+  return bytes;
+}
+
+bool _sameMediaBytes(
+  Map<String, Uint8List> first,
+  Map<String, Uint8List> second,
+) {
+  if (first.length != second.length) return false;
+  for (final entry in first.entries) {
+    if (!listEquals(entry.value, second[entry.key])) return false;
+  }
+  return true;
 }
 
 Map<String, Uint8List> _copyMediaBytes(Map<String, Uint8List> values) =>

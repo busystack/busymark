@@ -10224,6 +10224,31 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       onClipboardCaptured: ref
                           .read(clipboardHistoryControllerProvider.notifier)
                           .retain,
+                      workspaceRoot: _imageWorkspaceRoot(
+                        widget.state.workspace,
+                      ),
+                      writersideRoot:
+                          widget.state.workspace?.writersideModule?.rootPath,
+                      imagesDir:
+                          widget
+                              .state
+                              .workspace
+                              ?.writersideModule
+                              ?.effectiveImagesDir ??
+                          'images',
+                      assetWorkspaceKind:
+                          switch (widget.state.workspace?.kind) {
+                            WorkspaceKind.writersideModule =>
+                              AssetWorkspaceKind.writerside,
+                            WorkspaceKind.markdownFolder =>
+                              AssetWorkspaceKind.markdownWorkspace,
+                            WorkspaceKind.singleMarkdown =>
+                              AssetWorkspaceKind.standalone,
+                            WorkspaceKind.untitledMarkdown ||
+                            null => AssetWorkspaceKind.standalone,
+                          },
+                      onAssetSaveRequired: () =>
+                          unawaited(saveActiveToNewLocation(context, ref)),
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],

@@ -362,20 +362,28 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       revision: source.revision,
       path: destinationPath,
     );
-    if (source.untitled && !destinationExisted) {
-      return _enqueue(
-        source.bufferId,
-        () => _capture(destination, LocalHistoryCaptureReason.saved),
-      );
-    }
-    final captured = await _enqueue(
-      source.bufferId,
-      () => _capture(
+    final captured = await _enqueue(source.bufferId, () async {
+      // A checkpoint created before Save As belongs to the source lineage.
+      // Settle it before changing this buffer's binding. Edits made after the
+      // workspace switched to the destination keep their destination snapshot
+      // and timer and will run after the binding changes below.
+      final pending = _pending[source.bufferId];
+      if (pending != null && _sameOptionalPath(pending.path, source.path)) {
+        _pending.remove(source.bufferId);
+        _checkpointTimers.remove(source.bufferId)?.cancel();
+        if (!await _capture(
+          pending,
+          LocalHistoryCaptureReason.automaticCheckpoint,
+        )) {
+          return false;
+        }
+      }
+      return _capture(
         destination,
         LocalHistoryCaptureReason.saved,
-        ignoreBinding: true,
-      ),
-    );
+        ignoreBinding: !source.untitled || destinationExisted,
+      );
+    });
     if (captured) {
       final document = state.snapshot.documents
           .where(
@@ -385,6 +393,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           )
           .firstOrNull;
       if (document != null) _documentIdsByBuffer[source.bufferId] = document.id;
+    } else if (!source.untitled || destinationExisted) {
+      // The filesystem transition already succeeded. Do not let a later
+      // checkpoint reuse the source document identity if history was disabled,
+      // excluded, or temporarily unavailable during this Save As.
+      _documentIdsByBuffer.remove(source.bufferId);
     }
     return captured;
   }
@@ -454,6 +467,32 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<void> remapPath(String sourcePath, String destinationPath) async {
     try {
+      // Observe-edit callbacks are queued per buffer. Drain them, then capture
+      // pending source-path snapshots before the store remaps their stable
+      // document identities. New edits already see the remapped workspace
+      // buffer path and remain pending for the destination.
+      while (_bufferQueues.isNotEmpty) {
+        await Future.wait(_bufferQueues.values.toList(growable: false));
+      }
+      final affected = <MapEntry<String, LocalHistoryBufferSnapshot>>[];
+      for (final entry in _pending.entries) {
+        final path = entry.value.path;
+        if (path != null &&
+            (p.equals(path, sourcePath) || p.isWithin(sourcePath, path))) {
+          affected.add(entry);
+        }
+      }
+      for (final entry in affected) {
+        _pending.remove(entry.key);
+        _checkpointTimers.remove(entry.key)?.cancel();
+        await _enqueue(
+          entry.key,
+          () => _capture(
+            entry.value,
+            LocalHistoryCaptureReason.automaticCheckpoint,
+          ),
+        );
+      }
       await _store.remapPath(sourcePath, destinationPath);
       await refresh();
     } on Object catch (error) {
@@ -500,6 +539,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     )) {
       return;
     }
+    _loadGeneration++;
     state = state.copyWith(
       selectedDocumentId: documentId,
       selectedRevisionId: null,
@@ -515,6 +555,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   /// No current editor is implied: closed, renamed, untitled, and deleted
   /// documents remain first-class results.
   void beginDocumentSearch() {
+    _loadGeneration++;
     _searchGeneration++;
     state = state.copyWith(
       selectedDocumentId: null,
@@ -556,7 +597,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     );
     try {
       final revision = await _store.readRevision(revisionId);
-      if (!ref.mounted || generation != _loadGeneration) return;
+      if (!ref.mounted ||
+          generation != _loadGeneration ||
+          state.selectedDocumentId != documentId ||
+          state.selectedRevisionId != revisionId ||
+          (revision != null && revision.summary.documentId != documentId)) {
+        return;
+      }
       state = state.copyWith(
         selectedRevision: revision,
         loading: false,
@@ -565,7 +612,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
             : null,
       );
     } on Object catch (error) {
-      if (!ref.mounted || generation != _loadGeneration) return;
+      if (!ref.mounted ||
+          generation != _loadGeneration ||
+          state.selectedDocumentId != documentId ||
+          state.selectedRevisionId != revisionId) {
+        return;
+      }
       state = state.copyWith(
         loading: false,
         warning: LocalHistoryWarning(
@@ -577,8 +629,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }
 
   void clearComparison() {
+    _loadGeneration++;
     state = state.copyWith(selectedRevisionId: null, selectedRevision: null);
   }
+
+  String? bufferIdForDocument(String documentId) => _documentIdsByBuffer.entries
+      .where((entry) => entry.value == documentId)
+      .map((entry) => entry.key)
+      .firstOrNull;
 
   Future<void> search(String query) async {
     final normalized = query;
@@ -714,6 +772,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       );
     }
   }
+}
+
+bool _sameOptionalPath(String? first, String? second) {
+  if (first == null || second == null) return first == second;
+  return p.equals(first, second);
 }
 
 extension<T> on Iterable<T> {

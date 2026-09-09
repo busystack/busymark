@@ -4160,7 +4160,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         text: text,
         sourceText: source,
         html: data.html,
-        richFragment: data.richFragment,
+        richFragment: fragment?.encode() ?? data.richFragment,
         origin: _clipboardOrigin,
         external: true,
       ),
@@ -6838,7 +6838,9 @@ class _ClipboardTarget {
 }
 
 class _WysiwygClipboardInsertionTarget
-    implements BusyMarkClipboardInsertionTarget {
+    implements
+        BusyMarkClipboardInsertionTarget,
+        BusyMarkClipboardInsertionCapabilities {
   const _WysiwygClipboardInsertionTarget(this.state);
 
   final _BusyMarkWysiwygEditorState state;
@@ -6860,6 +6862,23 @@ class _WysiwygClipboardInsertionTarget
 
   @override
   bool get editable => state.mounted;
+
+  @override
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+    if (!editable) return false;
+    if (plainText) return payload.hasMeaningfulTextRepresentation;
+    return switch (payload.kind) {
+      BusyMarkClipboardContentKind.image =>
+        payload.imageBytes?.isNotEmpty == true,
+      BusyMarkClipboardContentKind.richText =>
+        payload.mediaComplete &&
+            (payload.richFragment != null ||
+                payload.text != null ||
+                payload.sourceText != null),
+      BusyMarkClipboardContentKind.text =>
+        payload.text != null || payload.sourceText != null,
+    };
+  }
 
   @override
   Future<ClipboardPasteResult> paste(

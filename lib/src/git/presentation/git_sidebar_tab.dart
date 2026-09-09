@@ -242,13 +242,6 @@ class GitSidebarTab extends ConsumerWidget {
     if (confirmed != true || !context.mounted) {
       return;
     }
-    final path = ref.read(gitControllerProvider).fileHistory.currentPath;
-    if (path == null ||
-        !await ref
-            .read(workspaceControllerProvider.notifier)
-            .protectPathsBeforeExternalReplacement([path])) {
-      return;
-    }
     if (await controller.restoreSelectedFileVersion()) {
       await onAfterWorkspaceFilesChanged();
     }

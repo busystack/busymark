@@ -139,9 +139,11 @@ class WysiwygClipboardFragment {
     String targetPath, {
     Map<String, String> mediaDestinations = const {},
   }) {
-    if (sourcePath.isEmpty ||
-        targetPath.isEmpty ||
-        p.equals(sourcePath, targetPath)) {
+    final rebaseRelativeReferences =
+        sourcePath.isNotEmpty &&
+        targetPath.isNotEmpty &&
+        !p.equals(sourcePath, targetPath);
+    if (!rebaseRelativeReferences && mediaDestinations.isEmpty) {
       return this;
     }
     String? destination(String? value, {bool media = false}) {
@@ -154,6 +156,7 @@ class WysiwygClipboardFragment {
           return Uri(path: resolved).toString();
         }
       }
+      if (!rebaseRelativeReferences) return value;
       final uri = Uri.tryParse(value);
       if (uri == null || uri.hasScheme || uri.hasAuthority) return value;
       final resolved = Uri.file(p.absolute(sourcePath)).resolveUri(uri);
@@ -199,7 +202,7 @@ class WysiwygClipboardFragment {
     );
     return WysiwygClipboardFragment(
       mode: mode,
-      sourcePath: targetPath,
+      sourcePath: targetPath.isEmpty ? sourcePath : targetPath,
       mediaPaths: mediaPaths,
       blocks: [
         for (final value in blocks)
