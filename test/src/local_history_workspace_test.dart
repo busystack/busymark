@@ -10,6 +10,8 @@ import 'package:busymark/src/local_history/local_history_comparison_view.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/recovery_persistence.dart';
+import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
@@ -586,6 +588,201 @@ void main() {
     },
   );
 
+  test(
+    'shutdown retries first-save promotion without requiring another edit',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingFirstPromotionStore(memory);
+      final harness = await _harness(store);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Untitled lineage before save\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final originalDocument = (await memory.load()).documents.single;
+      final destination = p.join(root.path, 'Guide.md');
+
+      expect(await harness.controller.saveActiveAs(destination), isTrue);
+      expect(harness.state.activeBuffer!.isDirty, isFalse);
+      expect((await memory.load()).documents.single.currentPath, isNull);
+
+      await harness.controller.markCleanShutdown();
+      final afterShutdown = await memory.load();
+      expect(afterShutdown.documents, hasLength(1));
+      expect(afterShutdown.documents.single.id, originalDocument.id);
+      expect(afterShutdown.documents.single.currentPath, destination);
+      expect(
+        await _revisionSources(
+          memory,
+          afterShutdown.revisionsFor(originalDocument.id),
+        ),
+        contains('Untitled lineage before save\n'),
+      );
+
+      final reopened = await _harness(store);
+      await reopened.controller.openPath(destination);
+      await reopened.container
+          .read(localHistoryControllerProvider.notifier)
+          .selectDocumentForBuffer(reopened.state.activeBuffer!);
+      expect(
+        reopened.container
+            .read(localHistoryControllerProvider.notifier)
+            .bufferIdForDocument(originalDocument.id),
+        reopened.state.activeBuffer!.id,
+      );
+    },
+  );
+
+  test(
+    'unresolved shutdown promotion survives in session and retries on startup',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingFirstPromotionStore(memory, failures: 20);
+      final sessions = MemoryDocumentSessionStore();
+      final recovery = MemoryDocumentRecoveryStore();
+      final harness = await _harness(
+        store,
+        sessionStore: sessions,
+        recoveryStore: recovery,
+      );
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Lineage needing recovery\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final originalDocument = (await memory.load()).documents.single;
+      final destination = p.join(root.path, 'Recovered-guide.md');
+      expect(await harness.controller.saveActiveAs(destination), isTrue);
+
+      await harness.controller.markCleanShutdown();
+      expect(recovery.value.cleanShutdown, isFalse);
+      expect(
+        sessions.value?.pendingLocalHistoryAssociations.single.documentId,
+        originalDocument.id,
+      );
+
+      final reopened = await _harness(
+        store,
+        sessionStore: sessions,
+        recoveryStore: recovery,
+      );
+      expect(
+        await reopened.controller.restoreStartupSession(
+          reopenCleanSession: false,
+        ),
+        isTrue,
+      );
+      expect((await memory.load()).documents.single.currentPath, isNull);
+      expect(reopened.state.activeBuffer!.id, sessions.value!.tabs.single.id);
+
+      store.remainingPromotionFailures = 0;
+      expect(
+        await reopened.container
+            .read(localHistoryControllerProvider.notifier)
+            .flushAll(reopened.state.documentBuffers),
+        isTrue,
+      );
+      final restoredHistory = await memory.load();
+      expect(restoredHistory.documents, hasLength(1));
+      expect(restoredHistory.documents.single.id, originalDocument.id);
+      expect(restoredHistory.documents.single.currentPath, destination);
+      expect(
+        reopened.container
+            .read(localHistoryControllerProvider.notifier)
+            .pendingIdentityPromotions,
+        isEmpty,
+      );
+    },
+  );
+
+  test('workspace rename settles a failed first-save promotion', () async {
+    final memory = MemoryLocalHistoryStore();
+    final store = _FailingFirstPromotionStore(memory);
+    final harness = await _harness(store);
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('Untitled before rename\n');
+    await Future<void>.delayed(Duration.zero);
+    await harness.container
+        .read(localHistoryControllerProvider.notifier)
+        .flushBuffer(harness.state.activeBuffer!);
+    final originalDocument = (await memory.load()).documents.single;
+    final firstPath = p.join(root.path, 'A.md');
+    final finalPath = p.join(root.path, 'B.md');
+    expect(await harness.controller.saveActiveAs(firstPath), isTrue);
+    expect((await memory.load()).documents.single.currentPath, isNull);
+
+    expect(
+      await harness.controller.renameWorkspaceEntity(firstPath, 'B.md'),
+      isTrue,
+    );
+    expect(harness.state.activeBuffer!.filePath, finalPath);
+    harness.controller.updateActiveText('Saved after rename\n');
+    expect(await harness.controller.saveActive(), isTrue);
+
+    final snapshot = await memory.load();
+    expect(snapshot.documents, hasLength(1));
+    expect(snapshot.documents.single.id, originalDocument.id);
+    expect(snapshot.documents.single.currentPath, finalPath);
+    expect(
+      await _revisionSources(
+        memory,
+        snapshot.revisionsFor(originalDocument.id),
+      ),
+      containsAll(['Untitled before rename\n', 'Saved after rename\n']),
+    );
+  });
+
+  test(
+    'workspace directory move settles a nested failed first-save promotion',
+    () async {
+      final drafts = Directory(p.join(root.path, 'drafts'));
+      final archive = Directory(p.join(root.path, 'archive'));
+      await drafts.create();
+      await archive.create();
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingFirstPromotionStore(memory);
+      final harness = await _harness(store);
+      await harness.controller.openPath(root.path);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Untitled before directory move\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final originalDocument = (await memory.load()).documents.single;
+      final firstPath = p.join(drafts.path, 'A.md');
+      final movedDirectory = p.join(archive.path, 'drafts');
+      final finalPath = p.join(movedDirectory, 'A.md');
+      expect(await harness.controller.saveActiveAs(firstPath), isTrue);
+      expect((await memory.load()).documents.single.currentPath, isNull);
+
+      expect(
+        await harness.controller.moveWorkspaceEntity(drafts.path, archive.path),
+        isTrue,
+      );
+      expect(harness.state.activeBuffer!.filePath, finalPath);
+      harness.controller.updateActiveText('Saved after directory move\n');
+      expect(await harness.controller.saveActive(), isTrue);
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(snapshot.documents.single.currentPath, finalPath);
+      expect(
+        await _revisionSources(
+          memory,
+          snapshot.revisionsFor(originalDocument.id),
+        ),
+        containsAll([
+          'Untitled before directory move\n',
+          'Saved after directory move\n',
+        ]),
+      );
+    },
+  );
+
   testWidgets(
     'comparison renders styled intraline spans without framework errors',
     (tester) async {
@@ -853,6 +1050,8 @@ Future<_Harness> _harness(
   WorkspaceFileMonitor? fileMonitor,
   LocalHistoryTimerFactory? timerFactory,
   LocalHistoryComparisonComputer? comparisonComputer,
+  DocumentSessionStore? sessionStore,
+  DocumentRecoveryStore? recoveryStore,
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -862,6 +1061,10 @@ Future<_Harness> _harness(
         () => DateTime.utc(2026, 1, 1, 0, 1),
       ),
       workspaceServiceProvider.overrideWithValue(service),
+      if (sessionStore != null)
+        documentSessionStoreProvider.overrideWithValue(sessionStore),
+      if (recoveryStore != null)
+        documentRecoveryStoreProvider.overrideWithValue(recoveryStore),
       if (fileMonitor != null)
         workspaceFileMonitorProvider.overrideWithValue(fileMonitor),
       if (timerFactory != null)
@@ -967,6 +1170,32 @@ class _FailingSavedStore extends _FailingProtectiveStore {
       throw const LocalHistoryStorageException('Injected saved failure');
     }
     return delegate.capture(request, policy);
+  }
+}
+
+class _FailingFirstPromotionStore extends _FailingProtectiveStore {
+  _FailingFirstPromotionStore(super.delegate, {int failures = 1})
+    : remainingPromotionFailures = failures;
+
+  int remainingPromotionFailures;
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) {
+    if (remainingPromotionFailures > 0) {
+      remainingPromotionFailures--;
+      throw const LocalHistoryStorageException('Injected promotion failure');
+    }
+    return delegate.promoteUntitledDocument(
+      documentId: documentId,
+      destinationPath: destinationPath,
+      displayName: displayName,
+      updatedAt: updatedAt,
+    );
   }
 }
 

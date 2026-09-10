@@ -524,6 +524,129 @@ void main() {
   );
 
   test(
+    'flush retries a failed first-save promotion without another edit',
+    () async {
+      final store = _FailingFirstPromotionStore();
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+
+      final untitled = DocumentBuffer.untitled(
+        id: 'draft-flush-retry',
+        name: 'Draft.md',
+        text: 'Retained before first save\n',
+      );
+      await controller.observeOpened(untitled);
+      final originalDocument = (await store.load()).documents.single;
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(untitled),
+          '/workspace/Guide.md',
+          destinationExisted: false,
+        ),
+        isFalse,
+      );
+      final saved = untitled.copyWith(
+        filePath: '/workspace/Guide.md',
+        untitledName: null,
+        lastSavedText: untitled.text,
+        dirty: false,
+      );
+
+      expect(await controller.flushAll([saved]), isTrue);
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(snapshot.documents.single.currentPath, '/workspace/Guide.md');
+      expect(snapshot.revisionsFor(originalDocument.id), hasLength(1));
+    },
+  );
+
+  test(
+    'remap settles pending first-save promotions for files and directories',
+    () async {
+      final scenarios = [
+        (
+          initialPath: '/workspace/A.md',
+          sourcePath: '/workspace/A.md',
+          destinationPath: '/workspace/B.md',
+          finalPath: '/workspace/B.md',
+        ),
+        (
+          initialPath: '/workspace/drafts/A.md',
+          sourcePath: '/workspace/drafts',
+          destinationPath: '/workspace/archive/drafts',
+          finalPath: '/workspace/archive/drafts/A.md',
+        ),
+      ];
+      for (var index = 0; index < scenarios.length; index += 1) {
+        final scenario = scenarios[index];
+        final store = _FailingFirstPromotionStore();
+        final container = _historyContainer(store, <_FakeTimer>[]);
+        addTearDown(container.dispose);
+        final controller = container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await Future<void>.delayed(Duration.zero);
+        await controller.refresh();
+        final untitled = DocumentBuffer.untitled(
+          id: 'draft-remap-$index',
+          name: 'Draft.md',
+          text: 'Original lineage $index\n',
+        );
+        await controller.observeOpened(untitled);
+        final originalDocument = (await store.load()).documents.single;
+        expect(
+          await controller.captureSavedAs(
+            LocalHistoryBufferSnapshot.fromBuffer(untitled),
+            scenario.initialPath,
+            destinationExisted: false,
+          ),
+          isFalse,
+        );
+
+        await controller.remapPath(
+          scenario.sourcePath,
+          scenario.destinationPath,
+        );
+        final moved = untitled.copyWith(
+          filePath: scenario.finalPath,
+          untitledName: null,
+          lastSavedText: untitled.text,
+          dirty: false,
+        );
+        expect(
+          await controller.captureSaved(
+            LocalHistoryBufferSnapshot.fromBuffer(
+              moved.edited('Recorded after remap $index\n'),
+            ),
+          ),
+          isTrue,
+        );
+
+        final snapshot = await store.load();
+        expect(snapshot.documents, hasLength(1));
+        expect(snapshot.documents.single.id, originalDocument.id);
+        expect(snapshot.documents.single.currentPath, scenario.finalPath);
+        expect(
+          await _revisionSources(
+            store,
+            snapshot.revisionsFor(originalDocument.id),
+          ),
+          containsAll([
+            'Original lineage $index\n',
+            'Recorded after remap $index\n',
+          ]),
+        );
+      }
+    },
+  );
+
+  test(
     'file and directory moves settle pending checkpoints before remap',
     () async {
       final timers = <_FakeTimer>[];

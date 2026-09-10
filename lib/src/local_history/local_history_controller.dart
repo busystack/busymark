@@ -211,16 +211,26 @@ class LocalHistoryBufferPathTransition {
   final String destinationPath;
 }
 
-class _PendingUntitledPromotion {
-  const _PendingUntitledPromotion({
+class LocalHistoryPendingIdentityPromotion {
+  const LocalHistoryPendingIdentityPromotion({
+    required this.bufferId,
     required this.documentId,
     required this.destinationPath,
     required this.displayName,
   });
 
+  final String bufferId;
   final String documentId;
   final String destinationPath;
   final String displayName;
+
+  LocalHistoryPendingIdentityPromotion atPath(String path) =>
+      LocalHistoryPendingIdentityPromotion(
+        bufferId: bufferId,
+        documentId: documentId,
+        destinationPath: p.normalize(path),
+        displayName: p.basename(path),
+      );
 }
 
 class LocalHistoryController extends Notifier<LocalHistoryState> {
@@ -232,7 +242,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _checkpointTimers = <String, Timer>{};
   final _bufferQueues = <String, Future<void>>{};
   final _pathTransitions = <String, LocalHistoryBufferPathTransition>{};
-  final _pendingUntitledPromotions = <String, _PendingUntitledPromotion>{};
+  final _pendingUntitledPromotions =
+      <String, LocalHistoryPendingIdentityPromotion>{};
   var _loadGeneration = 0;
   var _searchGeneration = 0;
 
@@ -369,6 +380,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         transition.destinationPath,
       );
     }
+    final promotion = _pendingUntitledPromotions[transition.bufferId];
+    if (committed &&
+        promotion != null &&
+        _sameOptionalPath(promotion.destinationPath, transition.sourcePath)) {
+      _pendingUntitledPromotions[transition.bufferId] = promotion.atPath(
+        transition.destinationPath,
+      );
+    }
     _scheduleCheckpoint(transition.bufferId);
   }
 
@@ -446,11 +465,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
       final sourceDocumentId = _documentIdsByBuffer[source.bufferId];
       if (source.untitled && !destinationExisted && sourceDocumentId != null) {
-        _pendingUntitledPromotions[source.bufferId] = _PendingUntitledPromotion(
-          documentId: sourceDocumentId,
-          destinationPath: p.normalize(destinationPath),
-          displayName: p.basename(destinationPath),
-        );
+        _pendingUntitledPromotions[source.bufferId] =
+            LocalHistoryPendingIdentityPromotion(
+              bufferId: source.bufferId,
+              documentId: sourceDocumentId,
+              destinationPath: p.normalize(destinationPath),
+              displayName: p.basename(destinationPath),
+            );
         promotionCompleted = await _completePendingUntitledPromotion(
           source.bufferId,
         );
@@ -524,7 +545,20 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     );
   }
 
-  Future<void> flushBuffer(DocumentBuffer buffer) async {
+  List<LocalHistoryPendingIdentityPromotion> get pendingIdentityPromotions =>
+      List.unmodifiable(_pendingUntitledPromotions.values);
+
+  bool hasPendingIdentityPromotion(String bufferId) =>
+      _pendingUntitledPromotions.containsKey(bufferId);
+
+  void restorePendingIdentityPromotion(
+    LocalHistoryPendingIdentityPromotion promotion,
+  ) {
+    _documentIdsByBuffer[promotion.bufferId] = promotion.documentId;
+    _pendingUntitledPromotions[promotion.bufferId] = promotion;
+  }
+
+  Future<bool> flushBuffer(DocumentBuffer buffer) async {
     _checkpointTimers.remove(buffer.id)?.cancel();
     final pending = _pending.remove(buffer.id);
     if (pending != null) {
@@ -536,15 +570,38 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         ),
       );
     }
+    if (_pendingUntitledPromotions.containsKey(buffer.id)) {
+      return _enqueue(
+        buffer.id,
+        () => _completePendingUntitledPromotion(buffer.id),
+      );
+    }
+    return true;
   }
 
-  Future<void> flushAll(Iterable<DocumentBuffer> buffers) async {
-    for (final buffer in buffers) {
-      await flushBuffer(buffer);
+  Future<bool> flushPendingIdentityPromotions() async {
+    var succeeded = true;
+    for (final bufferId in _pendingUntitledPromotions.keys.toList()) {
+      if (!await _enqueue(
+        bufferId,
+        () => _completePendingUntitledPromotion(bufferId),
+      )) {
+        succeeded = false;
+      }
     }
+    return succeeded && _pendingUntitledPromotions.isEmpty;
+  }
+
+  Future<bool> flushAll(Iterable<DocumentBuffer> buffers) async {
+    var succeeded = true;
+    for (final buffer in buffers) {
+      if (!await flushBuffer(buffer)) succeeded = false;
+    }
+    if (!await flushPendingIdentityPromotions()) succeeded = false;
     while (_bufferQueues.isNotEmpty) {
       await Future.wait(_bufferQueues.values.toList(growable: false));
     }
+    return succeeded && _pendingUntitledPromotions.isEmpty;
   }
 
   Future<void> remapPath(String sourcePath, String destinationPath) async {
@@ -575,6 +632,34 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
             LocalHistoryCaptureReason.automaticCheckpoint,
           ),
         );
+      }
+      final affectedPromotions = _pendingUntitledPromotions.entries
+          .where(
+            (entry) =>
+                p.equals(entry.value.destinationPath, sourcePath) ||
+                p.isWithin(sourcePath, entry.value.destinationPath),
+          )
+          .toList(growable: false);
+      for (final entry in affectedPromotions) {
+        final completed = await _enqueue(
+          entry.key,
+          () => _completePendingUntitledPromotion(entry.key),
+        );
+        if (!completed) {
+          final pendingPromotion = _pendingUntitledPromotions[entry.key];
+          if (pendingPromotion != null) {
+            final remapped = _remapHistoryPath(
+              pendingPromotion.destinationPath,
+              sourcePath,
+              destinationPath,
+            );
+            if (remapped != null) {
+              _pendingUntitledPromotions[entry.key] = pendingPromotion.atPath(
+                remapped,
+              );
+            }
+          }
+        }
       }
       await _store.remapPath(sourcePath, destinationPath);
       await refresh();
@@ -808,6 +893,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final promotion = _pendingUntitledPromotions[snapshot.bufferId];
     if (promotion != null) {
       if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
+        _setWarning(LocalHistoryWarningKind.pathChange);
         return false;
       }
       if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
@@ -947,6 +1033,22 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 bool _sameOptionalPath(String? first, String? second) {
   if (first == null || second == null) return first == second;
   return p.equals(first, second);
+}
+
+String? _remapHistoryPath(String path, String source, String destination) {
+  final normalizedPath = p.normalize(path);
+  final normalizedSource = p.normalize(source);
+  final normalizedDestination = p.normalize(destination);
+  if (p.equals(normalizedPath, normalizedSource)) {
+    return normalizedDestination;
+  }
+  if (!p.isWithin(normalizedSource, normalizedPath)) return null;
+  return p.normalize(
+    p.join(
+      normalizedDestination,
+      p.relative(normalizedPath, from: normalizedSource),
+    ),
+  );
 }
 
 extension<T> on Iterable<T> {

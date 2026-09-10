@@ -268,6 +268,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final recovery = await _recoveryStart;
     final session = await _sessionStore.load();
+    for (final association
+        in session?.pendingLocalHistoryAssociations ??
+            const <PendingLocalHistoryAssociation>[]) {
+      _localHistory.restorePendingIdentityPromotion(
+        LocalHistoryPendingIdentityPromotion(
+          bufferId: association.bufferId,
+          documentId: association.documentId,
+          destinationPath: association.destinationPath,
+          displayName: association.displayName,
+        ),
+      );
+    }
+    await _localHistory.flushPendingIdentityPromotions();
     // Entries are authoritative even if the last shutdown was marked clean.
     // This protects users when close confirmation is disabled while dirty
     // buffers still exist.
@@ -457,7 +470,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
     }
     final load = await _service.loadTextWithSnapshot(path);
-    return _fileBuffer(path, load).copyWith(editorState: session.editorState);
+    return _fileBuffer(
+      path,
+      load,
+      id: session.id,
+    ).copyWith(editorState: session.editorState);
   }
 
   Future<DocumentBuffer?> _restoreRecoveryBuffer(
@@ -540,9 +557,29 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> _persistSnapshot(WorkspaceState snapshot) async {
     await _recoveryStart;
     final workspace = snapshot.workspace;
+    final pendingHistoryAssociations = [
+      for (final promotion in _localHistory.pendingIdentityPromotions)
+        PendingLocalHistoryAssociation(
+          bufferId: promotion.bufferId,
+          documentId: promotion.documentId,
+          destinationPath: promotion.destinationPath,
+          displayName: promotion.displayName,
+        ),
+    ];
     if (workspace == null) {
       await _recoveryStore.writeEntries(const []);
-      await _sessionStore.clear();
+      if (pendingHistoryAssociations.isEmpty) {
+        await _sessionStore.clear();
+      } else {
+        await _sessionStore.save(
+          WorkspaceSessionSnapshot(
+            workspacePath: null,
+            tabs: const [],
+            activeBufferId: null,
+            pendingLocalHistoryAssociations: pendingHistoryAssociations,
+          ),
+        );
+      }
       return;
     }
     final workspacePath = switch (workspace.kind) {
@@ -576,17 +613,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               editorState: buffer.editorState,
             ),
         ],
+        pendingLocalHistoryAssociations: pendingHistoryAssociations,
       ),
     );
   }
 
   Future<void> markCleanShutdown() async {
     await _settleWritesForShutdown();
-    await _localHistory.flushAll(state.documentBuffers);
+    final historySettled = await _localHistory.flushAll(state.documentBuffers);
     await flushPersistence();
-    if (state.documentBuffers.any(
-      (buffer) => buffer.isDirty || buffer.isUntitled,
-    )) {
+    if (!historySettled ||
+        state.documentBuffers.any(
+          (buffer) => buffer.isDirty || buffer.isUntitled,
+        )) {
       // Keep the run unclean while recovery data is still needed.
       return;
     }
@@ -595,9 +634,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> discardRecoveryForShutdown() async {
     await _settleWritesForShutdown();
-    await _localHistory.flushAll(state.documentBuffers);
+    final historySettled = await _localHistory.flushAll(state.documentBuffers);
     await flushPersistence();
     await _recoveryStore.clear();
+    if (!historySettled) {
+      // Preserve the unclean-run marker so the pending association stored in
+      // the session is retried on the next launch.
+      await _recoveryStore.writeEntries(const []);
+    }
   }
 
   Future<void> _settleWritesForShutdown() async {
@@ -4185,6 +4229,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 DocumentBuffer _fileBuffer(
   String path,
   WorkspaceFileLoad load, {
+  String? id,
   DocumentViewModePreference mode = DocumentViewModePreference.editor,
 }) {
   final format =
@@ -4198,7 +4243,7 @@ DocumentBuffer _fileBuffer(
         )
       : load.format;
   return DocumentBuffer.file(
-    id: 'file:$path',
+    id: id ?? 'file:$path',
     filePath: path,
     text: load.text,
     snapshot: load.snapshot,

@@ -38,70 +38,87 @@ void main() {
     expect(restored.format.formattedText(restored.text), 'Saved\n');
   });
 
-  test('session store keeps only tab identity and editor state', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-session-',
-    );
-    addTearDown(() => directory.delete(recursive: true));
-    final store = JsonDocumentSessionStore(
-      filePathOverride: p.join(directory.path, 'session.json'),
-    );
-    final snapshot = WorkspaceSessionSnapshot(
-      workspacePath: '/workspace',
-      activeBufferId: 'second',
-      tabs: [
-        DocumentSessionEntry(
-          id: 'first',
-          filePath: '/workspace/first.md',
-          untitledName: null,
-          editorState: const DocumentEditorState(
-            mode: DocumentViewModePreference.split,
-            selection: TextSelection(baseOffset: 2, extentOffset: 8),
-            scrollOffset: 42,
-            foldedRegionKeys: {'heading:2'},
+  test(
+    'session store keeps tab state and pending history identity without text',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-session-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final store = JsonDocumentSessionStore(
+        filePathOverride: p.join(directory.path, 'session.json'),
+      );
+      final snapshot = WorkspaceSessionSnapshot(
+        workspacePath: '/workspace',
+        activeBufferId: 'second',
+        tabs: [
+          DocumentSessionEntry(
+            id: 'first',
+            filePath: '/workspace/first.md',
+            untitledName: null,
+            editorState: const DocumentEditorState(
+              mode: DocumentViewModePreference.split,
+              selection: TextSelection(baseOffset: 2, extentOffset: 8),
+              scrollOffset: 42,
+              foldedRegionKeys: {'heading:2'},
+            ),
           ),
-        ),
-        const DocumentSessionEntry(
-          id: 'second',
-          filePath: null,
-          untitledName: 'Untitled 2',
-          editorState: DocumentEditorState(),
-        ),
-      ],
-    );
+          const DocumentSessionEntry(
+            id: 'second',
+            filePath: null,
+            untitledName: 'Untitled 2',
+            editorState: DocumentEditorState(),
+          ),
+        ],
+        pendingLocalHistoryAssociations: const [
+          PendingLocalHistoryAssociation(
+            bufferId: 'first',
+            documentId: 'history-document',
+            destinationPath: '/workspace/first.md',
+            displayName: 'first.md',
+          ),
+        ],
+      );
 
-    await store.save(snapshot);
-    final restored = await store.load();
+      await store.save(snapshot);
+      final restored = await store.load();
 
-    expect(restored?.workspacePath, '/workspace');
-    expect(restored?.activeBufferId, 'second');
-    expect(restored?.tabs.map((entry) => entry.id), ['first', 'second']);
-    expect(
-      restored?.tabs.first.editorState.mode,
-      DocumentViewModePreference.split,
-    );
-    expect(
-      restored?.tabs.first.editorState.selection,
-      const TextSelection(baseOffset: 2, extentOffset: 8),
-    );
-    expect(restored?.tabs.first.editorState.scrollOffset, 42);
-    expect(restored?.tabs.first.editorState.foldedRegionKeys, {'heading:2'});
-    final persisted =
-        jsonDecode(
-              await File(p.join(directory.path, 'session.json')).readAsString(),
-            )
-            as Map<String, Object?>;
-    final firstTab = ((persisted['tabs'] as List).first as Map)
-        .cast<String, Object?>();
-    expect(firstTab, isNot(contains('lastKnownText')));
-    expect(firstTab, isNot(contains('diskSnapshot')));
-    expect(firstTab, isNot(contains('format')));
-    expect(firstTab, isNot(contains('searchCurrentMatchIndex')));
-    expect(
-      await File(p.join(directory.path, 'session.json')).readAsString(),
-      isNot(contains('# First')),
-    );
-  });
+      expect(restored?.workspacePath, '/workspace');
+      expect(restored?.activeBufferId, 'second');
+      expect(restored?.tabs.map((entry) => entry.id), ['first', 'second']);
+      expect(
+        restored?.pendingLocalHistoryAssociations.single.documentId,
+        'history-document',
+      );
+      expect(
+        restored?.tabs.first.editorState.mode,
+        DocumentViewModePreference.split,
+      );
+      expect(
+        restored?.tabs.first.editorState.selection,
+        const TextSelection(baseOffset: 2, extentOffset: 8),
+      );
+      expect(restored?.tabs.first.editorState.scrollOffset, 42);
+      expect(restored?.tabs.first.editorState.foldedRegionKeys, {'heading:2'});
+      final persisted =
+          jsonDecode(
+                await File(
+                  p.join(directory.path, 'session.json'),
+                ).readAsString(),
+              )
+              as Map<String, Object?>;
+      final firstTab = ((persisted['tabs'] as List).first as Map)
+          .cast<String, Object?>();
+      expect(firstTab, isNot(contains('lastKnownText')));
+      expect(firstTab, isNot(contains('diskSnapshot')));
+      expect(firstTab, isNot(contains('format')));
+      expect(firstTab, isNot(contains('searchCurrentMatchIndex')));
+      expect(
+        await File(p.join(directory.path, 'session.json')).readAsString(),
+        isNot(contains('# First')),
+      );
+    },
+  );
 
   test('recovery store distinguishes clean and unclean runs', () async {
     final directory = await Directory.systemTemp.createTemp(
