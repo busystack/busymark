@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/export/markdown_export_assets.dart';
 import 'package:busymark/src/export/markdown_export_mapper.dart';
@@ -9,12 +11,69 @@ import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  testWidgets('PDF export failure dialog exposes actionable detail', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: Colors.blue,
+        ),
+        home: Builder(
+          builder: (value) {
+            context = value;
+            return const Scaffold();
+          },
+        ),
+      ),
+    );
+    final headerBar = LinuxHeaderBarService(
+      channel: const MethodChannel('markdown-pdf-error-test'),
+    );
+    final dialog = showMarkdownPdfExportError(
+      context,
+      headerBar,
+      const MarkdownPdfExportException(
+        MarkdownPdfFailureCode.compilerFailed,
+        detail: 'Typst could not load the bundled template.',
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(
+      find.text('BusyMark could not export this document as PDF.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Typst could not load the bundled template.'),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Typst could not load the bundled template.'),
+        matching: find.byType(SelectionArea),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await dialog;
+  });
+
   test('PDF export eligibility is limited to active regular Markdown', () {
     const parser = MarkdownParser();
     final parsed = parser.parse(

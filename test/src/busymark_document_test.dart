@@ -2140,9 +2140,7 @@ void main() {}
     },
   );
 
-  testWidgets('WYSIWYG Shift+Down traverses explicit empty paragraphs', (
-    tester,
-  ) async {
+  testWidgets('WYSIWYG ignores redundant source blank lines', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
       source: 'First\n\n\nSecond\n',
@@ -2169,19 +2167,9 @@ void main() {}
     TextField fieldAt(int index) =>
         tester.widget<TextField>(find.byType(TextField).at(index));
 
-    expect(find.byType(TextField), findsNWidgets(3));
-    expect(fieldAt(1).controller!.text, isEmpty);
-    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 0);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.pump();
-    expect(fieldAt(2).focusNode!.hasFocus, isTrue);
-    expect(fieldAt(2).controller!.selection.extentOffset, 0);
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(fieldAt(0).controller!.text, 'First');
+    expect(fieldAt(1).controller!.text, 'Second');
   });
 
   testWidgets('typing replaces a WYSIWYG selection across paragraphs', (
@@ -5044,42 +5032,44 @@ void main() {}
     expect(controller.markdown, 'First\n\nSecond\n');
   });
 
-  test('WYSIWYG Enter preserves an empty paragraph across reloads', () {
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: 'First\n\nSecond\n',
-    );
-    final controller = BusyMarkWysiwygDocumentController(
-      document: parsed.busyDocument,
-    );
-    final firstBlock = controller.document.blocks.first;
+  test(
+    'WYSIWYG reload ignores an empty paragraph represented only by blanks',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'First\n\nSecond\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final firstBlock = controller.document.blocks.first;
 
-    final emptyBlockId = controller.applyEnterAt(
-      firstBlock.id,
-      firstBlock.plainText.length,
-    );
+      final emptyBlockId = controller.applyEnterAt(
+        firstBlock.id,
+        firstBlock.plainText.length,
+      );
 
-    expect(emptyBlockId, isNotNull);
-    expect(controller.markdown, 'First\n\n\nSecond\n');
-    expect(controller.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-      'Second',
-    ]);
+      expect(emptyBlockId, isNotNull);
+      expect(controller.markdown, 'First\n\n\nSecond\n');
+      expect(controller.document.blocks.map((block) => block.plainText), [
+        'First',
+        '',
+        'Second',
+      ]);
 
-    final reopened = BusyMarkWysiwygDocumentController(
-      document: parser
-          .parse(filePath: 'topic.md', source: controller.markdown)
-          .busyDocument,
-    );
-    expect(reopened.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-      'Second',
-    ]);
-  });
+      final reopened = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: controller.markdown)
+            .busyDocument,
+      );
+      expect(reopened.document.blocks.map((block) => block.plainText), [
+        'First',
+        'Second',
+      ]);
+    },
+  );
 
-  test('WYSIWYG Enter preserves an empty paragraph at end of file', () {
+  test('WYSIWYG reload ignores trailing blank lines', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
     final controller = BusyMarkWysiwygDocumentController(
       document: parsed.busyDocument,
@@ -5094,30 +5084,20 @@ void main() {}
           .parse(filePath: 'topic.md', source: controller.markdown)
           .busyDocument,
     );
-    expect(reopened.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-    ]);
+    expect(reopened.document.blocks.map((block) => block.plainText), ['First']);
   });
 
-  test('WYSIWYG can edit and remove a restored empty paragraph', () {
-    BusyMarkWysiwygDocumentController open(String source) {
-      return BusyMarkWysiwygDocumentController(
-        document: parser
-            .parse(filePath: 'topic.md', source: source)
-            .busyDocument,
-      );
-    }
+  test('WYSIWYG does not create blocks for redundant source whitespace', () {
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parser
+          .parse(filePath: 'topic.md', source: 'First\n\n\nSecond\n')
+          .busyDocument,
+    );
 
-    final edited = open('First\n\n\nSecond\n');
-    final emptyBlock = edited.document.blocks[1];
-    edited.updateBlockText(emptyBlock.id, 'Middle');
-    expect(edited.markdown, 'First\n\nMiddle\n\nSecond\n');
-
-    final removed = open('First\n\n\nSecond\n');
-    final removedEmptyBlock = removed.document.blocks[1];
-    removed.applyBackspaceAtStart(removedEmptyBlock.id);
-    expect(removed.markdown, 'First\n\nSecond\n');
+    expect(controller.document.blocks.map((block) => block.plainText), [
+      'First',
+      'Second',
+    ]);
   });
 
   test('WYSIWYG Enter in unordered list creates next item then exits list', () {

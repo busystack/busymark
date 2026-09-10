@@ -17,6 +17,55 @@ void main() {
     expect(preview.compatibility, isEmpty);
   });
 
+  test('preview ignores redundant blank lines between blocks', () {
+    // CommonMark 0.31.2 section 4.9: blank lines between block-level elements
+    // are ignored (apart from their separate role in tight/loose lists).
+    final ordinary = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '# Test Title 1\n'
+          '\n'
+          'Lorem ipsum dolor\n'
+          '\n'
+          'Lorem ipsume dolor 2\n'
+          '\n'
+          'Sincerely,\n'
+          '\n'
+          'User name\n',
+    );
+    final redundant = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '# Test Title 1\n'
+          '\n'
+          'Lorem ipsum dolor\n'
+          '\n'
+          '\n'
+          '\n'
+          'Lorem ipsume dolor 2\n'
+          '\n'
+          '\n'
+          'Sincerely,\n'
+          '\n'
+          'User name\n',
+    );
+
+    final ordinaryPreview = previewBuilder.build(ordinary);
+    final redundantPreview = previewBuilder.build(redundant);
+
+    expect(redundantPreview.blocks.map((block) => block.text), [
+      'Test Title 1',
+      'Lorem ipsum dolor',
+      'Lorem ipsume dolor 2',
+      'Sincerely,',
+      'User name',
+    ]);
+    expect(
+      redundantPreview.blocks.map((block) => (block.kind, block.text)),
+      ordinaryPreview.blocks.map((block) => (block.kind, block.text)),
+    );
+  });
+
   test('preview headings carry parser anchors for outline navigation', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

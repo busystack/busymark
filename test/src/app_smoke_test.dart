@@ -5090,6 +5090,142 @@ void main() {
     );
   });
 
+  testWidgets(
+    'rendered views ignore redundant blanks while Source preserves them',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const source =
+          '# Test Title 1\n'
+          '\n'
+          'Lorem ipsum dolor\n'
+          '\n'
+          '\n'
+          '\n'
+          'Lorem ipsume dolor 2\n'
+          '\n'
+          '\n'
+          'Sincerely,\n'
+          '\n'
+          'User name\n';
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.editor)
+            .toJson();
+      const service = _SearchWorkspaceService(source);
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue('/tmp/empty-paragraphs.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      final editorContent = find.byKey(
+        const ValueKey('wysiwyg-document-content'),
+      );
+      final editorScroll = find.byKey(
+        const ValueKey('wysiwyg-document-scroll'),
+      );
+      final editorFieldFinder = find.descendant(
+        of: editorScroll,
+        matching: find.byType(TextField),
+      );
+      for (
+        var i = 0;
+        i < 30 && editorFieldFinder.evaluate().length != 5;
+        i += 1
+      ) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(editorContent, findsOneWidget);
+      final editorFields = tester
+          .widgetList<TextField>(editorFieldFinder)
+          .toList();
+      final editorEmptyFields = editorFields
+          .where((field) => field.controller?.text.isEmpty ?? false)
+          .toList();
+      expect(editorFields, hasLength(5));
+      expect(editorEmptyFields, isEmpty);
+      final editorContentTops = [
+        for (var index = 0; index < editorFields.length; index += 1)
+          tester.getTopLeft(editorFieldFinder.at(index)).dy,
+      ];
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveEditorMode(DocumentViewModePreference.preview);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.preview);
+      await tester.pump(const Duration(milliseconds: 100));
+      final previewScroll = find.byKey(
+        const ValueKey('preview-document-scroll'),
+      );
+      final previewContentFinders = [
+        for (final text in const [
+          'Test Title 1',
+          'Lorem ipsum dolor',
+          'Lorem ipsume dolor 2',
+          'Sincerely,',
+          'User name',
+        ])
+          find.descendant(
+            of: previewScroll,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Text && widget.textSpan?.toPlainText() == text,
+            ),
+          ),
+      ];
+      for (final finder in previewContentFinders) {
+        expect(finder, findsOneWidget);
+      }
+      final previewContentTops = [
+        for (final finder in previewContentFinders)
+          tester.getTopLeft(finder).dy,
+      ];
+      for (var index = 1; index < previewContentTops.length; index += 1) {
+        expect(
+          previewContentTops[index] - previewContentTops.first,
+          closeTo(editorContentTops[index] - editorContentTops.first, 0.1),
+        );
+      }
+      expect(find.text(l10n.untitledResult), findsNothing);
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveEditorMode(DocumentViewModePreference.source);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.source);
+      final sourceEditor = find.byType(BusyMarkSourceEditor);
+      for (var i = 0; i < 30 && sourceEditor.evaluate().isEmpty; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final sourceField = find.descendant(
+        of: sourceEditor,
+        matching: find.byType(TextField),
+      );
+      expect(sourceField, findsOneWidget);
+      expect(tester.widget<TextField>(sourceField).controller?.text, source);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Editor and Preview share task-list presentation and wrapping', (
     tester,
   ) async {

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
-import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
@@ -3268,152 +3267,26 @@ String _incrementOrderedMarker(String? marker, int offset) {
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
-  final withBlankParagraphs = _restoreSourceBlankParagraphs(document);
-  final hasEditableBlock = withBlankParagraphs.blocks.any(
+  // Source whitespace remains in BusyDocument.source. The Markdown parser,
+  // rather than the rich editor, owns whether that whitespace creates blocks.
+  final hasEditableBlock = document.blocks.any(
     (block) =>
         block.kind != BusyBlockKind.frontMatter &&
         !block.isSourceOnly &&
         !block.isSourceProtected,
   );
   if (hasEditableBlock) {
-    return withBlankParagraphs;
+    return document;
   }
-  return withBlankParagraphs.copyWith(
+  return document.copyWith(
     blocks: [
-      ...withBlankParagraphs.blocks,
+      ...document.blocks,
       const BusyBlock(
         id: 'empty-paragraph',
         kind: BusyBlockKind.paragraph,
         inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
       ),
     ],
-  );
-}
-
-BusyDocument _restoreSourceBlankParagraphs(BusyDocument document) {
-  final source = document.source;
-  if (source == null ||
-      document.blocks.any(
-        (block) =>
-            block.kind == BusyBlockKind.paragraph && block.plainText.isEmpty,
-      )) {
-    return document;
-  }
-  final frontMatterBlocks = document.blocks
-      .where((block) => block.kind == BusyBlockKind.frontMatter)
-      .toList();
-  final sourceBlocks = document.blocks
-      .where(
-        (block) =>
-            block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
-      )
-      .toList();
-  final generatedBlocks = document.blocks
-      .where((block) => block.isGenerated)
-      .toList();
-  if (sourceBlocks.isEmpty) {
-    if (document.rawFrontMatter != null || source.trim().isNotEmpty) {
-      return document;
-    }
-    final blankOffsets = <int>[
-      0,
-      for (final match in '\n'.allMatches(source)) match.end,
-    ];
-    return document.copyWith(
-      blocks: [
-        ...frontMatterBlocks,
-        for (final (index, offset) in blankOffsets.indexed)
-          _sourceBlankParagraph(document, offset, index),
-        ...generatedBlocks,
-      ],
-    );
-  }
-  if (sourceBlocks.any((block) => block.sourceSpan == null)) {
-    return document;
-  }
-
-  final expanded = <BusyBlock>[];
-  var previousEnd = document.rawFrontMatter?.length ?? 0;
-  for (final (index, block) in sourceBlocks.indexed) {
-    final span = block.sourceSpan!;
-    if (span.startOffset < previousEnd || span.endOffset > source.length) {
-      return document;
-    }
-    final gap = source.substring(previousEnd, span.startOffset);
-    if (gap.trim().isNotEmpty) {
-      return document;
-    }
-    // Two newlines are the ordinary Markdown block boundary. Every newline
-    // after that represents another blank paragraph in the rich editor.
-    final baselineNewlines = index == 0 && document.rawFrontMatter == null
-        ? 0
-        : 2;
-    final blankOffsets = _extraBlankLineOffsets(
-      gap,
-      startOffset: previousEnd,
-      baselineNewlines: baselineNewlines,
-    );
-    for (final (blankIndex, offset) in blankOffsets.indexed) {
-      expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
-    }
-    expanded.add(block);
-    previousEnd = span.endOffset;
-  }
-
-  final trailing = source.substring(previousEnd);
-  if (trailing.trim().isNotEmpty) {
-    return document;
-  }
-  final trailingBlankOffsets = _extraBlankLineOffsets(
-    trailing,
-    startOffset: previousEnd,
-    baselineNewlines: 1,
-  );
-  for (final (blankIndex, offset) in trailingBlankOffsets.indexed) {
-    expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
-  }
-  if (expanded.length == sourceBlocks.length) {
-    return document;
-  }
-  return document.copyWith(
-    blocks: [...frontMatterBlocks, ...expanded, ...generatedBlocks],
-  );
-}
-
-List<int> _extraBlankLineOffsets(
-  String gap, {
-  required int startOffset,
-  required int baselineNewlines,
-}) {
-  final newlineOffsets = [
-    for (final match in '\n'.allMatches(gap)) startOffset + match.start,
-  ];
-  if (newlineOffsets.length <= baselineNewlines) {
-    return const [];
-  }
-  final lineStarts = <int>[
-    startOffset,
-    for (final offset in newlineOffsets) offset + 1,
-  ];
-  return [
-    for (var index = baselineNewlines; index < newlineOffsets.length; index++)
-      lineStarts[index],
-  ];
-}
-
-BusyBlock _sourceBlankParagraph(BusyDocument document, int offset, int index) {
-  return BusyBlock(
-    id: '\u0000source-blank:$offset:$index',
-    kind: BusyBlockKind.paragraph,
-    inlines: const [BusyInline(kind: BusyInlineKind.text, text: '')],
-    attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
-    rawSource: '',
-    sourceSpan: SourceSpan.fromOffsets(
-      filePath: document.filePath,
-      source: document.source ?? '',
-      startOffset: offset,
-      endOffset: offset,
-    ),
   );
 }
 
