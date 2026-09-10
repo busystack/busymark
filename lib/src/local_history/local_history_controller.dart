@@ -197,18 +197,32 @@ class LocalHistoryBufferSnapshot {
         revision: revision,
         path: destinationPath,
       );
+
+  LocalHistoryBufferSnapshot forBuffer(String id) => LocalHistoryBufferSnapshot(
+    bufferId: id,
+    displayName: displayName,
+    text: text,
+    format: format,
+    revision: revision,
+    path: path,
+    untitled: untitled,
+  );
 }
+
+enum LocalHistoryBufferPathTransitionKind { move, saveAs }
 
 class LocalHistoryBufferPathTransition {
   const LocalHistoryBufferPathTransition._({
     required this.bufferId,
     required this.sourcePath,
     required this.destinationPath,
+    required this.kind,
   });
 
   final String bufferId;
   final String? sourcePath;
   final String destinationPath;
+  final LocalHistoryBufferPathTransitionKind kind;
 }
 
 class LocalHistoryPendingIdentityPromotion {
@@ -230,6 +244,14 @@ class LocalHistoryPendingIdentityPromotion {
         documentId: documentId,
         destinationPath: p.normalize(path),
         displayName: p.basename(path),
+      );
+
+  LocalHistoryPendingIdentityPromotion forBuffer(String id) =>
+      LocalHistoryPendingIdentityPromotion(
+        bufferId: id,
+        documentId: documentId,
+        destinationPath: destinationPath,
+        displayName: displayName,
       );
 }
 
@@ -319,7 +341,29 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   Future<void> observeOpened(DocumentBuffer buffer) async {
     final snapshot = LocalHistoryBufferSnapshot.fromBuffer(buffer);
     if (snapshot.untitled && snapshot.text.isEmpty) return;
+    final adoptedPromotion = _adoptPendingPromotionForOpenedBuffer(snapshot);
     await _enqueue(snapshot.bufferId, () async {
+      final promotion = _pendingUntitledPromotions[snapshot.bufferId];
+      if (promotion != null) {
+        if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
+          _setWarning(LocalHistoryWarningKind.pathChange);
+          return;
+        }
+        if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
+          return;
+        }
+        final pending = _pending.remove(snapshot.bufferId);
+        _checkpointTimers.remove(snapshot.bufferId)?.cancel();
+        if (pending != null) {
+          await _capture(
+            pending,
+            LocalHistoryCaptureReason.automaticCheckpoint,
+          );
+        }
+        await _capture(snapshot, LocalHistoryCaptureReason.baseline);
+        return;
+      }
+      if (adoptedPromotion != null) return;
       if (_documentIdsByBuffer.containsKey(snapshot.bufferId)) return;
       await _capture(snapshot, LocalHistoryCaptureReason.baseline);
     });
@@ -350,11 +394,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     required String bufferId,
     required String? sourcePath,
     required String destinationPath,
+    LocalHistoryBufferPathTransitionKind kind =
+        LocalHistoryBufferPathTransitionKind.move,
   }) {
     final transition = LocalHistoryBufferPathTransition._(
       bufferId: bufferId,
       sourcePath: sourcePath,
       destinationPath: p.normalize(destinationPath),
+      kind: kind,
     );
     _pathTransitions[bufferId] = transition;
     _checkpointTimers.remove(bufferId)?.cancel();
@@ -382,6 +429,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
     final promotion = _pendingUntitledPromotions[transition.bufferId];
     if (committed &&
+        transition.kind == LocalHistoryBufferPathTransitionKind.move &&
         promotion != null &&
         _sameOptionalPath(promotion.destinationPath, transition.sourcePath)) {
       _pendingUntitledPromotions[transition.bufferId] = promotion.atPath(
@@ -440,7 +488,26 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       path: destinationPath,
     );
     var promotionCompleted = false;
+    var retainedSourcePromotion = false;
     final captured = await _enqueue(source.bufferId, () async {
+      // A named-file Save As is a fork. Resolve an earlier untitled-to-source
+      // promotion before recording the destination. If storage is still
+      // unavailable, detach that source association from the buffer so it can
+      // be retried independently without being retargeted to the copy.
+      if (!source.untitled &&
+          _pendingUntitledPromotions.containsKey(source.bufferId)) {
+        final promotion = _pendingUntitledPromotions[source.bufferId]!;
+        if (_sameOptionalPath(source.path, promotion.destinationPath)) {
+          promotionCompleted = await _completePendingUntitledPromotion(
+            source.bufferId,
+          );
+        }
+        if (_pendingUntitledPromotions.containsKey(source.bufferId)) {
+          _detachPendingUntitledPromotion(source.bufferId);
+          retainedSourcePromotion = true;
+        }
+      }
+
       // A checkpoint included in the Save As target belongs to the source
       // lineage. Newer edits remain suspended until the caller publishes the
       // destination path and finishes the path transition.
@@ -479,7 +546,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
 
       if (!policy.recordingEnabled || policy.excludes(destination.path)) {
-        return promotionCompleted;
+        return source.untitled && !destinationExisted && promotionCompleted;
       }
       return _capture(
         destination,
@@ -501,6 +568,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       // checkpoint reuse the source document identity if history was disabled,
       // excluded, or temporarily unavailable during this Save As.
       _documentIdsByBuffer.remove(source.bufferId);
+    }
+    if (retainedSourcePromotion) {
+      _setWarning(LocalHistoryWarningKind.pathChange);
     }
     return captured;
   }
@@ -582,10 +652,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   Future<bool> flushPendingIdentityPromotions() async {
     var succeeded = true;
     for (final bufferId in _pendingUntitledPromotions.keys.toList()) {
-      if (!await _enqueue(
-        bufferId,
-        () => _completePendingUntitledPromotion(bufferId),
-      )) {
+      if (!await _enqueue(bufferId, () async {
+        if (!await _completePendingUntitledPromotion(bufferId)) return false;
+        final pending = _pending.remove(bufferId);
+        _checkpointTimers.remove(bufferId)?.cancel();
+        if (pending == null) return true;
+        await _capture(pending, LocalHistoryCaptureReason.automaticCheckpoint);
+        return true;
+      })) {
         succeeded = false;
       }
     }
@@ -871,6 +945,52 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _pendingUntitledPromotions.clear();
     await _store.clearAll();
     await refresh();
+  }
+
+  LocalHistoryPendingIdentityPromotion? _adoptPendingPromotionForOpenedBuffer(
+    LocalHistoryBufferSnapshot snapshot,
+  ) {
+    final path = snapshot.path;
+    if (path == null) return null;
+    final match = _pendingUntitledPromotions.entries
+        .where((entry) => p.equals(entry.value.destinationPath, path))
+        .firstOrNull;
+    if (match == null) return null;
+    if (match.key == snapshot.bufferId) {
+      _documentIdsByBuffer[snapshot.bufferId] = match.value.documentId;
+      return match.value;
+    }
+
+    // Re-key synchronously, before the first await in observeOpened(). This
+    // prevents a fast edit from scheduling a baseline under a competing file
+    // identity while the promotion retry is still in progress.
+    _pendingUntitledPromotions.remove(match.key);
+    final adopted = match.value.forBuffer(snapshot.bufferId);
+    _pendingUntitledPromotions[snapshot.bufferId] = adopted;
+    final pending = _pending.remove(match.key);
+    _checkpointTimers.remove(match.key)?.cancel();
+    if (pending != null) {
+      _pending[snapshot.bufferId] = pending.forBuffer(snapshot.bufferId);
+    }
+    _documentIdsByBuffer.remove(match.key);
+    _documentIdsByBuffer[snapshot.bufferId] = adopted.documentId;
+    return adopted;
+  }
+
+  void _detachPendingUntitledPromotion(String bufferId) {
+    final promotion = _pendingUntitledPromotions.remove(bufferId);
+    if (promotion == null) return;
+    final detachedBufferId = 'history-promotion:${promotion.documentId}';
+    _pendingUntitledPromotions[detachedBufferId] = promotion.forBuffer(
+      detachedBufferId,
+    );
+    final pending = _pending.remove(bufferId);
+    _checkpointTimers.remove(bufferId)?.cancel();
+    if (pending != null) {
+      _pending[detachedBufferId] = pending.forBuffer(detachedBufferId);
+    }
+    _documentIdsByBuffer.remove(bufferId);
+    _documentIdsByBuffer[detachedBufferId] = promotion.documentId;
   }
 
   Future<bool> _capture(

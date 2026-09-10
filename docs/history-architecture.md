@@ -47,7 +47,11 @@ Known file and directory moves remap current and descendant paths while
 retaining historical paths. A first save of an untitled document continues its
 lineage. Named-file Save As retains the source lineage separately and starts or
 appends to the destination lineage; an overwritten destination is protected
-before publication.
+before publication. Path transitions explicitly distinguish moves from Save As
+so an unresolved first-save association is never retargeted to a later copy.
+Pending first-save associations are also matched by destination path when a tab
+is reopened, before baseline capture, and promotion refuses a destination
+already owned by another history document.
 
 ## Store and retention
 

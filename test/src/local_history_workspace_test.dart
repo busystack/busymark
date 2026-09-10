@@ -635,6 +635,119 @@ void main() {
   );
 
   test(
+    'second Save As preserves a failed first-save association as the source',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingFirstPromotionStore(memory);
+      final harness = await _harness(store);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Original untitled lineage\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final originalDocument = (await memory.load()).documents.single;
+      final firstPath = p.join(root.path, 'A.md');
+      final copyPath = p.join(root.path, 'B.md');
+
+      expect(await harness.controller.saveActiveAs(firstPath), isTrue);
+      expect((await memory.load()).documents.single.currentPath, isNull);
+      expect(await harness.controller.saveActiveAs(copyPath), isTrue);
+      expect(
+        await harness.container
+            .read(localHistoryControllerProvider.notifier)
+            .flushAll(harness.state.documentBuffers),
+        isTrue,
+      );
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents, hasLength(2));
+      final source = snapshot.documents.singleWhere(
+        (document) => document.currentPath == firstPath,
+      );
+      final copy = snapshot.documents.singleWhere(
+        (document) => document.currentPath == copyPath,
+      );
+      expect(source.id, originalDocument.id);
+      expect(copy.id, isNot(originalDocument.id));
+      expect(
+        await _revisionSources(memory, snapshot.revisionsFor(source.id)),
+        contains('Original untitled lineage\n'),
+      );
+      expect(
+        await _revisionSources(memory, snapshot.revisionsFor(copy.id)),
+        contains('Original untitled lineage\n'),
+      );
+
+      for (final expected in [(firstPath, source.id), (copyPath, copy.id)]) {
+        final reopened = await _harness(store);
+        await reopened.controller.openPath(expected.$1);
+        final history = reopened.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await history.selectDocumentForBuffer(reopened.state.activeBuffer!);
+        expect(
+          reopened.container
+              .read(localHistoryControllerProvider)
+              .selectedDocument
+              ?.id,
+          expected.$2,
+        );
+      }
+    },
+  );
+
+  test(
+    'reopened tab adopts its unresolved first-save history association',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingFirstPromotionStore(memory, failures: 20);
+      final harness = await _harness(store);
+      await harness.controller.openPath(root.path);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Lineage before closing the tab\n');
+      await Future<void>.delayed(Duration.zero);
+      await harness.container
+          .read(localHistoryControllerProvider.notifier)
+          .flushBuffer(harness.state.activeBuffer!);
+      final originalDocument = (await memory.load()).documents.single;
+      final destination = p.join(root.path, 'A.md');
+      expect(await harness.controller.saveActiveAs(destination), isTrue);
+      final oldBufferId = harness.state.activeBuffer!.id;
+
+      expect(await harness.controller.closeDocumentBuffer(oldBufferId), isTrue);
+      final history = harness.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      expect(history.hasPendingIdentityPromotion(oldBufferId), isTrue);
+      store.remainingPromotionFailures = 0;
+
+      expect(await harness.controller.openActiveFile(destination), isTrue);
+      final reopenedBuffer = harness.state.activeBuffer!;
+      expect(reopenedBuffer.id, isNot(oldBufferId));
+      await history.selectDocumentForBuffer(reopenedBuffer);
+      expect(await history.flushAll(harness.state.documentBuffers), isTrue);
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(snapshot.documents.single.currentPath, destination);
+      expect(
+        history.bufferIdForDocument(originalDocument.id),
+        reopenedBuffer.id,
+      );
+      expect(history.pendingIdentityPromotions, isEmpty);
+      expect(
+        await _revisionSources(
+          memory,
+          snapshot.revisionsFor(originalDocument.id),
+        ),
+        contains('Lineage before closing the tab\n'),
+      );
+    },
+  );
+
+  test(
     'unresolved shutdown promotion survives in session and retries on startup',
     () async {
       final memory = MemoryLocalHistoryStore();

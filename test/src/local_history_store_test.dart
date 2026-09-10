@@ -120,6 +120,57 @@ void main() {
   );
 
   test(
+    'untitled promotion refuses an already-owned destination path',
+    () async {
+      final time = DateTime.utc(2026, 1, 1);
+      final untitled = await store.capture(
+        LocalHistoryCaptureRequest(
+          displayName: 'Draft.md',
+          source: 'Original untitled history',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time,
+          reason: LocalHistoryCaptureReason.baseline,
+          untitled: true,
+        ),
+        policy,
+      );
+      final destination = await store.capture(
+        request(
+          'Existing destination history',
+          time.add(const Duration(seconds: 1)),
+          path: '/workspace/Guide.md',
+        ),
+        policy,
+      );
+
+      expect(
+        await store.promoteUntitledDocument(
+          documentId: untitled.document.id,
+          destinationPath: '/workspace/Guide.md',
+          displayName: 'Guide.md',
+          updatedAt: time.add(const Duration(seconds: 2)),
+        ),
+        isNull,
+      );
+
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(2));
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == untitled.document.id)
+            .currentPath,
+        isNull,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == destination.document.id)
+            .currentPath,
+        '/workspace/Guide.md',
+      );
+    },
+  );
+
+  test(
     'deduplicates only adjacent ordinary captures and preserves A-B-A',
     () async {
       final time = DateTime.utc(2026, 1, 1);

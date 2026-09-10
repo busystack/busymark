@@ -206,6 +206,15 @@ class FileLocalHistoryStore implements LocalHistoryStore {
         return p.equals(document.currentPath!, destination) ? document : null;
       }
       if (!document.untitled) return null;
+      final destinationOwner = index.documents
+          .where(
+            (candidate) =>
+                candidate.id != document.id &&
+                candidate.currentPath != null &&
+                p.equals(candidate.currentPath!, destination),
+          )
+          .firstOrNull;
+      if (destinationOwner != null) return null;
       final promoted = document.copyWith(
         displayName: displayName,
         currentPath: destination,
@@ -973,6 +982,15 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
       return p.equals(document.currentPath!, destination) ? document : null;
     }
     if (!document.untitled) return null;
+    final destinationOwner = _documents.values
+        .where(
+          (candidate) =>
+              candidate.id != document.id &&
+              candidate.currentPath != null &&
+              p.equals(candidate.currentPath!, destination),
+        )
+        .firstOrNull;
+    if (destinationOwner != null) return null;
     final promoted = document.copyWith(
       displayName: displayName,
       currentPath: destination,

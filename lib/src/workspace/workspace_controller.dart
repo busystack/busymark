@@ -3017,6 +3017,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           bufferId: target.bufferId,
           sourcePath: target.path,
           destinationPath: path,
+          kind: LocalHistoryBufferPathTransitionKind.saveAs,
         );
     var historyPathCommitted = false;
     try {
