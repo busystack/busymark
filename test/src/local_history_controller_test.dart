@@ -363,6 +363,167 @@ void main() {
   );
 
   test(
+    'recording-disabled first save promotes untitled history identity',
+    () async {
+      final timers = <_FakeTimer>[];
+      final store = MemoryLocalHistoryStore();
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final settings = container.read(appSettingsControllerProvider.notifier);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+
+      final untitled = DocumentBuffer.untitled(
+        id: 'draft-first-save',
+        name: 'Draft.md',
+        text: 'Untitled history\n',
+      );
+      await controller.observeOpened(untitled);
+      final originalDocument = (await store.load()).documents.single;
+
+      await settings.setLocalHistoryRecordingEnabled(false);
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(untitled),
+          '/workspace/Guide.md',
+          destinationExisted: false,
+        ),
+        isTrue,
+      );
+      var snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(snapshot.documents.single.currentPath, '/workspace/Guide.md');
+      expect(snapshot.documents.single.untitled, isFalse);
+      expect(snapshot.revisionsFor(originalDocument.id), hasLength(1));
+
+      await settings.setLocalHistoryRecordingEnabled(true);
+      final saved = untitled.copyWith(
+        filePath: '/workspace/Guide.md',
+        untitledName: null,
+        lastSavedText: untitled.text,
+        dirty: false,
+      );
+      expect(
+        await controller.captureSaved(
+          LocalHistoryBufferSnapshot.fromBuffer(
+            saved.edited('Named history\n'),
+          ),
+        ),
+        isTrue,
+      );
+      snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(
+        await _revisionSources(
+          store,
+          snapshot.revisionsFor(originalDocument.id),
+        ),
+        containsAll(['Untitled history\n', 'Named history\n']),
+      );
+
+      final reopenedContainer = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(reopenedContainer.dispose);
+      final reopenedController = reopenedContainer.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await reopenedController.refresh();
+      await reopenedController.observeOpened(
+        _fileBuffer('reopened-guide', '/workspace/Guide.md', 'Named history\n'),
+      );
+      expect(
+        reopenedController.bufferIdForDocument(originalDocument.id),
+        'reopened-guide',
+      );
+    },
+  );
+
+  test(
+    'failed first-save promotion is retried before a later capture',
+    () async {
+      final store = _FailingFirstPromotionStore();
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+
+      final untitled = DocumentBuffer.untitled(
+        id: 'draft-retry',
+        name: 'Draft.md',
+        text: 'Original untitled revision\n',
+      );
+      await controller.observeOpened(untitled);
+      final originalDocument = (await store.load()).documents.single;
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(untitled),
+          '/workspace/Recovered.md',
+          destinationExisted: false,
+        ),
+        isFalse,
+      );
+      expect((await store.load()).documents.single.currentPath, isNull);
+
+      final saved = untitled.copyWith(
+        filePath: '/workspace/Recovered.md',
+        untitledName: null,
+        lastSavedText: untitled.text,
+        dirty: false,
+      );
+      expect(
+        await controller.captureSaved(
+          LocalHistoryBufferSnapshot.fromBuffer(
+            saved.edited('Revision after recovery\n'),
+          ),
+        ),
+        isTrue,
+      );
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocument.id);
+      expect(snapshot.documents.single.currentPath, '/workspace/Recovered.md');
+      expect(snapshot.documents.single.untitled, isFalse);
+      expect(
+        await _revisionSources(
+          store,
+          snapshot.revisionsFor(originalDocument.id),
+        ),
+        containsAll([
+          'Original untitled revision\n',
+          'Revision after recovery\n',
+        ]),
+      );
+
+      final reopenedContainer = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(reopenedContainer.dispose);
+      final reopenedController = reopenedContainer.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await reopenedController.refresh();
+      await reopenedController.observeOpened(
+        _fileBuffer(
+          'reopened-recovered',
+          '/workspace/Recovered.md',
+          'Revision after recovery\n',
+        ),
+      );
+      expect(
+        reopenedController.bufferIdForDocument(originalDocument.id),
+        'reopened-recovered',
+      );
+    },
+  );
+
+  test(
     'file and directory moves settle pending checkpoints before remap',
     () async {
       final timers = <_FakeTimer>[];
@@ -509,8 +670,44 @@ class _BlockingRevisionReadStore implements LocalHistoryStore {
       delegate.prune(policy, now);
 
   @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) => delegate.promoteUntitledDocument(
+    documentId: documentId,
+    destinationPath: destinationPath,
+    displayName: displayName,
+    updatedAt: updatedAt,
+  );
+
+  @override
   Future<void> remapPath(String sourcePath, String destinationPath) =>
       delegate.remapPath(sourcePath, destinationPath);
+}
+
+class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
+  var _failNextPromotion = true;
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) {
+    if (_failNextPromotion) {
+      _failNextPromotion = false;
+      throw const LocalHistoryStorageException('Injected promotion failure');
+    }
+    return super.promoteUntitledDocument(
+      documentId: documentId,
+      destinationPath: destinationPath,
+      displayName: displayName,
+      updatedAt: updatedAt,
+    );
+  }
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

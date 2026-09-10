@@ -3669,6 +3669,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           continue;
         }
         final load = await _service.loadTextWithSnapshot(path);
+        final sourceChanged = buffer.text != load.text;
         buffers.add(
           buffer.copyWith(
             text: load.text,
@@ -3676,6 +3677,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             dirty: false,
             diskSnapshot: load.snapshot,
             format: load.format,
+            revision: sourceChanged ? buffer.revision + 1 : buffer.revision,
             diskState: DocumentDiskState.present,
           ),
         );

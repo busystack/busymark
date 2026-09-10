@@ -21,6 +21,18 @@ abstract interface class LocalHistoryStore {
 
   Future<void> prune(LocalHistoryPolicy policy, DateTime now);
 
+  /// Promotes an existing untitled history document to its first file path
+  /// without requiring a content revision to be recorded.
+  ///
+  /// Returns the updated document, or `null` when the requested identity is
+  /// missing or is no longer eligible for this transition.
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  });
+
   Future<void> remapPath(String sourcePath, String destinationPath);
 
   Future<void> markDeleted(String path, {required bool recursive});
@@ -175,6 +187,40 @@ class FileLocalHistoryStore implements LocalHistoryStore {
       if (!identical(retained, index)) await _publishIndex(root, retained);
     }),
   );
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) => _serialized((root) async {
+    return _withFileLock(root, () async {
+      final index = await _loadIndexUnlocked(root, repair: true);
+      final document = index.documents
+          .where((candidate) => candidate.id == documentId)
+          .firstOrNull;
+      if (document == null) return null;
+      final destination = p.normalize(destinationPath);
+      if (document.currentPath != null) {
+        return p.equals(document.currentPath!, destination) ? document : null;
+      }
+      if (!document.untitled) return null;
+      final promoted = document.copyWith(
+        displayName: displayName,
+        currentPath: destination,
+        historicalPaths: _uniquePaths([
+          ...document.historicalPaths,
+          destination,
+        ]),
+        updatedAt: updatedAt.toUtc(),
+        deleted: false,
+        untitled: false,
+      );
+      await _publishIndex(root, index.withDocument(promoted));
+      return promoted;
+    });
+  });
 
   @override
   Future<void> remapPath(String sourcePath, String destinationPath) =>
@@ -911,6 +957,32 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
       for (final revision in _revisions.values) revision.summary.documentId,
     };
     _documents.removeWhere((id, _) => !retainedDocumentIds.contains(id));
+  }
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) async {
+    final document = _documents[documentId];
+    if (document == null) return null;
+    final destination = p.normalize(destinationPath);
+    if (document.currentPath != null) {
+      return p.equals(document.currentPath!, destination) ? document : null;
+    }
+    if (!document.untitled) return null;
+    final promoted = document.copyWith(
+      displayName: displayName,
+      currentPath: destination,
+      historicalPaths: _uniquePaths([...document.historicalPaths, destination]),
+      updatedAt: updatedAt.toUtc(),
+      deleted: false,
+      untitled: false,
+    );
+    _documents[documentId] = promoted;
+    return promoted;
   }
 
   @override

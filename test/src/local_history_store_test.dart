@@ -69,6 +69,57 @@ void main() {
   );
 
   test(
+    'persists untitled first-save promotion without a new revision',
+    () async {
+      final time = DateTime.utc(2026, 1, 1);
+      final untitled = await store.capture(
+        LocalHistoryCaptureRequest(
+          displayName: 'Draft.md',
+          source: 'Draft content',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time,
+          reason: LocalHistoryCaptureReason.baseline,
+          untitled: true,
+        ),
+        policy,
+      );
+
+      final promoted = await store.promoteUntitledDocument(
+        documentId: untitled.document.id,
+        destinationPath: '/workspace/Guide.md',
+        displayName: 'Guide.md',
+        updatedAt: time.add(const Duration(seconds: 1)),
+      );
+      expect(promoted?.id, untitled.document.id);
+
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      var snapshot = await reopened.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, untitled.document.id);
+      expect(snapshot.documents.single.currentPath, '/workspace/Guide.md');
+      expect(snapshot.documents.single.untitled, isFalse);
+      expect(snapshot.revisions, hasLength(1));
+
+      final later = await reopened.capture(
+        LocalHistoryCaptureRequest(
+          documentId: untitled.document.id,
+          path: '/workspace/Guide.md',
+          displayName: 'Guide.md',
+          source: 'Named content',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time.add(const Duration(seconds: 2)),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        policy,
+      );
+      snapshot = await reopened.load();
+      expect(later.document.id, untitled.document.id);
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.revisionsFor(untitled.document.id), hasLength(2));
+    },
+  );
+
+  test(
     'deduplicates only adjacent ordinary captures and preserves A-B-A',
     () async {
       final time = DateTime.utc(2026, 1, 1);

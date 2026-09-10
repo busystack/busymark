@@ -211,6 +211,18 @@ class LocalHistoryBufferPathTransition {
   final String destinationPath;
 }
 
+class _PendingUntitledPromotion {
+  const _PendingUntitledPromotion({
+    required this.documentId,
+    required this.destinationPath,
+    required this.displayName,
+  });
+
+  final String documentId;
+  final String destinationPath;
+  final String displayName;
+}
+
 class LocalHistoryController extends Notifier<LocalHistoryState> {
   late LocalHistoryStore _store;
   late LocalHistoryClock _clock;
@@ -220,6 +232,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _checkpointTimers = <String, Timer>{};
   final _bufferQueues = <String, Future<void>>{};
   final _pathTransitions = <String, LocalHistoryBufferPathTransition>{};
+  final _pendingUntitledPromotions = <String, _PendingUntitledPromotion>{};
   var _loadGeneration = 0;
   var _searchGeneration = 0;
 
@@ -407,6 +420,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       revision: source.revision,
       path: destinationPath,
     );
+    var promotionCompleted = false;
     final captured = await _enqueue(source.bufferId, () async {
       // A checkpoint included in the Save As target belongs to the source
       // lineage. Newer edits remain suspended until the caller publishes the
@@ -417,19 +431,39 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           _sameOptionalPath(pending.path, source.path)) {
         _pending.remove(source.bufferId);
         _checkpointTimers.remove(source.bufferId)?.cancel();
-        if (!await _capture(
+        final pendingCaptured = await _capture(
           pending,
           LocalHistoryCaptureReason.automaticCheckpoint,
           allowDuringPathTransition: true,
-        )) {
+        );
+        if (!pendingCaptured &&
+            policy.recordingEnabled &&
+            !policy.excludes(pending.path) &&
+            !source.untitled) {
           return false;
         }
+      }
+
+      final sourceDocumentId = _documentIdsByBuffer[source.bufferId];
+      if (source.untitled && !destinationExisted && sourceDocumentId != null) {
+        _pendingUntitledPromotions[source.bufferId] = _PendingUntitledPromotion(
+          documentId: sourceDocumentId,
+          destinationPath: p.normalize(destinationPath),
+          displayName: p.basename(destinationPath),
+        );
+        promotionCompleted = await _completePendingUntitledPromotion(
+          source.bufferId,
+        );
+        if (!promotionCompleted) return false;
+      }
+
+      if (!policy.recordingEnabled || policy.excludes(destination.path)) {
+        return promotionCompleted;
       }
       return _capture(
         destination,
         LocalHistoryCaptureReason.saved,
         ignoreBinding: !source.untitled || destinationExisted,
-        allowPathChange: source.untitled && !destinationExisted,
       );
     });
     if (captured) {
@@ -740,12 +774,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   Future<void> clearDocument(String documentId) async {
     await _store.clearDocument(documentId);
     _documentIdsByBuffer.removeWhere((_, value) => value == documentId);
+    _pendingUntitledPromotions.removeWhere(
+      (_, promotion) => promotion.documentId == documentId,
+    );
     await refresh();
   }
 
   Future<void> clearAll() async {
     _cancelCheckpoints();
     _documentIdsByBuffer.clear();
+    _pendingUntitledPromotions.clear();
     await _store.clearAll();
     await refresh();
   }
@@ -766,6 +804,15 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         _pending[snapshot.bufferId] = snapshot;
       }
       return true;
+    }
+    final promotion = _pendingUntitledPromotions[snapshot.bufferId];
+    if (promotion != null) {
+      if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
+        return false;
+      }
+      if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
+        return false;
+      }
     }
     final currentPolicy = policy;
     if (!currentPolicy.recordingEnabled ||
@@ -807,6 +854,35 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       return true;
     } on Object catch (error) {
       _setWarning(LocalHistoryWarningKind.capture, error.toString());
+      return false;
+    }
+  }
+
+  Future<bool> _completePendingUntitledPromotion(String bufferId) async {
+    final promotion = _pendingUntitledPromotions[bufferId];
+    if (promotion == null) return true;
+    try {
+      final document = await _store.promoteUntitledDocument(
+        documentId: promotion.documentId,
+        destinationPath: promotion.destinationPath,
+        displayName: promotion.displayName,
+        updatedAt: _clock().toUtc(),
+      );
+      if (document == null) {
+        _setWarning(LocalHistoryWarningKind.pathChange);
+        return false;
+      }
+      _documentIdsByBuffer[bufferId] = document.id;
+      _pendingUntitledPromotions.remove(bufferId);
+      if (ref.mounted) {
+        final loaded = await _store.load();
+        if (ref.mounted) {
+          state = state.copyWith(snapshot: loaded, warning: null);
+        }
+      }
+      return true;
+    } on Object catch (error) {
+      _setWarning(LocalHistoryWarningKind.pathChange, error.toString());
       return false;
     }
   }

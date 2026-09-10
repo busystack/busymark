@@ -63,6 +63,7 @@ class _LocalHistoryComparisonViewState
       revisionVersion: revision.summary.capturedAt.microsecondsSinceEpoch,
       currentBufferId: matchingBuffer?.id,
       currentSourceVersion: matchingBuffer?.revision,
+      currentSource: matchingBuffer?.text,
       currentPath: document.currentPath,
     );
     if (_request != request) {
@@ -263,6 +264,7 @@ class _ComparisonRequest {
     required this.revisionVersion,
     required this.currentBufferId,
     required this.currentSourceVersion,
+    required this.currentSource,
     required this.currentPath,
   });
 
@@ -271,6 +273,7 @@ class _ComparisonRequest {
   final int revisionVersion;
   final String? currentBufferId;
   final int? currentSourceVersion;
+  final String? currentSource;
   final String? currentPath;
 
   @override
@@ -281,6 +284,7 @@ class _ComparisonRequest {
       other.revisionVersion == revisionVersion &&
       other.currentBufferId == currentBufferId &&
       other.currentSourceVersion == currentSourceVersion &&
+      other.currentSource == currentSource &&
       other.currentPath == currentPath;
 
   @override
@@ -290,6 +294,7 @@ class _ComparisonRequest {
     revisionVersion,
     currentBufferId,
     currentSourceVersion,
+    currentSource,
     currentPath,
   );
 }
@@ -322,7 +327,9 @@ class _ComparisonSnapshot {
     }
     if (currentBuffer == null) return request.currentBufferId == null;
     return comparison.currentInput.id == currentBuffer.id &&
-        comparison.currentInput.version == currentBuffer.revision;
+        comparison.currentInput.version == currentBuffer.revision &&
+        comparison.currentInput.source == currentBuffer.text &&
+        request.currentSource == currentBuffer.text;
   }
 }
 

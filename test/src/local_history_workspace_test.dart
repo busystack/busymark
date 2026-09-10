@@ -707,6 +707,87 @@ void main() {
       expect(tester.widget<OutlinedButton>(restoreChange).onPressed, isNotNull);
     },
   );
+
+  testWidgets(
+    'workspace refresh invalidates a completed comparison by source content',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1200, 800);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      final path = p.join(root.path, 'refreshed-comparison.md');
+      final computer = _BlockingReplacementComparisonComputer();
+      final monitor = _ControlledFileMonitor();
+      final harness = (await tester.runAsync(() async {
+        await File(path).writeAsString('Current before refresh\n');
+        final store = MemoryLocalHistoryStore();
+        final captured = await _capture(
+          store,
+          path,
+          'Historical comparison text\n',
+        );
+        final harness = await _harness(
+          store,
+          fileMonitor: monitor,
+          comparisonComputer: computer.call,
+        );
+        await harness.controller.openPath(path);
+        final history = harness.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await history.refresh();
+        history.selectDocument(captured.document.id);
+        await history.selectRevision(captured.revision!.id);
+        return harness;
+      }))!;
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: harness.container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.light,
+              accentColor: Colors.blue,
+            ),
+            home: const Scaffold(body: LocalHistoryComparisonView()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final initialRevision = harness.state.activeBuffer!.revision;
+      final context = tester.element(find.byType(LocalHistoryComparisonView));
+      final l10n = AppLocalizations.of(context);
+      final restoreAll = find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton &&
+            widget.tooltip == l10n.localHistoryRestoreRevision,
+      );
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNotNull);
+
+      await tester.runAsync(() async {
+        await File(path).writeAsString('Current after refresh\n');
+        expect(
+          await harness.controller.refreshWorkspaceFromDiskPreservingOpenTabs(),
+          isTrue,
+        );
+      });
+      expect(harness.state.activeBuffer!.revision, initialRevision + 1);
+      expect(harness.state.activeText, 'Current after refresh\n');
+      await tester.pump();
+      await tester.runAsync(() => computer.replacementStarted.future);
+      await tester.pump();
+
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNull);
+
+      computer.completeReplacement();
+      await tester.pumpAndSettle();
+      expect(computer.replacementCurrent.source, 'Current after refresh\n');
+      expect(find.textContaining('Current after refresh'), findsWidgets);
+      expect(tester.widget<IconButton>(restoreAll).onPressed, isNotNull);
+    },
+  );
 }
 
 SourceComparison _comparison(
@@ -857,6 +938,19 @@ class _FailingProtectiveStore implements LocalHistoryStore {
       delegate.prune(policy, now);
 
   @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) => delegate.promoteUntitledDocument(
+    documentId: documentId,
+    destinationPath: destinationPath,
+    displayName: displayName,
+    updatedAt: updatedAt,
+  );
+
+  @override
   Future<void> remapPath(String sourcePath, String destinationPath) =>
       delegate.remapPath(sourcePath, destinationPath);
 }
@@ -925,6 +1019,8 @@ class _BlockingReplacementComparisonComputer {
   final _replacement = Completer<SourceComparison>();
   late SourceComparisonInput _replacementOld;
   late SourceComparisonInput _replacementCurrent;
+
+  SourceComparisonInput get replacementCurrent => _replacementCurrent;
 
   Future<SourceComparison> call(
     SourceComparisonInput oldInput,
