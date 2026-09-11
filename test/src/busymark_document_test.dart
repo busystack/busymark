@@ -5407,6 +5407,95 @@ void main() {}
     expect(find.byType(TextField), findsOneWidget);
   });
 
+  testWidgets('hard-break toolbar command retains focus and advances caret', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fieldFinder = find.byType(TextField).first;
+    final field = tester.widget<TextField>(fieldFinder);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+    final l10n = AppLocalizations.of(tester.element(fieldFinder));
+    final hardBreakButton = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkHeaderIconButton &&
+          widget.tooltip == l10n.hardLineBreak,
+    );
+
+    expect(hardBreakButton, findsOneWidget);
+    await tester.tap(hardBreakButton);
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \n Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection.collapsed(offset: 6),
+    );
+  });
+
+  testWidgets('Shift+Enter retains focus and advances past the hard break', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \n Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection.collapsed(offset: 6),
+    );
+  });
+
   testWidgets('WYSIWYG editor lazily builds large documents', (tester) async {
     final source = List.generate(
       500,

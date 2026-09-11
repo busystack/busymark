@@ -4597,6 +4597,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _recordUndoSnapshot();
     _documentController.insertHardBreak(blockId, offset);
     _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: offset + 1);
   }
 
   Future<void> _applyCodeLanguageCommand() async {
