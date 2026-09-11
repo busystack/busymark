@@ -943,6 +943,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hardLineBreak => 'Zorunlu satır sonu';
 
   @override
+  String get insertBlankLine => 'Boş satır ekle';
+
+  @override
   String get textStyle => 'Metin stili';
 
   @override

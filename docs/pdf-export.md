@@ -39,6 +39,16 @@ Choose the destination after confirming settings. BusyMark asks before
 replacing an existing file. Export can be cancelled, and a failed export keeps
 the previous PDF usable.
 
+## Intentional blank lines
+
+Use **Insert blank line** in Editor view when a specific one-line gap is part of
+the document. BusyMark stores the gap as two explicit `<br>` elements, so it is
+visible in Editor and Reading views and preserved by Markdown PDF and HTML
+exports. Source view shows the `<br><br>` representation.
+
+Additional empty source lines are still ordinary Markdown block separators;
+repeating them does not create additional vertical space.
+
 ## Offline content
 
 PDF export works locally with BusyMark’s included PDF, math, and diagram tools.

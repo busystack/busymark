@@ -1137,6 +1137,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Boş satır ekle",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Metin stili",
   "@textStyle": {
     "description": "Text style menu tooltip."

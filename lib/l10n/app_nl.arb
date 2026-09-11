@@ -1137,6 +1137,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Lege regel invoegen",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Tekststijl",
   "@textStyle": {
     "description": "Text style menu tooltip."

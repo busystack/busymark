@@ -953,6 +953,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hardLineBreak => 'Saut de ligne forcé';
 
   @override
+  String get insertBlankLine => 'Insérer une ligne vide';
+
+  @override
   String get textStyle => 'Style de texte';
 
   @override

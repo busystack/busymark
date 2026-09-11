@@ -1401,6 +1401,7 @@ void main() {
                       onOutdentCommand: () {},
                       onToggleTaskCommand: () {},
                       onHardBreakCommand: () {},
+                      onBlankLineCommand: () {},
                     ),
                   );
                 },
@@ -1460,6 +1461,7 @@ void main() {
         l10n.link,
         l10n.inlineMath,
         l10n.hardLineBreak,
+        l10n.insertBlankLine,
         l10n.admonition,
         l10n.blockquote,
         l10n.codeBlock,
@@ -1485,6 +1487,10 @@ void main() {
       };
       expect(buttonsByTooltip[l10n.codeBlock]?.icon, BusyMarkGlyphs.codeBlock);
       expect(buttonsByTooltip[l10n.htmlBlock]?.icon, BusyMarkGlyphs.htmlBlock);
+      expect(
+        buttonsByTooltip[l10n.insertBlankLine]?.icon,
+        BusyMarkGlyphs.blankLine,
+      );
       expect(
         buttonsByTooltip[l10n.codeBlock]?.icon,
         isNot(buttonsByTooltip[l10n.htmlBlock]?.icon),

@@ -941,6 +941,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get hardLineBreak => 'Sundreavahetus';
 
   @override
+  String get insertBlankLine => 'Lisa tühi rida';
+
+  @override
   String get textStyle => 'Tekstilaad';
 
   @override

@@ -954,6 +954,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hardLineBreak => 'Salto de línea forzado';
 
   @override
+  String get insertBlankLine => 'Insertar línea en blanco';
+
+  @override
   String get textStyle => 'Estilo de texto';
 
   @override

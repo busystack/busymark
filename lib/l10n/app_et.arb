@@ -1065,6 +1065,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Lisa tühi rida",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Tekstilaad",
   "@textStyle": {
     "description": "Text style menu tooltip."

@@ -1416,6 +1416,7 @@ void main() {
       findsOneWidget,
     );
     expect(categoryText('html', l10n.hardLineBreak), findsOneWidget);
+    expect(categoryText('html', l10n.insertBlankLine), findsOneWidget);
     expect(topicNavigation('html', 1), findsOneWidget);
     expect(topicNavigation('html', 2), findsNothing);
     expect(find.textContaining('article, aside, div, section'), findsOneWidget);
@@ -5205,6 +5206,96 @@ void main() {
         );
       }
       expect(find.text(l10n.untitledResult), findsNothing);
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveEditorMode(DocumentViewModePreference.source);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.source);
+      final sourceEditor = find.byType(BusyMarkSourceEditor);
+      for (var i = 0; i < 30 && sourceEditor.evaluate().isEmpty; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final sourceField = find.descendant(
+        of: sourceEditor,
+        matching: find.byType(TextField),
+      );
+      expect(sourceField, findsOneWidget);
+      expect(tester.widget<TextField>(sourceField).controller?.text, source);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'explicit HTML breaks preserve one blank line in every document view',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const source = 'Before<br><br>After\n';
+      const renderedText = 'Before\n\nAfter';
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.editor)
+            .toJson();
+      const service = _SearchWorkspaceService(source);
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue('/tmp/explicit-blank-line.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      final editorScroll = find.byKey(
+        const ValueKey('wysiwyg-document-scroll'),
+      );
+      final editorField = find.descendant(
+        of: editorScroll,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField && widget.controller?.text == renderedText,
+        ),
+      );
+      for (var i = 0; i < 30 && editorField.evaluate().isEmpty; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(editorField, findsOneWidget);
+
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveEditorMode(DocumentViewModePreference.preview);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.preview);
+      await tester.pump(const Duration(milliseconds: 100));
+      final previewScroll = find.byKey(
+        const ValueKey('preview-document-scroll'),
+      );
+      expect(
+        find.descendant(
+          of: previewScroll,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                widget.textSpan?.toPlainText() == renderedText,
+          ),
+        ),
+        findsOneWidget,
+      );
 
       container
           .read(workspaceControllerProvider.notifier)

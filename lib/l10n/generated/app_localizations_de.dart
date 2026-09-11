@@ -956,6 +956,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hardLineBreak => 'Harter Zeilenumbruch';
 
   @override
+  String get insertBlankLine => 'Leerzeile einfügen';
+
+  @override
   String get textStyle => 'Textstil';
 
   @override

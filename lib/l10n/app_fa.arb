@@ -978,6 +978,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "درج خط خالی",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "سبک متن",
   "@textStyle": {
     "description": "Text style menu tooltip."

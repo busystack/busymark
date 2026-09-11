@@ -901,6 +901,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hardLineBreak => '강제 줄 바꿈';
 
   @override
+  String get insertBlankLine => '빈 줄 삽입';
+
+  @override
   String get textStyle => '텍스트 스타일';
 
   @override

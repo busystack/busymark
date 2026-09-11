@@ -949,6 +949,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get hardLineBreak => 'Quebra de linha forçada';
 
   @override
+  String get insertBlankLine => 'Inserir linha em branco';
+
+  @override
   String get textStyle => 'Estilo de texto';
 
   @override
@@ -5174,6 +5177,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get hardLineBreak => 'Quebra de linha forçada';
+
+  @override
+  String get insertBlankLine => 'Inserir linha em branco';
 
   @override
   String get textStyle => 'Estilo de texto';

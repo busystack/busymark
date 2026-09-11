@@ -953,6 +953,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hardLineBreak => 'Принудительный перенос строки';
 
   @override
+  String get insertBlankLine => 'Вставить пустую строку';
+
+  @override
   String get textStyle => 'Стиль текста';
 
   @override

@@ -1137,6 +1137,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Sisipkan baris kosong",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Gaya teks",
   "@textStyle": {
     "description": "Text style menu tooltip."

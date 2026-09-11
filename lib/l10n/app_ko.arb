@@ -1137,6 +1137,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "빈 줄 삽입",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "텍스트 스타일",
   "@textStyle": {
     "description": "Text style menu tooltip."

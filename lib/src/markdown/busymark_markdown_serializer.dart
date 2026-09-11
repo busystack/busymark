@@ -453,6 +453,23 @@ class BusyMarkMarkdownSerializer {
     var nextAtBlockStart = atBlockStart;
     for (var index = 0; index < inlines.length; index++) {
       final inline = inlines[index];
+      if (inline.kind == BusyInlineKind.hardBreak) {
+        var runEnd = index + 1;
+        while (runEnd < inlines.length &&
+            inlines[runEnd].kind == BusyInlineKind.hardBreak) {
+          runEnd += 1;
+        }
+        final count = runEnd - index;
+        if (count > 1) {
+          // A whitespace-only line ends a CommonMark paragraph, so repeated
+          // two-space hard breaks do not round-trip. Raw inline <br> elements
+          // are defined by CommonMark and preserve an intentional blank line.
+          buffer.write(List.filled(count, '<br>').join());
+          nextAtBlockStart = false;
+          index = runEnd - 1;
+          continue;
+        }
+      }
       final source = _inline(
         inline,
         tableCell: tableCell,

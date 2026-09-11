@@ -977,6 +977,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "إدراج سطر فارغ",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "نمط النص",
   "@textStyle": {
     "description": "Text style menu tooltip."

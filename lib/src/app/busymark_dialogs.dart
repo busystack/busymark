@@ -1599,6 +1599,13 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           scope: l10n.markdown,
           documentationUri: _htmlDocumentationUri,
         ),
+        _SyntaxReferenceEntry(
+          title: l10n.insertBlankLine,
+          example: 'First line<br><br>\nSecond line',
+          identifiers: 'br + br',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
       ],
       footer: _SyntaxReferenceNote(
         items: [

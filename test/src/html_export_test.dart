@@ -155,6 +155,16 @@ Footnote[^note] and again[^note].
     },
   );
 
+  test('explicit blank lines export as consecutive HTML breaks', () async {
+    final result = await export('Before<br><br>After\n');
+    final doc = html.parse(await File(result.entryPointPath).readAsString());
+    final paragraph = doc.querySelector('article p');
+
+    expect(paragraph, isNotNull);
+    expect(paragraph!.querySelectorAll('br'), hasLength(2));
+    expect(paragraph.text, 'BeforeAfter');
+  });
+
   test(
     'content-addressed assets relocate, deduplicate and reject symlink escapes',
     () async {

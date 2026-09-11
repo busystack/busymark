@@ -977,6 +977,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "खाली पंक्ति डालें",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "टेक्स्ट शैली",
   "@textStyle": {
     "description": "Text style menu tooltip."

@@ -942,6 +942,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get hardLineBreak => 'Pemisah baris keras';
 
   @override
+  String get insertBlankLine => 'Sisipkan baris kosong';
+
+  @override
   String get textStyle => 'Gaya teks';
 
   @override

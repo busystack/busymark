@@ -904,6 +904,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hardLineBreak => '強制改行';
 
   @override
+  String get insertBlankLine => '空行を挿入';
+
+  @override
   String get textStyle => 'テキストスタイル';
 
   @override

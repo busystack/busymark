@@ -941,6 +941,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get hardLineBreak => 'Tvungent linjeskift';
 
   @override
+  String get insertBlankLine => 'Sett inn tom linje';
+
+  @override
   String get textStyle => 'Tekststil';
 
   @override

@@ -951,6 +951,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get hardLineBreak => 'Interruzione di riga forzata';
 
   @override
+  String get insertBlankLine => 'Inserisci riga vuota';
+
+  @override
   String get textStyle => 'Stile del testo';
 
   @override

@@ -977,6 +977,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Wstaw pusty wiersz",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Styl tekstu",
   "@textStyle": {
     "description": "Text style menu tooltip."

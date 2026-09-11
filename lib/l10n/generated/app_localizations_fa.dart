@@ -937,6 +937,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get hardLineBreak => 'شکست خط اجباری';
 
   @override
+  String get insertBlankLine => 'درج خط خالی';
+
+  @override
   String get textStyle => 'سبک متن';
 
   @override

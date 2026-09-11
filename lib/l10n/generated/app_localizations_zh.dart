@@ -889,6 +889,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hardLineBreak => '硬换行';
 
   @override
+  String get insertBlankLine => '插入空行';
+
+  @override
   String get textStyle => '文本样式';
 
   @override
@@ -4866,6 +4869,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get hardLineBreak => '硬换行';
+
+  @override
+  String get insertBlankLine => '插入空行';
 
   @override
   String get textStyle => '文本样式';

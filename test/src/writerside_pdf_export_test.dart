@@ -162,6 +162,38 @@ void main() {
   });
 
   test(
+    'Markdown topic blank lines remain explicit in Writerside PDF',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      await File(
+        p.join(fixture.module.path, 'topics', 'intro.md'),
+      ).writeAsString('# Introduction\n\nBefore<br><br>After\n');
+      final exporter = _RecordingMarkdownExporter();
+
+      await WritersidePdfExportService(markdownExporter: exporter).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: p.join(fixture.root.path, 'blank-line.pdf'),
+          overwrite: false,
+        ),
+      );
+
+      final paragraph = _allBlocks(
+        exporter.request!.document!.blocks,
+      ).singleWhere((block) => block.plainText == 'Before\n\nAfter');
+      expect(
+        paragraph.inlines.where(
+          (inline) => inline.kind == BusyInlineKind.hardBreak,
+        ),
+        hasLength(2),
+      );
+    },
+  );
+
+  test(
     'native export composes the selected instance without a container runtime',
     () async {
       final fixture = await _WritersideFixture.create();

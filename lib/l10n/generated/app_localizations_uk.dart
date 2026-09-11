@@ -959,6 +959,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get hardLineBreak => 'Примусовий розрив рядка';
 
   @override
+  String get insertBlankLine => 'Вставити порожній рядок';
+
+  @override
   String get textStyle => 'Стиль тексту';
 
   @override

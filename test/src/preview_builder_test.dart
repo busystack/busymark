@@ -66,6 +66,22 @@ void main() {
     );
   });
 
+  test('preview preserves an explicit blank line encoded with HTML breaks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Before<br><br>After\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks, hasLength(1));
+    expect(
+      _flattenInlines(
+        preview.blocks.single.inlines,
+      ).map((inline) => inline.text).join(),
+      'Before\n\nAfter',
+    );
+  });
+
   test('preview headings carry parser anchors for outline navigation', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

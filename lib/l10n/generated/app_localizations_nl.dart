@@ -942,6 +942,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get hardLineBreak => 'Hard regeleinde';
 
   @override
+  String get insertBlankLine => 'Lege regel invoegen';
+
+  @override
   String get textStyle => 'Tekststijl';
 
   @override

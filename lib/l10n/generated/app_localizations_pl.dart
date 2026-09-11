@@ -957,6 +957,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hardLineBreak => 'Twardy podział wiersza';
 
   @override
+  String get insertBlankLine => 'Wstaw pusty wiersz';
+
+  @override
   String get textStyle => 'Styl tekstu';
 
   @override

@@ -936,6 +936,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hardLineBreak => 'हार्ड लाइन ब्रेक';
 
   @override
+  String get insertBlankLine => 'खाली पंक्ति डालें';
+
+  @override
   String get textStyle => 'टेक्स्ट शैली';
 
   @override

@@ -937,6 +937,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hardLineBreak => 'Hard line break';
 
   @override
+  String get insertBlankLine => 'Insert blank line';
+
+  @override
   String get textStyle => 'Text style';
 
   @override

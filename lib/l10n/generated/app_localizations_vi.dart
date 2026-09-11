@@ -936,6 +936,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get hardLineBreak => 'Ngắt dòng cứng';
 
   @override
+  String get insertBlankLine => 'Chèn dòng trống';
+
+  @override
   String get textStyle => 'Kiểu văn bản';
 
   @override

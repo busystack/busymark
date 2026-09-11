@@ -1825,6 +1825,12 @@ abstract class AppLocalizations {
   /// **'Hard line break'**
   String get hardLineBreak;
 
+  /// Insert blank line command label.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert blank line'**
+  String get insertBlankLine;
+
   /// Text style menu tooltip.
   ///
   /// In en, this message translates to:

@@ -24,9 +24,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onOutdentCommand,
     required this.onToggleTaskCommand,
     required this.onHardBreakCommand,
+    required this.onBlankLineCommand,
     this.isBlockCommandEnabled,
     this.admonitionCommandsEnabled = true,
     this.inlineCommandsEnabled = true,
+    this.lineBreakCommandsEnabled = true,
     this.admonitionsEnabled = false,
     this.alignEnd = false,
     this.axis = Axis.horizontal,
@@ -46,9 +48,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
   final VoidCallback onHardBreakCommand;
+  final VoidCallback onBlankLineCommand;
   final bool Function(BusyWysiwygBlockCommand command)? isBlockCommandEnabled;
   final bool admonitionCommandsEnabled;
   final bool inlineCommandsEnabled;
+  final bool lineBreakCommandsEnabled;
   final bool admonitionsEnabled;
   final bool alignEnd;
   final Axis axis;
@@ -141,7 +145,17 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               tooltip: context.l10n.hardLineBreak,
               icon: BusyMarkGlyphs.hardBreak,
               shortcut: BusyMarkEditorShortcutLabels.hardLineBreak,
-              onPressed: inlineCommandsEnabled ? onHardBreakCommand : null,
+              onPressed: inlineCommandsEnabled && lineBreakCommandsEnabled
+                  ? onHardBreakCommand
+                  : null,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.insertBlankLine,
+              icon: BusyMarkGlyphs.blankLine,
+              onPressed: inlineCommandsEnabled && lineBreakCommandsEnabled
+                  ? onBlankLineCommand
+                  : null,
             ),
           ],
           [

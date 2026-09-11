@@ -879,15 +879,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void insertHardBreak(String blockId, int offset) {
+    _insertHardBreaks(blockId, offset, count: 1);
+  }
+
+  void insertBlankLine(String blockId, int offset) {
+    _insertHardBreaks(blockId, offset, count: 2);
+  }
+
+  void _insertHardBreaks(String blockId, int offset, {required int count}) {
     _replaceBlock(blockId, (block) {
       final text = block.plainText;
       final safeOffset = offset.clamp(0, text.length).toInt();
-      final nextText = text.replaceRange(safeOffset, safeOffset, '\n');
+      final nextText = text.replaceRange(safeOffset, safeOffset, '\n' * count);
       final ranges = _styleRangesForReplacement(
         ranges: busyInlineStyleRanges(block.inlines),
         selectionStart: safeOffset,
         selectionEnd: safeOffset,
-        replacementLength: 1,
+        replacementLength: count,
       );
       return block.copyWith(
         inlines: _inlinesFromStyleRangesWithHardBreaks(nextText, ranges),

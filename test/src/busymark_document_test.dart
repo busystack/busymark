@@ -5496,6 +5496,65 @@ void main() {}
     );
   });
 
+  testWidgets(
+    'blank-line toolbar command round-trips and remains one focused edit',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+      var markdown = parsed.source;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (filePath, value) => markdown = value,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final fieldFinder = find.byType(TextField).first;
+      final field = tester.widget<TextField>(fieldFinder);
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(fieldFinder));
+      final blankLineButton = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkHeaderIconButton &&
+            widget.tooltip == l10n.insertBlankLine,
+      );
+
+      expect(blankLineButton, findsOneWidget);
+      await tester.ensureVisible(blankLineButton);
+      await tester.tap(blankLineButton);
+      await tester.pump();
+
+      expect(markdown, 'Alpha<br><br> Beta\n');
+      expect(field.controller!.text, 'Alpha\n\n Beta');
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(
+        field.controller!.selection,
+        const TextSelection.collapsed(offset: 7),
+      );
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+
+      expect(markdown, 'Alpha Beta\n');
+    },
+  );
+
   testWidgets('WYSIWYG editor lazily builds large documents', (tester) async {
     final source = List.generate(
       500,
@@ -5625,6 +5684,20 @@ void main() {}
 
     hardBreakController.insertHardBreak(hardBreakBlockId, 5);
     expect(hardBreakController.markdown, 'Alpha  \n Beta\n');
+
+    hardBreakController.insertHardBreak(hardBreakBlockId, 6);
+    expect(hardBreakController.markdown, 'Alpha<br><br> Beta\n');
+    final blankLineRoundTrip = parser.parse(
+      filePath: 'topic.md',
+      source: hardBreakController.markdown,
+    );
+    expect(blankLineRoundTrip.busyDocument.blocks, hasLength(1));
+    expect(
+      blankLineRoundTrip.busyDocument.blocks.single.inlines.where(
+        (inline) => inline.kind == BusyInlineKind.hardBreak,
+      ),
+      hasLength(2),
+    );
   });
 
   test('WYSIWYG table and code language commands serialize Markdown', () {

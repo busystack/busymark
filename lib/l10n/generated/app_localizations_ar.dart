@@ -936,6 +936,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hardLineBreak => 'فاصل سطر صريح';
 
   @override
+  String get insertBlankLine => 'إدراج سطر فارغ';
+
+  @override
   String get textStyle => 'نمط النص';
 
   @override

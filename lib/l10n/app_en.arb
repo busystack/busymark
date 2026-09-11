@@ -576,6 +576,8 @@
   "@link": {"description": "Link command and preview label."},
   "hardLineBreak": "Hard line break",
   "@hardLineBreak": {"description": "Hard line break command label."},
+  "insertBlankLine": "Insert blank line",
+  "@insertBlankLine": {"description": "Insert blank line command label."},
   "textStyle": "Text style",
   "@textStyle": {"description": "Text style menu tooltip."},
   "paragraph": "Paragraph",

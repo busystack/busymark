@@ -600,6 +600,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onAdmonitionCommand: _applyAdmonitionCommand,
                       admonitionCommandsEnabled: _canApplyAdmonitionCommand(),
                       inlineCommandsEnabled: _hasInlineCommandTarget,
+                      lineBreakCommandsEnabled: _activeCellId == null,
                       admonitionsEnabled:
                           _documentController.document.mode ==
                           MarkdownMode.writersideMarkdown,
@@ -616,6 +617,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
                       onHardBreakCommand: _applyHardBreakCommand,
+                      onBlankLineCommand: _applyBlankLineCommand,
                     ),
                   ),
                 ],
@@ -4598,6 +4600,24 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController.insertHardBreak(blockId, offset);
     _emitMarkdown();
     _focusBlockAfterFrame(blockId, offset: offset + 1);
+  }
+
+  void _applyBlankLineCommand() {
+    final target = _activeTextTarget();
+    if (target == null || _activeCellId != null) {
+      return;
+    }
+    final blockId = target.targetId;
+    final controller = target.controller;
+    final block = target.block;
+    final selection = controller.selection;
+    final offset = selection.isValid
+        ? selection.extentOffset.clamp(0, controller.text.length).toInt()
+        : block.plainText.length;
+    _recordUndoSnapshot();
+    _documentController.insertBlankLine(blockId, offset);
+    _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: offset + 2);
   }
 
   Future<void> _applyCodeLanguageCommand() async {

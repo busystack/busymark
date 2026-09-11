@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 void main() {
   final typstPath = Platform.environment['BUSYMARK_TYPST_PATH'];
   final canRunTypst = typstPath != null && File(typstPath).existsSync();
+  final canMeasurePdf = canRunTypst && File('/usr/bin/pdftotext').existsSync();
 
   test('display images do not reserve a fixed-height letterbox', () {
     final template = File('assets/export/markdown.typ').readAsStringSync();
@@ -104,6 +105,109 @@ void main() {
       ['heading', 'paragraph', 'paragraph', 'paragraph', 'paragraph'],
     );
   });
+
+  test('PDF payload preserves an explicit blank line as two breaks', () async {
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'busymark-explicit-blank-line-payload-test-',
+    );
+    addTearDown(() async {
+      if (await temporaryDirectory.exists()) {
+        await temporaryDirectory.delete(recursive: true);
+      }
+    });
+    final runner = _CapturingTypstRunner();
+    final service = MarkdownPdfExportService(
+      compilerLocator: const TypstCompilerLocator(
+        environment: {'BUSYMARK_TYPST_PATH': '/bin/true'},
+      ),
+      commandRunner: runner,
+      templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+    );
+
+    await service.export(
+      MarkdownPdfExportRequest(
+        source: 'Before<br><br>After\n',
+        filePath: '/workspace/blank-line.md',
+        workspaceRoot: '/workspace',
+        destinationPath: p.join(temporaryDirectory.path, 'blank-line.pdf'),
+        options: const PdfExportOptions(),
+        overwrite: false,
+      ),
+    );
+
+    final blocks = runner.payload!['blocks'] as List<dynamic>;
+    final paragraph = blocks.single as Map<String, dynamic>;
+    final inlines = paragraph['inlines'] as List<dynamic>;
+    expect(inlines.map((value) => (value as Map<String, dynamic>)['kind']), [
+      'text',
+      'hardBreak',
+      'hardBreak',
+      'text',
+    ]);
+  });
+
+  test(
+    'bundled template renders two explicit breaks as one blank PDF line',
+    () async {
+      final temporaryDirectory = await Directory.systemTemp.createTemp(
+        'busymark-explicit-blank-line-typst-test-',
+      );
+      addTearDown(() async {
+        if (await temporaryDirectory.exists()) {
+          await temporaryDirectory.delete(recursive: true);
+        }
+      });
+      final service = MarkdownPdfExportService(
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+      );
+
+      Future<double> textBaselineDelta(String source, String name) async {
+        final destination = p.join(temporaryDirectory.path, '$name.pdf');
+        await service.export(
+          MarkdownPdfExportRequest(
+            source: source,
+            filePath: p.join(temporaryDirectory.path, '$name.md'),
+            workspaceRoot: temporaryDirectory.path,
+            destinationPath: destination,
+            options: const PdfExportOptions(),
+            overwrite: false,
+          ),
+        );
+        final extracted = await Process.run('/usr/bin/pdftotext', [
+          '-bbox-layout',
+          destination,
+          '-',
+        ]);
+        expect(extracted.exitCode, 0, reason: extracted.stderr.toString());
+        final positions = <String, double>{};
+        final wordPattern = RegExp(
+          r'<word xMin="[^"]+" yMin="([^"]+)" xMax="[^"]+" yMax="[^"]+">(Before|After)</word>',
+        );
+        for (final match in wordPattern.allMatches(
+          extracted.stdout as String,
+        )) {
+          positions[match.group(2)!] = double.parse(match.group(1)!);
+        }
+        expect(positions.keys, containsAll(['Before', 'After']));
+        return positions['After']! - positions['Before']!;
+      }
+
+      final oneBreak = await textBaselineDelta(
+        'Before<br>After\n',
+        'one-break',
+      );
+      final twoBreaks = await textBaselineDelta(
+        'Before<br><br>After\n',
+        'two-breaks',
+      );
+
+      expect(oneBreak, greaterThan(0));
+      expect(twoBreaks, greaterThan(oneBreak * 1.8));
+    },
+    skip: canMeasurePdf
+        ? false
+        : 'Set BUSYMARK_TYPST_PATH and install pdftotext to measure PDF lines.',
+  );
 
   test(
     'bundled template renders redundant blank lines identically',

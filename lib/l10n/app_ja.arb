@@ -1137,6 +1137,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "空行を挿入",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "テキストスタイル",
   "@textStyle": {
     "description": "Text style menu tooltip."
