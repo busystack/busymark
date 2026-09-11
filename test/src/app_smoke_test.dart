@@ -97,6 +97,7 @@ void main() {
         BusyMarkEditorShortcutAction.blockquote: 'Ctrl+Shift+Q',
         BusyMarkEditorShortcutAction.codeBlock: 'Ctrl+Shift+K',
         BusyMarkEditorShortcutAction.image: 'Ctrl+Shift+I',
+        BusyMarkEditorShortcutAction.thematicBreak: 'Ctrl+Shift+-',
         BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
       },
     );
@@ -4625,6 +4626,15 @@ void main() {
     expect(
       container.read(workspaceControllerProvider).activeText,
       '```\nsnippet\n```',
+    );
+
+    await tester.enterText(sourceField, 'line');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.minus, control: true, shift: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      'line\n---\n',
     );
 
     await tester.enterText(sourceField, 'line');

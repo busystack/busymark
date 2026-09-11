@@ -1701,6 +1701,7 @@ void main() {
       'BusyMarkEditorShortcutLabels.blockquote',
       'BusyMarkEditorShortcutLabels.codeBlock',
       'BusyMarkEditorShortcutLabels.image',
+      'BusyMarkEditorShortcutLabels.thematicBreak',
       'BusyMarkEditorShortcutLabels.hardLineBreak',
     ]) {
       expect(toolbar, contains(shortcut));
@@ -1711,7 +1712,6 @@ void main() {
       'BusyMarkEditorShortcutLabels.inlineImage',
       'BusyMarkEditorShortcutLabels.table',
       'BusyMarkEditorShortcutLabels.htmlBlock',
-      'BusyMarkEditorShortcutLabels.thematicBreak',
     ]) {
       expect(toolbar, isNot(contains(shortcut)));
     }

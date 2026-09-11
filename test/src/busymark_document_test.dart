@@ -1593,6 +1593,49 @@ void main() {}
     expect(markdown, 'Title\n');
   });
 
+  testWidgets('Ctrl+Shift+- inserts a thematic break', (tester) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.minus);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Intro\n\n---\n');
+    final emptyParagraph = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .singleWhere(
+          (candidate) => candidate.controller?.text.isEmpty ?? false,
+        );
+    expect(emptyParagraph.focusNode!.hasFocus, isTrue);
+  });
+
   testWidgets(
     'WYSIWYG Tab nests eligible list items and Shift+Tab lifts them',
     (tester) async {
@@ -4487,6 +4530,7 @@ void main() {}
 
     expect(destinationField, findsNothing);
     expect(markdown, '[Linked](https://example.com) word\n');
+    expect(editorField.focusNode!.hasFocus, isTrue);
   });
 
   for (final (selectionDescription, selection) in const [
@@ -5452,6 +5496,65 @@ void main() {}
     expect(
       field.controller!.selection,
       const TextSelection.collapsed(offset: 6),
+    );
+  });
+
+  testWidgets('formatting toolbar command retains editor focus and selection', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fieldFinder = find.byType(TextField).first;
+    final field = tester.widget<TextField>(fieldFinder);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 5,
+    );
+    await tester.pump();
+    final l10n = AppLocalizations.of(tester.element(fieldFinder));
+    final boldButton = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkHeaderIconButton && widget.tooltip == l10n.bold,
+    );
+
+    expect(boldButton, findsOneWidget);
+    final buttonFocusNode = Focus.of(
+      tester.element(
+        find.descendant(of: boldButton, matching: find.byType(Icon)),
+      ),
+    );
+    buttonFocusNode.requestFocus();
+    await tester.pump();
+    expect(field.focusNode!.hasFocus, isFalse);
+
+    tester.widget<BusyMarkHeaderIconButton>(boldButton).onPressed!();
+    await tester.pump();
+
+    expect(markdown, '**Alpha** Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection(baseOffset: 0, extentOffset: 5),
     );
   });
 

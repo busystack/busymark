@@ -595,29 +595,44 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                         widget.toolbarPlacement,
                         widget.toolbarDirection,
                       ),
-                      onBlockCommand: _applyBlockCommand,
+                      onBlockCommand: _applyToolbarBlockCommand,
                       isBlockCommandEnabled: _canApplyBlockCommand,
-                      onAdmonitionCommand: _applyAdmonitionCommand,
+                      onAdmonitionCommand: (style) => _applyToolbarCommand(
+                        () => _applyAdmonitionCommand(style),
+                      ),
                       admonitionCommandsEnabled: _canApplyAdmonitionCommand(),
                       inlineCommandsEnabled: _hasInlineCommandTarget,
                       lineBreakCommandsEnabled: _activeCellId == null,
                       admonitionsEnabled:
                           _documentController.document.mode ==
                           MarkdownMode.writersideMarkdown,
-                      onInlineCommand: _applyInlineCommand,
-                      onLinkCommand: () => unawaited(_applyLinkCommand()),
-                      onInlineMathCommand: _applyInlineMathCommand,
-                      onDisplayMathCommand: _applyDisplayMathCommand,
-                      onImageCommand: () => unawaited(_applyImageCommand()),
+                      onInlineCommand: (command) => _applyToolbarCommand(
+                        () => _applyInlineCommand(command),
+                      ),
+                      onLinkCommand: () =>
+                          _applyAsyncToolbarCommand(_applyLinkCommand),
+                      onInlineMathCommand: () =>
+                          _applyToolbarCommand(_applyInlineMathCommand),
+                      onDisplayMathCommand: () =>
+                          _applyToolbarCommand(_applyDisplayMathCommand),
+                      onImageCommand: () =>
+                          _applyAsyncToolbarCommand(_applyImageCommand),
                       onInlineImageCommand: () =>
-                          unawaited(_applyInlineImageCommand()),
-                      onTableCommand: () => unawaited(_applyTableCommand()),
-                      onHtmlCommand: () => unawaited(_applyHtmlCommand()),
-                      onIndentCommand: _applyIndentCommand,
-                      onOutdentCommand: _applyOutdentCommand,
-                      onToggleTaskCommand: _applyToggleTaskCommand,
-                      onHardBreakCommand: _applyHardBreakCommand,
-                      onBlankLineCommand: _applyBlankLineCommand,
+                          _applyAsyncToolbarCommand(_applyInlineImageCommand),
+                      onTableCommand: () =>
+                          _applyAsyncToolbarCommand(_applyTableCommand),
+                      onHtmlCommand: () =>
+                          _applyAsyncToolbarCommand(_applyHtmlCommand),
+                      onIndentCommand: () =>
+                          _applyToolbarCommand(_applyIndentCommand),
+                      onOutdentCommand: () =>
+                          _applyToolbarCommand(_applyOutdentCommand),
+                      onToggleTaskCommand: () =>
+                          _applyToolbarCommand(_applyToggleTaskCommand),
+                      onHardBreakCommand: () =>
+                          _applyToolbarCommand(_applyHardBreakCommand),
+                      onBlankLineCommand: () =>
+                          _applyToolbarCommand(_applyBlankLineCommand),
                     ),
                   ),
                 ],
@@ -3492,6 +3507,63 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         : [if (active != null) active];
     return targets.isNotEmpty &&
         targets.every(busyMarkWysiwygCanApplyAdmonitionStyle);
+  }
+
+  void _applyToolbarBlockCommand(BusyWysiwygBlockCommand command) {
+    final selectedBlocks = _selectedBlocks();
+    final activeBlock = _activeBlockId == null
+        ? null
+        : _documentController.blockById(_activeBlockId!);
+    final commandTargets = selectedBlocks.isNotEmpty
+        ? selectedBlocks
+        : [if (activeBlock != null) activeBlock];
+    final opensCodeLanguageDialog =
+        command == BusyWysiwygBlockCommand.codeBlock &&
+        commandTargets.isNotEmpty &&
+        commandTargets.every((block) => block.kind == BusyBlockKind.codeBlock);
+    if (opensCodeLanguageDialog) {
+      _applyAsyncToolbarCommand(_applyCodeLanguageCommand);
+      return;
+    }
+    _applyToolbarCommand(() => _applyBlockCommand(command));
+  }
+
+  void _applyToolbarCommand(VoidCallback command) {
+    command();
+    _restoreEditingFocusAfterFrame();
+  }
+
+  void _applyAsyncToolbarCommand(Future<void> Function() command) {
+    unawaited(command().whenComplete(_restoreEditingFocusAfterFrame));
+  }
+
+  void _restoreEditingFocusAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      if (_documentSelection != null) {
+        _selectionFocusNode.requestFocus();
+        return;
+      }
+      final activeCellId = _activeCellId;
+      final cellFocusNode = activeCellId == null
+          ? null
+          : _tableCellFocusNodes[activeCellId];
+      if (cellFocusNode != null) {
+        cellFocusNode.requestFocus();
+        return;
+      }
+      final activeBlockId = _activeBlockId;
+      final blockFocusNode = activeBlockId == null
+          ? null
+          : _focusNodes[activeBlockId];
+      if (blockFocusNode != null) {
+        blockFocusNode.requestFocus();
+        return;
+      }
+      _focusActiveOrFirstBlock();
+    });
   }
 
   void _applyBlockCommand(BusyWysiwygBlockCommand command) {

@@ -544,6 +544,7 @@ abstract final class BusyMarkEditorShortcuts {
   static const blockquoteLabel = 'Ctrl+Shift+Q';
   static const codeBlockLabel = 'Ctrl+Shift+K';
   static const imageLabel = 'Ctrl+Shift+I';
+  static const thematicBreakLabel = 'Ctrl+Shift+-';
   static const hardLineBreakLabel = 'Shift+Enter';
 
   static const refineWithAi = BusyMarkShortcutDefinition(
@@ -702,6 +703,14 @@ abstract final class BusyMarkEditorShortcuts {
       shift: true,
     ),
   );
+  static const thematicBreak = BusyMarkShortcutDefinition(
+    label: thematicBreakLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.minus,
+      control: true,
+      shift: true,
+    ),
+  );
   static const hardLineBreak = BusyMarkShortcutDefinition(
     label: hardLineBreakLabel,
     activator: SingleActivator(LogicalKeyboardKey.enter, shift: true),
@@ -731,6 +740,7 @@ abstract final class BusyMarkEditorShortcuts {
         BusyMarkEditorShortcutAction.blockquote: blockquote,
         BusyMarkEditorShortcutAction.codeBlock: codeBlock,
         BusyMarkEditorShortcutAction.image: image,
+        BusyMarkEditorShortcutAction.thematicBreak: thematicBreak,
         BusyMarkEditorShortcutAction.hardLineBreak: hardLineBreak,
       };
 }
@@ -762,6 +772,7 @@ abstract final class BusyMarkEditorShortcutLabels {
   static const blockquote = BusyMarkEditorShortcuts.blockquoteLabel;
   static const codeBlock = BusyMarkEditorShortcuts.codeBlockLabel;
   static const image = BusyMarkEditorShortcuts.imageLabel;
+  static const thematicBreak = BusyMarkEditorShortcuts.thematicBreakLabel;
   static const hardLineBreak = BusyMarkEditorShortcuts.hardLineBreakLabel;
 }
 
@@ -833,6 +844,8 @@ abstract final class BusyMarkEditorShortcutActivators {
   static ShortcutActivator get codeBlock =>
       BusyMarkEditorShortcuts.codeBlock.activator;
   static ShortcutActivator get image => BusyMarkEditorShortcuts.image.activator;
+  static ShortcutActivator get thematicBreak =>
+      BusyMarkEditorShortcuts.thematicBreak.activator;
   static ShortcutActivator get hardLineBreak =>
       BusyMarkEditorShortcuts.hardLineBreak.activator;
 }

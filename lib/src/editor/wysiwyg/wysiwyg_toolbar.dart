@@ -196,6 +196,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               context,
               tooltip: context.l10n.thematicBreak,
               icon: BusyMarkGlyphs.thematicBreak,
+              shortcut: BusyMarkEditorShortcutLabels.thematicBreak,
               onPressed:
                   _blockCommandEnabled(BusyWysiwygBlockCommand.thematicBreak)
                   ? () => onBlockCommand(BusyWysiwygBlockCommand.thematicBreak)
