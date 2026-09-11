@@ -16,10 +16,6 @@ enum HeaderBarAction {
   search,
   refresh,
   save,
-  clipboardHistory,
-  localHistory,
-  findLocalHistory,
-  export,
   fullScreen,
   menu,
   settings,
@@ -158,10 +154,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
     return _invokeLegacy('setCanRefresh', value);
   }
 
-  Future<void> setCanExportPdf(bool value) {
-    return _invokeLegacy('setCanExportPdf', value);
-  }
-
   Future<void> setDocumentControlsVisible(bool value) {
     return _invokeLegacy('setDocumentControlsVisible', value);
   }
@@ -293,8 +285,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
       ('setTitleRange', configuration.title),
       ('setViewMode', configuration.viewMode.name),
       ('setCanRefresh', configuration.canRefresh),
-      ('setCanExportPdf', configuration.canExportPdf),
-      ('setCanExportHtml', configuration.canExportHtml),
       ('setDocumentControlsVisible', configuration.documentControlsVisible),
       ('setSearchVisible', configuration.searchVisible),
       ('setSidebarVisible', configuration.sidebarVisible),
@@ -394,10 +384,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
-      'clipboardHistory' => HeaderBarAction.clipboardHistory,
-      'localHistory' => HeaderBarAction.localHistory,
-      'findLocalHistory' => HeaderBarAction.findLocalHistory,
-      'export' => HeaderBarAction.export,
       'fullScreen' => HeaderBarAction.fullScreen,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,

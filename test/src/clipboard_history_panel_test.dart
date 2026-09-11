@@ -147,13 +147,126 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'current external HTML is transient until panel insertion and remains reusable',
+    (tester) async {
+      const html =
+          '<h1>External</h1><p><b>Bold</b> and '
+          '<a href="https://example.com">linked</a></p><ul><li>Item</li></ul>';
+      final clipboard = _PanelClipboard(
+        const RichClipboardData(
+          text: 'External\nBold and linked\nItem',
+          html: html,
+          generation: 21,
+        ),
+      );
+      final container = _container(clipboard: clipboard);
+      final target = _PanelInsertionTarget();
+      container.read(clipboardInsertionRegistryProvider).register(target);
+      await _pumpPanel(tester, container);
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        isEmpty,
+      );
+
+      final currentPaste = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) => widget is IconButton && widget.tooltip == 'Paste',
+        ),
+      );
+      expect(currentPaste.onPressed, isNotNull);
+      currentPaste.onPressed!.call();
+      await tester.pumpAndSettle();
+      expect(target.payloads.single.html, html);
+      expect(target.lastPlainText, isFalse);
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        hasLength(1),
+      );
+
+      clipboard.value = const RichClipboardData(
+        text: 'Replacement clipboard',
+        generation: 22,
+      );
+      await container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .refreshCurrentClipboard();
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'External');
+      await tester.pumpAndSettle();
+      final retainedPaste = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) => widget is IconButton && widget.tooltip == 'Paste',
+        ),
+      );
+      expect(retainedPaste.onPressed, isNotNull);
+      retainedPaste.onPressed!.call();
+      await tester.pumpAndSettle();
+      expect(target.payloads, hasLength(2));
+      expect(target.payloads.last.html, html);
+    },
+  );
+
+  testWidgets(
+    'failed current-item paste is not retained and plain paste stays explicit',
+    (tester) async {
+      final clipboard = _PanelClipboard(
+        const RichClipboardData(
+          text: 'Readable fallback',
+          html: '<p><strong>Rich source</strong></p>',
+          generation: 23,
+        ),
+      );
+      final container = _container(clipboard: clipboard);
+      final failed = _PanelInsertionTarget(
+        result: ClipboardPasteResult.staleTarget,
+      );
+      container.read(clipboardInsertionRegistryProvider).register(failed);
+      await _pumpPanel(tester, container);
+
+      final failedPaste = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) => widget is IconButton && widget.tooltip == 'Paste',
+        ),
+      );
+      expect(failedPaste.onPressed, isNotNull);
+      failedPaste.onPressed!.call();
+      await tester.pumpAndSettle();
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        isEmpty,
+      );
+
+      final successful = _PanelInsertionTarget();
+      container.read(clipboardInsertionRegistryProvider).register(successful);
+      await tester.pump();
+      final plainPaste = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is IconButton && widget.tooltip == 'Paste as Plain Text',
+        ),
+      );
+      expect(plainPaste.onPressed, isNotNull);
+      plainPaste.onPressed!.call();
+      await tester.pumpAndSettle();
+      expect(successful.lastPlainText, isTrue);
+      expect(successful.payloads.single.text, 'Readable fallback');
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        hasLength(1),
+      );
+    },
+  );
 }
 
-ProviderContainer _container() {
+ProviderContainer _container({RichClipboardService? clipboard}) {
   final container = ProviderContainer(
     overrides: [
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-      richClipboardServiceProvider.overrideWithValue(_EmptyClipboard()),
+      richClipboardServiceProvider.overrideWithValue(
+        clipboard ?? _EmptyClipboard(),
+      ),
       clipboardAssetInputServiceProvider.overrideWithValue(_EmptyAssetInput()),
     ],
   );
@@ -205,6 +318,7 @@ class _PanelInsertionTarget
   final ClipboardPasteResult result;
   int pasteCalls = 0;
   bool? lastPlainText;
+  final payloads = <BusyMarkClipboardPayload>[];
 
   @override
   String get documentId => 'panel-target';
@@ -234,6 +348,7 @@ class _PanelInsertionTarget
   }) async {
     pasteCalls++;
     lastPlainText = plainText;
+    payloads.add(payload);
     return result;
   }
 
@@ -257,6 +372,18 @@ class _EmptyClipboard extends RichClipboardService {
 
   @override
   Future<RichClipboardData> read() async => const RichClipboardData();
+}
+
+class _PanelClipboard extends RichClipboardService {
+  _PanelClipboard(this.value)
+    : super(
+        channel: const MethodChannel('busymark.test/current-panel-clipboard'),
+      );
+
+  RichClipboardData value;
+
+  @override
+  Future<RichClipboardData> read() async => value;
 }
 
 class _EmptyAssetInput extends AssetInputService {

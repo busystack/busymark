@@ -380,6 +380,165 @@ void main() {
   );
 
   test(
+    'missing history restores over an existing file without touching disk and undoes to its real source',
+    () async {
+      final anchor = p.join(root.path, 'anchor.md');
+      final destination = p.join(root.path, 'destination.md');
+      await File(anchor).writeAsString('# Anchor\n');
+      final originalBytes = <int>[
+        0xef,
+        0xbb,
+        0xbf,
+        ...'Original destination\r\nSecond line'.codeUnits,
+      ];
+      await File(destination).writeAsBytes(originalBytes);
+      final store = MemoryLocalHistoryStore();
+      final captured = await _capture(
+        store,
+        p.join(root.path, 'deleted.md'),
+        '# Recovered\n\nHistorical content.\n',
+        reason: LocalHistoryCaptureReason.beforeDelete,
+      );
+      final harness = await _harness(store);
+      await harness.controller.openPath(root.path);
+      final revision = (await store.readRevision(captured.revision!.id))!;
+
+      expect(
+        await harness.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        ),
+        isTrue,
+      );
+      final restored = harness.state.activeBuffer!;
+      expect(restored.filePath, destination);
+      expect(restored.text, revision.source);
+      expect(restored.isDirty, isTrue);
+      expect(restored.format.hasUtf8Bom, isTrue);
+      expect(restored.format.lineEnding, DocumentLineEnding.crlf);
+      expect(restored.format.hasFinalNewline, isFalse);
+      expect(await File(destination).readAsBytes(), originalBytes);
+
+      expect(harness.controller.undoActiveBuffer(), isTrue);
+      expect(harness.state.activeText, 'Original destination\nSecond line');
+      expect(harness.controller.redoActiveBuffer(), isTrue);
+      expect(harness.state.activeText, revision.source);
+    },
+  );
+
+  test(
+    'existing open destination protects unsaved source as the restore undo baseline',
+    () async {
+      final sourcePath = p.join(root.path, 'deleted.md');
+      final destination = p.join(root.path, 'open.md');
+      final anchor = p.join(root.path, 'anchor.md');
+      await File(destination).writeAsString('Disk destination\n');
+      await File(anchor).writeAsString('Anchor\n');
+      final store = MemoryLocalHistoryStore();
+      final captured = await _capture(store, sourcePath, 'Recovered source\n');
+      final harness = await _harness(store);
+      await harness.controller.openPath(root.path);
+      await harness.controller.openActiveFile(destination);
+      harness.controller.updateActiveText('Unsaved destination\n');
+      expect(await harness.controller.openActiveFile(anchor), isTrue);
+      final revision = (await store.readRevision(captured.revision!.id))!;
+
+      expect(
+        await harness.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        ),
+        isTrue,
+      );
+      expect(harness.state.activeBuffer?.filePath, destination);
+      expect(harness.state.activeText, 'Recovered source\n');
+      expect(await File(destination).readAsString(), 'Disk destination\n');
+      expect(harness.controller.undoActiveBuffer(), isTrue);
+      expect(harness.state.activeText, 'Unsaved destination\n');
+    },
+  );
+
+  test(
+    'existing destination restore stops when protection fails or the target changes',
+    () async {
+      final sourcePath = p.join(root.path, 'deleted.md');
+      final destination = p.join(root.path, 'protected.md');
+      await File(destination).writeAsString('Protected destination\n');
+      final memory = MemoryLocalHistoryStore();
+      final captured = await _capture(memory, sourcePath, 'Recovered source\n');
+      final revision = (await memory.readRevision(captured.revision!.id))!;
+
+      final failing = await _harness(_FailingProtectiveStore(memory));
+      await failing.controller.openPath(destination);
+      expect(
+        await failing.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        ),
+        isFalse,
+      );
+      expect(failing.state.activeText, 'Protected destination\n');
+      expect(await File(destination).readAsString(), 'Protected destination\n');
+
+      final blockingStore = _BlockingProtectiveStore(memory);
+      final changing = await _harness(blockingStore);
+      await changing.controller.openPath(destination);
+      final restore = changing.controller.restoreMissingLocalHistoryRevision(
+        document: captured.document,
+        revision: revision,
+        destinationPath: destination,
+        overwriteExisting: true,
+      );
+      await blockingStore.started.future;
+      changing.controller.updateActiveText('Newer destination edit\n');
+      blockingStore.release.complete();
+      expect(await restore, isFalse);
+      expect(changing.state.activeText, 'Newer destination edit\n');
+      expect(await File(destination).readAsString(), 'Protected destination\n');
+    },
+  );
+
+  test(
+    'autosaved existing-destination recovery never publishes an empty file',
+    () async {
+      final sourcePath = p.join(root.path, 'deleted.md');
+      final destination = p.join(root.path, 'autosave.md');
+      await File(destination).writeAsString('Original destination\n');
+      final store = MemoryLocalHistoryStore();
+      final captured = await _capture(store, sourcePath, 'Recovered source\n');
+      final service = _RecordingRestoreWorkspaceService();
+      final harness = await _harness(store, service: service);
+      await harness.container
+          .read(appSettingsControllerProvider.notifier)
+          .setAutoSave(true);
+      await harness.controller.openPath(destination);
+      service.writes.clear();
+      final revision = (await store.readRevision(captured.revision!.id))!;
+
+      expect(
+        await harness.controller.restoreMissingLocalHistoryRevision(
+          document: captured.document,
+          revision: revision,
+          destinationPath: destination,
+          overwriteExisting: true,
+        ),
+        isTrue,
+      );
+      expect(service.writes, isEmpty);
+      expect(await harness.controller.autoSaveActiveIfNeeded(), isTrue);
+      expect(service.writes, [revision.source]);
+      expect(service.writes, isNot(contains('')));
+      expect(await File(destination).readAsString(), revision.source);
+    },
+  );
+
+  test(
     'delayed explicit save records exactly the source that was written',
     () async {
       final path = p.join(root.path, 'delayed-save.md');
@@ -1328,6 +1487,51 @@ class _BlockingBeforeReloadStore extends _FailingProtectiveStore {
       await release.future;
     }
     return delegate.capture(request, policy);
+  }
+}
+
+class _BlockingProtectiveStore extends _FailingProtectiveStore {
+  _BlockingProtectiveStore(super.delegate);
+
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeRestore) {
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return delegate.capture(request, policy);
+  }
+}
+
+class _RecordingRestoreWorkspaceService extends WorkspaceService {
+  final writes = <String>[];
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    writes.add(text);
+    return super.saveText(path, text);
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewFormattedText(
+    String path,
+    String text, {
+    TextFormatMetadata? format,
+    LineEndingNormalization? mixedNormalization,
+  }) async {
+    writes.add(text);
+    return super.saveNewFormattedText(
+      path,
+      text,
+      format: format,
+      mixedNormalization: mixedNormalization,
+    );
   }
 }
 

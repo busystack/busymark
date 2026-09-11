@@ -30,8 +30,13 @@ target lifetime around asynchronous work.
 
 Copy/cut capture happens only after successful publication. A cut publishes,
 then revalidates its selection before one deletion transaction. External
-content is retained only after a successful document paste. History insertion
-uses the normal Source or WYSIWYG transaction and asset-ingestion paths.
+content is retained only after a successful document paste. The transient
+current item carries supported external HTML without claiming BusyMark token
+ownership and keeps its interoperable text separately. WYSIWYG history
+insertion sends that HTML through `WysiwygClipboardHtml`, the same validated
+conversion used by ordinary Paste; malformed or unsupported structure uses the
+existing text fallback. History insertion uses the normal Source or WYSIWYG
+transaction and asset-ingestion paths.
 
 ## Local History capture and identity
 
@@ -72,6 +77,14 @@ to 30 days and 512 MiB.
 
 ## Comparison and restore safety
 
+Ordinary Local History browsing is scoped to the active document buffer. A
+scope generation invalidates outstanding revision reads and searches before a
+new filename is displayed, so old results cannot land beneath a new header.
+Store-wide document search is a temporary discovery mode for retained closed,
+renamed, deleted, or untitled identities; selecting a normal document resumes
+active-tab following. The revision list is timestamp-first and groups the same
+localized timestamps by local calendar date.
+
 `SourceComparisonInput` identifies immutable sources by ID, version, label,
 and text. The comparison uses unique patience anchors plus bounded local LCS
 and intraline refinement in Dart UTF-16 offsets. Separated edits are retained.
@@ -80,11 +93,28 @@ simplified and exact region restore is disabled.
 
 Local History has its own `WorkspaceTabKind.localHistory`. The current side is
 the live unsaved buffer when present, then a fresh disk load, or an explicit
-missing-file state. Async results remain tied to both source versions. Restore
+missing-file state. An immutable comparison request owns the history document,
+revision, current buffer, source revision, and source text; sidebar browsing is
+not consulted later to redirect a pending comparison or restore. Restore
 captures the target identity/path/revision/selection and exact range, persists
 a protective snapshot, revalidates after awaits, and applies one
 `DocumentBuffer.edited` transaction without replacing format metadata or the
 undo stack.
+
+Missing-file recovery keeps the source history identity separate from the
+destination buffer. For an approved existing path, the normal guarded open flow
+loads the destination's real source and format, protection must succeed, and
+the retained source is one ordinary edit whose Undo baseline is the exact
+destination content. No empty file is published. New-file recovery retains its
+separate no-overwrite creation path.
+
+Workspace refresh records per-buffer request snapshots, then reconciles disk
+loads against live membership, path, source revision/text, dirty and disk
+state, and the loaded disk snapshot after every asynchronous parse boundary.
+Buffers opened meanwhile survive, closed buffers are not resurrected, and
+newer editor state and undo/redo history win over stale loads. Derived workspace
+and preview content is published only when its active buffer and source still
+match; otherwise the normal fresh-parse scheduler takes over.
 
 ## Verification workflow
 
@@ -92,7 +122,7 @@ Use the repository-pinned Flutter/Dart toolchain:
 
 ```bash
 flutter gen-l10n
-dart format lib test/src
+dart format <changed Dart files>
 flutter analyze
 flutter test
 flutter build linux --release
@@ -122,20 +152,7 @@ fragment-restore, deletion, or recovery check fails.
 
 The current checkout is pinned to Flutter 3.47.2 / Dart 3.13.2. Available
 native validation is Linux-only because the repository contains no Windows
-runner or Windows plugin registration path.
-
-Final verification for this implementation used the commands above plus the
-cross-process writer/reader sequence on one X11 display. Localization
-generation and formatting completed cleanly, `flutter analyze` reported no
-issues, all 1,563 executed tests passed (with 12 existing intentional skips),
-and the Linux release bundle built successfully. The compiled clipboard probe
-reported:
-
-- same-process: text, HTML, and session-owned rich resolution all passed;
-- cross-process: text and HTML passed, and the foreign token did not resolve;
-- external plain replacement: text passed with no stale HTML or rich payload.
-
-The production-controller visual target completed both its Markdown light/en
-scenario and its Writerside dark/ar scenario at 1280×800 and 1920×1080. Its
-Markdown run also deleted, compared, and recovered a document. Reports and
-captured frames are retained under `test-results/history-runtime/`.
+runner or Windows plugin registration path. Verification artifacts are written
+to the ignored `build/history-ui-evidence/` directory by the runtime
+exercise; documentation does not treat an earlier committed test count or
+screenshot as proof of the current checkout.

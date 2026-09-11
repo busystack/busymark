@@ -1,9 +1,11 @@
 # PDF export
 
-Choose **Main menu → Export as PDF…**, use the command palette, or press
-**Ctrl+Shift+E**. Markdown exports the active editor text, including unsaved and
-untitled documents. Writerside first offers Save, Discard, or Cancel for project
-changes, then lets you select a non-library instance.
+For Markdown, choose **Outline → Actions → Export**, use the command palette,
+or press **Ctrl+Shift+E**. Markdown exports the active editor text, including
+unsaved and untitled documents. For Writerside, choose **TOC → Actions → Export**;
+BusyMark first offers Save, Discard, or Cancel for project changes, then lets
+you select a non-library instance. The shortcut and command palette route use
+the same document-versus-instance scope.
 
 The export settings are independent of the editor and preview appearance.
 Markdown and Writerside offer the same PDF controls:

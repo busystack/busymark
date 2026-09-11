@@ -168,7 +168,9 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
     if (generation != _refreshGeneration || !ref.mounted) return;
 
     BusyMarkClipboardCapture? capture;
-    if (first.richFragment != null || first.sourceText != null) {
+    if (first.richFragment != null ||
+        first.sourceText != null ||
+        first.html != null) {
       capture = BusyMarkClipboardCapture(
         kind: BusyMarkClipboardContentKind.richText,
         text: first.text,

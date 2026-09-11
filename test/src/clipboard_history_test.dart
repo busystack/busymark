@@ -147,6 +147,59 @@ void main() {
     },
   );
 
+  test(
+    'current external HTML keeps its rich and interoperable text representations',
+    () async {
+      const html =
+          '<h1>External</h1><p><strong>Bold</strong> and '
+          '<a href="https://example.com">linked</a></p><ul><li>Item</li></ul>';
+      final scope = container(
+        current: const RichClipboardData(
+          text: 'External\nBold and linked\nItem',
+          html: html,
+          generation: 11,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      final controller = scope.read(
+        clipboardHistoryControllerProvider.notifier,
+      );
+
+      await controller.refreshCurrentClipboard();
+      final state = scope.read(clipboardHistoryControllerProvider);
+      final current = state.currentClipboard!;
+      expect(current.kind, BusyMarkClipboardContentKind.richText);
+      expect(current.html, html);
+      expect(current.text, 'External\nBold and linked\nItem');
+      expect(current.sourceText, isNull);
+      expect(current.external, isTrue);
+      expect(state.entries, isEmpty);
+    },
+  );
+
+  test(
+    'current HTML-only clipboard is eligible without internal ownership',
+    () async {
+      final scope = container(
+        current: const RichClipboardData(
+          html: '<h2>HTML only</h2><p><em>Supported</em></p>',
+          generation: 12,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await scope
+          .read(clipboardHistoryControllerProvider.notifier)
+          .refreshCurrentClipboard();
+      final current = scope
+          .read(clipboardHistoryControllerProvider)
+          .currentClipboard!;
+      expect(current.kind, BusyMarkClipboardContentKind.richText);
+      expect(current.text, isNull);
+      expect(current.html, contains('HTML only'));
+    },
+  );
+
   test('equal visible text with different structure stays distinct', () async {
     final scope = container();
     await Future<void>.delayed(Duration.zero);

@@ -75,6 +75,7 @@ class LocalHistoryState {
     this.searchMatches = const {},
     this.documentSearchMatches = const {},
     this.findingDocuments = false,
+    this.inspectingRetainedDocument = false,
     this.warning,
   });
 
@@ -88,6 +89,7 @@ class LocalHistoryState {
   final Set<String> searchMatches;
   final Set<String> documentSearchMatches;
   final bool findingDocuments;
+  final bool inspectingRetainedDocument;
   final LocalHistoryWarning? warning;
 
   LocalHistoryDocument? get selectedDocument => snapshot.documents
@@ -113,6 +115,7 @@ class LocalHistoryState {
     Set<String>? searchMatches,
     Set<String>? documentSearchMatches,
     bool? findingDocuments,
+    bool? inspectingRetainedDocument,
     Object? warning = _unset,
   }) => LocalHistoryState(
     snapshot: snapshot ?? this.snapshot,
@@ -131,6 +134,8 @@ class LocalHistoryState {
     searchMatches: searchMatches ?? this.searchMatches,
     documentSearchMatches: documentSearchMatches ?? this.documentSearchMatches,
     findingDocuments: findingDocuments ?? this.findingDocuments,
+    inspectingRetainedDocument:
+        inspectingRetainedDocument ?? this.inspectingRetainedDocument,
     warning: identical(warning, _unset)
         ? this.warning
         : warning as LocalHistoryWarning?,
@@ -268,6 +273,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       <String, LocalHistoryPendingIdentityPromotion>{};
   var _loadGeneration = 0;
   var _searchGeneration = 0;
+  var _scopeGeneration = 0;
 
   @override
   LocalHistoryState build() {
@@ -752,11 +758,27 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }
 
   Future<void> selectDocumentForBuffer(DocumentBuffer buffer) async {
+    final generation = ++_scopeGeneration;
+    _loadGeneration++;
+    _searchGeneration++;
+    state = state.copyWith(
+      loading: true,
+      selectedDocumentId: null,
+      selectedRevisionId: null,
+      selectedRevision: null,
+      searchQuery: '',
+      searching: false,
+      searchMatches: const {},
+      documentSearchMatches: const {},
+      findingDocuments: false,
+      inspectingRetainedDocument: false,
+    );
     await observeOpened(buffer);
+    if (!ref.mounted || generation != _scopeGeneration) return;
     final documentId = _documentIdsByBuffer[buffer.id];
-    if (!ref.mounted) return;
     if (documentId == null) {
       await refresh();
+      if (!ref.mounted || generation != _scopeGeneration) return;
       final byPath = state.snapshot.documents
           .where(
             (document) =>
@@ -766,31 +788,74 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           )
           .firstOrNull;
       if (byPath != null) {
-        selectDocument(byPath.id);
+        _selectDocument(byPath.id, inspectingRetainedDocument: false);
       } else {
-        state = state.copyWith(findingDocuments: false);
+        state = state.copyWith(
+          loading: false,
+          findingDocuments: false,
+          inspectingRetainedDocument: false,
+        );
       }
     } else {
-      selectDocument(documentId);
+      if (!state.snapshot.documents.any(
+        (document) => document.id == documentId,
+      )) {
+        await refresh();
+        if (!ref.mounted || generation != _scopeGeneration) return;
+      }
+      _selectDocument(documentId, inspectingRetainedDocument: false);
     }
   }
 
   void selectDocument(String documentId) {
+    _selectDocument(documentId, inspectingRetainedDocument: false);
+  }
+
+  void clearDocumentScope() {
+    _scopeGeneration++;
+    _loadGeneration++;
+    _searchGeneration++;
+    state = state.copyWith(
+      loading: false,
+      selectedDocumentId: null,
+      selectedRevisionId: null,
+      selectedRevision: null,
+      searchQuery: '',
+      searching: false,
+      searchMatches: const {},
+      documentSearchMatches: const {},
+      findingDocuments: false,
+      inspectingRetainedDocument: false,
+    );
+  }
+
+  void inspectRetainedDocument(String documentId) {
+    _scopeGeneration++;
+    _selectDocument(documentId, inspectingRetainedDocument: true);
+  }
+
+  void _selectDocument(
+    String documentId, {
+    required bool inspectingRetainedDocument,
+  }) {
     if (!state.snapshot.documents.any(
       (document) => document.id == documentId,
     )) {
       return;
     }
     _loadGeneration++;
+    _searchGeneration++;
     state = state.copyWith(
       loading: false,
       selectedDocumentId: documentId,
       selectedRevisionId: null,
       selectedRevision: null,
       searchQuery: '',
+      searching: false,
       searchMatches: const {},
       documentSearchMatches: const {},
       findingDocuments: false,
+      inspectingRetainedDocument: inspectingRetainedDocument,
     );
   }
 
@@ -798,6 +863,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   /// No current editor is implied: closed, renamed, untitled, and deleted
   /// documents remain first-class results.
   void beginDocumentSearch() {
+    _scopeGeneration++;
     _loadGeneration++;
     _searchGeneration++;
     state = state.copyWith(
@@ -810,6 +876,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       searchMatches: const {},
       documentSearchMatches: const {},
       findingDocuments: true,
+      inspectingRetainedDocument: false,
     );
   }
 
@@ -886,6 +953,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       .map((entry) => entry.key)
       .firstOrNull;
 
+  String? documentIdForBuffer(String bufferId) =>
+      _documentIdsByBuffer[bufferId];
+
   Future<void> search(String query) async {
     final normalized = query;
     final generation = ++_searchGeneration;
@@ -897,8 +967,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     );
     if (normalized.isEmpty) return;
     final documentId = state.selectedDocumentId;
-    final summaries = documentId == null
+    final summaries = state.findingDocuments
         ? state.snapshot.revisions
+        : documentId == null
+        ? const <LocalHistoryRevisionSummary>[]
         : state.snapshot.revisionsFor(documentId);
     final matches = <String>{};
     final documentMatches = <String>{};

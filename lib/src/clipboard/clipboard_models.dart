@@ -234,7 +234,10 @@ class BusyMarkClipboardCapture {
     BusyMarkClipboardContentKind.text => text != null || sourceText != null,
     BusyMarkClipboardContentKind.richText =>
       mediaComplete &&
-          (richFragment != null || sourceText != null || text != null),
+          (richFragment != null ||
+              html != null ||
+              sourceText != null ||
+              text != null),
     BusyMarkClipboardContentKind.image =>
       imageBytes != null && imageBytes!.isNotEmpty,
   };

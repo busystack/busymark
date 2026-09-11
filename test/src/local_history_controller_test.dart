@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -9,9 +10,12 @@ import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_file_snapshot.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import 'package:path/path.dart' as p;
 
 void main() {
   test(
@@ -201,6 +205,409 @@ void main() {
       state = container.read(localHistoryControllerProvider);
       expect(state.documentSearchMatches, {state.snapshot.documents.single.id});
       expect(state.snapshot.documents.single.deleted, isTrue);
+    },
+  );
+
+  test(
+    'retained-document lookup is temporary and normal document selection resumes following',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      await _capturePath(store, '/workspace/current.md', 'Current source');
+      await _capturePath(
+        store,
+        '/retired/deleted.md',
+        'Unique retained content',
+      );
+      await store.markDeleted('/retired/deleted.md', recursive: false);
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+      final current = _fileBuffer(
+        'current-buffer',
+        '/workspace/current.md',
+        'Current source',
+      );
+      await controller.selectDocumentForBuffer(current);
+      final currentId = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId;
+
+      controller.beginDocumentSearch();
+      await controller.search('Unique retained');
+      var state = container.read(localHistoryControllerProvider);
+      final deleted = state.snapshot.documents.singleWhere(
+        (document) =>
+            document.currentPath == '/retired/deleted.md' ||
+            document.historicalPaths.contains('/retired/deleted.md'),
+      );
+      expect(state.documentSearchMatches, {deleted.id});
+      controller.inspectRetainedDocument(deleted.id);
+      state = container.read(localHistoryControllerProvider);
+      expect(state.inspectingRetainedDocument, isTrue);
+      expect(state.selectedDocumentId, deleted.id);
+      expect(state.selectedDocument?.deleted, isTrue);
+      expect(state.searchQuery, isEmpty);
+
+      await controller.selectDocumentForBuffer(current);
+      state = container.read(localHistoryControllerProvider);
+      expect(state.inspectingRetainedDocument, isFalse);
+      expect(state.findingDocuments, isFalse);
+      expect(state.selectedDocumentId, currentId);
+      expect(state.searchQuery, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'panel construction preserves an explicit retained-document inspection',
+    (tester) async {
+      final directory = await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-history-inspect-'),
+      );
+      final root = directory!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final currentPath = p.join(root.path, 'current.md');
+      await tester.runAsync(
+        () => File(currentPath).writeAsString('Current source'),
+      );
+      final store = MemoryLocalHistoryStore();
+      await tester.runAsync(
+        () => _capturePath(
+          store,
+          '/retired/deleted.md',
+          'Unique retained content',
+        ),
+      );
+      await tester.runAsync(
+        () => store.markDeleted('/retired/deleted.md', recursive: false),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localHistoryStoreProvider.overrideWithValue(store),
+          localHistoryClockProvider.overrideWithValue(
+            () => DateTime.utc(2026, 1, 2),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() => workspace.openPath(currentPath));
+      final history = container.read(localHistoryControllerProvider.notifier);
+      await tester.runAsync(history.refresh);
+      history.beginDocumentSearch();
+      await tester.runAsync(() => history.search('Unique retained'));
+      final retained = container
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .singleWhere((document) => document.deleted);
+      history.inspectRetainedDocument(retained.id);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LocalHistoryPanel()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.inspectingRetainedDocument, isTrue);
+      expect(state.selectedDocumentId, retained.id);
+      expect(find.text('deleted.md'), findsOneWidget);
+    },
+  );
+
+  test(
+    'delayed revision search cannot repopulate a newly selected document scope',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      await _capturePath(memory, '/workspace/a.md', 'Only A matches');
+      await _capturePath(memory, '/workspace/b.md', 'Only B matches');
+      final snapshot = await memory.load();
+      final documentA = snapshot.documents.singleWhere(
+        (document) => document.currentPath == '/workspace/a.md',
+      );
+      final documentB = snapshot.documents.singleWhere(
+        (document) => document.currentPath == '/workspace/b.md',
+      );
+      final revisionA = snapshot.revisionsFor(documentA.id).single;
+      final store = _BlockingRevisionReadStore(memory, revisionA.id);
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+      controller.selectDocument(documentA.id);
+
+      final search = controller.search('Only A');
+      await store.started.future;
+      controller.selectDocument(documentB.id);
+      expect(container.read(localHistoryControllerProvider).loading, isFalse);
+      expect(
+        container.read(localHistoryControllerProvider).selectedDocumentId,
+        documentB.id,
+      );
+      store.release.complete();
+      await search;
+
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.selectedDocument?.currentPath, '/workspace/b.md');
+      expect(state.searchQuery, isEmpty);
+      expect(state.searchMatches, isEmpty);
+      expect(state.documentSearchMatches, isEmpty);
+      expect(state.loading, isFalse);
+    },
+  );
+
+  testWidgets(
+    'Local History follows active tabs and clears the visible query without a document dropdown',
+    (tester) async {
+      final directory = await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-history-follow-'),
+      );
+      final root = directory!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final aPath = p.join(root.path, 'A.md');
+      final bPath = p.join(root.path, 'B.md');
+      await tester.runAsync(() async {
+        await File(aPath).writeAsString('# Unique A\n');
+        await File(bPath).writeAsString('# Unique B\n');
+      });
+      final store = MemoryLocalHistoryStore();
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localHistoryStoreProvider.overrideWithValue(store),
+        ],
+      );
+      addTearDown(container.dispose);
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() => workspace.openPath(root.path));
+      await tester.runAsync(() => workspace.openActiveFile(bPath));
+
+      tester.view.physicalSize = const Size(300, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LocalHistoryPanel()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => _waitForHistory(
+          container,
+          (state) => state.selectedDocument?.currentPath == bPath,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('B.md'), findsOneWidget);
+      expect(find.byType(DropdownButton<String>), findsNothing);
+
+      final searchField = find.byType(TextField);
+      expect(searchField, findsOneWidget);
+      await tester.enterText(searchField, 'Unique B');
+      await tester.runAsync(
+        () => _waitForHistory(
+          container,
+          (state) => !state.searching && state.searchQuery == 'Unique B',
+        ),
+      );
+      final selectedBeforeFocus = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId;
+      await tester.tap(searchField);
+      await tester.pump();
+      expect(
+        container.read(localHistoryControllerProvider).selectedDocumentId,
+        selectedBeforeFocus,
+      );
+
+      await tester.runAsync(() => workspace.openActiveFile(aPath));
+      await tester.runAsync(
+        () => _waitForHistory(
+          container,
+          (state) => state.selectedDocument?.currentPath == aPath,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('A.md'), findsOneWidget);
+      expect(
+        container.read(localHistoryControllerProvider).searchQuery,
+        isEmpty,
+      );
+      expect(tester.widget<TextField>(searchField).controller!.text, isEmpty);
+
+      await tester.tap(
+        find.byKey(const ValueKey('local-history-actions-menu')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Find in Local History…'), findsOneWidget);
+      expect(find.text('Clear This Document’s History'), findsOneWidget);
+      expect(find.text('Clear All Local History'), findsOneWidget);
+
+      final aDocumentId = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId!;
+      final bDocumentId = (await tester.runAsync(
+        store.load,
+      ))!.documents.singleWhere((document) => document.currentPath == bPath).id;
+      await tester.tap(find.text('Clear This Document’s History'));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => workspace.openActiveFile(bPath));
+      await tester.runAsync(
+        () => _waitForHistory(
+          container,
+          (state) => state.selectedDocumentId == bDocumentId,
+        ),
+      );
+      await tester.pump();
+      final dialogContext = tester.element(find.byType(AlertDialog));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(AppLocalizations.of(dialogContext).delete),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final afterClear = await tester.runAsync(store.load);
+      expect(afterClear!.revisionsFor(aDocumentId), isEmpty);
+      expect(afterClear.revisionsFor(bDocumentId), isNotEmpty);
+    },
+  );
+
+  testWidgets(
+    'revision rows use local second-precision time, date groups, event metadata, and RTL',
+    (tester) async {
+      final directory = await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-history-rows-'),
+      );
+      final root = directory!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final path = p.join(root.path, 'versions.md');
+      await tester.runAsync(() => File(path).writeAsString('Disk source\n'));
+      final store = MemoryLocalHistoryStore();
+      final beforeMidnight = DateTime(2026, 1, 1, 23, 59, 58);
+      final afterMidnight = DateTime(2026, 1, 2, 0, 0, 2);
+      await tester.runAsync(() async {
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: path,
+            displayName: 'versions.md',
+            source: 'Automatic source',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: beforeMidnight.toUtc(),
+            reason: LocalHistoryCaptureReason.automaticCheckpoint,
+          ),
+          const LocalHistoryPolicy(),
+        );
+        await store.capture(
+          LocalHistoryCaptureRequest(
+            path: path,
+            displayName: 'versions.md',
+            source: 'Saved source',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: afterMidnight.toUtc(),
+            reason: LocalHistoryCaptureReason.saved,
+          ),
+          const LocalHistoryPolicy(),
+        );
+      });
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          localHistoryStoreProvider.overrideWithValue(store),
+          localHistoryClockProvider.overrideWithValue(
+            () => DateTime.utc(2026, 1, 3),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final workspace = container.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() => workspace.openPath(path));
+
+      tester.view.physicalSize = const Size(300, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('ar'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: LocalHistoryPanel()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => _waitForHistory(
+          container,
+          (state) => state.selectedDocument?.currentPath == path,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(LocalHistoryPanel));
+      final l10n = AppLocalizations.of(context);
+      final locale = Localizations.localeOf(context).toLanguageTag();
+      final beforeLabel = DateFormat.Hms(locale).format(beforeMidnight);
+      final afterLabel = DateFormat.Hms(locale).format(afterMidnight);
+      expect(Directionality.of(context), TextDirection.rtl);
+      expect(find.text(beforeLabel), findsOneWidget);
+      expect(find.text(afterLabel), findsOneWidget);
+      expect(find.text(l10n.localHistoryReasonSaved), findsOneWidget);
+      expect(
+        find.text(l10n.localHistoryReasonAutomaticCheckpoint),
+        findsNothing,
+      );
+      expect(find.text(l10n.localHistoryReasonBaseline), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Tooltip &&
+              widget.message?.contains(
+                    l10n.localHistoryReasonAutomaticCheckpoint,
+                  ) ==
+                  true,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .getSemantics(find.text(afterLabel))
+            .label
+            .contains(l10n.localHistoryReasonSaved),
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
     },
   );
 
@@ -703,6 +1110,7 @@ ProviderContainer _historyContainer(
   overrides: [
     localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
     localHistoryStoreProvider.overrideWithValue(store),
+    localHistoryClockProvider.overrideWithValue(() => DateTime.utc(2026, 1, 2)),
     localHistoryTimerFactoryProvider.overrideWithValue((delay, callback) {
       final timer = _FakeTimer(delay, callback);
       timers.add(timer);
@@ -749,6 +1157,19 @@ Future<List<String>> _revisionSources(
     sources.add((await store.readRevision(revision.id))!.source);
   }
   return sources;
+}
+
+Future<void> _waitForHistory(
+  ProviderContainer container,
+  bool Function(LocalHistoryState state) condition,
+) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 3));
+  while (!condition(container.read(localHistoryControllerProvider))) {
+    if (DateTime.now().isAfter(deadline)) {
+      throw StateError('Timed out waiting for Local History state');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
 }
 
 class _BlockingRevisionReadStore implements LocalHistoryStore {

@@ -1099,7 +1099,13 @@ void main() {
       workspace,
       contains("ValueKey('workspace-sidebar-outline-file-menu')"),
     );
-    expect(workspace, contains('copyNameLabel: menuContext.l10n.copyFileName'));
+    expect(workspace, contains('_outlineDocumentMenuItems('));
+    expect(workspace, contains('label: context.l10n.copyFileName'));
+    expect(
+      workspace,
+      contains('label: context.l10n.generateOrUpdateMarkdownToc'),
+    );
+    expect(workspace, contains('label: context.l10n.export'));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));

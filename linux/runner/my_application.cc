@@ -109,8 +109,6 @@ struct _MyApplication {
   GtkWidget* search_entry;
   gboolean document_controls_visible;
   gboolean search_visible;
-  gboolean can_export_pdf;
-  gboolean can_export_html;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_icon;
@@ -157,8 +155,6 @@ struct HeaderBarConfiguration {
   const gchar* title;
   const gchar* view_mode;
   gboolean can_refresh;
-  gboolean can_export_pdf;
-  gboolean can_export_html;
   gboolean document_controls_visible;
   gboolean search_active;
   gboolean search_visible;
@@ -1327,18 +1323,8 @@ static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
 }
 
 static const gchar* main_menu_icon_name(const gchar* action) {
-  if (g_strcmp0(action, "export") == 0) {
-    return "document-save-as-symbolic";
-  }
   if (g_strcmp0(action, "settings") == 0) {
     return "preferences-system-symbolic";
-  }
-  if (g_strcmp0(action, "clipboardHistory") == 0) {
-    return "edit-paste-symbolic";
-  }
-  if (g_strcmp0(action, "localHistory") == 0 ||
-      g_strcmp0(action, "findLocalHistory") == 0) {
-    return "document-open-recent-symbolic";
   }
   if (g_strcmp0(action, "keyboardShortcuts") == 0) {
     return "input-keyboard-symbolic";
@@ -1390,28 +1376,9 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
   g_menu_remove_all(self->main_menu_model);
   append_action_menu_item(
       self->main_menu_model,
-      localized_label_or(labels, "export", ""), "header.export",
-      main_menu_icon_name("export"),
-      fl_lookup_string_arg(labels, "exportGtkAccelerator"));
-  append_action_menu_item(
-      self->main_menu_model,
       localized_label_or(labels, "fullScreen", ""), "header.full-screen",
       main_menu_icon_name("fullScreen"),
       fl_lookup_string_arg(labels, "fullScreenGtkAccelerator"));
-  append_action_menu_item(
-      self->main_menu_model,
-      localized_label_or(labels, "clipboardHistory", ""),
-      "header.clipboard-history", main_menu_icon_name("clipboardHistory"),
-      nullptr);
-  append_action_menu_item(
-      self->main_menu_model,
-      localized_label_or(labels, "localHistory", ""),
-      "header.local-history", main_menu_icon_name("localHistory"), nullptr);
-  append_action_menu_item(
-      self->main_menu_model,
-      localized_label_or(labels, "findLocalHistory", ""),
-      "header.find-local-history", main_menu_icon_name("findLocalHistory"),
-      nullptr);
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "settings", ""), "header.settings",
@@ -1563,27 +1530,9 @@ static void add_header_gaction(MyApplication* self,
   g_object_unref(action);
 }
 
-static void set_header_action_enabled(MyApplication* self,
-                                      const gchar* action_name,
-                                      gboolean enabled) {
-  if (self->header_action_group == nullptr) {
-    return;
-  }
-  GAction* action = g_action_map_lookup_action(
-      G_ACTION_MAP(self->header_action_group), action_name);
-  if (action != nullptr && G_IS_SIMPLE_ACTION(action)) {
-    g_simple_action_set_enabled(G_SIMPLE_ACTION(action), enabled);
-  }
-}
-
 static void setup_header_actions(MyApplication* self) {
   self->header_action_group = g_simple_action_group_new();
-  add_header_gaction(self, "export", "export");
-  set_header_action_enabled(self, "export", FALSE);
   add_header_gaction(self, "settings", "settings");
-  add_header_gaction(self, "clipboard-history", "clipboardHistory");
-  add_header_gaction(self, "local-history", "localHistory");
-  add_header_gaction(self, "find-local-history", "findLocalHistory");
   add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
   add_header_gaction(self, "syntax-reference", "syntaxReference");
   add_header_gaction(self, "report-issue", "reportIssue");
@@ -1899,9 +1848,6 @@ static gboolean decode_header_bar_configuration(
       configuration->sidebar_width <= 0 ||
       !fl_lookup_optional_bool_arg(args, "canRefresh",
                                    &configuration->can_refresh) ||
-      !fl_lookup_optional_bool_arg(args, "canExportHtml", &configuration->can_export_html) ||
-      !fl_lookup_optional_bool_arg(args, "canExportPdf",
-                                   &configuration->can_export_pdf) ||
       !fl_lookup_optional_bool_arg(
           args, "documentControlsVisible",
           &configuration->document_controls_visible) ||
@@ -1946,16 +1892,6 @@ static void apply_header_bar_configuration(
     gtk_label_set_text(GTK_LABEL(self->title_label), configuration.title);
   }
   set_widget_sensitive(self->refresh_button, configuration.can_refresh);
-  self->can_export_pdf = configuration.can_export_pdf;
-  self->can_export_html = configuration.can_export_html;
-  set_header_action_enabled(
-      self, "export", self->can_export_pdf || self->can_export_html);
-  set_header_action_enabled(self, "clipboard-history",
-                            configuration.document_controls_visible);
-  set_header_action_enabled(self, "local-history",
-                            configuration.document_controls_visible);
-  set_header_action_enabled(self, "find-local-history",
-                            configuration.document_controls_visible);
   set_sidebar_width(self, configuration.sidebar_width);
   set_text_direction(self, configuration.text_direction);
   set_sidebar_visible(self, configuration.sidebar_visible);
@@ -2194,16 +2130,6 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
-    respond_success(method_call);
-  } else if (strcmp(method, "setCanExportHtml") == 0) {
-    self->can_export_html = fl_method_bool_arg(args);
-    set_header_action_enabled(
-        self, "export", self->can_export_pdf || self->can_export_html);
-    respond_success(method_call);
-  } else if (strcmp(method, "setCanExportPdf") == 0) {
-    self->can_export_pdf = fl_method_bool_arg(args);
-    set_header_action_enabled(
-        self, "export", self->can_export_pdf || self->can_export_html);
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));

@@ -8,15 +8,18 @@ import 'dart:ui' as ui;
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
+import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/comparison/source_comparison.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/data/git_cli_gateway.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
@@ -59,7 +62,7 @@ Future<void> main(List<String> arguments) async {
         ? BusyMarkThemeModePreference.dark
         : BusyMarkThemeModePreference.light,
     localeTag: mode == 'writerside' ? 'ar' : 'en',
-    documentViewMode: DocumentViewModePreference.source,
+    documentViewMode: DocumentViewModePreference.editor,
     previewVisible: false,
     editorFontSize: mode == 'writerside' ? 20 : 15,
     autoSave: false,
@@ -83,6 +86,9 @@ Future<void> main(List<String> arguments) async {
         ),
         documentRecoveryStoreProvider.overrideWithValue(
           MemoryDocumentRecoveryStore(),
+        ),
+        richClipboardServiceProvider.overrideWithValue(
+          _RuntimeExternalClipboardService(),
         ),
         localHistoryStoreProvider.overrideWithValue(
           FileLocalHistoryStore(
@@ -164,17 +170,38 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         () => ref.read(workspaceControllerProvider).activeBuffer != null,
         'active document',
       );
+      await _waitFor(
+        () => _hasWidgetNamed('_Sidebar'),
+        'workspace sidebar listeners',
+      );
       await Future<void>.delayed(const Duration(milliseconds: 500));
 
       await _seedClipboard();
-      ref.read(clipboardHistoryOpenRequestProvider.notifier).request();
+      _check(
+        await ref
+            .read(busyMarkCommandRegistryProvider)
+            .execute(BusyMarkCommandIds.clipboardHistory),
+        'Clipboard History command',
+      );
+      await _waitFor(
+        _hasWidget<ClipboardHistoryPanel>,
+        'Clipboard History view',
+      );
       await _capture('${widget.mode}-clipboard-history-1280x800.png');
+      await _exerciseCurrentClipboard();
 
       var buffer = ref.read(workspaceControllerProvider).activeBuffer!;
       await localHistory.observeOpened(buffer);
       final baseline = buffer.text;
       final saved = _savedVersion(baseline);
       workspace.updateActiveText(saved, sourceFilePath: buffer.filePath);
+      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      _check(
+        await localHistory.captureSaved(
+          LocalHistoryBufferSnapshot.fromBuffer(buffer),
+        ),
+        'saved event captured',
+      );
       _check(
         await workspace.saveActive(overwriteExternalChanges: true),
         'explicit save captured',
@@ -194,7 +221,22 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       buffer = ref.read(workspaceControllerProvider).activeBuffer!;
       await localHistory.selectDocumentForBuffer(buffer);
       await localHistory.refresh();
-      ref.read(localHistoryOpenRequestProvider.notifier).request();
+      _check(
+        await ref
+            .read(busyMarkCommandRegistryProvider)
+            .execute(BusyMarkCommandIds.localHistory),
+        'Local History command',
+      );
+      await _waitFor(_hasWidget<LocalHistoryPanel>, 'Local History view');
+      await _waitFor(
+        () =>
+            !ref.read(localHistoryControllerProvider).loading &&
+            ref
+                .read(localHistoryControllerProvider)
+                .selectedRevisions
+                .isNotEmpty,
+        'Local History revisions',
+      );
       await _capture('${widget.mode}-local-history-1280x800.png');
 
       final historyState = ref.read(localHistoryControllerProvider);
@@ -261,15 +303,17 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
             LocalHistoryCaptureReason.automaticCheckpoint,
             LocalHistoryCaptureReason.beforeRestore,
           });
+      final passed = _checks.values.every((value) => value);
       await File(
         p.join(widget.output.path, '${widget.mode}-report.json'),
       ).writeAsString(
         const JsonEncoder.withIndent('  ').convert({
-          'passed': _checks.values.every((value) => value),
+          'passed': passed,
           'checks': _checks,
           'screenshots': _screenshots,
         }),
       );
+      if (!passed) exitCode = 1;
       await workspace.discardRecoveryForShutdown();
       await Future<void>.delayed(const Duration(milliseconds: 300));
       await SystemNavigator.pop();
@@ -290,20 +334,28 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       documentPath: buffer.filePath,
     );
     final controller = ref.read(clipboardHistoryControllerProvider.notifier);
-    const sourceSelection =
-        '## Safe deployment\n\nUse **staged rollout** with a rollback plan.';
+    const externalText =
+        'Safe deployment\n\nUse staged rollout with a rollback plan.\n\n'
+        'Verify health\nKeep the prior package';
+    const externalHtml =
+        '<h2>Safe deployment</h2>'
+        '<p>Use <strong>staged rollout</strong> with a '
+        '<a href="https://example.test/rollback">rollback plan</a>.</p>'
+        '<ul><li>Verify health</li><li>Keep the prior package</li></ul>';
     final nativeWrite = await ref
         .read(richClipboardServiceProvider)
-        .write(
-          RichClipboardData(
-            text: 'Safe deployment\n\nUse staged rollout with a rollback plan.',
-            sourceText: sourceSelection,
-            html:
-                '<h2>Safe deployment</h2><p>Use <strong>staged rollout</strong> with a rollback plan.</p>',
-            origin: origin,
-          ),
-        );
+        .write(const RichClipboardData(text: externalText, html: externalHtml));
     _check(nativeWrite, 'native clipboard publication');
+    await controller.refreshCurrentClipboard();
+    final current = ref
+        .read(clipboardHistoryControllerProvider)
+        .currentClipboard;
+    _check(
+      current?.html == externalHtml && current?.text == externalText,
+      'current external HTML retained before paste',
+    );
+    const sourceSelection =
+        '## Safe deployment\n\nUse **staged rollout** with a rollback plan.';
     controller.retain(
       BusyMarkClipboardCapture(
         kind: BusyMarkClipboardContentKind.richText,
@@ -372,6 +424,68 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         ),
       );
     }
+  }
+
+  Future<void> _exerciseCurrentClipboard() async {
+    const externalHtml =
+        '<h2>Safe deployment</h2>'
+        '<p>Use <strong>staged rollout</strong> with a '
+        '<a href="https://example.test/rollback">rollback plan</a>.</p>'
+        '<ul><li>Verify health</li><li>Keep the prior package</li></ul>';
+    final controller = ref.read(clipboardHistoryControllerProvider.notifier);
+    final current = ref
+        .read(clipboardHistoryControllerProvider)
+        .currentClipboard!;
+    await _waitFor(
+      () => ref.read(clipboardInsertionRegistryProvider).target != null,
+      'clipboard insertion target',
+    );
+    final firstInsertion = await ref
+        .read(clipboardInsertionRegistryProvider)
+        .paste(current, plainText: false);
+    _check(
+      firstInsertion == ClipboardPasteResult.inserted,
+      'current external HTML inserted',
+    );
+    controller.retainCurrentAfterPaste(current);
+    await Clipboard.setData(const ClipboardData(text: 'Clipboard replaced'));
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await WidgetsBinding.instance.endOfFrame;
+    await _waitFor(
+      () => ref.read(clipboardInsertionRegistryProvider).target != null,
+      'clipboard insertion target after first paste',
+    );
+    final retained = ref
+        .read(clipboardHistoryControllerProvider)
+        .entries
+        .firstWhere((entry) => entry.html == externalHtml);
+    final secondInsertion = await ref
+        .read(clipboardInsertionRegistryProvider)
+        .paste(retained, plainText: false);
+    _check(
+      secondInsertion == ClipboardPasteResult.inserted,
+      'retained external HTML reused after clipboard replacement',
+    );
+    final insertedSource = ref
+        .read(workspaceControllerProvider)
+        .activeBuffer!
+        .text;
+    _check(
+      RegExp(
+            r'^## Safe deployment$',
+            multiLine: true,
+          ).allMatches(insertedSource).length >=
+          2,
+      'external HTML heading structure preserved',
+    );
+    _check(
+      insertedSource.contains('**staged rollout**') &&
+          insertedSource.contains(
+            '[rollback plan](https://example.test/rollback)',
+          ) &&
+          insertedSource.contains('- Verify health'),
+      'external HTML inline and list structure preserved',
+    );
   }
 
   Future<void> _verifyDeletedRecovery(
@@ -455,6 +569,36 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     _screenshots.add(path);
   }
 
+  bool _hasWidget<T extends Widget>() {
+    var found = false;
+    void visit(Element element) {
+      if (found) return;
+      if (element.widget is T) {
+        found = true;
+        return;
+      }
+      element.visitChildren(visit);
+    }
+
+    WidgetsBinding.instance.rootElement?.visitChildren(visit);
+    return found;
+  }
+
+  bool _hasWidgetNamed(String typeName) {
+    var found = false;
+    void visit(Element element) {
+      if (found) return;
+      if (element.widget.runtimeType.toString() == typeName) {
+        found = true;
+        return;
+      }
+      element.visitChildren(visit);
+    }
+
+    WidgetsBinding.instance.rootElement?.visitChildren(visit);
+    return found;
+  }
+
   Future<void> _waitFor(bool Function() condition, String description) async {
     for (var attempt = 0; attempt < 240; attempt++) {
       if (condition()) return;
@@ -480,5 +624,25 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _RuntimeExternalClipboardService extends RichClipboardService {
+  final RichClipboardService _native = RichClipboardService();
+  RichClipboardData? _externalRead;
+
+  @override
+  Future<bool> write(RichClipboardData data) async {
+    final written = await _native.write(data);
+    if (written) {
+      _externalRead = RichClipboardData(text: data.text, html: data.html);
+    }
+    return written;
+  }
+
+  @override
+  Future<RichClipboardData> read() async {
+    final external = _externalRead;
+    return external ?? await _native.read();
   }
 }

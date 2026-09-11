@@ -374,10 +374,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
-      case HeaderBarAction.clipboardHistory:
-      case HeaderBarAction.localHistory:
-      case HeaderBarAction.findLocalHistory:
-      case HeaderBarAction.export:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
@@ -398,13 +394,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.export:
-      case BusyMarkMainMenuAction.generateMarkdownToc:
-        break;
-      case BusyMarkMainMenuAction.clipboardHistory:
-      case BusyMarkMainMenuAction.localHistory:
-      case BusyMarkMainMenuAction.findLocalHistory:
-        break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:

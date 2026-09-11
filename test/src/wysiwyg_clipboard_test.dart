@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
@@ -17,6 +20,7 @@ import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
 
@@ -651,9 +655,42 @@ void main() {
             '<a href="https://example.com">linked</a></p><ul><li>Item</li></ul>',
         'text': 'External\nBold and linked\nItem',
       };
+      final historyClipboard = _WysiwygHistoryClipboard(
+        const RichClipboardData(
+          html:
+              '<h1>External</h1><p><b>Bold</b> and '
+              '<a href="https://example.com">linked</a></p><ul><li>Item</li></ul>',
+          text: 'External\nBold and linked\nItem',
+          generation: 31,
+        ),
+      );
+      final historyScope = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            _ClipboardMemorySettingsStore(),
+          ),
+          richClipboardServiceProvider.overrideWithValue(historyClipboard),
+          clipboardAssetInputServiceProvider.overrideWithValue(
+            _ClipboardEmptyAssetInput(),
+          ),
+        ],
+      );
+      addTearDown(historyScope.dispose);
+      final history = historyScope.read(
+        clipboardHistoryControllerProvider.notifier,
+      );
+      await history.refreshCurrentClipboard();
+      final current = historyScope
+          .read(clipboardHistoryControllerProvider)
+          .currentClipboard!;
+      expect(current.html, contains('<h1>External</h1>'));
+      expect(
+        historyScope.read(clipboardHistoryControllerProvider).entries,
+        isEmpty,
+      );
+
       final registry = BusyMarkClipboardInsertionRegistry();
       addTearDown(registry.dispose);
-      BusyMarkClipboardCapture? capture;
       var first = '';
       await mount(
         tester,
@@ -661,14 +698,25 @@ void main() {
         'Target\n',
         (value) => first = value,
         registry: registry,
-        onCaptured: (value) => capture = value,
       );
       await key(tester, LogicalKeyboardKey.keyA);
-      await key(tester, LogicalKeyboardKey.keyV);
+      expect(await registry.paste(current), ClipboardPasteResult.inserted);
+      await tester.pump();
       expect(first, contains('**Bold**'));
-      expect(capture?.richFragment, isNotNull);
+      expect(first, contains('[linked](https://example.com)'));
+      expect(first, contains('- Item'));
+      history.retainCurrentAfterPaste(current);
+      expect(
+        historyScope.read(clipboardHistoryControllerProvider).entries,
+        hasLength(1),
+      );
 
       systemData = {'text': 'Replacement clipboard'};
+      historyClipboard.value = const RichClipboardData(
+        text: 'Replacement clipboard',
+        generation: 32,
+      );
+      await history.refreshCurrentClipboard();
       var retained = '';
       await mount(
         tester,
@@ -678,29 +726,106 @@ void main() {
         registry: registry,
       );
       await key(tester, LogicalKeyboardKey.keyA);
-      final value = capture!;
-      expect(
-        await registry.paste(
-          BusyMarkClipboardPayload(
-            id: 'external-html',
-            acquiredAt: DateTime.utc(2026),
-            kind: value.kind,
-            text: value.text,
-            sourceText: value.sourceText,
-            html: value.html,
-            richFragment: value.richFragment,
-            origin: value.origin,
-            external: true,
-          ),
-        ),
-        ClipboardPasteResult.inserted,
-      );
+      final value = historyScope
+          .read(clipboardHistoryControllerProvider)
+          .entries
+          .single;
+      expect(await registry.paste(value), ClipboardPasteResult.inserted);
       await tester.pump();
       expect(retained, contains('# External'));
       expect(retained, contains('**Bold**'));
       expect(retained, contains('[linked](https://example.com)'));
       expect(retained, contains('- Item'));
+
+      var plain = '';
+      await mount(
+        tester,
+        'plain',
+        'Target\n',
+        (value) => plain = value,
+        registry: registry,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      expect(
+        await registry.paste(current, plainText: true),
+        ClipboardPasteResult.inserted,
+      );
+      await tester.pump();
+      expect(plain, contains('External'));
+      expect(plain, contains('Bold and linked'));
+      expect(plain, contains('Item'));
+      expect(plain, isNot(contains('**Bold**')));
+      expect(plain, isNot(contains('[linked]')));
     });
+
+    testWidgets(
+      'current HTML-only and malformed HTML use ordinary importer fallbacks',
+      (tester) async {
+        final service = _WysiwygHistoryClipboard(
+          const RichClipboardData(
+            html: '<h2>HTML only</h2><p><em>Supported</em></p>',
+            generation: 33,
+          ),
+        );
+        final historyScope = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _ClipboardMemorySettingsStore(),
+            ),
+            richClipboardServiceProvider.overrideWithValue(service),
+            clipboardAssetInputServiceProvider.overrideWithValue(
+              _ClipboardEmptyAssetInput(),
+            ),
+          ],
+        );
+        addTearDown(historyScope.dispose);
+        final history = historyScope.read(
+          clipboardHistoryControllerProvider.notifier,
+        );
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+
+        await history.refreshCurrentClipboard();
+        final htmlOnly = historyScope
+            .read(clipboardHistoryControllerProvider)
+            .currentClipboard!;
+        var htmlOnlyResult = '';
+        await mount(
+          tester,
+          'html-only-current',
+          'Target\n',
+          (value) => htmlOnlyResult = value,
+          registry: registry,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(await registry.paste(htmlOnly), ClipboardPasteResult.inserted);
+        await tester.pump();
+        expect(htmlOnlyResult, contains('## HTML only'));
+        expect(htmlOnlyResult, contains('*Supported*'));
+
+        service.value = const RichClipboardData(
+          html: '<not-valid><p>',
+          text: 'Safe text alternative',
+          generation: 34,
+        );
+        await history.refreshCurrentClipboard();
+        final malformed = historyScope
+            .read(clipboardHistoryControllerProvider)
+            .currentClipboard!;
+        var fallback = '';
+        await mount(
+          tester,
+          'malformed-current',
+          'Target\n',
+          (value) => fallback = value,
+          registry: registry,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(await registry.paste(malformed), ClipboardPasteResult.inserted);
+        await tester.pump();
+        expect(fallback, contains('Safe text alternative'));
+      },
+    );
 
     testWidgets('Ctrl+Shift+V is not an Editor paste command', (tester) async {
       await copyAll(tester);
@@ -768,4 +893,35 @@ void main() {
       expect(result, 'Other\n');
     });
   });
+}
+
+class _ClipboardMemorySettingsStore implements LocalSettingsStore {
+  Map<String, Object?> value = {};
+
+  @override
+  Future<Map<String, Object?>> load() async => value;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async => value = json;
+}
+
+class _ClipboardEmptyAssetInput extends AssetInputService {
+  _ClipboardEmptyAssetInput()
+    : super(channel: const MethodChannel('busymark.test/wysiwyg-assets'));
+
+  @override
+  Future<List<String>> readClipboardImageFiles() async => const [];
+
+  @override
+  Future<Uint8List?> readClipboardImagePng() async => null;
+}
+
+class _WysiwygHistoryClipboard extends RichClipboardService {
+  _WysiwygHistoryClipboard(this.value)
+    : super(channel: const MethodChannel('busymark.test/wysiwyg-history'));
+
+  RichClipboardData value;
+
+  @override
+  Future<RichClipboardData> read() async => value;
 }

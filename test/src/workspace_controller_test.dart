@@ -15,6 +15,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -1648,6 +1649,160 @@ void main() {
     expect(harness.controller.state.activeText, '# Original\n');
   });
 
+  test(
+    'workspace refresh preserves an active edit and editor history made during reparse',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-refresh-active-edit-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'a.md');
+      await File(path).writeAsString('# Disk\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final monitor = _ControlledFileMonitor();
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      await harness.controller.openPath(directory.path);
+
+      service.pauseNextReparse();
+      final refresh = harness.controller.refreshWorkspaceFromDisk();
+      await service.reparseStarted.future;
+      harness.controller.updateActiveEditorState(
+        harness.controller.state.activeBuffer!.editorState.copyWith(
+          selection: const TextSelection.collapsed(offset: 2),
+        ),
+      );
+      harness.controller.updateActiveSourceText('# Newer one\n');
+      harness.controller.updateActiveEditorState(
+        harness.controller.state.activeBuffer!.editorState.copyWith(
+          selection: const TextSelection.collapsed(offset: 7),
+        ),
+      );
+      harness.controller.updateActiveSourceText('# Newer two\n');
+      expect(harness.controller.undoActiveBuffer(), isTrue);
+      final duringRefresh = harness.controller.state.activeBuffer!;
+      expect(duringRefresh.editorState.undoState.redo, isNotEmpty);
+
+      service.releaseReparse();
+      expect(await refresh, isTrue);
+      final after = harness.controller.state.activeBuffer!;
+      expect(after.text, '# Newer one\n');
+      expect(after.isDirty, isTrue);
+      expect(after.editorState.selection, duringRefresh.editorState.selection);
+      expect(
+        after.editorState.undoState.undo,
+        duringRefresh.editorState.undoState.undo,
+      );
+      expect(
+        after.editorState.undoState.redo,
+        duringRefresh.editorState.undoState.redo,
+      );
+      expect(harness.controller.redoActiveBuffer(), isTrue);
+      expect(harness.controller.state.activeText, '# Newer two\n');
+    },
+  );
+
+  test(
+    'workspace refresh preserves inactive edits and does not resurrect a closed tab',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-refresh-tabs-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final monitor = _ControlledFileMonitor();
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      await harness.controller.openPath(directory.path);
+      expect(await harness.controller.openActiveFile(bPath), isTrue);
+      final bId = harness.controller.state.activeBuffer!.id;
+      expect(await harness.controller.openActiveFile(aPath), isTrue);
+      final aId = harness.controller.state.activeBuffer!.id;
+
+      service.pauseNextReparse();
+      final refresh = harness.controller.refreshWorkspaceFromDisk();
+      await service.reparseStarted.future;
+      expect(harness.controller.updateDocumentText(bId, '# B one\n'), isTrue);
+      expect(harness.controller.updateDocumentText(bId, '# B two\n'), isTrue);
+      expect(await harness.controller.activateDocumentBuffer(bId), isTrue);
+      expect(harness.controller.undoActiveBuffer(), isTrue);
+      final editedB = harness.controller.state.activeBuffer!;
+      expect(await harness.controller.activateDocumentBuffer(aId), isTrue);
+      expect(await harness.controller.closeDocumentBuffer(aId), isTrue);
+
+      service.releaseReparse();
+      expect(await refresh, isTrue);
+      expect(
+        harness.controller.state.documentBuffers.map((buffer) => buffer.id),
+        [bId],
+      );
+      final after = harness.controller.state.activeBuffer!;
+      expect(after.text, '# B one\n');
+      expect(after.isDirty, isTrue);
+      expect(
+        after.editorState.undoState.undo,
+        editedB.editorState.undoState.undo,
+      );
+      expect(
+        after.editorState.undoState.redo,
+        editedB.editorState.undoState.redo,
+      );
+      expect(harness.controller.state.workspace?.activeFilePath, bPath);
+      expect(harness.controller.state.workspace?.markdown?.filePath, bPath);
+      expect(harness.controller.state.workspace?.markdown?.source, '# B one\n');
+    },
+  );
+
+  test('workspace refresh rejects a disk load superseded by typing', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-refresh-load-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final path = p.join(directory.path, 'a.md');
+    await File(path).writeAsString('# Initial\n');
+    final service = _BlockingRefreshWorkspaceService();
+    final monitor = _ControlledFileMonitor();
+    final harness = await _createControllerHarness(
+      service: service,
+      fileMonitor: monitor,
+    );
+    await harness.settingsController.setAutoSave(false);
+    await harness.settingsController.setValidateOnEdit(false);
+    await harness.controller.openPath(directory.path);
+    await File(path).writeAsString('# Disk replacement\n');
+
+    service.pauseNextLoad(path);
+    final refresh = harness.controller.refreshWorkspaceFromDisk();
+    await service.loadStarted.future;
+    harness.controller.updateActiveEditorState(
+      harness.controller.state.activeBuffer!.editorState.copyWith(
+        selection: const TextSelection.collapsed(offset: 3),
+      ),
+    );
+    harness.controller.updateActiveSourceText('# Typed while loading\n');
+    final edited = harness.controller.state.activeBuffer!;
+    service.releaseLoad();
+
+    expect(await refresh, isTrue);
+    final after = harness.controller.state.activeBuffer!;
+    expect(after.text, edited.text);
+    expect(after.isDirty, isTrue);
+    expect(after.editorState.selection, edited.editorState.selection);
+    expect(after.editorState.undoState.undo, edited.editorState.undoState.undo);
+  });
+
   test('external file moves remap the open document buffer', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-external-move-',
@@ -2175,6 +2330,9 @@ class _WorkspaceControllerDriver {
 
   Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
+  Future<bool> activateDocumentBuffer(String bufferId) =>
+      _notifier.activateDocumentBuffer(bufferId);
+
   void updateActiveText(String text, {String? sourceFilePath}) {
     _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
   }
@@ -2187,6 +2345,16 @@ class _WorkspaceControllerDriver {
       selection: selection,
     );
   }
+
+  void updateActiveEditorState(DocumentEditorState editorState) =>
+      _notifier.updateActiveEditorState(editorState);
+
+  bool updateDocumentText(String bufferId, String text) =>
+      _notifier.updateDocumentText(bufferId, text);
+
+  bool undoActiveBuffer() => _notifier.undoActiveBuffer();
+
+  bool redoActiveBuffer() => _notifier.redoActiveBuffer();
 
   void updateActiveEditorMode(DocumentViewModePreference mode) {
     _notifier.updateActiveEditorMode(mode);
@@ -2605,5 +2773,49 @@ class _GatedRefreshWorkspaceService extends WorkspaceService {
       await pending.future;
     }
     return super.openPath(path);
+  }
+}
+
+class _BlockingRefreshWorkspaceService extends WorkspaceService {
+  var _pauseReparse = false;
+  String? _pausedLoadPath;
+  final reparseStarted = Completer<void>();
+  final loadStarted = Completer<void>();
+  final _reparseRelease = Completer<void>();
+  final _loadRelease = Completer<void>();
+
+  void pauseNextReparse() => _pauseReparse = true;
+
+  void releaseReparse() {
+    if (!_reparseRelease.isCompleted) _reparseRelease.complete();
+  }
+
+  void pauseNextLoad(String path) => _pausedLoadPath = p.normalize(path);
+
+  void releaseLoad() {
+    if (!_loadRelease.isCompleted) _loadRelease.complete();
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final loaded = await super.loadTextWithSnapshot(path);
+    if (_pausedLoadPath != null &&
+        p.equals(_pausedLoadPath!, p.normalize(path))) {
+      _pausedLoadPath = null;
+      if (!loadStarted.isCompleted) loadStarted.complete();
+      await _loadRelease.future;
+    }
+    return loaded;
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    final reparsed = await super.reparseActive(workspace, source);
+    if (_pauseReparse) {
+      _pauseReparse = false;
+      if (!reparseStarted.isCompleted) reparseStarted.complete();
+      await _reparseRelease.future;
+    }
+    return reparsed;
   }
 }

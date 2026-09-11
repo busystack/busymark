@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
@@ -37,13 +38,20 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
     super.dispose();
   }
 
-  Future<void> _selectActive() async {
-    if (ref.read(localHistoryControllerProvider).findingDocuments) return;
+  Future<void> _selectActive({bool preserveLookup = true}) async {
+    final history = ref.read(localHistoryControllerProvider);
+    if (preserveLookup &&
+        (history.findingDocuments || history.inspectingRetainedDocument)) {
+      return;
+    }
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     if (buffer != null) {
       await ref
           .read(localHistoryControllerProvider.notifier)
           .selectDocumentForBuffer(buffer);
+    } else if (!preserveLookup ||
+        !ref.read(localHistoryControllerProvider).inspectingRetainedDocument) {
+      ref.read(localHistoryControllerProvider.notifier).clearDocumentScope();
     }
   }
 
@@ -51,6 +59,43 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
   Widget build(BuildContext context) {
     final state = ref.watch(localHistoryControllerProvider);
     final controller = ref.read(localHistoryControllerProvider.notifier);
+    final workspaceState = ref.watch(workspaceControllerProvider);
+    final activeBuffer = workspaceState.activeBuffer;
+    ref.listen<_LocalHistoryEditorScope>(
+      workspaceControllerProvider.select(
+        (value) => (
+          workspaceId: value.workspace?.id,
+          bufferId: value.activeBuffer?.id,
+          path: value.activeBuffer?.filePath,
+          displayName: value.activeBuffer?.displayName,
+        ),
+      ),
+      (previous, next) {
+        if (previous == next) return;
+        if (next.bufferId == null) {
+          final history = ref.read(localHistoryControllerProvider);
+          if (!history.findingDocuments &&
+              !history.inspectingRetainedDocument) {
+            controller.clearDocumentScope();
+          }
+          return;
+        }
+        final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+        if (buffer != null) {
+          unawaited(controller.selectDocumentForBuffer(buffer));
+        }
+      },
+    );
+    ref.listen<String>(
+      localHistoryControllerProvider.select((value) => value.searchQuery),
+      (previous, next) {
+        if (_searchController.text == next) return;
+        _searchController.value = TextEditingValue(
+          text: next,
+          selection: TextSelection.collapsed(offset: next.length),
+        );
+      },
+    );
     final documents = [...state.snapshot.documents]
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     final visibleDocuments =
@@ -62,68 +107,52 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
               .toList(growable: false)
         : documents;
     final selected = state.selectedDocument;
-    final visibleRevisions = state.selectedRevisions
-        .where(state.revisionVisible)
-        .toList(growable: false);
+    final activeHistoryDocumentId = activeBuffer == null
+        ? null
+        : controller.documentIdForBuffer(activeBuffer.id);
+    final selectedMatchesActive =
+        selected != null &&
+        activeBuffer != null &&
+        (selected.id == activeHistoryDocumentId ||
+            (selected.currentPath != null &&
+                activeBuffer.filePath != null &&
+                p.equals(selected.currentPath!, activeBuffer.filePath!)));
+    final selectedMatchesVisibleScope =
+        state.inspectingRetainedDocument || selectedMatchesActive;
+    final visibleRevisions = selectedMatchesVisibleScope
+        ? state.selectedRevisions
+              .where(state.revisionVisible)
+              .toList(growable: false)
+        : const <LocalHistoryRevisionSummary>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BusyMarkSpacing.md,
-            BusyMarkSpacing.sm,
-            BusyMarkSpacing.md,
-            BusyMarkSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: PopupMenuButton<String>(
-                  tooltip: context.l10n.localHistory,
-                  enabled: documents.isNotEmpty,
-                  onSelected: controller.selectDocument,
-                  itemBuilder: (context) => [
-                    for (final document in documents)
-                      PopupMenuItem(
-                        value: document.id,
-                        child: _DocumentLabel(document: document),
-                      ),
-                  ],
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(BusyMarkGlyphs.documentHistory, size: 18),
-                        const SizedBox(width: BusyMarkSpacing.sm),
-                        Expanded(
-                          child: selected == null
-                              ? Text(context.l10n.localHistoryNoDocuments)
-                              : _DocumentLabel(document: selected),
-                        ),
-                        const Icon(BusyMarkGlyphs.downArrow, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: MaterialLocalizations.of(
-                  context,
-                ).refreshIndicatorSemanticLabel,
-                onPressed: state.loading ? null : controller.refresh,
-                icon: state.loading
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(BusyMarkGlyphs.refresh),
-              ),
-            ],
-          ),
+        _LocalHistoryHeader(
+          activeDocumentName: activeBuffer?.displayName,
+          activeDocumentPath: activeBuffer?.filePath,
+          selectedDocument: selected,
+          findingDocuments: state.findingDocuments,
+          inspectingRetainedDocument: state.inspectingRetainedDocument,
+          loading: state.loading,
+          canClearDocument:
+              selectedMatchesVisibleScope && state.selectedRevisions.isNotEmpty,
+          canClearAll: state.snapshot.revisions.isNotEmpty,
+          onBack: () => unawaited(_selectActive(preserveLookup: false)),
+          onRefresh: controller.refresh,
+          onAction: (action) {
+            switch (action) {
+              case _HistoryAction.find:
+                controller.beginDocumentSearch();
+              case _HistoryAction.clearDocument:
+                final documentId = selected?.id;
+                if (documentId != null) {
+                  unawaited(_confirmClear(action, documentId));
+                }
+              case _HistoryAction.clearAll:
+                unawaited(_confirmClear(action, null));
+            }
+          },
         ),
         Padding(
           padding: const EdgeInsets.symmetric(
@@ -163,6 +192,9 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                             : context.l10n.localHistoryNoMatches,
                       )
                     : ListView.builder(
+                        key: const ValueKey(
+                          'local-history-document-search-results',
+                        ),
                         itemCount: visibleDocuments.length,
                         itemBuilder: (context, index) {
                           final document = visibleDocuments[index];
@@ -188,13 +220,18 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                               trailing: document.deleted
                                   ? Text(context.l10n.localHistoryDeleted)
                                   : null,
-                              onTap: () =>
-                                  controller.selectDocument(document.id),
+                              onTap: () => controller.inspectRetainedDocument(
+                                document.id,
+                              ),
                             ),
                           );
                         },
                       )
-              : selected == null
+              : state.loading &&
+                    state.selectedDocumentId == null &&
+                    !state.inspectingRetainedDocument
+              ? const Center(child: CircularProgressIndicator())
+              : activeBuffer == null && !state.inspectingRetainedDocument
               ? _HistoryEmpty(text: context.l10n.localHistoryNoDocuments)
               : visibleRevisions.isEmpty
               ? _HistoryEmpty(
@@ -203,6 +240,9 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                       : context.l10n.localHistoryNoMatches,
                 )
               : ListView.builder(
+                  key: ValueKey(
+                    'local-history-revisions-${selected?.id ?? 'none'}',
+                  ),
                   itemCount: visibleRevisions.length,
                   itemBuilder: (context, index) {
                     final revision = visibleRevisions[index];
@@ -213,9 +253,15 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                         previous == null ||
                         !_sameDate(previous.capturedAt, revision.capturedAt);
                     final reason = _reason(context, revision.reason);
-                    final timestamp = DateFormat.yMd(
-                      Localizations.localeOf(context).toLanguageTag(),
-                    ).add_Hms().format(revision.capturedAt.toLocal());
+                    final locale = Localizations.localeOf(
+                      context,
+                    ).toLanguageTag();
+                    final localTime = revision.capturedAt.toLocal();
+                    final timestamp = DateFormat.Hms(locale).format(localTime);
+                    final fullTimestamp = DateFormat.yMd(
+                      locale,
+                    ).add_Hms().format(localTime);
+                    final event = _visibleReason(context, revision.reason);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -239,16 +285,23 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                           button: true,
                           label: context.l10n.localHistoryRevisionAt(
                             reason,
-                            timestamp,
+                            fullTimestamp,
                           ),
                           excludeSemantics: true,
-                          child: ListTile(
-                            selected: revision.id == state.selectedRevisionId,
-                            leading: const Icon(BusyMarkGlyphs.history),
-                            title: Text(reason),
-                            subtitle: Text(timestamp),
-                            onTap: () => unawaited(
-                              controller.selectRevision(revision.id),
+                          child: Tooltip(
+                            message: context.l10n.localHistoryRevisionAt(
+                              reason,
+                              fullTimestamp,
+                            ),
+                            child: ListTile(
+                              dense: event == null,
+                              selected: revision.id == state.selectedRevisionId,
+                              leading: const Icon(BusyMarkGlyphs.history),
+                              title: Text(timestamp),
+                              subtitle: event == null ? null : Text(event),
+                              onTap: () => unawaited(
+                                controller.selectRevision(revision.id),
+                              ),
                             ),
                           ),
                         ),
@@ -257,47 +310,26 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
                   },
                 ),
         ),
-        if (selected != null)
-          Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: PopupMenuButton<_ClearAction>(
-              tooltip: context.l10n.actions,
-              onSelected: (action) => _confirmClear(action, selected.id),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _ClearAction.document,
-                  child: Text(context.l10n.localHistoryClearDocument),
-                ),
-                PopupMenuItem(
-                  value: _ClearAction.all,
-                  child: Text(context.l10n.localHistoryClearAll),
-                ),
-              ],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Icon(BusyMarkGlyphs.menuHorizontal),
-                  const SizedBox(width: BusyMarkSpacing.xs),
-                  Text(context.l10n.actions),
-                ],
-              ),
-            ),
-          ),
       ],
     );
   }
 
-  Future<void> _confirmClear(_ClearAction action, String documentId) async {
+  Future<void> _confirmClear(_HistoryAction action, String? documentId) async {
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          action == _ClearAction.document
+          action == _HistoryAction.clearDocument
               ? dialogContext.l10n.localHistoryClearDocumentTitle
               : dialogContext.l10n.localHistoryClearAllTitle,
         ),
-        content: Text(dialogContext.l10n.localHistoryClearConfirmation),
+        content: Text(
+          action == _HistoryAction.clearAll
+              ? '${dialogContext.l10n.localHistoryClearAll}.\n\n'
+                    '${dialogContext.l10n.localHistoryClearConfirmation}'
+              : dialogContext.l10n.localHistoryClearConfirmation,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -312,7 +344,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
     );
     if (confirmed != true || !mounted) return;
     final controller = ref.read(localHistoryControllerProvider.notifier);
-    if (action == _ClearAction.document) {
+    if (action == _HistoryAction.clearDocument && documentId != null) {
       await controller.clearDocument(documentId);
     } else {
       await controller.clearAll();
@@ -320,35 +352,139 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
   }
 }
 
-enum _ClearAction { document, all }
+typedef _LocalHistoryEditorScope = ({
+  String? workspaceId,
+  String? bufferId,
+  String? path,
+  String? displayName,
+});
 
-class _DocumentLabel extends StatelessWidget {
-  const _DocumentLabel({required this.document});
+enum _HistoryAction { find, clearDocument, clearAll }
 
-  final LocalHistoryDocument document;
+class _LocalHistoryHeader extends StatelessWidget {
+  const _LocalHistoryHeader({
+    required this.activeDocumentName,
+    required this.activeDocumentPath,
+    required this.selectedDocument,
+    required this.findingDocuments,
+    required this.inspectingRetainedDocument,
+    required this.loading,
+    required this.canClearDocument,
+    required this.canClearAll,
+    required this.onBack,
+    required this.onRefresh,
+    required this.onAction,
+  });
+
+  final String? activeDocumentName;
+  final String? activeDocumentPath;
+  final LocalHistoryDocument? selectedDocument;
+  final bool findingDocuments;
+  final bool inspectingRetainedDocument;
+  final bool loading;
+  final bool canClearDocument;
+  final bool canClearAll;
+  final VoidCallback onBack;
+  final Future<void> Function() onRefresh;
+  final ValueChanged<_HistoryAction> onAction;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message:
-          document.currentPath ?? document.historicalPaths.lastOrNull ?? '',
+    final temporary = findingDocuments || inspectingRetainedDocument;
+    final selectedPath =
+        selectedDocument?.currentPath ??
+        selectedDocument?.historicalPaths.lastOrNull;
+    final title = findingDocuments
+        ? context.l10n.findLocalHistoryEllipsis
+        : inspectingRetainedDocument
+        ? selectedDocument?.displayName ?? context.l10n.localHistoryNoDocuments
+        : activeDocumentName ?? context.l10n.localHistoryNoDocuments;
+    final path = inspectingRetainedDocument ? selectedPath : activeDocumentPath;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        BusyMarkSpacing.md,
+        BusyMarkSpacing.sm,
+        BusyMarkSpacing.sm,
+        BusyMarkSpacing.xs,
+      ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
+          if (temporary) ...[
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.back,
+              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+              transparent: true,
+              onPressed: onBack,
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+          ] else ...[
+            const Icon(BusyMarkGlyphs.documentHistory, size: 18),
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
           Expanded(
-            child: Text(
-              document.displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Tooltip(
+              message: path == null
+                  ? title
+                  : busyMarkLtrIsolateFor(context, path),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      busyMarkLtrIsolateFor(context, title),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  if (inspectingRetainedDocument &&
+                      selectedDocument?.deleted == true) ...[
+                    const SizedBox(width: BusyMarkSpacing.xs),
+                    Text(
+                      context.l10n.localHistoryDeleted,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-          if (document.deleted) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            Text(
-              context.l10n.localHistoryDeleted,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+          BusyMarkHeaderIconButton(
+            tooltip: MaterialLocalizations.of(
+              context,
+            ).refreshIndicatorSemanticLabel,
+            icon: BusyMarkGlyphs.refresh,
+            transparent: true,
+            onPressed: loading ? null : () => unawaited(onRefresh()),
+          ),
+          BusyMarkHeaderPopupMenuButton<_HistoryAction>(
+            key: const ValueKey('local-history-actions-menu'),
+            tooltip: context.l10n.actions,
+            icon: BusyMarkGlyphs.menuVertical,
+            transparent: true,
+            borderRadius: BusyMarkRadius.nativeHeaderButton,
+            highlightWhenOpen: false,
+            itemBuilder: (context) => [
+              BusyMarkPopupMenuItem(
+                value: _HistoryAction.find,
+                label: context.l10n.findLocalHistoryEllipsis,
+                icon: BusyMarkGlyphs.search,
+              ),
+              const PopupMenuDivider(height: BusyMarkSpacing.sm),
+              BusyMarkPopupMenuItem(
+                value: _HistoryAction.clearDocument,
+                label: context.l10n.localHistoryClearDocument,
+                icon: BusyMarkGlyphs.delete,
+                enabled: canClearDocument,
+              ),
+              BusyMarkPopupMenuItem(
+                value: _HistoryAction.clearAll,
+                label: context.l10n.localHistoryClearAll,
+                icon: BusyMarkGlyphs.clearAll,
+                enabled: canClearAll,
+              ),
+            ],
+            onSelected: onAction,
+          ),
         ],
       ),
     );
@@ -386,6 +522,14 @@ String _reason(BuildContext context, LocalHistoryCaptureReason reason) {
       l10n.localHistoryReasonBeforeDelete,
     LocalHistoryCaptureReason.externalChange =>
       l10n.localHistoryReasonExternalChange,
+  };
+}
+
+String? _visibleReason(BuildContext context, LocalHistoryCaptureReason reason) {
+  return switch (reason) {
+    LocalHistoryCaptureReason.baseline ||
+    LocalHistoryCaptureReason.automaticCheckpoint => null,
+    _ => _reason(context, reason),
   };
 }
 

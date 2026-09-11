@@ -554,6 +554,11 @@ class WorkspaceScreen extends ConsumerWidget {
     final sidebarVisible =
         settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
     final documentOutline = _activeDocumentOutline(state);
+    final canExportPdf = canExportWorkspacePdf(state);
+    final canExportHtml = canExportWorkspaceHtml(state);
+    final canGenerateMarkdownToc =
+        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
+        false;
     final sidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _Sidebar(
@@ -562,6 +567,10 @@ class WorkspaceScreen extends ConsumerWidget {
         searchState: searchState,
         searchResults: searchResults,
         onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
+        canExport: canExportPdf || canExportHtml,
+        canGenerateMarkdownToc: canGenerateMarkdownToc,
+        onExport: () => unawaited(exportWorkspace(context, ref)),
+        onGenerateMarkdownToc: () => _generateOrUpdateMarkdownToc(context, ref),
       ),
     );
     final workspaceContent = Expanded(
@@ -698,19 +707,12 @@ class WorkspaceScreen extends ConsumerWidget {
         ? '*${_activeFileName(context, workspace)}'
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
-    final canExportPdf = canExportWorkspacePdf(state);
-    final canExportHtml = canExportWorkspaceHtml(state);
-    final canGenerateMarkdownToc =
-        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
-        false;
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
           viewMode: _headerBarViewMode(settings.documentViewMode),
           searchQuery: searchState.query,
           canRefresh: true,
-          canExportPdf: canExportPdf,
-          canExportHtml: canExportHtml,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
@@ -883,9 +885,6 @@ class WorkspaceScreen extends ConsumerWidget {
                           },
                         ),
                         BusyMarkMainMenuButton(
-                          canExportPdf: canExportPdf,
-                          canExportHtml: canExportHtml,
-                          canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -1023,14 +1022,6 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
-      case HeaderBarAction.clipboardHistory:
-        execute(BusyMarkCommandIds.clipboardHistory);
-      case HeaderBarAction.localHistory:
-        execute(BusyMarkCommandIds.localHistory);
-      case HeaderBarAction.findLocalHistory:
-        execute(BusyMarkCommandIds.findLocalHistory);
-      case HeaderBarAction.export:
-        execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
@@ -1076,14 +1067,6 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.export:
-        unawaited(exportWorkspace(context, ref));
-      case BusyMarkMainMenuAction.generateMarkdownToc:
-        _generateOrUpdateMarkdownToc(context, ref);
-      case BusyMarkMainMenuAction.clipboardHistory:
-      case BusyMarkMainMenuAction.localHistory:
-      case BusyMarkMainMenuAction.findLocalHistory:
-        return;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -1666,6 +1649,15 @@ Future<void> _performWorkspacePathAction(
 
 enum _PathMenuAction { copyName, copyPath, openInFiles, refineWithAi }
 
+enum _OutlineDocumentAction {
+  copyName,
+  copyPath,
+  openInFiles,
+  refineWithAi,
+  generateMarkdownToc,
+  export,
+}
+
 List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
   BuildContext context, {
   String? copyNameLabel,
@@ -1697,6 +1689,53 @@ List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
         value: _PathMenuAction.refineWithAi,
         label: context.l10n.aiRefineWithAi,
         icon: BusyMarkGlyphs.ai,
+      ),
+  ];
+}
+
+List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
+  BuildContext context, {
+  required bool pathActionsEnabled,
+  required bool canGenerateMarkdownToc,
+  required bool showExport,
+  required bool canExport,
+}) {
+  return [
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.copyName,
+      label: context.l10n.copyFileName,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.copyPath,
+      label: context.l10n.copyPath,
+      icon: BusyMarkGlyphs.copy,
+      enabled: pathActionsEnabled,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.openInFiles,
+      label: context.l10n.openInFiles,
+      icon: BusyMarkGlyphs.folderOpen,
+      enabled: pathActionsEnabled,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.refineWithAi,
+      label: context.l10n.aiRefineWithAi,
+      icon: BusyMarkGlyphs.ai,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.generateMarkdownToc,
+      label: context.l10n.generateOrUpdateMarkdownToc,
+      icon: BusyMarkGlyphs.orderedList,
+      enabled: canGenerateMarkdownToc,
+    ),
+    if (showExport)
+      BusyMarkPopupMenuItem(
+        value: _OutlineDocumentAction.export,
+        label: context.l10n.export,
+        icon: BusyMarkGlyphs.exportPdf,
+        enabled: canExport,
       ),
   ];
 }
@@ -1986,6 +2025,10 @@ class _Sidebar extends ConsumerStatefulWidget {
     required this.searchState,
     required this.searchResults,
     required this.onOpenSearchResult,
+    required this.canExport,
+    required this.canGenerateMarkdownToc,
+    required this.onExport,
+    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -1993,6 +2036,10 @@ class _Sidebar extends ConsumerStatefulWidget {
   final _WorkspaceSearchState searchState;
   final List<_WorkspaceSearchResult> searchResults;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
+  final bool canExport;
+  final bool canGenerateMarkdownToc;
+  final VoidCallback onExport;
+  final VoidCallback onGenerateMarkdownToc;
 
   @override
   ConsumerState<_Sidebar> createState() => _SidebarState();
@@ -2070,6 +2117,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                 _performWorkspaceGitAction(menuContext, ref, action),
             onRefineActiveDocument: () =>
                 unawaited(_refineActiveDocumentWithAi(context)),
+            canExport: widget.canExport,
+            canGenerateMarkdownToc: widget.canGenerateMarkdownToc,
+            onExport: widget.onExport,
+            onGenerateMarkdownToc: widget.onGenerateMarkdownToc,
           ),
           Expanded(
             child: widget.searchState.active
@@ -2097,6 +2148,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                     _SidebarTab.toc => _TocTab(
                       workspace: widget.workspace,
+                      canExport: widget.canExport,
+                      onExport: widget.onExport,
                       onShowFileHistory: _showFileHistory,
                       onRequestTopicRemoval: (target) =>
                           _runWritersideTopicRemoval(context, target),
@@ -2691,6 +2744,10 @@ class _SidebarHeader extends StatelessWidget {
     required this.loadGitMenuItems,
     required this.onGitAction,
     required this.onRefineActiveDocument,
+    required this.canExport,
+    required this.canGenerateMarkdownToc,
+    required this.onExport,
+    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -2707,6 +2764,10 @@ class _SidebarHeader extends StatelessWidget {
   final Future<void> Function(BuildContext context, _GitMenuAction action)
   onGitAction;
   final VoidCallback onRefineActiveDocument;
+  final bool canExport;
+  final bool canGenerateMarkdownToc;
+  final VoidCallback onExport;
+  final VoidCallback onGenerateMarkdownToc;
 
   @override
   Widget build(BuildContext context) {
@@ -2753,6 +2814,7 @@ class _SidebarHeader extends StatelessWidget {
                 if (showTabMenu && selectedTab != null) ...[
                   const SizedBox(width: BusyMarkSpacing.sm),
                   BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+                    key: const ValueKey('workspace-sidebar-view-menu'),
                     tooltip: context.l10n.sidebarViewMenu,
                     icon: _sidebarTabIcon(
                       selectedTab!,
@@ -2856,28 +2918,52 @@ class _SidebarHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
+                  BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>(
                     key: const ValueKey('workspace-sidebar-outline-file-menu'),
                     tooltip: context.l10n.actions,
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
-                    itemBuilder: (menuContext) => _sidebarPathMenuItems(
+                    itemBuilder: (menuContext) => _outlineDocumentMenuItems(
                       menuContext,
-                      copyNameLabel: menuContext.l10n.copyFileName,
                       pathActionsEnabled: hasActiveDocumentPath,
-                      showRefineWithAi: true,
+                      canGenerateMarkdownToc: canGenerateMarkdownToc,
+                      showExport:
+                          workspace.kind != WorkspaceKind.writersideModule,
+                      canExport: canExport,
                     ),
-                    onSelected: (action) => unawaited(
-                      _performWorkspacePathAction(
-                        context,
-                        name: activeDocumentName,
-                        path: activeDocumentPath,
-                        action: action,
-                        onRefineWithAi: onRefineActiveDocument,
-                      ),
-                    ),
+                    onSelected: (action) {
+                      switch (action) {
+                        case _OutlineDocumentAction.copyName:
+                        case _OutlineDocumentAction.copyPath:
+                        case _OutlineDocumentAction.openInFiles:
+                        case _OutlineDocumentAction.refineWithAi:
+                          unawaited(
+                            _performWorkspacePathAction(
+                              context,
+                              name: activeDocumentName,
+                              path: activeDocumentPath,
+                              action: switch (action) {
+                                _OutlineDocumentAction.copyName =>
+                                  _PathMenuAction.copyName,
+                                _OutlineDocumentAction.copyPath =>
+                                  _PathMenuAction.copyPath,
+                                _OutlineDocumentAction.openInFiles =>
+                                  _PathMenuAction.openInFiles,
+                                _OutlineDocumentAction.refineWithAi =>
+                                  _PathMenuAction.refineWithAi,
+                                _ => throw StateError('unreachable'),
+                              },
+                              onRefineWithAi: onRefineActiveDocument,
+                            ),
+                          );
+                        case _OutlineDocumentAction.generateMarkdownToc:
+                          onGenerateMarkdownToc();
+                        case _OutlineDocumentAction.export:
+                          onExport();
+                      }
+                    },
                   ),
                 ],
               ),
@@ -4019,9 +4105,10 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
           await widget.onShowFileHistory(file);
         }
       case _FileTreeAction.localHistory:
-        await ref
-            .read(localHistoryControllerProvider.notifier)
-            .selectDocumentForPath(path);
+        final opened = await ref
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile(path);
+        if (!opened || !mounted) return;
         ref
             .read(_sidebarShortcutRequestProvider.notifier)
             .select(_SidebarTab.localHistory);
@@ -5005,11 +5092,15 @@ Set<String> _activeFileAncestorPaths(Workspace workspace) {
 class _TocTab extends ConsumerStatefulWidget {
   const _TocTab({
     required this.workspace,
+    required this.canExport,
+    required this.onExport,
     required this.onShowFileHistory,
     required this.onRequestTopicRemoval,
   });
 
   final Workspace workspace;
+  final bool canExport;
+  final VoidCallback onExport;
   final Future<void> Function(DocumentFile file) onShowFileHistory;
   final Future<WritersideTopicRemovalResult?> Function(
     _WritersideTopicRemovalTarget target,
@@ -5324,6 +5415,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   ),
                   onOpenTocFile: () =>
                       _openInstanceTree(context, instance.sourceTreePath),
+                  canExport: widget.canExport,
+                  onExport: widget.onExport,
                 );
               }
               final entry = entries[index - 1];
@@ -6502,6 +6595,7 @@ enum _TocHeaderAction {
   newLibrary,
   editInstance,
   openTocFile,
+  export,
 }
 
 class _TocHeader extends StatelessWidget {
@@ -6518,6 +6612,8 @@ class _TocHeader extends StatelessWidget {
     required this.onCreateLibrary,
     required this.onEditInstance,
     required this.onOpenTocFile,
+    required this.canExport,
+    required this.onExport,
   });
 
   final List<({String id, String label})> modules;
@@ -6532,6 +6628,8 @@ class _TocHeader extends StatelessWidget {
   final VoidCallback onCreateLibrary;
   final VoidCallback onEditInstance;
   final VoidCallback onOpenTocFile;
+  final bool canExport;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -6631,6 +6729,13 @@ class _TocHeader extends StatelessWidget {
                       label: context.l10n.openTocFile,
                       icon: BusyMarkGlyphs.documentOpen,
                     ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.export,
+                      label: context.l10n.export,
+                      icon: BusyMarkGlyphs.exportPdf,
+                      enabled: canExport,
+                    ),
                   ],
                   onSelected: (action) {
                     switch (action) {
@@ -6644,6 +6749,8 @@ class _TocHeader extends StatelessWidget {
                         onEditInstance();
                       case _TocHeaderAction.openTocFile:
                         onOpenTocFile();
+                      case _TocHeaderAction.export:
+                        onExport();
                     }
                   },
                 ),
@@ -8471,12 +8578,30 @@ class _EditorTabStrip extends ConsumerWidget {
       case WorkspaceTabKind.file:
         ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (entry.bufferId == state.activeBufferId) {
+          final buffer = state.activeBuffer;
+          if (buffer != null) {
+            unawaited(
+              ref
+                  .read(localHistoryControllerProvider.notifier)
+                  .selectDocumentForBuffer(buffer),
+            );
+          }
           gitController.deactivateDiffFile();
           return;
         }
-        await ref
+        final activated = await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(entry.bufferId!);
+        if (activated) {
+          final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+          if (buffer != null) {
+            unawaited(
+              ref
+                  .read(localHistoryControllerProvider.notifier)
+                  .selectDocumentForBuffer(buffer),
+            );
+          }
+        }
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
         ref.read(localHistoryControllerProvider.notifier).clearComparison();
@@ -8555,9 +8680,10 @@ class _EditorTabStrip extends ConsumerWidget {
             .where((candidate) => candidate.id == entry.bufferId)
             .firstOrNull;
         if (buffer == null) return;
-        await ref
-            .read(localHistoryControllerProvider.notifier)
-            .selectDocumentForBuffer(buffer);
+        final activated = await ref
+            .read(workspaceControllerProvider.notifier)
+            .activateDocumentBuffer(buffer.id);
+        if (!activated || !context.mounted) return;
         ref
             .read(_sidebarShortcutRequestProvider.notifier)
             .select(_SidebarTab.localHistory);

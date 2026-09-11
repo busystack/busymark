@@ -263,6 +263,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.fullScreen), findsOneWidget);
     expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    for (final documentCommand in <String>{
+      l10n.clipboardHistory,
+      l10n.localHistory,
+      l10n.findLocalHistoryEllipsis,
+      l10n.generateOrUpdateMarkdownToc,
+      l10n.export,
+    }) {
+      expect(find.text(documentCommand), findsNothing);
+    }
     expect(
       tester
           .widget<BusyMarkPopupMenuItem<Object?>>(fullScreenMenuItem())
@@ -2138,6 +2147,7 @@ void main() {
     expect(find.text(l10n.newTocLibrary), findsOneWidget);
     expect(find.text(l10n.editInstance), findsOneWidget);
     expect(find.text(l10n.openTocFile), findsOneWidget);
+    expect(find.text(l10n.export), findsOneWidget);
     await tester.tap(find.text(l10n.editInstance));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.instanceOutputSettings), findsOneWidget);
@@ -2425,8 +2435,7 @@ void main() {
     );
     expect(targetNode.children.single.topicFileName, 'loose.md');
 
-    await tester.tap(find.byTooltip(l10n.mainMenu));
-    await tester.pumpAndSettle();
+    await openPopup(find.byTooltip(l10n.tocActions));
     final exportItem = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkPopupMenuItem<Object?> &&
@@ -3000,6 +3009,8 @@ void main() {
     expect(find.text(l10n.copyName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
+    expect(find.text(l10n.export), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
@@ -3461,6 +3472,8 @@ void main() {
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
     expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
+    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsOneWidget);
+    expect(find.text(l10n.export), findsOneWidget);
 
     await tester.tap(find.text(l10n.copyFileName));
     await tester.pumpAndSettle();
@@ -3484,9 +3497,14 @@ void main() {
       expect(find.text(shortcut), findsOneWidget);
       expect(find.byTooltip('$label ($shortcut)'), findsNothing);
     }
+    expect(find.text(l10n.clipboardHistory), findsOneWidget);
+    expect(find.text(l10n.localHistory), findsOneWidget);
     expect(find.text(l10n.gitChanges), findsNothing);
     expect(find.text(l10n.gitFileHistory), findsNothing);
     expect(find.text(l10n.gitProjectHistory), findsNothing);
+    expect(find.text(l10n.findLocalHistoryEllipsis), findsNothing);
+    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
+    expect(find.text(l10n.export), findsNothing);
   });
 
   testWidgets('Writerside sidebar shortcuts survive document view changes', (

@@ -6391,12 +6391,43 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             : ClipboardPasteResult.unsupported;
       }
     }
+    if (!plainText && payload.html != null) {
+      final fragment = const WysiwygClipboardHtml().decode(
+        payload.html!,
+        mode: _documentController.document.mode,
+      );
+      if (fragment != null && _hasUsableClipboardHtmlContent(fragment)) {
+        if (!_isClipboardTargetCurrent(captured)) {
+          return ClipboardPasteResult.staleTarget;
+        }
+        final rebased = fragment.rebase(_documentController.document.filePath);
+        final inserted = _pasteStyledClipboardIntoActiveBlock(
+          rebased.blocks,
+          payload.text ??
+              rebased.documentBlocks.map(_copyTextForBlock).join('\n\n'),
+        );
+        return inserted
+            ? ClipboardPasteResult.inserted
+            : ClipboardPasteResult.unsupported;
+      }
+    }
     final text = payload.text ?? payload.sourceText;
     if (text == null) return ClipboardPasteResult.unsupported;
     final inserted = await _pastePlainTextIntoActiveBlock(textOverride: text);
     return inserted
         ? ClipboardPasteResult.inserted
         : ClipboardPasteResult.staleTarget;
+  }
+
+  bool _hasUsableClipboardHtmlContent(WysiwygClipboardFragment fragment) {
+    return fragment.documentBlocks.any(
+      (block) =>
+          block.plainText.trim().isNotEmpty ||
+          block.kind == BusyBlockKind.image ||
+          block.kind == BusyBlockKind.video ||
+          block.kind == BusyBlockKind.thematicBreak ||
+          block.kind == BusyBlockKind.table,
+    );
   }
 
   Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
@@ -6966,6 +6997,7 @@ class _WysiwygClipboardInsertionTarget
       BusyMarkClipboardContentKind.richText =>
         payload.mediaComplete &&
             (payload.richFragment != null ||
+                payload.html != null ||
                 payload.text != null ||
                 payload.sourceText != null),
       BusyMarkClipboardContentKind.text =>
