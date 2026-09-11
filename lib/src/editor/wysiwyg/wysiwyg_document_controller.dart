@@ -66,6 +66,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   String get markdown => _serializer.serialize(_document);
 
+  @override
+  void notifyListeners() {
+    _document = _ensureEditableDocument(_document);
+    super.notifyListeners();
+  }
+
   void replaceDocument(BusyDocument document) {
     _document = _ensureEditableDocument(document);
     notifyListeners();
@@ -646,7 +652,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         replacements.add(
           block.copyWith(
             inlines: inlines,
-            attributes: _attributesForText(block.attributes, block.kind, part),
+            attributes: _attributesForText(
+              _sourceBackedSplitAttributes(block.attributes),
+              block.kind,
+              part,
+            ),
             preserveRaw: false,
             dirty: true,
           ),
@@ -659,7 +669,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             kind: splitKind,
             inlines: inlines,
             attributes: _attributesForText(
-              _splitAttributesFor(block, splitKind, orderedOffset: index),
+              _sourceBackedSplitAttributes(
+                _splitAttributesFor(block, splitKind, orderedOffset: index),
+              ),
               splitKind,
               part,
             ),
@@ -1521,7 +1533,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? _textInlines('')
           : inlinePartition.before,
       children: block.children,
-      attributes: _attributesForText(block.attributes, block.kind, leftText),
+      attributes: _attributesForText(
+        _sourceBackedSplitAttributes(block.attributes),
+        block.kind,
+        leftText,
+      ),
       dirty: true,
     );
     final nextBlock = BusyBlock(
@@ -1531,7 +1547,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? _textInlines('')
           : inlinePartition.after,
       attributes: _attributesForText(
-        _splitAttributesFor(block, nextKind, orderedOffset: 1),
+        _sourceBackedSplitAttributes(
+          _splitAttributesFor(block, nextKind, orderedOffset: 1),
+        ),
         nextKind,
         rightText,
       ),
@@ -1552,6 +1570,30 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (block == null) {
       return null;
     }
+    if (block.kind == BusyBlockKind.codeBlock) {
+      final text = block.plainText;
+      final safeOffset = offset.clamp(0, text.length).toInt();
+      if (safeOffset == text.length && text.endsWith('\n\n')) {
+        final updated = _blockWithEditedText(
+          block,
+          text.substring(0, text.length - 2),
+        );
+        final paragraphId = _exitCodeBlockAfter(block, replacement: updated);
+        return BusyWysiwygTextSplitResult(blockId: paragraphId, offset: 0);
+      }
+      final updated = _blockWithEditedText(
+        block,
+        text.replaceRange(safeOffset, safeOffset, '\n'),
+      );
+      _document = _document.copyWith(
+        blocks: _replaceInBlocks(_document.blocks, blockId, (_) => updated),
+      );
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(
+        blockId: blockId,
+        offset: safeOffset + 1,
+      );
+    }
     if (_isListItemKind(block.kind) && block.plainText.trim().isEmpty) {
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
@@ -1561,6 +1603,46 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return null;
     }
     return BusyWysiwygTextSplitResult(blockId: nextBlockId, offset: 0);
+  }
+
+  /// Creates a normal caret target after a code block without changing the
+  /// serialized Markdown until the user types into it.
+  String? exitCodeBlock(String blockId) {
+    final block = blockById(blockId);
+    if (block == null || block.kind != BusyBlockKind.codeBlock) {
+      return null;
+    }
+    return _exitCodeBlockAfter(block);
+  }
+
+  String _exitCodeBlockAfter(BusyBlock block, {BusyBlock? replacement}) {
+    final following = _followingSibling(_document.blocks, block.id);
+    if (following != null &&
+        following.kind == BusyBlockKind.paragraph &&
+        following.plainText.isEmpty) {
+      if (replacement != null) {
+        _document = _document.copyWith(
+          blocks: _replaceInBlocks(
+            _document.blocks,
+            block.id,
+            (_) => replacement,
+          ),
+        );
+        notifyListeners();
+      }
+      return following.id;
+    }
+    final paragraph = _transientTrailingParagraph(
+      _nextGeneratedBlockId('paragraph'),
+    );
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, block.id, [
+        replacement ?? block,
+        paragraph,
+      ]),
+    );
+    notifyListeners();
+    return paragraph.id;
   }
 
   BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
@@ -2430,10 +2512,19 @@ Map<String, String> _attributesForText(
 ) {
   final updated = {...attributes}
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (text.isNotEmpty) {
+    updated.remove(busyMarkTransientTrailingParagraphAttribute);
+  }
   if (kind == BusyBlockKind.paragraph && text.isEmpty) {
     updated[busyMarkPreserveEmptyParagraphAttribute] = 'true';
   }
   return updated;
+}
+
+Map<String, String> _sourceBackedSplitAttributes(
+  Map<String, String> attributes,
+) {
+  return {...attributes}..remove(busyMarkTransientTrailingParagraphAttribute);
 }
 
 Map<String, String> _mathEditedBlockAttributes(
@@ -2888,7 +2979,8 @@ BusyBlock _blockWithCommand(
     ..remove(busyMarkWritersideAdmonitionAttribute)
     ..remove(busyMarkWritersideAdmonitionSourceFormAttribute)
     ..remove('style')
-    ..remove(busyMarkPreserveEmptyParagraphAttribute);
+    ..remove(busyMarkPreserveEmptyParagraphAttribute)
+    ..remove(busyMarkTransientTrailingParagraphAttribute);
   if (block.kind == BusyBlockKind.writersideAdmonition) {
     attributes.remove('element');
   }
@@ -3283,19 +3375,68 @@ BusyDocument _ensureEditableDocument(BusyDocument document) {
         !block.isSourceOnly &&
         !block.isSourceProtected,
   );
-  if (hasEditableBlock) {
+  if (!hasEditableBlock) {
+    return document.copyWith(
+      blocks: [
+        ...document.blocks,
+        const BusyBlock(
+          id: 'empty-paragraph',
+          kind: BusyBlockKind.paragraph,
+          inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
+        ),
+      ],
+    );
+  }
+  final visibleBlocks = document.blocks
+      .where(
+        (block) =>
+            block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+      )
+      .toList(growable: false);
+  if (visibleBlocks.isEmpty ||
+      visibleBlocks.last.kind != BusyBlockKind.codeBlock) {
     return document;
   }
+  final ids = {for (final block in _flattenBlocks(document.blocks)) block.id};
+  var suffix = 0;
+  var id = 'trailing-paragraph';
+  while (ids.contains(id)) {
+    suffix++;
+    id = 'trailing-paragraph-$suffix';
+  }
   return document.copyWith(
-    blocks: [
-      ...document.blocks,
-      const BusyBlock(
-        id: 'empty-paragraph',
-        kind: BusyBlockKind.paragraph,
-        inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
-      ),
-    ],
+    blocks: [...document.blocks, _transientTrailingParagraph(id)],
   );
+}
+
+BusyBlock _transientTrailingParagraph(String id) {
+  return BusyBlock(
+    id: id,
+    kind: BusyBlockKind.paragraph,
+    inlines: const [BusyInline(kind: BusyInlineKind.text, text: '')],
+    attributes: const {busyMarkTransientTrailingParagraphAttribute: 'true'},
+  );
+}
+
+Iterable<BusyBlock> _flattenBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _flattenBlocks(block.children);
+  }
+}
+
+BusyBlock? _followingSibling(List<BusyBlock> blocks, String blockId) {
+  for (var index = 0; index < blocks.length; index++) {
+    final block = blocks[index];
+    if (block.id == blockId) {
+      return index + 1 < blocks.length ? blocks[index + 1] : null;
+    }
+    final childResult = _followingSibling(block.children, blockId);
+    if (childResult != null) {
+      return childResult;
+    }
+  }
+  return null;
 }
 
 bool _selectionCoveredByKind(

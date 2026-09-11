@@ -5,6 +5,14 @@ import 'markdown_model.dart';
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 
+/// Marks the editor-only paragraph after a terminal non-paragraph block.
+///
+/// The Markdown serializer ignores this block while it is empty. The marker is
+/// removed as soon as the user enters content, at which point it becomes an
+/// ordinary source-backed paragraph.
+const busyMarkTransientTrailingParagraphAttribute =
+    'transientTrailingParagraph';
+
 const busyMarkWritersideAdmonitionAttribute = 'writersideAdmonition';
 const busyMarkWritersideAdmonitionSourceFormAttribute =
     'writersideAdmonitionSourceForm';

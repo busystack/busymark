@@ -2608,6 +2608,21 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _applyEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
+    if (event is KeyDownEvent &&
+        key == LogicalKeyboardKey.enter &&
+        keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed) {
+      final block = _documentController.blockById(blockId);
+      if (block?.kind == BusyBlockKind.codeBlock) {
+        final paragraphId = _documentController.exitCodeBlock(blockId);
+        if (paragraphId != null) {
+          _focusBlockAfterFrame(paragraphId, offset: 0);
+          return KeyEventResult.handled;
+        }
+      }
+    }
     if (keyboard.isControlPressed &&
         !keyboard.isAltPressed &&
         !keyboard.isMetaPressed &&
@@ -2731,6 +2746,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return _moveCaretVertically(blockId, -1);
     }
     if (key == LogicalKeyboardKey.arrowDown) {
+      if (block.kind == BusyBlockKind.codeBlock &&
+          offset == controller.text.length &&
+          _relativeFocusableBlock(blockId, 1) == null) {
+        final paragraphId = _documentController.exitCodeBlock(blockId);
+        if (paragraphId != null) {
+          _focusBlockAfterFrame(paragraphId, offset: 0);
+          return KeyEventResult.handled;
+        }
+      }
       return _moveCaretVertically(blockId, 1);
     }
     if (key == previousBlockKey && offset == 0) {

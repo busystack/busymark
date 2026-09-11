@@ -292,7 +292,15 @@ class BusyMarkMarkdownSerializer {
   }
 
   bool _isSourceBackedBlock(BusyBlock block) {
-    return block.kind != BusyBlockKind.frontMatter && !block.isGenerated;
+    return block.kind != BusyBlockKind.frontMatter &&
+        !block.isGenerated &&
+        !_isTransientTrailingParagraph(block);
+  }
+
+  bool _isTransientTrailingParagraph(BusyBlock block) {
+    return block.kind == BusyBlockKind.paragraph &&
+        block.plainText.isEmpty &&
+        block.attributes[busyMarkTransientTrailingParagraphAttribute] == 'true';
   }
 
   bool _isPreservedEmptyParagraph(BusyBlock block) {
