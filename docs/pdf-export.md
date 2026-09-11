@@ -44,7 +44,8 @@ the previous PDF usable.
 Use **Insert blank line** in Editor view when a specific one-line gap is part of
 the document. BusyMark stores the gap as two explicit `<br>` elements, so it is
 visible in Editor and Reading views and preserved by Markdown PDF and HTML
-exports. Source view shows the `<br><br>` representation.
+exports. Source view places each generated `<br>` on a marker-only line instead
+of appending the tags to document text.
 
 Additional empty source lines are still ordinary Markdown block separators;
 repeating them does not create additional vertical space.

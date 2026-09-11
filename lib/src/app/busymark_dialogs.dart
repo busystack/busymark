@@ -1601,8 +1601,8 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
         ),
         _SyntaxReferenceEntry(
           title: l10n.insertBlankLine,
-          example: 'First line<br><br>\nSecond line',
-          identifiers: 'br + br',
+          example: 'First line\n<br>\n<br>\nSecond line',
+          identifiers: 'br',
           scope: l10n.markdown,
           documentationUri: _htmlDocumentationUri,
         ),

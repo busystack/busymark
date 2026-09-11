@@ -156,7 +156,7 @@ Footnote[^note] and again[^note].
   );
 
   test('explicit blank lines export as consecutive HTML breaks', () async {
-    final result = await export('Before<br><br>After\n');
+    final result = await export('Before\n<br>\n<br>\nAfter\n');
     final doc = html.parse(await File(result.entryPointPath).readAsString());
     final paragraph = doc.querySelector('article p');
 

@@ -126,7 +126,7 @@ void main() {
 
     await service.export(
       MarkdownPdfExportRequest(
-        source: 'Before<br><br>After\n',
+        source: 'Before\n<br>\n<br>\nAfter\n',
         filePath: '/workspace/blank-line.md',
         workspaceRoot: '/workspace',
         destinationPath: p.join(temporaryDirectory.path, 'blank-line.pdf'),
@@ -197,7 +197,7 @@ void main() {
         'one-break',
       );
       final twoBreaks = await textBaselineDelta(
-        'Before<br><br>After\n',
+        'Before\n<br>\n<br>\nAfter\n',
         'two-breaks',
       );
 

@@ -5228,7 +5228,7 @@ void main() {
   );
 
   testWidgets(
-    'explicit HTML breaks preserve one blank line in every document view',
+    'standalone HTML breaks preserve one blank line in every document view',
     (tester) async {
       tester.view.physicalSize = const Size(1400, 800);
       tester.view.devicePixelRatio = 1;
@@ -5237,7 +5237,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      const source = 'Before<br><br>After\n';
+      const source = 'Before\n<br>\n<br>\nAfter\n';
       const renderedText = 'Before\n\nAfter';
       final settingsStore = _MemorySettingsStore()
         ..value = AppSettings.defaults()

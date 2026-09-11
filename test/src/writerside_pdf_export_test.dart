@@ -168,7 +168,7 @@ void main() {
       addTearDown(fixture.dispose);
       await File(
         p.join(fixture.module.path, 'topics', 'intro.md'),
-      ).writeAsString('# Introduction\n\nBefore<br><br>After\n');
+      ).writeAsString('# Introduction\n\nBefore\n<br>\n<br>\nAfter\n');
       final exporter = _RecordingMarkdownExporter();
 
       await WritersidePdfExportService(markdownExporter: exporter).export(

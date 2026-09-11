@@ -5537,7 +5537,7 @@ void main() {}
       await tester.tap(blankLineButton);
       await tester.pump();
 
-      expect(markdown, 'Alpha<br><br> Beta\n');
+      expect(markdown, 'Alpha\n<br>\n<br>\n Beta\n');
       expect(field.controller!.text, 'Alpha\n\n Beta');
       expect(field.focusNode!.hasFocus, isTrue);
       expect(
@@ -5686,7 +5686,7 @@ void main() {}
     expect(hardBreakController.markdown, 'Alpha  \n Beta\n');
 
     hardBreakController.insertHardBreak(hardBreakBlockId, 6);
-    expect(hardBreakController.markdown, 'Alpha<br><br> Beta\n');
+    expect(hardBreakController.markdown, 'Alpha\n<br>\n<br>\n Beta\n');
     final blankLineRoundTrip = parser.parse(
       filePath: 'topic.md',
       source: hardBreakController.markdown,
@@ -5698,7 +5698,48 @@ void main() {}
       ),
       hasLength(2),
     );
+    expect(
+      blankLineRoundTrip.busyDocument.blocks.single.plainText,
+      'Alpha\n\n Beta',
+    );
   });
+
+  test(
+    'blank-line command keeps repeated terminal markers off the text line',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Vancouver BC\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final blockId = parsed.busyDocument.blocks.single.id;
+
+      controller.insertBlankLine(blockId, 'Vancouver BC'.length);
+      expect(controller.markdown, 'Vancouver BC\n<br>\n<br>\n');
+
+      controller.insertBlankLine(blockId, 'Vancouver BC\n\n'.length);
+      expect(controller.markdown, 'Vancouver BC\n<br>\n<br>\n<br>\n<br>\n');
+      expect(controller.markdown, isNot(contains('Vancouver BC<br>')));
+
+      final roundTrip = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(roundTrip.busyDocument.blocks, hasLength(1));
+      expect(
+        roundTrip.busyDocument.blocks.single.inlines.where(
+          (inline) => inline.kind == BusyInlineKind.hardBreak,
+        ),
+        hasLength(4),
+      );
+      expect(
+        roundTrip.busyDocument.blocks.single.plainText,
+        'Vancouver BC\n\n\n\n',
+      );
+    },
+  );
 
   test('WYSIWYG table and code language commands serialize Markdown', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
