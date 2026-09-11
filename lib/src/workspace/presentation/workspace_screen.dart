@@ -718,7 +718,7 @@ class WorkspaceScreen extends ConsumerWidget {
           searchVisible: true,
           sidebarVisible: sidebarVisible,
           sidebarToggleVisible: hasSidebar,
-          backVisible: true,
+          backVisible: !searchState.active,
         );
     final commandRegistry =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
@@ -780,21 +780,28 @@ class WorkspaceScreen extends ConsumerWidget {
               appBar: useNativeHeaderBar
                   ? null
                   : AppBar(
-                      leading: Center(
-                        child: BusyMarkHeaderIconButton(
-                          tooltip: context.l10n.welcome,
-                          icon: BusyMarkGlyphs.home,
-                          shortcut: commandRegistry[BusyMarkCommandIds.back]
-                              ?.shortcut
-                              ?.label,
-                          onPressed: () async {
-                            final router = GoRouter.of(context);
-                            if (await confirmSafeToContinue(context, ref)) {
-                              router.go('/');
-                            }
-                          },
-                        ),
-                      ),
+                      automaticallyImplyLeading: false,
+                      leading: searchState.active
+                          ? null
+                          : Center(
+                              child: BusyMarkHeaderIconButton(
+                                tooltip: context.l10n.welcome,
+                                icon: BusyMarkGlyphs.home,
+                                shortcut:
+                                    commandRegistry[BusyMarkCommandIds.back]
+                                        ?.shortcut
+                                        ?.label,
+                                onPressed: () async {
+                                  final router = GoRouter.of(context);
+                                  if (await confirmSafeToContinue(
+                                    context,
+                                    ref,
+                                  )) {
+                                    router.go('/');
+                                  }
+                                },
+                              ),
+                            ),
                       title: searchState.active
                           ? _HeaderSearchField(
                               query: searchState.query,
@@ -813,15 +820,17 @@ class WorkspaceScreen extends ConsumerWidget {
                               dirty: state.isDirty,
                             ),
                       actions: [
-                        const SizedBox(width: BusyMarkSpacing.sm),
-                        BusyMarkHeaderIconButton(
-                          tooltip: context.l10n.validate,
-                          icon: BusyMarkGlyphs.diagnostics,
-                          onPressed: () => unawaited(
-                            _validateActiveAndShowProblems(context, ref),
+                        if (!searchState.active) ...[
+                          const SizedBox(width: BusyMarkSpacing.sm),
+                          BusyMarkHeaderIconButton(
+                            tooltip: context.l10n.validate,
+                            icon: BusyMarkGlyphs.diagnostics,
+                            onPressed: () => unawaited(
+                              _validateActiveAndShowProblems(context, ref),
+                            ),
                           ),
-                        ),
-                        const _HeaderSeparator(),
+                          const _HeaderSeparator(),
+                        ],
                         BusyMarkHeaderIconButton(
                           tooltip: settings.sidebarVisible
                               ? context.l10n.hideSidebar
@@ -851,39 +860,40 @@ class WorkspaceScreen extends ConsumerWidget {
                               ?.label,
                           onPressed: () => _toggleSearch(ref),
                         ),
-                        BusyMarkHeaderPopupMenuButton<
-                          DocumentViewModePreference
-                        >(
-                          tooltip: context.l10n.viewMode,
-                          icon: _documentViewModeIcon(documentViewMode),
-                          shortcut: _documentViewModeShortcut(
-                            documentViewMode,
-                            commandRegistry,
-                          ),
-                          itemBuilder: (context) => [
-                            for (final mode
-                                in DocumentViewModePreference.values)
-                              BusyMarkPopupMenuItem(
-                                value: mode,
-                                label: _documentViewModeLabel(context, mode),
-                                icon: _documentViewModeIcon(mode),
-                                shortcut: _documentViewModeShortcut(
-                                  mode,
-                                  commandRegistry,
+                        if (!searchState.active)
+                          BusyMarkHeaderPopupMenuButton<
+                            DocumentViewModePreference
+                          >(
+                            tooltip: context.l10n.viewMode,
+                            icon: _documentViewModeIcon(documentViewMode),
+                            shortcut: _documentViewModeShortcut(
+                              documentViewMode,
+                              commandRegistry,
+                            ),
+                            itemBuilder: (context) => [
+                              for (final mode
+                                  in DocumentViewModePreference.values)
+                                BusyMarkPopupMenuItem(
+                                  value: mode,
+                                  label: _documentViewModeLabel(context, mode),
+                                  icon: _documentViewModeIcon(mode),
+                                  shortcut: _documentViewModeShortcut(
+                                    mode,
+                                    commandRegistry,
+                                  ),
+                                  checked: mode == documentViewMode,
+                                  trailingCheck: true,
                                 ),
-                                checked: mode == documentViewMode,
-                                trailingCheck: true,
-                              ),
-                          ],
-                          onSelected: (mode) {
-                            ref
-                                .read(workspaceControllerProvider.notifier)
-                                .updateActiveEditorMode(mode);
-                            unawaited(
-                              settingsController.setDocumentViewMode(mode),
-                            );
-                          },
-                        ),
+                            ],
+                            onSelected: (mode) {
+                              ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .updateActiveEditorMode(mode);
+                              unawaited(
+                                settingsController.setDocumentViewMode(mode),
+                              );
+                            },
+                          ),
                         BusyMarkMainMenuButton(
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
@@ -1055,7 +1065,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
       case HeaderBarAction.search:
-        execute(BusyMarkCommandIds.search);
+        _toggleSearch(ref);
       case HeaderBarAction.menu:
         break;
     }

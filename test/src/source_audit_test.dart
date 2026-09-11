@@ -520,13 +520,16 @@ void main() {
     },
   );
 
-  test('native search action opens workspace search UI', () {
+  test('native search action toggles workspace search UI', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('case HeaderBarAction.search:'));
-    expect(workspace, contains('_toggleSearch(ref)'));
+    expect(
+      workspace,
+      contains('case HeaderBarAction.search:\n        _toggleSearch(ref);'),
+    );
+    expect(workspace, contains('backVisible: !searchState.active'));
     expect(workspace, contains('_workspaceSearchProvider'));
     expect(workspace, contains('class _HeaderSearchField'));
     expect(workspace, contains('return BusyMarkSearchField('));

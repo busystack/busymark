@@ -8107,7 +8107,9 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     }
   });
 
-  testWidgets('Ctrl+F opens search and Escape closes it', (tester) async {
+  testWidgets('header Search button toggles the expanded search field', (
+    tester,
+  ) async {
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
@@ -8137,11 +8139,31 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     expect(find.text(l10n.workspaceKindSingleMarkdown), findsWidgets);
 
     final initialTextFields = find.byType(TextField).evaluate().length;
+    Finder headerButton(String tooltip) => find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton &&
+          (widget.tooltip == tooltip ||
+              widget.tooltip?.startsWith('$tooltip (') == true),
+    );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
+    expect(headerButton(l10n.welcome), findsNothing);
+    expect(headerButton(l10n.validate), findsNothing);
+    expect(headerButton(l10n.viewMode), findsNothing);
+
+    await tester.tap(headerButton(l10n.search));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(TextField).evaluate().length, initialTextFields);
+    expect(headerButton(l10n.welcome), findsOneWidget);
+    expect(headerButton(l10n.validate), findsOneWidget);
+    expect(headerButton(l10n.viewMode), findsOneWidget);
+
+    await tester.tap(headerButton(l10n.search));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
 
@@ -8156,6 +8178,98 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(TextField).evaluate().length, initialTextFields);
   });
+
+  testWidgets(
+    'native header Search action toggles search and Back visibility',
+    (tester) async {
+      if (!Platform.isLinux) {
+        return;
+      }
+      const channelName = 'test.busymark/headerbar-search-toggle';
+      const channel = MethodChannel(channelName);
+      const codec = StandardMethodCodec();
+      final nativeHeaderBarService = LinuxHeaderBarService(
+        channel: channel,
+        sessionId: 'search-toggle-session',
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            if (call.method == 'initialize' || call.method == 'focusSearch') {
+              return true;
+            }
+            if (call.method == 'applyConfiguration') {
+              final configuration = Map<Object?, Object?>.from(
+                call.arguments! as Map<Object?, Object?>,
+              );
+              return configuration['revision'];
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+        channel.setMethodCallHandler(null);
+      });
+      await nativeHeaderBarService.initialize();
+
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(
+            nativeHeaderBarService,
+          ),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(
+            _StartupWorkspaceService(),
+          ),
+          startupPathProvider.overrideWithValue(
+            'test/fixtures/markdown/basic.md',
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pump();
+      for (var i = 0; i < 20; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      HeaderBarConfiguration configuration() => tester
+          .widget<HeaderBarConfigurationPublisher>(
+            find.byType(HeaderBarConfigurationPublisher),
+          )
+          .configuration;
+
+      expect(configuration().searchActive, isFalse);
+      expect(configuration().backVisible, isTrue);
+
+      Future<void> pressNativeSearch() async {
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              channelName,
+              codec.encodeMethodCall(const MethodCall('search')),
+              (_) {},
+            );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await pressNativeSearch();
+      expect(configuration().searchActive, isTrue);
+      expect(configuration().backVisible, isFalse);
+
+      await pressNativeSearch();
+      expect(configuration().searchActive, isFalse);
+      expect(configuration().backVisible, isTrue);
+    },
+  );
 
   testWidgets(
     'workspace search awaits non-active file reads without blocking builds',
