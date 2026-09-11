@@ -1382,9 +1382,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "İçindekiler",
+  "toc": "Konular",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "İçindekiler eylemleri",
   "@tocActions": {
@@ -3833,7 +3833,7 @@
   },
   "instances": "Örnekler",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "Yeni örnek",
   "@newInstance": {

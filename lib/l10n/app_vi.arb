@@ -1382,9 +1382,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Mục lục",
+  "toc": "Chủ đề",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "Thao tác với mục lục",
   "@tocActions": {
@@ -3833,7 +3833,7 @@
   },
   "instances": "Các thực thể",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "Thực thể mới",
   "@newInstance": {

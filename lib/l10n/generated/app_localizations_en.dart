@@ -1121,7 +1121,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get files => 'Files';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Topics';
 
   @override
   String get tocActions => 'TOC actions';

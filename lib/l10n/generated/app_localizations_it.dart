@@ -1135,7 +1135,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Argomenti';
 
   @override
   String get tocActions => 'Azioni dell\'indice';

@@ -1087,7 +1087,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get files => 'ファイル';
 
   @override
-  String get toc => '目次';
+  String get toc => 'トピック';
 
   @override
   String get tocActions => '目次の操作';

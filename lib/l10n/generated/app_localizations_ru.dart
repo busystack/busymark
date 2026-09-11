@@ -1140,7 +1140,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get files => 'Файлы';
 
   @override
-  String get toc => 'Оглавление';
+  String get toc => 'Темы';
 
   @override
   String get tocActions => 'Действия с оглавлением';

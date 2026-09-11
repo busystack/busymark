@@ -7,7 +7,7 @@ introduce a BusyMark-specific project file.
 
 ## Instance actions
 
-Open **Table of Contents**, select an instance from the visible **Instances**
+Open **Topics**, select an instance from the visible **Instances**
 list, and use **TOC actions** to:
 
 - create an instance, either empty or from selected local Markdown files;

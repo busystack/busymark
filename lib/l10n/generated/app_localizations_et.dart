@@ -1125,7 +1125,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get files => 'Failid';
 
   @override
-  String get toc => 'Sisukord';
+  String get toc => 'Teemad';
 
   @override
   String get tocActions => 'Sisukorra toimingud';

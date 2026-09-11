@@ -1212,9 +1212,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "فهرست مطالب",
+  "toc": "موضوعات",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "عملیات فهرست مطالب",
   "@tocActions": {

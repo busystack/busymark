@@ -1120,7 +1120,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get files => 'Tệp';
 
   @override
-  String get toc => 'Mục lục';
+  String get toc => 'Chủ đề';
 
   @override
   String get tocActions => 'Thao tác với mục lục';

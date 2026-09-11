@@ -2155,10 +2155,10 @@ abstract class AppLocalizations {
   /// **'Files'**
   String get files;
 
-  /// Writerside table of contents sidebar tab label.
+  /// Writerside Topics sidebar tab label.
   ///
   /// In en, this message translates to:
-  /// **'TOC'**
+  /// **'Topics'**
   String get toc;
 
   /// Tooltip for the Writerside TOC action menu button.
@@ -5172,7 +5172,7 @@ abstract class AppLocalizations {
   /// **'Export the active document or Writerside module as a PDF.'**
   String get shortcutExportPdfDescription;
 
-  /// Heading for the Writerside instances shown in the TOC sidebar.
+  /// Heading for the Writerside instances shown in the Topics sidebar.
   ///
   /// In en, this message translates to:
   /// **'Instances'**

@@ -1143,7 +1143,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get files => 'Pliki';
 
   @override
-  String get toc => 'Spis treści';
+  String get toc => 'Tematy';
 
   @override
   String get tocActions => 'Działania dotyczące spisu treści';

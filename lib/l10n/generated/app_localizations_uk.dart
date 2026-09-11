@@ -1147,7 +1147,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get files => 'Файли';
 
   @override
-  String get toc => 'Зміст';
+  String get toc => 'Теми';
 
   @override
   String get tocActions => 'Дії зі змістом';

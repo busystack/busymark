@@ -1206,9 +1206,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "جدول المحتويات",
+  "toc": "موضوعات",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "إجراءات جدول المحتويات",
   "@tocActions": {

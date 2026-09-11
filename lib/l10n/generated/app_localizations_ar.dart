@@ -1123,7 +1123,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get files => 'ملفات';
 
   @override
-  String get toc => 'جدول المحتويات';
+  String get toc => 'موضوعات';
 
   @override
   String get tocActions => 'إجراءات جدول المحتويات';

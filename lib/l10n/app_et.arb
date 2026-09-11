@@ -1294,9 +1294,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Sisukord",
+  "toc": "Teemad",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "Sisukorra toimingud",
   "@tocActions": {

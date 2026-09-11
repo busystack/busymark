@@ -1085,7 +1085,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get files => '파일';
 
   @override
-  String get toc => '목차';
+  String get toc => '토픽';
 
   @override
   String get tocActions => '목차 작업';

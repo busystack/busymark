@@ -1072,7 +1072,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get files => '文件';
 
   @override
-  String get toc => '目录';
+  String get toc => '主题';
 
   @override
   String get tocActions => '目录操作';
@@ -5054,7 +5054,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get files => '文件';
 
   @override
-  String get toc => '目录';
+  String get toc => '主题';
 
   @override
   String get tocActions => '目录操作';

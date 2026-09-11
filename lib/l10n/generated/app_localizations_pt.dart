@@ -1134,7 +1134,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get files => 'Ficheiros';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Tópicos';
 
   @override
   String get tocActions => 'Ações do sumário';
@@ -5364,7 +5364,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get files => 'Arquivos';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Tópicos';
 
   @override
   String get tocActions => 'Ações do sumário';

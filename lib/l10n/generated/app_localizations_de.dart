@@ -1140,7 +1140,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get files => 'Dateien';
 
   @override
-  String get toc => 'Inhaltsverzeichnis';
+  String get toc => 'Themen';
 
   @override
   String get tocActions => 'Inhaltsverzeichnisaktionen';

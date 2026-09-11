@@ -1120,7 +1120,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get files => 'फ़ाइलें';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'विषय';
 
   @override
   String get tocActions => 'विषय-सूची संबंधी कार्रवाइयाँ';

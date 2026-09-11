@@ -1127,7 +1127,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Daftar isi';
+  String get toc => 'Topik';
 
   @override
   String get tocActions => 'Tindakan TOC';

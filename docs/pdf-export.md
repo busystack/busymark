@@ -2,7 +2,7 @@
 
 For Markdown, choose **Outline → Actions → Export**, use the command palette,
 or press **Ctrl+Shift+E**. Markdown exports the active editor text, including
-unsaved and untitled documents. For Writerside, choose **TOC → Actions → Export**;
+unsaved and untitled documents. For Writerside, choose **Topics → Actions → Export**;
 BusyMark first offers Save, Discard, or Cancel for project changes, then lets
 you select a non-library instance. The shortcut and command palette route use
 the same document-versus-instance scope.

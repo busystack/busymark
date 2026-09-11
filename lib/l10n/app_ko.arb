@@ -1382,9 +1382,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "목차",
+  "toc": "토픽",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "목차 작업",
   "@tocActions": {
@@ -3833,7 +3833,7 @@
   },
   "instances": "인스턴스",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "새 인스턴스",
   "@newInstance": {

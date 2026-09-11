@@ -1382,9 +1382,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "目次",
+  "toc": "トピック",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "目次の操作",
   "@tocActions": {
@@ -3833,7 +3833,7 @@
   },
   "instances": "インスタンス",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "新しいインスタンス",
   "@newInstance": {

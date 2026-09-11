@@ -1127,7 +1127,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get files => 'Dosyalar';
 
   @override
-  String get toc => 'İçindekiler';
+  String get toc => 'Konular';
 
   @override
   String get tocActions => 'İçindekiler eylemleri';

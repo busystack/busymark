@@ -1145,7 +1145,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get files => 'فایل‌ها';
 
   @override
-  String get toc => 'فهرست مطالب';
+  String get toc => 'موضوعات';
 
   @override
   String get tocActions => 'عملیات فهرست مطالب';

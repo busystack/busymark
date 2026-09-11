@@ -1126,7 +1126,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get files => 'Filer';
 
   @override
-  String get toc => 'Innholdsfortegnelse';
+  String get toc => 'Emner';
 
   @override
   String get tocActions => 'Handlinger for innholdsfortegnelsen';

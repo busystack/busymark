@@ -1127,7 +1127,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get files => 'Bestanden';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Onderwerpen';
 
   @override
   String get tocActions => 'TOC-acties';

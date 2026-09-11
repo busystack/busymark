@@ -1138,7 +1138,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get files => 'Fichiers';
 
   @override
-  String get toc => 'Table des matières';
+  String get toc => 'Sujets';
 
   @override
   String get tocActions => 'Actions sur la table des matières';

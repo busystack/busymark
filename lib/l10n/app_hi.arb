@@ -1206,9 +1206,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "TOC",
+  "toc": "विषय",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "विषय-सूची संबंधी कार्रवाइयाँ",
   "@tocActions": {
