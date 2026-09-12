@@ -3903,6 +3903,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get clipboardHistory => 'Sejarah Tempel';
 
   @override
+  String get clipboardHistorySearchHint => 'Cari riwayat papan klip';
+
+  @override
   String get clipboardHistoryDescription => 'Buka riwayat tempel lokal sesi.';
 
   @override
@@ -3988,7 +3991,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
 
   @override
-  String get localHistorySearchHint => 'Cari isi revisi';
+  String get localHistorySearchHint => 'Cari riwayat lokal';
 
   @override
   String get localHistorySelectedRevision => 'Revisi yang dipilih';

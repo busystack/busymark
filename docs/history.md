@@ -9,11 +9,13 @@ compared and restored.
 
 Open **Clipboard History** from the sidebar selector, command palette, or a
 document editor's context menu. The panel stays open while you move between
-documents and selections. Each row preserves up to three lines of the item's
-source preview; its type, capture time, and origin are available in the row
-tooltip. Use its action menu for **Paste** or **Paste as Plain Text**; Enter and
-double-click insert the selected item at the latest visible editable selection.
-Escape returns focus to the editor.
+documents and selections. Each row preserves up to two lines of the item's
+source preview, followed by its type or current-clipboard status and capture
+date and time. Entries copied inside BusyMark also show their source document
+and path. This information is part of the row rather than a hover tooltip. Use
+its action menu for **Paste** or **Paste as Plain Text**; Enter and double-click
+insert the selected item at the latest visible editable selection. Escape
+returns focus to the editor.
 
 The panel toolbar keeps the search field first and the contextual **Actions**
 menu on its physical right. That menu owns **Refresh** and **Clear Clipboard
@@ -45,21 +47,22 @@ operating-system clipboard. Collection can be disabled under
 
 Open **Local History** from the sidebar selector, command palette, document
 tab or editor context menu, or a file-tree context menu. In ordinary use its
-plain filename header and revision list follow the active document tab; moving
-focus to search, a revision, the comparison, or an action does not change that
-scope. The header tooltip contains the full path when one exists.
+revision list follows the active document tab; the active filename is not
+repeated above the search field. Moving focus to search, a revision, the
+comparison, or an action does not change that scope.
 
 Its toolbar likewise places the contextual **Actions** menu to the physical
 right of the search field. **Refresh**, **Find in Local History…**, and clear
 commands stay in that menu rather than the application Main menu.
 
-Use **Find in Local History…** from Local History's header action menu or the
+Use **Find in Local History…** from Local History's **Actions** menu or the
 command palette to find closed, renamed, deleted, and previously untitled
 documents by stored name, path, and revision content, even when their original
 workspace is not open. Selecting a result temporarily inspects that retained
-document in the same sidebar. Its missing/deleted state is explicit, and the
-local Back action returns to the active document. There is no store-wide
-document selector in the ordinary history view.
+document in the same sidebar. The temporary context row identifies that scope,
+its tooltip exposes the retained path, its missing/deleted state is explicit,
+and the local Back action returns to the active document. There is no
+store-wide document selector in the ordinary history view.
 
 BusyMark records complete source text and its encoding/line-ending policy. A
 baseline is captured when an eligible existing document is first tracked.

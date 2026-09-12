@@ -3948,6 +3948,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clipboardHistory => 'История буфера обмена';
 
   @override
+  String get clipboardHistorySearchHint => 'Поиск в истории буфера обмена';
+
+  @override
   String get clipboardHistoryDescription =>
       'Открыть историю буфера обмена, специфичную для сеанса.';
 
@@ -4036,7 +4039,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ни одна версия не соответствует этому поиску.';
 
   @override
-  String get localHistorySearchHint => 'Поиск содержимого версии';
+  String get localHistorySearchHint => 'Поиск в локальной истории';
 
   @override
   String get localHistorySelectedRevision => 'Выбранная версия';

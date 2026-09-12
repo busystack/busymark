@@ -3940,6 +3940,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clipboardHistory => 'تاریخچه کپی و پیست';
 
   @override
+  String get clipboardHistorySearchHint => 'جستجو در تاریخچه کلیپ‌بورد';
+
+  @override
   String get clipboardHistoryDescription =>
       'باز کردن تاریخچه کپی و پیست مخصوص جلسه.';
 
@@ -4025,7 +4028,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
 
   @override
-  String get localHistorySearchHint => 'محتوای نسخه را جستجو کنید';
+  String get localHistorySearchHint => 'جستجو در تاریخچه محلی';
 
   @override
   String get localHistorySelectedRevision => 'نسخه انتخاب شده';

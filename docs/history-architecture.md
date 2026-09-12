@@ -98,7 +98,7 @@ to 30 days and 512 MiB.
 
 Ordinary Local History browsing is scoped to the active document buffer. A
 scope generation invalidates outstanding revision reads and searches before a
-new filename is displayed, so old results cannot land beneath a new header.
+new scope is displayed, so old results cannot land in the wrong document list.
 Store-wide document search is a temporary discovery mode for retained closed,
 renamed, deleted, or untitled identities; selecting a normal document resumes
 active-tab following. The revision list is timestamp-first and groups the same

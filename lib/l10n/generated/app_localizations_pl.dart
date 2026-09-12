@@ -3947,6 +3947,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get clipboardHistory => 'Historia w Koszyku';
 
   @override
+  String get clipboardHistorySearchHint => 'Przeszukaj historię schowka';
+
+  @override
   String get clipboardHistoryDescription =>
       'Otwórz historię w koszyku lokalną dla sesji.';
 
@@ -4034,7 +4037,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Żadne wersje nie pasują do tego wyszukiwania.';
 
   @override
-  String get localHistorySearchHint => 'Wyszukaj zawartość wersji';
+  String get localHistorySearchHint => 'Przeszukaj historię lokalną';
 
   @override
   String get localHistorySelectedRevision => 'Wybrana wersja';

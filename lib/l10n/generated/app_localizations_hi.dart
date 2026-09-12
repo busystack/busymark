@@ -3888,6 +3888,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clipboardHistory => 'क्लिपबोर्ड इतिहास';
 
   @override
+  String get clipboardHistorySearchHint => 'क्लिपबोर्ड इतिहास खोजें';
+
+  @override
   String get clipboardHistoryDescription =>
       'सत्र-विशिष्ट क्लिपबोर्ड इतिहास खोलें।';
 
@@ -3975,7 +3978,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह खोज स्थानीय इतिहास संशोधनों से मेल नहीं खाती।';
 
   @override
-  String get localHistorySearchHint => 'संशोधन सामग्री खोजें';
+  String get localHistorySearchHint => 'स्थानीय इतिहास खोजें';
 
   @override
   String get localHistorySelectedRevision => 'चयनित संशोधन';

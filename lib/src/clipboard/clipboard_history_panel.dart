@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../l10n/generated/app_localizations.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_search_field.dart';
@@ -92,7 +91,7 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                 Expanded(
                   child: BusyMarkSearchField(
                     controller: _searchController,
-                    hintText: context.l10n.search,
+                    hintText: context.l10n.clipboardHistorySearchHint,
                     onChanged: (_) => setState(() {}),
                     onEscape: widget.onEscape,
                   ),
@@ -324,22 +323,64 @@ class _ClipboardEntryTile extends StatelessWidget {
         : kindLabel;
     final preview = _clipboardEntryPreview(payload, kindLabel);
     final metadata = '$status · ${_timestamp(context, payload.acquiredAt)}';
+    final origin = payload.origin;
+    final originPath = origin?.documentPath?.trim();
     final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkSidebarRecordRow<_ClipboardEntryAction>(
       icon: payload.kind == BusyMarkClipboardContentKind.image
           ? BusyMarkGlyphs.image
           : BusyMarkGlyphs.copy,
-      content: Text(
-        preview,
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            preview,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+          ),
+          const SizedBox(height: BusyMarkSpacing.xxs),
+          Text(
+            metadata,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+          ),
+          if (origin != null) ...[
+            const SizedBox(height: BusyMarkSpacing.xxs),
+            Text(
+              l10n.clipboardOrigin(origin.documentName),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+            ),
+          ],
+          if (originPath != null && originPath.isNotEmpty)
+            Text(
+              busyMarkLtrIsolateFor(context, originPath),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textDirection: TextDirection.ltr,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+            ),
+        ],
       ),
       selected: selected,
-      semanticsLabel: '$preview\n$metadata',
-      tooltip: _clipboardEntryTooltip(payload, l10n, metadata),
+      semanticsLabel: [
+        preview,
+        metadata,
+        if (origin != null) l10n.clipboardOrigin(origin.documentName),
+        if (originPath != null && originPath.isNotEmpty) originPath,
+      ].join('\n'),
       onTap: onSelect,
       onDoubleTap: canPaste ? onPaste : null,
       menuTooltip: l10n.actions,
@@ -391,21 +432,6 @@ String _clipboardEntryPreview(
       fallback;
   final preview = value.trim();
   return preview.isEmpty ? fallback : preview;
-}
-
-String _clipboardEntryTooltip(
-  BusyMarkClipboardPayload payload,
-  AppLocalizations l10n,
-  String metadata,
-) {
-  final origin = payload.origin;
-  final originPath = origin?.documentPath;
-  final parts = <String>[
-    metadata,
-    if (origin != null) l10n.clipboardOrigin(origin.documentName),
-    if (originPath != null && originPath.trim().isNotEmpty) originPath.trim(),
-  ];
-  return parts.join('\n');
 }
 
 class _PanelNotice extends StatelessWidget {

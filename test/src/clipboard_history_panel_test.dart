@@ -18,41 +18,55 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('records preserve multiline source without visible metadata', (
-    tester,
-  ) async {
-    const source = '## Introduction\n\nUse **visible tags**.\n- First item';
-    final container = _container();
-    container
-        .read(clipboardHistoryControllerProvider.notifier)
-        .retain(
-          const BusyMarkClipboardCapture(
-            kind: BusyMarkClipboardContentKind.richText,
-            text: 'Introduction\n\nUse visible tags.\nFirst item',
-            sourceText: source,
-          ),
-        );
-    container
-        .read(clipboardInsertionRegistryProvider)
-        .register(_PanelInsertionTarget());
-    await _pumpPanel(tester, container);
+  testWidgets(
+    'records balance a two-line source preview with visible metadata',
+    (tester) async {
+      const source = '## Introduction\n\nUse **visible tags**.\n- First item';
+      final container = _container();
+      container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .retain(
+            const BusyMarkClipboardCapture(
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'Introduction\n\nUse visible tags.\nFirst item',
+              sourceText: source,
+              origin: BusyMarkClipboardOrigin(
+                documentId: 'introduction',
+                documentName: 'Introduction.md',
+                documentPath: '/workspace/Introduction.md',
+              ),
+            ),
+          );
+      container
+          .read(clipboardInsertionRegistryProvider)
+          .register(_PanelInsertionTarget());
+      await _pumpPanel(tester, container);
 
-    final row = tester.widget<BusyMarkSidebarRecordRow>(
-      find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
-    );
-    expect(row.title, isNull);
-    expect(row.subtitle, isNull);
-    expect(row.content, isA<Text>());
-    final preview = tester.widget<Text>(find.text(source));
-    expect(preview.maxLines, 3);
-    expect(
-      find.text(AppLocalizationsEn().clipboardDestination('Target.md')),
-      findsNothing,
-    );
-    expect(find.textContaining('Rich text ·'), findsNothing);
-  });
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).decoration?.hintText,
+        'Search clipboard history',
+      );
+      final row = tester.widget<BusyMarkSidebarRecordRow>(
+        find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+      );
+      expect(row.title, isNull);
+      expect(row.subtitle, isNull);
+      expect(row.content, isA<Column>());
+      expect(row.tooltip, isNull);
+      final preview = tester.widget<Text>(find.text(source));
+      expect(preview.maxLines, 2);
+      expect(find.textContaining('Rich text ·'), findsOneWidget);
+      expect(find.text('Copied from Introduction.md'), findsOneWidget);
+      expect(find.text('/workspace/Introduction.md'), findsOneWidget);
+      expect(row.semanticsLabel, contains('/workspace/Introduction.md'));
+      expect(
+        find.text(AppLocalizationsEn().clipboardDestination('Target.md')),
+        findsNothing,
+      );
+    },
+  );
 
-  testWidgets('large records do not put clipboard content in the tooltip', (
+  testWidgets('large records use a short preview and do not create a tooltip', (
     tester,
   ) async {
     final largeSource = List.filled(
@@ -74,9 +88,9 @@ void main() {
     final row = tester.widget<BusyMarkSidebarRecordRow>(
       find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
     );
-    expect(row.tooltip, isNot(contains(largeSource)));
-    expect(row.tooltip, contains(AppLocalizationsEn().clipboardEntryText));
-    expect(row.tooltip!.length, lessThan(100));
+    expect(row.tooltip, isNull);
+    expect(tester.widget<Text>(find.text(largeSource)).maxLines, 2);
+    expect(find.textContaining('Text ·'), findsOneWidget);
   });
 
   testWidgets('actions menu is right of search and owns refresh and clear', (

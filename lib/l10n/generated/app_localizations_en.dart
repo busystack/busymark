@@ -3923,6 +3923,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clipboardHistory => 'Clipboard History';
 
   @override
+  String get clipboardHistorySearchHint => 'Search clipboard history';
+
+  @override
   String get clipboardHistoryDescription =>
       'Open the session-local clipboard history.';
 
@@ -4007,7 +4010,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'No Local History revisions match this search.';
 
   @override
-  String get localHistorySearchHint => 'Search revision contents';
+  String get localHistorySearchHint => 'Search local history';
 
   @override
   String get localHistorySelectedRevision => 'Selected revision';

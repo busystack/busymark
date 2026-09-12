@@ -3929,6 +3929,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clipboardHistory => 'Historique de la presse-papiers';
 
   @override
+  String get clipboardHistorySearchHint =>
+      'Rechercher dans l’historique du presse-papiers';
+
+  @override
   String get clipboardHistoryDescription =>
       'Ouvrir l\'historique de la presse-papiers local à la session.';
 
@@ -4016,7 +4020,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune révision n\'est trouvée dans cette recherche.';
 
   @override
-  String get localHistorySearchHint => 'Rechercher le contenu des révisions';
+  String get localHistorySearchHint => 'Rechercher dans l’historique local';
 
   @override
   String get localHistorySelectedRevision => 'Révision sélectionnée';

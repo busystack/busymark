@@ -3789,6 +3789,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clipboardHistory => '클립보드 기록';
 
   @override
+  String get clipboardHistorySearchHint => '클립보드 기록 검색';
+
+  @override
   String get clipboardHistoryDescription => '세션별 클립보드 기록을 엽니다.';
 
   @override
@@ -3865,7 +3868,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get localHistoryNoMatches => '이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.';
 
   @override
-  String get localHistorySearchHint => '수정 내용 검색';
+  String get localHistorySearchHint => '로컬 기록 검색';
 
   @override
   String get localHistorySelectedRevision => '선택된 수정';

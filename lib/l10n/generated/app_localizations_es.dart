@@ -3932,6 +3932,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardHistory => 'Historial de la Copia';
 
   @override
+  String get clipboardHistorySearchHint =>
+      'Buscar en el historial del portapapeles';
+
+  @override
   String get clipboardHistoryDescription =>
       'Abrir el historial de la copia local de la sesión.';
 
@@ -4019,7 +4023,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ninguna revisión del Historial Local coincide con esta búsqueda.';
 
   @override
-  String get localHistorySearchHint => 'Buscar contenido de la revisión';
+  String get localHistorySearchHint => 'Buscar en el historial local';
 
   @override
   String get localHistorySelectedRevision => 'Revisión seleccionada';

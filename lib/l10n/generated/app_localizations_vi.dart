@@ -3891,6 +3891,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get clipboardHistory => 'Lịch sử sao chép';
 
   @override
+  String get clipboardHistorySearchHint => 'Tìm kiếm lịch sử bảng nhớ tạm';
+
+  @override
   String get clipboardHistoryDescription => 'Mở lịch sử sao chép cục bộ phiên.';
 
   @override
@@ -3976,7 +3979,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.';
 
   @override
-  String get localHistorySearchHint => 'Tìm kiếm nội dung phiên bản';
+  String get localHistorySearchHint => 'Tìm kiếm lịch sử cục bộ';
 
   @override
   String get localHistorySelectedRevision => 'Phiên bản đã chọn';

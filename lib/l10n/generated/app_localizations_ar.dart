@@ -3934,6 +3934,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clipboardHistory => 'سجل النسخ واللصق';
 
   @override
+  String get clipboardHistorySearchHint => 'البحث في سجل الحافظة';
+
+  @override
   String get clipboardHistoryDescription =>
       'افتح سجل النسخ واللصق الخاص بالجلسة.';
 
@@ -4018,7 +4021,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا تتطابق أي إصدارات في التاريخ المحلي مع هذا البحث.';
 
   @override
-  String get localHistorySearchHint => 'البحث في محتوى الإصدار';
+  String get localHistorySearchHint => 'البحث في السجل المحلي';
 
   @override
   String get localHistorySelectedRevision => 'الإصدار المحدد';

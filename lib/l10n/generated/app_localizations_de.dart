@@ -3929,6 +3929,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clipboardHistory => 'Zwischenablage-Historie';
 
   @override
+  String get clipboardHistorySearchHint => 'Zwischenablageverlauf durchsuchen';
+
+  @override
   String get clipboardHistoryDescription =>
       'Öffne die Sitzungs-spezifische Zwischenablage-Historie.';
 
@@ -4017,7 +4020,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Keine Lokalen Historie Revisionen passen zu dieser Suche.';
 
   @override
-  String get localHistorySearchHint => 'Revisionen durchsuchen';
+  String get localHistorySearchHint => 'Lokalen Verlauf durchsuchen';
 
   @override
   String get localHistorySelectedRevision => 'Ausgewählte Revision';

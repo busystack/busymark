@@ -3728,6 +3728,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clipboardHistory => '剪贴板历史';
 
   @override
+  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
+
+  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -3804,7 +3807,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
-  String get localHistorySearchHint => '搜索修订内容';
+  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';
@@ -7710,6 +7713,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get clipboardHistory => '剪贴板历史';
 
   @override
+  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
+
+  @override
   String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
 
   @override
@@ -7786,7 +7792,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
 
   @override
-  String get localHistorySearchHint => '搜索修订内容';
+  String get localHistorySearchHint => '搜索本地历史记录';
 
   @override
   String get localHistorySelectedRevision => '已选择的修订';

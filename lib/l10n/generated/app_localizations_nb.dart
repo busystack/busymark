@@ -3895,6 +3895,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clipboardHistory => 'Utklippshistorie';
 
   @override
+  String get clipboardHistorySearchHint => 'Søk i utklippstavlehistorikken';
+
+  @override
   String get clipboardHistoryDescription =>
       'Åpne historien for utklippet som er lokal for sesjonen.';
 
@@ -3981,7 +3984,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get localHistoryNoMatches => 'Ingen revisjoner matcher denne søken.';
 
   @override
-  String get localHistorySearchHint => 'Søk etter innhold i revisjon';
+  String get localHistorySearchHint => 'Søk i lokal historikk';
 
   @override
   String get localHistorySelectedRevision => 'Valgt revisjon';

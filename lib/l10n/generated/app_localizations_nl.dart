@@ -3938,6 +3938,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clipboardHistory => 'Historie van de klembord';
 
   @override
+  String get clipboardHistorySearchHint => 'Klembordgeschiedenis doorzoeken';
+
+  @override
   String get clipboardHistoryDescription =>
       'Open de klembordgeschiedenis per sessie.';
 
@@ -4026,7 +4029,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.';
 
   @override
-  String get localHistorySearchHint => 'Zoek naar inhoud van revisies';
+  String get localHistorySearchHint => 'Lokale geschiedenis doorzoeken';
 
   @override
   String get localHistorySelectedRevision => 'Geselecteerde revisie';

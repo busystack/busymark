@@ -3894,6 +3894,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get clipboardHistory => 'Kleepimiskredi ajalugu';
 
   @override
+  String get clipboardHistorySearchHint => 'Otsi lõikepuhvri ajaloost';
+
+  @override
   String get clipboardHistoryDescription =>
       'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
 
@@ -3981,7 +3984,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Ei leidunud kohalise ajalooga versioone.';
 
   @override
-  String get localHistorySearchHint => 'Otsi versioonide sisu';
+  String get localHistorySearchHint => 'Otsi kohalikust ajaloost';
 
   @override
   String get localHistorySelectedRevision => 'Valitud versioon';

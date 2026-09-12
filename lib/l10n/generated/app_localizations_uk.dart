@@ -3956,6 +3956,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clipboardHistory => 'Історія Вирізання';
 
   @override
+  String get clipboardHistorySearchHint => 'Пошук в історії буфера обміну';
+
+  @override
   String get clipboardHistoryDescription =>
       'Відкрити історію вирізання, прив\'язану до сесії.';
 
@@ -4043,7 +4046,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Жодна версія локальної історії не відповідає цьому пошуку.';
 
   @override
-  String get localHistorySearchHint => 'Пошук вмісту версій';
+  String get localHistorySearchHint => 'Пошук у локальній історії';
 
   @override
   String get localHistorySelectedRevision => 'Обрана версія';

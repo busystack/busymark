@@ -3925,6 +3925,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clipboardHistory => 'Cronologia della Copia';
 
   @override
+  String get clipboardHistorySearchHint =>
+      'Cerca nella cronologia degli appunti';
+
+  @override
   String get clipboardHistoryDescription =>
       'Apri la cronologia della copia locale della sessione.';
 
@@ -4013,7 +4017,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessuna revisione corrisponde a questa ricerca.';
 
   @override
-  String get localHistorySearchHint => 'Cerca i contenuti delle revisioni';
+  String get localHistorySearchHint => 'Cerca nella cronologia locale';
 
   @override
   String get localHistorySelectedRevision => 'Revisione selezionata';

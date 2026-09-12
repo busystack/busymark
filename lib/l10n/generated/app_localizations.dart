@@ -6569,6 +6569,12 @@ abstract class AppLocalizations {
   /// **'Clipboard History'**
   String get clipboardHistory;
 
+  /// No description provided for @clipboardHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search clipboard history'**
+  String get clipboardHistorySearchHint;
+
   /// No description provided for @clipboardHistoryDescription.
   ///
   /// In en, this message translates to:
@@ -6716,7 +6722,7 @@ abstract class AppLocalizations {
   /// No description provided for @localHistorySearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search revision contents'**
+  /// **'Search local history'**
   String get localHistorySearchHint;
 
   /// No description provided for @localHistorySelectedRevision.

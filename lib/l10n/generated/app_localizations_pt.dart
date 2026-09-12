@@ -3952,6 +3952,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get clipboardHistory => 'Histórico da Área de Transferência';
 
   @override
+  String get clipboardHistorySearchHint =>
+      'Pesquisar no histórico da área de transferência';
+
+  @override
   String get clipboardHistoryDescription =>
       'Abrir o histórico da área de transferência local da sessão.';
 
@@ -4039,7 +4043,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get localHistoryNoMatches => 'Nenhuma revisão corresponde à pesquisa.';
 
   @override
-  String get localHistorySearchHint => 'Procurar conteúdos de revisão';
+  String get localHistorySearchHint => 'Pesquisar no histórico local';
 
   @override
   String get localHistorySelectedRevision => 'Revisão selecionada';
@@ -8179,6 +8183,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get clipboardHistory => 'Histórico da Área de Transferência';
 
   @override
+  String get clipboardHistorySearchHint =>
+      'Pesquisar no histórico da área de transferência';
+
+  @override
   String get clipboardHistoryDescription =>
       'Abrir o histórico da área de transferência local da sessão.';
 
@@ -8268,7 +8276,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Nenhuma revisão no Histórico Local corresponde a esta pesquisa.';
 
   @override
-  String get localHistorySearchHint => 'Pesquisar conteúdo de revisões';
+  String get localHistorySearchHint => 'Pesquisar no histórico local';
 
   @override
   String get localHistorySelectedRevision => 'Revisão selecionada';

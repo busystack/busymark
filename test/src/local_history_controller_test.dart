@@ -751,6 +751,10 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'Unique retained',
       );
+      expect(
+        find.byKey(const ValueKey('local-history-context-header')),
+        findsOneWidget,
+      );
       expect(find.text('deleted.md'), findsOneWidget);
     },
   );
@@ -880,7 +884,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('B.md'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('local-history-context-header')),
+        findsNothing,
+      );
+      expect(find.text('B.md'), findsNothing);
       expect(find.byType(DropdownButton<String>), findsNothing);
 
       final searchField = find.byType(TextField);
@@ -892,6 +900,10 @@ void main() {
         greaterThan(tester.getTopRight(searchField).dx),
       );
       expect(searchField, findsOneWidget);
+      expect(
+        tester.widget<TextField>(searchField).decoration?.hintText,
+        'Search local history',
+      );
       await tester.enterText(searchField, 'Unique B');
       await tester.runAsync(
         () => _waitForHistory(
@@ -917,7 +929,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('A.md'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('local-history-context-header')),
+        findsNothing,
+      );
+      expect(find.text('A.md'), findsNothing);
       expect(
         container.read(localHistoryControllerProvider).searchQuery,
         isEmpty,

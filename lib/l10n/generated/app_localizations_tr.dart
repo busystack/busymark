@@ -3896,6 +3896,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clipboardHistory => 'Kopyalama Geçmişi';
 
   @override
+  String get clipboardHistorySearchHint => 'Pano geçmişinde ara';
+
+  @override
   String get clipboardHistoryDescription =>
       'Oturuma özgü kopyalama geçmişini aç.';
 
@@ -3984,7 +3987,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
 
   @override
-  String get localHistorySearchHint => 'Revizyon içeriğini arayın';
+  String get localHistorySearchHint => 'Yerel geçmişte ara';
 
   @override
   String get localHistorySelectedRevision => 'Seçilen revizyon';

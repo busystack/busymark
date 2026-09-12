@@ -134,14 +134,13 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _LocalHistoryHeader(
-          activeDocumentName: activeBuffer?.displayName,
-          activeDocumentPath: activeBuffer?.filePath,
-          selectedDocument: selected,
-          findingDocuments: state.findingDocuments,
-          inspectingRetainedDocument: state.inspectingRetainedDocument,
-          onBack: () => unawaited(_selectActive(preserveLookup: false)),
-        ),
+        if (state.findingDocuments || state.inspectingRetainedDocument)
+          _LocalHistoryHeader(
+            selectedDocument: selected,
+            findingDocuments: state.findingDocuments,
+            inspectingRetainedDocument: state.inspectingRetainedDocument,
+            onBack: () => unawaited(_selectActive(preserveLookup: false)),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: BusyMarkSpacing.md,
@@ -395,16 +394,12 @@ enum _HistoryAction { refresh, find, clearDocument, clearAll }
 
 class _LocalHistoryHeader extends StatelessWidget {
   const _LocalHistoryHeader({
-    required this.activeDocumentName,
-    required this.activeDocumentPath,
     required this.selectedDocument,
     required this.findingDocuments,
     required this.inspectingRetainedDocument,
     required this.onBack,
   });
 
-  final String? activeDocumentName;
-  final String? activeDocumentPath;
   final LocalHistoryDocument? selectedDocument;
   final bool findingDocuments;
   final bool inspectingRetainedDocument;
@@ -412,17 +407,15 @@ class _LocalHistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temporary = findingDocuments || inspectingRetainedDocument;
     final selectedPath =
         selectedDocument?.currentPath ??
         selectedDocument?.historicalPaths.lastOrNull;
     final title = findingDocuments
         ? context.l10n.findLocalHistoryEllipsis
-        : inspectingRetainedDocument
-        ? selectedDocument?.displayName ?? context.l10n.localHistoryNoDocuments
-        : activeDocumentName ?? context.l10n.localHistoryNoDocuments;
-    final path = inspectingRetainedDocument ? selectedPath : activeDocumentPath;
+        : selectedDocument?.displayName ?? context.l10n.localHistoryNoDocuments;
+    final path = inspectingRetainedDocument ? selectedPath : null;
     return Padding(
+      key: const ValueKey('local-history-context-header'),
       padding: const EdgeInsets.fromLTRB(
         BusyMarkSpacing.md,
         BusyMarkSpacing.sm,
@@ -431,18 +424,13 @@ class _LocalHistoryHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (temporary) ...[
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.back,
-              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-              transparent: true,
-              onPressed: onBack,
-            ),
-            const SizedBox(width: BusyMarkSpacing.xs),
-          ] else ...[
-            const Icon(BusyMarkGlyphs.documentHistory, size: 18),
-            const SizedBox(width: BusyMarkSpacing.sm),
-          ],
+          BusyMarkHeaderIconButton(
+            tooltip: context.l10n.back,
+            icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+            transparent: true,
+            onPressed: onBack,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xs),
           Expanded(
             child: Tooltip(
               message: path == null

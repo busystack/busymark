@@ -3793,6 +3793,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clipboardHistory => 'コピーボード履歴';
 
   @override
+  String get clipboardHistorySearchHint => 'クリップボード履歴を検索';
+
+  @override
   String get clipboardHistoryDescription => 'セッション固有のコピーボード履歴を開く。';
 
   @override
@@ -3869,7 +3872,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get localHistoryNoMatches => 'この検索に一致するローカル履歴の修正はありません。';
 
   @override
-  String get localHistorySearchHint => 'リビジョンの内容を検索';
+  String get localHistorySearchHint => 'ローカル履歴を検索';
 
   @override
   String get localHistorySelectedRevision => '選択されたリビジョン';
