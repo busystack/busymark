@@ -736,6 +736,24 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           } else {
             _documentIdsByBuffer.remove(source.bufferId);
           }
+        } else if (source.untitled &&
+            !destinationExisted &&
+            !promotionCompleted &&
+            sourceDocumentIdAtStart != null &&
+            _documentIdsByBuffer[source.bufferId] == sourceDocumentIdAtStart) {
+          // First save commits an identity transition even if optional source
+          // capture was cancelled before promotion registration. Keep it for
+          // the existing retry/session path. Unlike disabling recording, Clear
+          // removes the binding, so it must never reinstall this association.
+          _pendingUntitledPromotions.putIfAbsent(
+            source.bufferId,
+            () => LocalHistoryPendingIdentityPromotion(
+              bufferId: source.bufferId,
+              documentId: sourceDocumentIdAtStart,
+              destinationPath: p.normalize(destinationPath),
+              displayName: p.basename(destinationPath),
+            ),
+          );
         }
       }
     });

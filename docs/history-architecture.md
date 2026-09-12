@@ -85,6 +85,12 @@ Once a named-file Save As has changed the buffer path, detaching its source
 binding is unconditional finalization, not optional recording. Disabling
 recording or clearing history during the destination capture cannot leave the
 destination buffer bound to the source file's history.
+An untitled first save likewise retains a pending identity promotion if
+recording is cancelled before promotion registration. The existing retry and
+session-association mechanisms carry the original history ID to the saved path;
+this does not restart disabled content recording. Registration requires the
+original binding to survive, so explicit Clear cannot recreate that association
+or resurrect its deleted revisions.
 
 ## Store and retention
 

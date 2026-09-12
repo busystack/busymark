@@ -857,6 +857,208 @@ void main() {
     },
   );
 
+  for (final cancellation in ['disable', 'clear document', 'clear all']) {
+    for (final failCapture in [false, true]) {
+      test('first-save pre-promotion cancellation: $cancellation, '
+          '${failCapture ? "failed" : "completed"} pending capture', () async {
+        final historyRoot = Directory(p.join(root.path, 'history'));
+        final diskStore = FileLocalHistoryStore(
+          rootDirectory: () async => historyRoot,
+        );
+        final store = _BlockingPrePromotionCaptureStore(
+          diskStore,
+          failCapture: failCapture,
+        );
+        var now = DateTime.utc(2026, 1, 1);
+        final timers = <_FakeTimer>[];
+        final sessions = MemoryDocumentSessionStore();
+        final harness = await _harness(
+          store,
+          sessionStore: sessions,
+          clock: () => now,
+          timerFactory: (delay, callback) {
+            final timer = _FakeTimer(delay, callback);
+            timers.add(timer);
+            return timer;
+          },
+        );
+        final history = harness.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        final settings = harness.container.read(
+          appSettingsControllerProvider.notifier,
+        );
+        await harness.controller.createMarkdownFile();
+        final bufferId = harness.state.activeBuffer!.id;
+
+        // Establish history through an editor mutation and its real-policy
+        // checkpoint, without manually observing or storing the edit.
+        harness.controller.updateActiveText('Original retained draft\n');
+        await _waitFor(() => timers.any((timer) => timer.isActive));
+        final firstTimer = timers.singleWhere((timer) => timer.isActive);
+        expect(firstTimer.duration, const Duration(seconds: 60));
+        now = now.add(firstTimer.duration);
+        firstTimer.fire();
+        await _waitFor(
+          () =>
+              history.documentIdForBuffer(bufferId) != null &&
+              history.pendingSnapshotForBuffer(bufferId) == null,
+        );
+        final original = (await diskStore.load()).documents.single;
+        final originalRevisionIds = (await diskStore.load()).revisions
+            .map((revision) => revision.id)
+            .toSet();
+        expect(original.currentPath, isNull);
+
+        harness.controller.updateActiveText('Pending at first save\n');
+        await _waitFor(
+          () =>
+              history.pendingSnapshotForBuffer(bufferId)?.text ==
+              'Pending at first save\n',
+        );
+        store.blockNextUntitledCheckpoint = true;
+        final destination = p.join(root.path, 'Guide.md');
+        final save = harness.controller.saveActiveAs(destination);
+        final blocked = await store.started.future;
+        expect(harness.state.activeBuffer!.filePath, destination);
+        expect(
+          await File(destination).readAsString(),
+          'Pending at first save\n',
+        );
+        expect(blocked.path, isNull);
+        expect(blocked.documentId, original.id);
+        expect(blocked.source, 'Pending at first save\n');
+        expect(blocked.reason, LocalHistoryCaptureReason.automaticCheckpoint);
+        expect(history.pendingIdentityPromotions, isEmpty);
+        expect(store.promotionAttempts, 0);
+
+        Future<void>? clear;
+        if (cancellation == 'disable') {
+          await settings.setLocalHistoryRecordingEnabled(false);
+        } else {
+          clear = cancellation == 'clear all'
+              ? history.clearAll()
+              : history.clearDocument(original.id);
+        }
+        store.release.complete();
+        expect(await save, isTrue);
+        if (clear != null) await clear;
+        expect(harness.state.activeBuffer!.isDirty, isFalse);
+        expect(harness.state.activeText, 'Pending at first save\n');
+        expect(history.pendingSnapshotForBuffer(bufferId), isNull);
+        expect(timers.where((timer) => timer.isActive), isEmpty);
+        await harness.controller.flushPersistence();
+
+        if (cancellation == 'disable') {
+          expect(history.documentIdForBuffer(bufferId), original.id);
+          expect(history.pendingIdentityPromotions, hasLength(1));
+          final promotion = history.pendingIdentityPromotions.single;
+          expect(promotion.bufferId, bufferId);
+          expect(promotion.documentId, original.id);
+          expect(promotion.destinationPath, destination);
+          expect(
+            sessions.value!.pendingLocalHistoryAssociations.single.documentId,
+            original.id,
+          );
+          final retained = await diskStore.load();
+          expect(retained.documents.single.id, original.id);
+          expect(retained.documents.single.currentPath, isNull);
+          expect(
+            retained.revisions.map((revision) => revision.id),
+            containsAll(originalRevisionIds),
+          );
+          await settings.setLocalHistoryRecordingEnabled(true);
+        } else {
+          expect(history.documentIdForBuffer(bufferId), isNull);
+          expect(history.pendingIdentityPromotions, isEmpty);
+          expect(sessions.value!.pendingLocalHistoryAssociations, isEmpty);
+          now = now.add(const Duration(seconds: 60));
+          for (final timer in List<_FakeTimer>.of(timers)) {
+            timer.fire();
+          }
+          final cleared = await diskStore.load();
+          expect(cleared.documents, isEmpty);
+          expect(cleared.revisions, isEmpty);
+        }
+
+        // Only a new editor mutation and checkpoint may resume recording.
+        harness.controller.updateActiveText(
+          'Named checkpoint after cancellation\n',
+        );
+        await _waitFor(() => timers.any((timer) => timer.isActive));
+        final namedTimer = timers.singleWhere((timer) => timer.isActive);
+        expect(namedTimer.duration, const Duration(seconds: 60));
+        now = now.add(namedTimer.duration);
+        namedTimer.fire();
+        await _waitFor(
+          () => history.pendingSnapshotForBuffer(bufferId) == null,
+        );
+        final captured = await diskStore.load();
+        final document = captured.documents.single;
+        expect(document.currentPath, destination);
+        expect(document.untitled, isFalse);
+        expect(history.documentIdForBuffer(bufferId), document.id);
+        expect(history.pendingIdentityPromotions, isEmpty);
+        final sources = await _revisionSources(diskStore, captured.revisions);
+        expect(sources, contains('Named checkpoint after cancellation\n'));
+        if (cancellation == 'disable') {
+          expect(document.id, original.id);
+          expect(store.promotionAttempts, 1);
+          expect(
+            captured.revisions.map((revision) => revision.id),
+            containsAll(originalRevisionIds),
+          );
+          expect(sources, contains('Original retained draft\n'));
+        } else {
+          expect(document.id, isNot(original.id));
+          expect(store.promotionAttempts, 0);
+          expect(sources, isNot(contains('Original retained draft\n')));
+        }
+        expect(
+          captured.revisions.every(
+            (revision) => revision.documentId == document.id,
+          ),
+          isTrue,
+        );
+        expect(
+          harness.container
+              .read(localHistoryControllerProvider)
+              .snapshot
+              .documents
+              .single
+              .currentPath,
+          destination,
+        );
+
+        final reopenedStore = FileLocalHistoryStore(
+          rootDirectory: () async => historyRoot,
+        );
+        final reopened = await _harness(reopenedStore, clock: () => now);
+        final reopenedHistory = reopened.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await reopened.controller.openPath(destination);
+        await _waitFor(
+          () =>
+              reopenedHistory.documentIdForBuffer(
+                reopened.state.activeBuffer!.id,
+              ) !=
+              null,
+        );
+        expect(
+          reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
+          document.id,
+        );
+        final reopenedSnapshot = await reopenedStore.load();
+        expect(reopenedSnapshot.documents.single.id, document.id);
+        expect(
+          reopenedSnapshot.revisions.map((revision) => revision.id),
+          containsAll(captured.revisions.map((revision) => revision.id)),
+        );
+      });
+    }
+  }
+
   test(
     'Save As keeps edits made during destination capture out of source history',
     () async {
@@ -1488,6 +1690,7 @@ Future<_Harness> _harness(
   LocalHistoryStore store, {
   WorkspaceService service = const WorkspaceService(),
   WorkspaceFileMonitor? fileMonitor,
+  LocalHistoryClock? clock,
   LocalHistoryTimerFactory? timerFactory,
   LocalHistoryComparisonComputer? comparisonComputer,
   DocumentSessionStore? sessionStore,
@@ -1498,7 +1701,7 @@ Future<_Harness> _harness(
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
       localHistoryStoreProvider.overrideWithValue(store),
       localHistoryClockProvider.overrideWithValue(
-        () => DateTime.utc(2026, 1, 1, 0, 1),
+        clock ?? () => DateTime.utc(2026, 1, 1, 0, 1),
       ),
       workspaceServiceProvider.overrideWithValue(service),
       if (sessionStore != null)
@@ -1766,6 +1969,55 @@ class _BlockingRemapStore extends _FailingProtectiveStore {
     if (!started.isCompleted) started.complete();
     await release.future;
     await delegate.remapPath(sourcePath, destinationPath);
+  }
+}
+
+class _BlockingPrePromotionCaptureStore extends _FailingProtectiveStore {
+  _BlockingPrePromotionCaptureStore(
+    super.delegate, {
+    required this.failCapture,
+  });
+
+  final bool failCapture;
+  var blockNextUntitledCheckpoint = false;
+  var promotionAttempts = 0;
+  final started = Completer<LocalHistoryCaptureRequest>();
+  final release = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (blockNextUntitledCheckpoint &&
+        request.path == null &&
+        request.reason == LocalHistoryCaptureReason.automaticCheckpoint) {
+      blockNextUntitledCheckpoint = false;
+      started.complete(request);
+      await release.future;
+      if (failCapture) {
+        throw const LocalHistoryStorageException(
+          'Injected pre-promotion capture failure',
+        );
+      }
+    }
+    return delegate.capture(request, policy);
+  }
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) {
+    promotionAttempts++;
+    return super.promoteUntitledDocument(
+      documentId: documentId,
+      destinationPath: destinationPath,
+      displayName: displayName,
+      updatedAt: updatedAt,
+    );
   }
 }
 
