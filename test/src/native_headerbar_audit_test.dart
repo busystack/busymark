@@ -1162,10 +1162,12 @@ void main() {
     expect(native, contains('sidebar_shortcut_action_for_key'));
     expect(native, contains('GDK_KEY_KP_1'));
     expect(native, contains('GDK_KEY_KP_4'));
-    expect(native, isNot(contains('GDK_KEY_KP_5')));
+    expect(native, contains('GDK_KEY_KP_5'));
+    expect(native, contains('GDK_KEY_KP_6'));
     expect(native, contains('"sidebarFiles"'));
     expect(native, contains('"sidebarGit"'));
-    expect(native, isNot(contains('"sidebarHistory"')));
+    expect(native, contains('"sidebarLocalHistory"'));
+    expect(native, contains('"sidebarClipboardHistory"'));
     expect(native, contains('modifiers != GDK_CONTROL_MASK'));
     expect(
       native,
@@ -1744,15 +1746,19 @@ void main() {
       'lib/src/platform/header_bar_configuration.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     expect(welcome, contains('_WelcomeSidebar'));
-    expect(welcome, contains('_WelcomeRecentRow'));
-    expect(welcome, contains('WorkspaceIdentityRow'));
-    expect(welcome, contains('WorkspaceGlyphs.forRecent(widget.recent)'));
+    expect(
+      welcome,
+      contains('BusyMarkSidebarRecordRow<_RecentWorkspaceAction>'),
+    );
+    expect(welcome, contains('WorkspaceGlyphs.forRecent(recent)'));
     expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
     expect(welcome, contains('BusyMarkGlyphs.folder'));
     expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
-    expect(welcome, contains('BorderRadius.circular(BusyMarkRadius.md)'));
+    expect(design, contains('class BusyMarkSidebarRecordRow<T>'));
+    expect(design, contains('BorderRadius.circular(BusyMarkRadius.md)'));
     expect(welcome, contains('if (!sidebarOnRight && sidebarVisible)'));
     expect(welcome, contains('if (sidebarOnRight && sidebarVisible)'));
     expect(welcome, contains('welcomeMainColor = colors.view'));

@@ -8,10 +8,12 @@ compared and restored.
 ## Clipboard History
 
 Open **Clipboard History** from the sidebar selector, command palette, or a
-document editor's context menu. The panel stays open while you
-move between documents and selections. Select an item to preview it, then use
-**Paste**, **Paste as Plain Text**, Enter, or double-click to insert it at the
-latest visible editable selection. Escape returns focus to the editor.
+document editor's context menu. The panel stays open while you move between
+documents and selections. Each row preserves up to three lines of the item's
+source preview; its type, capture time, and origin are available in the row
+tooltip. Use its action menu for **Paste** or **Paste as Plain Text**; Enter and
+double-click insert the selected item at the latest visible editable selection.
+Escape returns focus to the editor.
 
 BusyMark collects successful copy and cut operations from document editors,
 plus supported content copied in another application after it is successfully
@@ -59,6 +61,23 @@ restore, delete, or external-change operations. The checkpoint deadline is
 not postponed by continued typing, and the ordinary 1.5-second autosave does
 not create a revision per write. Unchanged adjacent content is deduplicated.
 
+Typing, deletion, paste, selected-text formatting, Undo, Redo, and source
+changes made to an inactive open document update the authoritative editor
+buffer immediately. Local History observes the complete serialized source and
+keeps only the latest eligible source pending for that document's current
+checkpoint window. Pending work is not presented as a stored revision. When a
+checkpoint or explicit-save capture succeeds, the already-open revision list
+and any active content filter reconcile automatically; **Refresh** only rereads
+stored history and never forces a capture or document save.
+
+If storage fails, the panel reports the failure and keeps the latest eligible
+source pending in memory for a controlled retry. A newer edit replaces an
+older pending source. The revision is not durable and is not described as
+saved until storage actually succeeds. A document file can still save
+successfully when this separate history write fails; destructive history
+restore operations that require a protective revision remain blocked by such
+a failure.
+
 Revisions are grouped by local calendar date and use the localized time,
 including seconds, as the primary row label. Distinct events such as Saved,
 Before restore, or External change appear as secondary metadata. Automatic and
@@ -94,7 +113,11 @@ but leaves existing revisions available until retention or explicit clearing.
 
 Clearing one document's history or all Local History permanently removes only
 stored revisions. It does not delete project files, Git data, recovery data, or
-the system clipboard.
+the system clipboard. Clearing the revision currently being compared closes
+that transient comparison and returns to the unchanged editor. Scheduled or
+in-flight work accepted before the clear cannot recreate the erased history;
+new edits after the clear begin a normal checkpoint window and automatically
+reattach the active document's list.
 
 ## What each recovery tool means
 

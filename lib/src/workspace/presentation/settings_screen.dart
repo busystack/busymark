@@ -384,6 +384,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.sidebarToc:
       case HeaderBarAction.sidebarOutline:
       case HeaderBarAction.sidebarGit:
+      case HeaderBarAction.sidebarLocalHistory:
+      case HeaderBarAction.sidebarClipboardHistory:
         break;
     }
   }

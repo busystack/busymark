@@ -271,6 +271,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   final _pathTransitions = <String, LocalHistoryBufferPathTransition>{};
   final _pendingUntitledPromotions =
       <String, LocalHistoryPendingIdentityPromotion>{};
+  final _bufferGenerations = <String, int>{};
+  final _captureFailures = <String, _LocalHistoryCaptureFailure>{};
+  LocalHistoryBufferSnapshot? _normalBrowsingScope;
+  var _historyGeneration = 0;
+  var _snapshotGeneration = 0;
   var _loadGeneration = 0;
   var _searchGeneration = 0;
   var _scopeGeneration = 0;
@@ -280,9 +285,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     _store = ref.read(localHistoryStoreProvider);
     _clock = ref.read(localHistoryClockProvider);
     _timerFactory = ref.read(localHistoryTimerFactoryProvider);
-    ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
-      if (!next.localHistoryRecordingEnabled) _cancelCheckpoints();
-    });
+    ref.listen<AppSettings>(
+      appSettingsControllerProvider,
+      (previous, next) => _applyRecordingPolicy(next),
+    );
     ref.onDispose(_cancelCheckpoints);
     Future<void>.microtask(refresh);
     return const LocalHistoryState(loading: true);
@@ -301,6 +307,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     );
   }
 
+  LocalHistoryBufferSnapshot? pendingSnapshotForBuffer(String bufferId) =>
+      _pending[bufferId];
+
   Future<void> refresh() async {
     final generation = ++_loadGeneration;
     if (ref.mounted) state = state.copyWith(loading: true);
@@ -308,17 +317,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       await _store.prune(policy, _clock());
       final snapshot = await _store.load();
       if (!ref.mounted || generation != _loadGeneration) return;
-      final selectedDocumentId = state.selectedDocumentId;
-      state = state.copyWith(
-        snapshot: snapshot,
-        loading: false,
-        selectedDocumentId:
-            selectedDocumentId != null &&
-                snapshot.documents.any(
-                  (document) => document.id == selectedDocumentId,
-                )
-            ? selectedDocumentId
-            : null,
+      await _publishSnapshot(
+        snapshot,
         warning: snapshot.warning == null
             ? null
             : const LocalHistoryWarning(LocalHistoryWarningKind.indexRebuilt),
@@ -348,7 +348,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final snapshot = LocalHistoryBufferSnapshot.fromBuffer(buffer);
     if (snapshot.untitled && snapshot.text.isEmpty) return;
     final adoptedPromotion = _adoptPendingPromotionForOpenedBuffer(snapshot);
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(snapshot.bufferId);
     await _enqueue(snapshot.bufferId, () async {
+      if (!_operationIsCurrent(
+        snapshot.bufferId,
+        historyGeneration,
+        bufferGeneration,
+      )) {
+        return;
+      }
       final promotion = _pendingUntitledPromotions[snapshot.bufferId];
       if (promotion != null) {
         if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
@@ -358,13 +367,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
           return;
         }
-        final pending = _pending.remove(snapshot.bufferId);
+        final pending = _pending[snapshot.bufferId];
         _checkpointTimers.remove(snapshot.bufferId)?.cancel();
         if (pending != null) {
-          await _capture(
-            pending,
-            LocalHistoryCaptureReason.automaticCheckpoint,
-          );
+          await _capturePending(snapshot.bufferId, pending);
         }
         await _capture(snapshot, LocalHistoryCaptureReason.baseline);
         return;
@@ -379,14 +385,29 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     if (!policy.recordingEnabled || policy.excludes(current.filePath)) return;
     final previousSnapshot = LocalHistoryBufferSnapshot.fromBuffer(previous);
     final currentSnapshot = LocalHistoryBufferSnapshot.fromBuffer(current);
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(current.id);
     unawaited(
       _enqueue(current.id, () async {
-        if (!ref.mounted) return;
+        if (!_operationIsCurrent(
+          current.id,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return;
+        }
         if (!_documentIdsByBuffer.containsKey(current.id) &&
             !(previousSnapshot.untitled && previousSnapshot.text.isEmpty)) {
           await _capture(previousSnapshot, LocalHistoryCaptureReason.baseline);
         }
-        if (!ref.mounted) return;
+        if (!_operationIsCurrent(
+          current.id,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return;
+        }
+        if (!_pendingIsEligible(currentSnapshot)) return;
         _pending[current.id] = currentSnapshot;
         _scheduleCheckpoint(current.id);
       }),
@@ -446,10 +467,27 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }
 
   Future<bool> captureSaved(LocalHistoryBufferSnapshot snapshot) async {
-    return _enqueue(
-      snapshot.bufferId,
-      () => _capture(snapshot, LocalHistoryCaptureReason.saved),
-    );
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(snapshot.bufferId);
+    return _enqueue(snapshot.bufferId, () async {
+      if (!_operationIsCurrent(
+        snapshot.bufferId,
+        historyGeneration,
+        bufferGeneration,
+      )) {
+        return true;
+      }
+      final captured = await _capture(
+        snapshot,
+        LocalHistoryCaptureReason.saved,
+      );
+      if (captured) {
+        _acknowledgePending(snapshot.bufferId, snapshot.revision);
+      } else {
+        _retainPending(snapshot);
+      }
+      return captured;
+    });
   }
 
   Future<bool> captureProtective(
@@ -521,13 +559,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       if (pending != null &&
           pending.revision <= source.revision &&
           _sameOptionalPath(pending.path, source.path)) {
-        _pending.remove(source.bufferId);
         _checkpointTimers.remove(source.bufferId)?.cancel();
         final pendingCaptured = await _capture(
           pending,
           LocalHistoryCaptureReason.automaticCheckpoint,
           allowDuringPathTransition: true,
         );
+        if (pendingCaptured) {
+          _acknowledgePending(source.bufferId, pending.revision);
+        } else {
+          _retainPending(pending);
+        }
         if (!pendingCaptured &&
             policy.recordingEnabled &&
             !policy.excludes(pending.path) &&
@@ -554,11 +596,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       if (!policy.recordingEnabled || policy.excludes(destination.path)) {
         return source.untitled && !destinationExisted && promotionCompleted;
       }
-      return _capture(
+      final savedCaptured = await _capture(
         destination,
         LocalHistoryCaptureReason.saved,
         ignoreBinding: !source.untitled || destinationExisted,
       );
+      if (savedCaptured) {
+        _acknowledgePending(destination.bufferId, destination.revision);
+      } else {
+        _retainPending(destination);
+      }
+      return savedCaptured;
     });
     if (captured) {
       final document = state.snapshot.documents
@@ -588,18 +636,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     required LocalHistoryCaptureReason reason,
     bool force = true,
   }) {
-    return _capture(
-      LocalHistoryBufferSnapshot(
-        bufferId: 'path:${p.normalize(path)}',
-        displayName: p.basename(path),
-        text: text,
-        format: format,
-        revision: 0,
-        path: path,
-      ),
-      reason,
-      force: force,
-      ignoreBinding: true,
+    final snapshot = LocalHistoryBufferSnapshot(
+      bufferId: 'path:${p.normalize(path)}',
+      displayName: p.basename(path),
+      text: text,
+      format: format,
+      revision: 0,
+      path: path,
+    );
+    return _enqueue(
+      snapshot.bufferId,
+      () => _capture(snapshot, reason, force: force, ignoreBinding: true),
     );
   }
 
@@ -636,23 +683,20 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<bool> flushBuffer(DocumentBuffer buffer) async {
     _checkpointTimers.remove(buffer.id)?.cancel();
-    final pending = _pending.remove(buffer.id);
-    if (pending != null) {
-      await _enqueue(
-        buffer.id,
-        () => _capture(
-          LocalHistoryBufferSnapshot.fromBuffer(buffer),
-          LocalHistoryCaptureReason.automaticCheckpoint,
-        ),
-      );
-    }
-    if (_pendingUntitledPromotions.containsKey(buffer.id)) {
-      return _enqueue(
-        buffer.id,
-        () => _completePendingUntitledPromotion(buffer.id),
-      );
-    }
-    return true;
+    return _enqueue(buffer.id, () async {
+      _checkpointTimers.remove(buffer.id)?.cancel();
+      var pending = _pending[buffer.id];
+      if (pending != null) {
+        final current = LocalHistoryBufferSnapshot.fromBuffer(buffer);
+        if (current.revision >= pending.revision) pending = current;
+        if (!await _capturePending(buffer.id, pending)) return false;
+      }
+      if (_pendingUntitledPromotions.containsKey(buffer.id) &&
+          !await _completePendingUntitledPromotion(buffer.id)) {
+        return false;
+      }
+      return !_pending.containsKey(buffer.id);
+    });
   }
 
   Future<bool> flushPendingIdentityPromotions() async {
@@ -660,11 +704,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     for (final bufferId in _pendingUntitledPromotions.keys.toList()) {
       if (!await _enqueue(bufferId, () async {
         if (!await _completePendingUntitledPromotion(bufferId)) return false;
-        final pending = _pending.remove(bufferId);
+        final pending = _pending[bufferId];
         _checkpointTimers.remove(bufferId)?.cancel();
         if (pending == null) return true;
-        await _capture(pending, LocalHistoryCaptureReason.automaticCheckpoint);
-        return true;
+        return _capturePending(bufferId, pending);
       })) {
         succeeded = false;
       }
@@ -673,15 +716,19 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }
 
   Future<bool> flushAll(Iterable<DocumentBuffer> buffers) async {
+    final bufferList = buffers.toList(growable: false);
     var succeeded = true;
-    for (final buffer in buffers) {
+    for (final buffer in bufferList) {
       if (!await flushBuffer(buffer)) succeeded = false;
     }
     if (!await flushPendingIdentityPromotions()) succeeded = false;
     while (_bufferQueues.isNotEmpty) {
       await Future.wait(_bufferQueues.values.toList(growable: false));
     }
-    return succeeded && _pendingUntitledPromotions.isEmpty;
+    final bufferIds = bufferList.map((buffer) => buffer.id).toSet();
+    return succeeded &&
+        _pendingUntitledPromotions.isEmpty &&
+        _pending.keys.every((bufferId) => !bufferIds.contains(bufferId));
   }
 
   Future<void> remapPath(String sourcePath, String destinationPath) async {
@@ -703,15 +750,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         }
       }
       for (final entry in affected) {
-        _pending.remove(entry.key);
         _checkpointTimers.remove(entry.key)?.cancel();
-        await _enqueue(
+        final captured = await _enqueue(
           entry.key,
           () => _capture(
             entry.value,
             LocalHistoryCaptureReason.automaticCheckpoint,
           ),
         );
+        if (captured) {
+          _acknowledgePending(entry.key, entry.value.revision);
+        }
       }
       final affectedPromotions = _pendingUntitledPromotions.entries
           .where(
@@ -742,6 +791,20 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         }
       }
       await _store.remapPath(sourcePath, destinationPath);
+      for (final entry in affected) {
+        final pending = _pending[entry.key];
+        final pendingPath = pending?.path;
+        if (pending == null || pendingPath == null) continue;
+        final remapped = _remapHistoryPath(
+          pendingPath,
+          sourcePath,
+          destinationPath,
+        );
+        if (remapped != null) {
+          _pending[entry.key] = pending.atPath(remapped);
+          _scheduleCheckpoint(entry.key);
+        }
+      }
       await refresh();
     } on Object catch (error) {
       _setWarning(LocalHistoryWarningKind.pathChange, error.toString());
@@ -759,6 +822,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<void> selectDocumentForBuffer(DocumentBuffer buffer) async {
     final generation = ++_scopeGeneration;
+    _normalBrowsingScope = LocalHistoryBufferSnapshot.fromBuffer(buffer);
     _loadGeneration++;
     _searchGeneration++;
     state = state.copyWith(
@@ -813,6 +877,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   void clearDocumentScope() {
     _scopeGeneration++;
+    _normalBrowsingScope = null;
     _loadGeneration++;
     _searchGeneration++;
     state = state.copyWith(
@@ -957,66 +1022,73 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       _documentIdsByBuffer[bufferId];
 
   Future<void> search(String query) async {
-    final normalized = query;
-    final generation = ++_searchGeneration;
-    state = state.copyWith(
-      searchQuery: normalized,
-      searching: normalized.isNotEmpty,
-      searchMatches: const {},
-      documentSearchMatches: const {},
-    );
-    if (normalized.isEmpty) return;
-    final documentId = state.selectedDocumentId;
-    final summaries = state.findingDocuments
-        ? state.snapshot.revisions
-        : documentId == null
-        ? const <LocalHistoryRevisionSummary>[]
-        : state.snapshot.revisionsFor(documentId);
-    final matches = <String>{};
-    final documentMatches = <String>{};
-    final needle = normalized.toLowerCase();
-    if (state.findingDocuments) {
-      for (final document in state.snapshot.documents) {
-        if (document.displayName.toLowerCase().contains(needle) ||
-            (document.currentPath?.toLowerCase().contains(needle) ?? false) ||
-            document.historicalPaths.any(
-              (path) => path.toLowerCase().contains(needle),
-            )) {
-          documentMatches.add(document.id);
-        }
-      }
-    }
-    for (final summary in summaries) {
-      final revision = await _store.readRevision(summary.id);
-      if (!ref.mounted || generation != _searchGeneration) return;
-      if (revision?.source.toLowerCase().contains(needle) == true) {
-        matches.add(summary.id);
-        documentMatches.add(summary.documentId);
-      }
-    }
-    if (!ref.mounted || generation != _searchGeneration) return;
-    state = state.copyWith(
-      searching: false,
-      searchMatches: matches,
-      documentSearchMatches: documentMatches,
-    );
+    await _runSearch(query, clearMatches: true);
   }
 
   Future<void> clearDocument(String documentId) async {
-    await _store.clearDocument(documentId);
+    final document = state.snapshot.documents
+        .where((candidate) => candidate.id == documentId)
+        .firstOrNull;
+    final documentPaths = <String>{
+      if (document?.currentPath case final path?) p.normalize(path),
+      for (final path in document?.historicalPaths ?? const <String>[])
+        p.normalize(path),
+    };
+    final affectedBuffers = <String>{
+      ..._documentIdsByBuffer.entries
+          .where((entry) => entry.value == documentId)
+          .map((entry) => entry.key),
+      ..._pending.entries
+          .where(
+            (entry) =>
+                entry.value.path != null &&
+                documentPaths.any((path) => p.equals(path, entry.value.path!)),
+          )
+          .map((entry) => entry.key),
+      for (final path in documentPaths)
+        if (_bufferQueues.containsKey('path:$path')) 'path:$path',
+      if (_normalBrowsingScope case final scope?
+          when scope.path != null &&
+              documentPaths.any((path) => p.equals(path, scope.path!)))
+        scope.bufferId,
+    }.toList(growable: false);
+    for (final bufferId in affectedBuffers) {
+      _invalidateBufferWork(bufferId);
+    }
+    _loadGeneration++;
+    _searchGeneration++;
     _documentIdsByBuffer.removeWhere((_, value) => value == documentId);
     _pendingUntitledPromotions.removeWhere(
       (_, promotion) => promotion.documentId == documentId,
     );
-    await refresh();
+    await _runWithBlockedBufferQueues(
+      affectedBuffers,
+      () => _store.clearDocument(documentId),
+    );
+    if (!ref.mounted) return;
+    final snapshot = await _store.load();
+    if (!ref.mounted) return;
+    await _publishSnapshot(snapshot, explicitlyClearedDocumentId: documentId);
   }
 
   Future<void> clearAll() async {
-    _cancelCheckpoints();
+    final affectedBuffers = <String>{
+      ..._documentIdsByBuffer.keys,
+      ..._pending.keys,
+      ..._bufferQueues.keys,
+    };
+    _historyGeneration++;
+    _loadGeneration++;
+    _searchGeneration++;
+    _cancelCheckpoints(clearTransitions: false);
+    _captureFailures.clear();
     _documentIdsByBuffer.clear();
     _pendingUntitledPromotions.clear();
-    await _store.clearAll();
-    await refresh();
+    await _runWithBlockedBufferQueues(affectedBuffers, _store.clearAll);
+    if (!ref.mounted) return;
+    final snapshot = await _store.load();
+    if (!ref.mounted) return;
+    await _publishSnapshot(snapshot, clearAllComparisons: true);
   }
 
   LocalHistoryPendingIdentityPromotion? _adoptPendingPromotionForOpenedBuffer(
@@ -1073,6 +1145,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     bool allowPathChange = false,
     bool allowDuringPathTransition = false,
   }) async {
+    final acceptedHistoryGeneration = _historyGeneration;
+    final acceptedBufferGeneration = _bufferGeneration(snapshot.bufferId);
     if (reason == LocalHistoryCaptureReason.automaticCheckpoint &&
         !allowDuringPathTransition &&
         _pathTransitions.containsKey(snapshot.bufferId)) {
@@ -1120,18 +1194,44 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         ),
         currentPolicy,
       );
+      if (!_operationIsCurrent(
+        snapshot.bufferId,
+        acceptedHistoryGeneration,
+        acceptedBufferGeneration,
+      )) {
+        return true;
+      }
       if (!ignoreBinding) {
         _documentIdsByBuffer[snapshot.bufferId] = result.document.id;
       }
+      _captureFailures.remove(snapshot.bufferId);
       if (ref.mounted) {
         final loaded = await _store.load();
-        if (ref.mounted) {
-          state = state.copyWith(snapshot: loaded, warning: null);
+        if (_operationIsCurrent(
+          snapshot.bufferId,
+          acceptedHistoryGeneration,
+          acceptedBufferGeneration,
+        )) {
+          await _publishSnapshot(
+            loaded,
+            capturedBufferId: ignoreBinding ? null : snapshot.bufferId,
+            capturedSnapshot: ignoreBinding ? null : snapshot,
+          );
         }
       }
       return true;
     } on Object catch (error) {
-      _setWarning(LocalHistoryWarningKind.capture, error.toString());
+      if (_operationIsCurrent(
+        snapshot.bufferId,
+        acceptedHistoryGeneration,
+        acceptedBufferGeneration,
+      )) {
+        _captureFailures[snapshot.bufferId] = _LocalHistoryCaptureFailure(
+          detail: error.toString(),
+          retryable: _captureErrorIsRetryable(error),
+        );
+        _showCaptureFailure();
+      }
       return false;
     }
   }
@@ -1155,7 +1255,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       if (ref.mounted) {
         final loaded = await _store.load();
         if (ref.mounted) {
-          state = state.copyWith(snapshot: loaded, warning: null);
+          await _publishSnapshot(loaded, capturedBufferId: bufferId);
         }
       }
       return true;
@@ -1178,13 +1278,43 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     return result;
   }
 
-  void _cancelCheckpoints() {
+  Future<void> _runWithBlockedBufferQueues(
+    Iterable<String> bufferIds,
+    Future<void> Function() operation,
+  ) async {
+    final entered = <Future<void>>[];
+    final gates = <Completer<void>>[];
+    final barriers = <Future<void>>[];
+    for (final bufferId in bufferIds.toSet()) {
+      final didEnter = Completer<void>();
+      final gate = Completer<void>();
+      entered.add(didEnter.future);
+      gates.add(gate);
+      barriers.add(
+        _enqueue(bufferId, () async {
+          didEnter.complete();
+          await gate.future;
+        }),
+      );
+    }
+    try {
+      await Future.wait(entered);
+      await operation();
+    } finally {
+      for (final gate in gates) {
+        if (!gate.isCompleted) gate.complete();
+      }
+      await Future.wait(barriers);
+    }
+  }
+
+  void _cancelCheckpoints({bool clearTransitions = true}) {
     for (final timer in _checkpointTimers.values) {
       timer.cancel();
     }
     _checkpointTimers.clear();
     _pending.clear();
-    _pathTransitions.clear();
+    if (clearTransitions) _pathTransitions.clear();
   }
 
   void _scheduleCheckpoint(String bufferId) {
@@ -1197,20 +1327,304 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       () => _timerFactory(policy.checkpointInterval, () {
         _checkpointTimers.remove(bufferId);
         if (!ref.mounted || _pathTransitions.containsKey(bufferId)) return;
-        final latest = _pending.remove(bufferId);
+        final latest = _pending[bufferId];
         if (latest != null) {
           unawaited(
-            _enqueue(
-              bufferId,
-              () => _capture(
-                latest,
-                LocalHistoryCaptureReason.automaticCheckpoint,
-              ),
-            ),
+            _enqueue(bufferId, () => _capturePending(bufferId, latest)),
           );
         }
       }),
     );
+  }
+
+  Future<bool> _capturePending(
+    String bufferId,
+    LocalHistoryBufferSnapshot snapshot,
+  ) async {
+    if (!_pendingIsEligible(snapshot)) {
+      _pending.remove(bufferId);
+      _checkpointTimers.remove(bufferId)?.cancel();
+      _captureFailures.remove(bufferId);
+      return true;
+    }
+    final captured = await _capture(
+      snapshot,
+      LocalHistoryCaptureReason.automaticCheckpoint,
+    );
+    if (captured && !_pathTransitions.containsKey(bufferId)) {
+      _acknowledgePending(bufferId, snapshot.revision);
+    }
+    final remaining = _pending[bufferId];
+    if (remaining != null) {
+      final failure = _captureFailures[bufferId];
+      if (captured || failure?.retryable == true) {
+        _scheduleCheckpoint(bufferId);
+      }
+    }
+    return captured && !_pending.containsKey(bufferId);
+  }
+
+  void _retainPending(LocalHistoryBufferSnapshot snapshot) {
+    if (!_pendingIsEligible(snapshot)) return;
+    final current = _pending[snapshot.bufferId];
+    if (current == null || current.revision <= snapshot.revision) {
+      _pending[snapshot.bufferId] = snapshot;
+    }
+    if (_captureFailures[snapshot.bufferId]?.retryable != false) {
+      _scheduleCheckpoint(snapshot.bufferId);
+    }
+  }
+
+  void _acknowledgePending(String bufferId, int capturedRevision) {
+    final pending = _pending[bufferId];
+    if (pending != null && pending.revision <= capturedRevision) {
+      _pending.remove(bufferId);
+      _checkpointTimers.remove(bufferId)?.cancel();
+    }
+  }
+
+  bool _pendingIsEligible(LocalHistoryBufferSnapshot snapshot) {
+    final currentPolicy = policy;
+    return currentPolicy.recordingEnabled &&
+        !currentPolicy.excludes(snapshot.path);
+  }
+
+  int _bufferGeneration(String bufferId) => _bufferGenerations[bufferId] ?? 0;
+
+  bool _operationIsCurrent(
+    String bufferId,
+    int historyGeneration,
+    int bufferGeneration,
+  ) =>
+      ref.mounted &&
+      historyGeneration == _historyGeneration &&
+      bufferGeneration == _bufferGeneration(bufferId);
+
+  void _invalidateBufferWork(String bufferId) {
+    _bufferGenerations[bufferId] = _bufferGeneration(bufferId) + 1;
+    _checkpointTimers.remove(bufferId)?.cancel();
+    _pending.remove(bufferId);
+    _captureFailures.remove(bufferId);
+  }
+
+  void _applyRecordingPolicy(AppSettings settings) {
+    if (!settings.localHistoryRecordingEnabled) {
+      _historyGeneration++;
+      _cancelCheckpoints(clearTransitions: false);
+      _captureFailures.clear();
+      return;
+    }
+    for (final entry in _pending.entries.toList(growable: false)) {
+      if (policy.excludes(entry.value.path)) {
+        _invalidateBufferWork(entry.key);
+      }
+    }
+  }
+
+  bool _captureErrorIsRetryable(Object error) {
+    if (error is UnsupportedLocalHistoryFormat) return false;
+    if (error is LocalHistoryStorageException &&
+        error.message.contains('larger than the Local History storage limit')) {
+      return false;
+    }
+    return true;
+  }
+
+  void _showCaptureFailure() {
+    final failure = _captureFailures.values.firstOrNull;
+    if (failure != null) {
+      _setWarning(LocalHistoryWarningKind.capture, failure.detail);
+    }
+  }
+
+  Future<void> _publishSnapshot(
+    LocalHistorySnapshot snapshot, {
+    String? capturedBufferId,
+    LocalHistoryBufferSnapshot? capturedSnapshot,
+    LocalHistoryWarning? warning,
+    String? explicitlyClearedDocumentId,
+    bool clearAllComparisons = false,
+  }) async {
+    if (!ref.mounted) return;
+    _snapshotGeneration++;
+    _searchGeneration++;
+    if (capturedBufferId != null &&
+        _normalBrowsingScope?.bufferId == capturedBufferId &&
+        capturedSnapshot != null &&
+        capturedSnapshot.revision >= _normalBrowsingScope!.revision) {
+      _normalBrowsingScope = capturedSnapshot;
+    }
+
+    var selectedDocumentId = state.selectedDocumentId;
+    if (!state.findingDocuments && !state.inspectingRetainedDocument) {
+      final scope = _normalBrowsingScope;
+      if (scope != null) {
+        selectedDocumentId = _documentIdsByBuffer[scope.bufferId];
+        if (selectedDocumentId != null &&
+            !snapshot.documents.any(
+              (document) => document.id == selectedDocumentId,
+            )) {
+          selectedDocumentId = null;
+        }
+        if (selectedDocumentId == null && scope.path != null) {
+          final byPath = snapshot.documents
+              .where(
+                (document) =>
+                    document.currentPath != null &&
+                    p.equals(document.currentPath!, scope.path!),
+              )
+              .firstOrNull;
+          if (byPath != null) {
+            selectedDocumentId = byPath.id;
+            _documentIdsByBuffer[scope.bufferId] = byPath.id;
+          }
+        }
+      }
+    }
+    if (selectedDocumentId != null &&
+        !snapshot.documents.any(
+          (document) => document.id == selectedDocumentId,
+        )) {
+      selectedDocumentId = null;
+    }
+
+    var selectedRevisionId = state.selectedRevisionId;
+    var selectedRevision = state.selectedRevision;
+    var effectiveWarning = _captureFailures.isNotEmpty
+        ? LocalHistoryWarning(
+            LocalHistoryWarningKind.capture,
+            detail: _captureFailures.values.first.detail,
+          )
+        : warning;
+    final selectedSummary = selectedRevisionId == null
+        ? null
+        : snapshot.revisions
+              .where((revision) => revision.id == selectedRevisionId)
+              .firstOrNull;
+    final comparisonWasExplicitlyCleared =
+        clearAllComparisons ||
+        (explicitlyClearedDocumentId != null &&
+            ((state.selectedDocumentId == explicitlyClearedDocumentId &&
+                    selectedRevisionId != null) ||
+                selectedRevision?.summary.documentId ==
+                    explicitlyClearedDocumentId ||
+                selectedSummary?.documentId == explicitlyClearedDocumentId));
+    if (selectedRevisionId != null &&
+        (selectedSummary == null ||
+            selectedSummary.documentId != selectedDocumentId)) {
+      selectedRevisionId = null;
+      selectedRevision = null;
+      if (!comparisonWasExplicitlyCleared && effectiveWarning == null) {
+        effectiveWarning = const LocalHistoryWarning(
+          LocalHistoryWarningKind.revisionMissing,
+        );
+      }
+    }
+    if (comparisonWasExplicitlyCleared) {
+      selectedRevisionId = null;
+      selectedRevision = null;
+    }
+
+    final query = state.searchQuery;
+    state = state.copyWith(
+      snapshot: snapshot,
+      loading: false,
+      selectedDocumentId: selectedDocumentId,
+      selectedRevisionId: selectedRevisionId,
+      selectedRevision: selectedRevision,
+      warning: effectiveWarning,
+    );
+    if (query.isNotEmpty) {
+      await _runSearch(query, clearMatches: false);
+    } else {
+      final revisionIds = snapshot.revisions
+          .map((revision) => revision.id)
+          .toSet();
+      final documentIds = snapshot.documents
+          .map((document) => document.id)
+          .toSet();
+      state = state.copyWith(
+        searchMatches: state.searchMatches.intersection(revisionIds),
+        documentSearchMatches: state.documentSearchMatches.intersection(
+          documentIds,
+        ),
+      );
+    }
+  }
+
+  Future<void> _runSearch(String query, {required bool clearMatches}) async {
+    final generation = ++_searchGeneration;
+    final snapshotGeneration = _snapshotGeneration;
+    final documentId = state.selectedDocumentId;
+    final findingDocuments = state.findingDocuments;
+    state = state.copyWith(
+      searchQuery: query,
+      searching: query.isNotEmpty,
+      searchMatches: clearMatches ? const {} : state.searchMatches,
+      documentSearchMatches: clearMatches
+          ? const {}
+          : state.documentSearchMatches,
+    );
+    if (query.isEmpty) {
+      state = state.copyWith(
+        searching: false,
+        searchMatches: const {},
+        documentSearchMatches: const {},
+      );
+      return;
+    }
+    final snapshot = state.snapshot;
+    final summaries = findingDocuments
+        ? snapshot.revisions
+        : documentId == null
+        ? const <LocalHistoryRevisionSummary>[]
+        : snapshot.revisionsFor(documentId);
+    final matches = <String>{};
+    final documentMatches = <String>{};
+    final needle = query.toLowerCase();
+    bool current() =>
+        ref.mounted &&
+        generation == _searchGeneration &&
+        snapshotGeneration == _snapshotGeneration &&
+        state.searchQuery == query &&
+        state.selectedDocumentId == documentId &&
+        state.findingDocuments == findingDocuments;
+    try {
+      if (findingDocuments) {
+        for (final document in snapshot.documents) {
+          if (document.displayName.toLowerCase().contains(needle) ||
+              (document.currentPath?.toLowerCase().contains(needle) ?? false) ||
+              document.historicalPaths.any(
+                (path) => path.toLowerCase().contains(needle),
+              )) {
+            documentMatches.add(document.id);
+          }
+        }
+      }
+      for (final summary in summaries) {
+        final revision = await _store.readRevision(summary.id);
+        if (!current()) return;
+        if (revision?.source.toLowerCase().contains(needle) == true) {
+          matches.add(summary.id);
+          documentMatches.add(summary.documentId);
+        }
+      }
+      if (!current()) return;
+      state = state.copyWith(
+        searching: false,
+        searchMatches: matches,
+        documentSearchMatches: documentMatches,
+      );
+    } on Object catch (error) {
+      if (!current()) return;
+      state = state.copyWith(
+        searching: false,
+        warning: LocalHistoryWarning(
+          LocalHistoryWarningKind.revisionRead,
+          detail: error.toString(),
+        ),
+      );
+    }
   }
 
   void _setWarning(LocalHistoryWarningKind kind, [String? detail]) {
@@ -1220,6 +1634,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       );
     }
   }
+}
+
+class _LocalHistoryCaptureFailure {
+  const _LocalHistoryCaptureFailure({
+    required this.detail,
+    required this.retryable,
+  });
+
+  final String detail;
+  final bool retryable;
 }
 
 bool _sameOptionalPath(String? first, String? second) {

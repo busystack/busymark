@@ -368,11 +368,17 @@ abstract final class BusyMarkCommandCatalog {
         ),
       for (final action in BusyMarkSidebarShortcutAction.values)
         command(
-          id: 'sidebar.${action.name}',
+          id: _sidebarId(action),
           label: (context) => _sidebarLabel(context, action),
           category: (context) => context.l10n.shortcutGroupSidebar,
-          scope: BusyMarkCommandScope.sidebar,
+          scope: switch (action) {
+            BusyMarkSidebarShortcutAction.localHistory ||
+            BusyMarkSidebarShortcutAction.clipboardHistory =>
+              BusyMarkCommandScope.application,
+            _ => BusyMarkCommandScope.sidebar,
+          },
           shortcut: BusyMarkSidebarShortcuts.definitions[action],
+          description: (context) => _sidebarDescription(context, action),
         ),
       for (final action in BusyMarkTreeShortcutAction.values)
         command(
@@ -384,20 +390,6 @@ abstract final class BusyMarkCommandCatalog {
           description: (context) =>
               context.l10n.shortcutDeleteTreeItemDescription,
         ),
-      command(
-        id: BusyMarkCommandIds.clipboardHistory,
-        label: (context) => context.l10n.clipboardHistory,
-        category: (context) => context.l10n.shortcutGroupSidebar,
-        scope: BusyMarkCommandScope.application,
-        description: (context) => context.l10n.clipboardHistoryDescription,
-      ),
-      command(
-        id: BusyMarkCommandIds.localHistory,
-        label: (context) => context.l10n.localHistoryEllipsis,
-        category: (context) => context.l10n.shortcutGroupSidebar,
-        scope: BusyMarkCommandScope.application,
-        description: (context) => context.l10n.localHistoryDescription,
-      ),
       command(
         id: BusyMarkCommandIds.findLocalHistory,
         label: (context) => context.l10n.findLocalHistoryEllipsis,
@@ -653,6 +645,34 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkSidebarShortcutAction.toc => context.l10n.toc,
     BusyMarkSidebarShortcutAction.outline => context.l10n.outline,
     BusyMarkSidebarShortcutAction.git => context.l10n.git,
+    BusyMarkSidebarShortcutAction.localHistory =>
+      context.l10n.localHistoryEllipsis,
+    BusyMarkSidebarShortcutAction.clipboardHistory =>
+      context.l10n.clipboardHistory,
+  };
+
+  static String _sidebarId(BusyMarkSidebarShortcutAction action) =>
+      switch (action) {
+        BusyMarkSidebarShortcutAction.files => BusyMarkCommandIds.sidebarFiles,
+        BusyMarkSidebarShortcutAction.toc => BusyMarkCommandIds.sidebarToc,
+        BusyMarkSidebarShortcutAction.outline =>
+          BusyMarkCommandIds.sidebarOutline,
+        BusyMarkSidebarShortcutAction.git => BusyMarkCommandIds.sidebarGit,
+        BusyMarkSidebarShortcutAction.localHistory =>
+          BusyMarkCommandIds.localHistory,
+        BusyMarkSidebarShortcutAction.clipboardHistory =>
+          BusyMarkCommandIds.clipboardHistory,
+      };
+
+  static String? _sidebarDescription(
+    BuildContext context,
+    BusyMarkSidebarShortcutAction action,
+  ) => switch (action) {
+    BusyMarkSidebarShortcutAction.localHistory =>
+      context.l10n.localHistoryDescription,
+    BusyMarkSidebarShortcutAction.clipboardHistory =>
+      context.l10n.clipboardHistoryDescription,
+    _ => null,
   };
 
   static BuildContext? get _focusedContext =>

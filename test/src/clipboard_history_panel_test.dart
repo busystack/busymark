@@ -2,6 +2,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
@@ -16,6 +17,117 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('records preserve multiline source without visible metadata', (
+    tester,
+  ) async {
+    const source = '## Introduction\n\nUse **visible tags**.\n- First item';
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.richText,
+            text: 'Introduction\n\nUse visible tags.\nFirst item',
+            sourceText: source,
+          ),
+        );
+    container
+        .read(clipboardInsertionRegistryProvider)
+        .register(_PanelInsertionTarget());
+    await _pumpPanel(tester, container);
+
+    final row = tester.widget<BusyMarkSidebarRecordRow>(
+      find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+    );
+    expect(row.title, isNull);
+    expect(row.subtitle, isNull);
+    expect(row.content, isA<Text>());
+    final preview = tester.widget<Text>(find.text(source));
+    expect(preview.maxLines, 3);
+    expect(
+      find.text(AppLocalizationsEn().clipboardDestination('Target.md')),
+      findsNothing,
+    );
+    expect(find.textContaining('Rich text ·'), findsNothing);
+  });
+
+  testWidgets('large records do not put clipboard content in the tooltip', (
+    tester,
+  ) async {
+    final largeSource = List.filled(
+      4000,
+      'A long clipboard payload must stay in the row preview.',
+    ).join('\n');
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: largeSource,
+            sourceText: largeSource,
+          ),
+        );
+    await _pumpPanel(tester, container);
+
+    final row = tester.widget<BusyMarkSidebarRecordRow>(
+      find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+    );
+    expect(row.tooltip, isNot(contains(largeSource)));
+    expect(row.tooltip, contains(AppLocalizationsEn().clipboardEntryText));
+    expect(row.tooltip!.length, lessThan(100));
+  });
+
+  testWidgets('actions menu is right of search and owns refresh and clear', (
+    tester,
+  ) async {
+    final clipboard = _PanelClipboard(
+      const RichClipboardData(text: 'current system clipboard'),
+    );
+    final container = _container(clipboard: clipboard);
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: 'retained item',
+            sourceText: 'retained item',
+          ),
+        );
+    await _pumpPanel(tester, container, locale: const Locale('ar'));
+
+    final actions = find.byKey(
+      const ValueKey('clipboard-history-actions-menu'),
+    );
+    final search = find.byType(TextField);
+    final panelContext = tester.element(find.byType(ClipboardHistoryPanel));
+    final refreshLabel = MaterialLocalizations.of(
+      panelContext,
+    ).refreshIndicatorSemanticLabel;
+    final l10n = AppLocalizations.of(panelContext);
+    expect(actions, findsOneWidget);
+    expect(
+      tester.getCenter(actions).dx,
+      greaterThan(tester.getTopRight(search).dx),
+    );
+    expect(find.byTooltip(refreshLabel), findsNothing);
+
+    final readsBeforeRefresh = clipboard.readCalls;
+    await tester.tap(actions);
+    await tester.pumpAndSettle();
+    expect(find.text(refreshLabel), findsOneWidget);
+    expect(find.text(l10n.clipboardClearAll), findsOneWidget);
+    await tester.tap(find.text(refreshLabel));
+    await tester.pumpAndSettle();
+    expect(clipboard.readCalls, readsBeforeRefresh + 1);
+
+    await tester.tap(actions);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.clipboardClearAll));
+    await tester.pumpAndSettle();
+    expect(container.read(clipboardHistoryControllerProvider).entries, isEmpty);
+  });
 
   testWidgets('keyboard navigation keeps the selected history entry visible', (
     tester,
@@ -36,15 +148,19 @@ void main() {
         .register(_PanelInsertionTarget());
     await _pumpPanel(tester, container);
 
-    await tester.tap(find.text('entry 23'));
+    expect(
+      find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+      findsWidgets,
+    );
+    await tester.tap(find.text('entry 23').first);
     await tester.pump();
     for (var index = 0; index < 14; index++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pumpAndSettle();
     }
 
-    final selected = find.text('entry 9');
-    expect(selected, findsOneWidget);
+    final selected = find.text('entry 9').first;
+    expect(find.text('entry 9'), findsWidgets);
     final selectedRect = tester.getRect(selected);
     final listRect = tester.getRect(
       find.byKey(const ValueKey('clipboard-history-list')),
@@ -72,11 +188,47 @@ void main() {
         .register(_PanelInsertionTarget(supportImages: false));
     await _pumpPanel(tester, container);
 
-    final pasteButton = find.byWidgetPredicate(
-      (widget) => widget is IconButton && widget.tooltip == 'Paste',
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == 'Paste',
+      ),
+      findsNothing,
     );
-    final button = tester.widget<IconButton>(pasteButton);
-    expect(button.onPressed, isNull);
+    await _openEntryActions(tester);
+    final disabledPaste = find.ancestor(
+      of: find.text('Paste'),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is PopupMenuItem && !widget.enabled,
+      ),
+    );
+    expect(disabledPaste, findsOneWidget);
+  });
+
+  testWidgets('double-clicking a shared history row pastes the item', (
+    tester,
+  ) async {
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: 'double-click item',
+            sourceText: 'double-click item',
+          ),
+        );
+    final target = _PanelInsertionTarget();
+    container.read(clipboardInsertionRegistryProvider).register(target);
+    await _pumpPanel(tester, container);
+
+    final rowTitle = find.text('double-click item').first;
+    await tester.tap(rowTitle);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(rowTitle);
+    await tester.pumpAndSettle();
+
+    expect(target.pasteCalls, 1);
+    expect(target.lastPlainText, isFalse);
   });
 
   testWidgets(
@@ -99,17 +251,17 @@ void main() {
       container.read(clipboardInsertionRegistryProvider).register(target);
       await _pumpPanel(tester, container);
 
-      final paste = find.byWidgetPredicate(
-        (widget) => widget is IconButton && widget.tooltip == 'Paste',
+      await _openEntryActions(tester);
+      expect(
+        find.ancestor(
+          of: find.text('Paste'),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is PopupMenuItem && !widget.enabled,
+          ),
+        ),
+        findsOneWidget,
       );
-      final pastePlain = find.byWidgetPredicate(
-        (widget) =>
-            widget is IconButton && widget.tooltip == 'Paste as Plain Text',
-      );
-      expect(tester.widget<IconButton>(paste).onPressed, isNull);
-      expect(tester.widget<IconButton>(pastePlain).onPressed, isNotNull);
-
-      await tester.tap(pastePlain);
+      await tester.tap(find.text('Paste as Plain Text'));
       await tester.pump();
       expect(target.pasteCalls, 1);
       expect(target.lastPlainText, isTrue);
@@ -133,13 +285,8 @@ void main() {
     container.read(clipboardInsertionRegistryProvider).register(target);
     await _pumpPanel(tester, container);
 
-    final pasteButton = find.byWidgetPredicate(
-      (widget) => widget is IconButton && widget.tooltip == 'Paste',
-    );
-    final button = tester.widget<IconButton>(pasteButton);
-    expect(button.onPressed, isNotNull);
-    button.onPressed!.call();
-    await tester.pump();
+    await _openEntryActions(tester);
+    await tester.tap(find.text('Paste'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(target.pasteCalls, 1);
     expect(
@@ -170,13 +317,8 @@ void main() {
         isEmpty,
       );
 
-      final currentPaste = tester.widget<IconButton>(
-        find.byWidgetPredicate(
-          (widget) => widget is IconButton && widget.tooltip == 'Paste',
-        ),
-      );
-      expect(currentPaste.onPressed, isNotNull);
-      currentPaste.onPressed!.call();
+      await _openEntryActions(tester);
+      await tester.tap(find.text('Paste'));
       await tester.pumpAndSettle();
       expect(target.payloads.single.html, html);
       expect(target.lastPlainText, isFalse);
@@ -195,13 +337,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'External');
       await tester.pumpAndSettle();
-      final retainedPaste = tester.widget<IconButton>(
-        find.byWidgetPredicate(
-          (widget) => widget is IconButton && widget.tooltip == 'Paste',
-        ),
-      );
-      expect(retainedPaste.onPressed, isNotNull);
-      retainedPaste.onPressed!.call();
+      await _openEntryActions(tester);
+      await tester.tap(find.text('Paste'));
       await tester.pumpAndSettle();
       expect(target.payloads, hasLength(2));
       expect(target.payloads.last.html, html);
@@ -225,13 +362,8 @@ void main() {
       container.read(clipboardInsertionRegistryProvider).register(failed);
       await _pumpPanel(tester, container);
 
-      final failedPaste = tester.widget<IconButton>(
-        find.byWidgetPredicate(
-          (widget) => widget is IconButton && widget.tooltip == 'Paste',
-        ),
-      );
-      expect(failedPaste.onPressed, isNotNull);
-      failedPaste.onPressed!.call();
+      await _openEntryActions(tester);
+      await tester.tap(find.text('Paste'));
       await tester.pumpAndSettle();
       expect(
         container.read(clipboardHistoryControllerProvider).entries,
@@ -241,14 +373,8 @@ void main() {
       final successful = _PanelInsertionTarget();
       container.read(clipboardInsertionRegistryProvider).register(successful);
       await tester.pump();
-      final plainPaste = tester.widget<IconButton>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is IconButton && widget.tooltip == 'Paste as Plain Text',
-        ),
-      );
-      expect(plainPaste.onPressed, isNotNull);
-      plainPaste.onPressed!.call();
+      await _openEntryActions(tester);
+      await tester.tap(find.text('Paste as Plain Text'));
       await tester.pumpAndSettle();
       expect(successful.lastPlainText, isTrue);
       expect(successful.payloads.single.text, 'Readable fallback');
@@ -258,6 +384,16 @@ void main() {
       );
     },
   );
+}
+
+Future<void> _openEntryActions(WidgetTester tester) async {
+  final actions = find.descendant(
+    of: find.byKey(const ValueKey('clipboard-history-list')),
+    matching: find.byTooltip(AppLocalizationsEn().actions),
+  );
+  expect(actions, findsOneWidget);
+  await tester.tap(actions);
+  await tester.pumpAndSettle();
 }
 
 ProviderContainer _container({RichClipboardService? clipboard}) {
@@ -277,8 +413,9 @@ ProviderContainer _container({RichClipboardService? clipboard}) {
 
 Future<void> _pumpPanel(
   WidgetTester tester,
-  ProviderContainer container,
-) async {
+  ProviderContainer container, {
+  Locale? locale,
+}) async {
   tester.view.physicalSize = const Size(600, 600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -287,6 +424,7 @@ Future<void> _pumpPanel(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => BusyMarkToastOverlay(child: child!),
@@ -381,9 +519,13 @@ class _PanelClipboard extends RichClipboardService {
       );
 
   RichClipboardData value;
+  int readCalls = 0;
 
   @override
-  Future<RichClipboardData> read() async => value;
+  Future<RichClipboardData> read() async {
+    readCalls++;
+    return value;
+  }
 }
 
 class _EmptyAssetInput extends AssetInputService {

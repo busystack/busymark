@@ -31,6 +31,8 @@ enum HeaderBarAction {
   sidebarToc,
   sidebarOutline,
   sidebarGit,
+  sidebarLocalHistory,
+  sidebarClipboardHistory,
 }
 
 class HeaderBarActionEvent {
@@ -399,6 +401,8 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'sidebarToc' => HeaderBarAction.sidebarToc,
       'sidebarOutline' => HeaderBarAction.sidebarOutline,
       'sidebarGit' => HeaderBarAction.sidebarGit,
+      'sidebarLocalHistory' => HeaderBarAction.sidebarLocalHistory,
+      'sidebarClipboardHistory' => HeaderBarAction.sidebarClipboardHistory,
       _ => null,
     };
   }

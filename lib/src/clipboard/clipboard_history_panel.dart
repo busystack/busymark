@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_search_field.dart';
@@ -66,14 +67,12 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
             _matches(entry, query))
           entry,
     ];
-    if (visible.isNotEmpty &&
+    if (_selectedId != null &&
         !visible.any((entry) => entry.id == _selectedId)) {
-      _selectedId = visible.first.id;
+      _selectedId = null;
     }
     final visibleIds = visible.map((entry) => entry.id).toSet();
     _entryKeys.removeWhere((id, _) => !visibleIds.contains(id));
-    final target = registry.target;
-
     return Focus(
       focusNode: _listFocusNode,
       onKeyEvent: (_, event) => _handleKey(event, visible, registry),
@@ -87,50 +86,50 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
               BusyMarkSpacing.md,
               BusyMarkSpacing.sm,
             ),
-            child: BusyMarkSearchField(
-              controller: _searchController,
-              hintText: context.l10n.search,
-              onChanged: (_) => setState(() {}),
-              onEscape: widget.onEscape,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: BusyMarkSpacing.md,
-              vertical: BusyMarkSpacing.xs,
-            ),
-            child: Text(
-              target == null
-                  ? context.l10n.clipboardSessionOnly
-                  : context.l10n.clipboardDestination(target.documentName),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
             child: Row(
+              textDirection: TextDirection.ltr,
               children: [
-                IconButton(
-                  tooltip: MaterialLocalizations.of(
-                    context,
-                  ).refreshIndicatorSemanticLabel,
-                  onPressed: state.refreshing
-                      ? null
-                      : controller.refreshCurrentClipboard,
-                  icon: state.refreshing
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(BusyMarkGlyphs.refresh),
+                Expanded(
+                  child: BusyMarkSearchField(
+                    controller: _searchController,
+                    hintText: context.l10n.search,
+                    onChanged: (_) => setState(() {}),
+                    onEscape: widget.onEscape,
+                  ),
                 ),
-                const Spacer(),
-                IconButton(
-                  tooltip: context.l10n.clipboardClearAll,
-                  onPressed: state.entries.isEmpty ? null : controller.clear,
-                  icon: const Icon(BusyMarkGlyphs.clearAll),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                BusyMarkHeaderPopupMenuButton<_ClipboardHistoryAction>(
+                  key: const ValueKey('clipboard-history-actions-menu'),
+                  tooltip: context.l10n.actions,
+                  icon: BusyMarkGlyphs.menuVertical,
+                  transparent: true,
+                  borderRadius: BusyMarkRadius.nativeHeaderButton,
+                  highlightWhenOpen: false,
+                  itemBuilder: (context) => [
+                    BusyMarkPopupMenuItem(
+                      value: _ClipboardHistoryAction.refresh,
+                      label: MaterialLocalizations.of(
+                        context,
+                      ).refreshIndicatorSemanticLabel,
+                      icon: BusyMarkGlyphs.refresh,
+                      enabled: !state.refreshing,
+                    ),
+                    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                    BusyMarkPopupMenuItem(
+                      value: _ClipboardHistoryAction.clear,
+                      label: context.l10n.clipboardClearAll,
+                      icon: BusyMarkGlyphs.clearAll,
+                      enabled: state.entries.isNotEmpty,
+                    ),
+                  ],
+                  onSelected: (action) {
+                    switch (action) {
+                      case _ClipboardHistoryAction.refresh:
+                        unawaited(controller.refreshCurrentClipboard());
+                      case _ClipboardHistoryAction.clear:
+                        controller.clear();
+                    }
+                  },
                 ),
               ],
             ),
@@ -155,39 +154,38 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                         ? context.l10n.clipboardNoItems
                         : context.l10n.clipboardUnavailable,
                   )
-                : SingleChildScrollView(
+                : ListView(
                     key: const ValueKey('clipboard-history-list'),
                     controller: _listScrollController,
-                    child: Column(
-                      children: [
-                        for (final payload in visible)
-                          _ClipboardEntryTile(
-                            key: _entryKeys.putIfAbsent(
-                              payload.id,
-                              () => GlobalKey(
-                                debugLabel: 'Clipboard entry ${payload.id}',
-                              ),
+                    padding: BusyMarkInsets.sidebarList,
+                    children: [
+                      for (final payload in visible)
+                        _ClipboardEntryTile(
+                          key: _entryKeys.putIfAbsent(
+                            payload.id,
+                            () => GlobalKey(
+                              debugLabel: 'Clipboard entry ${payload.id}',
                             ),
-                            payload: payload,
-                            current: identical(payload, current),
-                            selected: payload.id == _selectedId,
-                            canPaste: registry.canPaste(payload),
-                            onSelect: () {
-                              setState(() => _selectedId = payload.id);
-                              _listFocusNode.requestFocus();
-                            },
-                            onPaste: () => _paste(payload, plainText: false),
-                            onPastePlain:
-                                payload.hasMeaningfulTextRepresentation &&
-                                    registry.canPaste(payload, plainText: true)
-                                ? () => _paste(payload, plainText: true)
-                                : null,
-                            onRemove: identical(payload, current)
-                                ? null
-                                : () => controller.remove(payload.id),
                           ),
-                      ],
-                    ),
+                          payload: payload,
+                          current: identical(payload, current),
+                          selected: payload.id == _selectedId,
+                          canPaste: registry.canPaste(payload),
+                          onSelect: () {
+                            setState(() => _selectedId = payload.id);
+                            _listFocusNode.requestFocus();
+                          },
+                          onPaste: () => _paste(payload, plainText: false),
+                          onPastePlain:
+                              payload.hasMeaningfulTextRepresentation &&
+                                  registry.canPaste(payload, plainText: true)
+                              ? () => _paste(payload, plainText: true)
+                              : null,
+                          onRemove: identical(payload, current)
+                              ? null
+                              : () => controller.remove(payload.id),
+                        ),
+                    ],
                   ),
           ),
         ],
@@ -285,6 +283,10 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
   }
 }
 
+enum _ClipboardHistoryAction { refresh, clear }
+
+enum _ClipboardEntryAction { paste, pastePlain, remove }
+
 class _ClipboardEntryTile extends StatelessWidget {
   const _ClipboardEntryTile({
     super.key,
@@ -315,173 +317,95 @@ class _ClipboardEntryTile extends StatelessWidget {
       BusyMarkClipboardContentKind.richText => l10n.clipboardEntryRichText,
       BusyMarkClipboardContentKind.image => l10n.clipboardEntryImage,
     };
-    final origin = payload.origin;
-    final tooltip = origin == null
-        ? null
-        : '${l10n.clipboardOrigin(origin.documentName)}\n'
-              '${origin.documentPath ?? ''}';
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: '$kindLabel ${_timestamp(context, payload.acquiredAt)}',
-      child: InkWell(
-        onTap: onSelect,
-        onDoubleTap: canPaste ? onPaste : null,
-        child: Container(
-          color: selected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : null,
-          padding: const EdgeInsets.fromLTRB(
-            BusyMarkSpacing.md,
-            BusyMarkSpacing.sm,
-            BusyMarkSpacing.xs,
-            BusyMarkSpacing.sm,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    payload.kind == BusyMarkClipboardContentKind.image
-                        ? BusyMarkGlyphs.image
-                        : BusyMarkGlyphs.copy,
-                    size: 16,
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      current && payload.external
-                          ? l10n.clipboardCurrentExternal
-                          : current
-                          ? l10n.clipboardCurrent
-                          : kindLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ),
-                  Text(
-                    _timestamp(context, payload.acquiredAt),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: BusyMarkSpacing.xs),
-              Tooltip(
-                message: tooltip ?? '',
-                child: _ClipboardPreview(payload, expanded: selected),
-              ),
-              if (origin != null) ...[
-                const SizedBox(height: BusyMarkSpacing.xs),
-                Text(
-                  l10n.clipboardOrigin(origin.documentName),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    tooltip: l10n.paste,
-                    onPressed: canPaste ? onPaste : null,
-                    icon: const Icon(BusyMarkGlyphs.paste, size: 18),
-                  ),
-                  if (onPastePlain != null)
-                    IconButton(
-                      tooltip: l10n.clipboardPastePlainText,
-                      onPressed: onPastePlain,
-                      icon: const Icon(BusyMarkGlyphs.text, size: 18),
-                    ),
-                  if (onRemove != null)
-                    IconButton(
-                      tooltip: l10n.removeAction,
-                      onPressed: onRemove,
-                      icon: const Icon(BusyMarkGlyphs.delete, size: 18),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ClipboardPreview extends StatefulWidget {
-  const _ClipboardPreview(this.payload, {required this.expanded});
-
-  final BusyMarkClipboardPayload payload;
-  final bool expanded;
-
-  @override
-  State<_ClipboardPreview> createState() => _ClipboardPreviewState();
-}
-
-class _ClipboardPreviewState extends State<_ClipboardPreview> {
-  ImageProvider<Object>? _image;
-
-  @override
-  void didUpdateWidget(covariant _ClipboardPreview oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.payload.id != widget.payload.id) {
-      _image?.evict();
-      _image = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _image?.evict();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final payload = widget.payload;
-    final bytes = payload.imageBytes;
-    if (bytes != null && widget.expanded) {
-      final image = _image ??= ResizeImage.resizeIfNeeded(
-        512,
-        512,
-        MemoryImage(bytes),
-      );
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 128),
-        child: Image(
-          // At most one selected preview is decoded, and both dimensions are
-          // bounded. RGBA decoding therefore stays well below the policy's
-          // separate 8 MiB thumbnail-cache budget.
-          image: image,
-          fit: BoxFit.contain,
-          errorBuilder: (_, _, _) {
-            return const Center(child: Icon(BusyMarkGlyphs.imageMissing));
-          },
-        ),
-      );
-    }
-    if (bytes != null) {
-      final prior = _image;
-      _image = null;
-      if (prior != null) unawaited(prior.evict());
-      return Text(
-        payload.imageDisplayName ?? context.l10n.clipboardEntryImage,
-        maxLines: 1,
+    final status = current && payload.external
+        ? l10n.clipboardCurrentExternal
+        : current
+        ? l10n.clipboardCurrent
+        : kindLabel;
+    final preview = _clipboardEntryPreview(payload, kindLabel);
+    final metadata = '$status · ${_timestamp(context, payload.acquiredAt)}';
+    final colors = BusyMarkSurfaceColors.of(context);
+    return BusyMarkSidebarRecordRow<_ClipboardEntryAction>(
+      icon: payload.kind == BusyMarkClipboardContentKind.image
+          ? BusyMarkGlyphs.image
+          : BusyMarkGlyphs.copy,
+      content: Text(
+        preview,
+        maxLines: 3,
         overflow: TextOverflow.ellipsis,
-      );
-    }
-    return Text(
-      payload.preferredSourceText ?? payload.text ?? '',
-      maxLines: widget.expanded ? 6 : 2,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+      ),
+      selected: selected,
+      semanticsLabel: '$preview\n$metadata',
+      tooltip: _clipboardEntryTooltip(payload, l10n, metadata),
+      onTap: onSelect,
+      onDoubleTap: canPaste ? onPaste : null,
+      menuTooltip: l10n.actions,
+      menuItemsBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: _ClipboardEntryAction.paste,
+          label: context.l10n.paste,
+          icon: BusyMarkGlyphs.paste,
+          enabled: canPaste,
+        ),
+        if (onPastePlain != null)
+          BusyMarkPopupMenuItem(
+            value: _ClipboardEntryAction.pastePlain,
+            label: context.l10n.clipboardPastePlainText,
+            icon: BusyMarkGlyphs.text,
+          ),
+        if (onRemove != null) ...[
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+          BusyMarkPopupMenuItem(
+            value: _ClipboardEntryAction.remove,
+            label: context.l10n.removeAction,
+            icon: BusyMarkGlyphs.delete,
+          ),
+        ],
+      ],
+      onMenuOpening: onSelect,
+      onMenuSelected: (action) {
+        switch (action) {
+          case _ClipboardEntryAction.paste:
+            onPaste();
+          case _ClipboardEntryAction.pastePlain:
+            onPastePlain?.call();
+          case _ClipboardEntryAction.remove:
+            onRemove?.call();
+        }
+      },
     );
   }
+}
+
+String _clipboardEntryPreview(
+  BusyMarkClipboardPayload payload,
+  String fallback,
+) {
+  final value =
+      payload.imageDisplayName ??
+      payload.preferredSourceText ??
+      payload.text ??
+      fallback;
+  final preview = value.trim();
+  return preview.isEmpty ? fallback : preview;
+}
+
+String _clipboardEntryTooltip(
+  BusyMarkClipboardPayload payload,
+  AppLocalizations l10n,
+  String metadata,
+) {
+  final origin = payload.origin;
+  final originPath = origin?.documentPath;
+  final parts = <String>[
+    metadata,
+    if (origin != null) l10n.clipboardOrigin(origin.documentName),
+    if (originPath != null && originPath.trim().isNotEmpty) originPath.trim(),
+  ];
+  return parts.join('\n');
 }
 
 class _PanelNotice extends StatelessWidget {

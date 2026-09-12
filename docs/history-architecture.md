@@ -47,6 +47,25 @@ restore, before delete, and observed external change. Pending buffers are
 flushed on close, workspace replacement, and awaited shutdown. Autosave writes
 do not themselves create Saved entries.
 
+The editor buffer is the source authority. Source and WYSIWYG callbacks,
+selected-text formatting, inactive-buffer mutations, Undo, and Redo all report
+the before/after buffer transition after one accepted document transaction.
+Observation is queued per buffer and replaces that buffer's one pending full
+source snapshot. The first edit anchors the checkpoint timer; later edits
+replace the pending source without postponing the deadline. A flush is a queue
+barrier, so observations accepted before it are captured before settlement is
+reported.
+
+Automatic capture retains pending work until storage succeeds or adjacent
+source deduplication validly settles it. Transient failure preserves one
+bounded latest snapshot per buffer, keeps the capture warning visible, and
+schedules a controlled retry using the configured checkpoint interval. Newer
+accepted source wins over acknowledgements or failures from older writes.
+Unsupported or over-limit content remains visibly failed without a retry loop.
+Flush and identity-promotion results propagate content-capture failure to
+lifecycle safety callers; a successful document save remains independent of a
+failed history write.
+
 History identity is stable independently of widget and transient buffer IDs.
 Known file and directory moves remap current and descendant paths while
 retaining historical paths. A first save of an untitled document continues its
@@ -85,6 +104,22 @@ renamed, deleted, or untitled identities; selecting a normal document resumes
 active-tab following. The revision list is timestamp-first and groups the same
 localized timestamps by local calendar date.
 
+Normal browsing retains the active buffer as its scope even before that buffer
+has a stored history document ID. The first capture, a capture after Clear, or
+an identity promotion reconciles the buffer-to-history association and
+publishes the corresponding rows without a tab switch, sidebar reconstruction,
+or Refresh. Captures for inactive buffers do not steal this scope. Explicit
+tab, editor, or Files-context Local History commands leave retained lookup and
+establish the requested buffer after guarded activation completes.
+
+Every published snapshot validates document/revision ownership. An active
+revision-content query is recomputed against the new scoped snapshot, with
+query, scope, and snapshot generations preventing delayed reads from replacing
+newer matches. Search completion clears its loading state on success, scope
+change, cancellation, and read failure. Explicit clear invalidates affected
+queued work and closes a comparison it owns; retention loss instead reports the
+existing missing-revision state.
+
 `SourceComparisonInput` identifies immutable sources by ID, version, label,
 and text. The comparison uses unique patience anchors plus bounded local LCS
 and intraline refinement in Dart UTF-16 offsets. Separated edits are retained.
@@ -115,6 +150,14 @@ Buffers opened meanwhile survive, closed buffers are not resurrected, and
 newer editor state and undo/redo history win over stale loads. Derived workspace
 and preview content is published only when its active buffer and source still
 match; otherwise the normal fresh-parse scheduler takes over.
+
+Ordinary tab activation follows the same live-buffer rule. It avoids reparsing
+an already-active unchanged target; after an asynchronous reparse, it
+revalidates workspace and target identity and republishes the current buffer
+membership, source, editor selection, and undo/redo state rather than an
+activation-time list. A stale derived result is discarded in favor of the
+normal fresh-parse scheduler. Refresh reschedules eligible autosaves on both
+success and failure because it cancels its incoming timers at the boundary.
 
 ## Verification workflow
 

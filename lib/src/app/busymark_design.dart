@@ -2430,6 +2430,265 @@ class BusyMarkSidebarNavigationTile extends StatelessWidget {
   }
 }
 
+typedef BusyMarkSidebarRecordMenuBuilder<T> =
+    List<PopupMenuEntry<T>> Function(BuildContext context);
+
+/// The interactive record surface used by persistent sidebar lists.
+///
+/// This is the shared form of the Recent-workspace row: a transparent rounded
+/// surface with native hover treatment and, when supplied, one overflow and
+/// context-menu action model. Callers can use the standard title/subtitle
+/// identity layout or provide domain-specific [content].
+class BusyMarkSidebarRecordRow<T> extends StatefulWidget {
+  const BusyMarkSidebarRecordRow({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.title,
+    this.subtitle,
+    this.content,
+    this.selected = false,
+    this.onDoubleTap,
+    this.semanticsLabel,
+    this.tooltip,
+    this.menuTooltip,
+    this.menuItemsBuilder,
+    this.onMenuSelected,
+    this.onMenuOpening,
+  }) : assert(
+         (title == null) != (content == null),
+         'Supply either the standard title or custom content.',
+       ),
+       assert(
+         (menuItemsBuilder == null) == (onMenuSelected == null),
+         'Menu items and selection handling must be supplied together.',
+       ),
+       assert(
+         menuItemsBuilder == null || menuTooltip != null,
+         'Rows with a menu need a tooltip for its trigger.',
+       );
+
+  final IconData icon;
+  final String? title;
+  final String? subtitle;
+  final Widget? content;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback? onDoubleTap;
+  final String? semanticsLabel;
+  final String? tooltip;
+  final String? menuTooltip;
+  final BusyMarkSidebarRecordMenuBuilder<T>? menuItemsBuilder;
+  final ValueChanged<T>? onMenuSelected;
+  final VoidCallback? onMenuOpening;
+
+  @override
+  State<BusyMarkSidebarRecordRow<T>> createState() =>
+      _BusyMarkSidebarRecordRowState<T>();
+}
+
+class _BusyMarkSidebarRecordRowState<T>
+    extends State<BusyMarkSidebarRecordRow<T>> {
+  final _rowKey = GlobalKey();
+  late final FocusNode _rowFocusNode;
+  var _contextMenuOpen = false;
+  DateTime? _lastTapAt;
+
+  bool get _hasMenu =>
+      widget.menuItemsBuilder != null && widget.onMenuSelected != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _rowFocusNode = FocusNode(debugLabel: 'BusyMark sidebar record row');
+  }
+
+  @override
+  void dispose() {
+    _rowFocusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!_hasMenu || !isBusyMarkContextMenuKeyEvent(event)) {
+      return KeyEventResult.ignored;
+    }
+    unawaited(_showContextMenu());
+    return KeyEventResult.handled;
+  }
+
+  void _handleTap() {
+    final onDoubleTap = widget.onDoubleTap;
+    if (onDoubleTap == null) {
+      widget.onTap();
+      return;
+    }
+    final now = DateTime.now();
+    final previous = _lastTapAt;
+    final doubleTap =
+        previous != null && now.difference(previous) <= kDoubleTapTimeout;
+    _lastTapAt = doubleTap ? null : now;
+    widget.onTap();
+    if (doubleTap) onDoubleTap();
+  }
+
+  Future<void> _showContextMenu([Offset? position]) async {
+    if (!_hasMenu || _contextMenuOpen) return;
+    final rowContext = _rowKey.currentContext;
+    if (rowContext == null) return;
+
+    widget.onMenuOpening?.call();
+    setState(() => _contextMenuOpen = true);
+    T? action;
+    try {
+      final items = widget.menuItemsBuilder!(rowContext);
+      action = position == null
+          ? await showBusyMarkMenu<T>(
+              context: rowContext,
+              anchorContext: rowContext,
+              items: items,
+              focusFirst: true,
+            )
+          : await showBusyMarkContextMenu<T>(
+              rowContext,
+              position,
+              items: items,
+            );
+    } finally {
+      if (mounted) setState(() => _contextMenuOpen = false);
+    }
+    if (mounted && action != null) widget.onMenuSelected!(action);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final subtitle = widget.subtitle?.trim();
+    final customContent = widget.content;
+    final menuItems = widget.menuItemsBuilder?.call(context);
+    final trailing = menuItems == null || menuItems.isEmpty
+        ? null
+        : BusyMarkMenuButton<T>(
+            tooltip: widget.menuTooltip!,
+            items: menuItems,
+            onSelected: widget.onMenuSelected!,
+            triggerBuilder: (context, trigger) => trigger.anchor(
+              child: BusyMarkCompactIconButton(
+                tooltip: widget.menuTooltip!,
+                icon: BusyMarkGlyphs.menuVertical,
+                focusNode: trigger.focusNode,
+                onPressed: trigger.onPressed == null
+                    ? null
+                    : () {
+                        widget.onMenuOpening?.call();
+                        trigger.onPressed!();
+                      },
+              ),
+            ),
+          );
+    final content = ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: BusyMarkSizes.sidebarTreeRowHeight * 2,
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Icon(
+            widget.icon,
+            size: BusyMarkSizes.iconSm,
+            color: colors.mutedForeground,
+          ),
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(
+            child: Padding(
+              padding: customContent == null
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+              child:
+                  customContent ??
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.title!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.foreground,
+                        ),
+                      ),
+                      if (subtitle != null && subtitle.isNotEmpty) ...[
+                        const SizedBox(height: BusyMarkSpacing.xxs),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.mutedForeground),
+                        ),
+                      ],
+                    ],
+                  ),
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: BusyMarkSpacing.xs),
+            trailing,
+          ],
+          const SizedBox(width: BusyMarkSpacing.sm),
+        ],
+      ),
+    );
+    final row = KeyedSubtree(
+      key: _rowKey,
+      child: Focus(
+        onKeyEvent: _handleKeyEvent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: BusyMarkStroke.hairline,
+          ),
+          child: Material(
+            color: widget.selected || _contextMenuOpen
+                ? busyMarkRowHoverColor(context)
+                : BusyMarkLinuxPalette.transparent,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              hoverColor: busyMarkRowHoverColor(context),
+              focusNode: _rowFocusNode,
+              onTap: _handleTap,
+              onSecondaryTapUp: !_hasMenu
+                  ? null
+                  : (details) {
+                      _rowFocusNode.requestFocus();
+                      unawaited(_showContextMenu(details.globalPosition));
+                    },
+              child: content,
+            ),
+          ),
+        ),
+      ),
+    );
+    final semanticRow = Semantics(
+      container: true,
+      selected: widget.selected,
+      button: true,
+      label: widget.semanticsLabel,
+      onTap: _handleTap,
+      child: row,
+    );
+    final tooltip = widget.tooltip;
+    return tooltip == null || tooltip.isEmpty
+        ? semanticRow
+        : Tooltip(
+            message: tooltip,
+            excludeFromSemantics: true,
+            child: semanticRow,
+          );
+  }
+}
+
 class BusyMarkGroupedList extends StatelessWidget {
   const BusyMarkGroupedList({
     super.key,

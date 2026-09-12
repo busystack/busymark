@@ -54,6 +54,8 @@ Future<void> main(List<String> arguments) async {
       : p.normalize(p.absolute(arguments[3]));
   final output = Directory(p.normalize(p.absolute(arguments[4])));
   await output.create(recursive: true);
+  final realPolicyTimer =
+      Platform.environment['BUSYMARK_HISTORY_REAL_POLICY'] == '1';
 
   await windowManager.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
@@ -95,9 +97,10 @@ Future<void> main(List<String> arguments) async {
             rootDirectory: () async => Directory(p.join(output.path, 'store')),
           ),
         ),
-        localHistoryTimerFactoryProvider.overrideWithValue(
-          (_, callback) => Timer(const Duration(milliseconds: 450), callback),
-        ),
+        if (!realPolicyTimer)
+          localHistoryTimerFactoryProvider.overrideWithValue(
+            (_, callback) => Timer(const Duration(milliseconds: 450), callback),
+          ),
       ],
       child: _HistoryVisualHarness(
         mode: mode,
@@ -105,6 +108,7 @@ Future<void> main(List<String> arguments) async {
         deletePath: deletePath,
         output: output,
         boundaryKey: boundaryKey,
+        realPolicyTimer: realPolicyTimer,
       ),
     ),
   );
@@ -124,6 +128,7 @@ class _HistoryVisualHarness extends ConsumerStatefulWidget {
     required this.deletePath,
     required this.output,
     required this.boundaryKey,
+    required this.realPolicyTimer,
   });
 
   final String mode;
@@ -131,6 +136,7 @@ class _HistoryVisualHarness extends ConsumerStatefulWidget {
   final String? deletePath;
   final Directory output;
   final GlobalKey boundaryKey;
+  final bool realPolicyTimer;
 
   @override
   ConsumerState<_HistoryVisualHarness> createState() =>
@@ -190,37 +196,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       await _capture('${widget.mode}-clipboard-history-1280x800.png');
       await _exerciseCurrentClipboard();
 
-      var buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-      await localHistory.observeOpened(buffer);
-      final baseline = buffer.text;
-      final saved = _savedVersion(baseline);
-      workspace.updateActiveText(saved, sourceFilePath: buffer.filePath);
-      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-      _check(
-        await localHistory.captureSaved(
-          LocalHistoryBufferSnapshot.fromBuffer(buffer),
-        ),
-        'saved event captured',
-      );
-      _check(
-        await workspace.saveActive(overwriteExternalChanges: true),
-        'explicit save captured',
-      );
-      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-      workspace.updateActiveText(
-        _checkpointVersion(buffer.text),
-        sourceFilePath: buffer.filePath,
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 850));
-      await localHistory.refresh();
-      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-      workspace.updateActiveText(
-        _currentVersion(buffer.text),
-        sourceFilePath: buffer.filePath,
-      );
-      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-      await localHistory.selectDocumentForBuffer(buffer);
-      await localHistory.refresh();
       _check(
         await ref
             .read(busyMarkCommandRegistryProvider)
@@ -235,9 +210,50 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
                 .read(localHistoryControllerProvider)
                 .selectedRevisions
                 .isNotEmpty,
-        'Local History revisions',
+        'Local History baseline',
+      );
+      var buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      final baseline = buffer.text;
+      final saved = _savedVersion(baseline);
+      workspace.updateActiveText(saved, sourceFilePath: buffer.filePath);
+      _check(
+        await workspace.saveActive(overwriteExternalChanges: true),
+        'explicit save captured',
+      );
+      await _waitForRevisionSource(
+        saved,
+        LocalHistoryCaptureReason.saved,
+        'saved source publication',
+      );
+      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      final checkpoint = _checkpointVersion(buffer.text);
+      workspace.updateActiveText(checkpoint, sourceFilePath: buffer.filePath);
+      await _waitForRevisionSource(
+        checkpoint,
+        LocalHistoryCaptureReason.automaticCheckpoint,
+        'automatic checkpoint publication',
       );
       await _capture('${widget.mode}-local-history-1280x800.png');
+
+      await localHistory.search('Monitoring');
+      buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      final current = _currentVersion(buffer.text);
+      workspace.updateActiveText(current, sourceFilePath: buffer.filePath);
+      await _waitForRevisionSource(
+        current,
+        LocalHistoryCaptureReason.automaticCheckpoint,
+        'filtered checkpoint publication',
+      );
+      await _waitFor(
+        () =>
+            !ref.read(localHistoryControllerProvider).searching &&
+            ref.read(localHistoryControllerProvider).searchQuery ==
+                'Monitoring' &&
+            ref.read(localHistoryControllerProvider).searchMatches.length >= 2,
+        'live filtered Local History rows',
+      );
+      await _capture('${widget.mode}-local-history-filtered-1280x800.png');
+      await localHistory.search('');
 
       final historyState = ref.read(localHistoryControllerProvider);
       final historyDocument = historyState.selectedDocument!;
@@ -282,7 +298,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         ),
         'fragment restore',
       );
-      await localHistory.refresh();
       await _capture('${widget.mode}-fragment-restored-1920x1080.png');
 
       if (widget.deletePath case final deletePath?) {
@@ -291,6 +306,12 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
 
       _checks['clipboardEntries'] =
           ref.read(clipboardHistoryControllerProvider).entries.length >= 4;
+      _checks['defaultCheckpointPolicy'] =
+          ref
+              .read(localHistoryControllerProvider.notifier)
+              .policy
+              .checkpointInterval ==
+          const Duration(seconds: 60);
       _checks['revisionReasons'] = ref
           .read(localHistoryControllerProvider)
           .snapshot
@@ -309,6 +330,9 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       ).writeAsString(
         const JsonEncoder.withIndent('  ').convert({
           'passed': passed,
+          'timerMode': widget.realPolicyTimer
+              ? 'production-default'
+              : 'visual-smoke-450ms',
           'checks': _checks,
           'screenshots': _screenshots,
         }),
@@ -494,13 +518,10 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     String deletePath,
   ) async {
     _check(await workspace.openActiveFile(deletePath), 'recovery file open');
-    final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
-    await localHistory.observeOpened(buffer);
     _check(
       await workspace.deleteWorkspaceEntity(deletePath),
       'document delete',
     );
-    await localHistory.refresh();
     ref.read(localHistoryOpenRequestProvider.notifier).request();
     await Future<void>.delayed(const Duration(milliseconds: 300));
     final deletedDocument = ref
@@ -531,7 +552,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       ),
       'deleted document recovery',
     );
-    await localHistory.refresh();
     await _capture('${widget.mode}-deleted-recovered-1920x1080.png');
     _checks['deletedFileRecovered'] = await File(deletePath).exists();
   }
@@ -567,6 +587,27 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     final path = p.join(widget.output.path, name);
     await File(path).writeAsBytes(byteData.buffer.asUint8List(), flush: true);
     _screenshots.add(path);
+  }
+
+  Future<void> _waitForRevisionSource(
+    String source,
+    LocalHistoryCaptureReason reason,
+    String description,
+  ) async {
+    final store = ref.read(localHistoryStoreProvider);
+    final maximumAttempts = widget.realPolicyTimer ? 900 : 240;
+    for (var attempt = 0; attempt < maximumAttempts; attempt++) {
+      final summaries = ref
+          .read(localHistoryControllerProvider)
+          .selectedRevisions
+          .where((revision) => revision.reason == reason);
+      for (final summary in summaries) {
+        final revision = await store.readRevision(summary.id);
+        if (revision?.source == source) return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    throw TimeoutException('Timed out waiting for $description.');
   }
 
   bool _hasWidget<T extends Widget>() {

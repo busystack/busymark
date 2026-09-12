@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_panel.dart';
@@ -115,6 +117,425 @@ void main() {
     expect(snapshot.documents, hasLength(2));
     expect(snapshot.revisions, hasLength(4));
   });
+
+  test(
+    'first checkpoint attaches an empty untitled browsing scope and publishes it',
+    () async {
+      final timers = <_FakeTimer>[];
+      final store = MemoryLocalHistoryStore();
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final empty = DocumentBuffer.untitled(
+        id: 'empty-draft',
+        name: 'Draft.md',
+      );
+
+      await controller.selectDocumentForBuffer(empty);
+      expect(
+        container.read(localHistoryControllerProvider).selectedDocumentId,
+        isNull,
+      );
+      final edited = empty.edited('First retained source');
+      controller.observeEdit(empty, edited);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.pendingSnapshotForBuffer(empty.id)?.text, edited.text);
+      expect(timers, hasLength(1));
+
+      timers.single.fire();
+      await _waitForHistory(
+        container,
+        (state) => state.selectedRevisions.length == 1,
+      );
+
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.selectedDocument?.displayName, 'Draft.md');
+      expect(state.selectedDocument?.untitled, isTrue);
+      expect(
+        state.selectedRevisions.single.reason,
+        LocalHistoryCaptureReason.automaticCheckpoint,
+      );
+      expect(
+        (await store.readRevision(state.selectedRevisions.single.id))!.source,
+        edited.text,
+      );
+      expect(controller.pendingSnapshotForBuffer(empty.id), isNull);
+    },
+  );
+
+  test(
+    'file store checkpoint persists across reopen and clear stays authoritative',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-history-controller-file-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final documentFile = File(p.join(root.path, 'workspace', 'guide.md'));
+      await documentFile.parent.create(recursive: true);
+      await documentFile.writeAsString('baseline');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      final store = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
+      final timers = <_FakeTimer>[];
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer(
+        'file-store-buffer',
+        documentFile.path,
+        'baseline',
+      );
+      await controller.selectDocumentForBuffer(opened);
+      final edited = opened.edited('persisted checkpoint');
+      controller.observeEdit(opened, edited);
+      await Future<void>.delayed(Duration.zero);
+      timers.single.fire();
+      await _waitForHistory(
+        container,
+        (state) => state.selectedRevisions.length == 2,
+      );
+
+      final reopened = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
+      var diskSnapshot = await reopened.load();
+      expect(diskSnapshot.documents, hasLength(1));
+      expect(
+        await _revisionSources(
+          reopened,
+          diskSnapshot.revisionsFor(diskSnapshot.documents.single.id),
+        ),
+        contains('persisted checkpoint'),
+      );
+
+      await controller.clearDocument(diskSnapshot.documents.single.id);
+      diskSnapshot = await reopened.load();
+      expect(diskSnapshot.documents, isEmpty);
+      expect(diskSnapshot.revisions, isEmpty);
+    },
+  );
+
+  test(
+    'active revision search follows matching and nonmatching captures',
+    () async {
+      final timers = <_FakeTimer>[];
+      final store = MemoryLocalHistoryStore();
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer(
+        'search-buffer',
+        '/workspace/search.md',
+        'base',
+      );
+      await controller.selectDocumentForBuffer(opened);
+      await controller.search('needle');
+      expect(
+        container.read(localHistoryControllerProvider).searchMatches,
+        isEmpty,
+      );
+
+      final matching = opened.edited('base with needle');
+      controller.observeEdit(opened, matching);
+      await Future<void>.delayed(Duration.zero);
+      timers.last.fire();
+      await _waitForHistory(
+        container,
+        (state) =>
+            !state.searching &&
+            state.searchQuery == 'needle' &&
+            state.searchMatches.isNotEmpty,
+      );
+      var state = container.read(localHistoryControllerProvider);
+      expect(
+        state.selectedRevisions.where(state.revisionVisible),
+        hasLength(1),
+      );
+
+      final nonmatching = matching.edited('different content');
+      controller.observeEdit(matching, nonmatching);
+      await Future<void>.delayed(Duration.zero);
+      timers.last.fire();
+      await _waitForHistory(
+        container,
+        (value) => !value.searching && value.selectedRevisions.length == 3,
+      );
+      state = container.read(localHistoryControllerProvider);
+      expect(state.searchQuery, 'needle');
+      expect(
+        state.selectedRevisions.where(state.revisionVisible),
+        hasLength(1),
+      );
+    },
+  );
+
+  test(
+    'failed automatic capture keeps pending source and retries without another edit',
+    () async {
+      final timers = <_FakeTimer>[];
+      final memory = MemoryLocalHistoryStore();
+      final store = _FailingSourceCaptureStore(memory, 'retry source');
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer('retry-buffer', '/workspace/retry.md', 'base');
+      await controller.selectDocumentForBuffer(opened);
+      final edited = opened.edited('retry source');
+      controller.observeEdit(opened, edited);
+      await Future<void>.delayed(Duration.zero);
+
+      timers.single.fire();
+      await _waitForHistory(
+        container,
+        (state) => state.warning?.kind == LocalHistoryWarningKind.capture,
+      );
+      expect(controller.pendingSnapshotForBuffer(opened.id)?.text, edited.text);
+      expect(timers, hasLength(2));
+
+      timers.last.fire();
+      await _waitForHistory(
+        container,
+        (state) => state.selectedRevisions.length == 2,
+      );
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.warning, isNull);
+      expect(controller.pendingSnapshotForBuffer(opened.id), isNull);
+      expect(
+        await _revisionSources(store, state.selectedRevisions),
+        contains(edited.text),
+      );
+    },
+  );
+
+  test('a newer edit accepted during a failed write wins the retry', () async {
+    final timers = <_FakeTimer>[];
+    final memory = MemoryLocalHistoryStore();
+    final store = _BlockingNextCaptureStore(memory);
+    final container = _historyContainer(store, timers);
+    addTearDown(container.dispose);
+    final controller = container.read(localHistoryControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+    final opened = _fileBuffer('newest-buffer', '/workspace/newest.md', 'base');
+    await controller.selectDocumentForBuffer(opened);
+    final older = opened.edited('older pending source');
+    controller.observeEdit(opened, older);
+    await Future<void>.delayed(Duration.zero);
+    store.blockNextCapture = true;
+    store.failBlockedCapture = true;
+    timers.single.fire();
+    await store.captureStarted.future;
+
+    final newer = older.edited('newest pending source');
+    controller.observeEdit(older, newer);
+    store.releaseCapture.complete();
+    await _waitForHistory(
+      container,
+      (state) =>
+          state.warning?.kind == LocalHistoryWarningKind.capture &&
+          controller.pendingSnapshotForBuffer(opened.id)?.text == newer.text,
+    );
+
+    timers.lastWhere((timer) => timer.isActive).fire();
+    await _waitForHistory(
+      container,
+      (state) =>
+          state.warning == null &&
+          controller.pendingSnapshotForBuffer(opened.id) == null,
+    );
+    final snapshot = await memory.load();
+    final sources = await _revisionSources(
+      memory,
+      snapshot.revisionsFor(snapshot.documents.single.id),
+    );
+    expect(sources, contains(newer.text));
+    expect(sources, isNot(contains(older.text)));
+  });
+
+  test(
+    'flush waits behind queued observation and captures its latest source',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingNextCaptureStore(memory);
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer('flush-buffer', '/workspace/flush.md', 'base');
+      await controller.observeOpened(opened);
+
+      store.blockNextCapture = true;
+      final intermediate = opened.edited('intermediate');
+      final blockedSave = controller.captureSaved(
+        LocalHistoryBufferSnapshot.fromBuffer(intermediate),
+      );
+      await store.captureStarted.future;
+      final latest = intermediate.edited('accepted latest source');
+      controller.observeEdit(intermediate, latest);
+      final flush = controller.flushBuffer(latest);
+      var flushCompleted = false;
+      unawaited(flush.then((_) => flushCompleted = true));
+      await Future<void>.delayed(Duration.zero);
+      expect(flushCompleted, isFalse);
+
+      store.releaseCapture.complete();
+      expect(await blockedSave, isTrue);
+      expect(await flush, isTrue);
+      final snapshot = await memory.load();
+      expect(
+        await _revisionSources(
+          memory,
+          snapshot.revisionsFor(snapshot.documents.single.id),
+        ),
+        contains('accepted latest source'),
+      );
+    },
+  );
+
+  test(
+    'clear wins over an in-flight capture and later edits record normally',
+    () async {
+      final timers = <_FakeTimer>[];
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingNextCaptureStore(memory);
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer('clear-buffer', '/workspace/clear.md', 'base');
+      await controller.selectDocumentForBuffer(opened);
+      final documentId = container
+          .read(localHistoryControllerProvider)
+          .selectedDocumentId!;
+      store.blockNextCapture = true;
+      final firstEdit = opened.edited('must stay cleared');
+      controller.observeEdit(opened, firstEdit);
+      await Future<void>.delayed(Duration.zero);
+      timers.single.fire();
+      await store.captureStarted.future;
+
+      final clear = controller.clearDocument(documentId);
+      store.releaseCapture.complete();
+      await clear;
+      expect((await memory.load()).revisions, isEmpty);
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision,
+        isNull,
+      );
+
+      final laterEdit = firstEdit.edited('new history after clear');
+      controller.observeEdit(firstEdit, laterEdit);
+      await Future<void>.delayed(Duration.zero);
+      timers.last.fire();
+      await _waitForHistory(
+        container,
+        (state) => state.selectedRevisions.length >= 2,
+      );
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.selectedDocument?.currentPath, opened.filePath);
+      expect(
+        await _revisionSources(store, state.selectedRevisions),
+        contains('new history after clear'),
+      );
+    },
+  );
+
+  test(
+    'clearing the displayed comparison closes it without a missing warning',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      await _capturePath(store, '/workspace/compare.md', 'older source');
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final buffer = _fileBuffer(
+        'comparison-buffer',
+        '/workspace/compare.md',
+        'current source',
+      );
+      await controller.selectDocumentForBuffer(buffer);
+      final before = container.read(localHistoryControllerProvider);
+      final documentId = before.selectedDocumentId!;
+      final revisionId = before.selectedRevisions.first.id;
+      await controller.selectRevision(revisionId);
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevision,
+        isNotNull,
+      );
+
+      await controller.clearDocument(documentId);
+
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.selectedDocumentId, isNull);
+      expect(state.selectedRevisionId, isNull);
+      expect(state.selectedRevision, isNull);
+      expect(
+        state.warning?.kind,
+        isNot(LocalHistoryWarningKind.revisionMissing),
+      );
+    },
+  );
+
+  test(
+    'clear invalidates an in-flight path capture for the same document',
+    () async {
+      final memory = MemoryLocalHistoryStore();
+      const path = '/workspace/path-clear.md';
+      await _capturePath(memory, path, 'retained source');
+      final store = _BlockingNextCaptureStore(memory);
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final documentId = container
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .single
+          .id;
+
+      store.blockNextCapture = true;
+      final capture = controller.capturePath(
+        path: path,
+        text: 'must not return after clear',
+        format: TextFormatMetadata.utf8Lf,
+        reason: LocalHistoryCaptureReason.beforeDelete,
+      );
+      await store.captureStarted.future;
+
+      final clear = controller.clearDocument(documentId);
+      store.releaseCapture.complete();
+      expect(await capture, isTrue);
+      await clear;
+
+      expect((await memory.load()).revisions, isEmpty);
+      expect(
+        container.read(localHistoryControllerProvider).snapshot.revisions,
+        isEmpty,
+      );
+    },
+  );
 
   test(
     'recording off prevents baseline and checkpoints without deleting history',
@@ -308,6 +729,7 @@ void main() {
           .documents
           .singleWhere((document) => document.deleted);
       history.inspectRetainedDocument(retained.id);
+      await tester.runAsync(() => history.search('Unique retained'));
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -324,6 +746,11 @@ void main() {
       final state = container.read(localHistoryControllerProvider);
       expect(state.inspectingRetainedDocument, isTrue);
       expect(state.selectedDocumentId, retained.id);
+      expect(state.searchQuery, 'Unique retained');
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Unique retained',
+      );
       expect(find.text('deleted.md'), findsOneWidget);
     },
   );
@@ -369,6 +796,37 @@ void main() {
       expect(state.searchMatches, isEmpty);
       expect(state.documentSearchMatches, isEmpty);
       expect(state.loading, isFalse);
+    },
+  );
+
+  test(
+    'revision search failure finishes searching and remains in scope',
+    () async {
+      final store = _FailingRevisionReadStore();
+      await _capturePath(store, '/workspace/failure.md', 'matching source');
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+      final document = container
+          .read(localHistoryControllerProvider)
+          .snapshot
+          .documents
+          .single;
+      controller.selectDocument(document.id);
+
+      store.failReads = true;
+      await controller.search('matching');
+
+      final state = container.read(localHistoryControllerProvider);
+      expect(state.searching, isFalse);
+      expect(state.searchQuery, 'matching');
+      expect(state.selectedDocumentId, document.id);
+      expect(state.searchMatches, isEmpty);
+      expect(state.warning?.kind, LocalHistoryWarningKind.revisionRead);
     },
   );
 
@@ -426,6 +884,13 @@ void main() {
       expect(find.byType(DropdownButton<String>), findsNothing);
 
       final searchField = find.byType(TextField);
+      final actionsMenu = find.byKey(
+        const ValueKey('local-history-actions-menu'),
+      );
+      expect(
+        tester.getCenter(actionsMenu).dx,
+        greaterThan(tester.getTopRight(searchField).dx),
+      );
       expect(searchField, findsOneWidget);
       await tester.enterText(searchField, 'Unique B');
       await tester.runAsync(
@@ -459,10 +924,18 @@ void main() {
       );
       expect(tester.widget<TextField>(searchField).controller!.text, isEmpty);
 
-      await tester.tap(
-        find.byKey(const ValueKey('local-history-actions-menu')),
+      final panelContext = tester.element(find.byType(LocalHistoryPanel));
+      final refreshLabel = MaterialLocalizations.of(
+        panelContext,
+      ).refreshIndicatorSemanticLabel;
+      expect(
+        tester.getCenter(actionsMenu).dx,
+        greaterThan(tester.getTopRight(searchField).dx),
       );
+      expect(find.byTooltip(refreshLabel), findsNothing);
+      await tester.tap(actionsMenu);
       await tester.pumpAndSettle();
+      expect(find.text(refreshLabel), findsOneWidget);
       expect(find.text('Find in Local History…'), findsOneWidget);
       expect(find.text('Clear This Document’s History'), findsOneWidget);
       expect(find.text('Clear All Local History'), findsOneWidget);
@@ -580,8 +1053,23 @@ void main() {
       final beforeLabel = DateFormat.Hms(locale).format(beforeMidnight);
       final afterLabel = DateFormat.Hms(locale).format(afterMidnight);
       expect(Directionality.of(context), TextDirection.rtl);
+      final searchField = find.byType(TextField);
+      final actionsMenu = find.byKey(
+        const ValueKey('local-history-actions-menu'),
+      );
+      expect(actionsMenu, findsOneWidget);
+      expect(searchField, findsOneWidget);
+      expect(
+        tester.getCenter(actionsMenu).dx,
+        lessThan(tester.getTopLeft(searchField).dx),
+      );
       expect(find.text(beforeLabel), findsOneWidget);
       expect(find.text(afterLabel), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+        findsWidgets,
+      );
+      expect(find.byType(ListTile), findsNothing);
       expect(find.text(l10n.localHistoryReasonSaved), findsOneWidget);
       expect(
         find.text(l10n.localHistoryReasonAutomaticCheckpoint),
@@ -599,11 +1087,13 @@ void main() {
         ),
         findsOneWidget,
       );
+      final revisionSemantics = tester.getSemantics(find.text(afterLabel));
       expect(
-        tester
-            .getSemantics(find.text(afterLabel))
-            .label
-            .contains(l10n.localHistoryReasonSaved),
+        revisionSemantics.label.contains(l10n.localHistoryReasonSaved),
+        isTrue,
+      );
+      expect(
+        revisionSemantics.getSemanticsData().hasAction(ui.SemanticsAction.tap),
         isTrue,
       );
       expect(tester.takeException(), isNull);
@@ -687,7 +1177,19 @@ void main() {
       final refresh = find.byWidgetPredicate(
         (widget) => widget is IconButton && widget.tooltip == refreshLabel,
       );
-      expect(tester.widget<IconButton>(refresh).onPressed, isNotNull);
+      expect(refresh, findsNothing);
+      await tester.tap(
+        find.byKey(const ValueKey('local-history-actions-menu')),
+      );
+      await tester.pumpAndSettle();
+      final refreshItem = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem && widget.label == refreshLabel,
+      );
+      expect(
+        tester.widget<BusyMarkPopupMenuItem<dynamic>>(refreshItem).enabled,
+        isTrue,
+      );
     },
   );
 
@@ -974,6 +1476,63 @@ void main() {
   );
 
   test(
+    'flush reports a content failure after successfully retrying promotion',
+    () async {
+      final store = _FailingPromotionThenCaptureStore('pending named source');
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final untitled = DocumentBuffer.untitled(
+        id: 'promotion-content-failure',
+        name: 'Draft.md',
+        text: 'initial source',
+      );
+      await controller.observeOpened(untitled);
+      final pending = untitled.edited('pending named source');
+      controller.observeEdit(untitled, pending);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(pending),
+          '/workspace/Promoted.md',
+          destinationExisted: false,
+        ),
+        isFalse,
+      );
+      expect(controller.hasPendingIdentityPromotion(untitled.id), isTrue);
+      final named = pending.copyWith(
+        filePath: '/workspace/Promoted.md',
+        untitledName: null,
+        lastSavedText: pending.text,
+        dirty: false,
+      );
+
+      expect(await controller.flushBuffer(named), isFalse);
+      expect(controller.hasPendingIdentityPromotion(named.id), isFalse);
+      expect(controller.pendingSnapshotForBuffer(named.id), isNotNull);
+      expect(
+        container.read(localHistoryControllerProvider).warning?.kind,
+        LocalHistoryWarningKind.capture,
+      );
+
+      expect(await controller.flushBuffer(named), isTrue);
+      expect(controller.pendingSnapshotForBuffer(named.id), isNull);
+      final snapshot = await store.load();
+      expect(snapshot.documents.single.currentPath, '/workspace/Promoted.md');
+      expect(
+        await _revisionSources(
+          store,
+          snapshot.revisionsFor(snapshot.documents.single.id),
+        ),
+        contains(pending.text),
+      );
+    },
+  );
+
+  test(
     'remap settles pending first-save promotions for files and directories',
     () async {
       final scenarios = [
@@ -1231,6 +1790,143 @@ class _BlockingRevisionReadStore implements LocalHistoryStore {
       delegate.remapPath(sourcePath, destinationPath);
 }
 
+class _FailingSourceCaptureStore implements LocalHistoryStore {
+  _FailingSourceCaptureStore(this.delegate, this.source);
+
+  final LocalHistoryStore delegate;
+  final String source;
+  var failed = false;
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) {
+    if (!failed && request.source == source) {
+      failed = true;
+      throw const LocalHistoryStorageException('Injected transient failure');
+    }
+    return delegate.capture(request, policy);
+  }
+
+  @override
+  Future<void> clearAll() => delegate.clearAll();
+
+  @override
+  Future<void> clearDocument(String documentId) =>
+      delegate.clearDocument(documentId);
+
+  @override
+  Future<LocalHistorySnapshot> load() => delegate.load();
+
+  @override
+  Future<void> markDeleted(String path, {required bool recursive}) =>
+      delegate.markDeleted(path, recursive: recursive);
+
+  @override
+  Future<void> prune(LocalHistoryPolicy policy, DateTime now) =>
+      delegate.prune(policy, now);
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) => delegate.promoteUntitledDocument(
+    documentId: documentId,
+    destinationPath: destinationPath,
+    displayName: displayName,
+    updatedAt: updatedAt,
+  );
+
+  @override
+  Future<LocalHistoryRevision?> readRevision(String revisionId) =>
+      delegate.readRevision(revisionId);
+
+  @override
+  Future<void> remapPath(String sourcePath, String destinationPath) =>
+      delegate.remapPath(sourcePath, destinationPath);
+}
+
+class _FailingRevisionReadStore extends MemoryLocalHistoryStore {
+  var failReads = false;
+
+  @override
+  Future<LocalHistoryRevision?> readRevision(String revisionId) {
+    if (failReads) throw StateError('Injected revision read failure');
+    return super.readRevision(revisionId);
+  }
+}
+
+class _BlockingNextCaptureStore implements LocalHistoryStore {
+  _BlockingNextCaptureStore(this.delegate);
+
+  final LocalHistoryStore delegate;
+  var blockNextCapture = false;
+  var failBlockedCapture = false;
+  var captureStarted = Completer<void>();
+  var releaseCapture = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (blockNextCapture) {
+      blockNextCapture = false;
+      if (!captureStarted.isCompleted) captureStarted.complete();
+      await releaseCapture.future;
+      if (failBlockedCapture) {
+        failBlockedCapture = false;
+        throw const LocalHistoryStorageException(
+          'Injected blocked capture failure',
+        );
+      }
+    }
+    return delegate.capture(request, policy);
+  }
+
+  @override
+  Future<void> clearAll() => delegate.clearAll();
+
+  @override
+  Future<void> clearDocument(String documentId) =>
+      delegate.clearDocument(documentId);
+
+  @override
+  Future<LocalHistorySnapshot> load() => delegate.load();
+
+  @override
+  Future<void> markDeleted(String path, {required bool recursive}) =>
+      delegate.markDeleted(path, recursive: recursive);
+
+  @override
+  Future<void> prune(LocalHistoryPolicy policy, DateTime now) =>
+      delegate.prune(policy, now);
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) => delegate.promoteUntitledDocument(
+    documentId: documentId,
+    destinationPath: destinationPath,
+    displayName: displayName,
+    updatedAt: updatedAt,
+  );
+
+  @override
+  Future<LocalHistoryRevision?> readRevision(String revisionId) =>
+      delegate.readRevision(revisionId);
+
+  @override
+  Future<void> remapPath(String sourcePath, String destinationPath) =>
+      delegate.remapPath(sourcePath, destinationPath);
+}
+
 class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
   var _failNextPromotion = true;
 
@@ -1251,6 +1947,47 @@ class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
       displayName: displayName,
       updatedAt: updatedAt,
     );
+  }
+}
+
+class _FailingPromotionThenCaptureStore extends MemoryLocalHistoryStore {
+  _FailingPromotionThenCaptureStore(this.failingSource);
+
+  final String failingSource;
+  var _failPromotion = true;
+  var _matchingCaptureCount = 0;
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) {
+    if (_failPromotion) {
+      _failPromotion = false;
+      throw const LocalHistoryStorageException('Injected promotion failure');
+    }
+    return super.promoteUntitledDocument(
+      documentId: documentId,
+      destinationPath: destinationPath,
+      displayName: displayName,
+      updatedAt: updatedAt,
+    );
+  }
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) {
+    if (request.source == failingSource) {
+      _matchingCaptureCount++;
+    }
+    if (_matchingCaptureCount <= 2 && request.source == failingSource) {
+      throw const LocalHistoryStorageException('Injected capture failure');
+    }
+    return super.capture(request, policy);
   }
 }
 

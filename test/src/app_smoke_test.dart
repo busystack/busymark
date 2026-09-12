@@ -21,6 +21,7 @@ import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
@@ -35,6 +36,9 @@ import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/local_history/local_history_panel.dart';
+import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -1077,6 +1081,12 @@ void main() {
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
     expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
     expect(find.text(l10n.git), findsOneWidget);
+    expect(find.text(l10n.localHistoryEllipsis), findsOneWidget);
+    expect(find.text(l10n.clipboardHistory), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.localHistoryEllipsis)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.clipboardHistory)).dy),
+    );
     expect(find.text(l10n.gitChanges), findsNothing);
     expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.gitHistory), findsNothing);
@@ -1114,6 +1124,26 @@ void main() {
     final shortcutRows = tester
         .widgetList<BusyMarkActionRow>(shortcutRowFinder)
         .toList();
+    final localHistoryRow = shortcutRows.singleWhere(
+      (row) => row.title == l10n.localHistoryEllipsis,
+    );
+    final clipboardHistoryRow = shortcutRows.singleWhere(
+      (row) => row.title == l10n.clipboardHistory,
+    );
+    expect(
+      find.descendant(
+        of: find.byWidget(localHistoryRow.trailing!),
+        matching: find.text(BusyMarkSidebarShortcutLabels.localHistory),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byWidget(clipboardHistoryRow.trailing!),
+        matching: find.text(BusyMarkSidebarShortcutLabels.clipboardHistory),
+      ),
+      findsOneWidget,
+    );
     final displayedShortcutLabels = <String>[];
     for (final row in shortcutRows) {
       final trailing = row.trailing;
@@ -3131,7 +3161,6 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -3375,6 +3404,12 @@ void main() {
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
 
+    await pressControlShortcut(LogicalKeyboardKey.digit5);
+    expect(find.byType(LocalHistoryPanel), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit6);
+    expect(find.byType(ClipboardHistoryPanel), findsOneWidget);
+
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
@@ -3492,13 +3527,17 @@ void main() {
       (l10n.files, BusyMarkSidebarShortcutLabels.files),
       (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
       (l10n.git, BusyMarkSidebarShortcutLabels.git),
+      (l10n.localHistory, BusyMarkSidebarShortcutLabels.localHistory),
+      (l10n.clipboardHistory, BusyMarkSidebarShortcutLabels.clipboardHistory),
     ]) {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
       expect(find.byTooltip('$label ($shortcut)'), findsNothing);
     }
-    expect(find.text(l10n.clipboardHistory), findsOneWidget);
-    expect(find.text(l10n.localHistory), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.localHistory)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.clipboardHistory)).dy),
+    );
     expect(find.text(l10n.gitChanges), findsNothing);
     expect(find.text(l10n.gitFileHistory), findsNothing);
     expect(find.text(l10n.gitProjectHistory), findsNothing);
@@ -3506,6 +3545,402 @@ void main() {
     expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
     expect(find.text(l10n.export), findsNothing);
   });
+
+  testWidgets(
+    'real Source edits reach the visible Local History list on the fixed deadline',
+    (tester) async {
+      const nativeMenuChannel = MethodChannel('busymark/native_menus');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        nativeMenuChannel,
+        (call) async => call.method == 'dismiss' ? true : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          nativeMenuChannel,
+          null,
+        ),
+      );
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final temp = Directory.systemTemp.createTempSync(
+        'busymark-editor-history-',
+      );
+      final file = File(p.join(temp.path, 'history.md'))
+        ..writeAsStringSync('alpha beta\n');
+      addTearDown(() {
+        if (temp.existsSync()) temp.deleteSync(recursive: true);
+      });
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              validateOnEdit: false,
+              documentViewMode: DocumentViewModePreference.source,
+            )
+            .toJson();
+      var now = DateTime.utc(2026, 3, 4, 10);
+      final timers = <_HistoryTestTimer>[];
+      final historyStore = MemoryLocalHistoryStore();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(
+            const _SearchWorkspaceService('alpha beta\n'),
+          ),
+          startupPathProvider.overrideWithValue(file.path),
+          localHistoryStoreProvider.overrideWithValue(historyStore),
+          localHistoryClockProvider.overrideWithValue(() => now),
+          localHistoryTimerFactoryProvider.overrideWithValue((delay, callback) {
+            final timer = _HistoryTestTimer(delay, callback);
+            timers.add(timer);
+            return timer;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      Future<void> waitForHistory(
+        bool Function(LocalHistoryState state) condition,
+      ) async {
+        await tester.runAsync(() async {
+          final deadline = DateTime.now().add(const Duration(seconds: 3));
+          while (!condition(container.read(localHistoryControllerProvider))) {
+            if (DateTime.now().isAfter(deadline)) {
+              throw StateError('Timed out waiting for Local History state');
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+        });
+        await tester.pump();
+      }
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var index = 0; index < 40; index += 1) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty) break;
+      }
+      expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await waitForHistory((history) => history.selectedRevisions.length == 1);
+      expect(find.byType(LocalHistoryPanel), findsOneWidget);
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        hasLength(1),
+      );
+
+      final sourceField = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      await tester.tap(sourceField);
+      await tester.enterText(sourceField, 'alpha beta gamma\n');
+      await tester.pump();
+      await tester.enterText(sourceField, 'alpha gamma\n');
+      await tester.pump();
+      await tester.enterText(sourceField, '**alpha** gamma\n');
+      await tester.pump();
+
+      const formatted = '**alpha** gamma\n';
+      expect(container.read(workspaceControllerProvider).activeText, formatted);
+      final editedBufferId = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .id;
+      await waitForHistory(
+        (_) =>
+            container
+                .read(localHistoryControllerProvider.notifier)
+                .pendingSnapshotForBuffer(editedBufferId)
+                ?.text ==
+            formatted,
+      );
+      expect(timers, hasLength(1));
+      expect(timers.single.duration, const Duration(seconds: 60));
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        hasLength(1),
+        reason: 'Source operations update pending state, not one row per edit.',
+      );
+
+      now = now.add(const Duration(seconds: 60));
+      timers.single.fire();
+      await waitForHistory((history) => history.selectedRevisions.length == 2);
+      var history = container.read(localHistoryControllerProvider);
+      expect(history.selectedRevisions, hasLength(2));
+      expect(
+        find.descendant(
+          of: find.byType(LocalHistoryPanel),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is BusyMarkSidebarRecordRow,
+          ),
+        ),
+        findsNWidgets(2),
+      );
+      final capturedSources = <String>[];
+      await tester.runAsync(() async {
+        for (final revision in history.selectedRevisions) {
+          capturedSources.add(
+            (await historyStore.readRevision(revision.id))!.source,
+          );
+        }
+      });
+      expect(capturedSources, contains(formatted));
+
+      final historySearch = find.descendant(
+        of: find.byType(LocalHistoryPanel),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(historySearch, 'needle');
+      await tester.pump();
+      await tester.tap(sourceField);
+      await tester.enterText(sourceField, '**alpha** needle\n');
+      await tester.pump();
+      now = now.add(const Duration(seconds: 60));
+      expect(timers.where((timer) => timer.isActive), hasLength(1));
+      timers.lastWhere((timer) => timer.isActive).fire();
+      await waitForHistory(
+        (history) => !history.searching && history.searchMatches.length == 1,
+      );
+      history = container.read(localHistoryControllerProvider);
+      expect(history.searchQuery, 'needle');
+      expect(history.searchMatches, hasLength(1));
+      expect(
+        tester.widget<TextField>(historySearch).controller!.text,
+        'needle',
+      );
+      expect(
+        find.descendant(
+          of: find.byType(LocalHistoryPanel),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is BusyMarkSidebarRecordRow,
+          ),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(sourceField);
+      await tester.enterText(sourceField, '**alpha** needle redo-state\n');
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        '**alpha** needle\n',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      const redone = '**alpha** needle redo-state\n';
+      expect(container.read(workspaceControllerProvider).activeText, redone);
+      final bufferId = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .id;
+      await waitForHistory(
+        (_) =>
+            container
+                .read(localHistoryControllerProvider.notifier)
+                .pendingSnapshotForBuffer(bufferId)
+                ?.text ==
+            redone,
+      );
+      expect(
+        container
+            .read(localHistoryControllerProvider.notifier)
+            .pendingSnapshotForBuffer(bufferId)
+            ?.text,
+        redone,
+      );
+      now = now.add(const Duration(seconds: 60));
+      timers.lastWhere((timer) => timer.isActive).fire();
+      await waitForHistory(
+        (history) =>
+            history.selectedRevisions.length == 4 && !history.searching,
+      );
+      history = container.read(localHistoryControllerProvider);
+      final finalSources = <String>[];
+      await tester.runAsync(() async {
+        for (final revision in history.selectedRevisions) {
+          finalSources.add(
+            (await historyStore.readRevision(revision.id))!.source,
+          );
+        }
+      });
+      expect(finalSources, contains(redone));
+      expect(history.searchQuery, 'needle');
+      expect(history.searchMatches, hasLength(2));
+    },
+  );
+
+  testWidgets(
+    'selected WYSIWYG formatting reaches Local History through workspace callbacks',
+    (tester) async {
+      const nativeMenuChannel = MethodChannel('busymark/native_menus');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        nativeMenuChannel,
+        (call) async => call.method == 'dismiss' ? true : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          nativeMenuChannel,
+          null,
+        ),
+      );
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final temp = Directory.systemTemp.createTempSync(
+        'busymark-wysiwyg-history-',
+      );
+      final file = File(p.join(temp.path, 'format.md'))
+        ..writeAsStringSync('First\n\nSecond\n\nThird\n');
+      addTearDown(() {
+        if (temp.existsSync()) temp.deleteSync(recursive: true);
+      });
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              validateOnEdit: false,
+              documentViewMode: DocumentViewModePreference.editor,
+            )
+            .toJson();
+      var now = DateTime.utc(2026, 3, 4, 11);
+      final timers = <_HistoryTestTimer>[];
+      final historyStore = MemoryLocalHistoryStore();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(
+            const _SearchWorkspaceService('First\n\nSecond\n\nThird\n'),
+          ),
+          startupPathProvider.overrideWithValue(file.path),
+          localHistoryStoreProvider.overrideWithValue(historyStore),
+          localHistoryClockProvider.overrideWithValue(() => now),
+          localHistoryTimerFactoryProvider.overrideWithValue((delay, callback) {
+            final timer = _HistoryTestTimer(delay, callback);
+            timers.add(timer);
+            return timer;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var index = 0; index < 40; index += 1) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (find
+            .byKey(const ValueKey('wysiwyg-document-content'))
+            .evaluate()
+            .isNotEmpty) {
+          break;
+        }
+      }
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      for (var index = 0; index < 40; index += 1) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (container
+                .read(localHistoryControllerProvider)
+                .selectedRevisions
+                .length ==
+            1) {
+          break;
+        }
+      }
+
+      final wysiwygFields = find.descendant(
+        of: find.byKey(const ValueKey('wysiwyg-document-content')),
+        matching: find.byType(TextField),
+      );
+      expect(wysiwygFields, findsWidgets);
+      final firstField = tester.widget<TextField>(wysiwygFields.first);
+      firstField.focusNode!.requestFocus();
+      firstField.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 5,
+      );
+      await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
+      await tester.pump();
+
+      const formatted = '**First**\n\nSecond\n\nThird\n';
+      expect(container.read(workspaceControllerProvider).activeText, formatted);
+      final bufferId = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .id;
+      for (var index = 0; index < 40; index += 1) {
+        await tester.pump(const Duration(milliseconds: 10));
+        if (container
+                .read(localHistoryControllerProvider.notifier)
+                .pendingSnapshotForBuffer(bufferId)
+                ?.text ==
+            formatted) {
+          break;
+        }
+      }
+      expect(timers, hasLength(1));
+      expect(timers.single.duration, const Duration(seconds: 60));
+      expect(
+        container.read(localHistoryControllerProvider).selectedRevisions,
+        hasLength(1),
+      );
+
+      now = now.add(const Duration(seconds: 60));
+      timers.single.fire();
+      for (var index = 0; index < 80; index += 1) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (container
+                .read(localHistoryControllerProvider)
+                .selectedRevisions
+                .length ==
+            2) {
+          break;
+        }
+      }
+      final history = container.read(localHistoryControllerProvider);
+      expect(history.selectedRevisions, hasLength(2));
+      final sources = <String>[];
+      for (final revision in history.selectedRevisions) {
+        sources.add((await historyStore.readRevision(revision.id))!.source);
+      }
+      expect(sources, contains(formatted));
+      expect(
+        find.descendant(
+          of: find.byType(LocalHistoryPanel),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is BusyMarkSidebarRecordRow,
+          ),
+        ),
+        findsNWidgets(2),
+      );
+    },
+  );
 
   testWidgets('Writerside sidebar shortcuts survive document view changes', (
     tester,
@@ -9321,6 +9756,29 @@ class _FallbackHeaderBarService extends LinuxHeaderBarService {
 
   @override
   Stream<HeaderBarAction> get actions => const Stream.empty();
+}
+
+class _HistoryTestTimer implements Timer {
+  _HistoryTestTimer(this.duration, this.callback);
+
+  final Duration duration;
+  final void Function() callback;
+  var _active = true;
+
+  void fire() {
+    if (!_active) return;
+    _active = false;
+    callback();
+  }
+
+  @override
+  void cancel() => _active = false;
+
+  @override
+  bool get isActive => _active;
+
+  @override
+  int get tick => _active ? 0 : 1;
 }
 
 class _MutableWorkspaceController extends WorkspaceController {

@@ -30,7 +30,6 @@ import '../workspace_controller.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
-import 'workspace_identity_row.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -265,6 +264,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.sidebarToc:
       case HeaderBarAction.sidebarOutline:
       case HeaderBarAction.sidebarGit:
+      case HeaderBarAction.sidebarLocalHistory:
+      case HeaderBarAction.sidebarClipboardHistory:
         break;
     }
   }
@@ -512,10 +513,17 @@ class _WelcomeSidebar extends StatelessWidget {
                     title: context.l10n.recent,
                     children: <Widget>[
                       for (final recent in recentWorkspaces)
-                        _WelcomeRecentRow(
-                          recent: recent,
+                        BusyMarkSidebarRecordRow<_RecentWorkspaceAction>(
+                          icon: WorkspaceGlyphs.forRecent(recent),
+                          title: busyMarkLtrIsolateFor(
+                            context,
+                            _displayPath(recent.path),
+                          ),
+                          subtitle: busyMarkLtrIsolateFor(context, recent.path),
                           onTap: () => unawaited(onOpenRecent(recent.path)),
-                          onAction: (action) =>
+                          menuTooltip: context.l10n.actions,
+                          menuItemsBuilder: _recentWorkspaceMenuItems,
+                          onMenuSelected: (action) =>
                               unawaited(onRecentAction(recent, action)),
                         ),
                     ],
@@ -555,135 +563,6 @@ class _WelcomeSidebarSection extends StatelessWidget {
 }
 
 enum _RecentWorkspaceAction { openInFiles, copyPath, removeFromRecent }
-
-class _WelcomeRecentRow extends StatefulWidget {
-  const _WelcomeRecentRow({
-    required this.recent,
-    required this.onTap,
-    required this.onAction,
-  });
-
-  final RecentWorkspace recent;
-  final VoidCallback onTap;
-  final ValueChanged<_RecentWorkspaceAction> onAction;
-
-  @override
-  State<_WelcomeRecentRow> createState() => _WelcomeRecentRowState();
-}
-
-class _WelcomeRecentRowState extends State<_WelcomeRecentRow> {
-  final _rowKey = GlobalKey();
-  late final FocusNode _rowFocusNode;
-  var _contextMenuOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _rowFocusNode = FocusNode(debugLabel: 'BusyMark recent workspace row');
-  }
-
-  @override
-  void dispose() {
-    _rowFocusNode.dispose();
-    super.dispose();
-  }
-
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (!isBusyMarkContextMenuKeyEvent(event)) {
-      return KeyEventResult.ignored;
-    }
-    unawaited(_showContextMenu());
-    return KeyEventResult.handled;
-  }
-
-  Future<void> _showContextMenu([Offset? position]) async {
-    if (_contextMenuOpen) {
-      return;
-    }
-    final rowContext = _rowKey.currentContext;
-    if (rowContext == null) {
-      return;
-    }
-    setState(() => _contextMenuOpen = true);
-    _RecentWorkspaceAction? action;
-    try {
-      final items = _recentWorkspaceMenuItems(rowContext);
-      action = position == null
-          ? await showBusyMarkMenu<_RecentWorkspaceAction>(
-              context: rowContext,
-              anchorContext: rowContext,
-              items: items,
-              focusFirst: true,
-            )
-          : await showBusyMarkContextMenu<_RecentWorkspaceAction>(
-              rowContext,
-              position,
-              items: items,
-            );
-    } finally {
-      if (mounted) {
-        setState(() => _contextMenuOpen = false);
-      }
-    }
-    if (mounted && action != null) {
-      widget.onAction(action);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final items = _recentWorkspaceMenuItems(context);
-    return KeyedSubtree(
-      key: _rowKey,
-      child: Focus(
-        onKeyEvent: _handleKeyEvent,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: BusyMarkStroke.hairline,
-          ),
-          child: Material(
-            color: _contextMenuOpen
-                ? busyMarkRowHoverColor(context)
-                : BusyMarkLinuxPalette.transparent,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              hoverColor: busyMarkRowHoverColor(context),
-              focusNode: _rowFocusNode,
-              onTap: widget.onTap,
-              onSecondaryTapUp: (details) {
-                _rowFocusNode.requestFocus();
-                unawaited(_showContextMenu(details.globalPosition));
-              },
-              child: WorkspaceIdentityRow(
-                height: BusyMarkSizes.sidebarTreeRowHeight * 2,
-                icon: WorkspaceGlyphs.forRecent(widget.recent),
-                name: busyMarkLtrIsolateFor(
-                  context,
-                  _displayPath(widget.recent.path),
-                ),
-                path: busyMarkLtrIsolateFor(context, widget.recent.path),
-                trailing: BusyMarkMenuButton<_RecentWorkspaceAction>(
-                  tooltip: context.l10n.actions,
-                  items: items,
-                  onSelected: widget.onAction,
-                  triggerBuilder: (context, trigger) => trigger.anchor(
-                    child: BusyMarkCompactIconButton(
-                      tooltip: context.l10n.actions,
-                      icon: BusyMarkGlyphs.menuVertical,
-                      focusNode: trigger.focusNode,
-                      onPressed: trigger.onPressed,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 List<PopupMenuEntry<_RecentWorkspaceAction>> _recentWorkspaceMenuItems(
   BuildContext context,

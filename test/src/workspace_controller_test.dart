@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
@@ -1184,6 +1187,93 @@ void main() {
     settingsController.dispose();
   });
 
+  test(
+    'Undo and Redo reschedule autosave after the prior save settled',
+    () async {
+      final service = _AutosaveWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller;
+
+      await controller.openPath(service.path);
+      controller.updateActiveText('# Changed\n');
+      await _waitFor(() => service.savedTexts.length == 1);
+      expect(controller.state.isDirty, isFalse);
+
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, '# Initial\n');
+      await _waitFor(() => service.savedTexts.length == 2);
+      expect(service.savedTexts.last, '# Initial\n');
+      expect(controller.state.isDirty, isFalse);
+
+      expect(controller.redoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, '# Changed\n');
+      await _waitFor(() => service.savedTexts.length == 3);
+      expect(service.savedTexts.last, '# Changed\n');
+      expect(controller.state.isDirty, isFalse);
+    },
+  );
+
+  test(
+    'inactive document updates schedule autosave without changing tabs',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller;
+
+      await harness.settingsController.setValidateOnEdit(false);
+      await controller.openPath(service.rootPath);
+      final aId = controller.state.activeBuffer!.id;
+      expect(await controller.openActiveFile(service.bPath), isTrue);
+      final activeB = controller.state.activeBuffer!.id;
+
+      expect(controller.updateDocumentText(aId, '# Inactive change\n'), isTrue);
+      expect(controller.state.activeBufferId, activeB);
+      await _waitFor(() => service.savedTexts.contains('# Inactive change\n'));
+      expect(controller.state.activeBufferId, activeB);
+      expect(
+        controller.state.documentBuffers
+            .singleWhere((buffer) => buffer.id == aId)
+            .isDirty,
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'failed workspace refresh restores eligible autosave scheduling',
+    () async {
+      final service = _FailingRefreshAutosaveWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller;
+
+      await controller.openPath(service.path);
+      controller.updateActiveText('# Save after refresh failure\n');
+      service.failRefresh = true;
+      expect(await controller.refreshWorkspaceFromDisk(), isFalse);
+      expect(controller.state.isDirty, isTrue);
+
+      await _waitFor(() => service.savedTexts.isNotEmpty);
+      expect(service.savedTexts, ['# Save after refresh failure\n']);
+      expect(controller.state.isDirty, isFalse);
+    },
+  );
+
+  test('disabled autosave stays disabled after a failed refresh', () async {
+    final service = _FailingRefreshAutosaveWorkspaceService();
+    final harness = await _createControllerHarness(service: service);
+    final controller = harness.controller;
+
+    await harness.settingsController.setAutoSave(false);
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Remains dirty\n');
+    service.failRefresh = true;
+    expect(await controller.refreshWorkspaceFromDisk(), isFalse);
+    await Future<void>.delayed(const Duration(milliseconds: 1700));
+
+    expect(service.savedTexts, isEmpty);
+    expect(controller.state.isDirty, isTrue);
+  });
+
   test('auto save remains scheduled independently for inactive tabs', () async {
     final service = _DelayedValidationWorkspaceService();
     final harness = await _createControllerHarness(service: service);
@@ -1320,6 +1410,39 @@ void main() {
       isFalse,
     );
   });
+
+  test(
+    'discard aborts when the document changes during protective history capture',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-close-history-race-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'draft.md');
+      await File(path).writeAsString('# Disk\n');
+      final historyStore = _BlockingBeforeDiscardStore();
+      final harness = await _createControllerHarness(
+        localHistoryStore: historyStore,
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller;
+      await controller.openPath(path);
+      controller.updateActiveText('# Approved discard state\n');
+      final bufferId = controller.state.activeBuffer!.id;
+
+      final close = controller.closeDocumentBuffer(bufferId, discard: true);
+      await historyStore.captureStarted.future;
+      controller.updateActiveText('# New edit while history is writing\n');
+      historyStore.releaseCapture.complete();
+
+      expect(await close, isFalse);
+      final surviving = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == bufferId,
+      );
+      expect(surviving.text, '# New edit while history is writing\n');
+      expect(surviving.isDirty, isTrue);
+    },
+  );
 
   test('discard waits for its buffer in-flight autosave', () async {
     final service = _AutosaveWorkspaceService(pauseFirstSave: true);
@@ -1703,6 +1826,60 @@ void main() {
       );
       expect(harness.controller.redoActiveBuffer(), isTrue);
       expect(harness.controller.state.activeText, '# Newer two\n');
+    },
+  );
+
+  test(
+    'tab activation reconciles edits accepted while its reparse is pending',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-activation-live-edits-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller;
+      await controller.openPath(directory.path);
+      final aId = controller.state.activeBuffer!.id;
+      expect(await controller.openActiveFile(bPath), isTrue);
+      final bId = controller.state.activeBuffer!.id;
+      expect(await controller.activateDocumentBuffer(aId), isTrue);
+
+      service.pauseNextReparse();
+      final activation = controller.activateDocumentBuffer(bId);
+      await service.reparseStarted.future;
+      controller.updateActiveSourceText('# A edited while B activates\n');
+      expect(controller.updateDocumentText(bId, '# B newest\n'), isTrue);
+      final liveA = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == aId,
+      );
+      final liveB = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == bId,
+      );
+
+      service.releaseReparse();
+      expect(await activation, isTrue);
+      expect(controller.state.activeBufferId, bId);
+      expect(controller.state.activeText, '# B newest\n');
+      expect(
+        controller.state.documentBuffers
+            .singleWhere((buffer) => buffer.id == aId)
+            .text,
+        liveA.text,
+      );
+      expect(controller.state.activeBuffer!.isDirty, isTrue);
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        liveB.editorState.undoState.undo,
+      );
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, '# B\n');
     },
   );
 
@@ -2225,6 +2402,7 @@ Future<_WorkspaceControllerHarness> _createControllerHarness({
   WorkspaceFileMonitor? fileMonitor,
   DocumentSessionStore? sessionStore,
   DocumentRecoveryStore? recoveryStore,
+  LocalHistoryStore? localHistoryStore,
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -2236,6 +2414,8 @@ Future<_WorkspaceControllerHarness> _createControllerHarness({
         documentSessionStoreProvider.overrideWithValue(sessionStore),
       if (recoveryStore != null)
         documentRecoveryStoreProvider.overrideWithValue(recoveryStore),
+      if (localHistoryStore != null)
+        localHistoryStoreProvider.overrideWithValue(localHistoryStore),
     ],
   );
   addTearDown(container.dispose);
@@ -2449,6 +2629,23 @@ class _MemorySettingsStore implements LocalSettingsStore {
   }
 }
 
+class _BlockingBeforeDiscardStore extends MemoryLocalHistoryStore {
+  final captureStarted = Completer<void>();
+  final releaseCapture = Completer<void>();
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.reason == LocalHistoryCaptureReason.beforeDiscard) {
+      captureStarted.complete();
+      await releaseCapture.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
 class _FailingDocumentSessionStore extends MemoryDocumentSessionStore {
   bool failSave = false;
 
@@ -2631,6 +2828,17 @@ class _AutosaveWorkspaceService extends WorkspaceService {
     if (!_releaseFirstSave.isCompleted) {
       _releaseFirstSave.complete();
     }
+  }
+}
+
+class _FailingRefreshAutosaveWorkspaceService
+    extends _AutosaveWorkspaceService {
+  var failRefresh = false;
+
+  @override
+  Future<Workspace> openPath(String path) {
+    if (failRefresh) throw StateError('injected refresh failure');
+    return super.openPath(path);
   }
 }
 

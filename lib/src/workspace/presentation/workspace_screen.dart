@@ -751,6 +751,17 @@ class WorkspaceScreen extends ConsumerWidget {
               const _SelectSidebarTabIntent(_SidebarTab.git),
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.git),
+          commandRegistry[BusyMarkCommandIds.localHistory]!.shortcut!.activator:
+              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
+          const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
+              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
+          commandRegistry[BusyMarkCommandIds.clipboardHistory]!
+              .shortcut!
+              .activator: const _SelectSidebarTabIntent(
+            _SidebarTab.clipboard,
+          ),
+          const SingleActivator(LogicalKeyboardKey.numpad6, control: true):
+              const _SelectSidebarTabIntent(_SidebarTab.clipboard),
         },
         child: Actions(
           actions: {
@@ -1064,6 +1075,10 @@ class WorkspaceScreen extends ConsumerWidget {
         _selectSidebarShortcut(ref, _SidebarTab.outline);
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
+      case HeaderBarAction.sidebarLocalHistory:
+        _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      case HeaderBarAction.sidebarClipboardHistory:
+        _selectSidebarShortcut(ref, _SidebarTab.clipboard);
       case HeaderBarAction.search:
         _toggleSearch(ref);
       case HeaderBarAction.menu:
@@ -2602,7 +2617,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git, clipboard, localHistory }
+enum _SidebarTab { files, toc, outline, git, localHistory, clipboard }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2627,28 +2642,28 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
     WorkspaceKind.untitledMarkdown => const [
       _SidebarTab.outline,
-      _SidebarTab.clipboard,
       _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
     WorkspaceKind.singleMarkdown => const [
       _SidebarTab.outline,
-      _SidebarTab.clipboard,
       _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.clipboard,
       _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.clipboard,
       _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
   };
 }
@@ -2659,8 +2674,8 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
     _SidebarTab.git => context.l10n.git,
-    _SidebarTab.clipboard => context.l10n.clipboardHistory,
     _SidebarTab.localHistory => context.l10n.localHistory,
+    _SidebarTab.clipboard => context.l10n.clipboardHistory,
   };
 }
 
@@ -2670,8 +2685,8 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.branch,
-    _SidebarTab.clipboard => BusyMarkGlyphs.copy,
     _SidebarTab.localHistory => BusyMarkGlyphs.documentHistory,
+    _SidebarTab.clipboard => BusyMarkGlyphs.copy,
   };
 }
 
@@ -2684,8 +2699,8 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
     _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
     _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
-    _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
     _SidebarTab.localHistory => BusyMarkCommandIds.localHistory,
+    _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
   };
   return commands[id]?.shortcut?.label;
 }
@@ -4119,6 +4134,19 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
             .read(workspaceControllerProvider.notifier)
             .openActiveFile(path);
         if (!opened || !mounted) return;
+        final requestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where(
+              (buffer) =>
+                  buffer.filePath != null && p.equals(buffer.filePath!, path),
+            )
+            .firstOrNull;
+        if (requestedBuffer == null) return;
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForBuffer(requestedBuffer);
+        if (!mounted) return;
         ref
             .read(_sidebarShortcutRequestProvider.notifier)
             .select(_SidebarTab.localHistory);
@@ -8686,14 +8714,24 @@ class _EditorTabStrip extends ConsumerWidget {
     if (action == null || !context.mounted) return;
     switch (action) {
       case _WorkspaceTabAction.localHistory:
-        final buffer = state.documentBuffers
+        final requestedBuffer = state.documentBuffers
             .where((candidate) => candidate.id == entry.bufferId)
             .firstOrNull;
-        if (buffer == null) return;
+        if (requestedBuffer == null) return;
         final activated = await ref
             .read(workspaceControllerProvider.notifier)
-            .activateDocumentBuffer(buffer.id);
+            .activateDocumentBuffer(requestedBuffer.id);
         if (!activated || !context.mounted) return;
+        final currentRequestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == requestedBuffer.id)
+            .firstOrNull;
+        if (currentRequestedBuffer == null) return;
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForBuffer(currentRequestedBuffer);
+        if (!context.mounted) return;
         ref
             .read(_sidebarShortcutRequestProvider.notifier)
             .select(_SidebarTab.localHistory);
