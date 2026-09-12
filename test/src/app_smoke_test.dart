@@ -9163,6 +9163,48 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.pump(const Duration(seconds: 1));
   });
 
+  testWidgets(
+    'literal workspace search bounds malformed Markdown snippets around the match',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'Active document\n',
+        'b.md': 'First line\n${'[' * 40000}needle\n',
+      });
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.searchResultLine('b.md', 2)).evaluate().isNotEmpty,
+      );
+      final results = find.byKey(const ValueKey('workspace-search-results'));
+      final title = tester
+          .widgetList<Text>(
+            find.descendant(of: results, matching: find.byType(Text)),
+          )
+          .singleWhere((text) => text.data?.contains('needle') == true)
+          .data!;
+      expect(title.length, lessThanOrEqualTo(120));
+      expect(title, startsWith('…'));
+      expect(title, endsWith('needle'));
+      expect(
+        session.container.read(workspaceControllerProvider).documentBuffers,
+        hasLength(1),
+      );
+      // Result titles are also formatted during unrelated workspace rebuilds.
+      final rebuild = Stopwatch()..start();
+      final settings = session.container.read(appSettingsControllerProvider);
+      await session.container
+          .read(appSettingsControllerProvider.notifier)
+          .setWordWrap(!settings.wordWrap);
+      await tester.pump();
+      rebuild.stop();
+      expect(rebuild.elapsed, lessThan(const Duration(seconds: 1)));
+      expect(find.text(title), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
   testWidgets('preview search result clicks move preview scroll repeatedly', (
     tester,
   ) async {

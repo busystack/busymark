@@ -153,6 +153,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _replacementWorker = SearchReplacementWorker();
   bool _applyingSearchReplacement = false;
   ({int start, int end})? _requestedSearchRange;
+  bool _searchNavigationFailed = false;
   final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
@@ -238,6 +239,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         widget.searchOptions != oldWidget.searchOptions ||
         authoritativeDocumentChanged) {
       _requestedSearchRange = null;
+      _searchNavigationFailed = false;
       _syncSearchOptions();
     }
     if (widget.wordWrap && !oldWidget.wordWrap) {
@@ -341,6 +343,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final end = endOffset.clamp(start, _controller.fullText.length).toInt();
     _replacementWorker.cancel();
     _requestedSearchRange = start < end ? (start: start, end: end) : null;
+    _searchNavigationFailed = false;
     _focusNode.requestFocus();
     _controller.fullSelection = TextSelection(
       baseOffset: start,
@@ -741,6 +744,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                   ),
                 ),
                 replacement: widget.searchReplacement,
+                canReplaceCurrent:
+                    _requestedSearchRange == null && !_searchNavigationFailed,
                 onReplacementChanged:
                     widget.onSearchReplacementChanged ?? (_) {},
                 onReplaceCurrent: () => unawaited(_replaceCurrentSearchMatch()),
@@ -905,16 +910,21 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               _searchController.acceptResult(result);
               final requestedRange = _requestedSearchRange;
               if (requestedRange != null) {
+                _requestedSearchRange = null;
                 final localIndex = result.matches.indexWhere(
                   (match) =>
                       match.fullStart == requestedRange.start &&
                       match.fullEnd == requestedRange.end,
                 );
+                _searchNavigationFailed = localIndex < 0;
                 if (localIndex >= 0) {
                   _searchController.setCurrentMatchIndex(
                     result.firstMatchIndex + localIndex,
                   );
-                  _requestedSearchRange = null;
+                } else {
+                  // A completed lookup with no exact match must not silently
+                  // turn Replace Current into replacement of the first result.
+                  _searchController.setCurrentMatchIndex(null);
                 }
               } else if (minimumFullOffset != null &&
                   result.matches.isNotEmpty) {
@@ -958,6 +968,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _nextSearchMatch() {
     _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -971,6 +982,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _previousSearchMatch() {
     _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -1003,7 +1015,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
     if (_searchController.result.invalidRegex ||
-        _requestedSearchRange != null) {
+        _requestedSearchRange != null ||
+        _searchNavigationFailed) {
       return;
     }
     if (_searchController.result.currentMatchIndex == null) {
@@ -1209,6 +1222,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _handleSourceChanged() {
     _replacementWorker.cancel();
+    // Sidebar offsets belong to the pre-edit document. Once the user edits,
+    // resume normal search on the new text instead of awaiting the old range.
+    _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final visibleEdit = _controller.lastVisibleEdit;
     final selection = _controller.fullSelection;
     final previousSelection =
@@ -2532,6 +2549,7 @@ class _SourceSearchPanel extends StatefulWidget {
     required this.onToggleWholeWord,
     required this.onToggleRegex,
     required this.replacement,
+    required this.canReplaceCurrent,
     required this.onReplacementChanged,
     required this.onReplaceCurrent,
     required this.onReplaceAndFindNext,
@@ -2546,6 +2564,7 @@ class _SourceSearchPanel extends StatefulWidget {
   final VoidCallback onToggleWholeWord;
   final VoidCallback onToggleRegex;
   final String replacement;
+  final bool canReplaceCurrent;
   final ValueChanged<String> onReplacementChanged;
   final VoidCallback onReplaceCurrent;
   final VoidCallback onReplaceAndFindNext;
@@ -2683,14 +2702,16 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   _SearchPanelIconButton(
                     tooltip: context.l10n.sourceSearchReplaceCurrent,
                     icon: BusyMarkGlyphs.edit,
-                    onPressed: result.totalMatchCount == 0
+                    onPressed:
+                        result.totalMatchCount == 0 || !widget.canReplaceCurrent
                         ? null
                         : widget.onReplaceCurrent,
                   ),
                   _SearchPanelIconButton(
                     tooltip: context.l10n.sourceSearchReplaceAndFindNext,
                     icon: BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    onPressed: result.totalMatchCount == 0
+                    onPressed:
+                        result.totalMatchCount == 0 || !widget.canReplaceCurrent
                         ? null
                         : widget.onReplaceAndFindNext,
                   ),

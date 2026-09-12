@@ -40,6 +40,106 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  for (final lookupFinished in [false, true]) {
+    for (final findNext in [false, true]) {
+      testWidgets(
+        'search replacement recovers after editing a ${lookupFinished ? 'missing' : 'pending'} result (${findNext ? 'find next' : 'current'})',
+        (tester) async {
+          final key = GlobalKey<BusyMarkSourceEditorState>();
+          var text = lookupFinished ? 'dog cat cat' : 'cat cat cat';
+          await tester.pumpWidget(
+            MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: StatefulBuilder(
+                  builder: (context, setState) => BusyMarkSourceEditor(
+                    key: key,
+                    text: text,
+                    language: SourceSyntaxLanguage.markdown,
+                    filePath: '/project/topic.md',
+                    diagnostics: const [],
+                    editorFontSize: 14,
+                    wordWrap: true,
+                    searchActive: true,
+                    searchOptions: const SourceSearchOptions(query: 'cat'),
+                    searchReplacement: 'bat',
+                    onSearchReplacementChanged: (_) {},
+                    onSearchOptionsChanged: (_) {},
+                    onChanged: (value, _) => setState(() => text = value),
+                    onOpenSearch: () {},
+                    onCloseSearch: () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+          final controller = tester
+              .widgetList<TextField>(find.byType(TextField))
+              .map((field) => field.controller)
+              .whereType<BusyMarkSourceEditingController>()
+              .single;
+          // Click before the initial search debounce expires, as happens when
+          // entering a previously unopened document through the sidebar.
+          key.currentState!.scrollToSearchRange(
+            line: 1,
+            startOffset: 0,
+            endOffset: 3,
+          );
+          await tester.pump();
+          final en = AppLocalizationsEn();
+          YaruIconButton button(String tooltip) => tester
+              .widgetList<YaruIconButton>(find.byType(YaruIconButton))
+              .singleWhere((button) => button.tooltip == tooltip);
+          if (lookupFinished) {
+            await _pumpUntil(
+              tester,
+              () => controller.searchResult.totalMatchCount == 2,
+            );
+            await tester.pump();
+            // A missing target is settled with replacement unavailable, not
+            // silently redirected to a different occurrence.
+            expect(controller.searchResult.currentMatchIndex, isNull);
+            expect(button(en.sourceSearchReplaceCurrent).onPressed, isNull);
+            expect(button(en.sourceSearchReplaceAndFindNext).onPressed, isNull);
+            expect(button(en.sourceSearchNextMatch).onPressed, isNotNull);
+            expect(
+              controller.fullSelection,
+              const TextSelection(baseOffset: 0, extentOffset: 3),
+            );
+          } else {
+            expect(controller.searchResult.matches, isEmpty);
+          }
+          final edited = lookupFinished ? 'fox cat cat' : 'dog cat cat';
+          tester.testTextInput.updateEditingValue(
+            TextEditingValue(
+              text: edited,
+              selection: const TextSelection.collapsed(offset: 3),
+            ),
+          );
+          await tester.pump();
+          expect(text, edited);
+          await _pumpUntil(
+            tester,
+            () => controller.searchResult.totalMatchCount == 2,
+          );
+          await tester.pump();
+          final tooltip = findNext
+              ? en.sourceSearchReplaceAndFindNext
+              : en.sourceSearchReplaceCurrent;
+          expect(button(tooltip).onPressed, isNotNull);
+          await tester.tap(find.byTooltip(tooltip));
+          await _pumpUntil(
+            tester,
+            () => text == edited.replaceRange(4, 7, 'bat'),
+          );
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
   for (final count in [3, 3000]) {
     testWidgets('Replace current follows selected result with $count matches', (
       tester,

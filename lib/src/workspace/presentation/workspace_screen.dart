@@ -14373,6 +14373,7 @@ Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
         hasZeroLengthMatches |= search.hasZeroLengthMatches;
         for (final match in search.matches) {
           final line = document.lineIndex.lineNumberAtOffset(match.fullStart);
+          final sourceLine = document.lineIndex.lineAt(line);
           results.add(
             _WorkspaceSearchMatch(
               kind: _WorkspaceSearchMatchKind.text,
@@ -14383,7 +14384,10 @@ Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
               startOffset: match.fullStart,
               endOffset: match.fullEnd,
               query: options.query,
-              lineText: document.lineIndex.lineAt(line).text,
+              lineText: _boundedSearchSnippet(
+                sourceLine.text,
+                matchStart: match.fullStart - sourceLine.startOffset,
+              ),
             ),
           );
         }
@@ -14437,11 +14441,28 @@ String _searchResultTitle(BuildContext context, String line) {
   if (trimmed.length <= 120) {
     return trimmed;
   }
-  return '${trimmed.substring(0, 117)}...';
+  var end = 117;
+  if (!sourceSearchRangeHasSafeBoundaries(trimmed, end, end)) end--;
+  return '${trimmed.substring(0, end)}...';
+}
+
+// Limit the input to Markdown cleanup, whose regexes can backtrack on malformed
+// markup. Keep the match near the beginning so it survives the title's shorter
+// display limit. The two ellipses are included in the 512-code-unit budget.
+String _boundedSearchSnippet(String line, {int matchStart = 0}) {
+  const maximumLength = 512;
+  if (line.length <= 120) return line;
+  var start = math.max(0, matchStart.clamp(0, line.length) - 40);
+  if (!sourceSearchRangeHasSafeBoundaries(line, start, start)) start--;
+  var end = math.min(line.length, start + maximumLength - 2);
+  if (!sourceSearchRangeHasSafeBoundaries(line, end, end)) end--;
+  return '${start > 0 ? '…' : ''}${line.substring(start, end)}'
+      '${end < line.length ? '…' : ''}';
 }
 
 String _stripMarkdownForSearchResult(String line, {BuildContext? context}) {
-  var value = line.trim();
+  // Preview navigation also calls this helper directly with source lines.
+  var value = _boundedSearchSnippet(line).trim();
   final fence = RegExp(
     r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
   ).firstMatch(value);
