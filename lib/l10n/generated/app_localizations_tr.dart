@@ -1558,6 +1558,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Geçersiz düzenli ifade';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, \$ veya yalnızca bir konumla eşleşen ileri bakışlar).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.';
+
+  @override
+  String get workspaceSearchShowMore => 'Daha fazla sonuç göster';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Büyük dosya: vurgulama ve katlama duraklatıldı';
 

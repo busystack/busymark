@@ -1558,6 +1558,21 @@ class AppLocalizationsEt extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, \$ või ainult asukohta sobitavad ettevaated).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.';
+
+  @override
+  String get workspaceSearchShowMore => 'Kuva rohkem tulemusi';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Suur fail: esiletõstmine ja voltimine on peatatud';
 

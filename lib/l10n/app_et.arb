@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, $ või ainult asukohta sobitavad ettevaated).",
+  "workspaceSearchIncomplete": "Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.",
+  "workspaceSearchShowMore": "Kuva rohkem tulemusi",
+  "workspaceSearchSkippedFiles": "Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:",
   "@@locale": "et",
   "reportIssue": "Teata probleemist",
   "@reportIssue": {

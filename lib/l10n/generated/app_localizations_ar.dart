@@ -1567,6 +1567,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'تعبير نمطي غير صالح';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو \$ أو الاستباق الذي يطابق موضعًا فقط).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.';
+
+  @override
+  String get workspaceSearchShowMore => 'عرض المزيد من النتائج';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'ملف كبير: تم إيقاف التمييز والطي مؤقتًا';
 

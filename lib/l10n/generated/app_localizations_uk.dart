@@ -1589,6 +1589,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, \$ або перевірки вперед, що збігаються лише з позицією).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Показано лише частину результатів. Покажіть більше або звузьте пошук.';
+
+  @override
+  String get workspaceSearchShowMore => 'Показати більше результатів';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Великий файл: підсвічування та згортання призупинено';
 

@@ -1554,6 +1554,21 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Biểu thức chính quy không hợp lệ';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, \$ hoặc lookahead chỉ khớp với một vị trí).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.';
+
+  @override
+  String get workspaceSearchShowMore => 'Hiển thị thêm kết quả';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Tệp lớn: đã tạm dừng tô sáng và thu gọn';
 

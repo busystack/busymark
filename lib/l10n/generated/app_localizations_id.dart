@@ -1561,6 +1561,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Ekspresi reguler tidak valid';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, \$, atau lookahead yang hanya cocok dengan posisi).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.';
+
+  @override
+  String get workspaceSearchShowMore => 'Tampilkan lebih banyak hasil';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Pencarian belum lengkap. Berkas ini melebihi 1 MiB atau tidak dapat dibaca:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'File besar: penyorotan dan pelipatan dijeda';
 

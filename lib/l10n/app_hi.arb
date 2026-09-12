@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, $ या केवल स्थिति से मेल खाने वाले लुकअहेड)।",
+  "workspaceSearchIncomplete": "केवल कुछ परिणाम दिखाए गए हैं। अधिक परिणाम देखें या खोज को सीमित करें।",
+  "workspaceSearchShowMore": "अधिक परिणाम दिखाएँ",
+  "workspaceSearchSkippedFiles": "खोज अधूरी है। ये फ़ाइलें 1 MiB से बड़ी हैं या पढ़ी नहीं जा सकीं:",
   "@@locale": "hi",
   "reportIssue": "समस्या की रिपोर्ट करें",
   "feedbackCategory": "श्रेणी",

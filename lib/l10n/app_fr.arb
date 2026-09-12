@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Les correspondances de longueur nulle ne sont pas prises en charge (par exemple ^, $ ou les assertions qui ne correspondent qu’à une position).",
+  "workspaceSearchIncomplete": "Seule une partie des résultats est affichée. Affichez-en davantage ou affinez la recherche.",
+  "workspaceSearchShowMore": "Afficher plus de résultats",
+  "workspaceSearchSkippedFiles": "La recherche est incomplète. Ces fichiers dépassent 1 MiB ou n’ont pas pu être lus :",
   "@@locale": "fr",
   "reportIssue": "Signaler un problème",
   "feedbackCategory": "Catégorie",

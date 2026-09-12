@@ -1555,6 +1555,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'शून्य लंबाई वाले रेगेक्स मिलान समर्थित नहीं हैं (जैसे ^, \$ या केवल स्थिति से मेल खाने वाले लुकअहेड)।';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'केवल कुछ परिणाम दिखाए गए हैं। अधिक परिणाम देखें या खोज को सीमित करें।';
+
+  @override
+  String get workspaceSearchShowMore => 'अधिक परिणाम दिखाएँ';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'खोज अधूरी है। ये फ़ाइलें 1 MiB से बड़ी हैं या पढ़ी नहीं जा सकीं:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं';
 

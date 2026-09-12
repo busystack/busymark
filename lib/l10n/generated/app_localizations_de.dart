@@ -1581,6 +1581,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Ungültiger regulärer Ausdruck';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-Treffer ohne Zeichen werden nicht unterstützt (z. B. ^, \$ oder Lookaheads, die nur eine Position treffen).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Es wird nur ein Teil der Ergebnisse angezeigt. Zeigen Sie mehr an oder grenzen Sie die Suche ein.';
+
+  @override
+  String get workspaceSearchShowMore => 'Weitere Ergebnisse anzeigen';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Die Suche ist unvollständig. Diese Dateien sind größer als 1 MiB oder konnten nicht gelesen werden:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Große Datei: Hervorhebung und Faltung sind pausiert';
 

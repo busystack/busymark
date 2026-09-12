@@ -1561,6 +1561,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Invalid regular expression';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Only some results are shown. Show more or narrow your search.';
+
+  @override
+  String get workspaceSearchShowMore => 'Show more results';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Search is incomplete. These files exceeded 1 MiB or could not be read:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Large file: highlighting and folding are paused';
 

@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, $ of lookaheads die alleen een positie vinden).",
+  "workspaceSearchIncomplete": "Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.",
+  "workspaceSearchShowMore": "Meer resultaten tonen",
+  "workspaceSearchSkippedFiles": "De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:",
   "@@locale": "nl",
   "appTitle": "BusyMark",
   "@appTitle": {

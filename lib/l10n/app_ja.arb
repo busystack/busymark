@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "長さがゼロの正規表現の一致には対応していません（^、$、位置のみに一致する先読みなど）。",
+  "workspaceSearchIncomplete": "一部の結果のみ表示しています。さらに表示するか、検索を絞り込んでください。",
+  "workspaceSearchShowMore": "さらに結果を表示",
+  "workspaceSearchSkippedFiles": "検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:",
   "@@locale": "ja",
   "appTitle": "BusyMark",
   "@appTitle": {

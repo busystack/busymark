@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Não há suporte para correspondências regex de comprimento zero (por exemplo, ^, $ ou antecipações que correspondem apenas a uma posição).",
+  "workspaceSearchIncomplete": "Apenas alguns resultados são exibidos. Mostre mais ou restrinja a pesquisa.",
+  "workspaceSearchShowMore": "Mostrar mais resultados",
+  "workspaceSearchSkippedFiles": "A pesquisa está incompleta. Estes arquivos excedem 1 MiB ou não puderam ser lidos:",
   "@@locale": "pt_BR",
   "reportIssue": "Comunicar um problema",
   "feedbackCategory": "Categoria",

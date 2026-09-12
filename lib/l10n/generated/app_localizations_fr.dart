@@ -1581,6 +1581,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Expression régulière non valide';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Les correspondances de longueur nulle ne sont pas prises en charge (par exemple ^, \$ ou les assertions qui ne correspondent qu’à une position).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Seule une partie des résultats est affichée. Affichez-en davantage ou affinez la recherche.';
+
+  @override
+  String get workspaceSearchShowMore => 'Afficher plus de résultats';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'La recherche est incomplète. Ces fichiers dépassent 1 MiB ou n’ont pas pu être lus :';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Fichier volumineux : la coloration et le repliage sont suspendus';
 

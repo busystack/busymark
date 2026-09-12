@@ -17,6 +17,7 @@ import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
+import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
@@ -30,6 +31,9 @@ import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/source/source_search.dart';
+import 'package:busymark/src/editor/source_highlighter.dart'
+    show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
@@ -48,6 +52,7 @@ import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/gestures.dart';
@@ -8719,6 +8724,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .toJson();
       final container = ProviderContainer(
         overrides: [
+          systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
+          workspaceFileMonitorProvider.overrideWith(
+            (ref) => _SearchTestFileMonitor(),
+          ),
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -8749,7 +8758,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pump();
       await tester.enterText(find.byType(TextField), 'needle');
       await tester.pump(const Duration(milliseconds: 150));
-
+      await _waitForSearchCondition(tester, () => service.searchReadCount == 1);
       expect(service.searchReadCount, 1);
       expect(
         find.byKey(const ValueKey('workspace-search-progress')),
@@ -8757,8 +8766,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
 
       service.completeSearchRead('Delayed needle result');
-      await tester.pump();
-      await tester.pump();
+      await _waitForSearchCondition(
+        tester,
+        () => find.text('Delayed needle result').evaluate().isNotEmpty,
+      );
 
       expect(
         find.byKey(const ValueKey('workspace-search-progress')),
@@ -8801,9 +8812,356 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pump(const Duration(milliseconds: 150));
       await tester.pump();
 
+      await _waitForSearchCondition(tester, () => service.searchReadCount == 2);
       expect(service.searchReadCount, 2);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
     },
   );
+
+  testWidgets(
+    'workspace search native submit uses exact payload and selected sidebar occurrence',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'cat\n cat \n cat \n',
+      });
+      session.events.add(const HeaderBarSearchSubmitted(' cat '));
+      await _waitForSearchCondition(
+        tester,
+        () => _searchSourceController(tester).searchResult.totalMatchCount == 2,
+      );
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.searchResultLine('a.md', 3)).evaluate().isNotEmpty,
+      );
+      expect(
+        tester
+            .widget<HeaderBarConfigurationPublisher>(
+              find.byType(HeaderBarConfigurationPublisher),
+            )
+            .configuration
+            .searchQuery,
+        ' cat ',
+      );
+      await tester.tap(find.text(l10n.searchResultLine('a.md', 3)));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            _searchSourceController(tester).searchResult.currentMatchIndex == 1,
+      );
+      expect(
+        _searchSourceController(tester).fullSelection,
+        const TextSelection(baseOffset: 10, extentOffset: 15),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('source-search-replacement')),
+        ' dog ',
+      );
+      await tester.pump();
+      await tester.tap(find.byTooltip(l10n.sourceSearchReplaceCurrent));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            session.container.read(workspaceControllerProvider).activeText ==
+            'cat\n cat \n dog \n',
+      );
+      session.events.add(const HeaderBarSearchSubmitted(' '));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            _searchSourceController(tester).searchResult.options.query == ' ' &&
+            _searchSourceController(tester).searchResult.totalMatchCount == 4,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'workspace search preserves query and lands on unopened destination',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'First file\n',
+        'b.md': 'Before\nsecond needle result\n',
+      });
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text('second needle result').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('second needle result'));
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            session.container
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.filePath
+                ?.endsWith('/b.md') ==
+            true,
+      );
+      await _waitForSearchCondition(
+        tester,
+        () =>
+            _searchSourceController(tester).searchResult.currentMatchIndex == 0,
+      );
+      final source = _searchSourceController(tester);
+      expect(
+        source.fullSelection,
+        const TextSelection(baseOffset: 14, extentOffset: 20),
+      );
+      expect(source.searchResult.options.query, 'needle');
+      await _waitForSearchCondition(
+        tester,
+        () => find.text('second needle result').evaluate().isNotEmpty,
+      );
+      expect(
+        tester
+            .widget<HeaderBarConfigurationPublisher>(
+              find.byType(HeaderBarConfigurationPublisher),
+            )
+            .configuration
+            .searchQuery,
+        'needle',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets('workspace search observes edits to inactive buffers', (
+    tester,
+  ) async {
+    final session = await _pumpSearchRegression(tester, headerBarService, {
+      'a.md': 'First file\n',
+      'b.md': 'disk needle\n',
+    });
+    final controller = session.container.read(
+      workspaceControllerProvider.notifier,
+    );
+    await controller.openActiveFile('${_SearchRegressionService.root}/b.md');
+    await tester.pump();
+    final buffer = session.container
+        .read(workspaceControllerProvider)
+        .activeBuffer!;
+    controller.updateDocumentEditorState(
+      buffer.id,
+      buffer.editorState.copyWith(
+        searchOptions: const SourceSearchOptions(
+          query: 'old query',
+          caseSensitive: true,
+          wholeWord: true,
+          regex: true,
+        ),
+      ),
+    );
+    controller.updateDocumentText(buffer.id, 'unsaved needle\n');
+    await controller.openActiveFile('${_SearchRegressionService.root}/a.md');
+    await tester.pump();
+    session.events.add(const HeaderBarSearchQueryChanged('needle'));
+    await _waitForSearchCondition(
+      tester,
+      () => find.text('unsaved needle').evaluate().isNotEmpty,
+    );
+    expect(find.text('disk needle'), findsNothing);
+    controller.updateDocumentText(buffer.id, 'removed\n');
+    await _waitForSearchCondition(
+      tester,
+      () => find.text(l10n.noResults).evaluate().isNotEmpty,
+    );
+    controller.updateDocumentText(buffer.id, 'added needle\n');
+    await _waitForSearchCondition(
+      tester,
+      () => find.text('added needle').evaluate().isNotEmpty,
+    );
+    await tester.tap(find.text('added needle'));
+    await _waitForSearchCondition(
+      tester,
+      () =>
+          _searchSourceController(tester).fullSelection ==
+          const TextSelection(baseOffset: 6, extentOffset: 12),
+    );
+    expect(
+      _searchSourceController(tester).searchResult.options.query,
+      'needle',
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets(
+    'workspace search reports limits and continues into later files',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': List.generate(80, (i) => 'needle $i').join('\n'),
+        'b.md': 'later needle\n',
+      });
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.workspaceSearchShowMore).evaluate().isNotEmpty,
+      );
+      expect(find.text(l10n.workspaceSearchIncomplete), findsOneWidget);
+      await tester.tap(find.text(l10n.workspaceSearchShowMore));
+      await _waitForSearchCondition(
+        tester,
+        () => find
+            .byKey(const ValueKey('workspace-search-progress'))
+            .evaluate()
+            .isEmpty,
+      );
+      expect(find.text(l10n.workspaceSearchIncomplete), findsNothing);
+      final sidebarList = find.byKey(
+        const ValueKey('workspace-search-results'),
+      );
+      final scrollable = find
+          .descendant(of: sidebarList, matching: find.byType(Scrollable))
+          .first;
+      await tester.scrollUntilVisible(
+        find.text('later needle'),
+        400,
+        scrollable: scrollable,
+        maxScrolls: 60,
+      );
+      expect(find.text('later needle'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets('workspace search exposes skipped files and regex diagnostics', (
+    tester,
+  ) async {
+    final session = await _pumpSearchRegression(
+      tester,
+      headerBarService,
+      {
+        'a.md': 'active\n',
+        'large.md': 'large needle',
+        'unreadable.md': 'needle',
+      },
+      oversized: {'large.md'},
+      unreadable: {'unreadable.md'},
+    );
+    session.events.add(const HeaderBarSearchQueryChanged('needle'));
+    await _waitForSearchCondition(
+      tester,
+      () => find
+          .textContaining(l10n.workspaceSearchSkippedFiles)
+          .evaluate()
+          .isNotEmpty,
+    );
+    expect(find.text(l10n.noResults), findsNothing);
+    expect(find.textContaining('large.md\nunreadable.md'), findsOneWidget);
+    await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
+    session.events.add(const HeaderBarSearchQueryChanged('['));
+    await _waitForSearchCondition(
+      tester,
+      () => find.text(l10n.sourceSearchInvalidRegex).evaluate().length == 2,
+    );
+    expect(find.text(l10n.noResults), findsNothing);
+    session.events.add(const HeaderBarSearchQueryChanged('^'));
+    await _waitForSearchCondition(
+      tester,
+      () =>
+          find.text(l10n.sourceSearchZeroLengthUnsupported).evaluate().length ==
+          2,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets(
+    'workspace search cancels expensive regex while UI keeps building',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'active\n',
+        'b.md': '${'a' * 100}b\n',
+      });
+      session.events.add(const HeaderBarSearchQueryChanged('needle'));
+      await tester.pump();
+      await tester.tap(find.byTooltip(l10n.sourceSearchRegex));
+      session.events.add(const HeaderBarSearchQueryChanged(r'^(a+)+$'));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 150)),
+      );
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsOneWidget,
+      );
+      await session.container
+          .read(appSettingsControllerProvider.notifier)
+          .setWordWrap(false);
+      await tester.pump();
+      session.events.add(const HeaderBarSearchQueryChanged('active'));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
+      );
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsNothing,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets(
+    'workspace search replacement review loads an asynchronous plan',
+    (tester) async {
+      final session = await _pumpSearchRegression(tester, headerBarService, {
+        'a.md': 'cat cat\n',
+        'b.md': 'cat\n',
+      });
+      session.events.add(const HeaderBarSearchQueryChanged('cat'));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.workspaceReplace).evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text(l10n.workspaceReplace));
+      await tester.pumpAndSettle();
+      final entry = find.descendant(
+        of: find.byType(BusyMarkModalEditorScaffold),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(entry, 'dog');
+      await tester.tap(find.text(l10n.reviewReplacements));
+      await _waitForSearchCondition(
+        tester,
+        () => find.text(l10n.applyReplacements).evaluate().isNotEmpty,
+      );
+      expect(find.text('cat → dog'), findsNWidgets(3));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(
+        session.container.read(workspaceControllerProvider).activeText,
+        'cat cat\n',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  testWidgets('preview search highlights preserve Unicode offsets', (
+    tester,
+  ) async {
+    final session = await _pumpSearchRegression(tester, headerBarService, {
+      'a.md': 'İ needle\n',
+    }, mode: DocumentViewModePreference.preview);
+    session.events.add(const HeaderBarSearchQueryChanged('needle'));
+    await _waitForSearchCondition(
+      tester,
+      () => find.text(l10n.searchResultLine('a.md', 1)).evaluate().isNotEmpty,
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('İ needle', findRichText: true), findsWidgets);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
 
   testWidgets('preview search result clicks move preview scroll repeatedly', (
     tester,
@@ -8868,7 +9226,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
     await tester.enterText(find.byType(TextField), 'needle');
     await tester.pump(const Duration(milliseconds: 150));
-    await tester.pump();
+    await _waitForSearchCondition(
+      tester,
+      () => find.text('Second needle target').evaluate().isNotEmpty,
+    );
 
     expect(
       find.text('- **First [needle target](https://example.com)**'),
@@ -9026,7 +9387,14 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
     await tester.enterText(find.byType(TextField), 'code needle');
     await tester.pump(const Duration(milliseconds: 150));
-    await tester.pump();
+    await _waitForSearchCondition(
+      tester,
+      () => find
+          .textContaining('second code needle target')
+          .hitTestable()
+          .evaluate()
+          .isNotEmpty,
+    );
 
     await _tapLeftmostText(tester, 'second code needle target');
     await tester.pump();
@@ -9090,7 +9458,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
     await tester.enterText(find.byType(TextField), 'ac');
     await tester.pump(const Duration(milliseconds: 150));
-    await tester.pump();
+    await _waitForSearchCondition(
+      tester,
+      () => find.textContaining(target).hitTestable().evaluate().isNotEmpty,
+    );
 
     await _tapLeftmostText(tester, target);
     await tester.pump();
@@ -10146,6 +10517,149 @@ GitFileStatus _gitStatusFile(
     conflicted: conflicted,
     ignored: category == GitFileStatusCategory.ignored,
   );
+}
+
+Future<void> _waitForSearchCondition(
+  WidgetTester tester,
+  bool Function() condition,
+) async {
+  for (var attempt = 0; attempt < 300; attempt++) {
+    await tester.pump(const Duration(milliseconds: 20));
+    if (condition()) return;
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+  }
+  fail('Timed out waiting for workspace search.');
+}
+
+BusyMarkSourceEditingController _searchSourceController(WidgetTester tester) =>
+    tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.controller)
+        .whereType<BusyMarkSourceEditingController>()
+        .single;
+
+Future<
+  ({ProviderContainer container, StreamController<HeaderBarSearchEvent> events})
+>
+_pumpSearchRegression(
+  WidgetTester tester,
+  LinuxHeaderBarService headerBar,
+  Map<String, String> sources, {
+  Set<String> oversized = const {},
+  Set<String> unreadable = const {},
+  DocumentViewModePreference mode = DocumentViewModePreference.source,
+}) async {
+  final events = StreamController<HeaderBarSearchEvent>.broadcast();
+  final settings = _MemorySettingsStore()
+    ..value = AppSettings.defaults()
+        .copyWith(autoSave: false, documentViewMode: mode)
+        .toJson();
+  final container = ProviderContainer(
+    overrides: [
+      systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
+      workspaceFileMonitorProvider.overrideWith(
+        (ref) => _SearchTestFileMonitor(),
+      ),
+      linuxHeaderBarServiceProvider.overrideWithValue(headerBar),
+      headerBarSearchEventsProvider.overrideWith((ref) => events.stream),
+      localSettingsStoreProvider.overrideWithValue(settings),
+      workspaceServiceProvider.overrideWithValue(
+        _SearchRegressionService(
+          sources,
+          oversized: oversized,
+          unreadable: unreadable,
+        ),
+      ),
+      startupPathProvider.overrideWithValue(
+        '${_SearchRegressionService.root}/a.md',
+      ),
+    ],
+  );
+  addTearDown(() {
+    container.dispose();
+    unawaited(events.close());
+  });
+  await tester.pumpWidget(
+    UncontrolledProviderScope(container: container, child: const BusyMarkApp()),
+  );
+  await _waitForSearchCondition(
+    tester,
+    () =>
+        container.read(workspaceControllerProvider).activeBuffer != null &&
+        find.byType(HeaderBarConfigurationPublisher).evaluate().isNotEmpty,
+  );
+  return (container: container, events: events);
+}
+
+class _SearchTestFileMonitor extends WorkspaceFileMonitor {
+  @override
+  Future<void> start({
+    required String rootPath,
+    required Iterable<String> openFilePaths,
+  }) async {}
+}
+
+class _SearchRegressionService extends WorkspaceService {
+  _SearchRegressionService(
+    this.sources, {
+    this.oversized = const {},
+    this.unreadable = const {},
+  });
+  static const root = '/tmp/busymark-search-regression';
+  final Map<String, String> sources;
+  final Set<String> oversized;
+  final Set<String> unreadable;
+
+  @override
+  Future<Workspace> openPath(String path) async => Workspace(
+    id: root,
+    rootPath: root,
+    kind: WorkspaceKind.markdownFolder,
+    openedAt: DateTime(2026),
+    activeFilePath: path,
+    files: [
+      for (final entry in sources.entries)
+        DocumentFile(
+          absolutePath: '$root/${entry.key}',
+          relativePath: entry.key,
+          kind: entry.key.endsWith('.cfg')
+              ? DocumentKind.config
+              : DocumentKind.markdown,
+          size: oversized.contains(entry.key)
+              ? 1024 * 1024 + 1
+              : entry.value.length,
+          lastModified: DateTime(2026),
+        ),
+    ],
+    diagnostics: const [],
+    markdown: markdownParser.parse(
+      filePath: path,
+      source: sources[p.basename(path)]!,
+    ),
+  );
+
+  @override
+  Future<String> loadText(String path) async {
+    if (unreadable.contains(p.basename(path))) {
+      throw FileSystemException('unreadable', path);
+    }
+    return sources[p.basename(path)]!;
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final text = await loadText(path);
+    return WorkspaceFileLoad(
+      text: text,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: text.length,
+        contentHash: text,
+      ),
+    );
+  }
 }
 
 class _SearchWorkspaceService extends WorkspaceService {

@@ -1491,6 +1491,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceSearchInvalidRegex => '无效的正则表达式';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
+
+  @override
+  String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
+
+  @override
+  String get workspaceSearchShowMore => '显示更多结果';
+
+  @override
+  String get workspaceSearchSkippedFiles => '搜索不完整。以下文件超过 1 MiB 或无法读取：';
+
+  @override
   String get sourceLargeFileFeaturesPaused => '大文件：已暂停语法突出显示和折叠';
 
   @override
@@ -5474,6 +5487,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get sourceSearchInvalidRegex => '无效的正则表达式';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
+
+  @override
+  String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
+
+  @override
+  String get workspaceSearchShowMore => '显示更多结果';
+
+  @override
+  String get workspaceSearchSkippedFiles => '搜索不完整。以下文件超过 1 MiB 或无法读取：';
 
   @override
   String get sourceLargeFileFeaturesPaused => '大文件：已暂停语法突出显示和折叠';

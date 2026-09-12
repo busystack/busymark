@@ -1572,6 +1572,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Expressão regular inválida';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Não são suportadas correspondências regex de comprimento zero (por exemplo, ^, \$ ou antecipações que correspondem apenas a uma posição).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Só são apresentados alguns resultados. Mostre mais ou restrinja a pesquisa.';
+
+  @override
+  String get workspaceSearchShowMore => 'Mostrar mais resultados';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'A pesquisa está incompleta. Estes ficheiros excedem 1 MiB ou não foi possível lê-los:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Ficheiro grande: o realce e o recolhimento estão pausados';
 
@@ -5804,6 +5819,21 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get sourceSearchInvalidRegex => 'Expressão regular inválida';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Não há suporte para correspondências regex de comprimento zero (por exemplo, ^, \$ ou antecipações que correspondem apenas a uma posição).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Apenas alguns resultados são exibidos. Mostre mais ou restrinja a pesquisa.';
+
+  @override
+  String get workspaceSearchShowMore => 'Mostrar mais resultados';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'A pesquisa está incompleta. Estes arquivos excedem 1 MiB ou não puderam ser lidos:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>

@@ -1509,6 +1509,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sourceSearchInvalidRegex => '잘못된 정규식';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, \$, 위치에만 일치하는 전방 탐색).';
+
+  @override
+  String get workspaceSearchIncomplete => '일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.';
+
+  @override
+  String get workspaceSearchShowMore => '결과 더 보기';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      '검색이 완료되지 않았습니다. 다음 파일은 1 MiB를 초과하거나 읽을 수 없습니다:';
+
+  @override
   String get sourceLargeFileFeaturesPaused => '대용량 파일: 강조 표시 및 접기가 일시 중지됩니다.';
 
   @override

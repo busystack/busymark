@@ -2863,6 +2863,30 @@ abstract class AppLocalizations {
   /// **'Invalid regular expression'**
   String get sourceSearchInvalidRegex;
 
+  /// No description provided for @sourceSearchZeroLengthUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).'**
+  String get sourceSearchZeroLengthUnsupported;
+
+  /// No description provided for @workspaceSearchIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Only some results are shown. Show more or narrow your search.'**
+  String get workspaceSearchIncomplete;
+
+  /// No description provided for @workspaceSearchShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more results'**
+  String get workspaceSearchShowMore;
+
+  /// No description provided for @workspaceSearchSkippedFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search is incomplete. These files exceeded 1 MiB or could not be read:'**
+  String get workspaceSearchSkippedFiles;
+
   /// Status banner shown when source highlighting and folding are disabled for a large file.
   ///
   /// In en, this message translates to:

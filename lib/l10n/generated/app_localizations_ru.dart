@@ -1581,6 +1581,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Некорректное регулярное выражение';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Совпадения регулярных выражений нулевой длины не поддерживаются (например, ^, \$ или проверки вперёд, совпадающие только с позицией).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Показана только часть результатов. Покажите больше или уточните поиск.';
+
+  @override
+  String get workspaceSearchShowMore => 'Показать больше результатов';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Поиск неполный. Эти файлы превышают 1 MiB или не могут быть прочитаны:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Большой файл: подсветка и сворачивание приостановлены';
 

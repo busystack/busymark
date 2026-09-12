@@ -151,6 +151,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _searchController = SourceSearchController();
   final _searchWorker = SourceSearchWorker();
   final _replacementWorker = SearchReplacementWorker();
+  bool _applyingSearchReplacement = false;
+  ({int start, int end})? _requestedSearchRange;
   final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
@@ -235,6 +237,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (widget.searchActive != oldWidget.searchActive ||
         widget.searchOptions != oldWidget.searchOptions ||
         authoritativeDocumentChanged) {
+      _requestedSearchRange = null;
       _syncSearchOptions();
     }
     if (widget.wordWrap && !oldWidget.wordWrap) {
@@ -336,11 +339,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _unfoldSourceRange(startOffset, endOffset);
     final start = startOffset.clamp(0, _controller.fullText.length).toInt();
     final end = endOffset.clamp(start, _controller.fullText.length).toInt();
+    _replacementWorker.cancel();
+    _requestedSearchRange = start < end ? (start: start, end: end) : null;
     _focusNode.requestFocus();
     _controller.fullSelection = TextSelection(
       baseOffset: start,
       extentOffset: end,
     );
+    final result = _searchController.result;
+    final localIndex = result.matches.indexWhere(
+      (match) => match.fullStart == start && match.fullEnd == end,
+    );
+    if (localIndex >= 0) {
+      _requestedSearchRange = null;
+      _searchController.setCurrentMatchIndex(
+        result.firstMatchIndex + localIndex,
+      );
+      _controller.setSearchResult(_searchController.result);
+      setState(() {});
+    } else if (start < end) {
+      _scheduleSearch(
+        minimumFullOffset: start,
+        revealCurrentAfterRefresh: true,
+        wrapIfOffsetMissing: false,
+      );
+    } else {
+      _searchController.setCurrentMatchIndex(null);
+      _controller.setSearchResult(_searchController.result);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateScrollToLine(line);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -877,7 +903,21 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 return;
               }
               _searchController.acceptResult(result);
-              if (minimumFullOffset != null && result.matches.isNotEmpty) {
+              final requestedRange = _requestedSearchRange;
+              if (requestedRange != null) {
+                final localIndex = result.matches.indexWhere(
+                  (match) =>
+                      match.fullStart == requestedRange.start &&
+                      match.fullEnd == requestedRange.end,
+                );
+                if (localIndex >= 0) {
+                  _searchController.setCurrentMatchIndex(
+                    result.firstMatchIndex + localIndex,
+                  );
+                  _requestedSearchRange = null;
+                }
+              } else if (minimumFullOffset != null &&
+                  result.matches.isNotEmpty) {
                 _searchController.setCurrentMatchIndex(result.firstMatchIndex);
               } else if (revealCurrentAfterRefresh &&
                   _searchController.result.currentMatch == null &&
@@ -917,6 +957,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _nextSearchMatch() {
+    _requestedSearchRange = null;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -929,6 +970,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _previousSearchMatch() {
+    _requestedSearchRange = null;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -960,7 +1002,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
-    if (_searchController.result.invalidRegex) {
+    if (_searchController.result.invalidRegex ||
+        _requestedSearchRange != null) {
       return;
     }
     if (_searchController.result.currentMatchIndex == null) {
@@ -986,6 +1029,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         !identical(document, _controller.document) ||
         options != widget.searchOptions ||
         replacement != widget.searchReplacement ||
+        _searchController.result.currentMatchIndex != currentIndex ||
         preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
@@ -996,27 +1040,25 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       match.end,
       match.replacement,
     );
-    _applyFullEditingValue(
-      TextEditingValue(
-        text: nextText,
-        selection: TextSelection(
-          baseOffset: match.start,
-          extentOffset: match.start + match.replacement.length,
+    _applyingSearchReplacement = true;
+    try {
+      _applyFullEditingValue(
+        TextEditingValue(
+          text: nextText,
+          selection: TextSelection(
+            baseOffset: match.start,
+            extentOffset: match.start + match.replacement.length,
+          ),
         ),
-      ),
-    );
-    final replacementEnd = match.start + match.replacement.length;
-    if (findNext) {
-      _refreshSearch(
-        minimumFullOffset: replacementEnd,
-        revealCurrentAfterRefresh: true,
       );
-    } else {
-      _refreshSearch(
-        currentIndex: currentIndex,
-        firstMatchIndex: _searchController.result.firstMatchIndex,
-      );
+    } finally {
+      _applyingSearchReplacement = false;
     }
+    final replacementEnd = match.start + match.replacement.length;
+    _refreshSearch(
+      minimumFullOffset: findNext ? replacementEnd : match.start,
+      revealCurrentAfterRefresh: true,
+    );
   }
 
   Future<void> _replaceAllSearchMatches() async {
@@ -1066,10 +1108,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       });
       return;
     }
-    final currentIndex = _searchController.result.currentMatchIndex;
     if (match.hidden) {
       _unfoldSourceRange(match.fullStart, match.fullEnd);
-      _refreshSearch(currentIndex: currentIndex);
     }
     final line = _controller.document.lineIndex.lineNumberAtOffset(
       match.fullStart,
@@ -1181,10 +1221,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final currentSearchIndex = _searchController.result.currentMatchIndex;
     final firstMatchIndex = _searchController.result.firstMatchIndex;
     _scheduleFoldRefresh();
-    _refreshSearch(
-      currentIndex: currentSearchIndex,
-      firstMatchIndex: firstMatchIndex,
-    );
+    if (!_applyingSearchReplacement) {
+      _refreshSearch(
+        currentIndex: currentSearchIndex,
+        firstMatchIndex: firstMatchIndex,
+      );
+    }
     final transactionalCallback = widget.onTransactionalChanged;
     if (transactionalCallback == null) {
       widget.onChanged(_controller.fullText, widget.filePath);
@@ -2559,6 +2601,11 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (result.hasZeroLengthMatches)
+              Text(
+                context.l10n.sourceSearchZeroLengthUnsupported,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

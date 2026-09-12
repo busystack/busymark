@@ -1562,6 +1562,21 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-treff med null lengde støttes ikke (for eksempel ^, \$ eller fremoversøk som bare samsvarer med en posisjon).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Bare noen av resultatene vises. Vis flere eller avgrens søket.';
+
+  @override
+  String get workspaceSearchShowMore => 'Vis flere resultater';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Stor fil: utheving og folding er satt på pause';
 

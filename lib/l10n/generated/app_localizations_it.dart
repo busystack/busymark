@@ -1575,6 +1575,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Espressione regolare non valida';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Le corrispondenze regex di lunghezza zero non sono supportate (ad esempio ^, \$ o lookahead che corrispondono solo a una posizione).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'È mostrata solo una parte dei risultati. Mostrane altri o restringi la ricerca.';
+
+  @override
+  String get workspaceSearchShowMore => 'Mostra altri risultati';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'La ricerca è incompleta. Questi file superano 1 MiB o non è stato possibile leggerli:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi';
 

@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "不支持零长度的正则表达式匹配（例如 ^、$ 或仅匹配位置的前瞻断言）。",
+  "workspaceSearchIncomplete": "仅显示了部分结果。请显示更多结果或缩小搜索范围。",
+  "workspaceSearchShowMore": "显示更多结果",
+  "workspaceSearchSkippedFiles": "搜索不完整。以下文件超过 1 MiB 或无法读取：",
   "@@locale": "zh_CN",
   "appTitle": "BusyMark",
   "@appTitle": {

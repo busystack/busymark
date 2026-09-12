@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Regex-Treffer ohne Zeichen werden nicht unterstützt (z. B. ^, $ oder Lookaheads, die nur eine Position treffen).",
+  "workspaceSearchIncomplete": "Es wird nur ein Teil der Ergebnisse angezeigt. Zeigen Sie mehr an oder grenzen Sie die Suche ein.",
+  "workspaceSearchShowMore": "Weitere Ergebnisse anzeigen",
+  "workspaceSearchSkippedFiles": "Die Suche ist unvollständig. Diese Dateien sind größer als 1 MiB oder konnten nicht gelesen werden:",
   "@@locale": "de",
   "reportIssue": "Problem melden",
   "feedbackCategory": "Kategorie",

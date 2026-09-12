@@ -40,6 +40,154 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  for (final count in [3, 3000]) {
+    testWidgets('Replace current follows selected result with $count matches', (
+      tester,
+    ) async {
+      final key = GlobalKey<BusyMarkSourceEditorState>();
+      final selectedIndex = count == 3 ? 1 : 2048;
+      var currentText = List.filled(count, 'cat').join(' ');
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => BusyMarkSourceEditor(
+                key: key,
+                text: currentText,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'cat'),
+                searchReplacement: 'dog',
+                onSearchReplacementChanged: (_) {},
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) => setState(() => currentText = text),
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == count,
+      );
+      // Establish a different current index before using the sidebar's API.
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchNextMatch),
+      );
+      await tester.pump();
+      key.currentState!.scrollToSearchRange(
+        line: 1,
+        startOffset: selectedIndex * 4,
+        endOffset: selectedIndex * 4 + 3,
+      );
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.currentMatchIndex == selectedIndex,
+      );
+      await tester.pump();
+      expect(controller.fullSelection.start, selectedIndex * 4);
+      expect(find.text('${selectedIndex + 1} / $count'), findsOneWidget);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceCurrent),
+      );
+      await _pumpUntil(
+        tester,
+        () => currentText.split(' ')[selectedIndex] == 'dog',
+      );
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == count - 1,
+      );
+      expect(
+        controller.searchResult.currentMatch!.fullStart,
+        (selectedIndex + 1) * 4,
+      );
+      expect(controller.fullSelection.start, (selectedIndex + 1) * 4);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceCurrent),
+      );
+      await _pumpUntil(
+        tester,
+        () => currentText.split(' ')[selectedIndex + 1] == 'dog',
+      );
+      expect(currentText.split(' ').take(selectedIndex), everyElement('cat'));
+      expect(
+        currentText.split(' ').where((word) => word == 'dog'),
+        hasLength(2),
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    });
+  }
+
+  testWidgets('search navigation retains a later window when unfolding', (
+    tester,
+  ) async {
+    final source = '# Section\n${'cat\n' * 3000}';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).first;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: '/project/topic.md',
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: true,
+            searchOptions: const SourceSearchOptions(query: 'cat'),
+            initialFoldedRegionKeys: {region.key},
+            onSearchOptionsChanged: (_) {},
+            onChanged: (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+          ),
+        ),
+      ),
+    );
+    final controller = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.controller)
+        .whereType<BusyMarkSourceEditingController>()
+        .single;
+    await _pumpUntil(
+      tester,
+      () => controller.searchResult.totalMatchCount == 3000,
+    );
+    await tester.tap(
+      find.byTooltip(AppLocalizationsEn().sourceSearchPreviousMatch),
+    );
+    await _pumpUntil(
+      tester,
+      () =>
+          controller.searchResult.currentMatchIndex == 2999 &&
+          controller.searchResult.currentMatch?.hidden == false,
+    );
+    expect(controller.fullSelection.start, source.lastIndexOf('cat'));
+    expect(controller.searchResult.firstMatchIndex, greaterThan(0));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('source AI action applies a selection through the editor path', (
     tester,
   ) async {

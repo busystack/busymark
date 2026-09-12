@@ -78,6 +78,7 @@ import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_panel.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../search/search_replace_service.dart';
+import '../../search/workspace_search_scope.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
@@ -163,6 +164,8 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
   static const _debounceDelay = Duration(milliseconds: 120);
 
   Timer? _debounce;
+  final _worker = SourceSearchWorker();
+  int _resultLimit = _maxWorkspaceSearchResults;
   late Future<String> Function(String path) _loadText;
   var _request = 0;
   var _disposed = false;
@@ -174,14 +177,14 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       final activeBufferChanged =
           previous?.activeBufferId != next.activeBufferId;
       var shouldRefresh = _workspaceSearchInputsChanged(previous, next);
-      if (activeBufferChanged) {
+      if (activeBufferChanged && !state.active) {
         final options = next.activeBuffer?.editorState.searchOptions;
         if (options != null) {
           state = state
               .withOptions(options)
               .copyWith(matches: const [], searching: false);
         }
-      } else {
+      } else if (!activeBufferChanged) {
         final previousOptions =
             previous?.activeBuffer?.editorState.searchOptions;
         final nextOptions = next.activeBuffer?.editorState.searchOptions;
@@ -202,6 +205,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       _disposed = true;
       _request += 1;
       _debounce?.cancel();
+      _worker.dispose();
     });
     return const _WorkspaceSearchState();
   }
@@ -213,6 +217,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
         state.wholeWord != searchState.wholeWord ||
         state.regex != searchState.regex ||
         state.active != searchState.active;
+    if (inputChanged) _resultLimit = _maxWorkspaceSearchResults;
     state = searchState.copyWith(
       matches: inputChanged ? const [] : state.matches,
       searching: false,
@@ -241,6 +246,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
 
   Future<bool> submit() async {
     _debounce?.cancel();
+    _worker.cancel();
     final request = ++_request;
     final workspaceState = ref.read(workspaceControllerProvider);
     final options = state.options;
@@ -260,6 +266,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
 
   void _schedule(WorkspaceState workspaceState) {
     _debounce?.cancel();
+    _worker.cancel();
     final request = ++_request;
     final workspace = workspaceState.workspace;
     final options = state.options;
@@ -273,7 +280,14 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       }
       return;
     }
-    state = state.copyWith(matches: const [], searching: true);
+    state = state.copyWith(
+      matches: const [],
+      searching: true,
+      truncated: false,
+      skippedFiles: const [],
+      invalidRegex: false,
+      hasZeroLengthMatches: false,
+    );
     _debounce = Timer(_debounceDelay, () {
       _debounce = null;
       unawaited(
@@ -292,22 +306,40 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
     required SourceSearchOptions options,
   }) async {
     try {
-      final matches = await _loadWorkspaceSearchMatches(
+      final result = await _loadWorkspaceSearchMatches(
         workspaceState,
         options,
         loadText: _loadText,
         isCancelled: () => _disposed || request != _request,
+        worker: _worker,
+        maximumResults: _resultLimit,
       );
       if (_disposed || request != _request) {
         return;
       }
-      state = state.copyWith(matches: matches, searching: false);
+      state = state.copyWith(
+        matches: result.matches,
+        searching: false,
+        truncated: result.truncated,
+        skippedFiles: result.skippedFiles,
+        invalidRegex: result.invalidRegex,
+        hasZeroLengthMatches: result.hasZeroLengthMatches,
+      );
     } on Object {
       if (_disposed || request != _request) {
         return;
       }
-      state = state.copyWith(matches: const [], searching: false);
+      state = state.copyWith(
+        matches: const [],
+        searching: false,
+        skippedFiles: [workspaceState.workspace?.rootPath ?? ''],
+      );
     }
+  }
+
+  void showMore() {
+    _resultLimit += _maxWorkspaceSearchResults;
+    _schedule(ref.read(workspaceControllerProvider));
   }
 }
 
@@ -390,6 +422,10 @@ class _WorkspaceSearchState {
     this.regex = false,
     this.matches = const [],
     this.searching = false,
+    this.truncated = false,
+    this.skippedFiles = const [],
+    this.invalidRegex = false,
+    this.hasZeroLengthMatches = false,
   });
 
   final bool active;
@@ -399,9 +435,13 @@ class _WorkspaceSearchState {
   final bool regex;
   final List<_WorkspaceSearchMatch> matches;
   final bool searching;
+  final bool truncated;
+  final List<String> skippedFiles;
+  final bool invalidRegex;
+  final bool hasZeroLengthMatches;
 
   SourceSearchOptions get options => SourceSearchOptions(
-    query: query.trim(),
+    query: query,
     caseSensitive: caseSensitive,
     wholeWord: wholeWord,
     regex: regex,
@@ -415,6 +455,10 @@ class _WorkspaceSearchState {
     bool? regex,
     List<_WorkspaceSearchMatch>? matches,
     bool? searching,
+    bool? truncated,
+    List<String>? skippedFiles,
+    bool? invalidRegex,
+    bool? hasZeroLengthMatches,
   }) {
     return _WorkspaceSearchState(
       active: active ?? this.active,
@@ -424,6 +468,10 @@ class _WorkspaceSearchState {
       regex: regex ?? this.regex,
       matches: matches ?? this.matches,
       searching: searching ?? this.searching,
+      truncated: truncated ?? this.truncated,
+      skippedFiles: skippedFiles ?? this.skippedFiles,
+      invalidRegex: invalidRegex ?? this.invalidRegex,
+      hasZeroLengthMatches: hasZeroLengthMatches ?? this.hasZeroLengthMatches,
     );
   }
 
@@ -455,6 +503,19 @@ bool _workspaceSearchInputsChanged(
       previous.activeBufferId != next.activeBufferId ||
       previous.activeText != next.activeText) {
     return true;
+  }
+  if (previous.documentBuffers.length != next.documentBuffers.length) {
+    return true;
+  }
+  for (var index = 0; index < next.documentBuffers.length; index++) {
+    final before = previous.documentBuffers[index];
+    final after = next.documentBuffers[index];
+    if (before.id != after.id ||
+        before.filePath != after.filePath ||
+        before.revision != after.revision ||
+        before.text != after.text) {
+      return true;
+    }
   }
   final previousWorkspace = previous.workspace;
   final nextWorkspace = next.workspace;
@@ -644,7 +705,12 @@ class WorkspaceScreen extends ConsumerWidget {
                 .read(_workspaceSearchProvider.notifier)
                 .set(current.copyWith(active: true, query: query));
             unawaited(settingsController.setSidebarVisible(true));
-          case HeaderBarSearchSubmitted():
+          case HeaderBarSearchSubmitted(:final query):
+            final current = ref.read(_workspaceSearchProvider);
+            ref
+                .read(_workspaceSearchProvider.notifier)
+                .set(current.copyWith(active: true, query: query));
+            unawaited(settingsController.setSidebarVisible(true));
             unawaited(_submitSearch(context, ref));
           case HeaderBarSearchCleared():
             _clearSearchQuery(ref);
@@ -1230,19 +1296,23 @@ class WorkspaceScreen extends ConsumerWidget {
     _WorkspaceSearchResult result,
   ) async {
     final workspace = ref.read(workspaceControllerProvider).workspace;
+    final searchOptions = ref.read(_workspaceSearchProvider).options;
     if (workspace == null) {
       return;
     }
     final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (activePath != result.filePath) {
-      await ref
+      final opened = await ref
           .read(workspaceControllerProvider.notifier)
           .openActiveFile(result.filePath);
+      if (!opened) return;
     }
-    _clearGitDetailSelection(ref);
-    if (!context.mounted) {
+    if (!context.mounted ||
+        ref.read(workspaceControllerProvider).workspace?.id != workspace.id ||
+        ref.read(_workspaceSearchProvider).options != searchOptions) {
       return;
     }
+    _clearGitDetailSelection(ref);
     final previous = ref.read(_searchNavigationTargetProvider);
     ref
         .read(_searchNavigationTargetProvider.notifier)
@@ -2075,6 +2145,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late String _workspaceId;
   String? _activeFilePath;
   _WritersideTopicUsageReview? _topicUsageReview;
+  WorkspaceReplacementCancellation? _replacementCancellation;
+
+  @override
+  void dispose() {
+    _replacementCancellation?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -2110,6 +2187,17 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   @override
   Widget build(BuildContext context) {
     final tabs = _sidebarTabsFor(widget.workspace.kind);
+    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
+      if (_workspaceSearchInputsChanged(previous, next)) {
+        _replacementCancellation?.cancel();
+      }
+    });
+    ref.listen(_workspaceSearchProvider, (previous, next) {
+      if (previous?.options != next.options ||
+          previous?.active != next.active) {
+        _replacementCancellation?.cancel();
+      }
+    });
     final gitState = ref.watch(gitControllerProvider);
     final repositoryInfo = gitState.attachedWorkspace?.id == widget.workspace.id
         ? gitState.repositoryInfo
@@ -2153,6 +2241,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     query: widget.searchState.query,
                     results: widget.searchResults,
                     searching: widget.searchState.searching,
+                    state: widget.searchState,
+                    onShowMore: () =>
+                        ref.read(_workspaceSearchProvider.notifier).showMore(),
                     onOpenResult: widget.onOpenSearchResult,
                     onReviewReplacement: _reviewWorkspaceReplacement,
                   )
@@ -2480,13 +2571,35 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return;
     }
     final service = const SearchReplacementService();
-    final preview = await service.previewWorkspace(
+    _replacementCancellation?.cancel();
+    final cancellation = WorkspaceReplacementCancellation();
+    _replacementCancellation = cancellation;
+    final previewFuture = service.previewWorkspace(
       state: ref.read(workspaceControllerProvider),
       workspaceService: ref.read(workspaceServiceProvider),
       options: widget.searchState.options,
       replacement: requested,
+      cancellation: cancellation,
     );
-    if (!mounted) {
+    final preview =
+        await showBusyMarkModalEditorDialog<WorkspaceReplacementPreview>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          maxWidth: BusyMarkSizes.dialogCompact,
+          builder: (dialogContext) => _WorkspaceReplacementProgress(
+            future: previewFuture,
+            cancellation: cancellation,
+          ),
+        );
+    cancellation.cancel();
+    if (identical(_replacementCancellation, cancellation)) {
+      _replacementCancellation = null;
+    }
+    if (!mounted ||
+        preview == null ||
+        preview.issues.any(
+          (issue) => issue.kind == WorkspaceReplacementIssueKind.cancelled,
+        )) {
       return;
     }
     if (preview.files.isEmpty && preview.issues.isEmpty) {
@@ -4850,18 +4963,7 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
 }
 
 bool _isOpenableTextDocument(DocumentFile file) {
-  return switch (file.kind) {
-    DocumentKind.markdown ||
-    DocumentKind.writersideMarkdownTopic ||
-    DocumentKind.writersideXmlTopic ||
-    DocumentKind.tree ||
-    DocumentKind.config ||
-    DocumentKind.variables ||
-    DocumentKind.categories ||
-    DocumentKind.gitIgnore ||
-    DocumentKind.resource => true,
-    DocumentKind.image || DocumentKind.unknown => false,
-  };
+  return isSearchableWorkspaceDocument(file);
 }
 
 class _FileTreeNode {
@@ -10064,6 +10166,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _wysiwygSearchQuery;
   BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
+  var _lastSearchNavigationRequest = 0;
 
   @override
   void initState() {
@@ -10176,16 +10279,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         }
       });
     });
-    ref.listen(_searchNavigationTargetProvider, (previous, next) {
-      if (next == null) {
-        return;
-      }
-      if (next.filePath != widget.state.workspace?.activeFilePath &&
-          next.filePath != widget.state.workspace?.markdown?.filePath) {
-        return;
-      }
-      _scrollToSearchTarget(next);
-    });
+    final searchTarget = ref.watch(_searchNavigationTargetProvider);
+    if (searchTarget != null &&
+        ref.read(_workspaceSearchProvider).active &&
+        ref.read(_workspaceSearchProvider).query == searchTarget.query &&
+        searchTarget.request != _lastSearchNavigationRequest) {
+      _scrollToSearchTarget(searchTarget);
+    }
     final colors = BusyMarkSurfaceColors.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -10958,9 +11058,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _scrollToSearchTarget(_SearchNavigationTarget target) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted ||
+          ref.read(_searchNavigationTargetProvider)?.request !=
+              target.request ||
+          _lastSearchNavigationRequest == target.request ||
+          (target.filePath != widget.state.workspace?.activeFilePath &&
+              target.filePath != widget.state.workspace?.markdown?.filePath)) {
         return;
       }
+      _lastSearchNavigationRequest = target.request;
       final editorVisible =
           widget.viewMode == DocumentViewModePreference.editor;
       final wysiwygVisible =
@@ -11077,7 +11183,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
-    final query = target.query.trim();
+    final query = target.query;
     if (query.isEmpty || !_previewScrollController.isAttached) {
       return false;
     }
@@ -12365,7 +12471,7 @@ class _PreviewInlineText extends ConsumerWidget {
     final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
       _remoteImageWorkspacePath(workspace),
     );
-    final highlightQuery = searchState.active ? searchState.query.trim() : '';
+    final highlightQuery = searchState.active ? searchState.query : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
         : block.inlines;
@@ -12496,7 +12602,7 @@ int _searchResultOrdinalInSource(
   String source,
   _SearchNavigationTarget target,
 ) {
-  final normalizedQuery = target.query.trim().toLowerCase();
+  final normalizedQuery = target.query.toLowerCase();
   if (normalizedQuery.isEmpty) {
     return 0;
   }
@@ -12525,7 +12631,7 @@ int? _previewSearchBlockIndexForOrdinal(
   String query,
   int ordinal,
 ) {
-  final normalizedQuery = query.trim().toLowerCase();
+  final normalizedQuery = query.toLowerCase();
   if (normalizedQuery.isEmpty) {
     return null;
   }
@@ -13286,15 +13392,15 @@ List<InlineSpan>? _highlightedPreviewTextSpans(
   MouseCursor? mouseCursor,
   GestureRecognizer? Function()? recognizerBuilder,
 }) {
-  final normalizedQuery = query.trim().toLowerCase();
-  if (normalizedQuery.isEmpty) {
+  if (query.isEmpty) {
     return null;
   }
-  final normalizedText = text.toLowerCase();
-  final firstMatch = normalizedText.indexOf(normalizedQuery);
-  if (firstMatch < 0) {
-    return null;
-  }
+  final matches = RegExp(
+    RegExp.escape(query),
+    caseSensitive: false,
+    unicode: true,
+  ).allMatches(text);
+  if (matches.isEmpty) return null;
   final highlightStyle =
       style?.merge(
         TextStyle(
@@ -13310,29 +13416,27 @@ List<InlineSpan>? _highlightedPreviewTextSpans(
       );
   final spans = <InlineSpan>[];
   var cursor = 0;
-  var match = firstMatch;
-  while (match >= 0) {
-    if (match > cursor) {
+  for (final match in matches) {
+    if (match.start > cursor) {
       spans.add(
         TextSpan(
-          text: text.substring(cursor, match),
+          text: text.substring(cursor, match.start),
           style: style,
           mouseCursor: mouseCursor,
           recognizer: recognizerBuilder?.call(),
         ),
       );
     }
-    final end = match + normalizedQuery.length;
+    final end = match.end;
     spans.add(
       TextSpan(
-        text: text.substring(match, end),
+        text: text.substring(match.start, end),
         style: highlightStyle,
         mouseCursor: mouseCursor,
         recognizer: recognizerBuilder?.call(),
       ),
     );
     cursor = end;
-    match = normalizedText.indexOf(normalizedQuery, cursor);
   }
   if (cursor < text.length) {
     spans.add(
@@ -13683,6 +13787,8 @@ class _SearchSidebar extends StatelessWidget {
     required this.searching,
     required this.onOpenResult,
     required this.onReviewReplacement,
+    required this.state,
+    required this.onShowMore,
   });
 
   final String query;
@@ -13690,10 +13796,12 @@ class _SearchSidebar extends StatelessWidget {
   final bool searching;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
   final Future<void> Function() onReviewReplacement;
+  final _WorkspaceSearchState state;
+  final VoidCallback onShowMore;
 
   @override
   Widget build(BuildContext context) {
-    final normalizedQuery = query.trim();
+    final normalizedQuery = query;
     if (normalizedQuery.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.search,
@@ -13708,7 +13816,15 @@ class _SearchSidebar extends StatelessWidget {
       );
     }
     final colors = BusyMarkSurfaceColors.of(context);
-    if (results.isEmpty) {
+    if (state.invalidRegex) {
+      return _SidebarEmptyState(
+        icon: BusyMarkGlyphs.searchUnavailable,
+        title: context.l10n.sourceSearchInvalidRegex,
+      );
+    }
+    if (results.isEmpty &&
+        state.skippedFiles.isEmpty &&
+        !state.hasZeroLengthMatches) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.searchUnavailable,
         title: context.l10n.noResults,
@@ -13734,8 +13850,35 @@ class _SearchSidebar extends StatelessWidget {
         ),
         Expanded(
           child: ListView(
+            key: const ValueKey('workspace-search-results'),
             padding: BusyMarkInsets.sidebarList,
             children: [
+              if (state.hasZeroLengthMatches)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Text(context.l10n.sourceSearchZeroLengthUnsupported),
+                ),
+              if (state.truncated)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Column(
+                    children: [
+                      Text(context.l10n.workspaceSearchIncomplete),
+                      TextButton(
+                        onPressed: onShowMore,
+                        child: Text(context.l10n.workspaceSearchShowMore),
+                      ),
+                    ],
+                  ),
+                ),
+              if (state.skippedFiles.isNotEmpty)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Text(
+                    '${context.l10n.workspaceSearchSkippedFiles}\n'
+                    '${state.skippedFiles.join('\n')}',
+                  ),
+                ),
               for (final group in groups) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -13772,6 +13915,55 @@ class _SearchSidebar extends StatelessWidget {
       ],
     );
   }
+}
+
+class _WorkspaceReplacementProgress extends StatefulWidget {
+  const _WorkspaceReplacementProgress({
+    required this.future,
+    required this.cancellation,
+  });
+
+  final Future<WorkspaceReplacementPreview> future;
+  final WorkspaceReplacementCancellation cancellation;
+
+  @override
+  State<_WorkspaceReplacementProgress> createState() =>
+      _WorkspaceReplacementProgressState();
+}
+
+class _WorkspaceReplacementProgressState
+    extends State<_WorkspaceReplacementProgress> {
+  @override
+  void initState() {
+    super.initState();
+    widget.future.then(
+      (preview) {
+        if (mounted) Navigator.pop(context, preview);
+      },
+      onError: (Object error, StackTrace stack) {
+        if (mounted) Navigator.pop(context);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    widget.cancellation.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => BusyMarkModalEditorScaffold(
+    title: context.l10n.reviewReplacements,
+    cancelLabel: context.l10n.cancel,
+    saveLabel: context.l10n.reviewReplacements,
+    onSave: null,
+    onCancel: () {
+      widget.cancellation.cancel();
+      Navigator.pop(context);
+    },
+    children: const [Center(child: CircularProgressIndicator())],
+  );
 }
 
 class _WorkspaceReplacementReviewDialog extends StatefulWidget {
@@ -13881,6 +14073,11 @@ String _workspaceReplacementIssueLabel(
   WorkspaceReplacementIssue issue,
 ) {
   return switch (issue.kind) {
+    WorkspaceReplacementIssueKind.cancelled => context.l10n.cancel,
+    WorkspaceReplacementIssueKind.invalidRegex =>
+      context.l10n.sourceSearchInvalidRegex,
+    WorkspaceReplacementIssueKind.zeroLengthMatches =>
+      context.l10n.sourceSearchZeroLengthUnsupported,
     WorkspaceReplacementIssueKind.oversized =>
       context.l10n.workspaceReplaceIssueOversized,
     WorkspaceReplacementIssueKind.unreadable =>
@@ -14105,138 +14302,134 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 const int _maxWorkspaceSearchResults = 80;
 const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
 
-Future<List<_WorkspaceSearchMatch>> _loadWorkspaceSearchMatches(
+class _WorkspaceSearchOutcome {
+  const _WorkspaceSearchOutcome({
+    this.matches = const [],
+    this.truncated = false,
+    this.skippedFiles = const [],
+    this.invalidRegex = false,
+    this.hasZeroLengthMatches = false,
+  });
+
+  final List<_WorkspaceSearchMatch> matches;
+  final bool truncated;
+  final List<String> skippedFiles;
+  final bool invalidRegex;
+  final bool hasZeroLengthMatches;
+}
+
+Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
   WorkspaceState state,
   SourceSearchOptions options, {
   required Future<String> Function(String path) loadText,
   required bool Function() isCancelled,
+  required SourceSearchWorker worker,
+  required int maximumResults,
 }) async {
   final workspace = state.workspace;
-  final trimmedQuery = options.query.trim();
-  if (workspace == null || trimmedQuery.isEmpty || isCancelled()) {
-    return const [];
+  if (workspace == null || options.query.isEmpty || isCancelled()) {
+    return const _WorkspaceSearchOutcome();
   }
-  final normalizedOptions = options.copyWith(query: trimmedQuery);
+  if (sourceSearchOptionsHaveInvalidRegex(options)) {
+    return const _WorkspaceSearchOutcome(invalidRegex: true);
+  }
   final results = <_WorkspaceSearchMatch>[];
-  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  final sortedFiles = [...workspace.files]
-    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
-  if (activePath != null &&
-      sortedFiles.every((file) => file.absolutePath != activePath)) {
-    _addWorkspaceSearchTextMatches(
-      file: DocumentFile(
-        absolutePath: activePath,
-        relativePath: p.basename(activePath),
-        kind: DocumentKind.markdown,
-        size: state.activeText.length,
-        lastModified: DateTime.fromMillisecondsSinceEpoch(0),
-      ),
-      text: state.activeText,
-      options: normalizedOptions,
-      results: results,
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return List.unmodifiable(results);
-    }
-  }
+  final skippedFiles = <String>[];
+  var hasZeroLengthMatches = false;
+  final sortedFiles =
+      workspace.files.where(isSearchableWorkspaceDocument).toList()
+        ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
   for (final file in sortedFiles) {
-    if (isCancelled()) {
-      return const [];
-    }
-    if (!_isOpenableTextDocument(file)) {
-      continue;
-    }
-    final String? text;
-    if (file.absolutePath == activePath) {
+    if (isCancelled()) return const _WorkspaceSearchOutcome();
+    final buffer = state.bufferForPath(file.absolutePath);
+    String? text;
+    if (buffer != null) {
+      text = buffer.text;
+    } else if (file.absolutePath ==
+        (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
       text = state.activeText;
     } else if (file.size > _maxWorkspaceSearchFileBytes) {
-      text = null;
+      skippedFiles.add(file.relativePath);
     } else {
-      String? loadedText;
       try {
-        loadedText = await loadText(file.absolutePath);
+        text = await loadText(file.absolutePath);
       } on Object {
-        // Keep filename matching available when a document cannot be read.
+        skippedFiles.add(file.relativePath);
       }
-      if (isCancelled()) {
-        return const [];
-      }
-      text = loadedText;
     }
+    if (isCancelled()) return const _WorkspaceSearchOutcome();
     if (text != null) {
-      _addWorkspaceSearchTextMatches(
-        file: file,
-        text: text,
-        options: normalizedOptions,
-        results: results,
+      final document = SourceDocument(fullText: text);
+      final search = await worker.search(
+        document,
+        options,
+        maximumMatches: maximumResults + 1 - results.length,
+        stopAfterMaximumMatches: true,
       );
-      if (results.length >= _maxWorkspaceSearchResults) {
-        return List.unmodifiable(results);
+      if (isCancelled()) return const _WorkspaceSearchOutcome();
+      if (search == null) {
+        skippedFiles.add(file.relativePath);
+      } else {
+        hasZeroLengthMatches |= search.hasZeroLengthMatches;
+        for (final match in search.matches) {
+          final line = document.lineIndex.lineNumberAtOffset(match.fullStart);
+          results.add(
+            _WorkspaceSearchMatch(
+              kind: _WorkspaceSearchMatchKind.text,
+              filePath: file.absolutePath,
+              relativePath: file.relativePath,
+              fileKind: file.kind,
+              line: line,
+              startOffset: match.fullStart,
+              endOffset: match.fullEnd,
+              query: options.query,
+              lineText: document.lineIndex.lineAt(line).text,
+            ),
+          );
+        }
       }
     }
-    if (!_fileNameMatchesSearch(file.relativePath, normalizedOptions)) {
-      continue;
+    if (results.length <= maximumResults &&
+        _fileNameMatchesSearch(file.relativePath, options)) {
+      results.add(
+        _WorkspaceSearchMatch(
+          kind: _WorkspaceSearchMatchKind.fileName,
+          filePath: file.absolutePath,
+          relativePath: file.relativePath,
+          fileKind: file.kind,
+          line: 1,
+          startOffset: 0,
+          endOffset: 0,
+          query: options.query,
+        ),
+      );
     }
-    results.add(
-      _WorkspaceSearchMatch(
-        kind: _WorkspaceSearchMatchKind.fileName,
-        filePath: file.absolutePath,
-        relativePath: file.relativePath,
-        fileKind: file.kind,
-        line: 1,
-        startOffset: 0,
-        endOffset: 0,
-        query: trimmedQuery,
-      ),
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return List.unmodifiable(results);
-    }
-  }
-  return List.unmodifiable(results);
-}
-
-void _addWorkspaceSearchTextMatches({
-  required DocumentFile file,
-  required String text,
-  required SourceSearchOptions options,
-  required List<_WorkspaceSearchMatch> results,
-}) {
-  final document = SourceDocument(fullText: text);
-  final searchResult = searchSourceDocument(document, options);
-  for (final match in searchResult.matches) {
-    final lineNumber = document.lineIndex.lineNumberAtOffset(match.fullStart);
-    final line = document.lineIndex.lineAt(lineNumber).text;
-    results.add(
-      _WorkspaceSearchMatch(
-        kind: _WorkspaceSearchMatchKind.text,
-        filePath: file.absolutePath,
-        relativePath: file.relativePath,
-        fileKind: file.kind,
-        line: lineNumber,
-        startOffset: match.fullStart,
-        endOffset: match.fullEnd,
-        query: options.query,
-        lineText: line,
-      ),
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return;
+    // Only report truncation once an additional result was actually found.
+    if (results.length > maximumResults) {
+      return _WorkspaceSearchOutcome(
+        matches: List.unmodifiable(results.take(maximumResults)),
+        truncated: true,
+        skippedFiles: List.unmodifiable(skippedFiles),
+        hasZeroLengthMatches: hasZeroLengthMatches,
+      );
     }
   }
+  return _WorkspaceSearchOutcome(
+    matches: List.unmodifiable(results),
+    skippedFiles: List.unmodifiable(skippedFiles),
+    hasZeroLengthMatches: hasZeroLengthMatches,
+  );
 }
 
 bool _fileNameMatchesSearch(String relativePath, SourceSearchOptions options) {
   if (options.regex || options.wholeWord) {
     return false;
   }
-  final haystack = options.caseSensitive
-      ? relativePath
-      : relativePath.toLowerCase();
-  final needle = options.caseSensitive
-      ? options.query
-      : options.query.toLowerCase();
-  return haystack.contains(needle);
+  return RegExp(
+    RegExp.escape(options.query),
+    caseSensitive: options.caseSensitive,
+    unicode: true,
+  ).hasMatch(relativePath);
 }
 
 String _searchResultTitle(BuildContext context, String line) {

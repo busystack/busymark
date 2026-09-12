@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "No se admiten coincidencias de longitud cero (por ejemplo, ^, $ o anticipaciones que solo coinciden con una posición).",
+  "workspaceSearchIncomplete": "Solo se muestran algunos resultados. Muestre más o limite la búsqueda.",
+  "workspaceSearchShowMore": "Mostrar más resultados",
+  "workspaceSearchSkippedFiles": "La búsqueda está incompleta. Estos archivos superan 1 MiB o no se pudieron leer:",
   "@@locale": "es",
   "reportIssue": "Informar de un problema",
   "feedbackCategory": "Categoría",

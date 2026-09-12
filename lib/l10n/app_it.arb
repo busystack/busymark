@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Le corrispondenze regex di lunghezza zero non sono supportate (ad esempio ^, $ o lookahead che corrispondono solo a una posizione).",
+  "workspaceSearchIncomplete": "È mostrata solo una parte dei risultati. Mostrane altri o restringi la ricerca.",
+  "workspaceSearchShowMore": "Mostra altri risultati",
+  "workspaceSearchSkippedFiles": "La ricerca è incompleta. Questi file superano 1 MiB o non è stato possibile leggerli:",
   "@@locale": "it",
   "reportIssue": "Segnala un problema",
   "feedbackCategory": "Categoria",

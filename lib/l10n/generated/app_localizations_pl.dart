@@ -1586,6 +1586,21 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Nieprawidłowe wyrażenie regularne';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Dopasowania wyrażeń regularnych o zerowej długości nie są obsługiwane (np. ^, \$ lub asercje dopasowujące tylko pozycję).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Wyświetlono tylko część wyników. Pokaż więcej lub zawęź wyszukiwanie.';
+
+  @override
+  String get workspaceSearchShowMore => 'Pokaż więcej wyników';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Wyszukiwanie jest niepełne. Te pliki przekraczają 1 MiB lub nie można ich odczytać:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Duży plik: podświetlanie i zwijanie są wstrzymane';
 

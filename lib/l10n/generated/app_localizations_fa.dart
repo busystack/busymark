@@ -1596,6 +1596,21 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، \$ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'فقط بخشی از نتایج نمایش داده می‌شود. نتایج بیشتری نمایش دهید یا جستجو را محدود کنید.';
+
+  @override
+  String get workspaceSearchShowMore => 'نمایش نتایج بیشتر';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'جستجو کامل نیست. حجم این فایل‌ها بیش از 1 MiB است یا خواندن آن‌ها ممکن نبود:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند';
 

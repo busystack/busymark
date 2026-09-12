@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Regex-treff med null lengde støttes ikke (for eksempel ^, $ eller fremoversøk som bare samsvarer med en posisjon).",
+  "workspaceSearchIncomplete": "Bare noen av resultatene vises. Vis flere eller avgrens søket.",
+  "workspaceSearchShowMore": "Vis flere resultater",
+  "workspaceSearchSkippedFiles": "Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:",
   "@@locale": "nb",
   "reportIssue": "Rapporter et problem",
   "feedbackCategory": "Kategori",

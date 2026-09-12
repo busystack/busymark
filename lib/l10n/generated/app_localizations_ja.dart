@@ -1511,6 +1511,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceSearchInvalidRegex => '無効な正規表現';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '長さがゼロの正規表現の一致には対応していません（^、\$、位置のみに一致する先読みなど）。';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      '一部の結果のみ表示しています。さらに表示するか、検索を絞り込んでください。';
+
+  @override
+  String get workspaceSearchShowMore => 'さらに結果を表示';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      '検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:';
+
+  @override
   String get sourceLargeFileFeaturesPaused => '大きなファイル：ハイライトと折りたたみを一時停止しています';
 
   @override

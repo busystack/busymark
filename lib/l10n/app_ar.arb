@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "لا تُدعم مطابقات التعبير النمطي ذات الطول الصفري (مثل ^ أو $ أو الاستباق الذي يطابق موضعًا فقط).",
+  "workspaceSearchIncomplete": "تظهر بعض النتائج فقط. اعرض المزيد أو ضيّق نطاق البحث.",
+  "workspaceSearchShowMore": "عرض المزيد من النتائج",
+  "workspaceSearchSkippedFiles": "البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:",
   "@@locale": "ar",
   "reportIssue": "الإبلاغ عن مشكلة",
   "feedbackCategory": "الفئة",

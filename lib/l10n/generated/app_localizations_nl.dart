@@ -1570,6 +1570,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sourceSearchInvalidRegex => 'Ongeldige reguliere expressie';
 
   @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, \$ of lookaheads die alleen een positie vinden).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.';
+
+  @override
+  String get workspaceSearchShowMore => 'Meer resultaten tonen';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:';
+
+  @override
   String get sourceLargeFileFeaturesPaused =>
       'Groot bestand: markeren en vouwen worden gepauzeerd';
 
