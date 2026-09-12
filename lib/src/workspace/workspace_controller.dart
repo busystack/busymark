@@ -1611,7 +1611,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       try {
         final load = await _service.loadTextWithSnapshot(filePath);
-        if (!await _localHistory.capturePath(
+        if (!await _localHistory.capturePathBeforeLoss(
           path: filePath,
           text: load.text,
           format: load.format,
@@ -1908,11 +1908,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String bufferId, {
     bool discard = false,
   }) async {
+    final closingWorkspace = state.workspace;
     _cancelAutoSave(bufferId);
-    return _enqueueBufferWrite(
-      bufferId,
-      () => _closeDocumentBufferNow(bufferId, discard: discard),
-    );
+    return _enqueueBufferWrite(bufferId, () async {
+      var closed = false;
+      try {
+        closed = await _closeDocumentBufferNow(bufferId, discard: discard);
+        return closed;
+      } finally {
+        // A rejected close leaves ordinary dirty work eligible for autosave.
+        // Finalize inside the write queue so shutdown's drain and final timer
+        // cancellation retain ownership; never schedule in a new workspace.
+        if (!closed &&
+            ref.mounted &&
+            closingWorkspace != null &&
+            state.workspace?.id == closingWorkspace.id &&
+            state.workspace?.openedAt == closingWorkspace.openedAt) {
+          _scheduleAutoSave(bufferId);
+        }
+      }
+    });
   }
 
   Future<bool> _closeDocumentBufferNow(
@@ -1939,7 +1954,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         afterProtection.revision != buffer.revision ||
         afterProtection.text != buffer.text ||
         afterProtection.isDirty != buffer.isDirty) {
-      if (afterProtection != null) _scheduleAutoSave(afterProtection.id);
       return false;
     }
     final historySettled = await _localHistory.flushBuffer(afterProtection);
@@ -1950,7 +1964,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         current.revision != afterProtection.revision ||
         current.text != afterProtection.text ||
         current.isDirty != afterProtection.isDirty) {
-      if (current != null) _scheduleAutoSave(current.id);
       return false;
     }
     if (current.filePath case final path?) {

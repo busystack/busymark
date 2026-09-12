@@ -78,6 +78,59 @@ void main() {
     },
   );
 
+  for (final clearAll in [false, true]) {
+    test(
+      'Clear ${clearAll ? "All" : "Document"} cancels queued restore protection',
+      () async {
+        final path = p.join(root.path, 'protected.md');
+        await File(path).writeAsString('Original disk\n');
+        final diskStore = FileLocalHistoryStore(
+          rootDirectory: () async => Directory(p.join(root.path, 'history')),
+        );
+        final store = _BlockingSaveAsStore(diskStore, path);
+        final harness = await _harness(store);
+        await harness.controller.openPath(path);
+        final history = harness.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        final baseline = await diskStore.load();
+        final document = baseline.documents.single;
+        final revision = (await diskStore.readRevision(
+          baseline.revisions.single.id,
+        ))!;
+        harness.controller.updateActiveText('Current work to protect\n');
+        final before = harness.state.activeBuffer!;
+
+        // A real explicit save holds the per-buffer history queue. Restore
+        // must not treat its later, invalidated protection as a stored copy.
+        final save = harness.controller.saveActive();
+        await store.started.future;
+        final restore = harness.controller.restoreLocalHistoryRevision(
+          document: document,
+          revision: revision,
+        );
+        final clear = clearAll
+            ? history.clearAll()
+            : history.clearDocument(document.id);
+        store.release.complete();
+        expect(await save, isTrue);
+        expect(await restore, isFalse);
+        await clear;
+
+        final current = harness.state.activeBuffer!;
+        expect(current.text, before.text);
+        expect(current.revision, before.revision);
+        expect(current.editorState.selection, before.editorState.selection);
+        expect(
+          current.editorState.undoState,
+          same(before.editorState.undoState),
+        );
+        expect(await File(path).readAsString(), before.text);
+        expect((await diskStore.load()).revisions, isEmpty);
+      },
+    );
+  }
+
   test('region restore is exact, undoable, and rejects stale ranges', () async {
     final path = p.join(root.path, 'regions.md');
     await File(path).writeAsString('alpha\nnew phrase\nomega\n');
@@ -688,6 +741,121 @@ void main() {
     expect(harness.state.workspace, same(workspaceAfterEdit));
     expect(harness.state.preview, same(previewAfterEdit));
   });
+
+  test(
+    'cancelled named Save As detaches source history and reopens separately',
+    () async {
+      final sourcePath = p.join(root.path, 'A.md');
+      final destinationPath = p.join(root.path, 'B.md');
+      await File(sourcePath).writeAsString('Original A\n');
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      final diskStore = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
+      final store = _BlockingSaveAsStore(diskStore, destinationPath);
+      final timers = <_FakeTimer>[];
+      final harness = await _harness(
+        store,
+        timerFactory: (delay, callback) {
+          final timer = _FakeTimer(delay, callback);
+          timers.add(timer);
+          return timer;
+        },
+      );
+      final settings = harness.container.read(
+        appSettingsControllerProvider.notifier,
+      );
+      final history = harness.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await harness.controller.openPath(sourcePath);
+      final sourceId = (await diskStore.load()).documents.single.id;
+      harness.controller.updateActiveText('Save As B\n');
+      final save = harness.controller.saveActiveAs(destinationPath);
+      await store.started.future;
+      expect(harness.state.activeBuffer!.filePath, destinationPath);
+      await settings.setLocalHistoryRecordingEnabled(false);
+      store.release.complete();
+      expect(await save, isTrue);
+      expect(
+        history.documentIdForBuffer(harness.state.activeBuffer!.id),
+        isNot(sourceId),
+      );
+      expect(await File(sourcePath).readAsString(), 'Original A\n');
+      expect(await File(destinationPath).readAsString(), 'Save As B\n');
+
+      await settings.setLocalHistoryRecordingEnabled(true);
+      harness.controller.updateActiveText('Only B after cancellation\n');
+      await _waitFor(() => timers.any((timer) => timer.isActive));
+      for (final timer in List<_FakeTimer>.of(timers)) {
+        timer.fire();
+      }
+      await _waitFor(
+        () => harness.container
+            .read(localHistoryControllerProvider)
+            .snapshot
+            .revisions
+            .any(
+              (revision) =>
+                  revision.reason ==
+                      LocalHistoryCaptureReason.automaticCheckpoint &&
+                  revision.historicalPath == destinationPath,
+            ),
+      );
+      final snapshot = await diskStore.load();
+      final destination = snapshot.documents.singleWhere(
+        (document) => document.currentPath == destinationPath,
+      );
+      expect(destination.id, isNot(sourceId));
+      expect(
+        await _revisionSources(diskStore, snapshot.revisionsFor(sourceId)),
+        isNot(contains('Only B after cancellation\n')),
+      );
+      expect(
+        await _revisionSources(
+          diskStore,
+          snapshot.revisionsFor(destination.id),
+        ),
+        contains('Only B after cancellation\n'),
+      );
+      expect(
+        history.documentIdForBuffer(harness.state.activeBuffer!.id),
+        destination.id,
+      );
+
+      final reopenedStore = FileLocalHistoryStore(
+        rootDirectory: () async => historyRoot,
+      );
+      final reopened = await _harness(reopenedStore);
+      final reopenedHistory = reopened.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await reopened.controller.openPath(sourcePath);
+      await _waitFor(
+        () =>
+            reopenedHistory.documentIdForBuffer(
+              reopened.state.activeBuffer!.id,
+            ) !=
+            null,
+      );
+      expect(
+        reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
+        sourceId,
+      );
+      expect(await reopened.controller.openActiveFile(destinationPath), isTrue);
+      await _waitFor(
+        () =>
+            reopenedHistory.documentIdForBuffer(
+              reopened.state.activeBuffer!.id,
+            ) !=
+            null,
+      );
+      expect(
+        reopenedHistory.documentIdForBuffer(reopened.state.activeBuffer!.id),
+        destination.id,
+      );
+    },
+  );
 
   test(
     'Save As keeps edits made during destination capture out of source history',

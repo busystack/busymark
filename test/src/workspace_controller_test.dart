@@ -2197,6 +2197,103 @@ void main() {
     },
   );
 
+  for (final outcome in [
+    'aborted',
+    'closed',
+    'disabled',
+    'shutdown',
+    'replaced',
+  ]) {
+    testWidgets('discard close autosave disposition: $outcome', (tester) async {
+      final service = _ClosingAutosaveWorkspaceService();
+      final creating = _createControllerHarness(service: service);
+      await tester.pump(Duration.zero);
+      final harness = await creating;
+      await harness.settingsController.setValidateOnEdit(false);
+      await harness.settingsController.setDocumentViewMode(
+        DocumentViewModePreference.source,
+      );
+      if (outcome == 'disabled') {
+        await harness.settingsController.setAutoSave(false);
+      }
+      final controller = harness.controller;
+      await controller.openPath(service.path);
+      final aId = controller.state.activeBuffer!.id;
+      await controller.openActiveFile(service.bPath);
+      await controller.activateDocumentBuffer(aId);
+      controller.updateActiveSourceText('# Unsaved A\n');
+      await tester.pump(const Duration(milliseconds: 500));
+      final before = controller.state.activeBuffer!;
+      expect(before.isDirty, isTrue);
+      expect(service.savedTexts, isEmpty);
+
+      service.pauseActivation = true;
+      final close = controller.closeDocumentBuffer(aId, discard: true);
+      await tester.pump();
+      expect(service.activationStarted.isCompleted, isTrue);
+      if (outcome != 'closed') {
+        controller.updateActiveEditorState(
+          before.editorState.copyWith(
+            selection: const TextSelection.collapsed(offset: 4),
+          ),
+        );
+      }
+      var shutdownCompleted = false;
+      final shutdown = outcome == 'shutdown'
+          ? controller._notifier.markCleanShutdown().then((_) {
+              shutdownCompleted = true;
+            })
+          : null;
+      if (outcome == 'replaced') {
+        await controller.openPath('/tmp/busymark-close-replacement.md');
+      }
+      service.releaseActivation.complete();
+      await tester.pump();
+      expect(await close, outcome == 'closed');
+      if (shutdown != null) {
+        for (var turn = 0; turn < 20 && !shutdownCompleted; turn++) {
+          await tester.pump();
+        }
+        expect(shutdownCompleted, isTrue);
+        await shutdown;
+      }
+
+      if (outcome != 'closed' && outcome != 'replaced') {
+        final surviving = controller.state.activeBuffer!;
+        expect(surviving.id, aId);
+        expect(surviving.text, before.text);
+        expect(surviving.isDirty, isTrue);
+        expect(surviving.editorState.selection.baseOffset, 4);
+        expect(
+          surviving.editorState.undoState,
+          same(before.editorState.undoState),
+        );
+      }
+      // No more edits: only the normal 1.5-second autosave clock may write A.
+      await tester.pump(const Duration(milliseconds: 1500));
+      if (outcome == 'aborted') {
+        expect(service.savedTexts, ['# Unsaved A\n']);
+        expect(controller.state.activeBuffer!.isDirty, isFalse);
+      } else {
+        expect(service.savedTexts, isEmpty);
+      }
+      if (outcome == 'closed') {
+        expect(
+          controller.state.documentBuffers.any((buffer) => buffer.id == aId),
+          isFalse,
+        );
+      }
+      if (outcome == 'replaced') {
+        expect(
+          controller.state.workspace!.id,
+          '/tmp/busymark-close-replacement.md',
+        );
+        expect(controller.state.activeText, '# Initial\n');
+      }
+      harness._container.dispose();
+    });
+  }
+
   test(
     'tab activation does not resurrect another tab closed while waiting',
     () async {
@@ -3226,6 +3323,23 @@ class _AutosaveWorkspaceService extends WorkspaceService {
     if (!_releaseFirstSave.isCompleted) {
       _releaseFirstSave.complete();
     }
+  }
+}
+
+class _ClosingAutosaveWorkspaceService extends _AutosaveWorkspaceService {
+  final bPath = '/tmp/busymark-close-autosave-b.md';
+  var pauseActivation = false;
+  final activationStarted = Completer<void>();
+  final releaseActivation = Completer<void>();
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    if (pauseActivation && workspace.activeFilePath == bPath) {
+      pauseActivation = false;
+      activationStarted.complete();
+      await releaseActivation.future;
+    }
+    return super.reparseActive(workspace, source);
   }
 }
 

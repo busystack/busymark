@@ -81,6 +81,11 @@ Pending first-save associations are also matched by destination path when a tab
 is reopened, before baseline capture, and promotion refuses a destination
 already owned by another history document.
 
+Once a named-file Save As has changed the buffer path, detaching its source
+binding is unconditional finalization, not optional recording. Disabling
+recording or clearing history during the destination capture cannot leave the
+destination buffer bound to the source file's history.
+
 ## Store and retention
 
 Production revisions live in `local_history` beneath the platform application
@@ -144,6 +149,11 @@ a protective snapshot, revalidates after awaits, and applies one
 `DocumentBuffer.edited` transaction without replacing format metadata or the
 undo stack.
 
+Cancellation is not successful protection: Clear or a recording-policy change
+invalidating a required capture aborts the dependent restore, reload, discard,
+or path replacement, even if the document itself has not changed. Optional
+post-save history cancellation does not turn a completed file save into failure.
+
 Missing-file recovery keeps the source history identity separate from the
 destination buffer. For an approved existing path, the normal guarded open flow
 loads the destination's real source and format, protection must succeed, and
@@ -172,9 +182,12 @@ a document is aborted if that document's source or editor state changes during
 the final activation await. Discard authorization is carried to that removal
 without temporarily marking unsaved text clean. Close All revalidates the exact
 workspace and buffer instances after its history flush, so a new edit, tab, or
-replacement workspace aborts the stale close. Refresh reschedules eligible
-autosaves on both success and failure because it cancels its incoming timers at
-the boundary.
+replacement workspace aborts the stale close. An aborted individual close
+reschedules normal autosave for a surviving eligible dirty buffer in that same
+workspace. This finalization stays inside the write queue so shutdown retains
+its final timer cancellation; successful discard does not schedule a save.
+Refresh reschedules eligible autosaves on both success and failure because it
+cancels its incoming timers at the boundary.
 
 ## Verification workflow
 

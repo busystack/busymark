@@ -553,6 +553,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         snapshot,
         reason,
         force: true,
+        requireProtection: true,
         acceptedHistoryGeneration: historyGeneration,
         acceptedBufferGeneration: bufferGeneration,
       ),
@@ -575,6 +576,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         snapshot,
         reason,
         force: true,
+        requireProtection: true,
         acceptedHistoryGeneration: historyGeneration,
         acceptedBufferGeneration: bufferGeneration,
       ),
@@ -599,21 +601,88 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     var promotionCompleted = false;
     var retainedSourcePromotion = false;
     final captured = await _enqueue(source.bufferId, () async {
-      if (!_operationIsCurrent(
-        source.bufferId,
-        historyGeneration,
-        bufferGeneration,
-      )) {
-        return true;
-      }
-      // A named-file Save As is a fork. Resolve an earlier untitled-to-source
-      // promotion before recording the destination. If storage is still
-      // unavailable, detach that source association from the buffer so it can
-      // be retried independently without being retargeted to the copy.
-      if (!source.untitled &&
-          _pendingUntitledPromotions.containsKey(source.bufferId)) {
-        final promotion = _pendingUntitledPromotions[source.bufferId]!;
-        if (_sameOptionalPath(source.path, promotion.destinationPath)) {
+      final sourceDocumentIdAtStart = _documentIdsByBuffer[source.bufferId];
+      try {
+        if (!_operationIsCurrent(
+          source.bufferId,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return true;
+        }
+        // A named-file Save As is a fork. Resolve an earlier untitled-to-source
+        // promotion before recording the destination. If storage is still
+        // unavailable, detach that source association from the buffer so it can
+        // be retried independently without being retargeted to the copy.
+        if (!source.untitled &&
+            _pendingUntitledPromotions.containsKey(source.bufferId)) {
+          final promotion = _pendingUntitledPromotions[source.bufferId]!;
+          if (_sameOptionalPath(source.path, promotion.destinationPath)) {
+            promotionCompleted = await _completePendingUntitledPromotion(
+              source.bufferId,
+              acceptedHistoryGeneration: historyGeneration,
+              acceptedBufferGeneration: bufferGeneration,
+            );
+            if (!_operationIsCurrent(
+              source.bufferId,
+              historyGeneration,
+              bufferGeneration,
+            )) {
+              return true;
+            }
+          }
+          if (_pendingUntitledPromotions.containsKey(source.bufferId)) {
+            _detachPendingUntitledPromotion(source.bufferId);
+            retainedSourcePromotion = true;
+          }
+        }
+
+        // A checkpoint included in the Save As target belongs to the source
+        // lineage. Newer edits remain suspended until the caller publishes the
+        // destination path and finishes the path transition.
+        final pending = _pending[source.bufferId];
+        if (pending != null &&
+            pending.revision <= source.revision &&
+            _sameOptionalPath(pending.path, source.path)) {
+          _checkpointTimers.remove(source.bufferId)?.cancel();
+          final pendingCaptured = await _capture(
+            pending,
+            LocalHistoryCaptureReason.automaticCheckpoint,
+            allowDuringPathTransition: true,
+            acceptedHistoryGeneration: historyGeneration,
+            acceptedBufferGeneration: bufferGeneration,
+          );
+          if (!_operationIsCurrent(
+            source.bufferId,
+            historyGeneration,
+            bufferGeneration,
+          )) {
+            return true;
+          }
+          if (pendingCaptured) {
+            _acknowledgePending(source.bufferId, pending.revision);
+          } else {
+            _retainPending(pending);
+          }
+          if (!pendingCaptured &&
+              policy.recordingEnabled &&
+              !policy.excludes(pending.path) &&
+              !source.untitled) {
+            return false;
+          }
+        }
+
+        final sourceDocumentId = _documentIdsByBuffer[source.bufferId];
+        if (source.untitled &&
+            !destinationExisted &&
+            sourceDocumentId != null) {
+          _pendingUntitledPromotions[source.bufferId] =
+              LocalHistoryPendingIdentityPromotion(
+                bufferId: source.bufferId,
+                documentId: sourceDocumentId,
+                destinationPath: p.normalize(destinationPath),
+                displayName: p.basename(destinationPath),
+              );
           promotionCompleted = await _completePendingUntitledPromotion(
             source.bufferId,
             acceptedHistoryGeneration: historyGeneration,
@@ -626,25 +695,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           )) {
             return true;
           }
+          if (!promotionCompleted) return false;
         }
-        if (_pendingUntitledPromotions.containsKey(source.bufferId)) {
-          _detachPendingUntitledPromotion(source.bufferId);
-          retainedSourcePromotion = true;
-        }
-      }
 
-      // A checkpoint included in the Save As target belongs to the source
-      // lineage. Newer edits remain suspended until the caller publishes the
-      // destination path and finishes the path transition.
-      final pending = _pending[source.bufferId];
-      if (pending != null &&
-          pending.revision <= source.revision &&
-          _sameOptionalPath(pending.path, source.path)) {
-        _checkpointTimers.remove(source.bufferId)?.cancel();
-        final pendingCaptured = await _capture(
-          pending,
-          LocalHistoryCaptureReason.automaticCheckpoint,
-          allowDuringPathTransition: true,
+        if (!policy.recordingEnabled || policy.excludes(destination.path)) {
+          return source.untitled && !destinationExisted && promotionCompleted;
+        }
+        final savedCaptured = await _capture(
+          destination,
+          LocalHistoryCaptureReason.saved,
+          ignoreBinding: !source.untitled || destinationExisted,
           acceptedHistoryGeneration: historyGeneration,
           acceptedBufferGeneration: bufferGeneration,
         );
@@ -655,66 +715,29 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         )) {
           return true;
         }
-        if (pendingCaptured) {
-          _acknowledgePending(source.bufferId, pending.revision);
+        if (savedCaptured) {
+          _acknowledgePending(destination.bufferId, destination.revision);
         } else {
-          _retainPending(pending);
+          _retainPending(destination);
         }
-        if (!pendingCaptured &&
-            policy.recordingEnabled &&
-            !policy.excludes(pending.path) &&
-            !source.untitled) {
-          return false;
+        return savedCaptured;
+      } finally {
+        // Save As has already changed the filesystem and buffer path. A named
+        // copy (or an overwrite) must detach from its source even if recording
+        // was cancelled. Do this inside the queue, before later edits can use
+        // the old binding, without removing a newly established association.
+        if ((!source.untitled || destinationExisted) &&
+            sourceDocumentIdAtStart != null &&
+            _documentIdsByBuffer[source.bufferId] == sourceDocumentIdAtStart) {
+          if (_pendingUntitledPromotions[source.bufferId]?.documentId ==
+              sourceDocumentIdAtStart) {
+            _detachPendingUntitledPromotion(source.bufferId);
+            retainedSourcePromotion = true;
+          } else {
+            _documentIdsByBuffer.remove(source.bufferId);
+          }
         }
       }
-
-      final sourceDocumentId = _documentIdsByBuffer[source.bufferId];
-      if (source.untitled && !destinationExisted && sourceDocumentId != null) {
-        _pendingUntitledPromotions[source.bufferId] =
-            LocalHistoryPendingIdentityPromotion(
-              bufferId: source.bufferId,
-              documentId: sourceDocumentId,
-              destinationPath: p.normalize(destinationPath),
-              displayName: p.basename(destinationPath),
-            );
-        promotionCompleted = await _completePendingUntitledPromotion(
-          source.bufferId,
-          acceptedHistoryGeneration: historyGeneration,
-          acceptedBufferGeneration: bufferGeneration,
-        );
-        if (!_operationIsCurrent(
-          source.bufferId,
-          historyGeneration,
-          bufferGeneration,
-        )) {
-          return true;
-        }
-        if (!promotionCompleted) return false;
-      }
-
-      if (!policy.recordingEnabled || policy.excludes(destination.path)) {
-        return source.untitled && !destinationExisted && promotionCompleted;
-      }
-      final savedCaptured = await _capture(
-        destination,
-        LocalHistoryCaptureReason.saved,
-        ignoreBinding: !source.untitled || destinationExisted,
-        acceptedHistoryGeneration: historyGeneration,
-        acceptedBufferGeneration: bufferGeneration,
-      );
-      if (!_operationIsCurrent(
-        source.bufferId,
-        historyGeneration,
-        bufferGeneration,
-      )) {
-        return true;
-      }
-      if (savedCaptured) {
-        _acknowledgePending(destination.bufferId, destination.revision);
-      } else {
-        _retainPending(destination);
-      }
-      return savedCaptured;
     });
     if (!_operationIsCurrent(
       source.bufferId,
@@ -750,6 +773,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     required TextFormatMetadata format,
     required LocalHistoryCaptureReason reason,
     bool force = true,
+    bool requireProtection = false,
   }) {
     final snapshot = LocalHistoryBufferSnapshot(
       bufferId: 'path:${p.normalize(path)}',
@@ -768,6 +792,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         reason,
         force: force,
         ignoreBinding: true,
+        requireProtection: requireProtection,
         acceptedHistoryGeneration: historyGeneration,
         acceptedBufferGeneration: bufferGeneration,
       ),
@@ -789,6 +814,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       format: format,
       reason: reason,
       force: true,
+      requireProtection: true,
     );
   }
 
@@ -1287,6 +1313,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     bool ignoreBinding = false,
     bool allowPathChange = false,
     bool allowDuringPathTransition = false,
+    bool requireProtection = false,
     int? acceptedHistoryGeneration,
     int? acceptedBufferGeneration,
   }) async {
@@ -1299,7 +1326,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       captureHistoryGeneration,
       captureBufferGeneration,
     )) {
-      return true;
+      return !requireProtection;
     }
     if (reason == LocalHistoryCaptureReason.automaticCheckpoint &&
         !allowDuringPathTransition &&
@@ -1308,7 +1335,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       if (pending == null || pending.revision <= snapshot.revision) {
         _pending[snapshot.bufferId] = snapshot;
       }
-      return true;
+      return !requireProtection;
     }
     final promotion = _pendingUntitledPromotions[snapshot.bufferId];
     if (promotion != null) {
@@ -1328,7 +1355,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         captureHistoryGeneration,
         captureBufferGeneration,
       )) {
-        return true;
+        return !requireProtection;
       }
     }
     final currentPolicy = policy;
@@ -1339,7 +1366,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     if (snapshot.untitled &&
         snapshot.text.isEmpty &&
         reason == LocalHistoryCaptureReason.baseline) {
-      return true;
+      return !requireProtection;
     }
     try {
       final result = await _store.capture(
@@ -1364,7 +1391,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         captureHistoryGeneration,
         captureBufferGeneration,
       )) {
-        return true;
+        return !requireProtection;
       }
       if (!ignoreBinding) {
         _documentIdsByBuffer[snapshot.bufferId] = result.document.id;
@@ -1384,7 +1411,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           );
         }
       }
-      return true;
+      // Optional recording may settle by cancellation; protection must still
+      // be valid after storage, snapshot loading, and any scoped search await.
+      return !requireProtection ||
+          _operationIsCurrent(
+            snapshot.bufferId,
+            captureHistoryGeneration,
+            captureBufferGeneration,
+          );
     } on Object catch (error) {
       if (_operationIsCurrent(
         snapshot.bufferId,

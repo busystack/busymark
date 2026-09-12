@@ -702,6 +702,69 @@ void main() {
     },
   );
 
+  for (final clearAll in [false, true]) {
+    for (final pathProtection in [false, true]) {
+      for (final queued in [false, true]) {
+        test(
+          '${clearAll ? "Clear All" : "Clear Document"} rejects '
+          '${queued ? "queued" : "in-flight"} '
+          '${pathProtection ? "path" : "buffer"} replacement protection',
+          () async {
+            final memory = MemoryLocalHistoryStore();
+            final store = _BlockingNextCaptureStore(memory);
+            final container = _historyContainer(store, <_FakeTimer>[]);
+            addTearDown(container.dispose);
+            final controller = container.read(
+              localHistoryControllerProvider.notifier,
+            );
+            await Future<void>.delayed(Duration.zero);
+            final buffer = _fileBuffer(
+              'protected',
+              '/workspace/protected.md',
+              'current source',
+            );
+            await controller.observeOpened(buffer);
+            final documentId = controller.documentIdForBuffer(buffer.id)!;
+            final snapshot = LocalHistoryBufferSnapshot.fromBuffer(buffer);
+            store.blockNextCapture = true;
+            Future<bool>? preceding;
+            if (queued) {
+              preceding = pathProtection
+                  ? controller.capturePath(
+                      path: buffer.filePath!,
+                      text: buffer.text,
+                      format: buffer.format,
+                      reason: LocalHistoryCaptureReason.externalChange,
+                    )
+                  : controller.captureSaved(snapshot);
+              await store.captureStarted.future;
+            }
+            final protection = pathProtection
+                ? controller.capturePathBeforeLoss(
+                    path: buffer.filePath!,
+                    text: buffer.text,
+                    format: buffer.format,
+                    reason: LocalHistoryCaptureReason.beforeDiscard,
+                  )
+                : controller.captureBeforeLoss(
+                    snapshot,
+                    LocalHistoryCaptureReason.beforeReload,
+                  );
+            if (!queued) await store.captureStarted.future;
+            final clear = clearAll
+                ? controller.clearAll()
+                : controller.clearDocument(documentId);
+            store.releaseCapture.complete();
+            if (preceding != null) expect(await preceding, isTrue);
+            expect(await protection, isFalse);
+            await clear;
+            expect((await memory.load()).revisions, isEmpty);
+          },
+        );
+      }
+    }
+  }
+
   test(
     'recording off prevents baseline and checkpoints without deleting history',
     () async {
