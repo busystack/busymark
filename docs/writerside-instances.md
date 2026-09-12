@@ -54,14 +54,6 @@ identified, but are not expanded when only one help module is open.
 The selected instance and icon colors are local BusyMark preferences. They do
 not modify or add undocumented Writerside project metadata.
 
-## Example
-
-[`demo/writerside-instances`](../demo/writerside-instances) is an openable
-Writerside module with two output instances, a TOC library, instance groups,
-custom filters, a cross-instance topic reference, per-instance build settings,
-release/EAP statuses, hidden and work-in-progress topics, an external TOC
-link, and redirect metadata.
-
 ## Authoritative references
 
 - [Instances](https://www.jetbrains.com/help/writerside/instances.html)

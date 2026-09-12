@@ -22,6 +22,73 @@ Markdown and Writerside editor for Linux.
 * **AI-assisted editing** — Optional Ollama, OpenAI, and Gemini integration with explicit edit scope and shared context, proposal review before changes are applied, and AI-assisted Git commit-message drafting.
 * **Workspace reliability** — Detect files changed outside BusyMark, recover unsaved documents, restore previous workspace sessions, manage remote-image permissions, and protect Git operations behind workspace trust.
 
+## Installation
+
+Install BusyMark from the Snap Store:
+
+```bash
+sudo snap install busymark --beta
+```
+
+The Snap uses strict confinement. See [Snap confinement](docs/snap-confinement.md)
+for filesystem and Git-integration details.
+
+## Run from source
+
+BusyMark currently uses Flutter 3.47.2. Install the Linux packages required by
+Flutter and BusyMark's CMake configuration:
+
+```bash
+sudo apt-get install -y \
+  clang \
+  cmake \
+  curl \
+  fonts-noto-core \
+  fonts-noto-mono \
+  libgtk-3-dev \
+  libhandy-1-dev \
+  libsecret-1-dev \
+  libwebkit2gtk-4.1-dev \
+  ninja-build \
+  pkg-config \
+  xz-utils
+```
+
+Node.js 22 or newer with npm is also required to build the bundled web
+components.
+
+Prepare and run the application:
+
+```bash
+flutter doctor
+flutter pub get
+flutter run -d linux
+```
+
+Pass a Markdown file or documentation directory after `--` to open it at
+startup:
+
+```bash
+flutter run -d linux -- /absolute/path/to/document.md
+flutter run -d linux -- /absolute/path/to/documentation
+```
+
+Build and run the standard checks with:
+
+```bash
+flutter build linux
+flutter analyze
+flutter test
+```
+
+The build assembles BusyMark's runtime components. Packaged users do not need
+separate Typst, Java, Node.js, or Chromium installations.
+
+The CI workflow installs additional packages for headless X11/Wayland, browser,
+PDF, and sandbox verification. Those packages are not required for an ordinary
+local build; see [the Linux workflow](.github/workflows/flutter-linux.yml) when
+reproducing release verification.
+
 ## Screenshots
 
 <table>
@@ -75,6 +142,11 @@ Markdown and Writerside editor for Linux.
   </tr>
 </table>
 
+## Documentation
+
+The [documentation index](docs/README.md) lists user guides and the separate
+developer notes.
+
 ## Markdown and Writerside
 
 BusyMark opens Markdown files using `.md` and `.markdown` extensions and can work with ordinary documentation folders.
@@ -83,10 +155,17 @@ Writerside-compatible projects are recognized through `writerside.cfg` and the o
 
 More information:
 
+* [Writerside support and limitations](docs/writerside-support.md)
 * [Writerside instances](docs/writerside-instances.md)
 * [Writerside videos](docs/videos.md)
 * [Admonitions](docs/admonitions.md)
 * [Collapsible elements](docs/collapsible-elements.md)
+
+## Search and replace
+
+BusyMark supports active-document replacement and reviewed workspace-wide
+replacement. See [Search and replace](docs/search-and-replace.md) for search
+options, scope, preview behavior, and stale-result handling.
 
 ## Diagrams and mathematics
 
@@ -122,66 +201,7 @@ See [AI editing](docs/local-ai.md) for configuration, privacy, provider behavior
 See [Clipboard History and Local History](docs/history.md) for collection scope,
 limits, retention, restoration, exclusions, and how these tools differ from
 undo, crash recovery, and Git. Implementation and verification details are in
-[the history architecture note](docs/history-architecture.md).
-
-## Installation
-
-Install BusyMark from the Snap Store:
-
-```bash
-sudo snap install busymark --beta
-```
-
-The Snap uses strict confinement. See [Snap confinement notes](docs/snap-confinement.md) for details about filesystem and Git integration.
-
-## Run from source
-
-BusyMark currently uses Flutter 3.47.2.
-
-Install the required Linux development packages:
-
-```bash
-sudo apt-get install \
-  curl \
-  libhandy-1-dev \
-  xz-utils \
-  libwebkit2gtk-4.1-dev \
-  fonts-noto-core \
-  fonts-noto-mono
-```
-
-Node.js 22 or newer with npm is also required when building the bundled web components.
-
-Prepare and run the application:
-
-```bash
-flutter doctor
-flutter pub get
-flutter run -d linux
-```
-
-A Markdown file or documentation folder can be opened directly from the command line:
-
-```bash
-flutter run -d linux
-```
-
-## Build
-
-Build the Linux desktop application with:
-
-```bash
-flutter build linux
-```
-
-The build assembles the runtime components required by BusyMark. Packaged users do not need separate Typst, Java, Node.js, or Chromium installations.
-
-## Test
-
-```bash
-flutter analyze
-flutter test
-```
+[the history implementation notes](docs/development/history.md).
 
 ## Contributing
 
