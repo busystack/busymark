@@ -1061,7 +1061,7 @@ void main() {
       expect(searchField, findsOneWidget);
       expect(
         tester.getCenter(actionsMenu).dx,
-        lessThan(tester.getTopLeft(searchField).dx),
+        greaterThan(tester.getTopRight(searchField).dx),
       );
       expect(find.text(beforeLabel), findsOneWidget);
       expect(find.text(afterLabel), findsOneWidget);

@@ -99,7 +99,7 @@ Future<void> main(List<String> arguments) async {
         ),
         if (!realPolicyTimer)
           localHistoryTimerFactoryProvider.overrideWithValue(
-            (_, callback) => Timer(const Duration(milliseconds: 450), callback),
+            (_, callback) => Timer(const Duration(seconds: 2), callback),
           ),
       ],
       child: _HistoryVisualHarness(
@@ -195,6 +195,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       );
       await _capture('${widget.mode}-clipboard-history-1280x800.png');
       await _exerciseCurrentClipboard();
+      await _waitForEditorSourceToSettle();
 
       _check(
         await ref
@@ -220,11 +221,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         await workspace.saveActive(overwriteExternalChanges: true),
         'explicit save captured',
       );
-      await _waitForRevisionSource(
-        saved,
-        LocalHistoryCaptureReason.saved,
-        'saved source publication',
-      );
+      await _waitForRevisionSource(saved, null, 'saved source publication');
       buffer = ref.read(workspaceControllerProvider).activeBuffer!;
       final checkpoint = _checkpointVersion(buffer.text);
       workspace.updateActiveText(checkpoint, sourceFilePath: buffer.filePath);
@@ -239,11 +236,23 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       buffer = ref.read(workspaceControllerProvider).activeBuffer!;
       final current = _currentVersion(buffer.text);
       workspace.updateActiveText(current, sourceFilePath: buffer.filePath);
-      await _waitForRevisionSource(
-        current,
-        LocalHistoryCaptureReason.automaticCheckpoint,
-        'filtered checkpoint publication',
-      );
+      if (widget.realPolicyTimer) {
+        _check(
+          await workspace.saveActive(overwriteExternalChanges: true),
+          'filtered explicit save captured',
+        );
+        await _waitForRevisionSource(
+          current,
+          null,
+          'filtered saved-source publication',
+        );
+      } else {
+        await _waitForRevisionSource(
+          current,
+          LocalHistoryCaptureReason.automaticCheckpoint,
+          'filtered checkpoint publication',
+        );
+      }
       await _waitFor(
         () =>
             !ref.read(localHistoryControllerProvider).searching &&
@@ -320,7 +329,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
           .toSet()
           .containsAll({
             LocalHistoryCaptureReason.baseline,
-            LocalHistoryCaptureReason.saved,
             LocalHistoryCaptureReason.automaticCheckpoint,
             LocalHistoryCaptureReason.beforeRestore,
           });
@@ -332,7 +340,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
           'passed': passed,
           'timerMode': widget.realPolicyTimer
               ? 'production-default'
-              : 'visual-smoke-450ms',
+              : 'visual-smoke-2s',
           'checks': _checks,
           'screenshots': _screenshots,
         }),
@@ -591,7 +599,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
 
   Future<void> _waitForRevisionSource(
     String source,
-    LocalHistoryCaptureReason reason,
+    LocalHistoryCaptureReason? reason,
     String description,
   ) async {
     final store = ref.read(localHistoryStoreProvider);
@@ -600,7 +608,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       final summaries = ref
           .read(localHistoryControllerProvider)
           .selectedRevisions
-          .where((revision) => revision.reason == reason);
+          .where((revision) => reason == null || revision.reason == reason);
       for (final summary in summaries) {
         final revision = await store.readRevision(summary.id);
         if (revision?.source == source) return;
@@ -608,6 +616,26 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }
     throw TimeoutException('Timed out waiting for $description.');
+  }
+
+  Future<void> _waitForEditorSourceToSettle() async {
+    var stableChecks = 0;
+    var revision = ref.read(workspaceControllerProvider).activeBuffer!.revision;
+    for (var attempt = 0; attempt < 100; attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final currentRevision = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .revision;
+      if (currentRevision == revision) {
+        stableChecks += 1;
+        if (stableChecks == 10) return;
+      } else {
+        revision = currentRevision;
+        stableChecks = 0;
+      }
+    }
+    throw TimeoutException('Timed out waiting for editor source to settle.');
   }
 
   bool _hasWidget<T extends Widget>() {

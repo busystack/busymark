@@ -15,6 +15,10 @@ tooltip. Use its action menu for **Paste** or **Paste as Plain Text**; Enter and
 double-click insert the selected item at the latest visible editable selection.
 Escape returns focus to the editor.
 
+The panel toolbar keeps the search field first and the contextual **Actions**
+menu on its physical right. That menu owns **Refresh** and **Clear Clipboard
+History**; these commands are not application Main-menu entries.
+
 BusyMark collects successful copy and cut operations from document editors,
 plus supported content copied in another application after it is successfully
 pasted into a BusyMark document. The current system clipboard can be refreshed
@@ -44,6 +48,10 @@ tab or editor context menu, or a file-tree context menu. In ordinary use its
 plain filename header and revision list follow the active document tab; moving
 focus to search, a revision, the comparison, or an action does not change that
 scope. The header tooltip contains the full path when one exists.
+
+Its toolbar likewise places the contextual **Actions** menu to the physical
+right of the search field. **Refresh**, **Find in Local History…**, and clear
+commands stay in that menu rather than the application Main menu.
 
 Use **Find in Local History…** from Local History's header action menu or the
 command palette to find closed, renamed, deleted, and previously untitled

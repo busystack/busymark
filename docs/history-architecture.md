@@ -184,6 +184,10 @@ GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
   markdown WORKSPACE PRIMARY_FILE DELETE_FILE OUTPUT_DIRECTORY
 GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
   writerside WORKSPACE PRIMARY_FILE - OUTPUT_DIRECTORY
+# Omit the smoke timer override and exercise the real 60-second deadline:
+BUSYMARK_HISTORY_REAL_POLICY=1 GDK_BACKEND=x11 \
+  build/linux/x64/debug/bundle/busymark \
+  markdown WORKSPACE PRIMARY_FILE - OUTPUT_DIRECTORY
 ```
 
 When a probe is launched through `xvfb-run`, explicitly set
