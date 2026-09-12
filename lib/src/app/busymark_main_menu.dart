@@ -10,8 +10,6 @@ import 'localization.dart';
 import 'window_control_service.dart';
 
 enum BusyMarkMainMenuAction {
-  export,
-  generateMarkdownToc,
   fullScreen,
   settings,
   keyboardShortcuts,
@@ -22,18 +20,9 @@ enum BusyMarkMainMenuAction {
 }
 
 class BusyMarkMainMenuButton extends ConsumerWidget {
-  const BusyMarkMainMenuButton({
-    super.key,
-    required this.onSelected,
-    this.canExportPdf = false,
-    this.canExportHtml = false,
-    this.canGenerateMarkdownToc = false,
-  });
+  const BusyMarkMainMenuButton({super.key, required this.onSelected});
 
   final ValueChanged<BusyMarkMainMenuAction> onSelected;
-  final bool canExportPdf;
-  final bool canExportHtml;
-  final bool canGenerateMarkdownToc;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,19 +38,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
       tooltip: l10n.mainMenu,
       icon: BusyMarkGlyphs.menuVertical,
       itemBuilder: (context) => [
-        BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.export,
-          label: command(BusyMarkCommandIds.export).label(context),
-          icon: BusyMarkGlyphs.exportPdf,
-          shortcut: command(BusyMarkCommandIds.export).shortcut?.label,
-          enabled: canExportPdf || canExportHtml,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyMarkMainMenuAction.generateMarkdownToc,
-          label: l10n.generateOrUpdateMarkdownToc,
-          icon: BusyMarkGlyphs.orderedList,
-          enabled: canGenerateMarkdownToc,
-        ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.fullScreen,
           label: command(BusyMarkCommandIds.fullScreen).label(context),
@@ -110,7 +86,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
       ],
       onSelected: (action) {
         final commandId = switch (action) {
-          BusyMarkMainMenuAction.export => BusyMarkCommandIds.export,
           BusyMarkMainMenuAction.fullScreen => BusyMarkCommandIds.fullScreen,
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
           BusyMarkMainMenuAction.keyboardShortcuts =>
@@ -119,7 +94,6 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
             BusyMarkCommandIds.commandPalette,
           BusyMarkMainMenuAction.syntaxReference =>
             BusyMarkCommandIds.syntaxReference,
-          BusyMarkMainMenuAction.generateMarkdownToc ||
           BusyMarkMainMenuAction.reportIssue ||
           BusyMarkMainMenuAction.aboutBusyMark => null,
         };

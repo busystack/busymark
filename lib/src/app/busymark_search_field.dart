@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
-/// Flutter fallback for BusyMark's native Linux search entry.
+/// Flutter counterpart to BusyMark's native Linux `GtkSearchEntry`.
 ///
-/// Linux header bars use `GtkSearchEntry`. Flutter-owned layouts delegate
-/// geometry, icons, focus presentation, and clear behavior to Yaru.
+/// The native entry cannot be embedded in Flutter-owned layouts. This uses the
+/// Yaru input theme shared by the rest of the application instead of
+/// [YaruSearchField], whose borderless pill geometry is intended for Flutter
+/// title bars rather than GTK-style entries inside a sidebar.
 class BusyMarkSearchField extends StatefulWidget {
   const BusyMarkSearchField({
     super.key,
@@ -24,7 +26,7 @@ class BusyMarkSearchField extends StatefulWidget {
   final String? hintText;
   final bool autofocus;
 
-  /// Increment this value to focus the Yaru-owned text entry again.
+  /// Increment this value to focus the themed text entry again.
   final int focusRequest;
 
   final ValueChanged<String>? onChanged;
@@ -38,25 +40,26 @@ class BusyMarkSearchField extends StatefulWidget {
 }
 
 class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
-  final _focusScopeNode = FocusScopeNode(
-    debugLabel: 'BusyMarkSearchField scope',
-  );
-  final _yaruKeyboardFocusNode = FocusNode(
-    debugLabel: 'BusyMarkSearchField keyboard listener',
-    skipTraversal: true,
-  );
+  late TextEditingController _controller;
+  late bool _textIsEmpty;
+  final _focusNode = FocusNode(debugLabel: 'BusyMarkSearchField text entry');
 
   @override
   void initState() {
     super.initState();
-    if (widget.autofocus) {
-      _requestTextFocus();
-    }
+    _attachController();
   }
 
   @override
   void didUpdateWidget(covariant BusyMarkSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _controller.removeListener(_handleControllerChanged);
+      if (oldWidget.controller == null) {
+        _controller.dispose();
+      }
+      _attachController();
+    }
     if (oldWidget.focusRequest != widget.focusRequest) {
       _requestTextFocus();
     }
@@ -64,50 +67,95 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
 
   @override
   void dispose() {
-    _focusScopeNode.dispose();
-    _yaruKeyboardFocusNode.dispose();
+    _controller.removeListener(_handleControllerChanged);
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _attachController() {
+    _controller = widget.controller ?? TextEditingController();
+    _textIsEmpty = _controller.text.isEmpty;
+    _controller.addListener(_handleControllerChanged);
+  }
+
+  void _handleControllerChanged() {
+    final textIsEmpty = _controller.text.isEmpty;
+    if (textIsEmpty != _textIsEmpty) {
+      setState(() => _textIsEmpty = textIsEmpty);
+    }
   }
 
   void _requestTextFocus() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      for (final node in _focusScopeNode.traversalDescendants) {
-        if (node.canRequestFocus) {
-          node.requestFocus();
-          return;
-        }
+      if (mounted) {
+        _focusNode.requestFocus();
       }
     });
   }
 
+  void _clear() {
+    final hadText = _controller.text.isNotEmpty;
+    final onClear = widget.onClear;
+    if (onClear != null) {
+      onClear();
+    }
+    _controller.clear();
+    if (onClear == null && hadText) {
+      // TextField does not report programmatic controller changes through
+      // onChanged, so keep onChanged-only search owners in sync.
+      widget.onChanged?.call('');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final clearLabel =
+        widget.clearButtonSemanticLabel ??
+        MaterialLocalizations.of(context).clearButtonTooltip;
     return Focus(
-      onKeyEvent: (node, event) {
+      onKeyEvent: (_, event) {
         if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.escape &&
-            widget.onEscape != null) {
-          widget.onEscape!();
+            event.logicalKey == LogicalKeyboardKey.escape) {
+          _clear();
+          widget.onEscape?.call();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
-      child: FocusScope(
-        node: _focusScopeNode,
-        child: YaruSearchField(
-          controller: widget.controller,
-          focusNode: _yaruKeyboardFocusNode,
-          hintText: widget.hintText,
+      child: SizedBox(
+        height: kYaruTitleBarItemHeight,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
           autofocus: widget.autofocus,
+          textInputAction: TextInputAction.search,
+          textAlignVertical: TextAlignVertical.center,
+          cursorWidth: 1,
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
-          onClear: widget.onClear,
-          clearIconSemanticLabel:
-              widget.clearButtonSemanticLabel ??
-              MaterialLocalizations.of(context).clearButtonTooltip,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            prefixIcon: const Icon(YaruIcons.search),
+            prefixIconConstraints: const BoxConstraints.tightFor(
+              width: kYaruTitleBarItemHeight,
+            ),
+            suffixIcon: _textIsEmpty
+                ? null
+                : IconButton(
+                    tooltip: clearLabel,
+                    onPressed: _clear,
+                    icon: const Icon(YaruIcons.edit_clear),
+                  ),
+            suffixIconConstraints: const BoxConstraints.tightFor(
+              width: kYaruTitleBarItemHeight,
+            ),
+          ),
         ),
       ),
     );

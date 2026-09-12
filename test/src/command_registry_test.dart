@@ -44,6 +44,22 @@ void main() {
       'Ctrl+Alt+M',
     );
     expect(
+      registry[BusyMarkCommandIds.localHistory]?.shortcut?.label,
+      'Ctrl+5',
+    );
+    expect(
+      registry[BusyMarkCommandIds.clipboardHistory]?.shortcut?.label,
+      'Ctrl+6',
+    );
+    expect(
+      registry[BusyMarkCommandIds.localHistory]?.scope,
+      BusyMarkCommandScope.application,
+    );
+    expect(
+      registry[BusyMarkCommandIds.clipboardHistory]?.scope,
+      BusyMarkCommandScope.application,
+    );
+    expect(
       registry.commands.map((command) => command.id).toSet().length,
       registry.commands.length,
     );

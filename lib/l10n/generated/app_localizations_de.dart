@@ -956,6 +956,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hardLineBreak => 'Harter Zeilenumbruch';
 
   @override
+  String get insertBlankLine => 'Leerzeile einfügen';
+
+  @override
   String get textStyle => 'Textstil';
 
   @override
@@ -1137,7 +1140,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get files => 'Dateien';
 
   @override
-  String get toc => 'Inhaltsverzeichnis';
+  String get toc => 'Themen';
 
   @override
   String get tocActions => 'Inhaltsverzeichnisaktionen';
@@ -1576,6 +1579,21 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Ungültiger regulärer Ausdruck';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-Treffer ohne Zeichen werden nicht unterstützt (z. B. ^, \$ oder Lookaheads, die nur eine Position treffen).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Es wird nur ein Teil der Ergebnisse angezeigt. Zeigen Sie mehr an oder grenzen Sie die Suche ein.';
+
+  @override
+  String get workspaceSearchShowMore => 'Weitere Ergebnisse anzeigen';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Die Suche ist unvollständig. Diese Dateien sind größer als 1 MiB oder konnten nicht gelesen werden:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3921,6 +3939,290 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Wählen Sie eine lesbare UTF-8-CSS-Datei bis 256 KiB ohne Importe, Ressourcen-URLs, HTML sowie ausführbares oder maskiertes CSS.';
+
+  @override
+  String get clipboardHistory => 'Zwischenablage-Historie';
+
+  @override
+  String get clipboardHistorySearchHint => 'Zwischenablageverlauf durchsuchen';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Öffne die Sitzungs-spezifische Zwischenablage-Historie.';
+
+  @override
+  String get clipboardCurrent => 'Aktuelle Zwischenablage';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Aktuelle Zwischenablage aus einer anderen Anwendung';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Einfügen in $name';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Nur für diese BusyMark-Sitzung gespeichert.';
+
+  @override
+  String get clipboardNoItems => 'Zwischenablage-Historie ist leer.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Keine Zwischenablagen-Elemente passen zu dieser Suche.';
+
+  @override
+  String get clipboardDisabled =>
+      'Die Sammlung \"Zwischenablage-Historie\" ist in den Einstellungen deaktiviert.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Der aktuelle Zwischenablage-Inhalt ist nicht verfügbar oder wird nicht unterstützt.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Dieses Zwischenablagen-Element ist zu groß, um es zu speichern.';
+
+  @override
+  String get clipboardPastePlainText => 'Einfügen als reinen Text';
+
+  @override
+  String get clipboardClearAll => 'Löschen der Zwischenablage-Historie';
+
+  @override
+  String get clipboardEntryText => 'Textinhalt';
+
+  @override
+  String get clipboardEntryRichText => 'Reicher Text';
+
+  @override
+  String get clipboardEntryImage => 'Bild';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Kopiert aus $name';
+  }
+
+  @override
+  String get localHistory => 'Lokale Historie';
+
+  @override
+  String get localHistoryEllipsis => 'Lokale Historie…';
+
+  @override
+  String get localHistoryDescription =>
+      'Zeige gespeicherte und automatische lokale Revisionen für das aktuelle Dokument.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'In Lokaler Historie suchen…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Lokale Historie Dokumente und Revisionen durchsuchen.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Es gibt noch keine Dokumente mit Lokaler Historie.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Dieses Dokument hat keine Lokalen Historie Revisionen.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Keine Lokalen Historie Revisionen passen zu dieser Suche.';
+
+  @override
+  String get localHistorySearchHint => 'Lokalen Verlauf durchsuchen';
+
+  @override
+  String get localHistorySelectedRevision => 'Ausgewählte Revision';
+
+  @override
+  String get localHistoryCurrentEditor => 'Aktueller Editor Inhalt';
+
+  @override
+  String get localHistoryCurrentDisk => 'Aktueller Inhalt auf der Festplatte';
+
+  @override
+  String get localHistoryMissingFile => 'Die Originaldatei fehlt.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Revision Wiederherstellen';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Zur Originalposition Wiederherstellen';
+
+  @override
+  String get localHistoryRestoreNewLocation =>
+      'Zur neuen Position Wiederherstellen…';
+
+  @override
+  String get localHistoryRestoreChange => 'Änderung Wiederherstellen';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Diese Änderung kann nicht wiederhergestellt werden, da der Vergleich nicht mehr aktuell ist.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Dieser große Vergleich wurde vereinfacht. Einzelne Änderungen können nicht wiederhergestellt werden.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Ältere Revision Änderung: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Aktuelle Inhalt Änderung: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Gelöscht';
+
+  @override
+  String get localHistoryUntitled => 'Unbenannt';
+
+  @override
+  String get localHistoryClearDocument =>
+      'Löschen Sie den Verlauf dieses Dokuments';
+
+  @override
+  String get localHistoryClearAll => 'Löschen Sie den gesamten lokalen Verlauf';
+
+  @override
+  String get localHistoryClearDocumentTitle =>
+      'Verlauf dieses Dokuments löschen?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Verlauf dieses Dokuments löschen?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Dies entfernt dauerhaft gespeicherte Revisionen. Diese Aktion kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Der lokale Verlauf wurde beschädigt und aus intakten Revisionen neu aufgebaut.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Dieser lokale Verlauf verwendet das nicht unterstützte Format $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Lokaler Verlauf ist nicht verfügbar: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Aufzeichnung ist deaktiviert oder dieser Pfad ist ausgeschlossen. Aktivieren Sie die Aufzeichnung erneut, bevor Sie wiederherstellen.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Lokaler Verlauf konnte die Pfadänderung nicht aufzeichnen: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Lokaler Verlauf konnte den gelöschten Pfad nicht speichern: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Die ausgewählte Revision fehlt oder ist beschädigt.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Die ausgewählte Revision kann nicht gelesen werden: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Lokaler Verlauf konnte diese Revision nicht erfassen: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Basisversion';
+
+  @override
+  String get localHistoryReasonSaved => 'Gespeichert';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Automatische Checkpoint';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Vor dem Neuladen';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Vor dem Entsorgen';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Vor der Wiederherstellung';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Vor dem Löschen';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Externe Änderung';
+
+  @override
+  String get settingsHistory => 'Verlauf';
+
+  @override
+  String get settingsClipboardHistoryTitle =>
+      'Verlauf der Zwischenablage sammeln';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Behalten Sie den Inhalt, der erfolgreich kopiert und eingefügt wurde, nur für diese BusyMark-Sitzung.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Lokalen Verlauf speichern';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Speichern Sie Dokumentversionen auf diesem Gerät zur Wiederherstellung und zum Vergleich.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Automatische Checkpoint-Intervall';
+
+  @override
+  String get settingsHistoryRetention => 'Aufbewahrungsdauer';
+
+  @override
+  String get settingsHistoryStorage => 'Maximale Speicherkapazität';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Ausschließlich Pfade';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Ein absoluter Pfad pro Zeile';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value Sekunden';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value Tage';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

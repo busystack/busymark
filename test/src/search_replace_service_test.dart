@@ -12,6 +12,185 @@ import 'package:path/path.dart' as p;
 void main() {
   const replacementService = SearchReplacementService();
 
+  test('Unicode regex replacement preserves complete characters', () async {
+    const options = SourceSearchOptions(query: '.', regex: true);
+    final worker = SearchReplacementWorker();
+    addTearDown(worker.dispose);
+    final all = await worker.previewText(
+      source: '😀😀',
+      options: options,
+      replacement: 'X',
+    );
+    expect(all!.apply(), 'XX');
+    final current = await worker.previewText(
+      source: '😀😀',
+      options: options,
+      replacement: 'X',
+      targetStart: 0,
+      targetEnd: 2,
+    );
+    expect(current!.apply(), 'X😀');
+    for (final range in [(0, 1), (1, 2), (1, 3)]) {
+      final unsafe = replacementService.previewMatch(
+        source: '😀😀',
+        options: options,
+        replacement: 'X',
+        start: range.$1,
+        end: range.$2,
+      );
+      expect(unsafe.matches, isEmpty);
+      expect(unsafe.apply(), '😀😀');
+    }
+  });
+
+  test('zero-length replacement limitation survives worker transfer', () async {
+    final worker = SearchReplacementWorker();
+    addTearDown(worker.dispose);
+    final preview = await worker.previewText(
+      source: 'cat',
+      options: const SourceSearchOptions(query: '^', regex: true),
+      replacement: 'X',
+    );
+    expect(preview!.hasZeroLengthMatches, isTrue);
+    expect(preview.apply(), 'cat');
+  });
+
+  for (final count in [4999, 5000, 5001]) {
+    test('workspace replacement limit at $count actual matches', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-search-limit-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'a.md'));
+      final tail = File(p.join(directory.path, 'b.md'));
+      await file.writeAsString('cat ' * (count > 5000 ? 5000 : count));
+      await tail.writeAsString(count > 5000 ? 'cat' : 'nothing');
+      final state = WorkspaceState(
+        workspace: Workspace(
+          id: directory.path,
+          rootPath: directory.path,
+          kind: WorkspaceKind.markdownFolder,
+          openedAt: DateTime(2026),
+          files: [
+            await _documentFile(file, directory.path),
+            await _documentFile(tail, directory.path),
+          ],
+          diagnostics: const [],
+        ),
+      );
+      final preview = await replacementService.previewWorkspace(
+        state: state,
+        workspaceService: const WorkspaceService(),
+        options: const SourceSearchOptions(query: 'cat'),
+        replacement: 'dog',
+      );
+      expect(preview.matchCount, count > 5000 ? 5000 : count);
+      expect(preview.isComplete, count <= 5000);
+    });
+  }
+
+  test('workspace replacement cancels a running expensive regex', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-search-cancel-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(p.join(directory.path, 'a.md'));
+    await file.writeAsString('${'a' * 100}b');
+    final state = WorkspaceState(
+      workspace: Workspace(
+        id: directory.path,
+        rootPath: directory.path,
+        kind: WorkspaceKind.markdownFolder,
+        openedAt: DateTime(2026),
+        files: [await _documentFile(file, directory.path)],
+        diagnostics: const [],
+      ),
+    );
+    final cancellation = WorkspaceReplacementCancellation();
+    addTearDown(cancellation.cancel);
+    final pending = replacementService.previewWorkspace(
+      state: state,
+      workspaceService: const WorkspaceService(),
+      options: const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+      replacement: 'X',
+      cancellation: cancellation,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    cancellation.cancel();
+    final preview = await pending.timeout(const Duration(seconds: 5));
+    expect(preview.isComplete, isFalse);
+    expect(preview.issues.single.kind, WorkspaceReplacementIssueKind.cancelled);
+  });
+
+  test(
+    'workspace scope includes closed Writerside documents and ignores unrelated open files',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-search-scope-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final config = File(p.join(directory.path, 'writerside.cfg'));
+      final image = File(p.join(directory.path, 'image.png'));
+      final unknown = File(p.join(directory.path, 'unknown.bin'));
+      for (final file in [config, image, unknown]) {
+        await file.writeAsString('cat');
+      }
+      final openLoad = await const WorkspaceService().loadTextWithSnapshot(
+        unknown.path,
+      );
+      final buffer = DocumentBuffer.file(
+        id: 'unknown',
+        filePath: unknown.path,
+        text: openLoad.text,
+        snapshot: openLoad.snapshot,
+        format: openLoad.format,
+      );
+      final state = WorkspaceState(
+        workspace: Workspace(
+          id: directory.path,
+          rootPath: directory.path,
+          kind: WorkspaceKind.writersideModule,
+          openedAt: DateTime(2026),
+          files: [
+            for (final entry in [
+              (config, DocumentKind.config),
+              (image, DocumentKind.image),
+              (unknown, DocumentKind.unknown),
+            ])
+              DocumentFile(
+                absolutePath: entry.$1.path,
+                relativePath: p.basename(entry.$1.path),
+                kind: entry.$2,
+                size: 3,
+                lastModified: DateTime(2026),
+              ),
+          ],
+          diagnostics: const [],
+        ),
+        documentBuffers: [buffer],
+        activeBufferId: buffer.id,
+      );
+      final preview = await replacementService.previewWorkspace(
+        state: state,
+        workspaceService: const WorkspaceService(),
+        options: const SourceSearchOptions(query: 'cat'),
+        replacement: 'dog',
+      );
+      expect(preview.files.single.filePath, config.path);
+      final result = await replacementService.applyWorkspace(
+        preview: preview,
+        selectedMatchIds: {preview.files.single.matches.single.id},
+        currentState: () => state,
+        updateBuffer: (_, _) => fail('Unrelated open buffer must be excluded'),
+        workspaceService: const WorkspaceService(),
+      );
+      expect(result.appliedMatches, 1);
+      expect(await config.readAsString(), 'dog');
+      expect(await image.readAsString(), 'cat');
+      expect(await unknown.readAsString(), 'cat');
+    },
+  );
+
   test('previews and applies plain whole-word replacements', () {
     final preview = replacementService.previewText(
       source: 'cat scatter Cat',

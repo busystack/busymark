@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "길이가 0인 정규식 일치는 지원하지 않습니다(예: ^, $, 위치에만 일치하는 전방 탐색).",
+  "workspaceSearchIncomplete": "일부 결과만 표시됩니다. 더 표시하거나 검색 범위를 좁히세요.",
+  "workspaceSearchShowMore": "결과 더 보기",
+  "workspaceSearchSkippedFiles": "검색이 완료되지 않았습니다. 다음 파일은 1 MiB를 초과하거나 읽을 수 없습니다:",
   "@@locale": "ko",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "빈 줄 삽입",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "텍스트 스타일",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "목차",
+  "toc": "토픽",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "목차 작업",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "인스턴스",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "새 인스턴스",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "여백을 제외한 콘텐츠 너비와 높이를 각각 20 mm 이상 확보하세요.",
   "exportInvalidColor": "#RRGGBB 형식으로 색상을 입력하세요.",
   "exportInvalidCss": "가져오기, 리소스 URL, HTML, 실행 가능하거나 이스케이프된 CSS가 없는 읽기 가능한 UTF-8 .css 파일(최대 256 KiB)을 선택하세요.",
-  "exportInvalidRange": "{field}: {minimum}에서 {maximum} 사이의 숫자를 입력하세요."
+  "exportInvalidRange": "{field}: {minimum}에서 {maximum} 사이의 숫자를 입력하세요.",
+  "clipboardHistory": "클립보드 기록",
+  "clipboardHistorySearchHint": "클립보드 기록 검색",
+  "clipboardHistoryDescription": "세션별 클립보드 기록을 엽니다.",
+  "clipboardCurrent": "현재 클립보드",
+  "clipboardCurrentExternal": "다른 애플리케이션의 현재 클립보드",
+  "clipboardDestination": "{name}에 붙여넣기",
+  "clipboardSessionOnly": "이 BusyMark 세션에만 저장됩니다.",
+  "clipboardNoItems": "클립보드 기록이 비어 있습니다.",
+  "clipboardNoMatches": "이 검색과 일치하는 클립보드 항목이 없습니다.",
+  "clipboardDisabled": "클립보드 기록 컬렉션이 설정에서 비활성화되었습니다.",
+  "clipboardUnavailable": "현재 클립보드 내용은 사용할 수 없거나 지원되지 않습니다.",
+  "clipboardTooLarge": "이 클립보드 항목은 저장할 수 없을 정도로 큽니다.",
+  "clipboardPastePlainText": "일반 텍스트로 붙여넣기",
+  "clipboardClearAll": "클립보드 기록 지우기",
+  "clipboardEntryText": "텍스트",
+  "clipboardEntryRichText": "풍부한 텍스트",
+  "clipboardEntryImage": "이미지",
+  "clipboardOrigin": "{name}에서 복사됨",
+  "localHistory": "로컬 기록",
+  "localHistoryEllipsis": "로컬 기록…",
+  "localHistoryDescription": "현재 문서에 저장된 자동 로컬 변경 사항을 표시합니다.",
+  "findLocalHistoryEllipsis": "로컬 히스토리에서 찾기…",
+  "findLocalHistoryDescription": "로컬 히스토리 문서 및 수정 내용 검색.",
+  "localHistoryNoDocuments": "아직 로컬 히스토리가 있는 문서는 없습니다.",
+  "localHistoryNoRevisions": "이 문서는 로컬 히스토리 수정 사항이 없습니다.",
+  "localHistoryNoMatches": "이 검색과 일치하는 로컬 히스토리 수정 사항이 없습니다.",
+  "localHistorySearchHint": "로컬 기록 검색",
+  "localHistorySelectedRevision": "선택된 수정",
+  "localHistoryCurrentEditor": "현재 편집 내용",
+  "localHistoryCurrentDisk": "디스크에 있는 현재 내용",
+  "localHistoryMissingFile": "원본 파일이 없습니다.",
+  "localHistoryRestoreRevision": "이전 버전 복원",
+  "localHistoryRestoreOriginalLocation": "원래 위치로 복원",
+  "localHistoryRestoreNewLocation": "새로운 위치로 복원…",
+  "localHistoryRestoreChange": "변경 사항 복원",
+  "localHistoryRestoreUnavailable": "이 변경 사항은 더 이상 비교가 불가능합니다.",
+  "localHistoryComparisonSimplified": "이 큰 비교는 단순화되었습니다. 개별 변경 사항 복원은 불가능합니다.",
+  "localHistoryOlderChange": "이전 버전의 변경: {text}",
+  "localHistoryCurrentChange": "현재 콘텐츠의 변경: {text}",
+  "localHistoryDeleted": "삭제됨",
+  "localHistoryUntitled": "제목 없음",
+  "localHistoryClearDocument": "이 문서의 기록 삭제",
+  "localHistoryClearAll": "모든 로컬 기록 삭제",
+  "localHistoryClearDocumentTitle": "문서 기록 삭제?",
+  "localHistoryClearAllTitle": "모든 로컬 기록 삭제?",
+  "localHistoryClearConfirmation": "이로 인해 저장된 버전이 영구적으로 삭제됩니다. 이 작업은 취소할 수 없습니다.",
+  "localHistoryWarningIndexRebuilt": "로컬 기록 인덱스가 손상되어 정상적인 버전에서 재구성되었습니다.",
+  "localHistoryWarningUnsupportedFormat": "이 로컬 기록 저장소는 지원되지 않는 형식 {version}을 사용합니다.",
+  "localHistoryWarningUnavailable": "로컬 기록은 사용할 수 없습니다: {detail}",
+  "localHistoryWarningRecordingDisabled": "녹음이 비활성화되었거나 이 경로가 제외되었습니다. 복원하기 전에 녹음을 다시 활성화하십시오.",
+  "localHistoryWarningPathChange": "로컬 기록이 경로 변경을 기록할 수 없습니다: {detail}",
+  "localHistoryWarningDeletedPath": "로컬 히스토리에서 삭제된 경로를 저장할 수 없습니다: {detail}",
+  "localHistoryWarningRevisionMissing": "선택된 버전이 누락되었거나 손상되었습니다.",
+  "localHistoryWarningRevisionRead": "선택된 버전을 읽을 수 없습니다: {detail}",
+  "localHistoryWarningCapture": "로컬 히스토리가 이 버전을 캡처할 수 없습니다: {detail}",
+  "localHistoryRevisionAt": "{reason} – {timestamp}",
+  "localHistoryReasonBaseline": "기본 버전",
+  "localHistoryReasonSaved": "저장됨",
+  "localHistoryReasonAutomaticCheckpoint": "자동 체크포인트",
+  "localHistoryReasonBeforeReload": "재로드 전",
+  "localHistoryReasonBeforeDiscard": "버리기 전",
+  "localHistoryReasonBeforeRestore": "복원 전",
+  "localHistoryReasonBeforeDelete": "삭제 전",
+  "localHistoryReasonExternalChange": "외부 변경",
+  "settingsHistory": "버전 기록",
+  "settingsClipboardHistoryTitle": "클립보드 기록 수집",
+  "settingsClipboardHistoryDescription": "이 BusyMark 세션에만 복사 및 성공적으로 붙여넣은 콘텐츠를 유지합니다.",
+  "settingsLocalHistoryTitle": "로컬 버전 기록",
+  "settingsLocalHistoryDescription": "복구 및 비교를 위해 이 장치에 문서 버전을 저장합니다.",
+  "settingsHistoryCheckpoint": "자동 체크포인트 간격",
+  "settingsHistoryRetention": "보관 기간",
+  "settingsHistoryStorage": "최대 저장 공간",
+  "settingsHistoryExcludedPaths": "제외된 경로",
+  "settingsHistoryExcludedPathsHint": "한 줄에 하나의 절대 경로",
+  "settingsSecondsValue": "{value} 초",
+  "settingsDaysValue": "{value} 일",
+  "settingsMebibytesValue": "{value} MiB"
 }

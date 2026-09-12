@@ -150,6 +150,7 @@ class GitSidebarTab extends ConsumerWidget {
                   onSelectCommit: controller.selectFileHistoryCommit,
                   onRestoreVersion: () => _confirmRestoreVersion(
                     context,
+                    ref,
                     controller,
                     hasUnsavedEditorChanges,
                   ),
@@ -208,6 +209,7 @@ class GitSidebarTab extends ConsumerWidget {
 
   Future<void> _confirmRestoreVersion(
     BuildContext context,
+    WidgetRef ref,
     GitController controller,
     bool hasUnsavedEditorChanges,
   ) async {

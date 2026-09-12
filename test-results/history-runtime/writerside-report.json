@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "checks": {
+    "native clipboard publication": true,
+    "explicit save captured": true,
+    "exact comparison region available": true,
+    "fragment restore": true,
+    "clipboardEntries": true,
+    "revisionReasons": true
+  },
+  "screenshots": [
+    "writerside-clipboard-history-1280x800.png",
+    "writerside-local-history-1280x800.png",
+    "writerside-comparison-1920x1080.png",
+    "writerside-fragment-restored-1920x1080.png"
+  ]
+}

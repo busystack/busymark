@@ -41,6 +41,7 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.paragraph => _inlineMarkdown(
         block.inlines,
         atBlockStart: true,
+        readableHardBreakRuns: true,
       ),
       BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
@@ -254,7 +255,11 @@ class BusyMarkMarkdownSerializer {
   }
 
   String _listItem(BusyBlock block, String marker, {String? contentPrefix}) {
-    final text = _inlineMarkdown(block.inlines, atBlockStart: true);
+    final text = _inlineMarkdown(
+      block.inlines,
+      atBlockStart: true,
+      readableHardBreakRuns: true,
+    );
     final content = [
       if (contentPrefix != null) contentPrefix,
       if (text.isNotEmpty) text,
@@ -287,7 +292,15 @@ class BusyMarkMarkdownSerializer {
   }
 
   bool _isSourceBackedBlock(BusyBlock block) {
-    return block.kind != BusyBlockKind.frontMatter && !block.isGenerated;
+    return block.kind != BusyBlockKind.frontMatter &&
+        !block.isGenerated &&
+        !_isTransientTrailingParagraph(block);
+  }
+
+  bool _isTransientTrailingParagraph(BusyBlock block) {
+    return block.kind == BusyBlockKind.paragraph &&
+        block.plainText.isEmpty &&
+        block.attributes[busyMarkTransientTrailingParagraphAttribute] == 'true';
   }
 
   bool _isPreservedEmptyParagraph(BusyBlock block) {
@@ -330,7 +343,7 @@ class BusyMarkMarkdownSerializer {
 
   String _blockquote(BusyBlock block) {
     final text = block.children.isEmpty
-        ? _inlineMarkdown(block.inlines)
+        ? _inlineMarkdown(block.inlines, readableHardBreakRuns: true)
         : block.children.map(serializeBlock).join('\n\n');
     final quote = text
         .split('\n')
@@ -448,15 +461,55 @@ class BusyMarkMarkdownSerializer {
     List<BusyInline> inlines, {
     bool tableCell = false,
     bool atBlockStart = false,
+    bool readableHardBreakRuns = false,
   }) {
     final buffer = StringBuffer();
     var nextAtBlockStart = atBlockStart;
     for (var index = 0; index < inlines.length; index++) {
       final inline = inlines[index];
+      if (inline.kind == BusyInlineKind.hardBreak) {
+        var runEnd = index + 1;
+        while (runEnd < inlines.length &&
+            inlines[runEnd].kind == BusyInlineKind.hardBreak) {
+          runEnd += 1;
+        }
+        final count = runEnd - index;
+        if (count > 1) {
+          if (readableHardBreakRuns && !tableCell) {
+            final startsBlock = buffer.isEmpty;
+            if (!startsBlock && !nextAtBlockStart) {
+              buffer.write('\n');
+            }
+            if (startsBlock) {
+              // Two tags on the marker-only first line keep CommonMark from
+              // treating a leading <br> as a raw HTML block.
+              buffer.write('<br><br>');
+              for (var marker = 2; marker < count; marker++) {
+                buffer.write('\n<br>');
+              }
+            } else {
+              buffer.write(List.filled(count, '<br>').join('\n'));
+            }
+            final hasFollowingContent = runEnd < inlines.length;
+            if (hasFollowingContent) {
+              buffer.write('\n');
+            }
+            nextAtBlockStart = hasFollowingContent;
+          } else {
+            // Physical newlines cannot safely occur in headings or table
+            // cells. Keep their repeated breaks in compact inline HTML.
+            buffer.write(List.filled(count, '<br>').join());
+            nextAtBlockStart = false;
+          }
+          index = runEnd - 1;
+          continue;
+        }
+      }
       final source = _inline(
         inline,
         tableCell: tableCell,
         atBlockStart: nextAtBlockStart,
+        readableHardBreakRuns: readableHardBreakRuns,
         followedByLink:
             index + 1 < inlines.length &&
             inlines[index + 1].kind == BusyInlineKind.link,
@@ -473,11 +526,16 @@ class BusyMarkMarkdownSerializer {
     BusyInline inline, {
     bool tableCell = false,
     bool atBlockStart = false,
+    bool readableHardBreakRuns = false,
     bool followedByLink = false,
   }) {
     final children = inline.children.isEmpty
         ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
-        : _inlineMarkdown(inline.children, tableCell: tableCell);
+        : _inlineMarkdown(
+            inline.children,
+            tableCell: tableCell,
+            readableHardBreakRuns: readableHardBreakRuns,
+          );
     return switch (inline.kind) {
       BusyInlineKind.text => _escapeInlineText(
         inline.text,

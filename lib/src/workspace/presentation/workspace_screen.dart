@@ -20,6 +20,8 @@ import 'package:yaru/yaru.dart';
 import '../../ai/ai_edit_ui.dart';
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
+import '../../clipboard/clipboard_history_controller.dart';
+import '../../clipboard/clipboard_history_panel.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
@@ -71,8 +73,12 @@ import '../../markdown/markdown_section_editor.dart';
 import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
 import '../../math/math_widget.dart';
+import '../../local_history/local_history_comparison_view.dart';
+import '../../local_history/local_history_controller.dart';
+import '../../local_history/local_history_panel.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../search/search_replace_service.dart';
+import '../../search/workspace_search_scope.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
@@ -158,6 +164,8 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
   static const _debounceDelay = Duration(milliseconds: 120);
 
   Timer? _debounce;
+  final _worker = SourceSearchWorker();
+  int _resultLimit = _maxWorkspaceSearchResults;
   late Future<String> Function(String path) _loadText;
   var _request = 0;
   var _disposed = false;
@@ -169,14 +177,14 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       final activeBufferChanged =
           previous?.activeBufferId != next.activeBufferId;
       var shouldRefresh = _workspaceSearchInputsChanged(previous, next);
-      if (activeBufferChanged) {
+      if (activeBufferChanged && !state.active) {
         final options = next.activeBuffer?.editorState.searchOptions;
         if (options != null) {
           state = state
               .withOptions(options)
               .copyWith(matches: const [], searching: false);
         }
-      } else {
+      } else if (!activeBufferChanged) {
         final previousOptions =
             previous?.activeBuffer?.editorState.searchOptions;
         final nextOptions = next.activeBuffer?.editorState.searchOptions;
@@ -197,6 +205,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       _disposed = true;
       _request += 1;
       _debounce?.cancel();
+      _worker.dispose();
     });
     return const _WorkspaceSearchState();
   }
@@ -208,6 +217,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
         state.wholeWord != searchState.wholeWord ||
         state.regex != searchState.regex ||
         state.active != searchState.active;
+    if (inputChanged) _resultLimit = _maxWorkspaceSearchResults;
     state = searchState.copyWith(
       matches: inputChanged ? const [] : state.matches,
       searching: false,
@@ -236,6 +246,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
 
   Future<bool> submit() async {
     _debounce?.cancel();
+    _worker.cancel();
     final request = ++_request;
     final workspaceState = ref.read(workspaceControllerProvider);
     final options = state.options;
@@ -255,6 +266,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
 
   void _schedule(WorkspaceState workspaceState) {
     _debounce?.cancel();
+    _worker.cancel();
     final request = ++_request;
     final workspace = workspaceState.workspace;
     final options = state.options;
@@ -268,7 +280,14 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       }
       return;
     }
-    state = state.copyWith(matches: const [], searching: true);
+    state = state.copyWith(
+      matches: const [],
+      searching: true,
+      truncated: false,
+      skippedFiles: const [],
+      invalidRegex: false,
+      hasZeroLengthMatches: false,
+    );
     _debounce = Timer(_debounceDelay, () {
       _debounce = null;
       unawaited(
@@ -287,22 +306,40 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
     required SourceSearchOptions options,
   }) async {
     try {
-      final matches = await _loadWorkspaceSearchMatches(
+      final result = await _loadWorkspaceSearchMatches(
         workspaceState,
         options,
         loadText: _loadText,
         isCancelled: () => _disposed || request != _request,
+        worker: _worker,
+        maximumResults: _resultLimit,
       );
       if (_disposed || request != _request) {
         return;
       }
-      state = state.copyWith(matches: matches, searching: false);
+      state = state.copyWith(
+        matches: result.matches,
+        searching: false,
+        truncated: result.truncated,
+        skippedFiles: result.skippedFiles,
+        invalidRegex: result.invalidRegex,
+        hasZeroLengthMatches: result.hasZeroLengthMatches,
+      );
     } on Object {
       if (_disposed || request != _request) {
         return;
       }
-      state = state.copyWith(matches: const [], searching: false);
+      state = state.copyWith(
+        matches: const [],
+        searching: false,
+        skippedFiles: [workspaceState.workspace?.rootPath ?? ''],
+      );
     }
+  }
+
+  void showMore() {
+    _resultLimit += _maxWorkspaceSearchResults;
+    _schedule(ref.read(workspaceControllerProvider));
   }
 }
 
@@ -385,6 +422,10 @@ class _WorkspaceSearchState {
     this.regex = false,
     this.matches = const [],
     this.searching = false,
+    this.truncated = false,
+    this.skippedFiles = const [],
+    this.invalidRegex = false,
+    this.hasZeroLengthMatches = false,
   });
 
   final bool active;
@@ -394,9 +435,13 @@ class _WorkspaceSearchState {
   final bool regex;
   final List<_WorkspaceSearchMatch> matches;
   final bool searching;
+  final bool truncated;
+  final List<String> skippedFiles;
+  final bool invalidRegex;
+  final bool hasZeroLengthMatches;
 
   SourceSearchOptions get options => SourceSearchOptions(
-    query: query.trim(),
+    query: query,
     caseSensitive: caseSensitive,
     wholeWord: wholeWord,
     regex: regex,
@@ -410,6 +455,10 @@ class _WorkspaceSearchState {
     bool? regex,
     List<_WorkspaceSearchMatch>? matches,
     bool? searching,
+    bool? truncated,
+    List<String>? skippedFiles,
+    bool? invalidRegex,
+    bool? hasZeroLengthMatches,
   }) {
     return _WorkspaceSearchState(
       active: active ?? this.active,
@@ -419,6 +468,10 @@ class _WorkspaceSearchState {
       regex: regex ?? this.regex,
       matches: matches ?? this.matches,
       searching: searching ?? this.searching,
+      truncated: truncated ?? this.truncated,
+      skippedFiles: skippedFiles ?? this.skippedFiles,
+      invalidRegex: invalidRegex ?? this.invalidRegex,
+      hasZeroLengthMatches: hasZeroLengthMatches ?? this.hasZeroLengthMatches,
     );
   }
 
@@ -450,6 +503,19 @@ bool _workspaceSearchInputsChanged(
       previous.activeBufferId != next.activeBufferId ||
       previous.activeText != next.activeText) {
     return true;
+  }
+  if (previous.documentBuffers.length != next.documentBuffers.length) {
+    return true;
+  }
+  for (var index = 0; index < next.documentBuffers.length; index++) {
+    final before = previous.documentBuffers[index];
+    final after = next.documentBuffers[index];
+    if (before.id != after.id ||
+        before.filePath != after.filePath ||
+        before.revision != after.revision ||
+        before.text != after.text) {
+      return true;
+    }
   }
   final previousWorkspace = previous.workspace;
   final nextWorkspace = next.workspace;
@@ -539,6 +605,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final documentViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
     final gitState = ref.watch(gitControllerProvider);
+    final localHistoryState = ref.watch(localHistoryControllerProvider);
     final searchResults = _workspaceSearchResults(context, searchState.matches);
 
     final colors = BusyMarkSurfaceColors.of(context);
@@ -548,6 +615,11 @@ class WorkspaceScreen extends ConsumerWidget {
     final sidebarVisible =
         settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
     final documentOutline = _activeDocumentOutline(state);
+    final canExportPdf = canExportWorkspacePdf(state);
+    final canExportHtml = canExportWorkspaceHtml(state);
+    final canGenerateMarkdownToc =
+        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
+        false;
     final sidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _Sidebar(
@@ -556,15 +628,25 @@ class WorkspaceScreen extends ConsumerWidget {
         searchState: searchState,
         searchResults: searchResults,
         onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
+        canExport: canExportPdf || canExportHtml,
+        canGenerateMarkdownToc: canGenerateMarkdownToc,
+        onExport: () => unawaited(exportWorkspace(context, ref)),
+        onGenerateMarkdownToc: () => _generateOrUpdateMarkdownToc(context, ref),
       ),
     );
     final workspaceContent = Expanded(
       child: Column(
         children: [
-          if (_shouldShowEditorTabs(state, gitState))
-            _EditorTabStrip(state: state, gitState: gitState),
+          if (_shouldShowEditorTabs(state, gitState, localHistoryState))
+            _EditorTabStrip(
+              state: state,
+              gitState: gitState,
+              localHistoryState: localHistoryState,
+            ),
           Expanded(
-            child: gitState.selectedDiffForDisplay == null
+            child: localHistoryState.selectedRevision != null
+                ? const LocalHistoryComparisonView()
+                : gitState.selectedDiffForDisplay == null
                 ? _EditorPreviewSplit(
                     state: state,
                     outline: documentOutline,
@@ -623,7 +705,12 @@ class WorkspaceScreen extends ConsumerWidget {
                 .read(_workspaceSearchProvider.notifier)
                 .set(current.copyWith(active: true, query: query));
             unawaited(settingsController.setSidebarVisible(true));
-          case HeaderBarSearchSubmitted():
+          case HeaderBarSearchSubmitted(:final query):
+            final current = ref.read(_workspaceSearchProvider);
+            ref
+                .read(_workspaceSearchProvider.notifier)
+                .set(current.copyWith(active: true, query: query));
+            unawaited(settingsController.setSidebarVisible(true));
             unawaited(_submitSearch(context, ref));
           case HeaderBarSearchCleared():
             _clearSearchQuery(ref);
@@ -644,6 +731,32 @@ class WorkspaceScreen extends ConsumerWidget {
         _closeSearch(ref);
       }
     });
+    ref.listen<int>(clipboardHistoryOpenRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.clipboard);
+      unawaited(
+        ref
+            .read(clipboardHistoryControllerProvider.notifier)
+            .refreshCurrentClipboard(),
+      );
+    });
+    ref.listen<int>(localHistoryOpenRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (buffer != null) {
+        unawaited(
+          ref
+              .read(localHistoryControllerProvider.notifier)
+              .selectDocumentForBuffer(buffer),
+        );
+      }
+    });
+    ref.listen<int>(localHistoryFindRequestProvider, (previous, next) {
+      if (next == previous) return;
+      _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      ref.read(localHistoryControllerProvider.notifier).beginDocumentSearch();
+    });
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
       final nextWorkspace = next.workspace;
       if (nextWorkspace == null) {
@@ -660,25 +773,18 @@ class WorkspaceScreen extends ConsumerWidget {
         ? '*${_activeFileName(context, workspace)}'
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
-    final canExportPdf = canExportWorkspacePdf(state);
-    final canExportHtml = canExportWorkspaceHtml(state);
-    final canGenerateMarkdownToc =
-        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
-        false;
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
           viewMode: _headerBarViewMode(settings.documentViewMode),
           searchQuery: searchState.query,
           canRefresh: true,
-          canExportPdf: canExportPdf,
-          canExportHtml: canExportHtml,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
           sidebarVisible: sidebarVisible,
           sidebarToggleVisible: hasSidebar,
-          backVisible: true,
+          backVisible: !searchState.active,
         );
     final commandRegistry =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
@@ -711,6 +817,17 @@ class WorkspaceScreen extends ConsumerWidget {
               const _SelectSidebarTabIntent(_SidebarTab.git),
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.git),
+          commandRegistry[BusyMarkCommandIds.localHistory]!.shortcut!.activator:
+              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
+          const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
+              const _SelectSidebarTabIntent(_SidebarTab.localHistory),
+          commandRegistry[BusyMarkCommandIds.clipboardHistory]!
+              .shortcut!
+              .activator: const _SelectSidebarTabIntent(
+            _SidebarTab.clipboard,
+          ),
+          const SingleActivator(LogicalKeyboardKey.numpad6, control: true):
+              const _SelectSidebarTabIntent(_SidebarTab.clipboard),
         },
         child: Actions(
           actions: {
@@ -740,21 +857,28 @@ class WorkspaceScreen extends ConsumerWidget {
               appBar: useNativeHeaderBar
                   ? null
                   : AppBar(
-                      leading: Center(
-                        child: BusyMarkHeaderIconButton(
-                          tooltip: context.l10n.welcome,
-                          icon: BusyMarkGlyphs.home,
-                          shortcut: commandRegistry[BusyMarkCommandIds.back]
-                              ?.shortcut
-                              ?.label,
-                          onPressed: () async {
-                            final router = GoRouter.of(context);
-                            if (await confirmSafeToContinue(context, ref)) {
-                              router.go('/');
-                            }
-                          },
-                        ),
-                      ),
+                      automaticallyImplyLeading: false,
+                      leading: searchState.active
+                          ? null
+                          : Center(
+                              child: BusyMarkHeaderIconButton(
+                                tooltip: context.l10n.welcome,
+                                icon: BusyMarkGlyphs.home,
+                                shortcut:
+                                    commandRegistry[BusyMarkCommandIds.back]
+                                        ?.shortcut
+                                        ?.label,
+                                onPressed: () async {
+                                  final router = GoRouter.of(context);
+                                  if (await confirmSafeToContinue(
+                                    context,
+                                    ref,
+                                  )) {
+                                    router.go('/');
+                                  }
+                                },
+                              ),
+                            ),
                       title: searchState.active
                           ? _HeaderSearchField(
                               query: searchState.query,
@@ -773,15 +897,17 @@ class WorkspaceScreen extends ConsumerWidget {
                               dirty: state.isDirty,
                             ),
                       actions: [
-                        const SizedBox(width: BusyMarkSpacing.sm),
-                        BusyMarkHeaderIconButton(
-                          tooltip: context.l10n.validate,
-                          icon: BusyMarkGlyphs.diagnostics,
-                          onPressed: () => unawaited(
-                            _validateActiveAndShowProblems(context, ref),
+                        if (!searchState.active) ...[
+                          const SizedBox(width: BusyMarkSpacing.sm),
+                          BusyMarkHeaderIconButton(
+                            tooltip: context.l10n.validate,
+                            icon: BusyMarkGlyphs.diagnostics,
+                            onPressed: () => unawaited(
+                              _validateActiveAndShowProblems(context, ref),
+                            ),
                           ),
-                        ),
-                        const _HeaderSeparator(),
+                          const _HeaderSeparator(),
+                        ],
                         BusyMarkHeaderIconButton(
                           tooltip: settings.sidebarVisible
                               ? context.l10n.hideSidebar
@@ -811,43 +937,41 @@ class WorkspaceScreen extends ConsumerWidget {
                               ?.label,
                           onPressed: () => _toggleSearch(ref),
                         ),
-                        BusyMarkHeaderPopupMenuButton<
-                          DocumentViewModePreference
-                        >(
-                          tooltip: context.l10n.viewMode,
-                          icon: _documentViewModeIcon(documentViewMode),
-                          shortcut: _documentViewModeShortcut(
-                            documentViewMode,
-                            commandRegistry,
-                          ),
-                          itemBuilder: (context) => [
-                            for (final mode
-                                in DocumentViewModePreference.values)
-                              BusyMarkPopupMenuItem(
-                                value: mode,
-                                label: _documentViewModeLabel(context, mode),
-                                icon: _documentViewModeIcon(mode),
-                                shortcut: _documentViewModeShortcut(
-                                  mode,
-                                  commandRegistry,
+                        if (!searchState.active)
+                          BusyMarkHeaderPopupMenuButton<
+                            DocumentViewModePreference
+                          >(
+                            tooltip: context.l10n.viewMode,
+                            icon: _documentViewModeIcon(documentViewMode),
+                            shortcut: _documentViewModeShortcut(
+                              documentViewMode,
+                              commandRegistry,
+                            ),
+                            itemBuilder: (context) => [
+                              for (final mode
+                                  in DocumentViewModePreference.values)
+                                BusyMarkPopupMenuItem(
+                                  value: mode,
+                                  label: _documentViewModeLabel(context, mode),
+                                  icon: _documentViewModeIcon(mode),
+                                  shortcut: _documentViewModeShortcut(
+                                    mode,
+                                    commandRegistry,
+                                  ),
+                                  checked: mode == documentViewMode,
+                                  trailingCheck: true,
                                 ),
-                                checked: mode == documentViewMode,
-                                trailingCheck: true,
-                              ),
-                          ],
-                          onSelected: (mode) {
-                            ref
-                                .read(workspaceControllerProvider.notifier)
-                                .updateActiveEditorMode(mode);
-                            unawaited(
-                              settingsController.setDocumentViewMode(mode),
-                            );
-                          },
-                        ),
+                            ],
+                            onSelected: (mode) {
+                              ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .updateActiveEditorMode(mode);
+                              unawaited(
+                                settingsController.setDocumentViewMode(mode),
+                              );
+                            },
+                          ),
                         BusyMarkMainMenuButton(
-                          canExportPdf: canExportPdf,
-                          canExportHtml: canExportHtml,
-                          canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -865,6 +989,14 @@ class WorkspaceScreen extends ConsumerWidget {
                       kind: busyMarkWorkspaceMessageStatusKind(
                         state.message!.code,
                       ),
+                    ),
+                  if (localHistoryState.warning != null)
+                    BusyMarkStatusBox(
+                      message: localizeLocalHistoryWarning(
+                        context,
+                        localHistoryState.warning!,
+                      ),
+                      kind: BusyMarkStatusKind.warning,
                     ),
                   Expanded(
                     child: Row(
@@ -977,8 +1109,6 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
-      case HeaderBarAction.export:
-        execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
@@ -1011,8 +1141,12 @@ class WorkspaceScreen extends ConsumerWidget {
         _selectSidebarShortcut(ref, _SidebarTab.outline);
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
+      case HeaderBarAction.sidebarLocalHistory:
+        _selectSidebarShortcut(ref, _SidebarTab.localHistory);
+      case HeaderBarAction.sidebarClipboardHistory:
+        _selectSidebarShortcut(ref, _SidebarTab.clipboard);
       case HeaderBarAction.search:
-        execute(BusyMarkCommandIds.search);
+        _toggleSearch(ref);
       case HeaderBarAction.menu:
         break;
     }
@@ -1024,10 +1158,6 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case BusyMarkMainMenuAction.export:
-        unawaited(exportWorkspace(context, ref));
-      case BusyMarkMainMenuAction.generateMarkdownToc:
-        _generateOrUpdateMarkdownToc(context, ref);
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -1166,19 +1296,23 @@ class WorkspaceScreen extends ConsumerWidget {
     _WorkspaceSearchResult result,
   ) async {
     final workspace = ref.read(workspaceControllerProvider).workspace;
+    final searchOptions = ref.read(_workspaceSearchProvider).options;
     if (workspace == null) {
       return;
     }
     final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (activePath != result.filePath) {
-      await ref
+      final opened = await ref
           .read(workspaceControllerProvider.notifier)
           .openActiveFile(result.filePath);
+      if (!opened) return;
     }
-    _clearGitDetailSelection(ref);
-    if (!context.mounted) {
+    if (!context.mounted ||
+        ref.read(workspaceControllerProvider).workspace?.id != workspace.id ||
+        ref.read(_workspaceSearchProvider).options != searchOptions) {
       return;
     }
+    _clearGitDetailSelection(ref);
     final previous = ref.read(_searchNavigationTargetProvider);
     ref
         .read(_searchNavigationTargetProvider.notifier)
@@ -1351,7 +1485,12 @@ Future<bool> _confirmDiscardGitFiles(
       ],
     ),
   );
-  return confirmed ?? false;
+  if (confirmed != true || !context.mounted) return false;
+  return ref
+      .read(workspaceControllerProvider.notifier)
+      .protectPathsBeforeExternalReplacement(
+        files.map((file) => file.absolutePath),
+      );
 }
 
 Future<bool> _confirmSwitchGitBranch(
@@ -1605,6 +1744,15 @@ Future<void> _performWorkspacePathAction(
 
 enum _PathMenuAction { copyName, copyPath, openInFiles, refineWithAi }
 
+enum _OutlineDocumentAction {
+  copyName,
+  copyPath,
+  openInFiles,
+  refineWithAi,
+  generateMarkdownToc,
+  export,
+}
+
 List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
   BuildContext context, {
   String? copyNameLabel,
@@ -1636,6 +1784,53 @@ List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
         value: _PathMenuAction.refineWithAi,
         label: context.l10n.aiRefineWithAi,
         icon: BusyMarkGlyphs.ai,
+      ),
+  ];
+}
+
+List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
+  BuildContext context, {
+  required bool pathActionsEnabled,
+  required bool canGenerateMarkdownToc,
+  required bool showExport,
+  required bool canExport,
+}) {
+  return [
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.copyName,
+      label: context.l10n.copyFileName,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.copyPath,
+      label: context.l10n.copyPath,
+      icon: BusyMarkGlyphs.copy,
+      enabled: pathActionsEnabled,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.openInFiles,
+      label: context.l10n.openInFiles,
+      icon: BusyMarkGlyphs.folderOpen,
+      enabled: pathActionsEnabled,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.refineWithAi,
+      label: context.l10n.aiRefineWithAi,
+      icon: BusyMarkGlyphs.ai,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _OutlineDocumentAction.generateMarkdownToc,
+      label: context.l10n.generateOrUpdateMarkdownToc,
+      icon: BusyMarkGlyphs.orderedList,
+      enabled: canGenerateMarkdownToc,
+    ),
+    if (showExport)
+      BusyMarkPopupMenuItem(
+        value: _OutlineDocumentAction.export,
+        label: context.l10n.export,
+        icon: BusyMarkGlyphs.exportPdf,
+        enabled: canExport,
       ),
   ];
 }
@@ -1925,6 +2120,10 @@ class _Sidebar extends ConsumerStatefulWidget {
     required this.searchState,
     required this.searchResults,
     required this.onOpenSearchResult,
+    required this.canExport,
+    required this.canGenerateMarkdownToc,
+    required this.onExport,
+    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -1932,6 +2131,10 @@ class _Sidebar extends ConsumerStatefulWidget {
   final _WorkspaceSearchState searchState;
   final List<_WorkspaceSearchResult> searchResults;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
+  final bool canExport;
+  final bool canGenerateMarkdownToc;
+  final VoidCallback onExport;
+  final VoidCallback onGenerateMarkdownToc;
 
   @override
   ConsumerState<_Sidebar> createState() => _SidebarState();
@@ -1942,6 +2145,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late String _workspaceId;
   String? _activeFilePath;
   _WritersideTopicUsageReview? _topicUsageReview;
+  WorkspaceReplacementCancellation? _replacementCancellation;
+
+  @override
+  void dispose() {
+    _replacementCancellation?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -1977,6 +2187,17 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   @override
   Widget build(BuildContext context) {
     final tabs = _sidebarTabsFor(widget.workspace.kind);
+    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
+      if (_workspaceSearchInputsChanged(previous, next)) {
+        _replacementCancellation?.cancel();
+      }
+    });
+    ref.listen(_workspaceSearchProvider, (previous, next) {
+      if (previous?.options != next.options ||
+          previous?.active != next.active) {
+        _replacementCancellation?.cancel();
+      }
+    });
     final gitState = ref.watch(gitControllerProvider);
     final repositoryInfo = gitState.attachedWorkspace?.id == widget.workspace.id
         ? gitState.repositoryInfo
@@ -2009,6 +2230,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                 _performWorkspaceGitAction(menuContext, ref, action),
             onRefineActiveDocument: () =>
                 unawaited(_refineActiveDocumentWithAi(context)),
+            canExport: widget.canExport,
+            canGenerateMarkdownToc: widget.canGenerateMarkdownToc,
+            onExport: widget.onExport,
+            onGenerateMarkdownToc: widget.onGenerateMarkdownToc,
           ),
           Expanded(
             child: widget.searchState.active
@@ -2016,6 +2241,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     query: widget.searchState.query,
                     results: widget.searchResults,
                     searching: widget.searchState.searching,
+                    state: widget.searchState,
+                    onShowMore: () =>
+                        ref.read(_workspaceSearchProvider.notifier).showMore(),
                     onOpenResult: widget.onOpenSearchResult,
                     onReviewReplacement: _reviewWorkspaceReplacement,
                   )
@@ -2036,6 +2264,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                     _SidebarTab.toc => _TocTab(
                       workspace: widget.workspace,
+                      canExport: widget.canExport,
+                      onExport: widget.onExport,
                       onShowFileHistory: _showFileHistory,
                       onRequestTopicRemoval: (target) =>
                           _runWritersideTopicRemoval(context, target),
@@ -2057,6 +2287,17 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                       onConfirmPushSetUpstream: () =>
                           _confirmGitPushSetUpstream(context, ref),
                     ),
+                    _SidebarTab.clipboard => ClipboardHistoryPanel(
+                      onEscape: () => ref
+                          .read(clipboardInsertionRegistryProvider)
+                          .target
+                          ?.requestEditorFocus(),
+                    ),
+                    _SidebarTab.localHistory => LocalHistoryPanel(
+                      focusSearchRequest: ref.watch(
+                        localHistoryFindRequestProvider,
+                      ),
+                    ),
                     null => const SizedBox.shrink(),
                   },
           ),
@@ -2077,6 +2318,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     setState(() {
       _tab = index;
     });
+    if (tab != _SidebarTab.localHistory) {
+      ref.read(localHistoryControllerProvider.notifier).clearComparison();
+    }
     if (tab == _SidebarTab.git) {
       final controller = ref.read(gitControllerProvider.notifier);
       unawaited(() async {
@@ -2327,13 +2571,35 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return;
     }
     final service = const SearchReplacementService();
-    final preview = await service.previewWorkspace(
+    _replacementCancellation?.cancel();
+    final cancellation = WorkspaceReplacementCancellation();
+    _replacementCancellation = cancellation;
+    final previewFuture = service.previewWorkspace(
       state: ref.read(workspaceControllerProvider),
       workspaceService: ref.read(workspaceServiceProvider),
       options: widget.searchState.options,
       replacement: requested,
+      cancellation: cancellation,
     );
-    if (!mounted) {
+    final preview =
+        await showBusyMarkModalEditorDialog<WorkspaceReplacementPreview>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          maxWidth: BusyMarkSizes.dialogCompact,
+          builder: (dialogContext) => _WorkspaceReplacementProgress(
+            future: previewFuture,
+            cancellation: cancellation,
+          ),
+        );
+    cancellation.cancel();
+    if (identical(_replacementCancellation, cancellation)) {
+      _replacementCancellation = null;
+    }
+    if (!mounted ||
+        preview == null ||
+        preview.issues.any(
+          (issue) => issue.kind == WorkspaceReplacementIssueKind.cancelled,
+        )) {
       return;
     }
     if (preview.files.isEmpty && preview.issues.isEmpty) {
@@ -2464,7 +2730,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git }
+enum _SidebarTab { files, toc, outline, git, localHistory, clipboard }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2487,18 +2753,30 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
-    WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
+    WorkspaceKind.untitledMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
+    ],
+    WorkspaceKind.singleMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
+    ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
     ],
   };
 }
@@ -2509,6 +2787,8 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
     _SidebarTab.git => context.l10n.git,
+    _SidebarTab.localHistory => context.l10n.localHistory,
+    _SidebarTab.clipboard => context.l10n.clipboardHistory,
   };
 }
 
@@ -2518,6 +2798,8 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.branch,
+    _SidebarTab.localHistory => BusyMarkGlyphs.documentHistory,
+    _SidebarTab.clipboard => BusyMarkGlyphs.copy,
   };
 }
 
@@ -2530,6 +2812,8 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
     _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
     _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
+    _SidebarTab.localHistory => BusyMarkCommandIds.localHistory,
+    _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
   };
   return commands[id]?.shortcut?.label;
 }
@@ -2598,6 +2882,10 @@ class _SidebarHeader extends StatelessWidget {
     required this.loadGitMenuItems,
     required this.onGitAction,
     required this.onRefineActiveDocument,
+    required this.canExport,
+    required this.canGenerateMarkdownToc,
+    required this.onExport,
+    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -2614,6 +2902,10 @@ class _SidebarHeader extends StatelessWidget {
   final Future<void> Function(BuildContext context, _GitMenuAction action)
   onGitAction;
   final VoidCallback onRefineActiveDocument;
+  final bool canExport;
+  final bool canGenerateMarkdownToc;
+  final VoidCallback onExport;
+  final VoidCallback onGenerateMarkdownToc;
 
   @override
   Widget build(BuildContext context) {
@@ -2660,6 +2952,7 @@ class _SidebarHeader extends StatelessWidget {
                 if (showTabMenu && selectedTab != null) ...[
                   const SizedBox(width: BusyMarkSpacing.sm),
                   BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+                    key: const ValueKey('workspace-sidebar-view-menu'),
                     tooltip: context.l10n.sidebarViewMenu,
                     icon: _sidebarTabIcon(
                       selectedTab!,
@@ -2763,28 +3056,52 @@ class _SidebarHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
-                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
+                  BusyMarkHeaderPopupMenuButton<_OutlineDocumentAction>(
                     key: const ValueKey('workspace-sidebar-outline-file-menu'),
                     tooltip: context.l10n.actions,
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
-                    itemBuilder: (menuContext) => _sidebarPathMenuItems(
+                    itemBuilder: (menuContext) => _outlineDocumentMenuItems(
                       menuContext,
-                      copyNameLabel: menuContext.l10n.copyFileName,
                       pathActionsEnabled: hasActiveDocumentPath,
-                      showRefineWithAi: true,
+                      canGenerateMarkdownToc: canGenerateMarkdownToc,
+                      showExport:
+                          workspace.kind != WorkspaceKind.writersideModule,
+                      canExport: canExport,
                     ),
-                    onSelected: (action) => unawaited(
-                      _performWorkspacePathAction(
-                        context,
-                        name: activeDocumentName,
-                        path: activeDocumentPath,
-                        action: action,
-                        onRefineWithAi: onRefineActiveDocument,
-                      ),
-                    ),
+                    onSelected: (action) {
+                      switch (action) {
+                        case _OutlineDocumentAction.copyName:
+                        case _OutlineDocumentAction.copyPath:
+                        case _OutlineDocumentAction.openInFiles:
+                        case _OutlineDocumentAction.refineWithAi:
+                          unawaited(
+                            _performWorkspacePathAction(
+                              context,
+                              name: activeDocumentName,
+                              path: activeDocumentPath,
+                              action: switch (action) {
+                                _OutlineDocumentAction.copyName =>
+                                  _PathMenuAction.copyName,
+                                _OutlineDocumentAction.copyPath =>
+                                  _PathMenuAction.copyPath,
+                                _OutlineDocumentAction.openInFiles =>
+                                  _PathMenuAction.openInFiles,
+                                _OutlineDocumentAction.refineWithAi =>
+                                  _PathMenuAction.refineWithAi,
+                                _ => throw StateError('unreachable'),
+                              },
+                              onRefineWithAi: onRefineActiveDocument,
+                            ),
+                          );
+                        case _OutlineDocumentAction.generateMarkdownToc:
+                          onGenerateMarkdownToc();
+                        case _OutlineDocumentAction.export:
+                          onExport();
+                      }
+                    },
                   ),
                 ],
               ),
@@ -3925,6 +4242,27 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         if (file != null && canUseGitFileActions) {
           await widget.onShowFileHistory(file);
         }
+      case _FileTreeAction.localHistory:
+        final opened = await ref
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile(path);
+        if (!opened || !mounted) return;
+        final requestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where(
+              (buffer) =>
+                  buffer.filePath != null && p.equals(buffer.filePath!, path),
+            )
+            .firstOrNull;
+        if (requestedBuffer == null) return;
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForBuffer(requestedBuffer);
+        if (!mounted) return;
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
     }
   }
 
@@ -4077,6 +4415,7 @@ enum _FileTreeAction {
   copyPath,
   openInFiles,
   fileHistory,
+  localHistory,
 }
 
 Future<_FileTreeAction?> _showFileTreeMenu(
@@ -4158,6 +4497,12 @@ Future<_FileTreeAction?> _showFileTreeMenu(
           label: context.l10n.fileHistory,
           icon: BusyMarkGlyphs.documentHistory,
           enabled: enableGitActions,
+        ),
+      if (showHistory)
+        BusyMarkPopupMenuItem(
+          value: _FileTreeAction.localHistory,
+          label: context.l10n.localHistoryEllipsis,
+          icon: BusyMarkGlyphs.history,
         ),
     ],
   );
@@ -4618,18 +4963,7 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
 }
 
 bool _isOpenableTextDocument(DocumentFile file) {
-  return switch (file.kind) {
-    DocumentKind.markdown ||
-    DocumentKind.writersideMarkdownTopic ||
-    DocumentKind.writersideXmlTopic ||
-    DocumentKind.tree ||
-    DocumentKind.config ||
-    DocumentKind.variables ||
-    DocumentKind.categories ||
-    DocumentKind.gitIgnore ||
-    DocumentKind.resource => true,
-    DocumentKind.image || DocumentKind.unknown => false,
-  };
+  return isSearchableWorkspaceDocument(file);
 }
 
 class _FileTreeNode {
@@ -4898,11 +5232,15 @@ Set<String> _activeFileAncestorPaths(Workspace workspace) {
 class _TocTab extends ConsumerStatefulWidget {
   const _TocTab({
     required this.workspace,
+    required this.canExport,
+    required this.onExport,
     required this.onShowFileHistory,
     required this.onRequestTopicRemoval,
   });
 
   final Workspace workspace;
+  final bool canExport;
+  final VoidCallback onExport;
   final Future<void> Function(DocumentFile file) onShowFileHistory;
   final Future<WritersideTopicRemovalResult?> Function(
     _WritersideTopicRemovalTarget target,
@@ -5217,6 +5555,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   ),
                   onOpenTocFile: () =>
                       _openInstanceTree(context, instance.sourceTreePath),
+                  canExport: widget.canExport,
+                  onExport: widget.onExport,
                 );
               }
               final entry = entries[index - 1];
@@ -6395,6 +6735,7 @@ enum _TocHeaderAction {
   newLibrary,
   editInstance,
   openTocFile,
+  export,
 }
 
 class _TocHeader extends StatelessWidget {
@@ -6411,6 +6752,8 @@ class _TocHeader extends StatelessWidget {
     required this.onCreateLibrary,
     required this.onEditInstance,
     required this.onOpenTocFile,
+    required this.canExport,
+    required this.onExport,
   });
 
   final List<({String id, String label})> modules;
@@ -6425,6 +6768,8 @@ class _TocHeader extends StatelessWidget {
   final VoidCallback onCreateLibrary;
   final VoidCallback onEditInstance;
   final VoidCallback onOpenTocFile;
+  final bool canExport;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -6524,6 +6869,13 @@ class _TocHeader extends StatelessWidget {
                       label: context.l10n.openTocFile,
                       icon: BusyMarkGlyphs.documentOpen,
                     ),
+                    const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.export,
+                      label: context.l10n.export,
+                      icon: BusyMarkGlyphs.exportPdf,
+                      enabled: canExport,
+                    ),
                   ],
                   onSelected: (action) {
                     switch (action) {
@@ -6537,6 +6889,8 @@ class _TocHeader extends StatelessWidget {
                         onEditInstance();
                       case _TocHeaderAction.openTocFile:
                         onOpenTocFile();
+                      case _TocHeaderAction.export:
+                        onExport();
                     }
                   },
                 ),
@@ -8221,21 +8575,32 @@ class _SidebarEmptyState extends StatelessWidget {
   }
 }
 
-bool _shouldShowEditorTabs(WorkspaceState state, GitState gitState) {
+bool _shouldShowEditorTabs(
+  WorkspaceState state,
+  GitState gitState,
+  LocalHistoryState localHistoryState,
+) {
+  if (localHistoryState.selectedRevision != null) return true;
   final workspace = state.workspace!;
   return (state.documentBuffers.length > 1 ||
           workspace.kind == WorkspaceKind.markdownFolder ||
           workspace.kind == WorkspaceKind.writersideModule) &&
       (state.documentBuffers.isNotEmpty ||
           gitState.openDiffFilePaths.isNotEmpty ||
-          gitState.selectedDiffForDisplay != null);
+          gitState.selectedDiffForDisplay != null ||
+          localHistoryState.selectedRevision != null);
 }
 
 class _EditorTabStrip extends ConsumerWidget {
-  const _EditorTabStrip({required this.state, required this.gitState});
+  const _EditorTabStrip({
+    required this.state,
+    required this.gitState,
+    required this.localHistoryState,
+  });
 
   final WorkspaceState state;
   final GitState gitState;
+  final LocalHistoryState localHistoryState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -8248,6 +8613,8 @@ class _EditorTabStrip extends ConsumerWidget {
       gitState: gitState,
       documentBuffers: state.documentBuffers,
       activeBufferId: state.activeBufferId,
+      localHistoryRevisionId: localHistoryState.selectedRevisionId,
+      localHistoryDocumentName: localHistoryState.selectedDocument?.displayName,
     );
     if (entries.isEmpty) {
       return const SizedBox.shrink();
@@ -8282,6 +8649,13 @@ class _EditorTabStrip extends ConsumerWidget {
                     onSelected: () =>
                         _selectTab(context, ref, workspace, entry),
                     onClose: () => _closeTab(context, ref, workspace, entry),
+                    onSecondaryTapUp: (details) => _showTabMenu(
+                      context,
+                      ref,
+                      workspace,
+                      entry,
+                      details.globalPosition,
+                    ),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -8289,7 +8663,8 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemCount: entries.length,
               ),
             ),
-            if (gitState.selectedDiffForDisplay == null)
+            if (gitState.selectedDiffForDisplay == null &&
+                localHistoryState.selectedRevision == null)
               if (state.activeBuffer case final buffer?) ...[
                 BusyMarkDocumentFormatIndicator(format: buffer.format),
                 const SizedBox(width: BusyMarkSpacing.xs),
@@ -8310,12 +8685,17 @@ class _EditorTabStrip extends ConsumerWidget {
         entry.untitledName ?? _relativeDocumentPath(workspace, entry.path),
       WorkspaceTabKind.gitDiff =>
         entry.path.isEmpty ? context.l10n.gitDiff : _diffTabTitle(entry.path),
+      WorkspaceTabKind.localHistory =>
+        '${context.l10n.localHistory}: ${entry.path}',
     };
   }
 
   IconData? _tabIcon(Workspace workspace, WorkspaceTabEntry entry) {
     if (entry.kind == WorkspaceTabKind.gitDiff) {
       return null;
+    }
+    if (entry.kind == WorkspaceTabKind.localHistory) {
+      return BusyMarkGlyphs.documentHistory;
     }
     final file = entry.path.isEmpty
         ? null
@@ -8336,19 +8716,41 @@ class _EditorTabStrip extends ConsumerWidget {
     final gitController = ref.read(gitControllerProvider.notifier);
     switch (entry.kind) {
       case WorkspaceTabKind.file:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (entry.bufferId == state.activeBufferId) {
+          final buffer = state.activeBuffer;
+          if (buffer != null) {
+            unawaited(
+              ref
+                  .read(localHistoryControllerProvider.notifier)
+                  .selectDocumentForBuffer(buffer),
+            );
+          }
           gitController.deactivateDiffFile();
           return;
         }
-        await ref
+        final activated = await ref
             .read(workspaceControllerProvider.notifier)
             .activateDocumentBuffer(entry.bufferId!);
+        if (activated) {
+          final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+          if (buffer != null) {
+            unawaited(
+              ref
+                  .read(localHistoryControllerProvider.notifier)
+                  .selectDocumentForBuffer(buffer),
+            );
+          }
+        }
         gitController.deactivateDiffFile();
       case WorkspaceTabKind.gitDiff:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
         if (entry.path.isEmpty) {
           return;
         }
         await gitController.activateDiffFile(entry.path);
+      case WorkspaceTabKind.localHistory:
+        return;
     }
   }
 
@@ -8380,9 +8782,68 @@ class _EditorTabStrip extends ConsumerWidget {
         } else {
           gitController.closeDiffFile(entry.path);
         }
+      case WorkspaceTabKind.localHistory:
+        ref.read(localHistoryControllerProvider.notifier).clearComparison();
+    }
+  }
+
+  Future<void> _showTabMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+    Offset position,
+  ) async {
+    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
+      context,
+      position,
+      items: [
+        if (entry.kind == WorkspaceTabKind.file)
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.localHistory,
+            label: context.l10n.localHistoryEllipsis,
+            icon: BusyMarkGlyphs.documentHistory,
+          ),
+        if (entry.kind == WorkspaceTabKind.file)
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        BusyMarkPopupMenuItem(
+          value: _WorkspaceTabAction.close,
+          label: MaterialLocalizations.of(context).closeButtonTooltip,
+          icon: BusyMarkGlyphs.clear,
+        ),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case _WorkspaceTabAction.localHistory:
+        final requestedBuffer = state.documentBuffers
+            .where((candidate) => candidate.id == entry.bufferId)
+            .firstOrNull;
+        if (requestedBuffer == null) return;
+        final activated = await ref
+            .read(workspaceControllerProvider.notifier)
+            .activateDocumentBuffer(requestedBuffer.id);
+        if (!activated || !context.mounted) return;
+        final currentRequestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == requestedBuffer.id)
+            .firstOrNull;
+        if (currentRequestedBuffer == null) return;
+        await ref
+            .read(localHistoryControllerProvider.notifier)
+            .selectDocumentForBuffer(currentRequestedBuffer);
+        if (!context.mounted) return;
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
+      case _WorkspaceTabAction.close:
+        await _closeTab(context, ref, workspace, entry);
     }
   }
 }
+
+enum _WorkspaceTabAction { localHistory, close }
 
 class _WorkspaceTabButton extends StatelessWidget {
   const _WorkspaceTabButton({
@@ -8393,6 +8854,7 @@ class _WorkspaceTabButton extends StatelessWidget {
     required this.dirty,
     required this.onSelected,
     required this.onClose,
+    required this.onSecondaryTapUp,
   });
 
   final String title;
@@ -8402,6 +8864,7 @@ class _WorkspaceTabButton extends StatelessWidget {
   final bool dirty;
   final VoidCallback onSelected;
   final VoidCallback onClose;
+  final GestureTapUpCallback onSecondaryTapUp;
 
   @override
   Widget build(BuildContext context) {
@@ -8422,6 +8885,7 @@ class _WorkspaceTabButton extends StatelessWidget {
         ),
         hoverColor: colors.controlHover,
         onTap: onSelected,
+        onSecondaryTapUp: onSecondaryTapUp,
         child: Container(
           height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
           constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
@@ -9702,6 +10166,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _wysiwygSearchQuery;
   BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
+  var _lastSearchNavigationRequest = 0;
 
   @override
   void initState() {
@@ -9814,16 +10279,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         }
       });
     });
-    ref.listen(_searchNavigationTargetProvider, (previous, next) {
-      if (next == null) {
-        return;
-      }
-      if (next.filePath != widget.state.workspace?.activeFilePath &&
-          next.filePath != widget.state.workspace?.markdown?.filePath) {
-        return;
-      }
-      _scrollToSearchTarget(next);
-    });
+    final searchTarget = ref.watch(_searchNavigationTargetProvider);
+    if (searchTarget != null &&
+        ref.read(_workspaceSearchProvider).active &&
+        ref.read(_workspaceSearchProvider).query == searchTarget.query &&
+        searchTarget.request != _lastSearchNavigationRequest) {
+      _scrollToSearchTarget(searchTarget);
+    }
     final colors = BusyMarkSurfaceColors.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -9909,6 +10371,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     child: BusyMarkWysiwygEditor(
                       document: wysiwygDocument,
                       documentId: activeBuffer?.id,
+                      clipboardInsertionRegistry: ref.read(
+                        clipboardInsertionRegistryProvider,
+                      ),
+                      onClipboardCaptured: ref
+                          .read(clipboardHistoryControllerProvider.notifier)
+                          .retain,
                       initialSessionState:
                           activeBuffer?.editorState.wysiwygState ??
                           const WysiwygEditorSessionState(),
@@ -10024,6 +10492,37 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       language: _sourceSyntaxLanguage(widget.state.workspace),
                       filePath: activeEditorPath,
                       documentId: activeBuffer?.id,
+                      clipboardInsertionRegistry: ref.read(
+                        clipboardInsertionRegistryProvider,
+                      ),
+                      onClipboardCaptured: ref
+                          .read(clipboardHistoryControllerProvider.notifier)
+                          .retain,
+                      workspaceRoot: _imageWorkspaceRoot(
+                        widget.state.workspace,
+                      ),
+                      writersideRoot:
+                          widget.state.workspace?.writersideModule?.rootPath,
+                      imagesDir:
+                          widget
+                              .state
+                              .workspace
+                              ?.writersideModule
+                              ?.effectiveImagesDir ??
+                          'images',
+                      assetWorkspaceKind:
+                          switch (widget.state.workspace?.kind) {
+                            WorkspaceKind.writersideModule =>
+                              AssetWorkspaceKind.writerside,
+                            WorkspaceKind.markdownFolder =>
+                              AssetWorkspaceKind.markdownWorkspace,
+                            WorkspaceKind.singleMarkdown =>
+                              AssetWorkspaceKind.standalone,
+                            WorkspaceKind.untitledMarkdown ||
+                            null => AssetWorkspaceKind.standalone,
+                          },
+                      onAssetSaveRequired: () =>
+                          unawaited(saveActiveToNewLocation(context, ref)),
                       diagnostics:
                           widget.state.workspace?.allDiagnostics ??
                           const <Diagnostic>[],
@@ -10559,9 +11058,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _scrollToSearchTarget(_SearchNavigationTarget target) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted ||
+          ref.read(_searchNavigationTargetProvider)?.request !=
+              target.request ||
+          _lastSearchNavigationRequest == target.request ||
+          (target.filePath != widget.state.workspace?.activeFilePath &&
+              target.filePath != widget.state.workspace?.markdown?.filePath)) {
         return;
       }
+      _lastSearchNavigationRequest = target.request;
       final editorVisible =
           widget.viewMode == DocumentViewModePreference.editor;
       final wysiwygVisible =
@@ -10678,7 +11183,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
-    final query = target.query.trim();
+    final query = target.query;
     if (query.isEmpty || !_previewScrollController.isAttached) {
       return false;
     }
@@ -11966,7 +12471,7 @@ class _PreviewInlineText extends ConsumerWidget {
     final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
       _remoteImageWorkspacePath(workspace),
     );
-    final highlightQuery = searchState.active ? searchState.query.trim() : '';
+    final highlightQuery = searchState.active ? searchState.query : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
         : block.inlines;
@@ -12097,7 +12602,7 @@ int _searchResultOrdinalInSource(
   String source,
   _SearchNavigationTarget target,
 ) {
-  final normalizedQuery = target.query.trim().toLowerCase();
+  final normalizedQuery = target.query.toLowerCase();
   if (normalizedQuery.isEmpty) {
     return 0;
   }
@@ -12126,7 +12631,7 @@ int? _previewSearchBlockIndexForOrdinal(
   String query,
   int ordinal,
 ) {
-  final normalizedQuery = query.trim().toLowerCase();
+  final normalizedQuery = query.toLowerCase();
   if (normalizedQuery.isEmpty) {
     return null;
   }
@@ -12887,15 +13392,15 @@ List<InlineSpan>? _highlightedPreviewTextSpans(
   MouseCursor? mouseCursor,
   GestureRecognizer? Function()? recognizerBuilder,
 }) {
-  final normalizedQuery = query.trim().toLowerCase();
-  if (normalizedQuery.isEmpty) {
+  if (query.isEmpty) {
     return null;
   }
-  final normalizedText = text.toLowerCase();
-  final firstMatch = normalizedText.indexOf(normalizedQuery);
-  if (firstMatch < 0) {
-    return null;
-  }
+  final matches = RegExp(
+    RegExp.escape(query),
+    caseSensitive: false,
+    unicode: true,
+  ).allMatches(text);
+  if (matches.isEmpty) return null;
   final highlightStyle =
       style?.merge(
         TextStyle(
@@ -12911,29 +13416,27 @@ List<InlineSpan>? _highlightedPreviewTextSpans(
       );
   final spans = <InlineSpan>[];
   var cursor = 0;
-  var match = firstMatch;
-  while (match >= 0) {
-    if (match > cursor) {
+  for (final match in matches) {
+    if (match.start > cursor) {
       spans.add(
         TextSpan(
-          text: text.substring(cursor, match),
+          text: text.substring(cursor, match.start),
           style: style,
           mouseCursor: mouseCursor,
           recognizer: recognizerBuilder?.call(),
         ),
       );
     }
-    final end = match + normalizedQuery.length;
+    final end = match.end;
     spans.add(
       TextSpan(
-        text: text.substring(match, end),
+        text: text.substring(match.start, end),
         style: highlightStyle,
         mouseCursor: mouseCursor,
         recognizer: recognizerBuilder?.call(),
       ),
     );
     cursor = end;
-    match = normalizedText.indexOf(normalizedQuery, cursor);
   }
   if (cursor < text.length) {
     spans.add(
@@ -13284,6 +13787,8 @@ class _SearchSidebar extends StatelessWidget {
     required this.searching,
     required this.onOpenResult,
     required this.onReviewReplacement,
+    required this.state,
+    required this.onShowMore,
   });
 
   final String query;
@@ -13291,10 +13796,12 @@ class _SearchSidebar extends StatelessWidget {
   final bool searching;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
   final Future<void> Function() onReviewReplacement;
+  final _WorkspaceSearchState state;
+  final VoidCallback onShowMore;
 
   @override
   Widget build(BuildContext context) {
-    final normalizedQuery = query.trim();
+    final normalizedQuery = query;
     if (normalizedQuery.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.search,
@@ -13309,7 +13816,15 @@ class _SearchSidebar extends StatelessWidget {
       );
     }
     final colors = BusyMarkSurfaceColors.of(context);
-    if (results.isEmpty) {
+    if (state.invalidRegex) {
+      return _SidebarEmptyState(
+        icon: BusyMarkGlyphs.searchUnavailable,
+        title: context.l10n.sourceSearchInvalidRegex,
+      );
+    }
+    if (results.isEmpty &&
+        state.skippedFiles.isEmpty &&
+        !state.hasZeroLengthMatches) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.searchUnavailable,
         title: context.l10n.noResults,
@@ -13335,8 +13850,35 @@ class _SearchSidebar extends StatelessWidget {
         ),
         Expanded(
           child: ListView(
+            key: const ValueKey('workspace-search-results'),
             padding: BusyMarkInsets.sidebarList,
             children: [
+              if (state.hasZeroLengthMatches)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Text(context.l10n.sourceSearchZeroLengthUnsupported),
+                ),
+              if (state.truncated)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Column(
+                    children: [
+                      Text(context.l10n.workspaceSearchIncomplete),
+                      TextButton(
+                        onPressed: onShowMore,
+                        child: Text(context.l10n.workspaceSearchShowMore),
+                      ),
+                    ],
+                  ),
+                ),
+              if (state.skippedFiles.isNotEmpty)
+                Padding(
+                  padding: BusyMarkInsets.searchResultRow,
+                  child: Text(
+                    '${context.l10n.workspaceSearchSkippedFiles}\n'
+                    '${state.skippedFiles.join('\n')}',
+                  ),
+                ),
               for (final group in groups) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -13373,6 +13915,55 @@ class _SearchSidebar extends StatelessWidget {
       ],
     );
   }
+}
+
+class _WorkspaceReplacementProgress extends StatefulWidget {
+  const _WorkspaceReplacementProgress({
+    required this.future,
+    required this.cancellation,
+  });
+
+  final Future<WorkspaceReplacementPreview> future;
+  final WorkspaceReplacementCancellation cancellation;
+
+  @override
+  State<_WorkspaceReplacementProgress> createState() =>
+      _WorkspaceReplacementProgressState();
+}
+
+class _WorkspaceReplacementProgressState
+    extends State<_WorkspaceReplacementProgress> {
+  @override
+  void initState() {
+    super.initState();
+    widget.future.then(
+      (preview) {
+        if (mounted) Navigator.pop(context, preview);
+      },
+      onError: (Object error, StackTrace stack) {
+        if (mounted) Navigator.pop(context);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    widget.cancellation.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => BusyMarkModalEditorScaffold(
+    title: context.l10n.reviewReplacements,
+    cancelLabel: context.l10n.cancel,
+    saveLabel: context.l10n.reviewReplacements,
+    onSave: null,
+    onCancel: () {
+      widget.cancellation.cancel();
+      Navigator.pop(context);
+    },
+    children: const [Center(child: CircularProgressIndicator())],
+  );
 }
 
 class _WorkspaceReplacementReviewDialog extends StatefulWidget {
@@ -13482,6 +14073,11 @@ String _workspaceReplacementIssueLabel(
   WorkspaceReplacementIssue issue,
 ) {
   return switch (issue.kind) {
+    WorkspaceReplacementIssueKind.cancelled => context.l10n.cancel,
+    WorkspaceReplacementIssueKind.invalidRegex =>
+      context.l10n.sourceSearchInvalidRegex,
+    WorkspaceReplacementIssueKind.zeroLengthMatches =>
+      context.l10n.sourceSearchZeroLengthUnsupported,
     WorkspaceReplacementIssueKind.oversized =>
       context.l10n.workspaceReplaceIssueOversized,
     WorkspaceReplacementIssueKind.unreadable =>
@@ -13706,138 +14302,138 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 const int _maxWorkspaceSearchResults = 80;
 const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
 
-Future<List<_WorkspaceSearchMatch>> _loadWorkspaceSearchMatches(
+class _WorkspaceSearchOutcome {
+  const _WorkspaceSearchOutcome({
+    this.matches = const [],
+    this.truncated = false,
+    this.skippedFiles = const [],
+    this.invalidRegex = false,
+    this.hasZeroLengthMatches = false,
+  });
+
+  final List<_WorkspaceSearchMatch> matches;
+  final bool truncated;
+  final List<String> skippedFiles;
+  final bool invalidRegex;
+  final bool hasZeroLengthMatches;
+}
+
+Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
   WorkspaceState state,
   SourceSearchOptions options, {
   required Future<String> Function(String path) loadText,
   required bool Function() isCancelled,
+  required SourceSearchWorker worker,
+  required int maximumResults,
 }) async {
   final workspace = state.workspace;
-  final trimmedQuery = options.query.trim();
-  if (workspace == null || trimmedQuery.isEmpty || isCancelled()) {
-    return const [];
+  if (workspace == null || options.query.isEmpty || isCancelled()) {
+    return const _WorkspaceSearchOutcome();
   }
-  final normalizedOptions = options.copyWith(query: trimmedQuery);
+  if (sourceSearchOptionsHaveInvalidRegex(options)) {
+    return const _WorkspaceSearchOutcome(invalidRegex: true);
+  }
   final results = <_WorkspaceSearchMatch>[];
-  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  final sortedFiles = [...workspace.files]
-    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
-  if (activePath != null &&
-      sortedFiles.every((file) => file.absolutePath != activePath)) {
-    _addWorkspaceSearchTextMatches(
-      file: DocumentFile(
-        absolutePath: activePath,
-        relativePath: p.basename(activePath),
-        kind: DocumentKind.markdown,
-        size: state.activeText.length,
-        lastModified: DateTime.fromMillisecondsSinceEpoch(0),
-      ),
-      text: state.activeText,
-      options: normalizedOptions,
-      results: results,
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return List.unmodifiable(results);
-    }
-  }
+  final skippedFiles = <String>[];
+  var hasZeroLengthMatches = false;
+  final sortedFiles =
+      workspace.files.where(isSearchableWorkspaceDocument).toList()
+        ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
   for (final file in sortedFiles) {
-    if (isCancelled()) {
-      return const [];
-    }
-    if (!_isOpenableTextDocument(file)) {
-      continue;
-    }
-    final String? text;
-    if (file.absolutePath == activePath) {
+    if (isCancelled()) return const _WorkspaceSearchOutcome();
+    final buffer = state.bufferForPath(file.absolutePath);
+    String? text;
+    if (buffer != null) {
+      text = buffer.text;
+    } else if (file.absolutePath ==
+        (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
       text = state.activeText;
     } else if (file.size > _maxWorkspaceSearchFileBytes) {
-      text = null;
+      skippedFiles.add(file.relativePath);
     } else {
-      String? loadedText;
       try {
-        loadedText = await loadText(file.absolutePath);
+        text = await loadText(file.absolutePath);
       } on Object {
-        // Keep filename matching available when a document cannot be read.
+        skippedFiles.add(file.relativePath);
       }
-      if (isCancelled()) {
-        return const [];
-      }
-      text = loadedText;
     }
+    if (isCancelled()) return const _WorkspaceSearchOutcome();
     if (text != null) {
-      _addWorkspaceSearchTextMatches(
-        file: file,
-        text: text,
-        options: normalizedOptions,
-        results: results,
+      final document = SourceDocument(fullText: text);
+      final search = await worker.search(
+        document,
+        options,
+        maximumMatches: maximumResults + 1 - results.length,
+        stopAfterMaximumMatches: true,
       );
-      if (results.length >= _maxWorkspaceSearchResults) {
-        return List.unmodifiable(results);
+      if (isCancelled()) return const _WorkspaceSearchOutcome();
+      if (search == null) {
+        skippedFiles.add(file.relativePath);
+      } else {
+        hasZeroLengthMatches |= search.hasZeroLengthMatches;
+        for (final match in search.matches) {
+          final line = document.lineIndex.lineNumberAtOffset(match.fullStart);
+          final sourceLine = document.lineIndex.lineAt(line);
+          results.add(
+            _WorkspaceSearchMatch(
+              kind: _WorkspaceSearchMatchKind.text,
+              filePath: file.absolutePath,
+              relativePath: file.relativePath,
+              fileKind: file.kind,
+              line: line,
+              startOffset: match.fullStart,
+              endOffset: match.fullEnd,
+              query: options.query,
+              lineText: _boundedSearchSnippet(
+                sourceLine.text,
+                matchStart: match.fullStart - sourceLine.startOffset,
+              ),
+            ),
+          );
+        }
       }
     }
-    if (!_fileNameMatchesSearch(file.relativePath, normalizedOptions)) {
-      continue;
+    if (results.length <= maximumResults &&
+        _fileNameMatchesSearch(file.relativePath, options)) {
+      results.add(
+        _WorkspaceSearchMatch(
+          kind: _WorkspaceSearchMatchKind.fileName,
+          filePath: file.absolutePath,
+          relativePath: file.relativePath,
+          fileKind: file.kind,
+          line: 1,
+          startOffset: 0,
+          endOffset: 0,
+          query: options.query,
+        ),
+      );
     }
-    results.add(
-      _WorkspaceSearchMatch(
-        kind: _WorkspaceSearchMatchKind.fileName,
-        filePath: file.absolutePath,
-        relativePath: file.relativePath,
-        fileKind: file.kind,
-        line: 1,
-        startOffset: 0,
-        endOffset: 0,
-        query: trimmedQuery,
-      ),
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return List.unmodifiable(results);
-    }
-  }
-  return List.unmodifiable(results);
-}
-
-void _addWorkspaceSearchTextMatches({
-  required DocumentFile file,
-  required String text,
-  required SourceSearchOptions options,
-  required List<_WorkspaceSearchMatch> results,
-}) {
-  final document = SourceDocument(fullText: text);
-  final searchResult = searchSourceDocument(document, options);
-  for (final match in searchResult.matches) {
-    final lineNumber = document.lineIndex.lineNumberAtOffset(match.fullStart);
-    final line = document.lineIndex.lineAt(lineNumber).text;
-    results.add(
-      _WorkspaceSearchMatch(
-        kind: _WorkspaceSearchMatchKind.text,
-        filePath: file.absolutePath,
-        relativePath: file.relativePath,
-        fileKind: file.kind,
-        line: lineNumber,
-        startOffset: match.fullStart,
-        endOffset: match.fullEnd,
-        query: options.query,
-        lineText: line,
-      ),
-    );
-    if (results.length >= _maxWorkspaceSearchResults) {
-      return;
+    // Only report truncation once an additional result was actually found.
+    if (results.length > maximumResults) {
+      return _WorkspaceSearchOutcome(
+        matches: List.unmodifiable(results.take(maximumResults)),
+        truncated: true,
+        skippedFiles: List.unmodifiable(skippedFiles),
+        hasZeroLengthMatches: hasZeroLengthMatches,
+      );
     }
   }
+  return _WorkspaceSearchOutcome(
+    matches: List.unmodifiable(results),
+    skippedFiles: List.unmodifiable(skippedFiles),
+    hasZeroLengthMatches: hasZeroLengthMatches,
+  );
 }
 
 bool _fileNameMatchesSearch(String relativePath, SourceSearchOptions options) {
   if (options.regex || options.wholeWord) {
     return false;
   }
-  final haystack = options.caseSensitive
-      ? relativePath
-      : relativePath.toLowerCase();
-  final needle = options.caseSensitive
-      ? options.query
-      : options.query.toLowerCase();
-  return haystack.contains(needle);
+  return RegExp(
+    RegExp.escape(options.query),
+    caseSensitive: options.caseSensitive,
+    unicode: true,
+  ).hasMatch(relativePath);
 }
 
 String _searchResultTitle(BuildContext context, String line) {
@@ -13845,11 +14441,28 @@ String _searchResultTitle(BuildContext context, String line) {
   if (trimmed.length <= 120) {
     return trimmed;
   }
-  return '${trimmed.substring(0, 117)}...';
+  var end = 117;
+  if (!sourceSearchRangeHasSafeBoundaries(trimmed, end, end)) end--;
+  return '${trimmed.substring(0, end)}...';
+}
+
+// Limit the input to Markdown cleanup, whose regexes can backtrack on malformed
+// markup. Keep the match near the beginning so it survives the title's shorter
+// display limit. The two ellipses are included in the 512-code-unit budget.
+String _boundedSearchSnippet(String line, {int matchStart = 0}) {
+  const maximumLength = 512;
+  if (line.length <= 120) return line;
+  var start = math.max(0, matchStart.clamp(0, line.length) - 40);
+  if (!sourceSearchRangeHasSafeBoundaries(line, start, start)) start--;
+  var end = math.min(line.length, start + maximumLength - 2);
+  if (!sourceSearchRangeHasSafeBoundaries(line, end, end)) end--;
+  return '${start > 0 ? '…' : ''}${line.substring(start, end)}'
+      '${end < line.length ? '…' : ''}';
 }
 
 String _stripMarkdownForSearchResult(String line, {BuildContext? context}) {
-  var value = line.trim();
+  // Preview navigation also calls this helper directly with source lines.
+  var value = _boundedSearchSnippet(line).trim();
   final fence = RegExp(
     r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
   ).firstMatch(value);

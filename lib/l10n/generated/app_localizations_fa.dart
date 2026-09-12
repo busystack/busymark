@@ -937,6 +937,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get hardLineBreak => 'شکست خط اجباری';
 
   @override
+  String get insertBlankLine => 'درج خط خالی';
+
+  @override
   String get textStyle => 'سبک متن';
 
   @override
@@ -1142,7 +1145,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get files => 'فایل‌ها';
 
   @override
-  String get toc => 'فهرست مطالب';
+  String get toc => 'موضوعات';
 
   @override
   String get tocActions => 'عملیات فهرست مطالب';
@@ -1591,6 +1594,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'تطبیق‌های با طول صفر در عبارت منظم پشتیبانی نمی‌شوند (مانند ^، \$ یا نگاه‌به‌جلو که فقط با یک موقعیت تطبیق دارد).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'فقط بخشی از نتایج نمایش داده می‌شود. نتایج بیشتری نمایش دهید یا جستجو را محدود کنید.';
+
+  @override
+  String get workspaceSearchShowMore => 'نمایش نتایج بیشتر';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'جستجو کامل نیست. حجم این فایل‌ها بیش از 1 MiB است یا خواندن آن‌ها ممکن نبود:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3932,6 +3950,282 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'یک فایل .css خوانا با UTF-8 تا ۲۵۶ KiB انتخاب کنید، بدون واردسازی، نشانی منابع، HTML یا CSS اجرایی یا دارای نویسهٔ گریز.';
+
+  @override
+  String get clipboardHistory => 'تاریخچه کپی و پیست';
+
+  @override
+  String get clipboardHistorySearchHint => 'جستجو در تاریخچه کلیپ‌بورد';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'باز کردن تاریخچه کپی و پیست مخصوص جلسه.';
+
+  @override
+  String get clipboardCurrent => 'کپی و پیست فعلی';
+
+  @override
+  String get clipboardCurrentExternal => 'کپی و پیست از برنامه دیگر';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'کپی و پیست در $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'فقط برای این جلسه BusyMark ذخیره می شود.';
+
+  @override
+  String get clipboardNoItems => 'تاریخچه کپی و پیست خالی است.';
+
+  @override
+  String get clipboardNoMatches =>
+      'هیچ آیتم کپی و پیستی با این جستجو مطابقت ندارد.';
+
+  @override
+  String get clipboardDisabled =>
+      'مجموعه تاریخچه کپی و پیست در تنظیمات غیرفعال است.';
+
+  @override
+  String get clipboardUnavailable =>
+      'محتوای کپی و پیست فعلی در دسترس نیست یا پشتیبانی نمی شود.';
+
+  @override
+  String get clipboardTooLarge =>
+      'این آیتم کپی شده خیلی بزرگ است و نمی‌توان آن را نگه داشت.';
+
+  @override
+  String get clipboardPastePlainText => 'به عنوان متن ساده کپی کنید';
+
+  @override
+  String get clipboardClearAll => 'تاریخچه کپی را پاک کنید';
+
+  @override
+  String get clipboardEntryText => 'متن';
+
+  @override
+  String get clipboardEntryRichText => 'متن غنی';
+
+  @override
+  String get clipboardEntryImage => 'تصویر';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'کپی شده از $name';
+  }
+
+  @override
+  String get localHistory => 'تاریخچه محلی';
+
+  @override
+  String get localHistoryEllipsis => 'تاریخچه محلی…';
+
+  @override
+  String get localHistoryDescription =>
+      'نسخه‌های ذخیره شده و خودکار محلی را برای سند فعلی نمایش دهید.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'در تاریخ محلی جستجو کنید...';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'اسناد و محتوای نسخه‌های تاریخ محلی را جستجو کنید.';
+
+  @override
+  String get localHistoryNoDocuments => 'هنوز هیچ سند دارای تاریخ محلی نیست.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'این سند دارای هیچ نسخه‌ای از تاریخ محلی نیست.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'هیچ نسخه‌ای از تاریخ محلی با این جستجو مطابقت ندارد.';
+
+  @override
+  String get localHistorySearchHint => 'جستجو در تاریخچه محلی';
+
+  @override
+  String get localHistorySelectedRevision => 'نسخه انتخاب شده';
+
+  @override
+  String get localHistoryCurrentEditor => 'محتوای فعلی ویرایشگر';
+
+  @override
+  String get localHistoryCurrentDisk => 'محتوای فعلی روی دیسک';
+
+  @override
+  String get localHistoryMissingFile => 'فایل اصلی وجود ندارد.';
+
+  @override
+  String get localHistoryRestoreRevision => 'بازگرداندن نسخه';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => 'بازگرداندن به محل اصلی';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'بازگرداندن به محل جدید…';
+
+  @override
+  String get localHistoryRestoreChange => 'بازگرداندن تغییر';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'این تغییر قابل بازگشت نیست زیرا مقایسه دیگر معتبر نیست.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'این مقایسه بزرگ ساده شده است. بازگرداندن تغییرات فردی امکان پذیر نیست.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'تغییر در نسخه قدیمی: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'تغییر در محتوا فعلی: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'حذف شده';
+
+  @override
+  String get localHistoryUntitled => 'نام‌گذاری نشده';
+
+  @override
+  String get localHistoryClearDocument => 'پاک کردن تاریخچه این سند';
+
+  @override
+  String get localHistoryClearAll => 'پاک کردن تمام تاریخچه محلی';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'پاک کردن تاریخچه سند؟';
+
+  @override
+  String get localHistoryClearAllTitle => 'پاک کردن تمام تاریخچه محلی؟';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'این به طور دائمی تغییرات ذخیره شده را حذف می کند. این عمل قابل لغو نیست.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'ایندکس تاریخچه محلی آسیب دیده و از تغییرات سالم بازسازی شده است.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'این فروشگاه تاریخچه محلی از فرمت پشتیبانی نشده $version استفاده می کند.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'تاریخچه محلی در دسترس نیست: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'ضبط غیرفعال است یا این مسیر حذف شده است. قبل از بازیابی، ضبط را دوباره فعال کنید.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'تاریخچه محلی نمی تواند تغییر مسیر را ثبت کند: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'تاریخ محلی نمی‌تواند مسیر حذف شده را حفظ کند: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'نسخه انتخاب شده وجود ندارد یا آسیب دیده است.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'نمی‌توان نسخه انتخاب شده را خواند: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'تاریخ محلی نمی‌تواند این نسخه را ثبت کند: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason، $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'خط مبنا';
+
+  @override
+  String get localHistoryReasonSaved => 'ذخیره شده';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'نقطه تیک کنترل خودکار';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'قبل از بارگذاری مجدد';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'قبل از حذف';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'قبل از بازیابی';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'قبل از حذف';
+
+  @override
+  String get localHistoryReasonExternalChange => 'تغییرات خارجی';
+
+  @override
+  String get settingsHistory => 'تاریخچه';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'جمع آوری تاریخچه کپی شده';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'محتوای کپی شده و موفق به پیوستن را فقط برای این جلسه BusyMark نگه دارید.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'ثبت تاریخچه محلی';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'ذخیره ویرایش های سند در این دستگاه برای بازیابی و مقایسه.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'فاصله زمانی خودکار';
+
+  @override
+  String get settingsHistoryRetention => 'دوره نگهداری';
+
+  @override
+  String get settingsHistoryStorage => 'حداکثر فضای ذخیره سازی';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'مسیرهای حذف شده';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'یک مسیر مطلق در هر خط';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value ثانیه';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value روز';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value مگابایت';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

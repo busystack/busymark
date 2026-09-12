@@ -813,17 +813,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<bool> restoreSelectedFileVersion() async {
-    if (ref.read(workspaceControllerProvider).hasUnsavedChanges) {
-      state = state.copyWith(
-        lastError: const GitFailure(
-          code: GitFailureCode.dirtyWorkspace,
-          userMessageKey: 'gitErrorDirtyWorkspace',
-          rawMessage: '',
-          commandName: 'restore',
-        ),
-      );
-      return false;
-    }
+    if (_rejectDirtyWorkspaceRestore()) return false;
     if (selectedFileHasStagedChanges) {
       state = state.copyWith(
         lastError: const GitFailure(
@@ -846,6 +836,18 @@ class GitController extends Notifier<GitState> {
         currentPath == null) {
       return false;
     }
+    final absoluteCurrentPath = p.isAbsolute(currentPath)
+        ? p.normalize(currentPath)
+        : p.normalize(p.join(operation.repository.rootPath, currentPath));
+    final protected = await ref
+        .read(workspaceControllerProvider.notifier)
+        .protectPathsBeforeExternalReplacement([absoluteCurrentPath]);
+    if (!protected) {
+      _rejectDirtyWorkspaceRestore();
+      return false;
+    }
+    if (_rejectDirtyWorkspaceRestore()) return false;
+    if (!_isCurrentRepositoryOperation(operation)) return false;
     state = state.copyWith(
       isRunningOperation: true,
       lastError: null,
@@ -881,6 +883,19 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(isRunningOperation: false);
       return false;
     }
+  }
+
+  bool _rejectDirtyWorkspaceRestore() {
+    if (!ref.read(workspaceControllerProvider).hasUnsavedChanges) return false;
+    state = state.copyWith(
+      lastError: const GitFailure(
+        code: GitFailureCode.dirtyWorkspace,
+        userMessageKey: 'gitErrorDirtyWorkspace',
+        rawMessage: '',
+        commandName: 'restore',
+      ),
+    );
+    return true;
   }
 
   Future<bool> resetCurrentBranchToSelectedCommit(GitResetMode mode) async {

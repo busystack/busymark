@@ -13,6 +13,7 @@ Widget buildBusyMarkEditorTextContextMenu(
   VoidCallback? onRefineWithAi,
   VoidCallback? onCut,
   VoidCallback? onCopy,
+  VoidCallback? onPaste,
   VoidCallback? onCopyPlainText,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
@@ -22,6 +23,7 @@ Widget buildBusyMarkEditorTextContextMenu(
     onRefineWithAi: onRefineWithAi,
     onCut: onCut,
     onCopy: onCopy,
+    onPaste: onPaste,
     onCopyPlainText: onCopyPlainText,
     additionalItems: additionalItems,
   );
@@ -34,6 +36,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.onRefineWithAi,
     required this.onCut,
     required this.onCopy,
+    required this.onPaste,
     required this.onCopyPlainText,
     required this.additionalItems,
   });
@@ -43,6 +46,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final VoidCallback? onRefineWithAi;
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
+  final VoidCallback? onPaste;
   final VoidCallback? onCopyPlainText;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
@@ -114,6 +118,7 @@ class _BusyMarkEditorTextContextMenuState
       final callback = switch (item.type) {
         ContextMenuButtonType.cut => widget.onCut ?? item.onPressed,
         ContextMenuButtonType.copy => widget.onCopy ?? item.onPressed,
+        ContextMenuButtonType.paste => widget.onPaste ?? item.onPressed,
         _ => item.onPressed,
       };
       if (_commandIdFor(item.type) case final commandId?) {
@@ -164,6 +169,24 @@ class _BusyMarkEditorTextContextMenuState
               commands[BusyMarkCommandIds.editorRefineWithAi]?.shortcut?.label,
         ),
       );
+    }
+    items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
+    for (final entry in [
+      (BusyMarkCommandIds.clipboardHistory, BusyMarkGlyphs.copy),
+      (BusyMarkCommandIds.localHistory, BusyMarkGlyphs.documentHistory),
+    ]) {
+      final command = commands[entry.$1];
+      if (command != null) {
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: () => unawaited(commands.execute(entry.$1)),
+            label: command.label(context),
+            icon: entry.$2,
+            shortcut: command.shortcut?.label,
+            enabled: command.enabled(),
+          ),
+        );
+      }
     }
     items.addAll(widget.additionalItems);
     return items;

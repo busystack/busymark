@@ -1,9 +1,11 @@
 # PDF export
 
-Choose **Main menu → Export as PDF…**, use the command palette, or press
-**Ctrl+Shift+E**. Markdown exports the active editor text, including unsaved and
-untitled documents. Writerside first offers Save, Discard, or Cancel for project
-changes, then lets you select a non-library instance.
+For Markdown, choose **Outline → Actions → Export**, use the command palette,
+or press **Ctrl+Shift+E**. Markdown exports the active editor text, including
+unsaved and untitled documents. For Writerside, choose **Topics → Actions → Export**;
+BusyMark first offers Save, Discard, or Cancel for project changes, then lets
+you select a non-library instance. The shortcut and command palette route use
+the same document-versus-instance scope.
 
 The export settings are independent of the editor and preview appearance.
 Markdown and Writerside offer the same PDF controls:
@@ -38,6 +40,17 @@ landscape swaps the width and height.
 Choose the destination after confirming settings. BusyMark asks before
 replacing an existing file. Export can be cancelled, and a failed export keeps
 the previous PDF usable.
+
+## Intentional blank lines
+
+Use **Insert blank line** in Editor view when a specific one-line gap is part of
+the document. BusyMark stores the gap as two explicit `<br>` elements, so it is
+visible in Editor and Reading views and preserved by Markdown PDF and HTML
+exports. Source view places each generated `<br>` on a marker-only line instead
+of appending the tags to document text.
+
+Additional empty source lines are still ordinary Markdown block separators;
+repeating them does not create additional vertical space.
 
 ## Offline content
 

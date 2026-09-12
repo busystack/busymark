@@ -1,5 +1,6 @@
 // Build with flutter build linux --debug -t tools/clipboard_smoke.dart.
-// Run the resulting binary with: write|read|plain|html OUTPUT_DIRECTORY.
+// Run the resulting binary with:
+// roundtrip|write|read|plain|html OUTPUT_DIRECTORY.
 // Use a private display: this probe intentionally owns that display's clipboard.
 import 'dart:async';
 import 'dart:convert';
@@ -20,7 +21,7 @@ const source =
 void main(List<String> arguments) {
   WidgetsFlutterBinding.ensureInitialized();
   if (arguments.length != 2) {
-    stderr.writeln('Usage: write|read|plain|html OUTPUT_DIRECTORY');
+    stderr.writeln('Usage: roundtrip|write|read|plain|html OUTPUT_DIRECTORY');
     exit(2);
   }
   runApp(
@@ -33,6 +34,11 @@ void main(List<String> arguments) {
 
 Future<void> run(String operation, Directory output) async {
   try {
+    // The GTK runner presents its window from the native first-frame callback,
+    // just after Flutter's first post-frame callbacks have run. Clipboard
+    // ownership on Wayland (and some X11 managers) requires that presentation
+    // to complete.
+    await Future<void>.delayed(const Duration(seconds: 5));
     if (Platform.environment['BUSYMARK_CLIPBOARD_WAIT_FOR_FOCUS'] == '1') {
       await File('${output.path}/$operation.window').writeAsString('ready');
       while (!File('${output.path}/start-$operation').existsSync()) {
@@ -64,25 +70,33 @@ Future<void> run(String operation, Directory output) async {
       if (!condition) throw StateError(reason);
     }
 
-    if (operation == 'write' || operation == 'html') {
+    if (operation == 'write' ||
+        operation == 'html' ||
+        operation == 'roundtrip') {
       check(
         await service.write(
           RichClipboardData(
             text: text,
             html: const WysiwygClipboardHtml().encode(fragment),
-            fragment: operation == 'write' ? fragment.encode() : null,
+            sourceText: operation == 'html' ? null : fragment.markdown,
+            richFragment: operation == 'html' ? null : fragment.encode(),
           ),
         ),
         'Clipboard write failed',
       );
-      await File('${output.path}/$operation.ready').writeAsString('ready');
-      Timer.periodic(const Duration(milliseconds: 100), (timer) {
-        if (File('${output.path}/stop').existsSync()) {
-          timer.cancel();
-          unawaited(SystemNavigator.pop());
-        }
-      });
-      return;
+      if (operation != 'roundtrip') {
+        await File('${output.path}/$operation.ready').writeAsString('ready');
+        Timer.periodic(const Duration(milliseconds: 100), (timer) {
+          if (File('${output.path}/stop').existsSync()) {
+            timer.cancel();
+            unawaited(SystemNavigator.pop());
+          }
+        });
+        return;
+      }
+      // Give the X11 selection owner change a main-loop turn before requesting
+      // its targets, matching a real copy followed by a separate paste event.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
     }
     if (operation == 'plain') {
       await Clipboard.setData(const ClipboardData(text: text));
@@ -90,11 +104,12 @@ Future<void> run(String operation, Directory output) async {
     final data = await service.read();
     check(
       data.text == text,
-      'Plain text did not survive transport: ${data.toMap().keys}',
+      'Plain text did not survive transport: '
+      '${jsonEncode({'text': data.text, 'html': data.html, 'token': data.token, 'generation': data.generation})}',
     );
     if (operation == 'plain') {
       check(
-        data.fragment == null && data.html == null,
+        data.richFragment == null && data.html == null,
         'Plain copy retained stale rich representations',
       );
     } else {
@@ -102,8 +117,25 @@ Future<void> run(String operation, Directory output) async {
         data.html?.contains('<strong>When</strong>') == true,
         'HTML formatting missing',
       );
-      final decoded = WysiwygClipboardFragment.decode(data.fragment ?? '');
-      check(decoded != null, 'Structured data missing');
+      final decoded = data.richFragment == null
+          ? const WysiwygClipboardHtml().decode(
+              data.html ?? '',
+              mode: document.mode,
+            )
+          : WysiwygClipboardFragment.decode(data.richFragment!);
+      if (operation == 'read') {
+        check(data.token != null, 'Opaque ownership token missing');
+        check(
+          data.richFragment == null && !data.sessionOwned,
+          'Another process resolved session-owned structured data',
+        );
+      } else if (operation == 'roundtrip') {
+        check(
+          data.richFragment != null && data.sessionOwned,
+          'Same-process ownership token did not resolve structured data',
+        );
+      }
+      check(decoded != null, 'No safe structured or HTML representation');
       final target = parser
           .parse(filePath: '/clipboard/destination.md', source: 'Target\n')
           .busyDocument;
@@ -126,7 +158,12 @@ Future<void> run(String operation, Directory output) async {
       controller.dispose();
     }
     await File('${output.path}/$operation.json').writeAsString(
-      jsonEncode({'passed': true, 'formats': data.toMap().keys.toList()}),
+      jsonEncode({
+        'passed': true,
+        'text': data.text != null,
+        'html': data.html != null,
+        'rich': data.richFragment != null,
+      }),
     );
     // Let native render hosts finish their first frame before closing the probe.
     await Future<void>.delayed(const Duration(seconds: 1));

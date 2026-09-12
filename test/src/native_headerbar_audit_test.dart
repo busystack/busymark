@@ -90,7 +90,6 @@ void main() {
       'title',
       'viewMode',
       'canRefresh',
-      'canExportPdf',
       'documentControlsVisible',
       'searchActive',
       'searchVisible',
@@ -255,30 +254,37 @@ void main() {
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
     expect(mainMenu, isNot(contains('BusyMarkPopupSubmenu')));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
-    expect(
-      mainMenu,
-      contains('label: command(BusyMarkCommandIds.export).label(context)'),
-    );
     expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(
       mainMenu,
       contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
     );
-    expect(mainMenu, contains('enabled: canExportPdf || canExportHtml'));
+    for (final removed in [
+      'BusyMarkCommandIds.export',
+      'generateOrUpdateMarkdownToc',
+      'BusyMarkCommandIds.clipboardHistory',
+      'BusyMarkCommandIds.localHistory',
+      'BusyMarkCommandIds.findLocalHistory',
+    ]) {
+      expect(mainMenu, isNot(contains(removed)), reason: removed);
+    }
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
     expect(native, isNot(contains('g_menu_item_new_submenu')));
-    expect(native, contains('localized_label_or(labels, "export", "")'));
+    expect(native, isNot(contains('localized_label_or(labels, "export", "")')));
     expect(native, contains('"header.keyboard-shortcuts"'));
-    expect(native, contains('"header.export"'));
+    expect(native, isNot(contains('"header.export"')));
     expect(native, isNot(contains('"header.export-pdf"')));
     expect(native, isNot(contains('"header.export-html"')));
     expect(native, contains('"header.full-screen"'));
     expect(native, contains('full_screen_gaction_activated_cb'));
     expect(native, contains('configuration.full_screen'));
-    expect(native, contains('configuration.can_export_pdf'));
+    expect(native, isNot(contains('configuration.can_export_pdf')));
+    expect(native, isNot(contains('"header.clipboard-history"')));
+    expect(native, isNot(contains('"header.local-history"')));
+    expect(native, isNot(contains('"header.find-local-history"')));
     expect(native, contains('"header.syntax-reference"'));
     expect(native, isNot(contains('"header.markdown-and-html"')));
     expect(native, contains('"header.report-issue"'));
@@ -1156,10 +1162,12 @@ void main() {
     expect(native, contains('sidebar_shortcut_action_for_key'));
     expect(native, contains('GDK_KEY_KP_1'));
     expect(native, contains('GDK_KEY_KP_4'));
-    expect(native, isNot(contains('GDK_KEY_KP_5')));
+    expect(native, contains('GDK_KEY_KP_5'));
+    expect(native, contains('GDK_KEY_KP_6'));
     expect(native, contains('"sidebarFiles"'));
     expect(native, contains('"sidebarGit"'));
-    expect(native, isNot(contains('"sidebarHistory"')));
+    expect(native, contains('"sidebarLocalHistory"'));
+    expect(native, contains('"sidebarClipboardHistory"'));
     expect(native, contains('modifiers != GDK_CONTROL_MASK'));
     expect(
       native,
@@ -1738,15 +1746,19 @@ void main() {
       'lib/src/platform/header_bar_configuration.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     expect(welcome, contains('_WelcomeSidebar'));
-    expect(welcome, contains('_WelcomeRecentRow'));
-    expect(welcome, contains('WorkspaceIdentityRow'));
-    expect(welcome, contains('WorkspaceGlyphs.forRecent(widget.recent)'));
+    expect(
+      welcome,
+      contains('BusyMarkSidebarRecordRow<_RecentWorkspaceAction>'),
+    );
+    expect(welcome, contains('WorkspaceGlyphs.forRecent(recent)'));
     expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
     expect(welcome, contains('BusyMarkGlyphs.folder'));
     expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
-    expect(welcome, contains('BorderRadius.circular(BusyMarkRadius.md)'));
+    expect(design, contains('class BusyMarkSidebarRecordRow<T>'));
+    expect(design, contains('BorderRadius.circular(BusyMarkRadius.md)'));
     expect(welcome, contains('if (!sidebarOnRight && sidebarVisible)'));
     expect(welcome, contains('if (sidebarOnRight && sidebarVisible)'));
     expect(welcome, contains('welcomeMainColor = colors.view'));

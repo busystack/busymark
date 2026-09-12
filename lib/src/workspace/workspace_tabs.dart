@@ -2,7 +2,7 @@ import '../git/application/git_controller.dart';
 import 'document_buffer.dart';
 import 'workspace_model.dart';
 
-enum WorkspaceTabKind { file, gitDiff }
+enum WorkspaceTabKind { file, gitDiff, localHistory }
 
 class WorkspaceTabEntry {
   const WorkspaceTabEntry._({
@@ -32,6 +32,16 @@ class WorkspaceTabEntry {
   const WorkspaceTabEntry.gitDiff({required String path, required bool active})
     : this._(kind: WorkspaceTabKind.gitDiff, path: path, active: active);
 
+  const WorkspaceTabEntry.localHistory({
+    required String revisionId,
+    required String documentName,
+  }) : this._(
+         kind: WorkspaceTabKind.localHistory,
+         path: documentName,
+         bufferId: revisionId,
+         active: true,
+       );
+
   final WorkspaceTabKind kind;
   final String path;
   final bool active;
@@ -47,8 +57,11 @@ List<WorkspaceTabEntry> workspaceTabEntries({
   required GitState gitState,
   List<DocumentBuffer>? documentBuffers,
   String? activeBufferId,
+  String? localHistoryRevisionId,
+  String? localHistoryDocumentName,
 }) {
   final diffActive = gitState.selectedDiffForDisplay != null;
+  final localHistoryActive = localHistoryRevisionId != null;
   return [
     if (documentBuffers != null)
       for (final buffer in documentBuffers)
@@ -57,21 +70,33 @@ List<WorkspaceTabEntry> workspaceTabEntries({
           bufferId: buffer.id,
           untitledName: buffer.untitledName,
           dirty: buffer.isDirty,
-          active: !diffActive && buffer.id == activeBufferId,
+          active:
+              !diffActive && !localHistoryActive && buffer.id == activeBufferId,
         )
     else
       for (final path in workspace.openFilePaths)
         WorkspaceTabEntry.file(
           path: path,
-          active: !diffActive && path == workspace.activeFilePath,
+          active:
+              !diffActive &&
+              !localHistoryActive &&
+              path == workspace.activeFilePath,
         ),
     for (final path in gitState.openDiffFilePaths)
       WorkspaceTabEntry.gitDiff(
         path: path,
-        active: diffActive && path == gitState.selectedCommitFilePath,
+        active:
+            !localHistoryActive &&
+            diffActive &&
+            path == gitState.selectedCommitFilePath,
       ),
-    if (gitState.openDiffFilePaths.isEmpty && diffActive)
+    if (gitState.openDiffFilePaths.isEmpty && diffActive && !localHistoryActive)
       const WorkspaceTabEntry.gitDiff(path: '', active: true),
+    if (localHistoryRevisionId != null)
+      WorkspaceTabEntry.localHistory(
+        revisionId: localHistoryRevisionId,
+        documentName: localHistoryDocumentName ?? '',
+      ),
   ];
 }
 

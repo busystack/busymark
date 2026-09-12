@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "長さがゼロの正規表現の一致には対応していません（^、$、位置のみに一致する先読みなど）。",
+  "workspaceSearchIncomplete": "一部の結果のみ表示しています。さらに表示するか、検索を絞り込んでください。",
+  "workspaceSearchShowMore": "さらに結果を表示",
+  "workspaceSearchSkippedFiles": "検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:",
   "@@locale": "ja",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "空行を挿入",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "テキストスタイル",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "目次",
+  "toc": "トピック",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "目次の操作",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "インスタンス",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "新しいインスタンス",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "余白を除いたコンテンツの幅と高さをそれぞれ 20 mm 以上にしてください。",
   "exportInvalidColor": "色を #RRGGBB 形式で入力してください。",
   "exportInvalidCss": "読み取り可能な UTF-8 .css ファイル（最大 256 KiB）を選択してください。インポート、リソース URL、HTML、実行可能な CSS、エスケープを含む CSS は使用できません。",
-  "exportInvalidRange": "{field}: {minimum} から {maximum} の数値を入力してください。"
+  "exportInvalidRange": "{field}: {minimum} から {maximum} の数値を入力してください。",
+  "clipboardHistory": "コピーボード履歴",
+  "clipboardHistorySearchHint": "クリップボード履歴を検索",
+  "clipboardHistoryDescription": "セッション固有のコピーボード履歴を開く。",
+  "clipboardCurrent": "現在のコピーボード",
+  "clipboardCurrentExternal": "別のアプリケーションからの現在のコピーボード",
+  "clipboardDestination": "{name} に貼り付け",
+  "clipboardSessionOnly": "このBusyMarkセッションのみに保存されます。",
+  "clipboardNoItems": "コピーボード履歴は空です。",
+  "clipboardNoMatches": "この検索に一致するコピーボードの項目はありません。",
+  "clipboardDisabled": "コピーボード履歴のコレクションは設定で無効になっています。",
+  "clipboardUnavailable": "現在のコピーボードの内容は利用できませんまたはサポートされていません。",
+  "clipboardTooLarge": "このクリップボードの項目は大きすぎて保持できません。",
+  "clipboardPastePlainText": "テキストとして貼り付け",
+  "clipboardClearAll": "クリップボードの履歴をクリア",
+  "clipboardEntryText": "テキスト",
+  "clipboardEntryRichText": "豊富なテキスト",
+  "clipboardEntryImage": "画像",
+  "clipboardOrigin": "{name} からコピー",
+  "localHistory": "ローカル履歴",
+  "localHistoryEllipsis": "ローカル履歴…",
+  "localHistoryDescription": "現在のドキュメントの保存されたおよび自動ローカルのバージョンを表示します。",
+  "findLocalHistoryEllipsis": "ローカル履歴で検索…",
+  "findLocalHistoryDescription": "ローカル履歴のドキュメントとリビジョンの内容を検索します。",
+  "localHistoryNoDocuments": "まだローカル履歴を持つドキュメントはありません。",
+  "localHistoryNoRevisions": "このドキュメントにはローカル履歴の修正はありません。",
+  "localHistoryNoMatches": "この検索に一致するローカル履歴の修正はありません。",
+  "localHistorySearchHint": "ローカル履歴を検索",
+  "localHistorySelectedRevision": "選択されたリビジョン",
+  "localHistoryCurrentEditor": "現在の編集内容",
+  "localHistoryCurrentDisk": "ディスク上の現在の内容",
+  "localHistoryMissingFile": "元のファイルが見つかりません。",
+  "localHistoryRestoreRevision": "変更を復元",
+  "localHistoryRestoreOriginalLocation": "元の位置に復元",
+  "localHistoryRestoreNewLocation": "新しい位置に復元…",
+  "localHistoryRestoreChange": "変更を復元",
+  "localHistoryRestoreUnavailable": "この変更は復元できません。比較が最新ではありません。",
+  "localHistoryComparisonSimplified": "この大きな比較は簡略化されています。個別の変更の復元はできません。",
+  "localHistoryOlderChange": "以前の変更: {text}",
+  "localHistoryCurrentChange": "現在の変更: {text}",
+  "localHistoryDeleted": "削除",
+  "localHistoryUntitled": "タイトルなし",
+  "localHistoryClearDocument": "このドキュメントの履歴をクリアする",
+  "localHistoryClearAll": "すべてのローカル履歴をクリアする",
+  "localHistoryClearDocumentTitle": "ドキュメントの履歴をクリアしますか？",
+  "localHistoryClearAllTitle": "すべてのローカル履歴をクリアしますか？",
+  "localHistoryClearConfirmation": "これにより、保存されたバージョンが完全に削除されます。この操作は取り消せません。",
+  "localHistoryWarningIndexRebuilt": "ローカル履歴のインデックスが破損し、正常なバージョンから再構築されました。",
+  "localHistoryWarningUnsupportedFormat": "このローカル履歴ストアはサポートされていない形式 {version} を使用しています。",
+  "localHistoryWarningUnavailable": "ローカル履歴は利用できません: {detail}",
+  "localHistoryWarningRecordingDisabled": "録音が無効になっているか、このパスは除外されています。復元する前に録音を再度有効にしてください。",
+  "localHistoryWarningPathChange": "ローカル履歴がパスの変更を記録できませんでした: {detail}",
+  "localHistoryWarningDeletedPath": "ローカル履歴は削除されたパスを保持できません: {detail}",
+  "localHistoryWarningRevisionMissing": "選択されたバージョンが存在しないか破損しています。",
+  "localHistoryWarningRevisionRead": "選択されたバージョンを読み取ることができません: {detail}",
+  "localHistoryWarningCapture": "ローカル履歴は、このバージョンをキャプチャできません: {detail}",
+  "localHistoryRevisionAt": "{reason}・{timestamp}",
+  "localHistoryReasonBaseline": "ベースライン",
+  "localHistoryReasonSaved": "保存",
+  "localHistoryReasonAutomaticCheckpoint": "自動チェックポイント",
+  "localHistoryReasonBeforeReload": "リロード前",
+  "localHistoryReasonBeforeDiscard": "破棄前",
+  "localHistoryReasonBeforeRestore": "復元前",
+  "localHistoryReasonBeforeDelete": "削除前",
+  "localHistoryReasonExternalChange": "外部からの変更",
+  "settingsHistory": "履歴",
+  "settingsClipboardHistoryTitle": "コピー＆ペースト履歴を収集",
+  "settingsClipboardHistoryDescription": "このBusyMarkセッションでのコピー＆ペーストされたコンテンツのみを保持。",
+  "settingsLocalHistoryTitle": "ローカル履歴を記録",
+  "settingsLocalHistoryDescription": "このデバイスにドキュメントのバージョンを保存し、復元および比較。",
+  "settingsHistoryCheckpoint": "自動チェックポイント間隔",
+  "settingsHistoryRetention": "保管期間",
+  "settingsHistoryStorage": "最大ストレージ",
+  "settingsHistoryExcludedPaths": "除外されたパス",
+  "settingsHistoryExcludedPathsHint": "1行に1つの絶対パス",
+  "settingsSecondsValue": "{value} 秒",
+  "settingsDaysValue": "{value} 日",
+  "settingsMebibytesValue": "{value} MiB"
 }

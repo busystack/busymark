@@ -38,22 +38,57 @@ class DocumentSessionEntry {
   }
 }
 
+class PendingLocalHistoryAssociation {
+  const PendingLocalHistoryAssociation({
+    required this.bufferId,
+    required this.documentId,
+    required this.destinationPath,
+    required this.displayName,
+  });
+
+  final String bufferId;
+  final String documentId;
+  final String destinationPath;
+  final String displayName;
+
+  Map<String, Object?> toJson() => {
+    'bufferId': bufferId,
+    'documentId': documentId,
+    'destinationPath': destinationPath,
+    'displayName': displayName,
+  };
+
+  factory PendingLocalHistoryAssociation.fromJson(Map<String, Object?> json) {
+    return PendingLocalHistoryAssociation(
+      bufferId: json['bufferId']?.toString() ?? '',
+      documentId: json['documentId']?.toString() ?? '',
+      destinationPath: json['destinationPath']?.toString() ?? '',
+      displayName: json['displayName']?.toString() ?? '',
+    );
+  }
+}
+
 class WorkspaceSessionSnapshot {
   const WorkspaceSessionSnapshot({
     required this.workspacePath,
     required this.tabs,
     required this.activeBufferId,
+    this.pendingLocalHistoryAssociations = const [],
   });
 
   final String? workspacePath;
   final List<DocumentSessionEntry> tabs;
   final String? activeBufferId;
+  final List<PendingLocalHistoryAssociation> pendingLocalHistoryAssociations;
 
   Map<String, Object?> toJson() => {
     'version': 1,
     'workspacePath': workspacePath,
     'activeBufferId': activeBufferId,
     'tabs': tabs.map((entry) => entry.toJson()).toList(),
+    'pendingLocalHistoryAssociations': pendingLocalHistoryAssociations
+        .map((entry) => entry.toJson())
+        .toList(),
   };
 
   factory WorkspaceSessionSnapshot.fromJson(Map<String, Object?> json) {
@@ -71,6 +106,22 @@ class WorkspaceSessionSnapshot {
               .toList() ??
           const [],
       activeBufferId: json['activeBufferId']?.toString(),
+      pendingLocalHistoryAssociations:
+          (json['pendingLocalHistoryAssociations'] as List?)
+              ?.whereType<Map>()
+              .map(
+                (entry) => PendingLocalHistoryAssociation.fromJson(
+                  entry.cast<String, Object?>(),
+                ),
+              )
+              .where(
+                (entry) =>
+                    entry.bufferId.isNotEmpty &&
+                    entry.documentId.isNotEmpty &&
+                    entry.destinationPath.isNotEmpty,
+              )
+              .toList() ??
+          const [],
     );
   }
 }

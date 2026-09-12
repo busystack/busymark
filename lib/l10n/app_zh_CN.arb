@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "不支持零长度的正则表达式匹配（例如 ^、$ 或仅匹配位置的前瞻断言）。",
+  "workspaceSearchIncomplete": "仅显示了部分结果。请显示更多结果或缩小搜索范围。",
+  "workspaceSearchShowMore": "显示更多结果",
+  "workspaceSearchSkippedFiles": "搜索不完整。以下文件超过 1 MiB 或无法读取：",
   "@@locale": "zh_CN",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "插入空行",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "文本样式",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "目录",
+  "toc": "主题",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "目录操作",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "实例",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "新建实例",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "扣除边距后，请至少保留 20 mm 的内容宽度和高度。",
   "exportInvalidColor": "请输入 #RRGGBB 格式的颜色。",
   "exportInvalidCss": "请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。",
-  "exportInvalidRange": "{field}：请输入 {minimum} 到 {maximum} 之间的数字。"
+  "exportInvalidRange": "{field}：请输入 {minimum} 到 {maximum} 之间的数字。",
+  "clipboardHistory": "剪贴板历史",
+  "clipboardHistorySearchHint": "搜索剪贴板历史记录",
+  "clipboardHistoryDescription": "打开会话本地剪贴板历史。",
+  "clipboardCurrent": "当前剪贴板",
+  "clipboardCurrentExternal": "来自其他应用程序的当前剪贴板",
+  "clipboardDestination": "粘贴到 {name}",
+  "clipboardSessionOnly": "仅存储在本次 BusyMark 会话中。",
+  "clipboardNoItems": "剪贴板历史为空。",
+  "clipboardNoMatches": "没有匹配此搜索的剪贴板项目。",
+  "clipboardDisabled": "剪贴板历史集合在设置中已禁用。",
+  "clipboardUnavailable": "当前剪贴板内容不可用或不受支持。",
+  "clipboardTooLarge": "此剪贴板内容过大，无法保留。",
+  "clipboardPastePlainText": "作为纯文本粘贴",
+  "clipboardClearAll": "清除剪贴板历史",
+  "clipboardEntryText": "文本",
+  "clipboardEntryRichText": "丰富文本",
+  "clipboardEntryImage": "图片",
+  "clipboardOrigin": "复制自 {name}",
+  "localHistory": "本地历史",
+  "localHistoryEllipsis": "本地历史…",
+  "localHistoryDescription": "显示当前文档的已保存和自动本地修订。",
+  "findLocalHistoryEllipsis": "在本地历史中查找…",
+  "findLocalHistoryDescription": "搜索本地历史文档和修订内容。",
+  "localHistoryNoDocuments": "尚无文档具有本地历史。",
+  "localHistoryNoRevisions": "此文档没有本地历史修订。",
+  "localHistoryNoMatches": "没有本地历史修订与此搜索匹配。",
+  "localHistorySearchHint": "搜索本地历史记录",
+  "localHistorySelectedRevision": "已选择的修订",
+  "localHistoryCurrentEditor": "当前编辑器内容",
+  "localHistoryCurrentDisk": "磁盘上的当前内容",
+  "localHistoryMissingFile": "原始文件丢失。",
+  "localHistoryRestoreRevision": "恢复版本",
+  "localHistoryRestoreOriginalLocation": "恢复到原始位置",
+  "localHistoryRestoreNewLocation": "恢复到新位置…",
+  "localHistoryRestoreChange": "恢复更改",
+  "localHistoryRestoreUnavailable": "无法恢复此更改，因为比较已过时。",
+  "localHistoryComparisonSimplified": "此大型比较已简化。 无法恢复单个更改。",
+  "localHistoryOlderChange": "较旧的版本更改： {text}",
+  "localHistoryCurrentChange": "当前内容更改： {text}",
+  "localHistoryDeleted": "已删除",
+  "localHistoryUntitled": "未命名",
+  "localHistoryClearDocument": "清除此文档的历史",
+  "localHistoryClearAll": "清除所有本地历史",
+  "localHistoryClearDocumentTitle": "清除文档历史？",
+  "localHistoryClearAllTitle": "清除所有本地历史？",
+  "localHistoryClearConfirmation": "这将永久删除存储的修订。 此操作无法撤销。",
+  "localHistoryWarningIndexRebuilt": "本地历史索引已损坏并从完整修订中重建。",
+  "localHistoryWarningUnsupportedFormat": "此本地历史存储使用不受支持的格式 {version}。",
+  "localHistoryWarningUnavailable": "本地历史不可用： {detail}",
+  "localHistoryWarningRecordingDisabled": "录音已禁用或此路径已排除。 在恢复之前重新启用录音。",
+  "localHistoryWarningPathChange": "无法记录本地历史路径更改： {detail}",
+  "localHistoryWarningDeletedPath": "本地历史记录无法保留已删除的路径： {detail}",
+  "localHistoryWarningRevisionMissing": "所选版本丢失或损坏。",
+  "localHistoryWarningRevisionRead": "无法读取所选版本： {detail}",
+  "localHistoryWarningCapture": "本地历史记录无法捕获此版本： {detail}",
+  "localHistoryRevisionAt": "{reason}・{timestamp}",
+  "localHistoryReasonBaseline": "基线",
+  "localHistoryReasonSaved": "已保存",
+  "localHistoryReasonAutomaticCheckpoint": "自动检查点",
+  "localHistoryReasonBeforeReload": "在重新加载之前",
+  "localHistoryReasonBeforeDiscard": "在丢弃之前",
+  "localHistoryReasonBeforeRestore": "恢复前",
+  "localHistoryReasonBeforeDelete": "删除前",
+  "localHistoryReasonExternalChange": "外部修改",
+  "settingsHistory": "历史记录",
+  "settingsClipboardHistoryTitle": "收集剪贴板历史",
+  "settingsClipboardHistoryDescription": "只保留本次 BusyMark 会话中已复制并成功粘贴的内容。",
+  "settingsLocalHistoryTitle": "记录本地历史",
+  "settingsLocalHistoryDescription": "将文档修订存储在此设备上，以便恢复和比较。",
+  "settingsHistoryCheckpoint": "自动检查点间隔",
+  "settingsHistoryRetention": "保留期限",
+  "settingsHistoryStorage": "最大存储",
+  "settingsHistoryExcludedPaths": "排除路径",
+  "settingsHistoryExcludedPathsHint": "每行一个绝对路径",
+  "settingsSecondsValue": "{value} 秒",
+  "settingsDaysValue": "{value} 天",
+  "settingsMebibytesValue": "{value} MiB"
 }

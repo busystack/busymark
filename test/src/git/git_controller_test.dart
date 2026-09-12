@@ -5,6 +5,9 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/application/git_gateway.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -528,6 +531,54 @@ void main() {
     );
   });
 
+  test(
+    'restore protects a repository-relative file against the repository root',
+    () async {
+      final repository = await Directory.systemTemp.createTemp(
+        'busymark-git-restore-root-',
+      );
+      addTearDown(() async {
+        if (await repository.exists()) await repository.delete(recursive: true);
+      });
+      final path = '${repository.path}/README.md';
+      await File(path).writeAsString('# Working tree before restore\n');
+      final store = MemoryLocalHistoryStore();
+      final gateway = _RootedGitGateway(repository.path);
+      final container = _container(gateway, historyStore: store);
+      final workspaceController = container.read(
+        workspaceControllerProvider.notifier,
+      );
+      await workspaceController.openPath(repository.path);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(
+        container.read(workspaceControllerProvider).workspace!,
+      );
+      await controller.refresh();
+      await controller.loadFileHistory(path);
+      await controller.selectFileHistoryCommit('1234567890abcdef');
+
+      expect(await controller.restoreSelectedFileVersion(), isTrue);
+      expect(gateway.restoreCalls, 1);
+      final snapshot = await store.load();
+      final protected = <LocalHistoryRevision>[];
+      for (final summary in snapshot.revisions.where(
+        (revision) =>
+            revision.reason == LocalHistoryCaptureReason.beforeDiscard,
+      )) {
+        protected.add((await store.readRevision(summary.id))!);
+      }
+      expect(protected.map((revision) => revision.source), [
+        '# Working tree before restore\n',
+      ]);
+      expect(
+        snapshot.documents.singleWhere(
+          (document) => document.currentPath == path,
+        ),
+        isNotNull,
+      );
+    },
+  );
+
   test('project history reset uses the selected commit and mode', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);
@@ -1042,11 +1093,16 @@ class _PagedHistoryGitGateway extends _FakeGitGateway {
   }) async => _fileEntries.skip(skip).take(limit).toList();
 }
 
-ProviderContainer _container(GitRepositoryGateway gateway) {
+ProviderContainer _container(
+  GitRepositoryGateway gateway, {
+  LocalHistoryStore? historyStore,
+}) {
   final container = ProviderContainer(
     overrides: [
       gitRepositoryGatewayProvider.overrideWithValue(gateway),
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+      if (historyStore != null)
+        localHistoryStoreProvider.overrideWithValue(historyStore),
       workspaceServiceProvider.overrideWithValue(const WorkspaceService()),
     ],
   );
@@ -1530,6 +1586,47 @@ class _TrustRequiredFakeGitGateway extends _FakeGitGateway {
 
   @override
   bool get requiresWorkspaceTrust => true;
+}
+
+class _RootedGitGateway extends _FakeGitGateway {
+  _RootedGitGateway(this.rootPath);
+
+  final String rootPath;
+
+  GitRepositoryInfo get repository => GitRepositoryInfo(
+    rootPath: rootPath,
+    gitDirPath: '$rootPath/.git',
+    currentBranch: 'main',
+  );
+
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
+    detectCalls++;
+    return repository;
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async =>
+      GitStatusSnapshot(
+        repositoryInfo: repository,
+        files: [
+          GitFileStatus(
+            repoRelativePath: 'README.md',
+            absolutePath: '$rootPath/README.md',
+            indexStatus: GitFileChangeStatus.unmodified,
+            workTreeStatus: GitFileChangeStatus.modified,
+            category: GitFileStatusCategory.modified,
+            staged: false,
+            unstaged: true,
+            untracked: false,
+            deleted: false,
+            renamed: false,
+            copied: false,
+            conflicted: false,
+            ignored: false,
+          ),
+        ],
+      );
 }
 
 class _DeferredDetectGitGateway extends _FakeGitGateway {

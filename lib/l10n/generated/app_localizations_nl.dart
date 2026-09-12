@@ -942,6 +942,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get hardLineBreak => 'Hard regeleinde';
 
   @override
+  String get insertBlankLine => 'Lege regel invoegen';
+
+  @override
   String get textStyle => 'Tekststijl';
 
   @override
@@ -1124,7 +1127,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get files => 'Bestanden';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Onderwerpen';
 
   @override
   String get tocActions => 'TOC-acties';
@@ -1565,6 +1568,21 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Ongeldige reguliere expressie';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, \$ of lookaheads die alleen een positie vinden).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.';
+
+  @override
+  String get workspaceSearchShowMore => 'Meer resultaten tonen';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3930,6 +3948,291 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.';
+
+  @override
+  String get clipboardHistory => 'Historie van de klembord';
+
+  @override
+  String get clipboardHistorySearchHint => 'Klembordgeschiedenis doorzoeken';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Open de klembordgeschiedenis per sessie.';
+
+  @override
+  String get clipboardCurrent => 'Huidig klembord';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Huidig klembord van een ander programma';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Plakken in $name';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Alleen opgeslagen voor deze BusyMark sessie.';
+
+  @override
+  String get clipboardNoItems => 'De klembordgeschiedenis is leeg.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Geen klemborditems komen overeen met deze zoekopdracht.';
+
+  @override
+  String get clipboardDisabled =>
+      'De collectie \"Historie van het klembord\" is uitgeschakeld in de instellingen.';
+
+  @override
+  String get clipboardUnavailable =>
+      'De inhoud van het huidige klembord is niet beschikbaar of niet ondersteund.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Dit item op het klembord is te groot om te bewaren.';
+
+  @override
+  String get clipboardPastePlainText => 'Plak als gewone tekst';
+
+  @override
+  String get clipboardClearAll => 'Maak de geschiedenis van het klembord leeg';
+
+  @override
+  String get clipboardEntryText => 'Tekst';
+
+  @override
+  String get clipboardEntryRichText => 'Rijke tekst';
+
+  @override
+  String get clipboardEntryImage => 'Afbeelding';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Geplakt van $name';
+  }
+
+  @override
+  String get localHistory => 'Lokale geschiedenis';
+
+  @override
+  String get localHistoryEllipsis => 'Lokale geschiedenis…';
+
+  @override
+  String get localHistoryDescription =>
+      'Toon opgeslagen en automatische lokale revisies voor het huidige document.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Zoeken in Lokale Geschiedenis…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Zoek naar documenten en inhoud van revisies in de lokale geschiedenis.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Er zijn nog geen documenten met Lokale Geschiedenis.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Dit document heeft geen revisies van de Lokale Geschiedenis.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.';
+
+  @override
+  String get localHistorySearchHint => 'Lokale geschiedenis doorzoeken';
+
+  @override
+  String get localHistorySelectedRevision => 'Geselecteerde revisie';
+
+  @override
+  String get localHistoryCurrentEditor => 'Huidige inhoud van de editor';
+
+  @override
+  String get localHistoryCurrentDisk => 'Huidige inhoud op schijf';
+
+  @override
+  String get localHistoryMissingFile => 'Het originele bestand ontbreekt.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Herstel Versie';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Herstel naar Originele Locatie';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Herstel naar Nieuwe Locatie…';
+
+  @override
+  String get localHistoryRestoreChange => 'Herstel Wijziging';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Deze wijziging kan niet worden hersteld omdat de vergelijking niet meer actueel is.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Deze grote vergelijking is vereenvoudigd. Het herstellen van individuele wijzigingen is niet mogelijk.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Oudere versie wijziging: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Huidige inhoud wijziging: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Verwijderd';
+
+  @override
+  String get localHistoryUntitled => 'Onbenoemd';
+
+  @override
+  String get localHistoryClearDocument =>
+      'Verwijder de geschiedenis van dit document';
+
+  @override
+  String get localHistoryClearAll => 'Verwijder de lokale geschiedenis';
+
+  @override
+  String get localHistoryClearDocumentTitle =>
+      'Verwijder de documentgeschiedenis?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Verwijder de lokale geschiedenis?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Dit verwijdert permanent opgeslagen revisies. Deze actie kan niet worden teruggedraaid.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'De index van de lokale geschiedenis is beschadigd en opnieuw gebouwd vanuit intacte revisies.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Deze lokale geschiedenisopslag gebruikt een onondersteunde $version-formaat.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'De lokale geschiedenis is niet beschikbaar: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Opnemen is uitgeschakeld of deze pad is uitgesloten. Schakel opnemen opnieuw in voordat u herstelt.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'De lokale geschiedenis kon de padwijziging niet opslaan: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Lokale Geschiedenis kon de verwijderde pad niet opslaan: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'De geselecteerde versie ontbreekt of is beschadigd.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'De geselecteerde versie kan niet worden gelezen: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Lokale Geschiedenis kon deze versie niet vastleggen: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Basislijn';
+
+  @override
+  String get localHistoryReasonSaved => 'Bewaard';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Automatische controlepunt';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Voor herladen';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Voor verwijderen';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Voordat herstellen';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Voordat verwijderen';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Externe wijziging';
+
+  @override
+  String get settingsHistory => 'Geschiedenis';
+
+  @override
+  String get settingsClipboardHistoryTitle =>
+      'Verzamelen van de geschiedenis van de klembord';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Behoud van gekopieerd en succesvol geplakt materiaal alleen voor deze BusyMark sessie.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Opnemen van lokale geschiedenis';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Opslaan van documentversies op dit apparaat voor herstel en vergelijking.';
+
+  @override
+  String get settingsHistoryCheckpoint =>
+      'Automatische interval voor controlepunten';
+
+  @override
+  String get settingsHistoryRetention => 'Bewaarperiode';
+
+  @override
+  String get settingsHistoryStorage => 'Maximale opslag';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Uitsluitingen';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Eén absolute pad per regel';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value seconden';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value dagen';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

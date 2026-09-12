@@ -1005,6 +1005,20 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
+                title: context.l10n.localHistoryEllipsis,
+                leading: const Icon(BusyMarkGlyphs.documentHistory),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.localHistory,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.clipboardHistory,
+                leading: const Icon(BusyMarkGlyphs.copy),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.clipboardHistory,
+                ),
+              ),
+              BusyMarkActionRow(
                 title: context.l10n.delete,
                 subtitle: context.l10n.shortcutDeleteTreeItemDescription,
                 leading: const Icon(BusyMarkGlyphs.delete),
@@ -1596,6 +1610,13 @@ class _SyntaxReferenceDialogState extends State<_SyntaxReferenceDialog> {
           title: l10n.hardLineBreak,
           example: 'First line<br>\nSecond line',
           identifiers: 'br, wbr',
+          scope: l10n.markdown,
+          documentationUri: _htmlDocumentationUri,
+        ),
+        _SyntaxReferenceEntry(
+          title: l10n.insertBlankLine,
+          example: 'First line\n<br>\n<br>\nSecond line',
+          identifiers: 'br',
           scope: l10n.markdown,
           documentationUri: _htmlDocumentationUri,
         ),

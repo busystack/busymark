@@ -942,6 +942,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get hardLineBreak => 'Pemisah baris keras';
 
   @override
+  String get insertBlankLine => 'Sisipkan baris kosong';
+
+  @override
   String get textStyle => 'Gaya teks';
 
   @override
@@ -1124,7 +1127,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Daftar isi';
+  String get toc => 'Topik';
 
   @override
   String get tocActions => 'Tindakan TOC';
@@ -1556,6 +1559,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Ekspresi reguler tidak valid';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, \$, atau lookahead yang hanya cocok dengan posisi).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.';
+
+  @override
+  String get workspaceSearchShowMore => 'Tampilkan lebih banyak hasil';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Pencarian belum lengkap. Berkas ini melebihi 1 MiB atau tidak dapat dibaca:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3895,6 +3913,282 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Pilih berkas .css UTF-8 yang dapat dibaca hingga 256 KiB, tanpa impor, URL sumber daya, HTML, atau CSS yang dapat dieksekusi atau memakai escape.';
+
+  @override
+  String get clipboardHistory => 'Sejarah Tempel';
+
+  @override
+  String get clipboardHistorySearchHint => 'Cari riwayat papan klip';
+
+  @override
+  String get clipboardHistoryDescription => 'Buka riwayat tempel lokal sesi.';
+
+  @override
+  String get clipboardCurrent => 'Tempel saat ini';
+
+  @override
+  String get clipboardCurrentExternal => 'Tempel saat ini dari aplikasi lain';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Tempel ke $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'Hanya disimpan untuk sesi BusyMark ini.';
+
+  @override
+  String get clipboardNoItems => 'Riwayat tempel kosong.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Tidak ada item tempel yang cocok dengan pencarian ini.';
+
+  @override
+  String get clipboardDisabled =>
+      'Koleksi Riwayat Tempel dinonaktifkan di Pengaturan.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Konten tempel saat ini tidak tersedia atau tidak didukung.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Item clipboard ini terlalu besar untuk disimpan.';
+
+  @override
+  String get clipboardPastePlainText => 'Tempel sebagai Teks Biasa';
+
+  @override
+  String get clipboardClearAll => 'Hapus Riwayat Clipboard';
+
+  @override
+  String get clipboardEntryText => 'Teks';
+
+  @override
+  String get clipboardEntryRichText => 'Teks kaya';
+
+  @override
+  String get clipboardEntryImage => 'Gambar';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Disalin dari $name';
+  }
+
+  @override
+  String get localHistory => 'Riwayat Lokal';
+
+  @override
+  String get localHistoryEllipsis => 'Riwayat Lokal…';
+
+  @override
+  String get localHistoryDescription =>
+      'Tampilkan revisi lokal yang disimpan dan otomatis untuk dokumen saat ini.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Cari di Sejarah Lokal…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Cari dokumen dan isi revisi dalam Sejarah Lokal.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Tidak ada dokumen yang memiliki Sejarah Lokal.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Dokumen ini tidak memiliki revisi Sejarah Lokal.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.';
+
+  @override
+  String get localHistorySearchHint => 'Cari riwayat lokal';
+
+  @override
+  String get localHistorySelectedRevision => 'Revisi yang dipilih';
+
+  @override
+  String get localHistoryCurrentEditor => 'Konten editor saat ini';
+
+  @override
+  String get localHistoryCurrentDisk => 'Konten saat ini di disk';
+
+  @override
+  String get localHistoryMissingFile => 'File asli hilang.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Kembalikan Revisi';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => 'Kembalikan ke Lokasi Asli';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Kembalikan ke Lokasi Baru…';
+
+  @override
+  String get localHistoryRestoreChange => 'Kembalikan Perubahan';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Perubahan ini tidak dapat dikembalikan karena perbandingan tidak lagi berlaku.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Perbandingan besar ini disederhanakan. Kembalikan perubahan individual tidak tersedia.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Perubahan revisi yang lebih lama: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Perubahan konten saat ini: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Dihapus';
+
+  @override
+  String get localHistoryUntitled => 'Tanpa Judul';
+
+  @override
+  String get localHistoryClearDocument => 'Hapus Riwayat Dokumen Ini';
+
+  @override
+  String get localHistoryClearAll => 'Hapus Riwayat Lokal Seluruhnya';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'Hapus riwayat dokumen?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Hapus riwayat lokal seluruhnya?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Ini secara permanen menghapus revisi yang tersimpan. Tindakan ini tidak dapat dibatalkan.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Indeks Riwayat Lokal rusak dan dibangun kembali dari revisi yang utuh.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Penyimpanan Riwayat Lokal menggunakan format yang tidak didukung $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Riwayat Lokal tidak tersedia: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Perekaman dinonaktifkan atau jalur ini dikecualikan. Aktifkan kembali perekaman sebelum memulihkan.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Riwayat Lokal tidak dapat mencatat perubahan jalur: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Sejarah Lokal tidak dapat menyimpan jalur yang dihapus: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Revisi yang dipilih hilang atau rusak.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Revisi yang dipilih tidak dapat dibaca: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Sejarah Lokal tidak dapat menangkap revisi ini: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Versi dasar';
+
+  @override
+  String get localHistoryReasonSaved => 'Tersimpan';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Checkpoint otomatis';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Sebelum memuat ulang';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Sebelum membuang';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Sebelum pemulihan';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Sebelum menghapus';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Perubahan eksternal';
+
+  @override
+  String get settingsHistory => 'Riwayat';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Kumpulkan Riwayat Klip';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Simpan konten yang disalin dan berhasil ditempel hanya untuk sesi BusyMark ini.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Rekam Riwayat Lokal';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Simpan revisi dokumen pada perangkat ini untuk pemulihan dan perbandingan.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Interval checkpoint otomatis';
+
+  @override
+  String get settingsHistoryRetention => 'Masa simpan';
+
+  @override
+  String get settingsHistoryStorage => 'Penyimpanan maksimum';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Jalur yang dikecualikan';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Satu jalur absolut per baris';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value detik';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value hari';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -6,6 +9,9 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/assets/asset_ingestion_service.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
+import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
@@ -18,7 +24,13 @@ import 'package:busymark/src/editor/source/source_gutter.dart'
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_language.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +40,254 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  for (final lookupFinished in [false, true]) {
+    for (final findNext in [false, true]) {
+      testWidgets(
+        'search replacement recovers after editing a ${lookupFinished ? 'missing' : 'pending'} result (${findNext ? 'find next' : 'current'})',
+        (tester) async {
+          final key = GlobalKey<BusyMarkSourceEditorState>();
+          var text = lookupFinished ? 'dog cat cat' : 'cat cat cat';
+          await tester.pumpWidget(
+            MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: StatefulBuilder(
+                  builder: (context, setState) => BusyMarkSourceEditor(
+                    key: key,
+                    text: text,
+                    language: SourceSyntaxLanguage.markdown,
+                    filePath: '/project/topic.md',
+                    diagnostics: const [],
+                    editorFontSize: 14,
+                    wordWrap: true,
+                    searchActive: true,
+                    searchOptions: const SourceSearchOptions(query: 'cat'),
+                    searchReplacement: 'bat',
+                    onSearchReplacementChanged: (_) {},
+                    onSearchOptionsChanged: (_) {},
+                    onChanged: (value, _) => setState(() => text = value),
+                    onOpenSearch: () {},
+                    onCloseSearch: () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+          final controller = tester
+              .widgetList<TextField>(find.byType(TextField))
+              .map((field) => field.controller)
+              .whereType<BusyMarkSourceEditingController>()
+              .single;
+          // Click before the initial search debounce expires, as happens when
+          // entering a previously unopened document through the sidebar.
+          key.currentState!.scrollToSearchRange(
+            line: 1,
+            startOffset: 0,
+            endOffset: 3,
+          );
+          await tester.pump();
+          final en = AppLocalizationsEn();
+          YaruIconButton button(String tooltip) => tester
+              .widgetList<YaruIconButton>(find.byType(YaruIconButton))
+              .singleWhere((button) => button.tooltip == tooltip);
+          if (lookupFinished) {
+            await _pumpUntil(
+              tester,
+              () => controller.searchResult.totalMatchCount == 2,
+            );
+            await tester.pump();
+            // A missing target is settled with replacement unavailable, not
+            // silently redirected to a different occurrence.
+            expect(controller.searchResult.currentMatchIndex, isNull);
+            expect(button(en.sourceSearchReplaceCurrent).onPressed, isNull);
+            expect(button(en.sourceSearchReplaceAndFindNext).onPressed, isNull);
+            expect(button(en.sourceSearchNextMatch).onPressed, isNotNull);
+            expect(
+              controller.fullSelection,
+              const TextSelection(baseOffset: 0, extentOffset: 3),
+            );
+          } else {
+            expect(controller.searchResult.matches, isEmpty);
+          }
+          final edited = lookupFinished ? 'fox cat cat' : 'dog cat cat';
+          tester.testTextInput.updateEditingValue(
+            TextEditingValue(
+              text: edited,
+              selection: const TextSelection.collapsed(offset: 3),
+            ),
+          );
+          await tester.pump();
+          expect(text, edited);
+          await _pumpUntil(
+            tester,
+            () => controller.searchResult.totalMatchCount == 2,
+          );
+          await tester.pump();
+          final tooltip = findNext
+              ? en.sourceSearchReplaceAndFindNext
+              : en.sourceSearchReplaceCurrent;
+          expect(button(tooltip).onPressed, isNotNull);
+          await tester.tap(find.byTooltip(tooltip));
+          await _pumpUntil(
+            tester,
+            () => text == edited.replaceRange(4, 7, 'bat'),
+          );
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 1));
+        },
+      );
+    }
+  }
+
+  for (final count in [3, 3000]) {
+    testWidgets('Replace current follows selected result with $count matches', (
+      tester,
+    ) async {
+      final key = GlobalKey<BusyMarkSourceEditorState>();
+      final selectedIndex = count == 3 ? 1 : 2048;
+      var currentText = List.filled(count, 'cat').join(' ');
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => BusyMarkSourceEditor(
+                key: key,
+                text: currentText,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: true,
+                searchOptions: const SourceSearchOptions(query: 'cat'),
+                searchReplacement: 'dog',
+                onSearchReplacementChanged: (_) {},
+                onSearchOptionsChanged: (_) {},
+                onChanged: (text, _) => setState(() => currentText = text),
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      final controller = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == count,
+      );
+      // Establish a different current index before using the sidebar's API.
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchNextMatch),
+      );
+      await tester.pump();
+      key.currentState!.scrollToSearchRange(
+        line: 1,
+        startOffset: selectedIndex * 4,
+        endOffset: selectedIndex * 4 + 3,
+      );
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.currentMatchIndex == selectedIndex,
+      );
+      await tester.pump();
+      expect(controller.fullSelection.start, selectedIndex * 4);
+      expect(find.text('${selectedIndex + 1} / $count'), findsOneWidget);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceCurrent),
+      );
+      await _pumpUntil(
+        tester,
+        () => currentText.split(' ')[selectedIndex] == 'dog',
+      );
+      await _pumpUntil(
+        tester,
+        () => controller.searchResult.totalMatchCount == count - 1,
+      );
+      expect(
+        controller.searchResult.currentMatch!.fullStart,
+        (selectedIndex + 1) * 4,
+      );
+      expect(controller.fullSelection.start, (selectedIndex + 1) * 4);
+      await tester.tap(
+        find.byTooltip(AppLocalizationsEn().sourceSearchReplaceCurrent),
+      );
+      await _pumpUntil(
+        tester,
+        () => currentText.split(' ')[selectedIndex + 1] == 'dog',
+      );
+      expect(currentText.split(' ').take(selectedIndex), everyElement('cat'));
+      expect(
+        currentText.split(' ').where((word) => word == 'dog'),
+        hasLength(2),
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 1));
+    });
+  }
+
+  testWidgets('search navigation retains a later window when unfolding', (
+    tester,
+  ) async {
+    final source = '# Section\n${'cat\n' * 3000}';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).first;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: '/project/topic.md',
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: true,
+            searchOptions: const SourceSearchOptions(query: 'cat'),
+            initialFoldedRegionKeys: {region.key},
+            onSearchOptionsChanged: (_) {},
+            onChanged: (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+          ),
+        ),
+      ),
+    );
+    final controller = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.controller)
+        .whereType<BusyMarkSourceEditingController>()
+        .single;
+    await _pumpUntil(
+      tester,
+      () => controller.searchResult.totalMatchCount == 3000,
+    );
+    await tester.tap(
+      find.byTooltip(AppLocalizationsEn().sourceSearchPreviousMatch),
+    );
+    await _pumpUntil(
+      tester,
+      () =>
+          controller.searchResult.currentMatchIndex == 2999 &&
+          controller.searchResult.currentMatch?.hidden == false,
+    );
+    expect(controller.fullSelection.start, source.lastIndexOf('cat'));
+    expect(controller.searchResult.firstMatchIndex, greaterThan(0));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('source AI action applies a selection through the editor path', (
     tester,
   ) async {
@@ -139,6 +399,9 @@ void main() {
     expect(nativeEntries!.map((entry) => entry['label']), <String>[
       ...expectedSelectionActions,
       'Refine with AI',
+      '',
+      'Clipboard History',
+      'Local History…',
     ]);
     expect(
       nativeEntries!.map((entry) => entry['label']),
@@ -1447,6 +1710,321 @@ void main() {
     await tester.pump();
     expect(changedText, 'authoritative!');
   });
+
+  testWidgets('source keyboard copy retains exact whitespace once', (
+    tester,
+  ) async {
+    const source = 'before\n \n\t\nafter\n';
+    final clipboard = _SourceTestClipboard();
+    final captures = <BusyMarkClipboardCapture>[];
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+    );
+    controller.selection = TextSelection(
+      baseOffset: source.indexOf(' \n'),
+      extentOffset: source.indexOf('after'),
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyC);
+    await tester.pump();
+
+    expect(clipboard.writes, hasLength(1));
+    expect(clipboard.writes.single.text, ' \n\t\n');
+    expect(clipboard.writes.single.sourceText, ' \n\t\n');
+    expect(captures, hasLength(1));
+    expect(captures.single.sourceText, ' \n\t\n');
+  });
+
+  testWidgets('source failed cut keeps text and does not record history', (
+    tester,
+  ) async {
+    const source = 'alpha beta gamma';
+    final clipboard = _SourceTestClipboard(writeResult: false);
+    final captures = <BusyMarkClipboardCapture>[];
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection(baseOffset: 6, extentOffset: 10);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyX);
+    await tester.pump();
+
+    expect(controller.text, source);
+    expect(changed, isNull);
+    expect(captures, isEmpty);
+  });
+
+  testWidgets('source delayed cut revalidates selection before deletion', (
+    tester,
+  ) async {
+    const source = 'alpha beta gamma';
+    final clipboard = _SourceTestClipboard(delayWrite: true);
+    final captures = <BusyMarkClipboardCapture>[];
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onCaptured: captures.add,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyX);
+    await clipboard.writeStarted.future;
+    controller.selection = const TextSelection(
+      baseOffset: 11,
+      extentOffset: 16,
+    );
+    clipboard.releaseWrite();
+    await tester.pump();
+
+    expect(controller.text, source);
+    expect(changed, isNull);
+    expect(captures.single.sourceText, 'alpha');
+  });
+
+  testWidgets('history insertion follows the latest Source selection', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    String? changed;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'abcd',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      onChanged: (value, _) => changed = value,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 3);
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-history-payload',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'plain',
+      sourceText: '**rich**',
+    );
+
+    expect(await registry.paste(payload), ClipboardPasteResult.inserted);
+    expect(changed, 'abc**rich**d');
+  });
+
+  testWidgets('structured history rebases retained media into Source', (
+    tester,
+  ) async {
+    final root = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('busymark-source-history-media-'),
+    ))!;
+    addTearDown(() async {
+      if (await root.exists()) await root.delete(recursive: true);
+    });
+    final sourceDirectory = Directory('${root.path}/source');
+    final destinationDirectory = Directory('${root.path}/destination');
+    await tester.runAsync(() async {
+      await sourceDirectory.create();
+      await destinationDirectory.create();
+    });
+    final sourcePath = '${sourceDirectory.path}/origin.md';
+    final destinationPath = '${destinationDirectory.path}/target.md';
+    final fragment = _structuredImageFragment(sourcePath);
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    String? changed;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target\n',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: destinationPath,
+      workspaceRoot: root.path,
+      assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      onChanged: (value, _) => changed = value,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'source-rich-media',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.richText,
+      text: 'Alt',
+      sourceText: '![Alt](diagram.png)\n',
+      richFragment: fragment.encode(),
+      mediaBytes: {
+        'diagram.png': Uint8List.fromList(
+          utf8.encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+          ),
+        ),
+      },
+    );
+
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.inserted,
+    );
+    expect(changed, contains('![Alt](../images/diagram.svg)'));
+    expect(
+      await tester.runAsync(
+        () => File('${root.path}/images/diagram.svg').exists(),
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets(
+    'standalone image history ingests and inserts one undoable Source edit',
+    (tester) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-source-image-history-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final filePath = '${root.path}/target.md';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      const source = 'Before after';
+      var transactionCount = 0;
+      String modelText = source;
+      TextEditingValue? undoValue;
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(),
+        registry: registry,
+        filePath: filePath,
+        workspaceRoot: root.path,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+        onTransactionalChanged:
+            (value, _, previousSelection, selection, undoGroup) {
+              transactionCount++;
+              undoValue = TextEditingValue(
+                text: modelText,
+                selection: previousSelection,
+              );
+              modelText = value;
+            },
+        onUndo: () {
+          final value = undoValue;
+          if (value != null) {
+            modelText = value.text;
+            undoValue = null;
+          }
+          return value;
+        },
+      );
+      controller.selection = const TextSelection.collapsed(offset: 7);
+      final payload = BusyMarkClipboardPayload(
+        id: 'source-image-history',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.image,
+        imageBytes: Uint8List.fromList(const [
+          0x89,
+          0x50,
+          0x4e,
+          0x47,
+          0x0d,
+          0x0a,
+          0x1a,
+          0x0a,
+        ]),
+        imageMimeType: 'image/png',
+        imageDisplayName: 'screenshot.png',
+      );
+
+      expect(registry.canPaste(payload), isTrue);
+      expect(
+        await tester.runAsync(() => registry.paste(payload)),
+        ClipboardPasteResult.inserted,
+      );
+      expect(modelText, 'Before ![Image](images/screenshot.png)after');
+      expect(transactionCount, 1);
+      final asset = File('${root.path}/images/screenshot.png');
+      expect(await tester.runAsync(asset.exists), isTrue);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(modelText, source);
+      expect(transactionCount, 1);
+      expect(await tester.runAsync(asset.exists), isTrue);
+    },
+  );
+
+  testWidgets('image history asks to save an untitled Source document', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    var saveRequests = 0;
+    var changes = 0;
+    await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Untitled',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: null,
+      onChanged: (_, _) => changes++,
+      onAssetSaveRequired: () => saveRequests++,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'untitled-source-image-history',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.image,
+      imageBytes: Uint8List.fromList(const [
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+      ]),
+      imageMimeType: 'image/png',
+      imageDisplayName: 'screenshot.png',
+    );
+
+    expect(registry.canPaste(payload), isTrue);
+    expect(
+      await tester.runAsync(() => registry.paste(payload)),
+      ClipboardPasteResult.unsupported,
+    );
+    expect(saveRequests, 1);
+    expect(changes, 0);
+  });
+}
+
+WysiwygClipboardFragment _structuredImageFragment(String sourcePath) {
+  const parser = MarkdownParser();
+  final document = parser
+      .parse(
+        filePath: sourcePath,
+        source: '![Alt](diagram.png)\n',
+        mode: MarkdownMode.writersideMarkdown,
+      )
+      .busyDocument;
+  final block = document.blocks.single;
+  return WysiwygClipboardFragment(
+    sourcePath: sourcePath,
+    mode: document.mode,
+    mediaPaths: const {'diagram.png': '/original/assets/diagram.png'},
+    blocks: [
+      BusyWysiwygStyledBlock(
+        kind: block.kind,
+        text: block.plainText,
+        ranges: busyInlineStyleRanges(block.inlines),
+        attributes: block.attributes,
+        completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+      ),
+    ],
+  );
 }
 
 const _autocompleteSource = '<topic><p>fea';
@@ -1518,6 +2096,97 @@ Future<void> _pressControlSpace(WidgetTester tester) async {
   await tester.sendKeyEvent(LogicalKeyboardKey.space);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
   await tester.pump();
+}
+
+Future<TextEditingController> _pumpClipboardSourceEditor(
+  WidgetTester tester, {
+  required String source,
+  required _SourceTestClipboard clipboard,
+  BusyMarkClipboardInsertionRegistry? registry,
+  ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+  BusyMarkSourceChanged? onChanged,
+  BusyMarkSourceTransactionalChanged? onTransactionalChanged,
+  TextEditingValue? Function()? onUndo,
+  String? filePath = '/project/source.md',
+  String? workspaceRoot,
+  AssetWorkspaceKind? assetWorkspaceKind,
+  VoidCallback? onAssetSaveRequired,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: BusyMarkLinuxPalette.blueAccent,
+      ),
+      home: Scaffold(
+        body: SizedBox(
+          width: 900,
+          height: 600,
+          child: BusyMarkSourceEditor(
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: filePath,
+            documentId: 'source-document',
+            workspaceRoot: workspaceRoot,
+            assetWorkspaceKind: assetWorkspaceKind,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            onSearchOptionsChanged: (_) {},
+            onChanged: onChanged ?? (_, _) {},
+            onTransactionalChanged: onTransactionalChanged,
+            onUndo: onUndo,
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+            clipboardService: clipboard,
+            clipboardInsertionRegistry: registry,
+            onClipboardCaptured: onCaptured,
+            onAssetSaveRequired: onAssetSaveRequired,
+          ),
+        ),
+      ),
+    ),
+  );
+  final field = find.byType(TextField);
+  await tester.tap(field);
+  await tester.showKeyboard(field);
+  return tester.widget<TextField>(field).controller!;
+}
+
+Future<void> _pressControlKey(
+  WidgetTester tester,
+  LogicalKeyboardKey key,
+) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(key);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+}
+
+class _SourceTestClipboard extends RichClipboardService {
+  _SourceTestClipboard({this.writeResult = true, this.delayWrite = false})
+    : super(channel: const MethodChannel('busymark.test/source-clipboard'));
+
+  final bool writeResult;
+  final bool delayWrite;
+  final writes = <RichClipboardData>[];
+  final writeStarted = Completer<void>();
+  final _writeRelease = Completer<void>();
+
+  void releaseWrite() {
+    if (!_writeRelease.isCompleted) _writeRelease.complete();
+  }
+
+  @override
+  Future<bool> write(RichClipboardData data) async {
+    writes.add(data);
+    if (!writeStarted.isCompleted) writeStarted.complete();
+    if (delayWrite) await _writeRelease.future;
+    return writeResult;
+  }
 }
 
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {

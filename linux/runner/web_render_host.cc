@@ -561,6 +561,13 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
   self->web_view = WEBKIT_WEB_VIEW(
       webkit_web_view_new_with_context(self->context));
   configure_web_view(self->web_view);
+  // GtkOffscreenWindow cannot provide a GL context for compositing. Set this
+  // before realizing/loading the view, including after WebKit process recovery.
+  // Keep the policy local: visible reference windows and Flutter still use
+  // their normal rendering settings.
+  webkit_settings_set_hardware_acceleration_policy(
+      webkit_web_view_get_settings(self->web_view),
+      WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
   g_signal_connect(self->web_view, "load-changed",
                    G_CALLBACK(render_load_changed_cb), self);
   g_signal_connect(self->web_view, "web-process-terminated",

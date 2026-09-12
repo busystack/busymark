@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Không hỗ trợ kết quả khớp regex có độ dài bằng 0 (ví dụ ^, $ hoặc lookahead chỉ khớp với một vị trí).",
+  "workspaceSearchIncomplete": "Chỉ hiển thị một phần kết quả. Hiển thị thêm hoặc thu hẹp tìm kiếm.",
+  "workspaceSearchShowMore": "Hiển thị thêm kết quả",
+  "workspaceSearchSkippedFiles": "Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:",
   "@@locale": "vi",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Chèn dòng trống",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Kiểu văn bản",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Mục lục",
+  "toc": "Chủ đề",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "Thao tác với mục lục",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "Các thực thể",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "Thực thể mới",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "Sau khi trừ lề, hãy để nội dung rộng và cao ít nhất 20 mm.",
   "exportInvalidColor": "Nhập màu theo dạng #RRGGBB.",
   "exportInvalidCss": "Chọn tệp .css UTF-8 đọc được tối đa 256 KiB, không có nhập tài nguyên, URL tài nguyên, HTML, CSS thực thi hoặc ký tự thoát.",
-  "exportInvalidRange": "{field}: nhập số từ {minimum} đến {maximum}."
+  "exportInvalidRange": "{field}: nhập số từ {minimum} đến {maximum}.",
+  "clipboardHistory": "Lịch sử sao chép",
+  "clipboardHistorySearchHint": "Tìm kiếm lịch sử bảng nhớ tạm",
+  "clipboardHistoryDescription": "Mở lịch sử sao chép cục bộ phiên.",
+  "clipboardCurrent": "Lịch sử sao chép hiện tại",
+  "clipboardCurrentExternal": "Lịch sử sao chép từ một ứng dụng khác",
+  "clipboardDestination": "Dán vào {name}",
+  "clipboardSessionOnly": "Chỉ lưu trong phiên BusyMark này.",
+  "clipboardNoItems": "Lịch sử sao chép trống.",
+  "clipboardNoMatches": "Không có mục sao chép nào khớp với tìm kiếm này.",
+  "clipboardDisabled": "Bộ sưu tập Lịch sử sao chép bị vô hiệu hóa trong Cài đặt.",
+  "clipboardUnavailable": "Nội dung sao chép hiện tại không khả dụng hoặc không được hỗ trợ.",
+  "clipboardTooLarge": "Mục này trong clipboard quá lớn để lưu.",
+  "clipboardPastePlainText": "Dán dưới dạng văn bản thuần túy",
+  "clipboardClearAll": "Xóa lịch sử clipboard",
+  "clipboardEntryText": "Văn bản",
+  "clipboardEntryRichText": "Văn bản phong phú",
+  "clipboardEntryImage": "Hình ảnh",
+  "clipboardOrigin": "Sao chép từ {name}",
+  "localHistory": "Lịch sử cục bộ",
+  "localHistoryEllipsis": "Lịch sử cục bộ…",
+  "localHistoryDescription": "Hiển thị các phiên bản cục bộ đã lưu và tự động cho tài liệu hiện tại.",
+  "findLocalHistoryEllipsis": "Tìm trong Lịch sử cục bộ…",
+  "findLocalHistoryDescription": "Tìm kiếm các tài liệu và nội dung phiên bản trong Lịch sử cục bộ.",
+  "localHistoryNoDocuments": "Chưa có tài liệu nào có Lịch sử cục bộ.",
+  "localHistoryNoRevisions": "Tài liệu này không có các phiên bản Lịch sử cục bộ.",
+  "localHistoryNoMatches": "Không có phiên bản nào trong Lịch sử cục bộ khớp với tìm kiếm này.",
+  "localHistorySearchHint": "Tìm kiếm lịch sử cục bộ",
+  "localHistorySelectedRevision": "Phiên bản đã chọn",
+  "localHistoryCurrentEditor": "Nội dung trình soạn thảo hiện tại",
+  "localHistoryCurrentDisk": "Nội dung hiện tại trên ổ đĩa",
+  "localHistoryMissingFile": "Tệp gốc bị thiếu.",
+  "localHistoryRestoreRevision": "Khôi phục Phiên bản",
+  "localHistoryRestoreOriginalLocation": "Khôi phục về Vị trí Ban đầu",
+  "localHistoryRestoreNewLocation": "Khôi phục về Vị trí Mới…",
+  "localHistoryRestoreChange": "Khôi phục Thay đổi",
+  "localHistoryRestoreUnavailable": "Thay đổi này không thể khôi phục vì so sánh không còn hợp lệ.",
+  "localHistoryComparisonSimplified": "So sánh này rất lớn, khôi phục thay đổi riêng không khả thi.",
+  "localHistoryOlderChange": "Thay đổi phiên bản cũ: {text}",
+  "localHistoryCurrentChange": "Thay đổi nội dung hiện tại: {text}",
+  "localHistoryDeleted": "Xóa",
+  "localHistoryUntitled": "Không có tiêu đề",
+  "localHistoryClearDocument": "Xóa Lịch Sử Của Tài Liệu Này",
+  "localHistoryClearAll": "Xóa Lịch Sử Địa Phương",
+  "localHistoryClearDocumentTitle": "Xóa lịch sử tài liệu?",
+  "localHistoryClearAllTitle": "Xóa lịch sử địa phương?",
+  "localHistoryClearConfirmation": "Điều này sẽ xóa vĩnh viễn các phiên bản đã lưu. Hành động này không thể hoàn tác.",
+  "localHistoryWarningIndexRebuilt": "Chỉ mục Lịch Sử Địa Phương bị hỏng và được xây dựng lại từ các phiên bản còn nguyên vẹn.",
+  "localHistoryWarningUnsupportedFormat": "Kho Lịch Sử Địa Phương sử dụng định dạng không được hỗ trợ {version}.",
+  "localHistoryWarningUnavailable": "Lịch Sử Địa Phương không khả dụng: {detail}",
+  "localHistoryWarningRecordingDisabled": "Ghi âm bị tắt hoặc đường dẫn này bị loại trừ. Vui lòng bật lại ghi âm trước khi khôi phục.",
+  "localHistoryWarningPathChange": "Lịch Sử Địa Phương không thể ghi lại thay đổi đường dẫn: {detail}",
+  "localHistoryWarningDeletedPath": "Lịch sử cục bộ không thể lưu trữ đường dẫn đã xóa: {detail}",
+  "localHistoryWarningRevisionMissing": "Phiên bản đã chọn bị thiếu hoặc bị hỏng.",
+  "localHistoryWarningRevisionRead": "Phiên bản đã chọn không thể đọc: {detail}",
+  "localHistoryWarningCapture": "Lịch sử cục bộ không thể ghi lại phiên bản này: {detail}",
+  "localHistoryRevisionAt": "{reason} – {timestamp}",
+  "localHistoryReasonBaseline": "Mốc cơ sở",
+  "localHistoryReasonSaved": "Lưu",
+  "localHistoryReasonAutomaticCheckpoint": "Tự động lưu",
+  "localHistoryReasonBeforeReload": "Trước khi tải lại",
+  "localHistoryReasonBeforeDiscard": "Trước khi vứt",
+  "localHistoryReasonBeforeRestore": "Trước khi khôi phục",
+  "localHistoryReasonBeforeDelete": "Trước khi xóa",
+  "localHistoryReasonExternalChange": "Thay đổi từ bên ngoài",
+  "settingsHistory": "Lịch sử",
+  "settingsClipboardHistoryTitle": "Thu thập lịch sử sao chép",
+  "settingsClipboardHistoryDescription": "Giữ nội dung đã sao chép và dán thành công chỉ cho phiên BusyMark này.",
+  "settingsLocalHistoryTitle": "Ghi lại lịch sử cục bộ",
+  "settingsLocalHistoryDescription": "Lưu các phiên bản tài liệu trên thiết bị để khôi phục và so sánh.",
+  "settingsHistoryCheckpoint": "Khoảng thời gian kiểm tra tự động",
+  "settingsHistoryRetention": "Thời gian lưu",
+  "settingsHistoryStorage": "Dung lượng tối đa",
+  "settingsHistoryExcludedPaths": "Đường dẫn bị loại trừ",
+  "settingsHistoryExcludedPathsHint": "Một đường dẫn tuyệt đối trên mỗi dòng",
+  "settingsSecondsValue": "{value} giây",
+  "settingsDaysValue": "{value} ngày",
+  "settingsMebibytesValue": "{value} MiB"
 }

@@ -106,6 +106,8 @@ void main() {
     await sendNativeAction('sidebarToc');
     await sendNativeAction('sidebarOutline');
     await sendNativeAction('sidebarGit');
+    await sendNativeAction('sidebarLocalHistory');
+    await sendNativeAction('sidebarClipboardHistory');
 
     expect(events.map((event) => event.action), [
       HeaderBarAction.save,
@@ -116,8 +118,21 @@ void main() {
       HeaderBarAction.sidebarToc,
       HeaderBarAction.sidebarOutline,
       HeaderBarAction.sidebarGit,
+      HeaderBarAction.sidebarLocalHistory,
+      HeaderBarAction.sidebarClipboardHistory,
     ]);
-    expect(events.map((event) => event.sequence), [1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(events.map((event) => event.sequence), [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+    ]);
     expect(events.first, isNot(events.last));
   });
 

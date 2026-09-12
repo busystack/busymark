@@ -43,7 +43,7 @@ class RawHtmlAdapter {
     if (!_mayContainHtml(text)) {
       return null;
     }
-    final fragment = _parseFragment(text);
+    final fragment = _parseFragment(_normalizeStandaloneBreakLayout(text));
     if (fragment == null) {
       return null;
     }
@@ -55,6 +55,26 @@ class RawHtmlAdapter {
       return null;
     }
     return _trimInlineEdges(_inlinesFromNodes(fragment.nodes));
+  }
+
+  String _normalizeStandaloneBreakLayout(String source) {
+    if (!source.contains('\n') && !source.contains('\r')) {
+      return source;
+    }
+    // A CommonMark soft line ending immediately beside an inline <br> is
+    // layout whitespace, not another visible break. Remove only those source
+    // line endings before HTML whitespace collapsing so marker-only lines do
+    // not add spaces to the editable document model. Explicit indentation
+    // after a marker line remains intact.
+    return source
+        .replaceAll(
+          RegExp(r'\r?\n[ \t]*(?=<br\s*/?>)', caseSensitive: false),
+          '',
+        )
+        .replaceAllMapped(
+          RegExp(r'(<br\s*/?>)\r?\n', caseSensitive: false),
+          (match) => match.group(1)!,
+        );
   }
 
   html.DocumentFragment? _parseFragment(String source) {

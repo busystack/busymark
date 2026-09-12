@@ -4,6 +4,60 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('regex uses Unicode code points and diagnoses zero-length matches', () {
+    final document = SourceDocument(fullText: '😀');
+    final result = searchSourceDocument(
+      document,
+      const SourceSearchOptions(query: '.', regex: true),
+    );
+    expect(result.matches.single.fullStart, 0);
+    expect(result.matches.single.fullEnd, 2);
+    for (final query in ['^', r'$', '(?=😀)']) {
+      final positions = searchSourceDocument(
+        document,
+        SourceSearchOptions(query: query, regex: true),
+      );
+      expect(positions.matches, isEmpty);
+      expect(positions.hasZeroLengthMatches, isTrue);
+    }
+    const invalidInUnicodeMode = SourceSearchOptions(query: r'\q', regex: true);
+    expect(sourceSearchOptionsHaveInvalidRegex(invalidInUnicodeMode), isTrue);
+    expect(
+      searchSourceDocument(document, invalidInUnicodeMode).invalidRegex,
+      isTrue,
+    );
+  });
+
+  test('workspace-style bounded matching stops after the sentinel match', () {
+    final result = searchSourceDocument(
+      SourceDocument(fullText: 'cat ' * 3000),
+      const SourceSearchOptions(query: 'cat'),
+      maximumMatches: 81,
+      stopAfterMaximumMatches: true,
+    );
+    expect(result.matches, hasLength(81));
+    expect(result.totalMatchCount, 81);
+  });
+
+  test('search worker terminates a running backtracking expression', () async {
+    final worker = SourceSearchWorker();
+    addTearDown(worker.dispose);
+    final slow = worker.search(
+      SourceDocument(fullText: '${'a' * 100}b'),
+      const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    final current = worker.search(
+      SourceDocument(fullText: 'needle'),
+      const SourceSearchOptions(query: 'needle'),
+    );
+    expect(await slow.timeout(const Duration(seconds: 5)), isNull);
+    expect(
+      (await current.timeout(const Duration(seconds: 5)))!.totalMatchCount,
+      1,
+    );
+  });
+
   test('plain search finds case-insensitive matches by default', () {
     final result = searchSourceDocument(
       SourceDocument(fullText: 'Alpha alpha'),

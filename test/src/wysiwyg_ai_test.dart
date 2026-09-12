@@ -288,6 +288,9 @@ void main() {
     expect(nativeEntries!.map((entry) => entry['label']), <String>[
       ...expectedSelectionActions,
       'Refine with AI',
+      '',
+      'Clipboard History',
+      'Local History…',
     ]);
     expect(
       nativeEntries!.map((entry) => entry['label']),

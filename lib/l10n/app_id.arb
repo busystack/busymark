@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Kecocokan regex dengan panjang nol tidak didukung (misalnya ^, $, atau lookahead yang hanya cocok dengan posisi).",
+  "workspaceSearchIncomplete": "Hanya sebagian hasil yang ditampilkan. Tampilkan lebih banyak atau persempit pencarian.",
+  "workspaceSearchShowMore": "Tampilkan lebih banyak hasil",
+  "workspaceSearchSkippedFiles": "Pencarian belum lengkap. Berkas ini melebihi 1 MiB atau tidak dapat dibaca:",
   "@@locale": "id",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Sisipkan baris kosong",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Gaya teks",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Daftar isi",
+  "toc": "Topik",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "Tindakan TOC",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "Instance",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "Instance baru",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "Sisakan lebar dan tinggi isi minimal 20 mm setelah margin.",
   "exportInvalidColor": "Masukkan warna sebagai #RRGGBB.",
   "exportInvalidCss": "Pilih berkas .css UTF-8 yang dapat dibaca hingga 256 KiB, tanpa impor, URL sumber daya, HTML, atau CSS yang dapat dieksekusi atau memakai escape.",
-  "exportInvalidRange": "{field}: masukkan angka antara {minimum} dan {maximum}."
+  "exportInvalidRange": "{field}: masukkan angka antara {minimum} dan {maximum}.",
+  "clipboardHistory": "Sejarah Tempel",
+  "clipboardHistorySearchHint": "Cari riwayat papan klip",
+  "clipboardHistoryDescription": "Buka riwayat tempel lokal sesi.",
+  "clipboardCurrent": "Tempel saat ini",
+  "clipboardCurrentExternal": "Tempel saat ini dari aplikasi lain",
+  "clipboardDestination": "Tempel ke {name}",
+  "clipboardSessionOnly": "Hanya disimpan untuk sesi BusyMark ini.",
+  "clipboardNoItems": "Riwayat tempel kosong.",
+  "clipboardNoMatches": "Tidak ada item tempel yang cocok dengan pencarian ini.",
+  "clipboardDisabled": "Koleksi Riwayat Tempel dinonaktifkan di Pengaturan.",
+  "clipboardUnavailable": "Konten tempel saat ini tidak tersedia atau tidak didukung.",
+  "clipboardTooLarge": "Item clipboard ini terlalu besar untuk disimpan.",
+  "clipboardPastePlainText": "Tempel sebagai Teks Biasa",
+  "clipboardClearAll": "Hapus Riwayat Clipboard",
+  "clipboardEntryText": "Teks",
+  "clipboardEntryRichText": "Teks kaya",
+  "clipboardEntryImage": "Gambar",
+  "clipboardOrigin": "Disalin dari {name}",
+  "localHistory": "Riwayat Lokal",
+  "localHistoryEllipsis": "Riwayat Lokal…",
+  "localHistoryDescription": "Tampilkan revisi lokal yang disimpan dan otomatis untuk dokumen saat ini.",
+  "findLocalHistoryEllipsis": "Cari di Sejarah Lokal…",
+  "findLocalHistoryDescription": "Cari dokumen dan isi revisi dalam Sejarah Lokal.",
+  "localHistoryNoDocuments": "Tidak ada dokumen yang memiliki Sejarah Lokal.",
+  "localHistoryNoRevisions": "Dokumen ini tidak memiliki revisi Sejarah Lokal.",
+  "localHistoryNoMatches": "Tidak ada revisi Sejarah Lokal yang cocok dengan pencarian ini.",
+  "localHistorySearchHint": "Cari riwayat lokal",
+  "localHistorySelectedRevision": "Revisi yang dipilih",
+  "localHistoryCurrentEditor": "Konten editor saat ini",
+  "localHistoryCurrentDisk": "Konten saat ini di disk",
+  "localHistoryMissingFile": "File asli hilang.",
+  "localHistoryRestoreRevision": "Kembalikan Revisi",
+  "localHistoryRestoreOriginalLocation": "Kembalikan ke Lokasi Asli",
+  "localHistoryRestoreNewLocation": "Kembalikan ke Lokasi Baru…",
+  "localHistoryRestoreChange": "Kembalikan Perubahan",
+  "localHistoryRestoreUnavailable": "Perubahan ini tidak dapat dikembalikan karena perbandingan tidak lagi berlaku.",
+  "localHistoryComparisonSimplified": "Perbandingan besar ini disederhanakan. Kembalikan perubahan individual tidak tersedia.",
+  "localHistoryOlderChange": "Perubahan revisi yang lebih lama: {text}",
+  "localHistoryCurrentChange": "Perubahan konten saat ini: {text}",
+  "localHistoryDeleted": "Dihapus",
+  "localHistoryUntitled": "Tanpa Judul",
+  "localHistoryClearDocument": "Hapus Riwayat Dokumen Ini",
+  "localHistoryClearAll": "Hapus Riwayat Lokal Seluruhnya",
+  "localHistoryClearDocumentTitle": "Hapus riwayat dokumen?",
+  "localHistoryClearAllTitle": "Hapus riwayat lokal seluruhnya?",
+  "localHistoryClearConfirmation": "Ini secara permanen menghapus revisi yang tersimpan. Tindakan ini tidak dapat dibatalkan.",
+  "localHistoryWarningIndexRebuilt": "Indeks Riwayat Lokal rusak dan dibangun kembali dari revisi yang utuh.",
+  "localHistoryWarningUnsupportedFormat": "Penyimpanan Riwayat Lokal menggunakan format yang tidak didukung {version}.",
+  "localHistoryWarningUnavailable": "Riwayat Lokal tidak tersedia: {detail}",
+  "localHistoryWarningRecordingDisabled": "Perekaman dinonaktifkan atau jalur ini dikecualikan. Aktifkan kembali perekaman sebelum memulihkan.",
+  "localHistoryWarningPathChange": "Riwayat Lokal tidak dapat mencatat perubahan jalur: {detail}",
+  "localHistoryWarningDeletedPath": "Sejarah Lokal tidak dapat menyimpan jalur yang dihapus: {detail}",
+  "localHistoryWarningRevisionMissing": "Revisi yang dipilih hilang atau rusak.",
+  "localHistoryWarningRevisionRead": "Revisi yang dipilih tidak dapat dibaca: {detail}",
+  "localHistoryWarningCapture": "Sejarah Lokal tidak dapat menangkap revisi ini: {detail}",
+  "localHistoryRevisionAt": "{reason} – {timestamp}",
+  "localHistoryReasonBaseline": "Versi dasar",
+  "localHistoryReasonSaved": "Tersimpan",
+  "localHistoryReasonAutomaticCheckpoint": "Checkpoint otomatis",
+  "localHistoryReasonBeforeReload": "Sebelum memuat ulang",
+  "localHistoryReasonBeforeDiscard": "Sebelum membuang",
+  "localHistoryReasonBeforeRestore": "Sebelum pemulihan",
+  "localHistoryReasonBeforeDelete": "Sebelum menghapus",
+  "localHistoryReasonExternalChange": "Perubahan eksternal",
+  "settingsHistory": "Riwayat",
+  "settingsClipboardHistoryTitle": "Kumpulkan Riwayat Klip",
+  "settingsClipboardHistoryDescription": "Simpan konten yang disalin dan berhasil ditempel hanya untuk sesi BusyMark ini.",
+  "settingsLocalHistoryTitle": "Rekam Riwayat Lokal",
+  "settingsLocalHistoryDescription": "Simpan revisi dokumen pada perangkat ini untuk pemulihan dan perbandingan.",
+  "settingsHistoryCheckpoint": "Interval checkpoint otomatis",
+  "settingsHistoryRetention": "Masa simpan",
+  "settingsHistoryStorage": "Penyimpanan maksimum",
+  "settingsHistoryExcludedPaths": "Jalur yang dikecualikan",
+  "settingsHistoryExcludedPathsHint": "Satu jalur absolut per baris",
+  "settingsSecondsValue": "{value} detik",
+  "settingsDaysValue": "{value} hari",
+  "settingsMebibytesValue": "{value} MiB"
 }

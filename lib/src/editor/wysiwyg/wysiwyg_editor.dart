@@ -15,6 +15,8 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../ai/ai_models.dart';
 import '../../assets/asset_ingestion_service.dart';
 import '../../assets/asset_input_service.dart';
+import '../../clipboard/clipboard_insertion.dart';
+import '../../clipboard/clipboard_models.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
@@ -81,6 +83,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.assetIngestionService = const AssetIngestionService(),
     this.assetInputService,
     this.clipboardService,
+    this.clipboardInsertionRegistry,
+    this.onClipboardCaptured,
     this.onAssetSaveRequired,
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
@@ -120,6 +124,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final AssetIngestionService assetIngestionService;
   final AssetInputService? assetInputService;
   final RichClipboardService? clipboardService;
+  final BusyMarkClipboardInsertionRegistry? clipboardInsertionRegistry;
+  final ValueChanged<BusyMarkClipboardCapture>? onClipboardCaptured;
   final VoidCallback? onAssetSaveRequired;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
@@ -190,6 +196,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   var _documentGeneration = 0;
   bool _sessionReportScheduled = false;
   double? _viewportHeight;
+  late final _WysiwygClipboardInsertionTarget _historyInsertionTarget;
 
   String get _documentId => widget.documentId ?? widget.document.filePath;
 
@@ -212,6 +219,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
     )..addListener(_handleDocumentControllerChanged);
+    _historyInsertionTarget = _WysiwygClipboardInsertionTarget(this);
+    widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
     _listenForDroppedAssets();
     _itemPositionsListener.itemPositions.addListener(
       _handleVisibleItemsChanged,
@@ -226,6 +235,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   void didUpdateWidget(covariant BusyMarkWysiwygEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.clipboardInsertionRegistry !=
+        widget.clipboardInsertionRegistry) {
+      oldWidget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
+      widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
+    }
     if (oldWidget.assetInputService != widget.assetInputService) {
       unawaited(_assetDropSubscription?.cancel());
       _listenForDroppedAssets();
@@ -262,6 +276,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
     unawaited(_assetDropSubscription?.cancel());
     _itemPositionsListener.itemPositions.removeListener(
       _handleVisibleItemsChanged,
@@ -580,27 +595,44 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                         widget.toolbarPlacement,
                         widget.toolbarDirection,
                       ),
-                      onBlockCommand: _applyBlockCommand,
+                      onBlockCommand: _applyToolbarBlockCommand,
                       isBlockCommandEnabled: _canApplyBlockCommand,
-                      onAdmonitionCommand: _applyAdmonitionCommand,
+                      onAdmonitionCommand: (style) => _applyToolbarCommand(
+                        () => _applyAdmonitionCommand(style),
+                      ),
                       admonitionCommandsEnabled: _canApplyAdmonitionCommand(),
                       inlineCommandsEnabled: _hasInlineCommandTarget,
+                      lineBreakCommandsEnabled: _activeCellId == null,
                       admonitionsEnabled:
                           _documentController.document.mode ==
                           MarkdownMode.writersideMarkdown,
-                      onInlineCommand: _applyInlineCommand,
-                      onLinkCommand: () => unawaited(_applyLinkCommand()),
-                      onInlineMathCommand: _applyInlineMathCommand,
-                      onDisplayMathCommand: _applyDisplayMathCommand,
-                      onImageCommand: () => unawaited(_applyImageCommand()),
+                      onInlineCommand: (command) => _applyToolbarCommand(
+                        () => _applyInlineCommand(command),
+                      ),
+                      onLinkCommand: () =>
+                          _applyAsyncToolbarCommand(_applyLinkCommand),
+                      onInlineMathCommand: () =>
+                          _applyToolbarCommand(_applyInlineMathCommand),
+                      onDisplayMathCommand: () =>
+                          _applyToolbarCommand(_applyDisplayMathCommand),
+                      onImageCommand: () =>
+                          _applyAsyncToolbarCommand(_applyImageCommand),
                       onInlineImageCommand: () =>
-                          unawaited(_applyInlineImageCommand()),
-                      onTableCommand: () => unawaited(_applyTableCommand()),
-                      onHtmlCommand: () => unawaited(_applyHtmlCommand()),
-                      onIndentCommand: _applyIndentCommand,
-                      onOutdentCommand: _applyOutdentCommand,
-                      onToggleTaskCommand: _applyToggleTaskCommand,
-                      onHardBreakCommand: _applyHardBreakCommand,
+                          _applyAsyncToolbarCommand(_applyInlineImageCommand),
+                      onTableCommand: () =>
+                          _applyAsyncToolbarCommand(_applyTableCommand),
+                      onHtmlCommand: () =>
+                          _applyAsyncToolbarCommand(_applyHtmlCommand),
+                      onIndentCommand: () =>
+                          _applyToolbarCommand(_applyIndentCommand),
+                      onOutdentCommand: () =>
+                          _applyToolbarCommand(_applyOutdentCommand),
+                      onToggleTaskCommand: () =>
+                          _applyToolbarCommand(_applyToggleTaskCommand),
+                      onHardBreakCommand: () =>
+                          _applyToolbarCommand(_applyHardBreakCommand),
+                      onBlankLineCommand: () =>
+                          _applyToolbarCommand(_applyBlankLineCommand),
                     ),
                   ),
                 ],
@@ -2576,6 +2608,21 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _applyEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
+    if (event is KeyDownEvent &&
+        key == LogicalKeyboardKey.enter &&
+        keyboard.isControlPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isShiftPressed) {
+      final block = _documentController.blockById(blockId);
+      if (block?.kind == BusyBlockKind.codeBlock) {
+        final paragraphId = _documentController.exitCodeBlock(blockId);
+        if (paragraphId != null) {
+          _focusBlockAfterFrame(paragraphId, offset: 0);
+          return KeyEventResult.handled;
+        }
+      }
+    }
     if (keyboard.isControlPressed &&
         !keyboard.isAltPressed &&
         !keyboard.isMetaPressed &&
@@ -2699,6 +2746,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return _moveCaretVertically(blockId, -1);
     }
     if (key == LogicalKeyboardKey.arrowDown) {
+      if (block.kind == BusyBlockKind.codeBlock &&
+          offset == controller.text.length &&
+          _relativeFocusableBlock(blockId, 1) == null) {
+        final paragraphId = _documentController.exitCodeBlock(blockId);
+        if (paragraphId != null) {
+          _focusBlockAfterFrame(paragraphId, offset: 0);
+          return KeyEventResult.handled;
+        }
+      }
       return _moveCaretVertically(blockId, 1);
     }
     if (key == previousBlockKey && offset == 0) {
@@ -3477,6 +3533,63 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         targets.every(busyMarkWysiwygCanApplyAdmonitionStyle);
   }
 
+  void _applyToolbarBlockCommand(BusyWysiwygBlockCommand command) {
+    final selectedBlocks = _selectedBlocks();
+    final activeBlock = _activeBlockId == null
+        ? null
+        : _documentController.blockById(_activeBlockId!);
+    final commandTargets = selectedBlocks.isNotEmpty
+        ? selectedBlocks
+        : [if (activeBlock != null) activeBlock];
+    final opensCodeLanguageDialog =
+        command == BusyWysiwygBlockCommand.codeBlock &&
+        commandTargets.isNotEmpty &&
+        commandTargets.every((block) => block.kind == BusyBlockKind.codeBlock);
+    if (opensCodeLanguageDialog) {
+      _applyAsyncToolbarCommand(_applyCodeLanguageCommand);
+      return;
+    }
+    _applyToolbarCommand(() => _applyBlockCommand(command));
+  }
+
+  void _applyToolbarCommand(VoidCallback command) {
+    command();
+    _restoreEditingFocusAfterFrame();
+  }
+
+  void _applyAsyncToolbarCommand(Future<void> Function() command) {
+    unawaited(command().whenComplete(_restoreEditingFocusAfterFrame));
+  }
+
+  void _restoreEditingFocusAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      if (_documentSelection != null) {
+        _selectionFocusNode.requestFocus();
+        return;
+      }
+      final activeCellId = _activeCellId;
+      final cellFocusNode = activeCellId == null
+          ? null
+          : _tableCellFocusNodes[activeCellId];
+      if (cellFocusNode != null) {
+        cellFocusNode.requestFocus();
+        return;
+      }
+      final activeBlockId = _activeBlockId;
+      final blockFocusNode = activeBlockId == null
+          ? null
+          : _focusNodes[activeBlockId];
+      if (blockFocusNode != null) {
+        blockFocusNode.requestFocus();
+        return;
+      }
+      _focusActiveOrFirstBlock();
+    });
+  }
+
   void _applyBlockCommand(BusyWysiwygBlockCommand command) {
     final selectedBlocks = _selectedBlocks();
     final activeBlock = _activeBlockId == null
@@ -4049,9 +4162,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final target = _captureClipboardTarget();
     final data = await _clipboard.read();
     if (!_isClipboardTargetCurrent(target)) return;
-    var fragment = data.fragment == null
+    var fragment = data.richFragment == null
         ? null
-        : WysiwygClipboardFragment.decode(data.fragment!);
+        : WysiwygClipboardFragment.decode(data.richFragment!);
     fragment ??= data.html == null
         ? null
         : const WysiwygClipboardHtml().decode(
@@ -4065,6 +4178,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         data.text ??
             fragment.documentBlocks.map(_copyTextForBlock).join('\n\n'),
       )) {
+        _retainExternalClipboardData(data, fragment: fragment);
         return;
       }
     }
@@ -4076,11 +4190,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             filePath,
             AssetIngestionOrigin.clipboardImageFile,
             reportInvalidImage: false,
+            clipboardTarget: target,
           )) {
+        if (!data.sessionOwned) {
+          unawaited(_retainExternalImageFile(filePath));
+        }
         return;
       }
       if (_isClipboardTargetCurrent(target)) {
-        await _pastePlainTextIntoActiveBlock(textOverride: text);
+        final inserted = await _pastePlainTextIntoActiveBlock(
+          textOverride: text,
+        );
+        if (inserted) _retainExternalClipboardData(data);
       }
       return;
     }
@@ -4091,18 +4212,75 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         await _ingestExternalImageFile(
           clipboardFiles.first,
           AssetIngestionOrigin.clipboardImageFile,
+          clipboardTarget: target,
         )) {
+      unawaited(_retainExternalImageFile(clipboardFiles.first));
       return;
     }
     final png = await assetInput.readClipboardImagePng();
     if (!_isClipboardTargetCurrent(target)) return;
     if (png != null && png.isNotEmpty) {
-      await _ingestExternalImageBytes(
+      final inserted = await _ingestExternalImageBytes(
         png,
         suggestedFileName:
             'screenshot-${DateTime.now().millisecondsSinceEpoch}.png',
         origin: AssetIngestionOrigin.screenshotPaste,
+        clipboardTarget: target,
       );
+      if (inserted) {
+        widget.onClipboardCaptured?.call(
+          BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.image,
+            imageBytes: png,
+            imageMimeType: 'image/png',
+            imageDisplayName:
+                'screenshot-${DateTime.now().millisecondsSinceEpoch}.png',
+            origin: _clipboardOrigin,
+            external: true,
+          ),
+        );
+      }
+    }
+  }
+
+  void _retainExternalClipboardData(
+    RichClipboardData data, {
+    WysiwygClipboardFragment? fragment,
+  }) {
+    if (data.sessionOwned) return;
+    final text = data.text;
+    final source = fragment?.markdown ?? data.sourceText ?? text;
+    widget.onClipboardCaptured?.call(
+      BusyMarkClipboardCapture(
+        kind: fragment == null
+            ? BusyMarkClipboardContentKind.text
+            : BusyMarkClipboardContentKind.richText,
+        text: text,
+        sourceText: source,
+        html: data.html,
+        richFragment: fragment?.encode() ?? data.richFragment,
+        origin: _clipboardOrigin,
+        external: true,
+      ),
+    );
+  }
+
+  Future<void> _retainExternalImageFile(String path) async {
+    try {
+      final bytes = await File(path).readAsBytes();
+      if (!mounted) return;
+      widget.onClipboardCaptured?.call(
+        BusyMarkClipboardCapture(
+          kind: BusyMarkClipboardContentKind.image,
+          imageBytes: bytes,
+          imageMimeType: _clipboardImageMimeType(path),
+          imageDisplayName: p.basename(path),
+          origin: _clipboardOrigin,
+          external: true,
+        ),
+      );
+    } on FileSystemException {
+      // The paste already succeeded. History retention is best effort.
     }
   }
 
@@ -4151,24 +4329,24 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return true;
   }
 
-  Future<void> _pastePlainTextIntoActiveBlock({String? textOverride}) async {
+  Future<bool> _pastePlainTextIntoActiveBlock({String? textOverride}) async {
     final captured = _captureClipboardTarget();
     final text = textOverride ?? await _clipboard.readPlainText();
     if (!_isClipboardTargetCurrent(captured) || text == null || text.isEmpty) {
-      return;
+      return false;
     }
     final target = _activeTextTarget();
     if (target == null) {
-      return;
+      return false;
     }
     final blockId = target.targetId;
     final controller = target.controller;
     if (_activeCellId != null) {
       _replaceActiveTableCellSelection(text);
-      return;
+      return true;
     }
     if (_hasBlockSelection && _replaceDocumentSelectionWithText(text)) {
-      return;
+      return true;
     }
     final currentText = controller.text;
     final selection = controller.selection.isValid
@@ -4192,6 +4370,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId,
       nextText,
     );
+    return true;
   }
 
   bool _replaceActiveTableCellSelection(
@@ -4516,6 +4695,25 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _recordUndoSnapshot();
     _documentController.insertHardBreak(blockId, offset);
     _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: offset + 1);
+  }
+
+  void _applyBlankLineCommand() {
+    final target = _activeTextTarget();
+    if (target == null || _activeCellId != null) {
+      return;
+    }
+    final blockId = target.targetId;
+    final controller = target.controller;
+    final block = target.block;
+    final selection = controller.selection;
+    final offset = selection.isValid
+        ? selection.extentOffset.clamp(0, controller.text.length).toInt()
+        : block.plainText.length;
+    _recordUndoSnapshot();
+    _documentController.insertBlankLine(blockId, offset);
+    _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: offset + 2);
   }
 
   Future<void> _applyCodeLanguageCommand() async {
@@ -4681,6 +4879,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String sourcePath,
     AssetIngestionOrigin origin, {
     bool reportInvalidImage = true,
+    _ClipboardTarget? clipboardTarget,
   }) async {
     try {
       final asset = await widget.assetIngestionService.ingestFile(
@@ -4688,14 +4887,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         request: _assetIngestionRequest,
         origin: origin,
       );
-      await _requestAltAndInsertAsset(
+      return await _requestAltAndInsertAsset(
         asset,
         suggestedAlt: p.basenameWithoutExtension(sourcePath),
+        clipboardTarget: clipboardTarget,
       );
-      return true;
     } on AssetSaveRequiredException {
       widget.onAssetSaveRequired?.call();
-      return true;
+      return false;
     } on AssetIngestionException catch (error) {
       if (reportInvalidImage && mounted) {
         BusyMarkToastOverlay.show(
@@ -4714,7 +4913,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     Uint8List bytes, {
     required String suggestedFileName,
     required AssetIngestionOrigin origin,
+    _ClipboardTarget? clipboardTarget,
   }) async {
+    final suggestedAlt = context.l10n.image;
     try {
       final asset = await widget.assetIngestionService.ingestBytes(
         bytes: bytes,
@@ -4722,11 +4923,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         request: _assetIngestionRequest,
         origin: origin,
       );
-      await _requestAltAndInsertAsset(asset, suggestedAlt: 'Screenshot');
-      return true;
+      return await _requestAltAndInsertAsset(
+        asset,
+        suggestedAlt: suggestedAlt,
+        clipboardTarget: clipboardTarget,
+      );
     } on AssetSaveRequiredException {
       widget.onAssetSaveRequired?.call();
-      return true;
+      return false;
     } on AssetIngestionException catch (error) {
       if (mounted) {
         BusyMarkToastOverlay.show(
@@ -4739,12 +4943,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
-  Future<void> _requestAltAndInsertAsset(
+  Future<bool> _requestAltAndInsertAsset(
     IngestedAsset asset, {
     required String suggestedAlt,
+    _ClipboardTarget? clipboardTarget,
   }) async {
-    if (!mounted) {
-      return;
+    if (!mounted ||
+        (clipboardTarget != null &&
+            !_isClipboardTargetCurrent(clipboardTarget))) {
+      await _deleteUncommittedClipboardAsset(asset);
+      return false;
     }
     final fallbackAltText = context.l10n.image;
     final target = _captureDialogTarget();
@@ -4755,20 +4963,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       initialAlt: suggestedAlt,
       submitLabel: context.l10n.insert,
     );
-    if (!_isDialogTargetCurrent(target) || result == null) {
-      if (!asset.reusedExisting) {
-        try {
-          await File(asset.absolutePath).delete();
-        } on FileSystemException {
-          // A cancelled dialog should not make the editor unusable.
-        }
-      }
-      return;
+    if (!_isDialogTargetCurrent(target) ||
+        (clipboardTarget != null &&
+            !_isClipboardTargetCurrent(clipboardTarget)) ||
+        result == null) {
+      await _deleteUncommittedClipboardAsset(asset);
+      return false;
     }
     final blockId = _activeBlockId;
     final controller = blockId == null ? null : _textControllers[blockId];
     if (blockId == null || controller == null) {
-      return;
+      await _deleteUncommittedClipboardAsset(asset);
+      return false;
     }
     final selection = controller.selection.isValid
         ? controller.selection
@@ -4783,6 +4989,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       fallbackAltText: fallbackAltText,
     );
     _emitMarkdown();
+    return true;
+  }
+
+  Future<void> _deleteUncommittedClipboardAsset(IngestedAsset asset) async {
+    if (asset.reusedExisting) return;
+    try {
+      await File(asset.absolutePath).delete();
+    } on FileSystemException {
+      // Cancellation cleanup must not make the editor unusable. Existing and
+      // shared assets are never removed through this path.
+    }
   }
 
   Future<_TableDialogResult?> _showTableDialog(
@@ -5628,6 +5845,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             BusyMarkCommandIds.editorRefineWithAi,
             BusyMarkGlyphs.ai,
           ),
+        const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        item(
+          _DocumentSelectionMenuAction.clipboardHistory,
+          BusyMarkCommandIds.clipboardHistory,
+          BusyMarkGlyphs.copy,
+        ),
+        item(
+          _DocumentSelectionMenuAction.localHistory,
+          BusyMarkCommandIds.localHistory,
+          BusyMarkGlyphs.documentHistory,
+        ),
       ],
     );
     if (!mounted || action == null || snapshot != _documentSelection) {
@@ -5646,6 +5874,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _selectWholeDocumentText();
       case _DocumentSelectionMenuAction.refineWithAi:
         unawaited(_runAiEdit());
+      case _DocumentSelectionMenuAction.clipboardHistory:
+        unawaited(commands.execute(BusyMarkCommandIds.clipboardHistory));
+      case _DocumentSelectionMenuAction.localHistory:
+        unawaited(commands.execute(BusyMarkCommandIds.localHistory));
     }
   }
 
@@ -5996,9 +6228,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (allRanges.isEmpty) return false;
     final ranges = documentSelection
         ? _withoutEmptySelectionEndpoints(allRanges)
-        : allRanges
-              .where((range) => _copyTextForRange(range).trim().isNotEmpty)
-              .toList();
+        : allRanges.where((range) => range.start != range.end).toList();
     if (ranges.isEmpty) return false;
     final text = ranges.map(_copyTextForRange).join('\n\n');
     if (text.isEmpty) return false;
@@ -6016,9 +6246,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (allRanges.isEmpty) return false;
     final ranges = documentSelection
         ? _withoutEmptySelectionEndpoints(allRanges)
-        : allRanges
-              .where((range) => _copyTextForRange(range).trim().isNotEmpty)
-              .toList();
+        : allRanges.where((range) => range.start != range.end).toList();
     if (ranges.isEmpty) return false;
     final target = _captureClipboardTarget();
     final blocks = _clipboardBlocksForRanges(ranges);
@@ -6047,7 +6275,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   Future<void> _writePlainClipboard(String text) async {
-    final success = await _clipboard.write(RichClipboardData(text: text));
+    final success = await _clipboard.write(
+      RichClipboardData(text: text, sourceText: text, origin: _clipboardOrigin),
+    );
+    if (success) {
+      widget.onClipboardCaptured?.call(
+        BusyMarkClipboardCapture(
+          kind: BusyMarkClipboardContentKind.text,
+          text: text,
+          sourceText: text,
+          origin: _clipboardOrigin,
+        ),
+      );
+    }
     if (!mounted || success) return;
     BusyMarkToastOverlay.show(
       context,
@@ -6061,27 +6301,219 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required VoidCallback onWritten,
   }) async {
     var success = false;
+    String? html;
+    String? encodedFragment;
+    var retainedMedia = (bytes: const <String, Uint8List>{}, complete: true);
     try {
-      String? html;
       try {
         html = const WysiwygClipboardHtml().encode(fragment);
       } on FormatException {
         // Large selections can still transfer their native structure and text.
       }
+      encodedFragment = fragment.encode();
+      retainedMedia = await _readClipboardMediaBytes(fragment);
       success = await _clipboard.write(
-        RichClipboardData(text: text, html: html, fragment: fragment.encode()),
+        RichClipboardData(
+          text: text,
+          html: html,
+          sourceText: fragment.markdown,
+          richFragment: encodedFragment,
+          origin: _clipboardOrigin,
+          mediaBytes: retainedMedia.bytes,
+          mediaComplete: retainedMedia.complete,
+        ),
       );
     } on FormatException {
       success = false;
     }
     if (!mounted) return;
     if (success) {
+      widget.onClipboardCaptured?.call(
+        BusyMarkClipboardCapture(
+          kind: BusyMarkClipboardContentKind.richText,
+          text: text,
+          sourceText: fragment.markdown,
+          html: html,
+          richFragment: encodedFragment,
+          origin: _clipboardOrigin,
+          mediaBytes: retainedMedia.bytes,
+          mediaComplete: retainedMedia.complete,
+        ),
+      );
       onWritten();
     } else {
       BusyMarkToastOverlay.show(
         context,
         message: context.l10n.clipboardCopyFailed,
       );
+    }
+  }
+
+  BusyMarkClipboardOrigin get _clipboardOrigin => BusyMarkClipboardOrigin(
+    documentId: _documentId,
+    documentName: p.basename(_documentController.document.filePath).isEmpty
+        ? _documentId
+        : p.basename(_documentController.document.filePath),
+    documentPath: _documentController.document.filePath.isEmpty
+        ? null
+        : _documentController.document.filePath,
+  );
+
+  Future<ClipboardPasteResult> _pasteHistoryPayload(
+    BusyMarkClipboardPayload payload, {
+    required bool plainText,
+  }) async {
+    final captured = _captureClipboardTarget();
+    if (payload.kind == BusyMarkClipboardContentKind.image) {
+      final bytes = payload.imageBytes;
+      if (bytes == null || bytes.isEmpty) {
+        return ClipboardPasteResult.unsupported;
+      }
+      final inserted = await _ingestExternalImageBytes(
+        bytes,
+        suggestedFileName: payload.imageDisplayName ?? 'clipboard-image.png',
+        origin: AssetIngestionOrigin.screenshotPaste,
+        clipboardTarget: captured,
+      );
+      return inserted
+          ? ClipboardPasteResult.inserted
+          : ClipboardPasteResult.unsupported;
+    }
+    if (!_isClipboardTargetCurrent(captured)) {
+      return ClipboardPasteResult.staleTarget;
+    }
+    if (!plainText && payload.richFragment != null) {
+      final decoded = WysiwygClipboardFragment.decode(payload.richFragment!);
+      if (decoded != null) {
+        var fragment = decoded.rebase(_documentController.document.filePath);
+        var ingestedAssets = const <IngestedAsset>[];
+        if (decoded.mediaPaths.isNotEmpty) {
+          if (!payload.mediaComplete) return ClipboardPasteResult.unsupported;
+          final prepared = await _prepareRetainedClipboardMedia(
+            decoded,
+            payload,
+            captured,
+          );
+          if (prepared == null) return ClipboardPasteResult.staleTarget;
+          fragment = prepared.fragment;
+          ingestedAssets = prepared.assets;
+        }
+        if (!_isClipboardTargetCurrent(captured)) {
+          await _deleteUncommittedClipboardAssets(ingestedAssets);
+          return ClipboardPasteResult.staleTarget;
+        }
+        final inserted = _pasteStyledClipboardIntoActiveBlock(
+          fragment.blocks,
+          payload.text ??
+              fragment.documentBlocks.map(_copyTextForBlock).join('\n\n'),
+        );
+        if (!inserted) {
+          await _deleteUncommittedClipboardAssets(ingestedAssets);
+        }
+        return inserted
+            ? ClipboardPasteResult.inserted
+            : ClipboardPasteResult.unsupported;
+      }
+    }
+    if (!plainText && payload.html != null) {
+      final fragment = const WysiwygClipboardHtml().decode(
+        payload.html!,
+        mode: _documentController.document.mode,
+      );
+      if (fragment != null && _hasUsableClipboardHtmlContent(fragment)) {
+        if (!_isClipboardTargetCurrent(captured)) {
+          return ClipboardPasteResult.staleTarget;
+        }
+        final rebased = fragment.rebase(_documentController.document.filePath);
+        final inserted = _pasteStyledClipboardIntoActiveBlock(
+          rebased.blocks,
+          payload.text ??
+              rebased.documentBlocks.map(_copyTextForBlock).join('\n\n'),
+        );
+        return inserted
+            ? ClipboardPasteResult.inserted
+            : ClipboardPasteResult.unsupported;
+      }
+    }
+    final text = payload.text ?? payload.sourceText;
+    if (text == null) return ClipboardPasteResult.unsupported;
+    final inserted = await _pastePlainTextIntoActiveBlock(textOverride: text);
+    return inserted
+        ? ClipboardPasteResult.inserted
+        : ClipboardPasteResult.staleTarget;
+  }
+
+  bool _hasUsableClipboardHtmlContent(WysiwygClipboardFragment fragment) {
+    return fragment.documentBlocks.any(
+      (block) =>
+          block.plainText.trim().isNotEmpty ||
+          block.kind == BusyBlockKind.image ||
+          block.kind == BusyBlockKind.video ||
+          block.kind == BusyBlockKind.thematicBreak ||
+          block.kind == BusyBlockKind.table,
+    );
+  }
+
+  Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
+  _prepareRetainedClipboardMedia(
+    WysiwygClipboardFragment fragment,
+    BusyMarkClipboardPayload payload,
+    _ClipboardTarget target,
+  ) async {
+    final destinations = <String, String>{};
+    final assets = <IngestedAsset>[];
+    try {
+      for (final entry in fragment.mediaPaths.entries) {
+        final bytes = payload.mediaBytes[entry.key];
+        if (bytes == null || bytes.isEmpty) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        final asset = await widget.assetIngestionService.ingestBytes(
+          bytes: bytes,
+          suggestedFileName: p.basename(entry.value),
+          request: _assetIngestionRequest,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        );
+        assets.add(asset);
+        if (!_isClipboardTargetCurrent(target)) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        destinations[entry.key] = asset.markdownPath;
+      }
+      return (
+        fragment: fragment.rebase(
+          _documentController.document.filePath,
+          mediaDestinations: destinations,
+        ),
+        assets: List<IngestedAsset>.unmodifiable(assets),
+      );
+    } on AssetSaveRequiredException {
+      await _deleteUncommittedClipboardAssets(assets);
+      widget.onAssetSaveRequired?.call();
+      return null;
+    } on AssetIngestionException catch (error) {
+      await _deleteUncommittedClipboardAssets(assets);
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return null;
+    } on FileSystemException {
+      await _deleteUncommittedClipboardAssets(assets);
+      return null;
+    }
+  }
+
+  Future<void> _deleteUncommittedClipboardAssets(
+    Iterable<IngestedAsset> assets,
+  ) async {
+    for (final asset in assets) {
+      await _deleteUncommittedClipboardAsset(asset);
     }
   }
 
@@ -6188,6 +6620,34 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (path != null) resolved[value] = path;
     }
     return resolved;
+  }
+
+  Future<({Map<String, Uint8List> bytes, bool complete})>
+  _readClipboardMediaBytes(WysiwygClipboardFragment fragment) async {
+    if (fragment.mediaPaths.isEmpty) {
+      return (bytes: const <String, Uint8List>{}, complete: true);
+    }
+    final maximumBytes = const ClipboardHistoryPolicy().maximumBytes;
+    final result = <String, Uint8List>{};
+    var total = 0;
+    for (final entry in fragment.mediaPaths.entries) {
+      try {
+        final file = File(entry.value);
+        final length = await file.length();
+        if (length <= 0 || total + length > maximumBytes) {
+          return (bytes: const <String, Uint8List>{}, complete: false);
+        }
+        final bytes = await file.readAsBytes();
+        if (bytes.length != length) {
+          return (bytes: const <String, Uint8List>{}, complete: false);
+        }
+        result[entry.key] = bytes;
+        total += bytes.length;
+      } on FileSystemException {
+        return (bytes: const <String, Uint8List>{}, complete: false);
+      }
+    }
+    return (bytes: Map<String, Uint8List>.unmodifiable(result), complete: true);
   }
 
   _ClipboardTarget _captureClipboardTarget() => _ClipboardTarget(
@@ -6525,6 +6985,82 @@ class _ClipboardTarget {
   final TextSelection? textSelection;
 }
 
+class _WysiwygClipboardInsertionTarget
+    implements
+        BusyMarkClipboardInsertionTarget,
+        BusyMarkClipboardInsertionCapabilities {
+  const _WysiwygClipboardInsertionTarget(this.state);
+
+  final _BusyMarkWysiwygEditorState state;
+
+  @override
+  String get documentId => state._documentId;
+
+  @override
+  String get documentName {
+    final path = state._documentController.document.filePath;
+    return p.basename(path).isEmpty ? documentId : p.basename(path);
+  }
+
+  @override
+  String? get documentPath {
+    final path = state._documentController.document.filePath;
+    return path.isEmpty ? null : path;
+  }
+
+  @override
+  bool get editable => state.mounted;
+
+  @override
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+    if (!editable) return false;
+    if (plainText) return payload.hasMeaningfulTextRepresentation;
+    return switch (payload.kind) {
+      BusyMarkClipboardContentKind.image =>
+        payload.imageBytes?.isNotEmpty == true,
+      BusyMarkClipboardContentKind.richText =>
+        payload.mediaComplete &&
+            (payload.richFragment != null ||
+                payload.html != null ||
+                payload.text != null ||
+                payload.sourceText != null),
+      BusyMarkClipboardContentKind.text =>
+        payload.text != null || payload.sourceText != null,
+    };
+  }
+
+  @override
+  Future<ClipboardPasteResult> paste(
+    BusyMarkClipboardPayload payload, {
+    required bool plainText,
+  }) => state._pasteHistoryPayload(payload, plainText: plainText);
+
+  @override
+  void requestEditorFocus() {
+    final target = state._activeTextTarget();
+    final blockId = target?.targetId ?? state._activeBlockId;
+    if (blockId != null) {
+      state._focusBlockAfterFrame(
+        blockId,
+        offset:
+            target?.controller.selection.extentOffset ??
+            target?.controller.text.length ??
+            0,
+      );
+    }
+  }
+}
+
+String _clipboardImageMimeType(String path) =>
+    switch (p.extension(path).toLowerCase()) {
+      '.jpg' || '.jpeg' => 'image/jpeg',
+      '.gif' => 'image/gif',
+      '.webp' => 'image/webp',
+      '.bmp' => 'image/bmp',
+      '.svg' => 'image/svg+xml',
+      _ => 'image/png',
+    };
+
 enum _DocumentSelectionMenuAction {
   cut,
   copy,
@@ -6532,6 +7068,8 @@ enum _DocumentSelectionMenuAction {
   paste,
   selectAll,
   refineWithAi,
+  clipboardHistory,
+  localHistory,
 }
 
 class _ContinuousTextEdit {

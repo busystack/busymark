@@ -941,6 +941,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get hardLineBreak => 'Sundreavahetus';
 
   @override
+  String get insertBlankLine => 'Lisa tühi rida';
+
+  @override
   String get textStyle => 'Tekstilaad';
 
   @override
@@ -1122,7 +1125,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get files => 'Failid';
 
   @override
-  String get toc => 'Sisukord';
+  String get toc => 'Teemad';
 
   @override
   String get tocActions => 'Sisukorra toimingud';
@@ -1553,6 +1556,21 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Vigane regulaaravaldis';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Nullpikkusega regulaaravaldiste vasteid ei toetata (näiteks ^, \$ või ainult asukohta sobitavad ettevaated).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Kuvatakse ainult osa tulemustest. Kuva rohkem või kitsenda otsingut.';
+
+  @override
+  String get workspaceSearchShowMore => 'Kuva rohkem tulemusi';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3886,6 +3904,287 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Vali loetav UTF-8 .css-fail kuni 256 KiB, ilma importide, ressursside URL-ide, HTML-i ning käivitatava või paojadadega CSS-ita.';
+
+  @override
+  String get clipboardHistory => 'Kleepimiskredi ajalugu';
+
+  @override
+  String get clipboardHistorySearchHint => 'Otsi lõikepuhvri ajaloost';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Ava sessiooni-spetsiifiline kleepimiskredi ajalugu.';
+
+  @override
+  String get clipboardCurrent => 'Praegune kleepimiskredi';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Praegune kleepimiskredi teistest rakendusest';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Kleepi $name';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Salvestatud ainult sellele BusyMark sessioonile.';
+
+  @override
+  String get clipboardNoItems => 'Kleepimiskredi ajalugu on tühi.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Ei leitud kleepimiskredi elemente, mis vastavad sellele otsingule.';
+
+  @override
+  String get clipboardDisabled =>
+      'Kleepimiskredi ajalugu on peatatud seadetes.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Praegune kleepimiskredi sisu pole saadaval või toetatud.';
+
+  @override
+  String get clipboardTooLarge =>
+      'See kleepimiskredi element on liiga suur, et seda säilitada.';
+
+  @override
+  String get clipboardPastePlainText => 'Kleepi kui tavatekst';
+
+  @override
+  String get clipboardClearAll => 'Puhasta kleepimiskredi ajalugu';
+
+  @override
+  String get clipboardEntryText => 'Tekst';
+
+  @override
+  String get clipboardEntryRichText => 'Rikas tekst';
+
+  @override
+  String get clipboardEntryImage => 'Pilt';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Kleepitud $name';
+  }
+
+  @override
+  String get localHistory => 'Paikne ajalugu';
+
+  @override
+  String get localHistoryEllipsis => 'Paikne ajalugu…';
+
+  @override
+  String get localHistoryDescription =>
+      'Näita salvestatud ja automaatseid paikseid versioone sellele dokumendile.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Leia kohalikust ajaloost…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Otsi kohalises ajaloos ja versioonide sisu.';
+
+  @override
+  String get localHistoryNoDocuments => 'Mida ei ole kohalist ajaloos.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Selle dokumendil pole kohalist ajaloos.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Ei leidunud kohalise ajalooga versioone.';
+
+  @override
+  String get localHistorySearchHint => 'Otsi kohalikust ajaloost';
+
+  @override
+  String get localHistorySelectedRevision => 'Valitud versioon';
+
+  @override
+  String get localHistoryCurrentEditor => 'Praegune redaktoori sisu';
+
+  @override
+  String get localHistoryCurrentDisk => 'Praegune sisu faile';
+
+  @override
+  String get localHistoryMissingFile => 'Algne fail puudub.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Taasta versioon';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => 'Taasta algsele asukohale';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Taasta uuele asukohale…';
+
+  @override
+  String get localHistoryRestoreChange => 'Taasta muudatus';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Seda muudatust ei saa taastada, kuna võrdlemine pole enam kehtiv.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'See suur võrdlemine on lihtsustatud. Eraldi muudatuste taastamine pole võimalik.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Vana versiooni muudatus: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Praeguse versiooni muudatus: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Hävitatud';
+
+  @override
+  String get localHistoryUntitled => 'Nimetamata';
+
+  @override
+  String get localHistoryClearDocument => 'Kaustade ajaloo kustutada';
+
+  @override
+  String get localHistoryClearAll => 'Kõik kohalikud ajaloo kustutada';
+
+  @override
+  String get localHistoryClearDocumentTitle =>
+      'Kas soovite kustutada dokumendi ajaloo?';
+
+  @override
+  String get localHistoryClearAllTitle =>
+      'Kas soovite kustutada kõik kohaliku aja?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'See eemaldab püsivalt salvestatud versioonid. Seda toimingut ei saa tagasi pöörata.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Kohalik ajaloo indeks oli kahjustatud ja taastati tervete versioonide abil.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'See kohalik ajaloo salvestus kasutab tugimat format $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Kohalik ajaloo pole saadaval: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Salvestamine on välja lülitatud või see tee on eemaldatud. Lülitage salvestamine uuesti sisse enne taastamist.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Kohalik ajaloo ei suutnud salvestada teed: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Kohalik ajaloo ei suutnud säilitada kustutatud teed: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Valitud versioon on kadunud või kahjustatud.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Valitud versiooni ei saa lugeda: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Kohalik ajaloo ei suutnud seda versiooni salvestada: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Alusversioon';
+
+  @override
+  String get localHistoryReasonSaved => 'Salvestatud';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Automaatne kontrollpunkt';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Enne laadimist';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Enne kõrvaldamist';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Enne taastamist';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Enne kustutamist';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Väline muudatus';
+
+  @override
+  String get settingsHistory => 'Ajalugu';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Salvesta klipi ajalugu';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Hoiab salvestatud ja edukalt kopeeritud sisu ainult selle BusyMark sessiooni jaoks.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Salvesta kohalik ajalugu';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Salvesta dokumendi versioonid selle seadmele taastamiseks ja võrdlemiseks.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Automaatne kontrollpunkte intervall';
+
+  @override
+  String get settingsHistoryRetention => 'Säilitamise aeg';
+
+  @override
+  String get settingsHistoryStorage => 'Maksimaalne salvestamine';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Exkludeeritud teed';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Üks absoluutne tee per rida';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value sekundid';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value päevad';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

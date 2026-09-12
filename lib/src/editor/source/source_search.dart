@@ -76,6 +76,7 @@ class SourceSearchResult {
     int? totalMatchCount,
     this.firstMatchIndex = 0,
     this.invalidRegex = false,
+    this.hasZeroLengthMatches = false,
   }) : totalMatchCount = totalMatchCount ?? matches.length;
 
   static final empty = SourceSearchResult(
@@ -93,6 +94,7 @@ class SourceSearchResult {
   /// The complete-result index represented by [matches.first].
   final int firstMatchIndex;
   final bool invalidRegex;
+  final bool hasZeroLengthMatches;
 
   SourceSearchMatch? get currentMatch {
     final index = currentMatchIndex;
@@ -114,6 +116,7 @@ class SourceSearchResult {
       totalMatchCount: totalMatchCount,
       firstMatchIndex: firstMatchIndex,
       invalidRegex: invalidRegex,
+      hasZeroLengthMatches: hasZeroLengthMatches,
     );
   }
 
@@ -125,6 +128,7 @@ class SourceSearchResult {
         other.totalMatchCount == totalMatchCount &&
         other.firstMatchIndex == firstMatchIndex &&
         other.invalidRegex == invalidRegex &&
+        other.hasZeroLengthMatches == hasZeroLengthMatches &&
         _matchesEqual(other.matches, matches);
   }
 
@@ -135,6 +139,7 @@ class SourceSearchResult {
     totalMatchCount,
     firstMatchIndex,
     invalidRegex,
+    hasZeroLengthMatches,
     Object.hashAll(matches.map(_matchHash)),
   );
 }
@@ -263,6 +268,7 @@ class SourceSearchWorker {
     int firstMatchIndex = 0,
     int? minimumFullOffset,
     int maximumMatches = sourceInteractiveSearchMatchLimit,
+    bool stopAfterMaximumMatches = false,
   }) {
     cancel();
     final generation = ++_generation;
@@ -295,6 +301,7 @@ class SourceSearchWorker {
       'firstMatchIndex': firstMatchIndex,
       'minimumFullOffset': minimumFullOffset,
       'maximumMatches': maximumMatches,
+      'stopAfterMaximumMatches': stopAfterMaximumMatches,
     };
     Isolate.spawn<List<Object?>>(
           _sourceSearchWorkerMain,
@@ -373,9 +380,11 @@ void _sourceSearchWorkerMain(List<Object?> payload) {
     firstMatchIndex: request['firstMatchIndex']! as int,
     minimumFullOffset: request['minimumFullOffset'] as int?,
     maximumMatches: request['maximumMatches']! as int,
+    stopAfterMaximumMatches: request['stopAfterMaximumMatches']! as bool,
   );
   sendPort.send(<Object?, Object?>{
     'invalidRegex': result.invalidRegex,
+    'hasZeroLengthMatches': result.hasZeroLengthMatches,
     'currentMatchIndex': result.currentMatchIndex,
     'totalMatchCount': result.totalMatchCount,
     'firstMatchIndex': result.firstMatchIndex,
@@ -413,6 +422,7 @@ SourceSearchResult _decodeSearchResult(
     totalMatchCount: payload['totalMatchCount']! as int,
     firstMatchIndex: payload['firstMatchIndex']! as int,
     invalidRegex: payload['invalidRegex']! as bool,
+    hasZeroLengthMatches: payload['hasZeroLengthMatches']! as bool,
   );
 }
 
@@ -425,6 +435,7 @@ bool sourceSearchOptionsHaveInvalidRegex(SourceSearchOptions options) {
       options.query,
       caseSensitive: options.caseSensitive,
       multiLine: true,
+      unicode: true,
     );
     return false;
   } on FormatException {
@@ -475,6 +486,7 @@ SourceSearchResult searchSourceDocument(
   int firstMatchIndex = 0,
   int? minimumFullOffset,
   int? maximumMatches,
+  bool stopAfterMaximumMatches = false,
 }) {
   final query = options.query;
   if (query.isEmpty) {
@@ -485,7 +497,12 @@ SourceSearchResult searchSourceDocument(
   if (options.regex) {
     try {
       rawMatches =
-          RegExp(query, caseSensitive: options.caseSensitive, multiLine: true)
+          RegExp(
+                query,
+                caseSensitive: options.caseSensitive,
+                multiLine: true,
+                unicode: true,
+              )
               .allMatches(document.fullText)
               .map((match) => (start: match.start, end: match.end));
     } on FormatException {
@@ -505,8 +522,17 @@ SourceSearchResult searchSourceDocument(
   var totalMatchCount = 0;
   var storedFirstMatchIndex = requestedFirstMatchIndex;
   var foundOffsetWindow = minimumFullOffset == null;
+  var hasZeroLengthMatches = false;
   for (final match in rawMatches) {
     if (match.start == match.end) {
+      hasZeroLengthMatches = true;
+      continue;
+    }
+    if (!sourceSearchRangeHasSafeBoundaries(
+      document.fullText,
+      match.start,
+      match.end,
+    )) {
       continue;
     }
     if (options.wholeWord &&
@@ -537,6 +563,11 @@ SourceSearchResult searchSourceDocument(
             visible.range.start == visible.range.end,
       ),
     );
+    if (stopAfterMaximumMatches &&
+        matchLimit != null &&
+        matches.length >= matchLimit) {
+      break;
+    }
   }
   if (!foundOffsetWindow) {
     storedFirstMatchIndex = totalMatchCount;
@@ -554,7 +585,21 @@ SourceSearchResult searchSourceDocument(
         : null,
     totalMatchCount: totalMatchCount,
     firstMatchIndex: storedFirstMatchIndex,
+    hasZeroLengthMatches: hasZeroLengthMatches,
   );
+}
+
+/// Search and replacement offsets are UTF-16 offsets, but must never bisect
+/// a character represented by a surrogate pair.
+bool sourceSearchRangeHasSafeBoundaries(String source, int start, int end) {
+  bool safe(int offset) =>
+      offset >= 0 &&
+      offset <= source.length &&
+      (offset == 0 ||
+          offset == source.length ||
+          !_isHighSurrogate(source.codeUnitAt(offset - 1)) ||
+          !_isLowSurrogate(source.codeUnitAt(offset)));
+  return start <= end && safe(start) && safe(end);
 }
 
 Iterable<({int start, int end})> _plainMatches(

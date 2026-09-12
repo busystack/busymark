@@ -165,7 +165,7 @@ Future<void> exportActiveMarkdownToPdf(
   final failure = outcome.failure;
   if (failure != null) {
     if (failure.code != MarkdownPdfFailureCode.cancelled) {
-      await _showPdfExportError(context, headerBar, failure);
+      await showMarkdownPdfExportError(context, headerBar, failure);
     }
     return;
   }
@@ -228,7 +228,8 @@ Future<bool> _confirmPdfOverwrite(
       false;
 }
 
-Future<void> _showPdfExportError(
+@visibleForTesting
+Future<void> showMarkdownPdfExportError(
   BuildContext context,
   LinuxHeaderBarService headerBar,
   MarkdownPdfExportException failure,
@@ -256,7 +257,19 @@ Future<void> _showPdfExportError(
           onPressed: () => Navigator.pop(context),
         ),
       ],
-      children: [Text(message)],
+      children: [
+        Text(message),
+        if (failure.detail.trim().isNotEmpty &&
+            failure.code != MarkdownPdfFailureCode.destinationExists) ...[
+          const SizedBox(height: BusyMarkSpacing.md),
+          SelectionArea(
+            child: Text(
+              failure.detail,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ],
     ),
   );
 }

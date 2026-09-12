@@ -1825,6 +1825,12 @@ abstract class AppLocalizations {
   /// **'Hard line break'**
   String get hardLineBreak;
 
+  /// Insert blank line command label.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert blank line'**
+  String get insertBlankLine;
+
   /// Text style menu tooltip.
   ///
   /// In en, this message translates to:
@@ -2149,10 +2155,10 @@ abstract class AppLocalizations {
   /// **'Files'**
   String get files;
 
-  /// Writerside table of contents sidebar tab label.
+  /// Writerside Topics sidebar tab label.
   ///
   /// In en, this message translates to:
-  /// **'TOC'**
+  /// **'Topics'**
   String get toc;
 
   /// Tooltip for the Writerside TOC action menu button.
@@ -2856,6 +2862,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid regular expression'**
   String get sourceSearchInvalidRegex;
+
+  /// No description provided for @sourceSearchZeroLengthUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).'**
+  String get sourceSearchZeroLengthUnsupported;
+
+  /// No description provided for @workspaceSearchIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Only some results are shown. Show more or narrow your search.'**
+  String get workspaceSearchIncomplete;
+
+  /// No description provided for @workspaceSearchShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more results'**
+  String get workspaceSearchShowMore;
+
+  /// No description provided for @workspaceSearchSkippedFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search is incomplete. These files exceeded 1 MiB or could not be read:'**
+  String get workspaceSearchSkippedFiles;
 
   /// Status banner shown when source highlighting and folding are disabled for a large file.
   ///
@@ -5166,7 +5196,7 @@ abstract class AppLocalizations {
   /// **'Export the active document or Writerside module as a PDF.'**
   String get shortcutExportPdfDescription;
 
-  /// Heading for the Writerside instances shown in the TOC sidebar.
+  /// Heading for the Writerside instances shown in the Topics sidebar.
   ///
   /// In en, this message translates to:
   /// **'Instances'**
@@ -6556,6 +6586,468 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.'**
   String get exportInvalidCss;
+
+  /// No description provided for @clipboardHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard History'**
+  String get clipboardHistory;
+
+  /// No description provided for @clipboardHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search clipboard history'**
+  String get clipboardHistorySearchHint;
+
+  /// No description provided for @clipboardHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the session-local clipboard history.'**
+  String get clipboardHistoryDescription;
+
+  /// No description provided for @clipboardCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current clipboard'**
+  String get clipboardCurrent;
+
+  /// No description provided for @clipboardCurrentExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'Current clipboard from another application'**
+  String get clipboardCurrentExternal;
+
+  /// No description provided for @clipboardDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste into {name}'**
+  String clipboardDestination(String name);
+
+  /// No description provided for @clipboardSessionOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored for this BusyMark session only.'**
+  String get clipboardSessionOnly;
+
+  /// No description provided for @clipboardNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard history is empty.'**
+  String get clipboardNoItems;
+
+  /// No description provided for @clipboardNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No clipboard items match this search.'**
+  String get clipboardNoMatches;
+
+  /// No description provided for @clipboardDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard History collection is disabled in Settings.'**
+  String get clipboardDisabled;
+
+  /// No description provided for @clipboardUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The current clipboard content is unavailable or unsupported.'**
+  String get clipboardUnavailable;
+
+  /// No description provided for @clipboardTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This clipboard item is too large to retain.'**
+  String get clipboardTooLarge;
+
+  /// No description provided for @clipboardPastePlainText.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste as Plain Text'**
+  String get clipboardPastePlainText;
+
+  /// No description provided for @clipboardClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Clipboard History'**
+  String get clipboardClearAll;
+
+  /// No description provided for @clipboardEntryText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get clipboardEntryText;
+
+  /// No description provided for @clipboardEntryRichText.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich text'**
+  String get clipboardEntryRichText;
+
+  /// No description provided for @clipboardEntryImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get clipboardEntryImage;
+
+  /// No description provided for @clipboardOrigin.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied from {name}'**
+  String clipboardOrigin(String name);
+
+  /// No description provided for @localHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History'**
+  String get localHistory;
+
+  /// No description provided for @localHistoryEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History…'**
+  String get localHistoryEllipsis;
+
+  /// No description provided for @localHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show saved and automatic local revisions for the current document.'**
+  String get localHistoryDescription;
+
+  /// No description provided for @findLocalHistoryEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Find in Local History…'**
+  String get findLocalHistoryEllipsis;
+
+  /// No description provided for @findLocalHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Local History documents and revision contents.'**
+  String get findLocalHistoryDescription;
+
+  /// No description provided for @localHistoryNoDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents have Local History yet.'**
+  String get localHistoryNoDocuments;
+
+  /// No description provided for @localHistoryNoRevisions.
+  ///
+  /// In en, this message translates to:
+  /// **'This document has no Local History revisions.'**
+  String get localHistoryNoRevisions;
+
+  /// No description provided for @localHistoryNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No Local History revisions match this search.'**
+  String get localHistoryNoMatches;
+
+  /// No description provided for @localHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search local history'**
+  String get localHistorySearchHint;
+
+  /// No description provided for @localHistorySelectedRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected revision'**
+  String get localHistorySelectedRevision;
+
+  /// No description provided for @localHistoryCurrentEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Current editor content'**
+  String get localHistoryCurrentEditor;
+
+  /// No description provided for @localHistoryCurrentDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Current content on disk'**
+  String get localHistoryCurrentDisk;
+
+  /// No description provided for @localHistoryMissingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'The original file is missing.'**
+  String get localHistoryMissingFile;
+
+  /// No description provided for @localHistoryRestoreRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Revision'**
+  String get localHistoryRestoreRevision;
+
+  /// No description provided for @localHistoryRestoreOriginalLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore to Original Location'**
+  String get localHistoryRestoreOriginalLocation;
+
+  /// No description provided for @localHistoryRestoreNewLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore to New Location…'**
+  String get localHistoryRestoreNewLocation;
+
+  /// No description provided for @localHistoryRestoreChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Change'**
+  String get localHistoryRestoreChange;
+
+  /// No description provided for @localHistoryRestoreUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This change cannot be restored because the comparison is no longer current.'**
+  String get localHistoryRestoreUnavailable;
+
+  /// No description provided for @localHistoryComparisonSimplified.
+  ///
+  /// In en, this message translates to:
+  /// **'This large comparison is simplified. Restore individual changes is unavailable.'**
+  String get localHistoryComparisonSimplified;
+
+  /// No description provided for @localHistoryOlderChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Older revision change: {text}'**
+  String localHistoryOlderChange(String text);
+
+  /// No description provided for @localHistoryCurrentChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Current content change: {text}'**
+  String localHistoryCurrentChange(String text);
+
+  /// No description provided for @localHistoryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get localHistoryDeleted;
+
+  /// No description provided for @localHistoryUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get localHistoryUntitled;
+
+  /// No description provided for @localHistoryClearDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear This Document’s History'**
+  String get localHistoryClearDocument;
+
+  /// No description provided for @localHistoryClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All Local History'**
+  String get localHistoryClearAll;
+
+  /// No description provided for @localHistoryClearDocumentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear document history?'**
+  String get localHistoryClearDocumentTitle;
+
+  /// No description provided for @localHistoryClearAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all Local History?'**
+  String get localHistoryClearAllTitle;
+
+  /// No description provided for @localHistoryClearConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes stored revisions. This action cannot be undone.'**
+  String get localHistoryClearConfirmation;
+
+  /// No description provided for @localHistoryWarningIndexRebuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'The Local History index was damaged and rebuilt from intact revisions.'**
+  String get localHistoryWarningIndexRebuilt;
+
+  /// No description provided for @localHistoryWarningUnsupportedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'This Local History store uses unsupported format {version}.'**
+  String localHistoryWarningUnsupportedFormat(String version);
+
+  /// No description provided for @localHistoryWarningUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History is unavailable: {detail}'**
+  String localHistoryWarningUnavailable(String detail);
+
+  /// No description provided for @localHistoryWarningRecordingDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording is disabled or this path is excluded. Re-enable recording before restoring.'**
+  String get localHistoryWarningRecordingDisabled;
+
+  /// No description provided for @localHistoryWarningPathChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History could not record the path change: {detail}'**
+  String localHistoryWarningPathChange(String detail);
+
+  /// No description provided for @localHistoryWarningDeletedPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History could not retain the deleted path: {detail}'**
+  String localHistoryWarningDeletedPath(String detail);
+
+  /// No description provided for @localHistoryWarningRevisionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected revision is missing or damaged.'**
+  String get localHistoryWarningRevisionMissing;
+
+  /// No description provided for @localHistoryWarningRevisionRead.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected revision cannot be read: {detail}'**
+  String localHistoryWarningRevisionRead(String detail);
+
+  /// No description provided for @localHistoryWarningCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History could not capture this revision: {detail}'**
+  String localHistoryWarningCapture(String detail);
+
+  /// No description provided for @localHistoryRevisionAt.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason} · {timestamp}'**
+  String localHistoryRevisionAt(String reason, String timestamp);
+
+  /// No description provided for @localHistoryReasonBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline'**
+  String get localHistoryReasonBaseline;
+
+  /// No description provided for @localHistoryReasonSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get localHistoryReasonSaved;
+
+  /// No description provided for @localHistoryReasonAutomaticCheckpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic checkpoint'**
+  String get localHistoryReasonAutomaticCheckpoint;
+
+  /// No description provided for @localHistoryReasonBeforeReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Before reload'**
+  String get localHistoryReasonBeforeReload;
+
+  /// No description provided for @localHistoryReasonBeforeDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Before discard'**
+  String get localHistoryReasonBeforeDiscard;
+
+  /// No description provided for @localHistoryReasonBeforeRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore'**
+  String get localHistoryReasonBeforeRestore;
+
+  /// No description provided for @localHistoryReasonBeforeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Before delete'**
+  String get localHistoryReasonBeforeDelete;
+
+  /// No description provided for @localHistoryReasonExternalChange.
+  ///
+  /// In en, this message translates to:
+  /// **'External change'**
+  String get localHistoryReasonExternalChange;
+
+  /// No description provided for @settingsHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get settingsHistory;
+
+  /// No description provided for @settingsClipboardHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect Clipboard History'**
+  String get settingsClipboardHistoryTitle;
+
+  /// No description provided for @settingsClipboardHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep copied and successfully pasted content for this BusyMark session only.'**
+  String get settingsClipboardHistoryDescription;
+
+  /// No description provided for @settingsLocalHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Local History'**
+  String get settingsLocalHistoryTitle;
+
+  /// No description provided for @settingsLocalHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Store document revisions on this device for recovery and comparison.'**
+  String get settingsLocalHistoryDescription;
+
+  /// No description provided for @settingsHistoryCheckpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic checkpoint interval'**
+  String get settingsHistoryCheckpoint;
+
+  /// No description provided for @settingsHistoryRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Retention age'**
+  String get settingsHistoryRetention;
+
+  /// No description provided for @settingsHistoryStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum storage'**
+  String get settingsHistoryStorage;
+
+  /// No description provided for @settingsHistoryExcludedPaths.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded paths'**
+  String get settingsHistoryExcludedPaths;
+
+  /// No description provided for @settingsHistoryExcludedPathsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One absolute path per line'**
+  String get settingsHistoryExcludedPathsHint;
+
+  /// No description provided for @settingsSecondsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} seconds'**
+  String settingsSecondsValue(int value);
+
+  /// No description provided for @settingsDaysValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} days'**
+  String settingsDaysValue(int value);
+
+  /// No description provided for @settingsMebibytesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} MiB'**
+  String settingsMebibytesValue(int value);
 
   /// Invalid numeric export setting.
   ///

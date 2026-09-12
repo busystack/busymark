@@ -16,7 +16,6 @@ enum HeaderBarAction {
   search,
   refresh,
   save,
-  export,
   fullScreen,
   menu,
   settings,
@@ -32,6 +31,8 @@ enum HeaderBarAction {
   sidebarToc,
   sidebarOutline,
   sidebarGit,
+  sidebarLocalHistory,
+  sidebarClipboardHistory,
 }
 
 class HeaderBarActionEvent {
@@ -153,10 +154,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
 
   Future<void> setCanRefresh(bool value) {
     return _invokeLegacy('setCanRefresh', value);
-  }
-
-  Future<void> setCanExportPdf(bool value) {
-    return _invokeLegacy('setCanExportPdf', value);
   }
 
   Future<void> setDocumentControlsVisible(bool value) {
@@ -290,8 +287,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
       ('setTitleRange', configuration.title),
       ('setViewMode', configuration.viewMode.name),
       ('setCanRefresh', configuration.canRefresh),
-      ('setCanExportPdf', configuration.canExportPdf),
-      ('setCanExportHtml', configuration.canExportHtml),
       ('setDocumentControlsVisible', configuration.documentControlsVisible),
       ('setSearchVisible', configuration.searchVisible),
       ('setSidebarVisible', configuration.sidebarVisible),
@@ -391,7 +386,6 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
-      'export' => HeaderBarAction.export,
       'fullScreen' => HeaderBarAction.fullScreen,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
@@ -407,6 +401,8 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'sidebarToc' => HeaderBarAction.sidebarToc,
       'sidebarOutline' => HeaderBarAction.sidebarOutline,
       'sidebarGit' => HeaderBarAction.sidebarGit,
+      'sidebarLocalHistory' => HeaderBarAction.sidebarLocalHistory,
+      'sidebarClipboardHistory' => HeaderBarAction.sidebarClipboardHistory,
       _ => null,
     };
   }

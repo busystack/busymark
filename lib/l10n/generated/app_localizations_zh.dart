@@ -889,6 +889,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hardLineBreak => '硬换行';
 
   @override
+  String get insertBlankLine => '插入空行';
+
+  @override
   String get textStyle => '文本样式';
 
   @override
@@ -1069,7 +1072,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get files => '文件';
 
   @override
-  String get toc => '目录';
+  String get toc => '主题';
 
   @override
   String get tocActions => '目录操作';
@@ -1486,6 +1489,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => '无效的正则表达式';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
+
+  @override
+  String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
+
+  @override
+  String get workspaceSearchShowMore => '显示更多结果';
+
+  @override
+  String get workspaceSearchSkippedFiles => '搜索不完整。以下文件超过 1 MiB 或无法读取：';
 
   @override
   String get sourceLargeFileFeaturesPaused => '大文件：已暂停语法突出显示和折叠';
@@ -3720,6 +3736,267 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+
+  @override
+  String get clipboardHistory => '剪贴板历史';
+
+  @override
+  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
+
+  @override
+  String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
+
+  @override
+  String get clipboardCurrent => '当前剪贴板';
+
+  @override
+  String get clipboardCurrentExternal => '来自其他应用程序的当前剪贴板';
+
+  @override
+  String clipboardDestination(String name) {
+    return '粘贴到 $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => '仅存储在本次 BusyMark 会话中。';
+
+  @override
+  String get clipboardNoItems => '剪贴板历史为空。';
+
+  @override
+  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
+
+  @override
+  String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
+
+  @override
+  String get clipboardUnavailable => '当前剪贴板内容不可用或不受支持。';
+
+  @override
+  String get clipboardTooLarge => '此剪贴板内容过大，无法保留。';
+
+  @override
+  String get clipboardPastePlainText => '作为纯文本粘贴';
+
+  @override
+  String get clipboardClearAll => '清除剪贴板历史';
+
+  @override
+  String get clipboardEntryText => '文本';
+
+  @override
+  String get clipboardEntryRichText => '丰富文本';
+
+  @override
+  String get clipboardEntryImage => '图片';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '复制自 $name';
+  }
+
+  @override
+  String get localHistory => '本地历史';
+
+  @override
+  String get localHistoryEllipsis => '本地历史…';
+
+  @override
+  String get localHistoryDescription => '显示当前文档的已保存和自动本地修订。';
+
+  @override
+  String get findLocalHistoryEllipsis => '在本地历史中查找…';
+
+  @override
+  String get findLocalHistoryDescription => '搜索本地历史文档和修订内容。';
+
+  @override
+  String get localHistoryNoDocuments => '尚无文档具有本地历史。';
+
+  @override
+  String get localHistoryNoRevisions => '此文档没有本地历史修订。';
+
+  @override
+  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
+
+  @override
+  String get localHistorySearchHint => '搜索本地历史记录';
+
+  @override
+  String get localHistorySelectedRevision => '已选择的修订';
+
+  @override
+  String get localHistoryCurrentEditor => '当前编辑器内容';
+
+  @override
+  String get localHistoryCurrentDisk => '磁盘上的当前内容';
+
+  @override
+  String get localHistoryMissingFile => '原始文件丢失。';
+
+  @override
+  String get localHistoryRestoreRevision => '恢复版本';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => '恢复到原始位置';
+
+  @override
+  String get localHistoryRestoreNewLocation => '恢复到新位置…';
+
+  @override
+  String get localHistoryRestoreChange => '恢复更改';
+
+  @override
+  String get localHistoryRestoreUnavailable => '无法恢复此更改，因为比较已过时。';
+
+  @override
+  String get localHistoryComparisonSimplified => '此大型比较已简化。 无法恢复单个更改。';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return '较旧的版本更改： $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return '当前内容更改： $text';
+  }
+
+  @override
+  String get localHistoryDeleted => '已删除';
+
+  @override
+  String get localHistoryUntitled => '未命名';
+
+  @override
+  String get localHistoryClearDocument => '清除此文档的历史';
+
+  @override
+  String get localHistoryClearAll => '清除所有本地历史';
+
+  @override
+  String get localHistoryClearDocumentTitle => '清除文档历史？';
+
+  @override
+  String get localHistoryClearAllTitle => '清除所有本地历史？';
+
+  @override
+  String get localHistoryClearConfirmation => '这将永久删除存储的修订。 此操作无法撤销。';
+
+  @override
+  String get localHistoryWarningIndexRebuilt => '本地历史索引已损坏并从完整修订中重建。';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return '此本地历史存储使用不受支持的格式 $version。';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return '本地历史不可用： $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return '无法记录本地历史路径更改： $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return '本地历史记录无法保留已删除的路径： $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing => '所选版本丢失或损坏。';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return '无法读取所选版本： $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return '本地历史记录无法捕获此版本： $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason・$timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => '基线';
+
+  @override
+  String get localHistoryReasonSaved => '已保存';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => '自动检查点';
+
+  @override
+  String get localHistoryReasonBeforeReload => '在重新加载之前';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => '在丢弃之前';
+
+  @override
+  String get localHistoryReasonBeforeRestore => '恢复前';
+
+  @override
+  String get localHistoryReasonBeforeDelete => '删除前';
+
+  @override
+  String get localHistoryReasonExternalChange => '外部修改';
+
+  @override
+  String get settingsHistory => '历史记录';
+
+  @override
+  String get settingsClipboardHistoryTitle => '收集剪贴板历史';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
+
+  @override
+  String get settingsLocalHistoryTitle => '记录本地历史';
+
+  @override
+  String get settingsLocalHistoryDescription => '将文档修订存储在此设备上，以便恢复和比较。';
+
+  @override
+  String get settingsHistoryCheckpoint => '自动检查点间隔';
+
+  @override
+  String get settingsHistoryRetention => '保留期限';
+
+  @override
+  String get settingsHistoryStorage => '最大存储';
+
+  @override
+  String get settingsHistoryExcludedPaths => '排除路径';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => '每行一个绝对路径';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value 秒';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value 天';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {
@@ -4610,6 +4887,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get hardLineBreak => '硬换行';
 
   @override
+  String get insertBlankLine => '插入空行';
+
+  @override
   String get textStyle => '文本样式';
 
   @override
@@ -4790,7 +5070,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get files => '文件';
 
   @override
-  String get toc => '目录';
+  String get toc => '主题';
 
   @override
   String get tocActions => '目录操作';
@@ -5207,6 +5487,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get sourceSearchInvalidRegex => '无效的正则表达式';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      '不支持零长度的正则表达式匹配（例如 ^、\$ 或仅匹配位置的前瞻断言）。';
+
+  @override
+  String get workspaceSearchIncomplete => '仅显示了部分结果。请显示更多结果或缩小搜索范围。';
+
+  @override
+  String get workspaceSearchShowMore => '显示更多结果';
+
+  @override
+  String get workspaceSearchSkippedFiles => '搜索不完整。以下文件超过 1 MiB 或无法读取：';
 
   @override
   String get sourceLargeFileFeaturesPaused => '大文件：已暂停语法突出显示和折叠';
@@ -7441,6 +7734,267 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get exportInvalidCss =>
       '请选择可读取的 UTF-8 .css 文件（最大 256 KiB），不得包含导入、资源 URL、HTML、可执行或转义 CSS。';
+
+  @override
+  String get clipboardHistory => '剪贴板历史';
+
+  @override
+  String get clipboardHistorySearchHint => '搜索剪贴板历史记录';
+
+  @override
+  String get clipboardHistoryDescription => '打开会话本地剪贴板历史。';
+
+  @override
+  String get clipboardCurrent => '当前剪贴板';
+
+  @override
+  String get clipboardCurrentExternal => '来自其他应用程序的当前剪贴板';
+
+  @override
+  String clipboardDestination(String name) {
+    return '粘贴到 $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => '仅存储在本次 BusyMark 会话中。';
+
+  @override
+  String get clipboardNoItems => '剪贴板历史为空。';
+
+  @override
+  String get clipboardNoMatches => '没有匹配此搜索的剪贴板项目。';
+
+  @override
+  String get clipboardDisabled => '剪贴板历史集合在设置中已禁用。';
+
+  @override
+  String get clipboardUnavailable => '当前剪贴板内容不可用或不受支持。';
+
+  @override
+  String get clipboardTooLarge => '此剪贴板内容过大，无法保留。';
+
+  @override
+  String get clipboardPastePlainText => '作为纯文本粘贴';
+
+  @override
+  String get clipboardClearAll => '清除剪贴板历史';
+
+  @override
+  String get clipboardEntryText => '文本';
+
+  @override
+  String get clipboardEntryRichText => '丰富文本';
+
+  @override
+  String get clipboardEntryImage => '图片';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '复制自 $name';
+  }
+
+  @override
+  String get localHistory => '本地历史';
+
+  @override
+  String get localHistoryEllipsis => '本地历史…';
+
+  @override
+  String get localHistoryDescription => '显示当前文档的已保存和自动本地修订。';
+
+  @override
+  String get findLocalHistoryEllipsis => '在本地历史中查找…';
+
+  @override
+  String get findLocalHistoryDescription => '搜索本地历史文档和修订内容。';
+
+  @override
+  String get localHistoryNoDocuments => '尚无文档具有本地历史。';
+
+  @override
+  String get localHistoryNoRevisions => '此文档没有本地历史修订。';
+
+  @override
+  String get localHistoryNoMatches => '没有本地历史修订与此搜索匹配。';
+
+  @override
+  String get localHistorySearchHint => '搜索本地历史记录';
+
+  @override
+  String get localHistorySelectedRevision => '已选择的修订';
+
+  @override
+  String get localHistoryCurrentEditor => '当前编辑器内容';
+
+  @override
+  String get localHistoryCurrentDisk => '磁盘上的当前内容';
+
+  @override
+  String get localHistoryMissingFile => '原始文件丢失。';
+
+  @override
+  String get localHistoryRestoreRevision => '恢复版本';
+
+  @override
+  String get localHistoryRestoreOriginalLocation => '恢复到原始位置';
+
+  @override
+  String get localHistoryRestoreNewLocation => '恢复到新位置…';
+
+  @override
+  String get localHistoryRestoreChange => '恢复更改';
+
+  @override
+  String get localHistoryRestoreUnavailable => '无法恢复此更改，因为比较已过时。';
+
+  @override
+  String get localHistoryComparisonSimplified => '此大型比较已简化。 无法恢复单个更改。';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return '较旧的版本更改： $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return '当前内容更改： $text';
+  }
+
+  @override
+  String get localHistoryDeleted => '已删除';
+
+  @override
+  String get localHistoryUntitled => '未命名';
+
+  @override
+  String get localHistoryClearDocument => '清除此文档的历史';
+
+  @override
+  String get localHistoryClearAll => '清除所有本地历史';
+
+  @override
+  String get localHistoryClearDocumentTitle => '清除文档历史？';
+
+  @override
+  String get localHistoryClearAllTitle => '清除所有本地历史？';
+
+  @override
+  String get localHistoryClearConfirmation => '这将永久删除存储的修订。 此操作无法撤销。';
+
+  @override
+  String get localHistoryWarningIndexRebuilt => '本地历史索引已损坏并从完整修订中重建。';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return '此本地历史存储使用不受支持的格式 $version。';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return '本地历史不可用： $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      '录音已禁用或此路径已排除。 在恢复之前重新启用录音。';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return '无法记录本地历史路径更改： $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return '本地历史记录无法保留已删除的路径： $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing => '所选版本丢失或损坏。';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return '无法读取所选版本： $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return '本地历史记录无法捕获此版本： $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason・$timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => '基线';
+
+  @override
+  String get localHistoryReasonSaved => '已保存';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => '自动检查点';
+
+  @override
+  String get localHistoryReasonBeforeReload => '在重新加载之前';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => '在丢弃之前';
+
+  @override
+  String get localHistoryReasonBeforeRestore => '恢复前';
+
+  @override
+  String get localHistoryReasonBeforeDelete => '删除前';
+
+  @override
+  String get localHistoryReasonExternalChange => '外部修改';
+
+  @override
+  String get settingsHistory => '历史记录';
+
+  @override
+  String get settingsClipboardHistoryTitle => '收集剪贴板历史';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      '只保留本次 BusyMark 会话中已复制并成功粘贴的内容。';
+
+  @override
+  String get settingsLocalHistoryTitle => '记录本地历史';
+
+  @override
+  String get settingsLocalHistoryDescription => '将文档修订存储在此设备上，以便恢复和比较。';
+
+  @override
+  String get settingsHistoryCheckpoint => '自动检查点间隔';
+
+  @override
+  String get settingsHistoryRetention => '保留期限';
+
+  @override
+  String get settingsHistoryStorage => '最大存储';
+
+  @override
+  String get settingsHistoryExcludedPaths => '排除路径';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => '每行一个绝对路径';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value 秒';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value 天';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

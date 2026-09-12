@@ -1593,6 +1593,49 @@ void main() {}
     expect(markdown, 'Title\n');
   });
 
+  testWidgets('Ctrl+Shift+- inserts a thematic break', (tester) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.minus);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Intro\n\n---\n');
+    final emptyParagraph = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .singleWhere(
+          (candidate) => candidate.controller?.text.isEmpty ?? false,
+        );
+    expect(emptyParagraph.focusNode!.hasFocus, isTrue);
+  });
+
   testWidgets(
     'WYSIWYG Tab nests eligible list items and Shift+Tab lifts them',
     (tester) async {
@@ -2140,9 +2183,7 @@ void main() {}
     },
   );
 
-  testWidgets('WYSIWYG Shift+Down traverses explicit empty paragraphs', (
-    tester,
-  ) async {
+  testWidgets('WYSIWYG ignores redundant source blank lines', (tester) async {
     final parsed = parser.parse(
       filePath: 'topic.md',
       source: 'First\n\n\nSecond\n',
@@ -2169,19 +2210,9 @@ void main() {}
     TextField fieldAt(int index) =>
         tester.widget<TextField>(find.byType(TextField).at(index));
 
-    expect(find.byType(TextField), findsNWidgets(3));
-    expect(fieldAt(1).controller!.text, isEmpty);
-    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 0);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.pump();
-    expect(fieldAt(2).focusNode!.hasFocus, isTrue);
-    expect(fieldAt(2).controller!.selection.extentOffset, 0);
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(fieldAt(0).controller!.text, 'First');
+    expect(fieldAt(1).controller!.text, 'Second');
   });
 
   testWidgets('typing replaces a WYSIWYG selection across paragraphs', (
@@ -4499,6 +4530,7 @@ void main() {}
 
     expect(destinationField, findsNothing);
     expect(markdown, '[Linked](https://example.com) word\n');
+    expect(editorField.focusNode!.hasFocus, isTrue);
   });
 
   for (final (selectionDescription, selection) in const [
@@ -5044,42 +5076,44 @@ void main() {}
     expect(controller.markdown, 'First\n\nSecond\n');
   });
 
-  test('WYSIWYG Enter preserves an empty paragraph across reloads', () {
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: 'First\n\nSecond\n',
-    );
-    final controller = BusyMarkWysiwygDocumentController(
-      document: parsed.busyDocument,
-    );
-    final firstBlock = controller.document.blocks.first;
+  test(
+    'WYSIWYG reload ignores an empty paragraph represented only by blanks',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'First\n\nSecond\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final firstBlock = controller.document.blocks.first;
 
-    final emptyBlockId = controller.applyEnterAt(
-      firstBlock.id,
-      firstBlock.plainText.length,
-    );
+      final emptyBlockId = controller.applyEnterAt(
+        firstBlock.id,
+        firstBlock.plainText.length,
+      );
 
-    expect(emptyBlockId, isNotNull);
-    expect(controller.markdown, 'First\n\n\nSecond\n');
-    expect(controller.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-      'Second',
-    ]);
+      expect(emptyBlockId, isNotNull);
+      expect(controller.markdown, 'First\n\n\nSecond\n');
+      expect(controller.document.blocks.map((block) => block.plainText), [
+        'First',
+        '',
+        'Second',
+      ]);
 
-    final reopened = BusyMarkWysiwygDocumentController(
-      document: parser
-          .parse(filePath: 'topic.md', source: controller.markdown)
-          .busyDocument,
-    );
-    expect(reopened.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-      'Second',
-    ]);
-  });
+      final reopened = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: controller.markdown)
+            .busyDocument,
+      );
+      expect(reopened.document.blocks.map((block) => block.plainText), [
+        'First',
+        'Second',
+      ]);
+    },
+  );
 
-  test('WYSIWYG Enter preserves an empty paragraph at end of file', () {
+  test('WYSIWYG reload ignores trailing blank lines', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
     final controller = BusyMarkWysiwygDocumentController(
       document: parsed.busyDocument,
@@ -5094,30 +5128,20 @@ void main() {}
           .parse(filePath: 'topic.md', source: controller.markdown)
           .busyDocument,
     );
-    expect(reopened.document.blocks.map((block) => block.plainText), [
-      'First',
-      '',
-    ]);
+    expect(reopened.document.blocks.map((block) => block.plainText), ['First']);
   });
 
-  test('WYSIWYG can edit and remove a restored empty paragraph', () {
-    BusyMarkWysiwygDocumentController open(String source) {
-      return BusyMarkWysiwygDocumentController(
-        document: parser
-            .parse(filePath: 'topic.md', source: source)
-            .busyDocument,
-      );
-    }
+  test('WYSIWYG does not create blocks for redundant source whitespace', () {
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parser
+          .parse(filePath: 'topic.md', source: 'First\n\n\nSecond\n')
+          .busyDocument,
+    );
 
-    final edited = open('First\n\n\nSecond\n');
-    final emptyBlock = edited.document.blocks[1];
-    edited.updateBlockText(emptyBlock.id, 'Middle');
-    expect(edited.markdown, 'First\n\nMiddle\n\nSecond\n');
-
-    final removed = open('First\n\n\nSecond\n');
-    final removedEmptyBlock = removed.document.blocks[1];
-    removed.applyBackspaceAtStart(removedEmptyBlock.id);
-    expect(removed.markdown, 'First\n\nSecond\n');
+    expect(controller.document.blocks.map((block) => block.plainText), [
+      'First',
+      'Second',
+    ]);
   });
 
   test('WYSIWYG Enter in unordered list creates next item then exits list', () {
@@ -5427,6 +5451,213 @@ void main() {}
     expect(find.byType(TextField), findsOneWidget);
   });
 
+  testWidgets('hard-break toolbar command retains focus and advances caret', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fieldFinder = find.byType(TextField).first;
+    final field = tester.widget<TextField>(fieldFinder);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+    final l10n = AppLocalizations.of(tester.element(fieldFinder));
+    final hardBreakButton = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkHeaderIconButton &&
+          widget.tooltip == l10n.hardLineBreak,
+    );
+
+    expect(hardBreakButton, findsOneWidget);
+    await tester.tap(hardBreakButton);
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \n Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection.collapsed(offset: 6),
+    );
+  });
+
+  testWidgets('formatting toolbar command retains editor focus and selection', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final fieldFinder = find.byType(TextField).first;
+    final field = tester.widget<TextField>(fieldFinder);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 5,
+    );
+    await tester.pump();
+    final l10n = AppLocalizations.of(tester.element(fieldFinder));
+    final boldButton = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkHeaderIconButton && widget.tooltip == l10n.bold,
+    );
+
+    expect(boldButton, findsOneWidget);
+    final buttonFocusNode = Focus.of(
+      tester.element(
+        find.descendant(of: boldButton, matching: find.byType(Icon)),
+      ),
+    );
+    buttonFocusNode.requestFocus();
+    await tester.pump();
+    expect(field.focusNode!.hasFocus, isFalse);
+
+    tester.widget<BusyMarkHeaderIconButton>(boldButton).onPressed!();
+    await tester.pump();
+
+    expect(markdown, '**Alpha** Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection(baseOffset: 0, extentOffset: 5),
+    );
+  });
+
+  testWidgets('Shift+Enter retains focus and advances past the hard break', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(markdown, 'Alpha  \n Beta\n');
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(
+      field.controller!.selection,
+      const TextSelection.collapsed(offset: 6),
+    );
+  });
+
+  testWidgets(
+    'blank-line toolbar command round-trips and remains one focused edit',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+      var markdown = parsed.source;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (filePath, value) => markdown = value,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final fieldFinder = find.byType(TextField).first;
+      final field = tester.widget<TextField>(fieldFinder);
+      field.focusNode!.requestFocus();
+      field.controller!.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pump();
+      final l10n = AppLocalizations.of(tester.element(fieldFinder));
+      final blankLineButton = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkHeaderIconButton &&
+            widget.tooltip == l10n.insertBlankLine,
+      );
+
+      expect(blankLineButton, findsOneWidget);
+      await tester.ensureVisible(blankLineButton);
+      await tester.tap(blankLineButton);
+      await tester.pump();
+
+      expect(markdown, 'Alpha\n<br>\n<br>\n Beta\n');
+      expect(field.controller!.text, 'Alpha\n\n Beta');
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(
+        field.controller!.selection,
+        const TextSelection.collapsed(offset: 7),
+      );
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+
+      expect(markdown, 'Alpha Beta\n');
+    },
+  );
+
   testWidgets('WYSIWYG editor lazily builds large documents', (tester) async {
     final source = List.generate(
       500,
@@ -5556,7 +5787,62 @@ void main() {}
 
     hardBreakController.insertHardBreak(hardBreakBlockId, 5);
     expect(hardBreakController.markdown, 'Alpha  \n Beta\n');
+
+    hardBreakController.insertHardBreak(hardBreakBlockId, 6);
+    expect(hardBreakController.markdown, 'Alpha\n<br>\n<br>\n Beta\n');
+    final blankLineRoundTrip = parser.parse(
+      filePath: 'topic.md',
+      source: hardBreakController.markdown,
+    );
+    expect(blankLineRoundTrip.busyDocument.blocks, hasLength(1));
+    expect(
+      blankLineRoundTrip.busyDocument.blocks.single.inlines.where(
+        (inline) => inline.kind == BusyInlineKind.hardBreak,
+      ),
+      hasLength(2),
+    );
+    expect(
+      blankLineRoundTrip.busyDocument.blocks.single.plainText,
+      'Alpha\n\n Beta',
+    );
   });
+
+  test(
+    'blank-line command keeps repeated terminal markers off the text line',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Vancouver BC\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final blockId = parsed.busyDocument.blocks.single.id;
+
+      controller.insertBlankLine(blockId, 'Vancouver BC'.length);
+      expect(controller.markdown, 'Vancouver BC\n<br>\n<br>\n');
+
+      controller.insertBlankLine(blockId, 'Vancouver BC\n\n'.length);
+      expect(controller.markdown, 'Vancouver BC\n<br>\n<br>\n<br>\n<br>\n');
+      expect(controller.markdown, isNot(contains('Vancouver BC<br>')));
+
+      final roundTrip = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(roundTrip.busyDocument.blocks, hasLength(1));
+      expect(
+        roundTrip.busyDocument.blocks.single.inlines.where(
+          (inline) => inline.kind == BusyInlineKind.hardBreak,
+        ),
+        hasLength(4),
+      );
+      expect(
+        roundTrip.busyDocument.blocks.single.plainText,
+        'Vancouver BC\n\n\n\n',
+      );
+    },
+  );
 
   test('WYSIWYG table and code language commands serialize Markdown', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');

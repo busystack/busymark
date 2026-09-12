@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
-import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_main_menu.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/export/html_export_models.dart';
@@ -35,61 +34,27 @@ void main() {
     expect(await registry.execute(BusyMarkCommandIds.export), isTrue);
     expect(calls, 1);
     final native = File('linux/runner/my_application.cc').readAsStringSync();
-    expect(native, contains('"header.export"'));
+    expect(native, isNot(contains('"header.export"')));
     expect(native, isNot(contains('"header.export-html"')));
     expect(native, isNot(contains('"header.export-pdf"')));
-    expect(native, contains('configuration.can_export_html'));
-    expect(native, contains('"setCanExportHtml"'));
+    expect(native, isNot(contains('configuration.can_export_html')));
+    expect(native, isNot(contains('"setCanExportHtml"')));
   });
 
-  testWidgets('Flutter HTML menu preserves enablement and dispatch', (
-    tester,
-  ) async {
-    var selected = false;
-    Future<void> menu(bool enabled) => tester.pumpWidget(
+  testWidgets('Flutter Main menu excludes document export', (tester) async {
+    await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: BusyMarkMainMenuButton(
-              canExportHtml: enabled,
-              onSelected: (action) =>
-                  selected = action == BusyMarkMainMenuAction.export,
-            ),
-          ),
+          home: Scaffold(body: BusyMarkMainMenuButton(onSelected: (_) {})),
         ),
       ),
     );
-    await menu(false);
     await tester.tap(find.byType(BusyMarkMainMenuButton));
     await tester.pumpAndSettle();
-    final exportItem = find.byWidgetPredicate(
-      (widget) =>
-          widget is BusyMarkPopupMenuItem<BusyMarkMainMenuAction> &&
-          widget.value == BusyMarkMainMenuAction.export,
-    );
-    expect(
-      tester
-          .widget<BusyMarkPopupMenuItem<BusyMarkMainMenuAction>>(exportItem)
-          .enabled,
-      isFalse,
-    );
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-    await menu(true);
-    await tester.tap(find.byType(BusyMarkMainMenuButton));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<BusyMarkPopupMenuItem<BusyMarkMainMenuAction>>(exportItem)
-          .enabled,
-      isTrue,
-    );
-    expect(find.text('Ctrl+Shift+E'), findsOneWidget);
-    await tester.tap(exportItem);
-    await tester.pumpAndSettle();
-    expect(selected, isTrue);
+    expect(find.text('Export'), findsNothing);
+    expect(find.text('Full Screen'), findsOneWidget);
   });
 
   testWidgets(
@@ -227,42 +192,42 @@ void main() {
   }
 }
 
-Widget _harness(
-  HtmlExportService service,
-  void Function(WidgetRef) ready,
-) => ProviderScope(
-  overrides: [
-    htmlExportServiceProvider.overrideWithValue(service),
-    localSettingsStoreProvider.overrideWithValue(_Settings()),
-    linuxHeaderBarServiceProvider.overrideWithValue(
-      LinuxHeaderBarService(channel: const MethodChannel('html-test-header')),
-    ),
-  ],
-  child: MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    theme: buildBusyMarkTheme(
-      brightness: Brightness.light,
-      accentColor: Colors.blue,
-    ),
-    home: Scaffold(
-      body: Consumer(
-        builder: (context, ref, child) {
-          ready(ref);
-          return Column(
-            children: [
-              TextButton(
-                onPressed: () => exportWorkspaceToHtml(context, ref),
-                child: const Text('Run HTML'),
-              ),
-              BusyMarkMainMenuButton(canExportHtml: true, onSelected: (_) {}),
-            ],
-          );
-        },
+Widget _harness(HtmlExportService service, void Function(WidgetRef) ready) =>
+    ProviderScope(
+      overrides: [
+        htmlExportServiceProvider.overrideWithValue(service),
+        localSettingsStoreProvider.overrideWithValue(_Settings()),
+        linuxHeaderBarServiceProvider.overrideWithValue(
+          LinuxHeaderBarService(
+            channel: const MethodChannel('html-test-header'),
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: Colors.blue,
+        ),
+        home: Scaffold(
+          body: Consumer(
+            builder: (context, ref, child) {
+              ready(ref);
+              return Column(
+                children: [
+                  TextButton(
+                    onPressed: () => exportWorkspaceToHtml(context, ref),
+                    child: const Text('Run HTML'),
+                  ),
+                  BusyMarkMainMenuButton(onSelected: (_) {}),
+                ],
+              );
+            },
+          ),
+        ),
       ),
-    ),
-  ),
-);
+    );
 
 class _Settings implements LocalSettingsStore {
   Map<String, Object?> data = AppSettings.defaults()

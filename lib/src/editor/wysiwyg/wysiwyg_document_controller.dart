@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
-import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
@@ -66,6 +65,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyDocument get document => _document;
 
   String get markdown => _serializer.serialize(_document);
+
+  @override
+  void notifyListeners() {
+    _document = _ensureEditableDocument(_document);
+    super.notifyListeners();
+  }
 
   void replaceDocument(BusyDocument document) {
     _document = _ensureEditableDocument(document);
@@ -647,7 +652,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         replacements.add(
           block.copyWith(
             inlines: inlines,
-            attributes: _attributesForText(block.attributes, block.kind, part),
+            attributes: _attributesForText(
+              _sourceBackedSplitAttributes(block.attributes),
+              block.kind,
+              part,
+            ),
             preserveRaw: false,
             dirty: true,
           ),
@@ -660,7 +669,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             kind: splitKind,
             inlines: inlines,
             attributes: _attributesForText(
-              _splitAttributesFor(block, splitKind, orderedOffset: index),
+              _sourceBackedSplitAttributes(
+                _splitAttributesFor(block, splitKind, orderedOffset: index),
+              ),
               splitKind,
               part,
             ),
@@ -880,15 +891,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void insertHardBreak(String blockId, int offset) {
+    _insertHardBreaks(blockId, offset, count: 1);
+  }
+
+  void insertBlankLine(String blockId, int offset) {
+    _insertHardBreaks(blockId, offset, count: 2);
+  }
+
+  void _insertHardBreaks(String blockId, int offset, {required int count}) {
     _replaceBlock(blockId, (block) {
       final text = block.plainText;
       final safeOffset = offset.clamp(0, text.length).toInt();
-      final nextText = text.replaceRange(safeOffset, safeOffset, '\n');
+      final nextText = text.replaceRange(safeOffset, safeOffset, '\n' * count);
       final ranges = _styleRangesForReplacement(
         ranges: busyInlineStyleRanges(block.inlines),
         selectionStart: safeOffset,
         selectionEnd: safeOffset,
-        replacementLength: 1,
+        replacementLength: count,
       );
       return block.copyWith(
         inlines: _inlinesFromStyleRangesWithHardBreaks(nextText, ranges),
@@ -1514,7 +1533,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? _textInlines('')
           : inlinePartition.before,
       children: block.children,
-      attributes: _attributesForText(block.attributes, block.kind, leftText),
+      attributes: _attributesForText(
+        _sourceBackedSplitAttributes(block.attributes),
+        block.kind,
+        leftText,
+      ),
       dirty: true,
     );
     final nextBlock = BusyBlock(
@@ -1524,7 +1547,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? _textInlines('')
           : inlinePartition.after,
       attributes: _attributesForText(
-        _splitAttributesFor(block, nextKind, orderedOffset: 1),
+        _sourceBackedSplitAttributes(
+          _splitAttributesFor(block, nextKind, orderedOffset: 1),
+        ),
         nextKind,
         rightText,
       ),
@@ -1545,6 +1570,30 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (block == null) {
       return null;
     }
+    if (block.kind == BusyBlockKind.codeBlock) {
+      final text = block.plainText;
+      final safeOffset = offset.clamp(0, text.length).toInt();
+      if (safeOffset == text.length && text.endsWith('\n\n')) {
+        final updated = _blockWithEditedText(
+          block,
+          text.substring(0, text.length - 2),
+        );
+        final paragraphId = _exitCodeBlockAfter(block, replacement: updated);
+        return BusyWysiwygTextSplitResult(blockId: paragraphId, offset: 0);
+      }
+      final updated = _blockWithEditedText(
+        block,
+        text.replaceRange(safeOffset, safeOffset, '\n'),
+      );
+      _document = _document.copyWith(
+        blocks: _replaceInBlocks(_document.blocks, blockId, (_) => updated),
+      );
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(
+        blockId: blockId,
+        offset: safeOffset + 1,
+      );
+    }
     if (_isListItemKind(block.kind) && block.plainText.trim().isEmpty) {
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
@@ -1554,6 +1603,46 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return null;
     }
     return BusyWysiwygTextSplitResult(blockId: nextBlockId, offset: 0);
+  }
+
+  /// Creates a normal caret target after a code block without changing the
+  /// serialized Markdown until the user types into it.
+  String? exitCodeBlock(String blockId) {
+    final block = blockById(blockId);
+    if (block == null || block.kind != BusyBlockKind.codeBlock) {
+      return null;
+    }
+    return _exitCodeBlockAfter(block);
+  }
+
+  String _exitCodeBlockAfter(BusyBlock block, {BusyBlock? replacement}) {
+    final following = _followingSibling(_document.blocks, block.id);
+    if (following != null &&
+        following.kind == BusyBlockKind.paragraph &&
+        following.plainText.isEmpty) {
+      if (replacement != null) {
+        _document = _document.copyWith(
+          blocks: _replaceInBlocks(
+            _document.blocks,
+            block.id,
+            (_) => replacement,
+          ),
+        );
+        notifyListeners();
+      }
+      return following.id;
+    }
+    final paragraph = _transientTrailingParagraph(
+      _nextGeneratedBlockId('paragraph'),
+    );
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, block.id, [
+        replacement ?? block,
+        paragraph,
+      ]),
+    );
+    notifyListeners();
+    return paragraph.id;
   }
 
   BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
@@ -2423,10 +2512,19 @@ Map<String, String> _attributesForText(
 ) {
   final updated = {...attributes}
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (text.isNotEmpty) {
+    updated.remove(busyMarkTransientTrailingParagraphAttribute);
+  }
   if (kind == BusyBlockKind.paragraph && text.isEmpty) {
     updated[busyMarkPreserveEmptyParagraphAttribute] = 'true';
   }
   return updated;
+}
+
+Map<String, String> _sourceBackedSplitAttributes(
+  Map<String, String> attributes,
+) {
+  return {...attributes}..remove(busyMarkTransientTrailingParagraphAttribute);
 }
 
 Map<String, String> _mathEditedBlockAttributes(
@@ -2881,7 +2979,8 @@ BusyBlock _blockWithCommand(
     ..remove(busyMarkWritersideAdmonitionAttribute)
     ..remove(busyMarkWritersideAdmonitionSourceFormAttribute)
     ..remove('style')
-    ..remove(busyMarkPreserveEmptyParagraphAttribute);
+    ..remove(busyMarkPreserveEmptyParagraphAttribute)
+    ..remove(busyMarkTransientTrailingParagraphAttribute);
   if (block.kind == BusyBlockKind.writersideAdmonition) {
     attributes.remove('element');
   }
@@ -3268,153 +3367,76 @@ String _incrementOrderedMarker(String? marker, int offset) {
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
-  final withBlankParagraphs = _restoreSourceBlankParagraphs(document);
-  final hasEditableBlock = withBlankParagraphs.blocks.any(
+  // Source whitespace remains in BusyDocument.source. The Markdown parser,
+  // rather than the rich editor, owns whether that whitespace creates blocks.
+  final hasEditableBlock = document.blocks.any(
     (block) =>
         block.kind != BusyBlockKind.frontMatter &&
         !block.isSourceOnly &&
         !block.isSourceProtected,
   );
-  if (hasEditableBlock) {
-    return withBlankParagraphs;
-  }
-  return withBlankParagraphs.copyWith(
-    blocks: [
-      ...withBlankParagraphs.blocks,
-      const BusyBlock(
-        id: 'empty-paragraph',
-        kind: BusyBlockKind.paragraph,
-        inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
-      ),
-    ],
-  );
-}
-
-BusyDocument _restoreSourceBlankParagraphs(BusyDocument document) {
-  final source = document.source;
-  if (source == null ||
-      document.blocks.any(
-        (block) =>
-            block.kind == BusyBlockKind.paragraph && block.plainText.isEmpty,
-      )) {
-    return document;
-  }
-  final frontMatterBlocks = document.blocks
-      .where((block) => block.kind == BusyBlockKind.frontMatter)
-      .toList();
-  final sourceBlocks = document.blocks
-      .where(
-        (block) =>
-            block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
-      )
-      .toList();
-  final generatedBlocks = document.blocks
-      .where((block) => block.isGenerated)
-      .toList();
-  if (sourceBlocks.isEmpty) {
-    if (document.rawFrontMatter != null || source.trim().isNotEmpty) {
-      return document;
-    }
-    final blankOffsets = <int>[
-      0,
-      for (final match in '\n'.allMatches(source)) match.end,
-    ];
+  if (!hasEditableBlock) {
     return document.copyWith(
       blocks: [
-        ...frontMatterBlocks,
-        for (final (index, offset) in blankOffsets.indexed)
-          _sourceBlankParagraph(document, offset, index),
-        ...generatedBlocks,
+        ...document.blocks,
+        const BusyBlock(
+          id: 'empty-paragraph',
+          kind: BusyBlockKind.paragraph,
+          inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
+        ),
       ],
     );
   }
-  if (sourceBlocks.any((block) => block.sourceSpan == null)) {
+  final visibleBlocks = document.blocks
+      .where(
+        (block) =>
+            block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+      )
+      .toList(growable: false);
+  if (visibleBlocks.isEmpty ||
+      visibleBlocks.last.kind != BusyBlockKind.codeBlock) {
     return document;
   }
-
-  final expanded = <BusyBlock>[];
-  var previousEnd = document.rawFrontMatter?.length ?? 0;
-  for (final (index, block) in sourceBlocks.indexed) {
-    final span = block.sourceSpan!;
-    if (span.startOffset < previousEnd || span.endOffset > source.length) {
-      return document;
-    }
-    final gap = source.substring(previousEnd, span.startOffset);
-    if (gap.trim().isNotEmpty) {
-      return document;
-    }
-    // Two newlines are the ordinary Markdown block boundary. Every newline
-    // after that represents another blank paragraph in the rich editor.
-    final baselineNewlines = index == 0 && document.rawFrontMatter == null
-        ? 0
-        : 2;
-    final blankOffsets = _extraBlankLineOffsets(
-      gap,
-      startOffset: previousEnd,
-      baselineNewlines: baselineNewlines,
-    );
-    for (final (blankIndex, offset) in blankOffsets.indexed) {
-      expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
-    }
-    expanded.add(block);
-    previousEnd = span.endOffset;
-  }
-
-  final trailing = source.substring(previousEnd);
-  if (trailing.trim().isNotEmpty) {
-    return document;
-  }
-  final trailingBlankOffsets = _extraBlankLineOffsets(
-    trailing,
-    startOffset: previousEnd,
-    baselineNewlines: 1,
-  );
-  for (final (blankIndex, offset) in trailingBlankOffsets.indexed) {
-    expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
-  }
-  if (expanded.length == sourceBlocks.length) {
-    return document;
+  final ids = {for (final block in _flattenBlocks(document.blocks)) block.id};
+  var suffix = 0;
+  var id = 'trailing-paragraph';
+  while (ids.contains(id)) {
+    suffix++;
+    id = 'trailing-paragraph-$suffix';
   }
   return document.copyWith(
-    blocks: [...frontMatterBlocks, ...expanded, ...generatedBlocks],
+    blocks: [...document.blocks, _transientTrailingParagraph(id)],
   );
 }
 
-List<int> _extraBlankLineOffsets(
-  String gap, {
-  required int startOffset,
-  required int baselineNewlines,
-}) {
-  final newlineOffsets = [
-    for (final match in '\n'.allMatches(gap)) startOffset + match.start,
-  ];
-  if (newlineOffsets.length <= baselineNewlines) {
-    return const [];
-  }
-  final lineStarts = <int>[
-    startOffset,
-    for (final offset in newlineOffsets) offset + 1,
-  ];
-  return [
-    for (var index = baselineNewlines; index < newlineOffsets.length; index++)
-      lineStarts[index],
-  ];
-}
-
-BusyBlock _sourceBlankParagraph(BusyDocument document, int offset, int index) {
+BusyBlock _transientTrailingParagraph(String id) {
   return BusyBlock(
-    id: '\u0000source-blank:$offset:$index',
+    id: id,
     kind: BusyBlockKind.paragraph,
     inlines: const [BusyInline(kind: BusyInlineKind.text, text: '')],
-    attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
-    rawSource: '',
-    sourceSpan: SourceSpan.fromOffsets(
-      filePath: document.filePath,
-      source: document.source ?? '',
-      startOffset: offset,
-      endOffset: offset,
-    ),
+    attributes: const {busyMarkTransientTrailingParagraphAttribute: 'true'},
   );
+}
+
+Iterable<BusyBlock> _flattenBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _flattenBlocks(block.children);
+  }
+}
+
+BusyBlock? _followingSibling(List<BusyBlock> blocks, String blockId) {
+  for (var index = 0; index < blocks.length; index++) {
+    final block = blocks[index];
+    if (block.id == blockId) {
+      return index + 1 < blocks.length ? blocks[index + 1] : null;
+    }
+    final childResult = _followingSibling(block.children, blockId);
+    if (childResult != null) {
+      return childResult;
+    }
+  }
+  return null;
 }
 
 bool _selectionCoveredByKind(

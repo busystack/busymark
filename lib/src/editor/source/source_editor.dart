@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 import 'package:yaru/yaru.dart';
 
 import '../../ai/ai_models.dart';
@@ -14,10 +16,15 @@ import '../../app/busymark_shortcuts.dart';
 import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
+import '../../assets/asset_ingestion_service.dart';
+import '../../clipboard/clipboard_insertion.dart';
+import '../../clipboard/clipboard_models.dart';
 import '../../core/diagnostic.dart';
+import '../../platform/rich_clipboard_service.dart';
 import '../../search/search_replace_service.dart';
 import '../document_text_geometry.dart';
 import '../editor_text_context_menu.dart';
+import '../wysiwyg/wysiwyg_clipboard_fragment.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -81,6 +88,15 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.onSessionChanged,
     this.autocompleteContext = const SourceAutocompleteContext(),
     this.onSymbolAction,
+    this.clipboardService,
+    this.clipboardInsertionRegistry,
+    this.onClipboardCaptured,
+    this.workspaceRoot,
+    this.writersideRoot,
+    this.imagesDir = 'images',
+    this.assetWorkspaceKind,
+    this.assetIngestionService = const AssetIngestionService(),
+    this.onAssetSaveRequired,
   });
 
   final String text;
@@ -110,6 +126,15 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final BusyMarkSourceSessionChanged? onSessionChanged;
   final SourceAutocompleteContext autocompleteContext;
   final void Function(SourceSymbolAction action, int offset)? onSymbolAction;
+  final RichClipboardService? clipboardService;
+  final BusyMarkClipboardInsertionRegistry? clipboardInsertionRegistry;
+  final ValueChanged<BusyMarkClipboardCapture>? onClipboardCaptured;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final AssetWorkspaceKind? assetWorkspaceKind;
+  final AssetIngestionService assetIngestionService;
+  final VoidCallback? onAssetSaveRequired;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -126,6 +151,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _searchController = SourceSearchController();
   final _searchWorker = SourceSearchWorker();
   final _replacementWorker = SearchReplacementWorker();
+  bool _applyingSearchReplacement = false;
+  ({int start, int end})? _requestedSearchRange;
+  bool _searchNavigationFailed = false;
   final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
@@ -142,6 +170,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   bool _sessionPublicationScheduled = false;
   final _undoSessionId = ++_sourceEditorUndoSessionSequence;
   var _undoGroupSequence = 0;
+  late final _SourceClipboardInsertionTarget _historyInsertionTarget;
+
+  RichClipboardService get _clipboard =>
+      widget.clipboardService ?? busyMarkRichClipboardService;
 
   @override
   void initState() {
@@ -150,6 +182,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       text: widget.text,
       language: widget.language,
     );
+    _historyInsertionTarget = _SourceClipboardInsertionTarget(this);
+    widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
     _scrollController = ScrollController();
     _horizontalScrollController = ScrollController();
@@ -166,6 +200,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   @override
   void didUpdateWidget(covariant BusyMarkSourceEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.clipboardInsertionRegistry !=
+        widget.clipboardInsertionRegistry) {
+      oldWidget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
+      widget.clipboardInsertionRegistry?.register(_historyInsertionTarget);
+    }
     if (widget.text != oldWidget.text ||
         widget.searchOptions != oldWidget.searchOptions ||
         widget.searchReplacement != oldWidget.searchReplacement) {
@@ -199,6 +238,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (widget.searchActive != oldWidget.searchActive ||
         widget.searchOptions != oldWidget.searchOptions ||
         authoritativeDocumentChanged) {
+      _requestedSearchRange = null;
+      _searchNavigationFailed = false;
       _syncSearchOptions();
     }
     if (widget.wordWrap && !oldWidget.wordWrap) {
@@ -212,6 +253,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   @override
   void dispose() {
+    widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
     _searchDebounce?.cancel();
     _foldRefreshDebounce?.cancel();
     _searchWorker.dispose();
@@ -299,11 +341,35 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _unfoldSourceRange(startOffset, endOffset);
     final start = startOffset.clamp(0, _controller.fullText.length).toInt();
     final end = endOffset.clamp(start, _controller.fullText.length).toInt();
+    _replacementWorker.cancel();
+    _requestedSearchRange = start < end ? (start: start, end: end) : null;
+    _searchNavigationFailed = false;
     _focusNode.requestFocus();
     _controller.fullSelection = TextSelection(
       baseOffset: start,
       extentOffset: end,
     );
+    final result = _searchController.result;
+    final localIndex = result.matches.indexWhere(
+      (match) => match.fullStart == start && match.fullEnd == end,
+    );
+    if (localIndex >= 0) {
+      _requestedSearchRange = null;
+      _searchController.setCurrentMatchIndex(
+        result.firstMatchIndex + localIndex,
+      );
+      _controller.setSearchResult(_searchController.result);
+      setState(() {});
+    } else if (start < end) {
+      _scheduleSearch(
+        minimumFullOffset: start,
+        revealCurrentAfterRefresh: true,
+        wrapIfOffsetMissing: false,
+      );
+    } else {
+      _searchController.setCurrentMatchIndex(null);
+      _controller.setSearchResult(_searchController.result);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateScrollToLine(line);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -370,6 +436,26 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         BusyMarkCommandCatalog.metadata;
     if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch();
+      return KeyEventResult.handled;
+    }
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textCopy,
+      event,
+      keyboard,
+    )) {
+      unawaited(_copyOrCutSource(cut: false));
+      return KeyEventResult.handled;
+    }
+    if (commands.shortcutAccepts(BusyMarkCommandIds.textCut, event, keyboard)) {
+      unawaited(_copyOrCutSource(cut: true));
+      return KeyEventResult.handled;
+    }
+    if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textPaste,
+      event,
+      keyboard,
+    )) {
+      unawaited(_pasteFromSystemClipboard());
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -495,8 +581,25 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                             BusyMarkContextCommandAction(
                               isCommandEnabled: (commandId) =>
                                   !_hasActiveComposition &&
-                                  commandId.startsWith('editor.'),
+                                  (commandId.startsWith('editor.') ||
+                                      {
+                                        BusyMarkCommandIds.textCopy,
+                                        BusyMarkCommandIds.textCut,
+                                        BusyMarkCommandIds.textPaste,
+                                      }.contains(commandId)),
                               onCommand: (commandId) {
+                                if (commandId == BusyMarkCommandIds.textCopy) {
+                                  unawaited(_copyOrCutSource(cut: false));
+                                  return;
+                                }
+                                if (commandId == BusyMarkCommandIds.textCut) {
+                                  unawaited(_copyOrCutSource(cut: true));
+                                  return;
+                                }
+                                if (commandId == BusyMarkCommandIds.textPaste) {
+                                  unawaited(_pasteFromSystemClipboard());
+                                  return;
+                                }
                                 final name = commandId.substring(
                                   'editor.'.length,
                                 );
@@ -595,6 +698,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                 onRefineWithAi: widget.onAiEdit == null
                                     ? null
                                     : () => unawaited(_runAiEdit()),
+                                onCopy: () =>
+                                    unawaited(_copyOrCutSource(cut: false)),
+                                onCut: () =>
+                                    unawaited(_copyOrCutSource(cut: true)),
+                                onPaste: () =>
+                                    unawaited(_pasteFromSystemClipboard()),
                               ),
                           onChanged: (_) => _handleSourceChanged(),
                         ),
@@ -635,6 +744,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                   ),
                 ),
                 replacement: widget.searchReplacement,
+                canReplaceCurrent:
+                    _requestedSearchRange == null && !_searchNavigationFailed,
                 onReplacementChanged:
                     widget.onSearchReplacementChanged ?? (_) {},
                 onReplaceCurrent: () => unawaited(_replaceCurrentSearchMatch()),
@@ -797,7 +908,26 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 return;
               }
               _searchController.acceptResult(result);
-              if (minimumFullOffset != null && result.matches.isNotEmpty) {
+              final requestedRange = _requestedSearchRange;
+              if (requestedRange != null) {
+                _requestedSearchRange = null;
+                final localIndex = result.matches.indexWhere(
+                  (match) =>
+                      match.fullStart == requestedRange.start &&
+                      match.fullEnd == requestedRange.end,
+                );
+                _searchNavigationFailed = localIndex < 0;
+                if (localIndex >= 0) {
+                  _searchController.setCurrentMatchIndex(
+                    result.firstMatchIndex + localIndex,
+                  );
+                } else {
+                  // A completed lookup with no exact match must not silently
+                  // turn Replace Current into replacement of the first result.
+                  _searchController.setCurrentMatchIndex(null);
+                }
+              } else if (minimumFullOffset != null &&
+                  result.matches.isNotEmpty) {
                 _searchController.setCurrentMatchIndex(result.firstMatchIndex);
               } else if (revealCurrentAfterRefresh &&
                   _searchController.result.currentMatch == null &&
@@ -837,6 +967,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _nextSearchMatch() {
+    _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -849,6 +981,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void _previousSearchMatch() {
+    _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final result = _searchController.result;
     if (result.totalMatchCount == 0) {
       _revealSearchMatch(null);
@@ -880,7 +1014,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   Future<void> _replaceCurrentSearchMatch({bool findNext = false}) async {
-    if (_searchController.result.invalidRegex) {
+    if (_searchController.result.invalidRegex ||
+        _requestedSearchRange != null ||
+        _searchNavigationFailed) {
       return;
     }
     if (_searchController.result.currentMatchIndex == null) {
@@ -906,6 +1042,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         !identical(document, _controller.document) ||
         options != widget.searchOptions ||
         replacement != widget.searchReplacement ||
+        _searchController.result.currentMatchIndex != currentIndex ||
         preview.invalidRegex ||
         preview.matches.isEmpty) {
       return;
@@ -916,27 +1053,25 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       match.end,
       match.replacement,
     );
-    _applyFullEditingValue(
-      TextEditingValue(
-        text: nextText,
-        selection: TextSelection(
-          baseOffset: match.start,
-          extentOffset: match.start + match.replacement.length,
+    _applyingSearchReplacement = true;
+    try {
+      _applyFullEditingValue(
+        TextEditingValue(
+          text: nextText,
+          selection: TextSelection(
+            baseOffset: match.start,
+            extentOffset: match.start + match.replacement.length,
+          ),
         ),
-      ),
-    );
-    final replacementEnd = match.start + match.replacement.length;
-    if (findNext) {
-      _refreshSearch(
-        minimumFullOffset: replacementEnd,
-        revealCurrentAfterRefresh: true,
       );
-    } else {
-      _refreshSearch(
-        currentIndex: currentIndex,
-        firstMatchIndex: _searchController.result.firstMatchIndex,
-      );
+    } finally {
+      _applyingSearchReplacement = false;
     }
+    final replacementEnd = match.start + match.replacement.length;
+    _refreshSearch(
+      minimumFullOffset: findNext ? replacementEnd : match.start,
+      revealCurrentAfterRefresh: true,
+    );
   }
 
   Future<void> _replaceAllSearchMatches() async {
@@ -986,10 +1121,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       });
       return;
     }
-    final currentIndex = _searchController.result.currentMatchIndex;
     if (match.hidden) {
       _unfoldSourceRange(match.fullStart, match.fullEnd);
-      _refreshSearch(currentIndex: currentIndex);
     }
     final line = _controller.document.lineIndex.lineNumberAtOffset(
       match.fullStart,
@@ -1089,6 +1222,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _handleSourceChanged() {
     _replacementWorker.cancel();
+    // Sidebar offsets belong to the pre-edit document. Once the user edits,
+    // resume normal search on the new text instead of awaiting the old range.
+    _requestedSearchRange = null;
+    _searchNavigationFailed = false;
     final visibleEdit = _controller.lastVisibleEdit;
     final selection = _controller.fullSelection;
     final previousSelection =
@@ -1101,10 +1238,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final currentSearchIndex = _searchController.result.currentMatchIndex;
     final firstMatchIndex = _searchController.result.firstMatchIndex;
     _scheduleFoldRefresh();
-    _refreshSearch(
-      currentIndex: currentSearchIndex,
-      firstMatchIndex: firstMatchIndex,
-    );
+    if (!_applyingSearchReplacement) {
+      _refreshSearch(
+        currentIndex: currentSearchIndex,
+        firstMatchIndex: firstMatchIndex,
+      );
+    }
     final transactionalCallback = widget.onTransactionalChanged;
     if (transactionalCallback == null) {
       widget.onChanged(_controller.fullText, widget.filePath);
@@ -1415,15 +1554,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         unawaited(_runAiEdit());
         break;
       case BusyMarkEditorShortcutAction.copyPlainText:
-        final value = _fullEditingValue();
-        final selection = value.selection;
-        if (selection.isValid && !selection.isCollapsed) {
-          unawaited(
-            Clipboard.setData(
-              ClipboardData(text: selection.textInside(value.text)),
-            ),
-          );
-        }
+        unawaited(_copyOrCutSource(cut: false));
         break;
       case BusyMarkEditorShortcutAction.bold:
         _applyInlineCommand(SourceInlineCommand.bold);
@@ -1541,6 +1672,309 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         );
         break;
     }
+  }
+
+  _SourceClipboardOperationTarget _captureClipboardTarget() =>
+      _SourceClipboardOperationTarget(
+        documentId: widget.documentId ?? widget.filePath ?? '',
+        filePath: widget.filePath,
+        language: widget.language,
+        text: _controller.fullText,
+        selection: _controller.fullSelection,
+      );
+
+  bool _isClipboardTargetCurrent(_SourceClipboardOperationTarget target) =>
+      mounted &&
+      target.documentId == (widget.documentId ?? widget.filePath ?? '') &&
+      target.filePath == widget.filePath &&
+      target.language == widget.language &&
+      target.text == _controller.fullText &&
+      target.selection == _controller.fullSelection;
+
+  Future<bool> _copyOrCutSource({required bool cut}) async {
+    if (_hasActiveComposition) return false;
+    final target = _captureClipboardTarget();
+    final selection = target.selection;
+    if (!selection.isValid || selection.isCollapsed) return false;
+    final start = selection.start.clamp(0, target.text.length).toInt();
+    final end = selection.end.clamp(start, target.text.length).toInt();
+    final selected = target.text.substring(start, end);
+    final success = await _clipboard.write(
+      RichClipboardData(
+        text: selected,
+        sourceText: selected,
+        origin: _clipboardOrigin,
+      ),
+    );
+    if (!success) {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.clipboardCopyFailed,
+        );
+      }
+      return false;
+    }
+    widget.onClipboardCaptured?.call(
+      BusyMarkClipboardCapture(
+        kind: BusyMarkClipboardContentKind.text,
+        text: selected,
+        sourceText: selected,
+        origin: _clipboardOrigin,
+      ),
+    );
+    if (cut && _isClipboardTargetCurrent(target)) {
+      _applyFullEditingValue(
+        TextEditingValue(
+          text: target.text.replaceRange(start, end, ''),
+          selection: TextSelection.collapsed(offset: start),
+        ),
+      );
+    }
+    return true;
+  }
+
+  Future<ClipboardPasteResult> _pasteFromSystemClipboard() async {
+    if (_hasActiveComposition) return ClipboardPasteResult.staleTarget;
+    final target = _captureClipboardTarget();
+    final data = await _clipboard.read();
+    if (!_isClipboardTargetCurrent(target)) {
+      return ClipboardPasteResult.staleTarget;
+    }
+    final text = data.sourceText ?? data.text;
+    if (text == null) return ClipboardPasteResult.unsupported;
+    final result = _insertClipboardText(target, text);
+    if (result == ClipboardPasteResult.inserted && !data.sessionOwned) {
+      widget.onClipboardCaptured?.call(
+        BusyMarkClipboardCapture(
+          kind: data.richFragment == null
+              ? BusyMarkClipboardContentKind.text
+              : BusyMarkClipboardContentKind.richText,
+          text: data.text,
+          sourceText: text,
+          html: data.html,
+          richFragment: data.richFragment,
+          origin: _clipboardOrigin,
+          external: true,
+        ),
+      );
+    }
+    return result;
+  }
+
+  Future<ClipboardPasteResult> _pasteHistoryPayload(
+    BusyMarkClipboardPayload payload, {
+    required bool plainText,
+  }) async {
+    if (_hasActiveComposition) {
+      return ClipboardPasteResult.unsupported;
+    }
+    final target = _captureClipboardTarget();
+    if (payload.kind == BusyMarkClipboardContentKind.image) {
+      if (plainText) {
+        final text = payload.text;
+        return text == null
+            ? ClipboardPasteResult.unsupported
+            : _insertClipboardText(target, text);
+      }
+      return _pasteHistoryImage(payload, target);
+    }
+    if (!plainText && payload.richFragment != null) {
+      final decoded = WysiwygClipboardFragment.decode(payload.richFragment!);
+      if (decoded != null) {
+        var fragment = decoded.rebase(widget.filePath ?? '');
+        var assets = const <IngestedAsset>[];
+        if (decoded.mediaPaths.isNotEmpty) {
+          if (!payload.mediaComplete) return ClipboardPasteResult.unsupported;
+          final prepared = await _prepareRetainedClipboardMedia(
+            decoded,
+            payload,
+            target,
+          );
+          if (prepared == null) {
+            return _isClipboardTargetCurrent(target)
+                ? ClipboardPasteResult.unsupported
+                : ClipboardPasteResult.staleTarget;
+          }
+          fragment = prepared.fragment;
+          assets = prepared.assets;
+        }
+        final result = _insertClipboardText(target, fragment.markdown);
+        if (result != ClipboardPasteResult.inserted) {
+          await _deleteUncommittedClipboardAssets(assets);
+        }
+        return result;
+      }
+    }
+    final text = plainText ? payload.text : payload.preferredSourceText;
+    if (text == null) return ClipboardPasteResult.unsupported;
+    return _insertClipboardText(target, text);
+  }
+
+  Future<ClipboardPasteResult> _pasteHistoryImage(
+    BusyMarkClipboardPayload payload,
+    _SourceClipboardOperationTarget target,
+  ) async {
+    final bytes = payload.imageBytes;
+    if (bytes == null || bytes.isEmpty) {
+      return ClipboardPasteResult.unsupported;
+    }
+    if (target.language == SourceSyntaxLanguage.plain) {
+      return ClipboardPasteResult.unsupported;
+    }
+    final alt = context.l10n.image;
+    late final IngestedAsset asset;
+    try {
+      asset = await widget.assetIngestionService.ingestBytes(
+        bytes: bytes,
+        suggestedFileName: payload.imageDisplayName ?? 'clipboard-image.png',
+        request: _assetIngestionRequest,
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+    } on AssetSaveRequiredException {
+      if (!_isClipboardTargetCurrent(target)) {
+        return ClipboardPasteResult.staleTarget;
+      }
+      widget.onAssetSaveRequired?.call();
+      return ClipboardPasteResult.unsupported;
+    } on AssetIngestionException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    } on FileSystemException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    }
+    if (!_isClipboardTargetCurrent(target)) {
+      await _deleteUncommittedClipboardAssets([asset]);
+      return ClipboardPasteResult.staleTarget;
+    }
+    final result = _insertClipboardText(target, switch (target.language) {
+      SourceSyntaxLanguage.markdown => SourceCommands.imageReference(
+        alt: alt,
+        sourceReference: asset.markdownPath,
+      ),
+      SourceSyntaxLanguage.xml => SourceCommands.writersideImageReference(
+        alt: alt,
+        sourceReference: asset.markdownPath,
+      ),
+      SourceSyntaxLanguage.plain => throw StateError(
+        'Plain source cannot contain an image reference.',
+      ),
+    });
+    if (result != ClipboardPasteResult.inserted) {
+      await _deleteUncommittedClipboardAssets([asset]);
+    }
+    return result;
+  }
+
+  Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
+  _prepareRetainedClipboardMedia(
+    WysiwygClipboardFragment fragment,
+    BusyMarkClipboardPayload payload,
+    _SourceClipboardOperationTarget target,
+  ) async {
+    final destinations = <String, String>{};
+    final assets = <IngestedAsset>[];
+    try {
+      for (final entry in fragment.mediaPaths.entries) {
+        final bytes = payload.mediaBytes[entry.key];
+        if (bytes == null || bytes.isEmpty) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        final asset = await widget.assetIngestionService.ingestBytes(
+          bytes: bytes,
+          suggestedFileName: p.basename(entry.value),
+          request: _assetIngestionRequest,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        );
+        assets.add(asset);
+        if (!_isClipboardTargetCurrent(target)) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return null;
+        }
+        destinations[entry.key] = asset.markdownPath;
+      }
+      return (
+        fragment: fragment.rebase(
+          widget.filePath ?? '',
+          mediaDestinations: destinations,
+        ),
+        assets: List<IngestedAsset>.unmodifiable(assets),
+      );
+    } on AssetSaveRequiredException {
+      await _deleteUncommittedClipboardAssets(assets);
+      widget.onAssetSaveRequired?.call();
+      return null;
+    } on AssetIngestionException {
+      await _deleteUncommittedClipboardAssets(assets);
+      return null;
+    } on FileSystemException {
+      await _deleteUncommittedClipboardAssets(assets);
+      return null;
+    }
+  }
+
+  AssetIngestionRequest get _assetIngestionRequest => AssetIngestionRequest(
+    documentFilePath: widget.filePath ?? '',
+    workspaceKind:
+        widget.assetWorkspaceKind ??
+        (widget.writersideRoot != null
+            ? AssetWorkspaceKind.writerside
+            : widget.workspaceRoot != null
+            ? AssetWorkspaceKind.markdownWorkspace
+            : AssetWorkspaceKind.standalone),
+    workspaceRoot: widget.workspaceRoot,
+    writersideRoot: widget.writersideRoot,
+    imagesDir: widget.imagesDir,
+  );
+
+  Future<void> _deleteUncommittedClipboardAssets(
+    Iterable<IngestedAsset> assets,
+  ) async {
+    for (final asset in assets) {
+      if (asset.reusedExisting) continue;
+      try {
+        await File(asset.absolutePath).delete();
+      } on FileSystemException {
+        // Failed cancellation cleanup must not make the editor unusable.
+      }
+    }
+  }
+
+  ClipboardPasteResult _insertClipboardText(
+    _SourceClipboardOperationTarget target,
+    String text,
+  ) {
+    if (!_isClipboardTargetCurrent(target)) {
+      return ClipboardPasteResult.staleTarget;
+    }
+    final selection = target.selection.isValid
+        ? target.selection
+        : TextSelection.collapsed(offset: target.text.length);
+    final start = selection.start.clamp(0, target.text.length).toInt();
+    final end = selection.end.clamp(start, target.text.length).toInt();
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: target.text.replaceRange(start, end, text),
+        selection: TextSelection.collapsed(offset: start + text.length),
+      ),
+    );
+    return ClipboardPasteResult.inserted;
+  }
+
+  BusyMarkClipboardOrigin get _clipboardOrigin {
+    final path = widget.filePath;
+    final documentId = widget.documentId ?? path ?? 'untitled';
+    return BusyMarkClipboardOrigin(
+      documentId: documentId,
+      documentName: path == null || p.basename(path).isEmpty
+          ? documentId
+          : p.basename(path),
+      documentPath: path,
+    );
   }
 
   void _applyInlineCommand(SourceInlineCommand command) {
@@ -2115,6 +2549,7 @@ class _SourceSearchPanel extends StatefulWidget {
     required this.onToggleWholeWord,
     required this.onToggleRegex,
     required this.replacement,
+    required this.canReplaceCurrent,
     required this.onReplacementChanged,
     required this.onReplaceCurrent,
     required this.onReplaceAndFindNext,
@@ -2129,6 +2564,7 @@ class _SourceSearchPanel extends StatefulWidget {
   final VoidCallback onToggleWholeWord;
   final VoidCallback onToggleRegex;
   final String replacement;
+  final bool canReplaceCurrent;
   final ValueChanged<String> onReplacementChanged;
   final VoidCallback onReplaceCurrent;
   final VoidCallback onReplaceAndFindNext;
@@ -2184,6 +2620,11 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (result.hasZeroLengthMatches)
+              Text(
+                context.l10n.sourceSearchZeroLengthUnsupported,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -2261,14 +2702,16 @@ class _SourceSearchPanelState extends State<_SourceSearchPanel> {
                   _SearchPanelIconButton(
                     tooltip: context.l10n.sourceSearchReplaceCurrent,
                     icon: BusyMarkGlyphs.edit,
-                    onPressed: result.totalMatchCount == 0
+                    onPressed:
+                        result.totalMatchCount == 0 || !widget.canReplaceCurrent
                         ? null
                         : widget.onReplaceCurrent,
                   ),
                   _SearchPanelIconButton(
                     tooltip: context.l10n.sourceSearchReplaceAndFindNext,
                     icon: BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    onPressed: result.totalMatchCount == 0
+                    onPressed:
+                        result.totalMatchCount == 0 || !widget.canReplaceCurrent
                         ? null
                         : widget.onReplaceAndFindNext,
                   ),
@@ -2477,6 +2920,70 @@ class _SourceSessionSnapshot {
         scrollOffset == other.scrollOffset &&
         setEquals(foldedRegionKeys, other.foldedRegionKeys);
   }
+}
+
+class _SourceClipboardOperationTarget {
+  const _SourceClipboardOperationTarget({
+    required this.documentId,
+    required this.filePath,
+    required this.language,
+    required this.text,
+    required this.selection,
+  });
+
+  final String documentId;
+  final String? filePath;
+  final SourceSyntaxLanguage language;
+  final String text;
+  final TextSelection selection;
+}
+
+class _SourceClipboardInsertionTarget
+    implements
+        BusyMarkClipboardInsertionTarget,
+        BusyMarkClipboardInsertionCapabilities {
+  const _SourceClipboardInsertionTarget(this.state);
+
+  final BusyMarkSourceEditorState state;
+
+  @override
+  String get documentId =>
+      state.widget.documentId ?? state.widget.filePath ?? 'untitled';
+
+  @override
+  String get documentName {
+    final path = state.widget.filePath;
+    return path == null || p.basename(path).isEmpty
+        ? documentId
+        : p.basename(path);
+  }
+
+  @override
+  String? get documentPath => state.widget.filePath;
+
+  @override
+  bool get editable => state.mounted && !state._hasActiveComposition;
+
+  @override
+  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+    if (!editable) return false;
+    if (plainText) return payload.hasMeaningfulTextRepresentation;
+    if (payload.kind == BusyMarkClipboardContentKind.image) {
+      return state.widget.language != SourceSyntaxLanguage.plain &&
+          payload.imageBytes?.isNotEmpty == true;
+    }
+    if (payload.richFragment != null) return payload.mediaComplete;
+    return payload.preferredSourceText != null;
+  }
+
+  @override
+  Future<ClipboardPasteResult> paste(
+    BusyMarkClipboardPayload payload, {
+    required bool plainText,
+  }) => state._pasteHistoryPayload(payload, plainText: plainText);
+
+  @override
+  void requestEditorFocus() => state._focusNode.requestFocus();
 }
 
 class _SourceEditorShortcutIntent extends Intent {

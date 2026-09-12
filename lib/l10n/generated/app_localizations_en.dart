@@ -937,6 +937,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hardLineBreak => 'Hard line break';
 
   @override
+  String get insertBlankLine => 'Insert blank line';
+
+  @override
   String get textStyle => 'Text style';
 
   @override
@@ -1118,7 +1121,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get files => 'Files';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Topics';
 
   @override
   String get tocActions => 'TOC actions';
@@ -1556,6 +1559,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Invalid regular expression';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Zero-length regex matches are not supported (for example ^, \$, or lookaheads that match only a position).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Only some results are shown. Show more or narrow your search.';
+
+  @override
+  String get workspaceSearchShowMore => 'Show more results';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Search is incomplete. These files exceeded 1 MiB or could not be read:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3915,6 +3933,282 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Choose a readable UTF-8 .css file up to 256 KiB, without imports, resource URLs, HTML, or executable or escaped CSS.';
+
+  @override
+  String get clipboardHistory => 'Clipboard History';
+
+  @override
+  String get clipboardHistorySearchHint => 'Search clipboard history';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Open the session-local clipboard history.';
+
+  @override
+  String get clipboardCurrent => 'Current clipboard';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Current clipboard from another application';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Paste into $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'Stored for this BusyMark session only.';
+
+  @override
+  String get clipboardNoItems => 'Clipboard history is empty.';
+
+  @override
+  String get clipboardNoMatches => 'No clipboard items match this search.';
+
+  @override
+  String get clipboardDisabled =>
+      'Clipboard History collection is disabled in Settings.';
+
+  @override
+  String get clipboardUnavailable =>
+      'The current clipboard content is unavailable or unsupported.';
+
+  @override
+  String get clipboardTooLarge => 'This clipboard item is too large to retain.';
+
+  @override
+  String get clipboardPastePlainText => 'Paste as Plain Text';
+
+  @override
+  String get clipboardClearAll => 'Clear Clipboard History';
+
+  @override
+  String get clipboardEntryText => 'Text';
+
+  @override
+  String get clipboardEntryRichText => 'Rich text';
+
+  @override
+  String get clipboardEntryImage => 'Image';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Copied from $name';
+  }
+
+  @override
+  String get localHistory => 'Local History';
+
+  @override
+  String get localHistoryEllipsis => 'Local History…';
+
+  @override
+  String get localHistoryDescription =>
+      'Show saved and automatic local revisions for the current document.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Find in Local History…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Search Local History documents and revision contents.';
+
+  @override
+  String get localHistoryNoDocuments => 'No documents have Local History yet.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'This document has no Local History revisions.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'No Local History revisions match this search.';
+
+  @override
+  String get localHistorySearchHint => 'Search local history';
+
+  @override
+  String get localHistorySelectedRevision => 'Selected revision';
+
+  @override
+  String get localHistoryCurrentEditor => 'Current editor content';
+
+  @override
+  String get localHistoryCurrentDisk => 'Current content on disk';
+
+  @override
+  String get localHistoryMissingFile => 'The original file is missing.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Restore Revision';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Restore to Original Location';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Restore to New Location…';
+
+  @override
+  String get localHistoryRestoreChange => 'Restore Change';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'This change cannot be restored because the comparison is no longer current.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'This large comparison is simplified. Restore individual changes is unavailable.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Older revision change: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Current content change: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Deleted';
+
+  @override
+  String get localHistoryUntitled => 'Untitled';
+
+  @override
+  String get localHistoryClearDocument => 'Clear This Document’s History';
+
+  @override
+  String get localHistoryClearAll => 'Clear All Local History';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'Clear document history?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Clear all Local History?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'This permanently removes stored revisions. This action cannot be undone.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'The Local History index was damaged and rebuilt from intact revisions.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'This Local History store uses unsupported format $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Local History is unavailable: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Recording is disabled or this path is excluded. Re-enable recording before restoring.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Local History could not record the path change: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Local History could not retain the deleted path: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'The selected revision is missing or damaged.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'The selected revision cannot be read: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Local History could not capture this revision: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason · $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Baseline';
+
+  @override
+  String get localHistoryReasonSaved => 'Saved';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Automatic checkpoint';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Before reload';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Before discard';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Before restore';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Before delete';
+
+  @override
+  String get localHistoryReasonExternalChange => 'External change';
+
+  @override
+  String get settingsHistory => 'History';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Collect Clipboard History';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Keep copied and successfully pasted content for this BusyMark session only.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Record Local History';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Store document revisions on this device for recovery and comparison.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Automatic checkpoint interval';
+
+  @override
+  String get settingsHistoryRetention => 'Retention age';
+
+  @override
+  String get settingsHistoryStorage => 'Maximum storage';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Excluded paths';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'One absolute path per line';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value seconds';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value days';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

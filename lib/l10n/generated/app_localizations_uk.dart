@@ -959,6 +959,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get hardLineBreak => 'Примусовий розрив рядка';
 
   @override
+  String get insertBlankLine => 'Вставити порожній рядок';
+
+  @override
   String get textStyle => 'Стиль тексту';
 
   @override
@@ -1144,7 +1147,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get files => 'Файли';
 
   @override
-  String get toc => 'Зміст';
+  String get toc => 'Теми';
 
   @override
   String get tocActions => 'Дії зі змістом';
@@ -1584,6 +1587,21 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Збіги регулярних виразів нульової довжини не підтримуються (наприклад, ^, \$ або перевірки вперед, що збігаються лише з позицією).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Показано лише частину результатів. Покажіть більше або звузьте пошук.';
+
+  @override
+  String get workspaceSearchShowMore => 'Показати більше результатів';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3948,6 +3966,289 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Виберіть читабельний файл .css у UTF-8 до 256 КіБ без імпортів, URL ресурсів, HTML, виконуваного CSS і escape-послідовностей.';
+
+  @override
+  String get clipboardHistory => 'Історія Вирізання';
+
+  @override
+  String get clipboardHistorySearchHint => 'Пошук в історії буфера обміну';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Відкрити історію вирізання, прив\'язану до сесії.';
+
+  @override
+  String get clipboardCurrent => 'Поточне вирізання';
+
+  @override
+  String get clipboardCurrentExternal => 'Поточне вирізання з іншого додатку';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Вставити в $name';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Зберігається лише для цієї сесії BusyMark.';
+
+  @override
+  String get clipboardNoItems => 'Історія вирізання порожня.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Жоден елемент вирізання не відповідає цьому пошуку.';
+
+  @override
+  String get clipboardDisabled =>
+      'Збірка \"Історія Вирізання\" вимкнена в Налаштуваннях.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Поточний вміст вирізання недоступний або не підтримується.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Цей елемент буфера обміну занадто великий для зберігання.';
+
+  @override
+  String get clipboardPastePlainText => 'Вставити як звичайний текст';
+
+  @override
+  String get clipboardClearAll => 'Очистити історію буфера обміну';
+
+  @override
+  String get clipboardEntryText => 'Текст';
+
+  @override
+  String get clipboardEntryRichText => 'Збагачений текст';
+
+  @override
+  String get clipboardEntryImage => 'Зображення';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Скопійовано з $name';
+  }
+
+  @override
+  String get localHistory => 'Локальна історія';
+
+  @override
+  String get localHistoryEllipsis => 'Локальна історія…';
+
+  @override
+  String get localHistoryDescription =>
+      'Показати збережені та автоматичні локальні версії для поточної документа.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Знайти в локальній історії…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Пошук документів та вмісту версій у локальній історії.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Жоден документ поки не має локальної історії.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Цей документ не має версій локальної історії.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Жодна версія локальної історії не відповідає цьому пошуку.';
+
+  @override
+  String get localHistorySearchHint => 'Пошук у локальній історії';
+
+  @override
+  String get localHistorySelectedRevision => 'Обрана версія';
+
+  @override
+  String get localHistoryCurrentEditor => 'Поточний вміст редактора';
+
+  @override
+  String get localHistoryCurrentDisk => 'Поточний вміст на диску';
+
+  @override
+  String get localHistoryMissingFile => 'Оригінальний файл відсутній.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Відновити версію';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Відновити до початкової локації';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Відновити до нової локації…';
+
+  @override
+  String get localHistoryRestoreChange => 'Відновити зміни';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Ці зміни не можуть бути відновлені, оскільки порівняння більше не актуальне.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Це велике порівняння спрощено. Відновлення окремих змін недоступне.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Зміна в попередній версії: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Зміна в поточному вмісті: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Видалено';
+
+  @override
+  String get localHistoryUntitled => 'Без назви';
+
+  @override
+  String get localHistoryClearDocument => 'Очистити історію цього документа';
+
+  @override
+  String get localHistoryClearAll => 'Очистити всю локальну історію';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'Очистити історію документа?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Очистити всю локальну історію?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Це постійно видаляє збережені версії. Цю дію неможливо скасувати.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Індекс локальної історії пошкоджено та відновлено з цілих версій.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Ця локальна історія використовує непідтримуваний формат $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Локальна історія недоступна: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Запис вимкнено або цей шлях виключено. Увімкніть запис перед відновленням.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Локальна історія не змогла записати зміну шляху: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Локальна історія не змогла зберегти видалений шлях: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Вибрана версія відсутня або пошкоджена.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Вибрану версію неможливо прочитати: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Локальна історія не змогла зберегти цю версію: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Базова версія';
+
+  @override
+  String get localHistoryReasonSaved => 'Збережено';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Автоматичний контрольний пункт';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Перед перезавантаженням';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Перед видаленням';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Перед відновленням';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Перед видаленням';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Зовнішня зміна';
+
+  @override
+  String get settingsHistory => 'Історія';
+
+  @override
+  String get settingsClipboardHistoryTitle =>
+      'Зберегти історію, скопійовану в буфер обміну';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Зберігати лише скопійований та успішно вставлений вміст для цієї сесії BusyMark.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Записувати локальну історію';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Зберігати версії документа на цьому пристрої для відновлення та порівняння.';
+
+  @override
+  String get settingsHistoryCheckpoint =>
+      'Автоматичний інтервал збереження контрольної точки';
+
+  @override
+  String get settingsHistoryRetention => 'Тривалість зберігання';
+
+  @override
+  String get settingsHistoryStorage => 'Максимальне місце для зберігання';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Виключені шляхи';
+
+  @override
+  String get settingsHistoryExcludedPathsHint =>
+      'Один абсолютний шлях на рядок';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value секунди';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value дні';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

@@ -135,20 +135,28 @@ class WysiwygClipboardFragment {
   }
 
   /// Rebase authored references, without opening or fetching clipboard URLs.
-  WysiwygClipboardFragment rebase(String targetPath) {
-    if (sourcePath.isEmpty ||
-        targetPath.isEmpty ||
-        p.equals(sourcePath, targetPath)) {
+  WysiwygClipboardFragment rebase(
+    String targetPath, {
+    Map<String, String> mediaDestinations = const {},
+  }) {
+    final rebaseRelativeReferences =
+        sourcePath.isNotEmpty &&
+        targetPath.isNotEmpty &&
+        !p.equals(sourcePath, targetPath);
+    if (!rebaseRelativeReferences && mediaDestinations.isEmpty) {
       return this;
     }
     String? destination(String? value, {bool media = false}) {
       if (value == null || value.isEmpty) return value;
       if (media) {
+        final retained = mediaDestinations[value];
+        if (retained != null) return retained;
         final resolved = mediaPaths[value];
         if (resolved != null && p.isAbsolute(resolved)) {
           return Uri(path: resolved).toString();
         }
       }
+      if (!rebaseRelativeReferences) return value;
       final uri = Uri.tryParse(value);
       if (uri == null || uri.hasScheme || uri.hasAuthority) return value;
       final resolved = Uri.file(p.absolute(sourcePath)).resolveUri(uri);
@@ -194,7 +202,7 @@ class WysiwygClipboardFragment {
     );
     return WysiwygClipboardFragment(
       mode: mode,
-      sourcePath: targetPath,
+      sourcePath: targetPath.isEmpty ? sourcePath : targetPath,
       mediaPaths: mediaPaths,
       blocks: [
         for (final value in blocks)

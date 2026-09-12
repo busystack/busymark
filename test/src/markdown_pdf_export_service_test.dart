@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
+import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +12,7 @@ import 'package:path/path.dart' as p;
 void main() {
   final typstPath = Platform.environment['BUSYMARK_TYPST_PATH'];
   final canRunTypst = typstPath != null && File(typstPath).existsSync();
+  final canMeasurePdf = canRunTypst && File('/usr/bin/pdftotext').existsSync();
 
   test('display images do not reserve a fixed-height letterbox', () {
     final template = File('assets/export/markdown.typ').readAsStringSync();
@@ -47,6 +50,228 @@ void main() {
     expect(callouts, contains('accent: rgb("4b5563")'));
     expect(callouts, isNot(contains('quote(\n      block: true')));
   });
+
+  test('PDF export ignores redundant blank lines between blocks', () async {
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'busymark-empty-paragraph-export-test-',
+    );
+    addTearDown(() async {
+      if (await temporaryDirectory.exists()) {
+        await temporaryDirectory.delete(recursive: true);
+      }
+    });
+    final runner = _CapturingTypstRunner();
+    final service = MarkdownPdfExportService(
+      compilerLocator: const TypstCompilerLocator(
+        environment: {'BUSYMARK_TYPST_PATH': '/bin/true'},
+      ),
+      commandRunner: runner,
+      templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+    );
+
+    Future<void> export(String source, String name) => service.export(
+      MarkdownPdfExportRequest(
+        source: source,
+        filePath: '/workspace/empty-lines.md',
+        workspaceRoot: '/workspace',
+        destinationPath: p.join(temporaryDirectory.path, name),
+        options: const PdfExportOptions(),
+        overwrite: false,
+      ),
+    );
+
+    await export(
+      '# Test Title 1\n\n'
+          'Lorem ipsum dolor\n\n'
+          'Lorem ipsume dolor 2\n\n'
+          'Sincerely,\n\n'
+          'User name\n',
+      'ordinary.pdf',
+    );
+    final ordinaryBlocks = runner.payload!['blocks'] as List<dynamic>;
+    await export(
+      '# Test Title 1\n\n'
+          'Lorem ipsum dolor\n\n\n\n'
+          'Lorem ipsume dolor 2\n\n\n'
+          'Sincerely,\n\n'
+          'User name\n',
+      'redundant.pdf',
+    );
+    final redundantBlocks = runner.payload!['blocks'] as List<dynamic>;
+
+    expect(redundantBlocks, ordinaryBlocks);
+    expect(
+      redundantBlocks.map((value) => (value as Map<String, dynamic>)['kind']),
+      ['heading', 'paragraph', 'paragraph', 'paragraph', 'paragraph'],
+    );
+  });
+
+  test('PDF payload preserves an explicit blank line as two breaks', () async {
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'busymark-explicit-blank-line-payload-test-',
+    );
+    addTearDown(() async {
+      if (await temporaryDirectory.exists()) {
+        await temporaryDirectory.delete(recursive: true);
+      }
+    });
+    final runner = _CapturingTypstRunner();
+    final service = MarkdownPdfExportService(
+      compilerLocator: const TypstCompilerLocator(
+        environment: {'BUSYMARK_TYPST_PATH': '/bin/true'},
+      ),
+      commandRunner: runner,
+      templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+    );
+
+    await service.export(
+      MarkdownPdfExportRequest(
+        source: 'Before\n<br>\n<br>\nAfter\n',
+        filePath: '/workspace/blank-line.md',
+        workspaceRoot: '/workspace',
+        destinationPath: p.join(temporaryDirectory.path, 'blank-line.pdf'),
+        options: const PdfExportOptions(),
+        overwrite: false,
+      ),
+    );
+
+    final blocks = runner.payload!['blocks'] as List<dynamic>;
+    final paragraph = blocks.single as Map<String, dynamic>;
+    final inlines = paragraph['inlines'] as List<dynamic>;
+    expect(inlines.map((value) => (value as Map<String, dynamic>)['kind']), [
+      'text',
+      'hardBreak',
+      'hardBreak',
+      'text',
+    ]);
+  });
+
+  test(
+    'bundled template renders two explicit breaks as one blank PDF line',
+    () async {
+      final temporaryDirectory = await Directory.systemTemp.createTemp(
+        'busymark-explicit-blank-line-typst-test-',
+      );
+      addTearDown(() async {
+        if (await temporaryDirectory.exists()) {
+          await temporaryDirectory.delete(recursive: true);
+        }
+      });
+      final service = MarkdownPdfExportService(
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+      );
+
+      Future<double> textBaselineDelta(String source, String name) async {
+        final destination = p.join(temporaryDirectory.path, '$name.pdf');
+        await service.export(
+          MarkdownPdfExportRequest(
+            source: source,
+            filePath: p.join(temporaryDirectory.path, '$name.md'),
+            workspaceRoot: temporaryDirectory.path,
+            destinationPath: destination,
+            options: const PdfExportOptions(),
+            overwrite: false,
+          ),
+        );
+        final extracted = await Process.run('/usr/bin/pdftotext', [
+          '-bbox-layout',
+          destination,
+          '-',
+        ]);
+        expect(extracted.exitCode, 0, reason: extracted.stderr.toString());
+        final positions = <String, double>{};
+        final wordPattern = RegExp(
+          r'<word xMin="[^"]+" yMin="([^"]+)" xMax="[^"]+" yMax="[^"]+">(Before|After)</word>',
+        );
+        for (final match in wordPattern.allMatches(
+          extracted.stdout as String,
+        )) {
+          positions[match.group(2)!] = double.parse(match.group(1)!);
+        }
+        expect(positions.keys, containsAll(['Before', 'After']));
+        return positions['After']! - positions['Before']!;
+      }
+
+      final oneBreak = await textBaselineDelta(
+        'Before<br>After\n',
+        'one-break',
+      );
+      final twoBreaks = await textBaselineDelta(
+        'Before\n<br>\n<br>\nAfter\n',
+        'two-breaks',
+      );
+
+      expect(oneBreak, greaterThan(0));
+      expect(twoBreaks, greaterThan(oneBreak * 1.8));
+    },
+    skip: canMeasurePdf
+        ? false
+        : 'Set BUSYMARK_TYPST_PATH and install pdftotext to measure PDF lines.',
+  );
+
+  test(
+    'bundled template renders redundant blank lines identically',
+    () async {
+      final temporaryDirectory = await Directory.systemTemp.createTemp(
+        'busymark-empty-paragraph-typst-test-',
+      );
+      addTearDown(() async {
+        if (await temporaryDirectory.exists()) {
+          await temporaryDirectory.delete(recursive: true);
+        }
+      });
+      final ordinaryDestination = p.join(
+        temporaryDirectory.path,
+        'ordinary.pdf',
+      );
+      final redundantDestination = p.join(
+        temporaryDirectory.path,
+        'redundant.pdf',
+      );
+      final service = MarkdownPdfExportService(
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+      );
+
+      await service.export(
+        MarkdownPdfExportRequest(
+          source:
+              '# Test Title 1\n\n'
+              'Lorem ipsum dolor\n\n'
+              'Lorem ipsume dolor 2\n\n'
+              'Sincerely,\n\n'
+              'User name\n',
+          filePath: '/workspace/empty-lines.md',
+          workspaceRoot: '/workspace',
+          destinationPath: ordinaryDestination,
+          options: const PdfExportOptions(),
+          overwrite: false,
+        ),
+      );
+      await service.export(
+        MarkdownPdfExportRequest(
+          source:
+              '# Test Title 1\n\n'
+              'Lorem ipsum dolor\n\n\n\n'
+              'Lorem ipsume dolor 2\n\n\n'
+              'Sincerely,\n\n'
+              'User name\n',
+          filePath: '/workspace/empty-lines.md',
+          workspaceRoot: '/workspace',
+          destinationPath: redundantDestination,
+          options: const PdfExportOptions(),
+          overwrite: false,
+        ),
+      );
+
+      final ordinaryBytes = await File(ordinaryDestination).readAsBytes();
+      final redundantBytes = await File(redundantDestination).readAsBytes();
+      expect(ordinaryBytes.take(5), [0x25, 0x50, 0x44, 0x46, 0x2d]);
+      expect(redundantBytes, ordinaryBytes);
+    },
+    skip: canRunTypst
+        ? false
+        : 'Set BUSYMARK_TYPST_PATH to run the real Typst integration test.',
+  );
 
   test(
     'bundled template exports representative Markdown to a valid PDF',
@@ -231,5 +456,29 @@ class _WritersideMarkdownParser extends MarkdownParser {
       workspaceRoot: workspaceRoot,
       validateLocalReferences: validateLocalReferences,
     );
+  }
+}
+
+class _CapturingTypstRunner implements TypstCommandRunner {
+  Map<String, dynamic>? payload;
+
+  @override
+  Future<TypstProcessResult> compile({
+    required String executable,
+    required Directory workingDirectory,
+    required Duration timeout,
+    required MarkdownPdfCancellationToken cancellationToken,
+  }) async {
+    payload =
+        jsonDecode(
+              await File(
+                p.join(workingDirectory.path, 'document.json'),
+              ).readAsString(),
+            )
+            as Map<String, dynamic>;
+    await File(
+      p.join(workingDirectory.path, 'output.pdf'),
+    ).writeAsString('%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n', flush: true);
+    return const TypstProcessResult(exitCode: 0, stdout: '', stderr: '');
   }
 }

@@ -111,7 +111,7 @@ jobs:
       - name: Run real WebKit, PlantUML, Mermaid, OpenAPI, and D2 smoke tests
         run: |
           xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
             --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
@@ -123,7 +123,7 @@ jobs:
           report="${RUNNER_TEMP}/visualization-release-x11.json"
           timeout --signal=TERM 300s \
             xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env BUSYMARK_RELEASE_SMOKE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --visualization-release-smoke="$report"
@@ -151,8 +151,7 @@ jobs:
           done
           test -S "$runtime_dir/wayland-99"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
-            GDK_BACKEND=wayland WEBKIT_DISABLE_COMPOSITING_MODE=1 \
-            LIBGL_ALWAYS_SOFTWARE=1 \
+            GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
             --assets build/linux/x64/release/bundle/share/busymark/visualization \
             --d2 build/linux/x64/release/bundle/libexec/busymark/d2 \
@@ -161,7 +160,7 @@ jobs:
           report="${RUNNER_TEMP}/visualization-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
-            WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
             timeout --signal=TERM 300s \
             build/linux/x64/release/bundle/busymark \
             --visualization-release-smoke="$report"
@@ -228,7 +227,7 @@ jobs:
           mkdir -p "$(dirname "$report")"
           timeout --signal=TERM 300s \
             xvfb-run -a -s '-screen 0 1280x1024x24' \
-            env BUSYMARK_RELEASE_SMOKE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
@@ -257,7 +256,7 @@ jobs:
           report="$HOME/snap/busymark/common/visualization-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
-            WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
             timeout --signal=TERM 300s snap run busymark \
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"

@@ -9,6 +9,7 @@ import '../editor/source/source_search.dart';
 import '../workspace/text_format_metadata.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_service.dart';
+import 'workspace_search_scope.dart';
 
 class TextReplacementMatch {
   const TextReplacementMatch({
@@ -34,6 +35,7 @@ class TextReplacementPreview {
     required this.matches,
     this.invalidRegex = false,
     this.truncated = false,
+    this.hasZeroLengthMatches = false,
   });
 
   final String source;
@@ -42,6 +44,7 @@ class TextReplacementPreview {
   final List<TextReplacementMatch> matches;
   final bool invalidRegex;
   final bool truncated;
+  final bool hasZeroLengthMatches;
 
   String apply({Set<String>? selectedMatchIds}) {
     if (matches.isEmpty) {
@@ -52,6 +55,11 @@ class TextReplacementPreview {
     for (final match in matches) {
       if (selectedMatchIds != null && !selectedMatchIds.contains(match.id)) {
         continue;
+      }
+      if (match.start < sourceOffset ||
+          !sourceSearchRangeHasSafeBoundaries(source, match.start, match.end) ||
+          source.substring(match.start, match.end) != match.original) {
+        throw StateError('Replacement range no longer matches the source.');
       }
       output
         ..write(source.substring(sourceOffset, match.start))
@@ -69,6 +77,9 @@ class TextReplacementPreview {
 enum WorkspaceReplacementSourceKind { disk, dirtyBuffer }
 
 enum WorkspaceReplacementIssueKind {
+  cancelled,
+  invalidRegex,
+  zeroLengthMatches,
   oversized,
   unreadable,
   invalidUtf8,
@@ -133,7 +144,10 @@ class WorkspaceReplacementPreview {
       files.fold(0, (total, file) => total + file.matches.length);
 
   bool get isComplete => !issues.any(
-    (issue) => issue.kind == WorkspaceReplacementIssueKind.truncated,
+    (issue) =>
+        issue.kind == WorkspaceReplacementIssueKind.truncated ||
+        issue.kind == WorkspaceReplacementIssueKind.cancelled ||
+        issue.kind == WorkspaceReplacementIssueKind.invalidRegex,
   );
 }
 
@@ -169,6 +183,7 @@ class SearchReplacementService {
       SourceDocument(fullText: source),
       options,
       maximumMatches: matchLimit + 1,
+      stopAfterMaximumMatches: true,
     );
     if (search.invalidRegex) {
       return TextReplacementPreview(
@@ -185,6 +200,7 @@ class SearchReplacementService {
         options.query,
         caseSensitive: options.caseSensitive,
         multiLine: true,
+        unicode: true,
       );
     }
     final matches = <TextReplacementMatch>[];
@@ -216,6 +232,7 @@ class SearchReplacementService {
       replacement: replacement,
       matches: List.unmodifiable(matches),
       truncated: search.totalMatchCount > matchLimit,
+      hasZeroLengthMatches: search.hasZeroLengthMatches,
     );
   }
 
@@ -226,7 +243,9 @@ class SearchReplacementService {
     required int start,
     required int end,
   }) {
-    if (start < 0 || end <= start || end > source.length) {
+    if (end <= start ||
+        !sourceSearchRangeHasSafeBoundaries(source, start, end) ||
+        options.query.isEmpty) {
       return TextReplacementPreview(
         source: source,
         options: options,
@@ -241,6 +260,7 @@ class SearchReplacementService {
           options.query,
           caseSensitive: options.caseSensitive,
           multiLine: true,
+          unicode: true,
         );
         final match = expression.matchAsPrefix(source, start);
         if (match is! RegExpMatch || match.end != end) {
@@ -259,6 +279,20 @@ class SearchReplacementService {
           replacement: replacement,
           matches: const [],
           invalidRegex: true,
+        );
+      }
+    } else {
+      final match = RegExp(
+        RegExp.escape(options.query),
+        caseSensitive: options.caseSensitive,
+        unicode: true,
+      ).matchAsPrefix(source, start);
+      if (match == null || match.end != end) {
+        return TextReplacementPreview(
+          source: source,
+          options: options,
+          replacement: replacement,
+          matches: const [],
         );
       }
     }
@@ -283,115 +317,173 @@ class SearchReplacementService {
     required WorkspaceService workspaceService,
     required SourceSearchOptions options,
     required String replacement,
+    WorkspaceReplacementCancellation? cancellation,
   }) async {
-    final workspace = state.workspace;
-    if (workspace == null || options.query.isEmpty) {
+    final operation = cancellation ?? WorkspaceReplacementCancellation();
+    try {
+      final workspace = state.workspace;
+      if (workspace == null || options.query.isEmpty) {
+        return WorkspaceReplacementPreview(
+          options: options,
+          replacement: replacement,
+          files: const [],
+          issues: const [],
+        );
+      }
+      final files = <WorkspaceReplacementFilePreview>[];
+      final issues = <WorkspaceReplacementIssue>[];
+      final candidates = <String, String>{
+        for (final file in workspace.files)
+          if (isSearchableWorkspaceDocument(file))
+            file.absolutePath: file.relativePath,
+      };
+      var remaining = maximumMatches.clamp(0, 0x7ffffffe).toInt();
+      final sortedPaths = candidates.keys.toList()..sort();
+      for (final path in sortedPaths) {
+        if (operation.isCancelled) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.cancelled,
+              filePath: path,
+            ),
+          );
+          break;
+        }
+        final buffer = state.bufferForPath(path);
+        late final String text;
+        late final TextFormatMetadata format;
+        WorkspaceFileSnapshot? snapshot;
+        if (buffer != null) {
+          text = buffer.text;
+          format = buffer.format;
+          snapshot = buffer.diskSnapshot;
+        } else {
+          final metadata = workspace.files
+              .where((file) => p.equals(file.absolutePath, path))
+              .firstOrNull;
+          if (metadata != null && metadata.size > maximumFileBytes) {
+            issues.add(
+              WorkspaceReplacementIssue(
+                kind: WorkspaceReplacementIssueKind.oversized,
+                filePath: path,
+              ),
+            );
+            continue;
+          }
+          try {
+            final loaded = await workspaceService.loadTextWithSnapshot(path);
+            text = loaded.text;
+            format = loaded.format;
+            snapshot = loaded.snapshot;
+          } on FormatException {
+            issues.add(
+              WorkspaceReplacementIssue(
+                kind: WorkspaceReplacementIssueKind.invalidUtf8,
+                filePath: path,
+              ),
+            );
+            continue;
+          } on FileSystemException {
+            issues.add(
+              WorkspaceReplacementIssue(
+                kind: WorkspaceReplacementIssueKind.unreadable,
+                filePath: path,
+              ),
+            );
+            continue;
+          }
+        }
+        if (operation.isCancelled) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.cancelled,
+              filePath: path,
+            ),
+          );
+          break;
+        }
+        final preview = await operation.worker.previewText(
+          source: text,
+          options: options,
+          replacement: replacement,
+          maximumMatches: remaining,
+        );
+        if (preview == null || operation.isCancelled) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.cancelled,
+              filePath: path,
+            ),
+          );
+          break;
+        }
+        if (preview.invalidRegex) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.invalidRegex,
+              filePath: path,
+            ),
+          );
+          break;
+        }
+        if (preview.hasZeroLengthMatches) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.zeroLengthMatches,
+              filePath: path,
+            ),
+          );
+        }
+        if (preview.matches.isEmpty && !preview.truncated) {
+          continue;
+        }
+        final retained = [
+          for (final match in preview.matches)
+            TextReplacementMatch(
+              id: '$path:${match.id}',
+              start: match.start,
+              end: match.end,
+              original: match.original,
+              replacement: match.replacement,
+            ),
+        ];
+        if (retained.isNotEmpty) {
+          files.add(
+            WorkspaceReplacementFilePreview(
+              filePath: path,
+              relativePath: candidates[path]!,
+              sourceKind: buffer?.isDirty == true
+                  ? WorkspaceReplacementSourceKind.dirtyBuffer
+                  : WorkspaceReplacementSourceKind.disk,
+              originalText: text,
+              matches: retained,
+              format: format,
+              bufferId: buffer?.id,
+              bufferRevision: buffer?.revision,
+              diskSnapshot: snapshot,
+            ),
+          );
+        }
+        remaining -= retained.length;
+        if (preview.truncated) {
+          issues.add(
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.truncated,
+              filePath: path,
+            ),
+          );
+          break;
+        }
+      }
       return WorkspaceReplacementPreview(
         options: options,
         replacement: replacement,
-        files: const [],
-        issues: const [],
+        files: List.unmodifiable(files),
+        issues: List.unmodifiable(issues),
       );
+    } finally {
+      operation.worker.dispose();
     }
-    final files = <WorkspaceReplacementFilePreview>[];
-    final issues = <WorkspaceReplacementIssue>[];
-    final candidates = <String, String>{
-      for (final file in workspace.files)
-        if (_isReplaceableTextPath(file.absolutePath))
-          file.absolutePath: file.relativePath,
-      for (final buffer in state.documentBuffers)
-        if (buffer.filePath case final path?)
-          path: p.relative(path, from: workspace.rootPath),
-    };
-    var remaining = maximumMatches;
-    final sortedPaths = candidates.keys.toList()..sort();
-    for (final path in sortedPaths) {
-      final buffer = state.bufferForPath(path);
-      late final String text;
-      late final TextFormatMetadata format;
-      WorkspaceFileSnapshot? snapshot;
-      if (buffer != null) {
-        text = buffer.text;
-        format = buffer.format;
-        snapshot = buffer.diskSnapshot;
-      } else {
-        final metadata = workspace.files
-            .where((file) => p.equals(file.absolutePath, path))
-            .firstOrNull;
-        if (metadata != null && metadata.size > maximumFileBytes) {
-          issues.add(
-            WorkspaceReplacementIssue(
-              kind: WorkspaceReplacementIssueKind.oversized,
-              filePath: path,
-            ),
-          );
-          continue;
-        }
-        try {
-          final loaded = await workspaceService.loadTextWithSnapshot(path);
-          text = loaded.text;
-          format = loaded.format;
-          snapshot = loaded.snapshot;
-        } on FormatException {
-          issues.add(
-            WorkspaceReplacementIssue(
-              kind: WorkspaceReplacementIssueKind.invalidUtf8,
-              filePath: path,
-            ),
-          );
-          continue;
-        } on FileSystemException {
-          issues.add(
-            WorkspaceReplacementIssue(
-              kind: WorkspaceReplacementIssueKind.unreadable,
-              filePath: path,
-            ),
-          );
-          continue;
-        }
-      }
-      final preview = previewText(
-        source: text,
-        options: options,
-        replacement: replacement,
-        idPrefix: path,
-      );
-      if (preview.matches.isEmpty) {
-        continue;
-      }
-      final retained = preview.matches.take(remaining).toList(growable: false);
-      files.add(
-        WorkspaceReplacementFilePreview(
-          filePath: path,
-          relativePath: candidates[path]!,
-          sourceKind: buffer?.isDirty == true
-              ? WorkspaceReplacementSourceKind.dirtyBuffer
-              : WorkspaceReplacementSourceKind.disk,
-          originalText: text,
-          matches: retained,
-          format: format,
-          bufferId: buffer?.id,
-          bufferRevision: buffer?.revision,
-          diskSnapshot: snapshot,
-        ),
-      );
-      remaining -= retained.length;
-      if (remaining <= 0) {
-        issues.add(
-          WorkspaceReplacementIssue(
-            kind: WorkspaceReplacementIssueKind.truncated,
-            filePath: path,
-          ),
-        );
-        break;
-      }
-    }
-    return WorkspaceReplacementPreview(
-      options: options,
-      replacement: replacement,
-      files: List.unmodifiable(files),
-      issues: List.unmodifiable(issues),
-    );
   }
 
   Future<WorkspaceReplacementApplyResult> applyWorkspace({
@@ -408,10 +500,7 @@ class SearchReplacementService {
       return WorkspaceReplacementApplyResult(
         appliedFiles: 0,
         appliedMatches: 0,
-        issues: List.unmodifiable([
-          for (final issue in preview.issues)
-            if (issue.kind == WorkspaceReplacementIssueKind.truncated) issue,
-        ]),
+        issues: List.unmodifiable([for (final issue in preview.issues) issue]),
       );
     }
     final state = currentState();
@@ -641,12 +730,15 @@ class SearchReplacementService {
     final unit = value.codeUnitAt(0);
     return unit >= 48 && unit <= 57;
   }
+}
 
-  bool _isReplaceableTextPath(String path) {
-    return switch (p.extension(path).toLowerCase()) {
-      '.md' || '.markdown' || '.xml' || '.topic' || '.tree' || '.html' => true,
-      _ => false,
-    };
+class WorkspaceReplacementCancellation {
+  final worker = SearchReplacementWorker();
+  bool isCancelled = false;
+
+  void cancel() {
+    isCancelled = true;
+    worker.cancel();
   }
 }
 
@@ -780,6 +872,7 @@ void _replacementWorkerMain(List<Object?> payload) {
   sendPort.send(<Object?, Object?>{
     'invalidRegex': preview.invalidRegex,
     'truncated': preview.truncated,
+    'hasZeroLengthMatches': preview.hasZeroLengthMatches,
     'matches': [
       for (final match in preview.matches)
         <Object?>[
@@ -816,6 +909,7 @@ TextReplacementPreview _decodeReplacementPreview(
     ]),
     invalidRegex: payload['invalidRegex']! as bool,
     truncated: payload['truncated']! as bool,
+    hasZeroLengthMatches: payload['hasZeroLengthMatches']! as bool,
   );
 }
 

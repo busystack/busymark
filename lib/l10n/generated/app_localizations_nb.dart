@@ -941,6 +941,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get hardLineBreak => 'Tvungent linjeskift';
 
   @override
+  String get insertBlankLine => 'Sett inn tom linje';
+
+  @override
   String get textStyle => 'Tekststil';
 
   @override
@@ -1123,7 +1126,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get files => 'Filer';
 
   @override
-  String get toc => 'Innholdsfortegnelse';
+  String get toc => 'Emner';
 
   @override
   String get tocActions => 'Handlinger for innholdsfortegnelsen';
@@ -1557,6 +1560,21 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Regex-treff med null lengde støttes ikke (for eksempel ^, \$ eller fremoversøk som bare samsvarer med en posisjon).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Bare noen av resultatene vises. Vis flere eller avgrens søket.';
+
+  @override
+  String get workspaceSearchShowMore => 'Vis flere resultater';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3887,6 +3905,286 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'Velg en lesbar UTF-8 .css-fil opptil 256 KiB uten importer, ressurs-URL-er, HTML eller kjørbar eller escaped CSS.';
+
+  @override
+  String get clipboardHistory => 'Utklippshistorie';
+
+  @override
+  String get clipboardHistorySearchHint => 'Søk i utklippstavlehistorikken';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Åpne historien for utklippet som er lokal for sesjonen.';
+
+  @override
+  String get clipboardCurrent => 'Nåværende utklipp';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Nåværende utklipp fra en annen applikasjon';
+
+  @override
+  String clipboardDestination(String name) {
+    return 'Lim inn i $name';
+  }
+
+  @override
+  String get clipboardSessionOnly => 'Lagret kun for denne BusyMark-sesjonen.';
+
+  @override
+  String get clipboardNoItems => 'Utklippshistorien er tom.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Ingen utklippsposter samsvarer med denne søkingen.';
+
+  @override
+  String get clipboardDisabled =>
+      'Samlingen \"Utklippshistorie\" er deaktivert i Innstillinger.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Innholdet i det nåværende utklippet er ikke tilgjengelig eller støttet.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Denne utklippsteksten er for stor til å lagre.';
+
+  @override
+  String get clipboardPastePlainText => 'Lim inn som ren tekst';
+
+  @override
+  String get clipboardClearAll => 'Tøm utklippshistorie';
+
+  @override
+  String get clipboardEntryText => 'Tekst';
+
+  @override
+  String get clipboardEntryRichText => 'Rik tekst';
+
+  @override
+  String get clipboardEntryImage => 'Bilde';
+
+  @override
+  String clipboardOrigin(String name) {
+    return 'Kopiert fra $name';
+  }
+
+  @override
+  String get localHistory => 'Lokal historie';
+
+  @override
+  String get localHistoryEllipsis => 'Lokal historie…';
+
+  @override
+  String get localHistoryDescription =>
+      'Vis lagrede og automatiserte lokale versjoner for det nåværende dokumentet.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Finn i Lokal Historikk…';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Søk etter dokumenter og innhold i Lokal Historikk.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Ingen dokumenter har Lokal Historikk ennå.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Dette dokumentet har ingen revisjoner i Lokal Historikk.';
+
+  @override
+  String get localHistoryNoMatches => 'Ingen revisjoner matcher denne søken.';
+
+  @override
+  String get localHistorySearchHint => 'Søk i lokal historikk';
+
+  @override
+  String get localHistorySelectedRevision => 'Valgt revisjon';
+
+  @override
+  String get localHistoryCurrentEditor => 'Nåværende innhold i redigereren';
+
+  @override
+  String get localHistoryCurrentDisk => 'Nåværende innhold på disken';
+
+  @override
+  String get localHistoryMissingFile => 'Den opprinnelige filen mangler.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Gjenopprett Versjon';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Gjenopprett til Opprinnelig Sted';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Gjenopprett til Nytt Sted…';
+
+  @override
+  String get localHistoryRestoreChange => 'Gjenopprett Endring';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Denne endringen kan ikke gjenopprettes fordi sammenligningen er ikke lenger aktuell.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Denne store sammenligningen er forenklet. Gjenopprett individuelle endringer er ikke tilgjengelig.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Eldre versjonsendring: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Nåværende innholdsendring: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Slettet';
+
+  @override
+  String get localHistoryUntitled => 'Uten tittel';
+
+  @override
+  String get localHistoryClearDocument =>
+      'Tøm historikken for dette dokumentet';
+
+  @override
+  String get localHistoryClearAll => 'Tøm all lokal historikk';
+
+  @override
+  String get localHistoryClearDocumentTitle => 'Tøm dokumentets historikk?';
+
+  @override
+  String get localHistoryClearAllTitle => 'Tøm all lokal historikk?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Dette sletter permanent lagrede versjoner. Denne handlingen kan ikke angres.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Lokal historikk indeksen ble skadet og gjenopprettet fra intakte versjoner.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Denne lokale historikk-lagringen bruker et støttet format $version.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Lokal historikk er ikke tilgjengelig: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Opptak er deaktivert eller denne stien er utelatt. Aktiver opptak før gjenoppretting.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Lokal historikk kunne ikke registrere endringen av stien: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Lokal Historikk kunne ikke lagre den slettede stien: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Den valgte versjonen mangler eller er skadet.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Den valgte versjonen kan ikke leses: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Lokal Historikk kunne ikke fange opp denne versjonen: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Baselinje';
+
+  @override
+  String get localHistoryReasonSaved => 'Lagret';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint => 'Automatisk sjekkpunkt';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Før omlasting';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Før avvisning';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Før gjenoppbygging';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Før sletting';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Ekstern endring';
+
+  @override
+  String get settingsHistory => 'Historikk';
+
+  @override
+  String get settingsClipboardHistoryTitle =>
+      'Samle Historikk fra utklippstavlen';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Behold kopiert og vellykket limt innhold kun for denne BusyMark-sesjonen.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Lag lokal historikk';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Lagre dokumentversjoner på denne enheten for gjenoppretting og sammenligning.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Automatisk sjekkpunktintervall';
+
+  @override
+  String get settingsHistoryRetention => 'Bevaringsperiode';
+
+  @override
+  String get settingsHistoryStorage => 'Maks lagringsplass';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Udelte stier';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Én absolutt sti per linje';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value sekunder';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value dager';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

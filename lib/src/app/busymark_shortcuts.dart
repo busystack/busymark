@@ -544,6 +544,7 @@ abstract final class BusyMarkEditorShortcuts {
   static const blockquoteLabel = 'Ctrl+Shift+Q';
   static const codeBlockLabel = 'Ctrl+Shift+K';
   static const imageLabel = 'Ctrl+Shift+I';
+  static const thematicBreakLabel = 'Ctrl+Shift+-';
   static const hardLineBreakLabel = 'Shift+Enter';
 
   static const refineWithAi = BusyMarkShortcutDefinition(
@@ -702,6 +703,14 @@ abstract final class BusyMarkEditorShortcuts {
       shift: true,
     ),
   );
+  static const thematicBreak = BusyMarkShortcutDefinition(
+    label: thematicBreakLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.minus,
+      control: true,
+      shift: true,
+    ),
+  );
   static const hardLineBreak = BusyMarkShortcutDefinition(
     label: hardLineBreakLabel,
     activator: SingleActivator(LogicalKeyboardKey.enter, shift: true),
@@ -731,6 +740,7 @@ abstract final class BusyMarkEditorShortcuts {
         BusyMarkEditorShortcutAction.blockquote: blockquote,
         BusyMarkEditorShortcutAction.codeBlock: codeBlock,
         BusyMarkEditorShortcutAction.image: image,
+        BusyMarkEditorShortcutAction.thematicBreak: thematicBreak,
         BusyMarkEditorShortcutAction.hardLineBreak: hardLineBreak,
       };
 }
@@ -762,6 +772,7 @@ abstract final class BusyMarkEditorShortcutLabels {
   static const blockquote = BusyMarkEditorShortcuts.blockquoteLabel;
   static const codeBlock = BusyMarkEditorShortcuts.codeBlockLabel;
   static const image = BusyMarkEditorShortcuts.imageLabel;
+  static const thematicBreak = BusyMarkEditorShortcuts.thematicBreakLabel;
   static const hardLineBreak = BusyMarkEditorShortcuts.hardLineBreakLabel;
 }
 
@@ -833,11 +844,20 @@ abstract final class BusyMarkEditorShortcutActivators {
   static ShortcutActivator get codeBlock =>
       BusyMarkEditorShortcuts.codeBlock.activator;
   static ShortcutActivator get image => BusyMarkEditorShortcuts.image.activator;
+  static ShortcutActivator get thematicBreak =>
+      BusyMarkEditorShortcuts.thematicBreak.activator;
   static ShortcutActivator get hardLineBreak =>
       BusyMarkEditorShortcuts.hardLineBreak.activator;
 }
 
-enum BusyMarkSidebarShortcutAction { files, toc, outline, git }
+enum BusyMarkSidebarShortcutAction {
+  files,
+  toc,
+  outline,
+  git,
+  localHistory,
+  clipboardHistory,
+}
 
 abstract final class BusyMarkSidebarShortcuts {
   const BusyMarkSidebarShortcuts._();
@@ -846,6 +866,8 @@ abstract final class BusyMarkSidebarShortcuts {
   static const tocLabel = 'Ctrl+2';
   static const outlineLabel = 'Ctrl+3';
   static const gitLabel = 'Ctrl+4';
+  static const localHistoryLabel = 'Ctrl+5';
+  static const clipboardHistoryLabel = 'Ctrl+6';
 
   static const toggleSidebar = BusyMarkAppShortcuts.toggleSidebar;
   static const files = BusyMarkShortcutDefinition(
@@ -864,6 +886,14 @@ abstract final class BusyMarkSidebarShortcuts {
     label: gitLabel,
     activator: SingleActivator(LogicalKeyboardKey.digit4, control: true),
   );
+  static const localHistory = BusyMarkShortcutDefinition(
+    label: localHistoryLabel,
+    activator: SingleActivator(LogicalKeyboardKey.digit5, control: true),
+  );
+  static const clipboardHistory = BusyMarkShortcutDefinition(
+    label: clipboardHistoryLabel,
+    activator: SingleActivator(LogicalKeyboardKey.digit6, control: true),
+  );
 
   static const definitions =
       <BusyMarkSidebarShortcutAction, BusyMarkShortcutDefinition>{
@@ -871,6 +901,8 @@ abstract final class BusyMarkSidebarShortcuts {
         BusyMarkSidebarShortcutAction.toc: toc,
         BusyMarkSidebarShortcutAction.outline: outline,
         BusyMarkSidebarShortcutAction.git: git,
+        BusyMarkSidebarShortcutAction.localHistory: localHistory,
+        BusyMarkSidebarShortcutAction.clipboardHistory: clipboardHistory,
       };
 }
 
@@ -882,6 +914,9 @@ abstract final class BusyMarkSidebarShortcutLabels {
   static const toc = BusyMarkSidebarShortcuts.tocLabel;
   static const outline = BusyMarkSidebarShortcuts.outlineLabel;
   static const git = BusyMarkSidebarShortcuts.gitLabel;
+  static const localHistory = BusyMarkSidebarShortcuts.localHistoryLabel;
+  static const clipboardHistory =
+      BusyMarkSidebarShortcuts.clipboardHistoryLabel;
 }
 
 abstract final class BusyMarkSidebarShortcutActivators {
@@ -895,6 +930,10 @@ abstract final class BusyMarkSidebarShortcutActivators {
   static ShortcutActivator get outline =>
       BusyMarkSidebarShortcuts.outline.activator;
   static ShortcutActivator get git => BusyMarkSidebarShortcuts.git.activator;
+  static ShortcutActivator get localHistory =>
+      BusyMarkSidebarShortcuts.localHistory.activator;
+  static ShortcutActivator get clipboardHistory =>
+      BusyMarkSidebarShortcuts.clipboardHistory.activator;
 
   static BusyMarkSidebarShortcutAction? actionForKeyEvent(
     KeyEvent event,
@@ -918,6 +957,10 @@ abstract final class BusyMarkSidebarShortcutActivators {
       LogicalKeyboardKey.numpad3 => BusyMarkSidebarShortcutAction.outline,
       LogicalKeyboardKey.digit4 ||
       LogicalKeyboardKey.numpad4 => BusyMarkSidebarShortcutAction.git,
+      LogicalKeyboardKey.digit5 ||
+      LogicalKeyboardKey.numpad5 => BusyMarkSidebarShortcutAction.localHistory,
+      LogicalKeyboardKey.digit6 || LogicalKeyboardKey.numpad6 =>
+        BusyMarkSidebarShortcutAction.clipboardHistory,
       _ => null,
     };
   }

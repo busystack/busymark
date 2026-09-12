@@ -943,6 +943,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hardLineBreak => 'Zorunlu satır sonu';
 
   @override
+  String get insertBlankLine => 'Boş satır ekle';
+
+  @override
   String get textStyle => 'Metin stili';
 
   @override
@@ -1124,7 +1127,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get files => 'Dosyalar';
 
   @override
-  String get toc => 'İçindekiler';
+  String get toc => 'Konular';
 
   @override
   String get tocActions => 'İçindekiler eylemleri';
@@ -1553,6 +1556,21 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sourceSearchInvalidRegex => 'Geçersiz düzenli ifade';
+
+  @override
+  String get sourceSearchZeroLengthUnsupported =>
+      'Sıfır uzunluklu düzenli ifade eşleşmeleri desteklenmez (örneğin ^, \$ veya yalnızca bir konumla eşleşen ileri bakışlar).';
+
+  @override
+  String get workspaceSearchIncomplete =>
+      'Sonuçların yalnızca bir kısmı gösteriliyor. Daha fazlasını gösterin veya aramayı daraltın.';
+
+  @override
+  String get workspaceSearchShowMore => 'Daha fazla sonuç göster';
+
+  @override
+  String get workspaceSearchSkippedFiles =>
+      'Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -3888,6 +3906,289 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get exportInvalidCss =>
       'İçe aktarım, kaynak URL’si, HTML, çalıştırılabilir veya kaçışlı CSS içermeyen, okunabilir UTF-8 .css dosyası seçin (en fazla 256 KiB).';
+
+  @override
+  String get clipboardHistory => 'Kopyalama Geçmişi';
+
+  @override
+  String get clipboardHistorySearchHint => 'Pano geçmişinde ara';
+
+  @override
+  String get clipboardHistoryDescription =>
+      'Oturuma özgü kopyalama geçmişini aç.';
+
+  @override
+  String get clipboardCurrent => 'Mevcut kopyalama';
+
+  @override
+  String get clipboardCurrentExternal =>
+      'Başka bir uygulamadan mevcut kopyalama';
+
+  @override
+  String clipboardDestination(String name) {
+    return '$name\'e yapıştır';
+  }
+
+  @override
+  String get clipboardSessionOnly =>
+      'Sadece bu BusyMark oturumu için saklanır.';
+
+  @override
+  String get clipboardNoItems => 'Kopyalama geçmişi boş.';
+
+  @override
+  String get clipboardNoMatches =>
+      'Bu arama ile eşleşen kopyalama öğesi bulunamadı.';
+
+  @override
+  String get clipboardDisabled =>
+      'Kopyalama Geçmişi koleksiyonu Ayarlar\'da devre dışıdır.';
+
+  @override
+  String get clipboardUnavailable =>
+      'Mevcut kopyalama içeriği mevcut değil veya desteklenmiyor.';
+
+  @override
+  String get clipboardTooLarge =>
+      'Bu kopyalanmış öğe, saklamak için çok büyüktür.';
+
+  @override
+  String get clipboardPastePlainText => 'Temiz Metin Olarak Yapıştır';
+
+  @override
+  String get clipboardClearAll => 'Kopyalama Geçmişini Temizle';
+
+  @override
+  String get clipboardEntryText => 'Metin';
+
+  @override
+  String get clipboardEntryRichText => 'Zengin Metin';
+
+  @override
+  String get clipboardEntryImage => 'Resim';
+
+  @override
+  String clipboardOrigin(String name) {
+    return '$name\'den Kopyalandı';
+  }
+
+  @override
+  String get localHistory => 'Yerel Geçmiş';
+
+  @override
+  String get localHistoryEllipsis => 'Yerel Geçmiş…';
+
+  @override
+  String get localHistoryDescription =>
+      'Mevcut belge için kaydedilmiş ve otomatik yerel sürümleri göster.';
+
+  @override
+  String get findLocalHistoryEllipsis => 'Yerel Geçmişte Bul...';
+
+  @override
+  String get findLocalHistoryDescription =>
+      'Yerel Geçmişte belgeleri ve revizyon içeriğini arayın.';
+
+  @override
+  String get localHistoryNoDocuments =>
+      'Henüz herhangi bir belge Yerel Geçmişe sahip değil.';
+
+  @override
+  String get localHistoryNoRevisions =>
+      'Bu belge Yerel Geçmiş revizyonlarına sahip değil.';
+
+  @override
+  String get localHistoryNoMatches =>
+      'Bu arama ile eşleşen Yerel Geçmiş revizyonu yok.';
+
+  @override
+  String get localHistorySearchHint => 'Yerel geçmişte ara';
+
+  @override
+  String get localHistorySelectedRevision => 'Seçilen revizyon';
+
+  @override
+  String get localHistoryCurrentEditor => 'Mevcut düzenleme içeriği';
+
+  @override
+  String get localHistoryCurrentDisk => 'Disk üzerinde mevcut içerik';
+
+  @override
+  String get localHistoryMissingFile => 'Orijinal dosya bulunmuyor.';
+
+  @override
+  String get localHistoryRestoreRevision => 'Versiyonu Geri Yükle';
+
+  @override
+  String get localHistoryRestoreOriginalLocation =>
+      'Orijinal Konuma Geri Yükle';
+
+  @override
+  String get localHistoryRestoreNewLocation => 'Yeni Konuma Geri Yükle…';
+
+  @override
+  String get localHistoryRestoreChange => 'Değişikliği Geri Yükle';
+
+  @override
+  String get localHistoryRestoreUnavailable =>
+      'Bu değişiklik geri alınamaz çünkü karşılaştırma artık geçerli değil.';
+
+  @override
+  String get localHistoryComparisonSimplified =>
+      'Bu büyük karşılaştırma basitleştirildi. Tek tek değişiklikleri geri yüklemek mümkün değil.';
+
+  @override
+  String localHistoryOlderChange(String text) {
+    return 'Eski versiyon değişikliği: $text';
+  }
+
+  @override
+  String localHistoryCurrentChange(String text) {
+    return 'Mevcut içerik değişikliği: $text';
+  }
+
+  @override
+  String get localHistoryDeleted => 'Silindi';
+
+  @override
+  String get localHistoryUntitled => 'Başlımsız';
+
+  @override
+  String get localHistoryClearDocument => 'Bu Dokümanın Geçmişini Temizle';
+
+  @override
+  String get localHistoryClearAll => 'Tüm Yerel Geçmişi Temizle';
+
+  @override
+  String get localHistoryClearDocumentTitle =>
+      'Doküman Geçmişini Temizlemek İstemiyor Musunuz?';
+
+  @override
+  String get localHistoryClearAllTitle =>
+      'Tüm Yerel Geçmişi Temizlemek İstemiyor Musunuz?';
+
+  @override
+  String get localHistoryClearConfirmation =>
+      'Bu, kaydedilen tüm sürümleri kalıcı olarak kaldırır. Bu işlem geri alınamaz.';
+
+  @override
+  String get localHistoryWarningIndexRebuilt =>
+      'Yerel Geçmiş indeksi, sağlam sürümlerden yeniden oluşturuldu.';
+
+  @override
+  String localHistoryWarningUnsupportedFormat(String version) {
+    return 'Bu Yerel Geçmiş depolama, desteklenmeyen format $version kullanır.';
+  }
+
+  @override
+  String localHistoryWarningUnavailable(String detail) {
+    return 'Yerel Geçmiş kullanılabilir değil: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRecordingDisabled =>
+      'Kayıt devre dışı bırakılmış veya bu yol hariç tutulmuş. Geri yükleme yapmadan önce tekrar etkinleştirin.';
+
+  @override
+  String localHistoryWarningPathChange(String detail) {
+    return 'Yerel Geçmiş, yol değişikliğini kaydetemedi: $detail';
+  }
+
+  @override
+  String localHistoryWarningDeletedPath(String detail) {
+    return 'Yerel Geçmiş, silinen yolu kaydetemedi: $detail';
+  }
+
+  @override
+  String get localHistoryWarningRevisionMissing =>
+      'Seçilen sürüm eksik veya bozulmuş.';
+
+  @override
+  String localHistoryWarningRevisionRead(String detail) {
+    return 'Seçilen sürüm okunamaz: $detail';
+  }
+
+  @override
+  String localHistoryWarningCapture(String detail) {
+    return 'Yerel Geçmiş, bu sürümü yakalamadı: $detail';
+  }
+
+  @override
+  String localHistoryRevisionAt(String reason, String timestamp) {
+    return '$reason – $timestamp';
+  }
+
+  @override
+  String get localHistoryReasonBaseline => 'Temel Sürüm';
+
+  @override
+  String get localHistoryReasonSaved => 'Kaydedildi';
+
+  @override
+  String get localHistoryReasonAutomaticCheckpoint =>
+      'Otomatik kontrol noktası';
+
+  @override
+  String get localHistoryReasonBeforeReload => 'Yenilemeden önce';
+
+  @override
+  String get localHistoryReasonBeforeDiscard => 'Atılmadan önce';
+
+  @override
+  String get localHistoryReasonBeforeRestore => 'Restorasyon öncesi';
+
+  @override
+  String get localHistoryReasonBeforeDelete => 'Silme öncesi';
+
+  @override
+  String get localHistoryReasonExternalChange => 'Dış kaynak değişiklik';
+
+  @override
+  String get settingsHistory => 'Geçmiş';
+
+  @override
+  String get settingsClipboardHistoryTitle => 'Geçmişi Kopyala';
+
+  @override
+  String get settingsClipboardHistoryDescription =>
+      'Bu BusyMark oturumu için kopyalanan ve başarıyla yapıştırılan içeriği sakla.';
+
+  @override
+  String get settingsLocalHistoryTitle => 'Yerel Geçmişi Kaydet';
+
+  @override
+  String get settingsLocalHistoryDescription =>
+      'Belgeleri kurtarma ve karşılaştırma için bu cihazda değişiklikleri sakla.';
+
+  @override
+  String get settingsHistoryCheckpoint => 'Otomatik kontrol noktası aralığı';
+
+  @override
+  String get settingsHistoryRetention => 'Saklama süresi';
+
+  @override
+  String get settingsHistoryStorage => 'Maksimum depolama alanı';
+
+  @override
+  String get settingsHistoryExcludedPaths => 'Hariç tutulan yollar';
+
+  @override
+  String get settingsHistoryExcludedPathsHint => 'Bir mutlak yol her satırda';
+
+  @override
+  String settingsSecondsValue(int value) {
+    return '$value saniye';
+  }
+
+  @override
+  String settingsDaysValue(int value) {
+    return '$value gün';
+  }
+
+  @override
+  String settingsMebibytesValue(int value) {
+    return '$value MiB';
+  }
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

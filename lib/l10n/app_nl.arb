@@ -1,4 +1,8 @@
 {
+  "sourceSearchZeroLengthUnsupported": "Regex-overeenkomsten met lengte nul worden niet ondersteund (zoals ^, $ of lookaheads die alleen een positie vinden).",
+  "workspaceSearchIncomplete": "Slechts een deel van de resultaten wordt getoond. Toon meer of verfijn de zoekopdracht.",
+  "workspaceSearchShowMore": "Meer resultaten tonen",
+  "workspaceSearchSkippedFiles": "De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:",
   "@@locale": "nl",
   "appTitle": "BusyMark",
   "@appTitle": {
@@ -1137,6 +1141,10 @@
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
+  "insertBlankLine": "Lege regel invoegen",
+  "@insertBlankLine": {
+    "description": "Insert blank line command label."
+  },
   "textStyle": "Tekststijl",
   "@textStyle": {
     "description": "Text style menu tooltip."
@@ -1378,9 +1386,9 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "TOC",
+  "toc": "Onderwerpen",
   "@toc": {
-    "description": "Writerside table of contents sidebar tab label."
+    "description": "Writerside Topics sidebar tab label."
   },
   "tocActions": "TOC-acties",
   "@tocActions": {
@@ -3829,7 +3837,7 @@
   },
   "instances": "Instanties",
   "@instances": {
-    "description": "Heading for the Writerside instances shown in the TOC sidebar."
+    "description": "Heading for the Writerside instances shown in the Topics sidebar."
   },
   "newInstance": "Nieuwe instantie",
   "@newInstance": {
@@ -4703,5 +4711,82 @@
   "exportInvalidGeometry": "Laat na de marges minimaal 20 mm inhoudsbreedte en -hoogte over.",
   "exportInvalidColor": "Voer een kleur in als #RRGGBB.",
   "exportInvalidCss": "Kies een leesbaar UTF-8 .css-bestand tot 256 KiB zonder imports, bron-URL’s, HTML of uitvoerbare of ontsnapte CSS.",
-  "exportInvalidRange": "{field}: voer een getal tussen {minimum} en {maximum} in."
+  "exportInvalidRange": "{field}: voer een getal tussen {minimum} en {maximum} in.",
+  "clipboardHistory": "Historie van de klembord",
+  "clipboardHistorySearchHint": "Klembordgeschiedenis doorzoeken",
+  "clipboardHistoryDescription": "Open de klembordgeschiedenis per sessie.",
+  "clipboardCurrent": "Huidig klembord",
+  "clipboardCurrentExternal": "Huidig klembord van een ander programma",
+  "clipboardDestination": "Plakken in {name}",
+  "clipboardSessionOnly": "Alleen opgeslagen voor deze BusyMark sessie.",
+  "clipboardNoItems": "De klembordgeschiedenis is leeg.",
+  "clipboardNoMatches": "Geen klemborditems komen overeen met deze zoekopdracht.",
+  "clipboardDisabled": "De collectie \"Historie van het klembord\" is uitgeschakeld in de instellingen.",
+  "clipboardUnavailable": "De inhoud van het huidige klembord is niet beschikbaar of niet ondersteund.",
+  "clipboardTooLarge": "Dit item op het klembord is te groot om te bewaren.",
+  "clipboardPastePlainText": "Plak als gewone tekst",
+  "clipboardClearAll": "Maak de geschiedenis van het klembord leeg",
+  "clipboardEntryText": "Tekst",
+  "clipboardEntryRichText": "Rijke tekst",
+  "clipboardEntryImage": "Afbeelding",
+  "clipboardOrigin": "Geplakt van {name}",
+  "localHistory": "Lokale geschiedenis",
+  "localHistoryEllipsis": "Lokale geschiedenis…",
+  "localHistoryDescription": "Toon opgeslagen en automatische lokale revisies voor het huidige document.",
+  "findLocalHistoryEllipsis": "Zoeken in Lokale Geschiedenis…",
+  "findLocalHistoryDescription": "Zoek naar documenten en inhoud van revisies in de lokale geschiedenis.",
+  "localHistoryNoDocuments": "Er zijn nog geen documenten met Lokale Geschiedenis.",
+  "localHistoryNoRevisions": "Dit document heeft geen revisies van de Lokale Geschiedenis.",
+  "localHistoryNoMatches": "Geen revisies van de Lokale Geschiedenis komen overeen met deze zoekopdracht.",
+  "localHistorySearchHint": "Lokale geschiedenis doorzoeken",
+  "localHistorySelectedRevision": "Geselecteerde revisie",
+  "localHistoryCurrentEditor": "Huidige inhoud van de editor",
+  "localHistoryCurrentDisk": "Huidige inhoud op schijf",
+  "localHistoryMissingFile": "Het originele bestand ontbreekt.",
+  "localHistoryRestoreRevision": "Herstel Versie",
+  "localHistoryRestoreOriginalLocation": "Herstel naar Originele Locatie",
+  "localHistoryRestoreNewLocation": "Herstel naar Nieuwe Locatie…",
+  "localHistoryRestoreChange": "Herstel Wijziging",
+  "localHistoryRestoreUnavailable": "Deze wijziging kan niet worden hersteld omdat de vergelijking niet meer actueel is.",
+  "localHistoryComparisonSimplified": "Deze grote vergelijking is vereenvoudigd. Het herstellen van individuele wijzigingen is niet mogelijk.",
+  "localHistoryOlderChange": "Oudere versie wijziging: {text}",
+  "localHistoryCurrentChange": "Huidige inhoud wijziging: {text}",
+  "localHistoryDeleted": "Verwijderd",
+  "localHistoryUntitled": "Onbenoemd",
+  "localHistoryClearDocument": "Verwijder de geschiedenis van dit document",
+  "localHistoryClearAll": "Verwijder de lokale geschiedenis",
+  "localHistoryClearDocumentTitle": "Verwijder de documentgeschiedenis?",
+  "localHistoryClearAllTitle": "Verwijder de lokale geschiedenis?",
+  "localHistoryClearConfirmation": "Dit verwijdert permanent opgeslagen revisies. Deze actie kan niet worden teruggedraaid.",
+  "localHistoryWarningIndexRebuilt": "De index van de lokale geschiedenis is beschadigd en opnieuw gebouwd vanuit intacte revisies.",
+  "localHistoryWarningUnsupportedFormat": "Deze lokale geschiedenisopslag gebruikt een onondersteunde {version}-formaat.",
+  "localHistoryWarningUnavailable": "De lokale geschiedenis is niet beschikbaar: {detail}",
+  "localHistoryWarningRecordingDisabled": "Opnemen is uitgeschakeld of deze pad is uitgesloten. Schakel opnemen opnieuw in voordat u herstelt.",
+  "localHistoryWarningPathChange": "De lokale geschiedenis kon de padwijziging niet opslaan: {detail}",
+  "localHistoryWarningDeletedPath": "Lokale Geschiedenis kon de verwijderde pad niet opslaan: {detail}",
+  "localHistoryWarningRevisionMissing": "De geselecteerde versie ontbreekt of is beschadigd.",
+  "localHistoryWarningRevisionRead": "De geselecteerde versie kan niet worden gelezen: {detail}",
+  "localHistoryWarningCapture": "Lokale Geschiedenis kon deze versie niet vastleggen: {detail}",
+  "localHistoryRevisionAt": "{reason} – {timestamp}",
+  "localHistoryReasonBaseline": "Basislijn",
+  "localHistoryReasonSaved": "Bewaard",
+  "localHistoryReasonAutomaticCheckpoint": "Automatische controlepunt",
+  "localHistoryReasonBeforeReload": "Voor herladen",
+  "localHistoryReasonBeforeDiscard": "Voor verwijderen",
+  "localHistoryReasonBeforeRestore": "Voordat herstellen",
+  "localHistoryReasonBeforeDelete": "Voordat verwijderen",
+  "localHistoryReasonExternalChange": "Externe wijziging",
+  "settingsHistory": "Geschiedenis",
+  "settingsClipboardHistoryTitle": "Verzamelen van de geschiedenis van de klembord",
+  "settingsClipboardHistoryDescription": "Behoud van gekopieerd en succesvol geplakt materiaal alleen voor deze BusyMark sessie.",
+  "settingsLocalHistoryTitle": "Opnemen van lokale geschiedenis",
+  "settingsLocalHistoryDescription": "Opslaan van documentversies op dit apparaat voor herstel en vergelijking.",
+  "settingsHistoryCheckpoint": "Automatische interval voor controlepunten",
+  "settingsHistoryRetention": "Bewaarperiode",
+  "settingsHistoryStorage": "Maximale opslag",
+  "settingsHistoryExcludedPaths": "Uitsluitingen",
+  "settingsHistoryExcludedPathsHint": "Eén absolute pad per regel",
+  "settingsSecondsValue": "{value} seconden",
+  "settingsDaysValue": "{value} dagen",
+  "settingsMebibytesValue": "{value} MiB"
 }
