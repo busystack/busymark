@@ -1572,6 +1572,61 @@ void main() {
   });
 
   test(
+    'pending history from a closed clean tab prevents a clean shutdown marker',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-closed-history-shutdown-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      const failedSource = '# Saved while history is unavailable\n';
+      final historyStore = _PersistentSourceFailureStore(failedSource);
+      final recoveryStore = MemoryDocumentRecoveryStore();
+      final harness = await _createControllerHarness(
+        localHistoryStore: historyStore,
+        recoveryStore: recoveryStore,
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller;
+      await controller.openPath(directory.path);
+      if (controller.state.activeBuffer?.filePath != aPath) {
+        expect(await controller.openActiveFile(aPath), isTrue);
+      }
+      final aId = controller.state.activeBuffer!.id;
+      controller.updateActiveText(failedSource);
+
+      expect(await controller.saveActive(), isTrue);
+      expect(controller.state.activeBuffer?.isDirty, isFalse);
+      expect(
+        harness._container
+            .read(localHistoryControllerProvider.notifier)
+            .pendingSnapshotForBuffer(aId)
+            ?.text,
+        failedSource,
+      );
+
+      expect(await controller.openActiveFile(bPath), isTrue);
+      expect(await controller.closeOpenFileTab(aPath), isTrue);
+      expect(
+        controller.state.documentBuffers.any((buffer) => buffer.id == aId),
+        isFalse,
+      );
+
+      await controller.markCleanShutdown();
+      expect(recoveryStore.value.cleanShutdown, isFalse);
+      expect(
+        harness._container
+            .read(localHistoryControllerProvider.notifier)
+            .pendingSnapshotForBuffer(aId),
+        isNotNull,
+      );
+    },
+  );
+
+  test(
     'save refuses to overwrite external file changes without force',
     () async {
       final directory = await Directory.systemTemp.createTemp('busymark-save-');
@@ -1880,6 +1935,157 @@ void main() {
       );
       expect(controller.undoActiveBuffer(), isTrue);
       expect(controller.state.activeText, '# B\n');
+    },
+  );
+
+  test(
+    'opening a new tab preserves live edits and editor history in the visible document',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-first-open-live-edits-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller;
+      await controller.openPath(directory.path);
+      final aId = controller.state.activeBuffer!.id;
+
+      service.pauseNextReparse();
+      final opening = controller.openActiveFile(bPath);
+      await service.reparseStarted.future;
+      controller.updateActiveEditorState(
+        controller.state.activeBuffer!.editorState.copyWith(
+          selection: const TextSelection.collapsed(offset: 2),
+        ),
+      );
+      controller.updateActiveSourceText('# A first edit\n');
+      controller.updateActiveEditorState(
+        controller.state.activeBuffer!.editorState.copyWith(
+          selection: const TextSelection.collapsed(offset: 8),
+        ),
+      );
+      controller.updateActiveSourceText('# A second edit\n');
+      final liveA = controller.state.activeBuffer!;
+
+      service.releaseReparse();
+      expect(await opening, isTrue);
+      final preservedA = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == aId,
+      );
+      expect(preservedA.text, liveA.text);
+      expect(preservedA.isDirty, isTrue);
+      expect(preservedA.editorState.selection, liveA.editorState.selection);
+      expect(
+        preservedA.editorState.undoState,
+        same(liveA.editorState.undoState),
+      );
+      expect(controller.state.activeBuffer?.filePath, bPath);
+
+      expect(await controller.activateDocumentBuffer(aId), isTrue);
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, '# A first edit\n');
+    },
+  );
+
+  test(
+    'closing the active tab aborts if it changes during next-tab activation',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-close-activation-edit-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller;
+      await controller.openPath(directory.path);
+      final aId = controller.state.activeBuffer!.id;
+      expect(await controller.openActiveFile(bPath), isTrue);
+      expect(await controller.activateDocumentBuffer(aId), isTrue);
+
+      service.pauseNextReparse();
+      final close = controller.closeOpenFileTab(aPath);
+      await service.reparseStarted.future;
+      controller.updateActiveEditorState(
+        controller.state.activeBuffer!.editorState.copyWith(
+          selection: const TextSelection.collapsed(offset: 2),
+        ),
+      );
+      controller.updateActiveSourceText('# A changed during close\n');
+      final liveA = controller.state.activeBuffer!;
+
+      service.releaseReparse();
+      expect(await close, isFalse);
+      expect(controller.state.activeBufferId, aId);
+      expect(controller.state.workspace?.openFilePaths, contains(aPath));
+      final preservedA = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == aId,
+      );
+      expect(preservedA.text, liveA.text);
+      expect(preservedA.isDirty, isTrue);
+      expect(preservedA.editorState.selection, liveA.editorState.selection);
+      expect(
+        preservedA.editorState.undoState,
+        same(liveA.editorState.undoState),
+      );
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, '# A\n');
+    },
+  );
+
+  test(
+    'tab activation does not resurrect another tab closed while waiting',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-activation-closed-tab-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final aPath = p.join(directory.path, 'a.md');
+      final bPath = p.join(directory.path, 'b.md');
+      final cPath = p.join(directory.path, 'c.md');
+      await File(aPath).writeAsString('# A\n');
+      await File(bPath).writeAsString('# B\n');
+      await File(cPath).writeAsString('# C\n');
+      final service = _BlockingRefreshWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller;
+      await controller.openPath(directory.path);
+      final aId = controller.state.activeBuffer!.id;
+      expect(await controller.openActiveFile(bPath), isTrue);
+      final bId = controller.state.activeBuffer!.id;
+      expect(await controller.openActiveFile(cPath), isTrue);
+      final cId = controller.state.activeBuffer!.id;
+      expect(await controller.activateDocumentBuffer(aId), isTrue);
+
+      service.pauseNextReparse();
+      final activation = controller.activateDocumentBuffer(bId);
+      await service.reparseStarted.future;
+      expect(await controller.closeOpenFileTab(cPath), isTrue);
+      expect(
+        controller.state.documentBuffers.any((buffer) => buffer.id == cId),
+        isFalse,
+      );
+
+      service.releaseReparse();
+      expect(await activation, isTrue);
+      expect(controller.state.activeBufferId, bId);
+      expect(
+        controller.state.documentBuffers.any((buffer) => buffer.id == cId),
+        isFalse,
+      );
+      expect(controller.state.workspace?.openFilePaths, isNot(contains(cPath)));
     },
   );
 
@@ -2641,6 +2847,25 @@ class _BlockingBeforeDiscardStore extends MemoryLocalHistoryStore {
     if (request.reason == LocalHistoryCaptureReason.beforeDiscard) {
       captureStarted.complete();
       await releaseCapture.future;
+    }
+    return super.capture(request, policy);
+  }
+}
+
+class _PersistentSourceFailureStore extends MemoryLocalHistoryStore {
+  _PersistentSourceFailureStore(this.failedSource);
+
+  final String failedSource;
+
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) {
+    if (request.source == failedSource) {
+      throw const LocalHistoryStorageException(
+        'Injected persistent capture failure',
+      );
     }
     return super.capture(request, policy);
   }

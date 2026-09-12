@@ -62,9 +62,13 @@ bounded latest snapshot per buffer, keeps the capture warning visible, and
 schedules a controlled retry using the configured checkpoint interval. Newer
 accepted source wins over acknowledgements or failures from older writes.
 Unsupported or over-limit content remains visibly failed without a retry loop.
-Flush and identity-promotion results propagate content-capture failure to
-lifecycle safety callers; a successful document save remains independent of a
-failed history write.
+Transient first-save identity-promotion failures use the same retry cadence
+before the pending checkpoint is captured. Flush and identity-promotion
+results propagate content-capture failure to lifecycle safety callers; a
+successful document save remains independent of a failed history write. A
+closed editor does not remove unresolved pending work from controller
+ownership: its retry continues while the process runs, and shutdown settlement
+accounts for pending buffer IDs even when their tabs are no longer open.
 
 History identity is stable independently of widget and transient buffer IDs.
 Known file and directory moves remap current and descendant paths while
@@ -117,7 +121,9 @@ revision-content query is recomputed against the new scoped snapshot, with
 query, scope, and snapshot generations preventing delayed reads from replacing
 newer matches. Search completion clears its loading state on success, scope
 change, cancellation, and read failure. Explicit clear invalidates affected
-queued work and closes a comparison it owns; retention loss instead reports the
+queued work at the point it was accepted, before store access, and closes a
+comparison it owns. A queued automatic checkpoint cannot become current merely
+because it begins executing after Clear. Retention loss instead reports the
 existing missing-revision state.
 
 `SourceComparisonInput` identifies immutable sources by ID, version, label,
@@ -156,7 +162,12 @@ an already-active unchanged target; after an asynchronous reparse, it
 revalidates workspace and target identity and republishes the current buffer
 membership, source, editor selection, and undo/redo state rather than an
 activation-time list. A stale derived result is discarded in favor of the
-normal fresh-parse scheduler. Refresh reschedules eligible autosaves on both
+normal fresh-parse scheduler. The first-open path likewise appends a newly
+loaded document to the live list instead of an earlier captured list. Only
+documents that were genuine additions at activation start may be added during
+reconciliation, so tabs closed while parsing stay closed. A close that removes
+a document is aborted if that document's source or editor state changes during
+the final activation await. Refresh reschedules eligible autosaves on both
 success and failure because it cancels its incoming timers at the boundary.
 
 ## Verification workflow

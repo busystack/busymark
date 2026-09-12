@@ -717,18 +717,37 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<bool> flushAll(Iterable<DocumentBuffer> buffers) async {
     final bufferList = buffers.toList(growable: false);
-    var succeeded = true;
     for (final buffer in bufferList) {
-      if (!await flushBuffer(buffer)) succeeded = false;
+      await flushBuffer(buffer);
     }
-    if (!await flushPendingIdentityPromotions()) succeeded = false;
+    await flushPendingIdentityPromotions();
     while (_bufferQueues.isNotEmpty) {
       await Future.wait(_bufferQueues.values.toList(growable: false));
     }
-    final bufferIds = bufferList.map((buffer) => buffer.id).toSet();
-    return succeeded &&
-        _pendingUntitledPromotions.isEmpty &&
-        _pending.keys.every((bufferId) => !bufferIds.contains(bufferId));
+    for (final bufferId in _pending.keys.toList(growable: false)) {
+      _checkpointTimers.remove(bufferId)?.cancel();
+      await _enqueue<bool>(bufferId, () async {
+        final pending = _pending[bufferId];
+        return pending == null
+            ? true
+            : await _capturePending(bufferId, pending);
+      });
+    }
+    while (_bufferQueues.isNotEmpty) {
+      await Future.wait(_bufferQueues.values.toList(growable: false));
+    }
+    return _pendingUntitledPromotions.isEmpty && _pending.isEmpty;
+  }
+
+  /// Keeps unresolved history work owned by this session after its editor tab
+  /// closes. Retryable work continues on the checkpoint cadence; all pending
+  /// work remains part of [flushAll] shutdown settlement.
+  void handleBufferClosed(String bufferId, {required bool historySettled}) {
+    if (historySettled) return;
+    final pending = _pending[bufferId];
+    if (pending != null && _captureFailures[bufferId]?.retryable != false) {
+      _scheduleCheckpoint(bufferId);
+    }
   }
 
   Future<void> remapPath(String sourcePath, String destinationPath) async {
@@ -1144,9 +1163,20 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     bool ignoreBinding = false,
     bool allowPathChange = false,
     bool allowDuringPathTransition = false,
+    int? acceptedHistoryGeneration,
+    int? acceptedBufferGeneration,
   }) async {
-    final acceptedHistoryGeneration = _historyGeneration;
-    final acceptedBufferGeneration = _bufferGeneration(snapshot.bufferId);
+    final captureHistoryGeneration =
+        acceptedHistoryGeneration ?? _historyGeneration;
+    final captureBufferGeneration =
+        acceptedBufferGeneration ?? _bufferGeneration(snapshot.bufferId);
+    if (!_operationIsCurrent(
+      snapshot.bufferId,
+      captureHistoryGeneration,
+      captureBufferGeneration,
+    )) {
+      return true;
+    }
     if (reason == LocalHistoryCaptureReason.automaticCheckpoint &&
         !allowDuringPathTransition &&
         _pathTransitions.containsKey(snapshot.bufferId)) {
@@ -1162,8 +1192,19 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         _setWarning(LocalHistoryWarningKind.pathChange);
         return false;
       }
-      if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
+      if (!await _completePendingUntitledPromotion(
+        snapshot.bufferId,
+        acceptedHistoryGeneration: captureHistoryGeneration,
+        acceptedBufferGeneration: captureBufferGeneration,
+      )) {
         return false;
+      }
+      if (!_operationIsCurrent(
+        snapshot.bufferId,
+        captureHistoryGeneration,
+        captureBufferGeneration,
+      )) {
+        return true;
       }
     }
     final currentPolicy = policy;
@@ -1196,8 +1237,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       );
       if (!_operationIsCurrent(
         snapshot.bufferId,
-        acceptedHistoryGeneration,
-        acceptedBufferGeneration,
+        captureHistoryGeneration,
+        captureBufferGeneration,
       )) {
         return true;
       }
@@ -1209,8 +1250,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         final loaded = await _store.load();
         if (_operationIsCurrent(
           snapshot.bufferId,
-          acceptedHistoryGeneration,
-          acceptedBufferGeneration,
+          captureHistoryGeneration,
+          captureBufferGeneration,
         )) {
           await _publishSnapshot(
             loaded,
@@ -1223,12 +1264,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     } on Object catch (error) {
       if (_operationIsCurrent(
         snapshot.bufferId,
-        acceptedHistoryGeneration,
-        acceptedBufferGeneration,
+        captureHistoryGeneration,
+        captureBufferGeneration,
       )) {
         _captureFailures[snapshot.bufferId] = _LocalHistoryCaptureFailure(
           detail: error.toString(),
           retryable: _captureErrorIsRetryable(error),
+          stage: _LocalHistoryFailureStage.capture,
         );
         _showCaptureFailure();
       }
@@ -1236,9 +1278,24 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     }
   }
 
-  Future<bool> _completePendingUntitledPromotion(String bufferId) async {
+  Future<bool> _completePendingUntitledPromotion(
+    String bufferId, {
+    int? acceptedHistoryGeneration,
+    int? acceptedBufferGeneration,
+  }) async {
     final promotion = _pendingUntitledPromotions[bufferId];
     if (promotion == null) return true;
+    final promotionHistoryGeneration =
+        acceptedHistoryGeneration ?? _historyGeneration;
+    final promotionBufferGeneration =
+        acceptedBufferGeneration ?? _bufferGeneration(bufferId);
+    if (!_operationIsCurrent(
+      bufferId,
+      promotionHistoryGeneration,
+      promotionBufferGeneration,
+    )) {
+      return true;
+    }
     try {
       final document = await _store.promoteUntitledDocument(
         documentId: promotion.documentId,
@@ -1246,20 +1303,52 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         displayName: promotion.displayName,
         updatedAt: _clock().toUtc(),
       );
+      if (!_operationIsCurrent(
+            bufferId,
+            promotionHistoryGeneration,
+            promotionBufferGeneration,
+          ) ||
+          !identical(_pendingUntitledPromotions[bufferId], promotion)) {
+        return true;
+      }
       if (document == null) {
+        _captureFailures[bufferId] = const _LocalHistoryCaptureFailure(
+          retryable: false,
+          stage: _LocalHistoryFailureStage.promotion,
+        );
         _setWarning(LocalHistoryWarningKind.pathChange);
         return false;
       }
       _documentIdsByBuffer[bufferId] = document.id;
       _pendingUntitledPromotions.remove(bufferId);
+      if (_captureFailures[bufferId]?.stage ==
+          _LocalHistoryFailureStage.promotion) {
+        _captureFailures.remove(bufferId);
+      }
       if (ref.mounted) {
         final loaded = await _store.load();
-        if (ref.mounted) {
+        if (_operationIsCurrent(
+          bufferId,
+          promotionHistoryGeneration,
+          promotionBufferGeneration,
+        )) {
           await _publishSnapshot(loaded, capturedBufferId: bufferId);
         }
       }
       return true;
     } on Object catch (error) {
+      if (!_operationIsCurrent(
+        bufferId,
+        promotionHistoryGeneration,
+        promotionBufferGeneration,
+      )) {
+        return true;
+      }
+      _captureFailures[bufferId] = _LocalHistoryCaptureFailure(
+        detail: error.toString(),
+        retryable: _captureErrorIsRetryable(error),
+        stage: _LocalHistoryFailureStage.promotion,
+      );
       _setWarning(LocalHistoryWarningKind.pathChange, error.toString());
       return false;
     }
@@ -1329,8 +1418,18 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         if (!ref.mounted || _pathTransitions.containsKey(bufferId)) return;
         final latest = _pending[bufferId];
         if (latest != null) {
+          final acceptedHistoryGeneration = _historyGeneration;
+          final acceptedBufferGeneration = _bufferGeneration(bufferId);
           unawaited(
-            _enqueue(bufferId, () => _capturePending(bufferId, latest)),
+            _enqueue(
+              bufferId,
+              () => _capturePending(
+                bufferId,
+                latest,
+                acceptedHistoryGeneration: acceptedHistoryGeneration,
+                acceptedBufferGeneration: acceptedBufferGeneration,
+              ),
+            ),
           );
         }
       }),
@@ -1339,8 +1438,21 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   Future<bool> _capturePending(
     String bufferId,
-    LocalHistoryBufferSnapshot snapshot,
-  ) async {
+    LocalHistoryBufferSnapshot snapshot, {
+    int? acceptedHistoryGeneration,
+    int? acceptedBufferGeneration,
+  }) async {
+    final captureHistoryGeneration =
+        acceptedHistoryGeneration ?? _historyGeneration;
+    final captureBufferGeneration =
+        acceptedBufferGeneration ?? _bufferGeneration(bufferId);
+    if (!_operationIsCurrent(
+      bufferId,
+      captureHistoryGeneration,
+      captureBufferGeneration,
+    )) {
+      return true;
+    }
     if (!_pendingIsEligible(snapshot)) {
       _pending.remove(bufferId);
       _checkpointTimers.remove(bufferId)?.cancel();
@@ -1350,7 +1462,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final captured = await _capture(
       snapshot,
       LocalHistoryCaptureReason.automaticCheckpoint,
+      acceptedHistoryGeneration: captureHistoryGeneration,
+      acceptedBufferGeneration: captureBufferGeneration,
     );
+    if (!_operationIsCurrent(
+      bufferId,
+      captureHistoryGeneration,
+      captureBufferGeneration,
+    )) {
+      return true;
+    }
     if (captured && !_pathTransitions.containsKey(bufferId)) {
       _acknowledgePending(bufferId, snapshot.revision);
     }
@@ -1638,13 +1759,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
 class _LocalHistoryCaptureFailure {
   const _LocalHistoryCaptureFailure({
-    required this.detail,
+    this.detail,
     required this.retryable,
+    required this.stage,
   });
 
-  final String detail;
+  final String? detail;
   final bool retryable;
+  final _LocalHistoryFailureStage stage;
 }
+
+enum _LocalHistoryFailureStage { capture, promotion }
 
 bool _sameOptionalPath(String? first, String? second) {
   if (first == null || second == null) return first == second;

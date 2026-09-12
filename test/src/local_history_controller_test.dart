@@ -365,6 +365,77 @@ void main() {
   });
 
   test(
+    'automatic checkpoint retries a transient first-save promotion failure',
+    () async {
+      final timers = <_FakeTimer>[];
+      final store = _ControllablePromotionStore();
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final untitled = DocumentBuffer.untitled(
+        id: 'promotion-retry-buffer',
+        name: 'Draft.md',
+        text: 'initial source',
+      );
+      await controller.observeOpened(untitled);
+      final originalDocumentId = (await store.load()).documents.single.id;
+      const destination = '/workspace/Promoted.md';
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(untitled),
+          destination,
+          destinationExisted: false,
+        ),
+        isFalse,
+      );
+      expect(store.promotionAttempts, 1);
+      expect(controller.hasPendingIdentityPromotion(untitled.id), isTrue);
+
+      final named = untitled.copyWith(
+        filePath: destination,
+        untitledName: null,
+        lastSavedText: untitled.text,
+        dirty: false,
+      );
+      final edited = named.edited('latest named source');
+      controller.observeEdit(named, edited);
+      await Future<void>.delayed(Duration.zero);
+      expect(timers, hasLength(1));
+
+      timers.single.fire();
+      await _waitForHistory(
+        container,
+        (_) => store.promotionAttempts == 2 && timers.length == 2,
+      );
+      expect(controller.pendingSnapshotForBuffer(edited.id)?.text, edited.text);
+
+      store.failPromotions = false;
+      timers.last.fire();
+      await _waitForHistory(
+        container,
+        (_) =>
+            !controller.hasPendingIdentityPromotion(edited.id) &&
+            controller.pendingSnapshotForBuffer(edited.id) == null,
+      );
+
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, originalDocumentId);
+      expect(snapshot.documents.single.currentPath, destination);
+      expect(
+        await _revisionSources(
+          store,
+          snapshot.revisionsFor(originalDocumentId),
+        ),
+        contains(edited.text),
+      );
+    },
+  );
+
+  test(
     'flush waits behind queued observation and captures its latest source',
     () async {
       final memory = MemoryLocalHistoryStore();
@@ -453,6 +524,51 @@ void main() {
         await _revisionSources(store, state.selectedRevisions),
         contains('new history after clear'),
       );
+    },
+  );
+
+  test(
+    'clear invalidates an automatic checkpoint queued for an untitled draft',
+    () async {
+      final timers = <_FakeTimer>[];
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingNextCaptureStore(memory);
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = DocumentBuffer.untitled(
+        id: 'queued-clear-draft',
+        name: 'Draft.md',
+        text: 'retained baseline',
+      );
+      await controller.observeOpened(opened);
+      final originalDocumentId = (await memory.load()).documents.single.id;
+      final edited = opened.edited('must remain cleared');
+      controller.observeEdit(opened, edited);
+      await Future<void>.delayed(Duration.zero);
+      expect(timers, hasLength(1));
+
+      store.blockNextCapture = true;
+      final precedingCapture = controller.captureSaved(
+        LocalHistoryBufferSnapshot.fromBuffer(opened),
+      );
+      await store.captureStarted.future;
+      timers.single.fire();
+      final clear = controller.clearDocument(originalDocumentId);
+      await Future<void>.delayed(Duration.zero);
+
+      store.releaseCapture.complete();
+      expect(await precedingCapture, isTrue);
+      await clear;
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents, isEmpty);
+      expect(snapshot.revisions, isEmpty);
+      expect(controller.documentIdForBuffer(opened.id), isNull);
+      expect(controller.pendingSnapshotForBuffer(opened.id), isNull);
     },
   );
 
@@ -1956,6 +2072,32 @@ class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
     if (_failNextPromotion) {
       _failNextPromotion = false;
       throw const LocalHistoryStorageException('Injected promotion failure');
+    }
+    return super.promoteUntitledDocument(
+      documentId: documentId,
+      destinationPath: destinationPath,
+      displayName: displayName,
+      updatedAt: updatedAt,
+    );
+  }
+}
+
+class _ControllablePromotionStore extends MemoryLocalHistoryStore {
+  var failPromotions = true;
+  var promotionAttempts = 0;
+
+  @override
+  Future<LocalHistoryDocument?> promoteUntitledDocument({
+    required String documentId,
+    required String destinationPath,
+    required String displayName,
+    required DateTime updatedAt,
+  }) {
+    promotionAttempts++;
+    if (failPromotions) {
+      throw const LocalHistoryStorageException(
+        'Injected transient promotion failure',
+      );
     }
     return super.promoteUntitledDocument(
       documentId: documentId,

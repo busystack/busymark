@@ -1480,8 +1480,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (state.hasUnsavedChanges) {
       return false;
     }
-    await _localHistory.flushAll(state.documentBuffers);
+    final closingBuffers = state.documentBuffers;
+    final historySettled = await _localHistory.flushAll(closingBuffers);
     _clearOpenFileTabs(workspace);
+    for (final buffer in closingBuffers) {
+      _localHistory.handleBufferClosed(
+        buffer.id,
+        historySettled: historySettled,
+      );
+    }
     return true;
   }
 
@@ -1793,8 +1800,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (closingBuffer?.isDirty == true) {
       return false;
     }
+    var historySettled = true;
     if (closingBuffer != null) {
-      await _localHistory.flushBuffer(closingBuffer);
+      historySettled = await _localHistory.flushBuffer(closingBuffer);
       final currentClosingBuffer = state.documentBuffers
           .where((candidate) => candidate.id == closingBuffer.id)
           .firstOrNull;
@@ -1808,9 +1816,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
     }
-    final closedIndex = workspace.openFilePaths.indexOf(path);
+    final closingWorkspace = state.workspace;
+    if (closingWorkspace == null ||
+        closingWorkspace.id != workspace.id ||
+        !closingWorkspace.openFilePaths.contains(path)) {
+      return false;
+    }
+    final closedIndex = closingWorkspace.openFilePaths.indexOf(path);
     final nextOpenFilePaths = [
-      for (final openPath in workspace.openFilePaths)
+      for (final openPath in closingWorkspace.openFilePaths)
         if (openPath != path) openPath,
     ];
     final remainingBuffers = [
@@ -1820,33 +1834,59 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (nextOpenFilePaths.isEmpty) {
       final nextUntitled = remainingBuffers.firstOrNull;
       if (nextUntitled == null) {
-        _clearOpenFileTabs(workspace);
+        _clearOpenFileTabs(closingWorkspace);
+        if (closingBuffer != null) {
+          _localHistory.handleBufferClosed(
+            closingBuffer.id,
+            historySettled: historySettled,
+          );
+        }
       } else {
-        await _activateBuffer(
-          workspace,
+        final closed = await _activateBuffer(
+          closingWorkspace,
           nextUntitled,
           documentBuffers: remainingBuffers,
           openFilePaths: nextOpenFilePaths,
         );
+        if (!closed) return false;
+        if (closingBuffer != null) {
+          _localHistory.handleBufferClosed(
+            closingBuffer.id,
+            historySettled: historySettled,
+          );
+        }
       }
       return true;
     }
-    if (workspace.activeFilePath != path) {
+    if (closingWorkspace.activeFilePath != path) {
       state = state.copyWith(
-        workspace: workspace.copyWith(openFilePaths: nextOpenFilePaths),
+        workspace: closingWorkspace.copyWith(openFilePaths: nextOpenFilePaths),
         documentBuffers: remainingBuffers,
         clearMessage: true,
       );
+      if (closingBuffer != null) {
+        _localHistory.handleBufferClosed(
+          closingBuffer.id,
+          historySettled: historySettled,
+        );
+      }
       return true;
     }
     final nextIndex = closedIndex <= 0
         ? 0
         : math.min(closedIndex - 1, nextOpenFilePaths.length - 1);
-    return _openActiveFile(
+    final closed = await _openActiveFile(
       nextOpenFilePaths[nextIndex],
       openFilePaths: nextOpenFilePaths,
       documentBuffers: remainingBuffers,
     );
+    if (closed && closingBuffer != null) {
+      _localHistory.handleBufferClosed(
+        closingBuffer.id,
+        historySettled: historySettled,
+      );
+    }
+    return closed;
   }
 
   Future<bool> closeDocumentBuffer(
@@ -1887,7 +1927,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (afterProtection != null) _scheduleAutoSave(afterProtection.id);
       return false;
     }
-    await _localHistory.flushBuffer(afterProtection);
+    final historySettled = await _localHistory.flushBuffer(afterProtection);
     final current = state.documentBuffers
         .where((candidate) => candidate.id == bufferId)
         .firstOrNull;
@@ -1921,14 +1961,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = const WorkspaceState();
       _fileMonitor.updateOpenFilePaths(const <String>[]);
       _schedulePersistence();
+      _localHistory.handleBufferClosed(
+        bufferId,
+        historySettled: historySettled,
+      );
       return true;
     }
-    return _activateBuffer(
+    final closed = await _activateBuffer(
       workspace,
       remaining.last,
       documentBuffers: remaining,
       openFilePaths: workspace.openFilePaths,
     );
+    if (closed) {
+      _localHistory.handleBufferClosed(
+        bufferId,
+        historySettled: historySettled,
+      );
+    }
+    return closed;
   }
 
   Future<bool> _activateOpenFileTab(int delta) async {
@@ -1994,6 +2045,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (workspace == null) {
       return false;
     }
+    final workspaceId = workspace.id;
     final buffers = documentBuffers ?? state.documentBuffers;
     final existing = buffers
         .where((buffer) => buffer.filePath == path)
@@ -2015,18 +2067,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();
+    final requestedOpenFilePaths =
+        openFilePaths ?? _openFileTabPaths(workspace, path);
+    final initialOpenPaths = workspace.openFilePaths.toSet();
+    final addedOpenPaths = [
+      for (final requestedPath in requestedOpenFilePaths)
+        if (!initialOpenPaths.contains(requestedPath)) requestedPath,
+    ];
     try {
       final load = await _service.loadTextWithSnapshot(path);
       final nextWorkspace = workspace.copyWith(
         activeFilePath: path,
         activeFileSnapshot: load.snapshot,
-        openFilePaths: openFilePaths ?? _openFileTabPaths(workspace, path),
+        openFilePaths: requestedOpenFilePaths,
       );
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (!_isCurrentActiveDocumentOperation(operationRevision) ||
+          state.workspace?.id != workspaceId) {
         return false;
       }
       final reparsed = await _service.reparseActive(nextWorkspace, load.text);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (!_isCurrentActiveDocumentOperation(operationRevision) ||
+          state.workspace?.id != workspaceId) {
         return false;
       }
       final buffer = _fileBuffer(
@@ -2034,21 +2095,37 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         load,
         mode: _settingsController.state.documentViewMode,
       );
+      final liveBuffers = state.documentBuffers;
+      if (liveBuffers.any(
+        (candidate) =>
+            candidate.id == buffer.id || candidate.filePath == buffer.filePath,
+      )) {
+        return false;
+      }
+      final reconciledBuffers = [...liveBuffers, buffer];
+      final liveOpenPaths = state.workspace?.openFilePaths ?? const <String>[];
+      final reconciledOpenPaths = <String>[
+        ...liveOpenPaths,
+        for (final addedPath in addedOpenPaths)
+          if (!liveOpenPaths.contains(addedPath)) addedPath,
+      ];
+      final publishedWorkspace = reparsed.copyWith(
+        openFilePaths: reconciledOpenPaths,
+      );
       state = state.copyWith(
-        workspace: reparsed,
+        workspace: publishedWorkspace,
         activeText: load.text,
-        preview: _safePreview(reparsed, load.text),
-        documentBuffers: [...buffers, buffer],
+        preview: _safePreview(publishedWorkspace, load.text),
+        documentBuffers: reconciledBuffers,
         activeBufferId: buffer.id,
         clearMessage: true,
       );
       unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
       _fileMonitor.updateOpenFilePaths(
-        [
-          ...buffers,
-          buffer,
-        ].map((candidate) => candidate.filePath).whereType<String>(),
+        reconciledBuffers
+            .map((candidate) => candidate.filePath)
+            .whereType<String>(),
       );
       _resetSaveTracking();
       return true;
@@ -2084,18 +2161,29 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final initialBufferIds = state.documentBuffers
         .map((candidate) => candidate.id)
         .toSet();
+    final initialBuffersById = {
+      for (final candidate in state.documentBuffers) candidate.id: candidate,
+    };
     final requestedBufferIds = documentBuffers
         .map((candidate) => candidate.id)
         .toSet();
     final intentionallyRemovedBufferIds = initialBufferIds.difference(
       requestedBufferIds,
     );
+    final intentionallyAddedBuffers = [
+      for (final candidate in documentBuffers)
+        if (!initialBufferIds.contains(candidate.id)) candidate,
+    ];
     final initialOpenPaths =
         state.workspace?.openFilePaths.toSet() ?? const <String>{};
     final requestedOpenPaths = openFilePaths.toSet();
     final intentionallyRemovedOpenPaths = initialOpenPaths.difference(
       requestedOpenPaths,
     );
+    final intentionallyAddedOpenPaths = [
+      for (final path in openFilePaths)
+        if (!initialOpenPaths.contains(path)) path,
+    ];
     final nextWorkspace = workspace.copyWith(
       activeFilePath: buffer.filePath,
       activeFileSnapshot: buffer.diskSnapshot,
@@ -2132,17 +2220,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         liveBuffer.revision == parsedBuffer.revision &&
         liveBuffer.text == parsedBuffer.text;
     final liveBuffers = state.documentBuffers;
+    for (final removedId in intentionallyRemovedBufferIds) {
+      final before = initialBuffersById[removedId];
+      final live = liveBuffers
+          .where((candidate) => candidate.id == removedId)
+          .firstOrNull;
+      if (before != null && live != null && !identical(before, live)) {
+        return false;
+      }
+    }
     final reconciledBuffers = <DocumentBuffer>[
       for (final candidate in liveBuffers)
         if (!intentionallyRemovedBufferIds.contains(candidate.id)) candidate,
-      for (final requested in documentBuffers)
-        if (!liveBuffers.any((candidate) => candidate.id == requested.id))
-          requested,
+      for (final added in intentionallyAddedBuffers)
+        if (!liveBuffers.any((candidate) => candidate.id == added.id)) added,
     ];
     final reconciledOpenPaths = <String>[
       for (final path in state.workspace?.openFilePaths ?? const <String>[])
         if (!intentionallyRemovedOpenPaths.contains(path)) path,
-      for (final path in openFilePaths)
+      for (final path in intentionallyAddedOpenPaths)
         if (!(state.workspace?.openFilePaths.contains(path) ?? false)) path,
     ];
     final publishedWorkspace = (sourceStayedCurrent ? reparsed : nextWorkspace)

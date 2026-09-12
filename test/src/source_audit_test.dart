@@ -1522,8 +1522,12 @@ void main() {
       contains('BusyMarkSidebarRecordRow<_ClipboardEntryAction>'),
     );
     expect(clipboard, contains('padding: BusyMarkInsets.sidebarList'));
-    expect(clipboard, contains('content: Text('));
-    expect(clipboard, contains('maxLines: 3'));
+    expect(clipboard, contains('content: Column('));
+    expect(clipboard, contains('maxLines: 2'));
+    expect(clipboard, contains("final metadata = '\$status · \${_timestamp"));
+    expect(clipboard, contains('l10n.clipboardOrigin(origin.documentName)'));
+    expect(clipboard, contains('busyMarkLtrIsolateFor(context, originPath)'));
+    expect(clipboard, isNot(contains('tooltip: _clipboardEntryTooltip')));
     expect(
       clipboard,
       isNot(contains('if (preview != null && preview.trim().isNotEmpty)')),

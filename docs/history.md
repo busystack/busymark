@@ -85,9 +85,11 @@ If storage fails, the panel reports the failure and keeps the latest eligible
 source pending in memory for a controlled retry. A newer edit replaces an
 older pending source. The revision is not durable and is not described as
 saved until storage actually succeeds. A document file can still save
-successfully when this separate history write fails; destructive history
-restore operations that require a protective revision remain blocked by such
-a failure.
+successfully when this separate history write fails. Closing its editor does
+not make unresolved work count as settled: controlled retry continues for a
+retryable failure during the application session, and clean shutdown is
+withheld while work remains pending. Destructive history restore operations
+that require a protective revision remain blocked by such a failure.
 
 Revisions are grouped by local calendar date and use the localized time,
 including seconds, as the primary row label. Distinct events such as Saved,
