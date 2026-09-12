@@ -67,7 +67,7 @@ Run the real WebKit and D2 corpus under X11:
 
 ```bash
 xvfb-run -a -s '-screen 0 1280x1024x24' \
-  env WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+  env GDK_BACKEND=x11 LIBGL_ALWAYS_SOFTWARE=1 \
   /usr/bin/python3 -u tools/visualization_smoke.py \
   --assets build/linux/x64/debug/visualization/web \
   --d2 build/linux/x64/debug/d2/linux-x86_64/d2 \
@@ -87,3 +87,11 @@ BUSYMARK_RELEASE_SMOKE=1 \
 The report must contain `"ok": true`; the same directory receives the generated
 PDF and HTML fixtures. The Linux workflow is authoritative for compositor setup,
 X11 and Wayland coverage, the strict Snap run, and required environment flags.
+
+The native host and Python corpus harness disable hardware compositing only for
+their offscreen WebKit views, before realization and after process recovery.
+GTK offscreen windows cannot provide the GL context that accelerated compositing
+requires. Normal startup does not require a WebKit environment override, and
+Flutter and visible API-reference windows retain their normal rendering settings.
+Smoke tests must not globally disable WebKit compositing; `LIBGL_ALWAYS_SOFTWARE`
+is only used to provide Mesa rendering on headless CI displays.

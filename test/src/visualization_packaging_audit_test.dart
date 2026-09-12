@@ -184,6 +184,14 @@ void main() {
       ),
     );
     expect(workflow, contains('GDK_BACKEND=wayland'));
+    expect(workflow, contains('GDK_BACKEND=x11'));
+    expect(
+      workflow,
+      isNot(contains('WEBKIT_DISABLE_COMPOSITING_MODE')),
+      reason:
+          'Native smoke tests must exercise the offscreen view policy '
+          'without globally disabling WebKit compositing.',
+    );
     expect(workflow, contains('snapcore/action-build@v1'));
     expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
     expect(workflow, contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}'));
@@ -208,6 +216,57 @@ void main() {
     expect(smoke, contains('WebKit process termination and recovery'));
     expect(smoke, contains('smoke-responsive-gradient'));
     expect(smoke, contains('Raster snapshot lacked visual variation'));
+  });
+
+  test('only offscreen WebKit views disable hardware compositing', () {
+    final native = File('linux/runner/web_render_host.cc').readAsStringSync();
+    final recreate = native
+        .split('void recreate_render_view(BusyMarkWebRenderHost* self) {')[1]
+        .split('gboolean recreate_render_view_cb(')[0];
+    const policy = 'webkit_settings_set_hardware_acceleration_policy(';
+    final policyIndex = recreate.indexOf(policy);
+
+    expect(policyIndex, greaterThanOrEqualTo(0));
+    expect(
+      policyIndex,
+      greaterThan(recreate.indexOf('configure_web_view(self->web_view);')),
+      reason:
+          'Apply the policy to the final per-view settings on every '
+          'creation, including WebKit process recovery.',
+    );
+    expect(
+      policyIndex,
+      lessThan(recreate.indexOf('gtk_widget_show_all(')),
+      reason:
+          'An offscreen view must not request a GL context before the '
+          'policy is applied.',
+    );
+    expect(
+      recreate,
+      contains(
+        RegExp(
+          r'webkit_settings_set_hardware_acceleration_policy\(\s*'
+          r'webkit_web_view_get_settings\(self->web_view\),\s*'
+          r'WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER\)',
+        ),
+      ),
+    );
+    expect(
+      policy.allMatches(native),
+      hasLength(1),
+      reason: 'Do not change the policy of visible API reference windows.',
+    );
+    expect(native, isNot(contains('WEBKIT_DISABLE_COMPOSITING_MODE')));
+
+    final smoke = File('tools/visualization_smoke.py').readAsStringSync();
+    final createView = smoke
+        .split('def _create_view(')[1]
+        .split('def _serve(')[0];
+    expect(createView, contains('WebKit2.HardwareAccelerationPolicy.NEVER'));
+    expect(
+      createView.indexOf('set_hardware_acceleration_policy('),
+      lessThan(createView.indexOf('view.set_settings(settings)')),
+    );
   });
 
   test(

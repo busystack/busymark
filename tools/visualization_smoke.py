@@ -60,6 +60,11 @@ class WebHarnessSmoke:
     def _create_view(self) -> WebKit2.WebView:
         view = WebKit2.WebView.new_with_context(self.context)
         settings = WebKit2.Settings()
+        # Mirror the native offscreen view policy, including process recovery.
+        # Gtk.OffscreenWindow cannot supply a GL context for compositing.
+        settings.set_hardware_acceleration_policy(
+            WebKit2.HardwareAccelerationPolicy.NEVER
+        )
         settings.set_enable_javascript(True)
         settings.set_enable_html5_local_storage(False)
         settings.set_enable_html5_database(False)
