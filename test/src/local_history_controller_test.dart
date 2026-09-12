@@ -572,6 +572,55 @@ void main() {
     },
   );
 
+  for (final clearAll in [false, true]) {
+    test('failed explicit save cannot recreate history after '
+        '${clearAll ? 'Clear All' : 'Clear Document'}', () async {
+      final timers = <_FakeTimer>[];
+      final memory = MemoryLocalHistoryStore();
+      final store = _BlockingNextCaptureStore(memory);
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final opened = _fileBuffer(
+        'saved-clear-buffer',
+        '/workspace/saved-clear.md',
+        'retained baseline',
+      );
+      await controller.selectDocumentForBuffer(opened);
+      final documentId = controller.documentIdForBuffer(opened.id)!;
+      final saved = opened.edited('saved before clear');
+
+      store.blockNextCapture = true;
+      store.failBlockedCapture = true;
+      final capture = controller.captureSaved(
+        LocalHistoryBufferSnapshot.fromBuffer(saved),
+      );
+      await store.captureStarted.future;
+      final clear = clearAll
+          ? controller.clearAll()
+          : controller.clearDocument(documentId);
+      await Future<void>.delayed(Duration.zero);
+
+      store.releaseCapture.complete();
+      expect(await capture, isTrue);
+      await clear;
+      for (final timer in timers) {
+        timer.fire();
+      }
+      await Future<void>.delayed(Duration.zero);
+
+      final snapshot = await memory.load();
+      expect(snapshot.documents, isEmpty);
+      expect(snapshot.revisions, isEmpty);
+      expect(controller.documentIdForBuffer(opened.id), isNull);
+      expect(controller.pendingSnapshotForBuffer(opened.id), isNull);
+      expect(timers.where((timer) => timer.isActive), isEmpty);
+    });
+  }
+
   test(
     'clearing the displayed comparison closes it without a missing warning',
     () async {

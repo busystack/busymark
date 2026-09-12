@@ -364,20 +364,53 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           _setWarning(LocalHistoryWarningKind.pathChange);
           return;
         }
-        if (!await _completePendingUntitledPromotion(snapshot.bufferId)) {
+        if (!await _completePendingUntitledPromotion(
+          snapshot.bufferId,
+          acceptedHistoryGeneration: historyGeneration,
+          acceptedBufferGeneration: bufferGeneration,
+        )) {
+          return;
+        }
+        if (!_operationIsCurrent(
+          snapshot.bufferId,
+          historyGeneration,
+          bufferGeneration,
+        )) {
           return;
         }
         final pending = _pending[snapshot.bufferId];
         _checkpointTimers.remove(snapshot.bufferId)?.cancel();
         if (pending != null) {
-          await _capturePending(snapshot.bufferId, pending);
+          await _capturePending(
+            snapshot.bufferId,
+            pending,
+            acceptedHistoryGeneration: historyGeneration,
+            acceptedBufferGeneration: bufferGeneration,
+          );
         }
-        await _capture(snapshot, LocalHistoryCaptureReason.baseline);
+        if (!_operationIsCurrent(
+          snapshot.bufferId,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return;
+        }
+        await _capture(
+          snapshot,
+          LocalHistoryCaptureReason.baseline,
+          acceptedHistoryGeneration: historyGeneration,
+          acceptedBufferGeneration: bufferGeneration,
+        );
         return;
       }
       if (adoptedPromotion != null) return;
       if (_documentIdsByBuffer.containsKey(snapshot.bufferId)) return;
-      await _capture(snapshot, LocalHistoryCaptureReason.baseline);
+      await _capture(
+        snapshot,
+        LocalHistoryCaptureReason.baseline,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
+      );
     });
   }
 
@@ -398,7 +431,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         }
         if (!_documentIdsByBuffer.containsKey(current.id) &&
             !(previousSnapshot.untitled && previousSnapshot.text.isEmpty)) {
-          await _capture(previousSnapshot, LocalHistoryCaptureReason.baseline);
+          await _capture(
+            previousSnapshot,
+            LocalHistoryCaptureReason.baseline,
+            acceptedHistoryGeneration: historyGeneration,
+            acceptedBufferGeneration: bufferGeneration,
+          );
         }
         if (!_operationIsCurrent(
           current.id,
@@ -480,7 +518,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       final captured = await _capture(
         snapshot,
         LocalHistoryCaptureReason.saved,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
       );
+      if (!_operationIsCurrent(
+        snapshot.bufferId,
+        historyGeneration,
+        bufferGeneration,
+      )) {
+        return true;
+      }
       if (captured) {
         _acknowledgePending(snapshot.bufferId, snapshot.revision);
       } else {
@@ -498,9 +545,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       _setWarning(LocalHistoryWarningKind.recordingDisabled);
       return false;
     }
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(snapshot.bufferId);
     return _enqueue(
       snapshot.bufferId,
-      () => _capture(snapshot, reason, force: true),
+      () => _capture(
+        snapshot,
+        reason,
+        force: true,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
+      ),
     );
   }
 
@@ -512,9 +567,17 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     LocalHistoryCaptureReason reason,
   ) async {
     if (!policy.recordingEnabled || policy.excludes(snapshot.path)) return true;
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(snapshot.bufferId);
     return _enqueue(
       snapshot.bufferId,
-      () => _capture(snapshot, reason, force: true),
+      () => _capture(
+        snapshot,
+        reason,
+        force: true,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
+      ),
     );
   }
 
@@ -523,6 +586,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     String destinationPath, {
     required bool destinationExisted,
   }) async {
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(source.bufferId);
     final destination = LocalHistoryBufferSnapshot(
       bufferId: source.bufferId,
       displayName: p.basename(destinationPath),
@@ -534,6 +599,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     var promotionCompleted = false;
     var retainedSourcePromotion = false;
     final captured = await _enqueue(source.bufferId, () async {
+      if (!_operationIsCurrent(
+        source.bufferId,
+        historyGeneration,
+        bufferGeneration,
+      )) {
+        return true;
+      }
       // A named-file Save As is a fork. Resolve an earlier untitled-to-source
       // promotion before recording the destination. If storage is still
       // unavailable, detach that source association from the buffer so it can
@@ -544,7 +616,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         if (_sameOptionalPath(source.path, promotion.destinationPath)) {
           promotionCompleted = await _completePendingUntitledPromotion(
             source.bufferId,
+            acceptedHistoryGeneration: historyGeneration,
+            acceptedBufferGeneration: bufferGeneration,
           );
+          if (!_operationIsCurrent(
+            source.bufferId,
+            historyGeneration,
+            bufferGeneration,
+          )) {
+            return true;
+          }
         }
         if (_pendingUntitledPromotions.containsKey(source.bufferId)) {
           _detachPendingUntitledPromotion(source.bufferId);
@@ -564,7 +645,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           pending,
           LocalHistoryCaptureReason.automaticCheckpoint,
           allowDuringPathTransition: true,
+          acceptedHistoryGeneration: historyGeneration,
+          acceptedBufferGeneration: bufferGeneration,
         );
+        if (!_operationIsCurrent(
+          source.bufferId,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return true;
+        }
         if (pendingCaptured) {
           _acknowledgePending(source.bufferId, pending.revision);
         } else {
@@ -589,7 +679,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
             );
         promotionCompleted = await _completePendingUntitledPromotion(
           source.bufferId,
+          acceptedHistoryGeneration: historyGeneration,
+          acceptedBufferGeneration: bufferGeneration,
         );
+        if (!_operationIsCurrent(
+          source.bufferId,
+          historyGeneration,
+          bufferGeneration,
+        )) {
+          return true;
+        }
         if (!promotionCompleted) return false;
       }
 
@@ -600,7 +699,16 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         destination,
         LocalHistoryCaptureReason.saved,
         ignoreBinding: !source.untitled || destinationExisted,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
       );
+      if (!_operationIsCurrent(
+        source.bufferId,
+        historyGeneration,
+        bufferGeneration,
+      )) {
+        return true;
+      }
       if (savedCaptured) {
         _acknowledgePending(destination.bufferId, destination.revision);
       } else {
@@ -608,6 +716,13 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
       return savedCaptured;
     });
+    if (!_operationIsCurrent(
+      source.bufferId,
+      historyGeneration,
+      bufferGeneration,
+    )) {
+      return true;
+    }
     if (captured) {
       final document = state.snapshot.documents
           .where(
@@ -644,9 +759,18 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       revision: 0,
       path: path,
     );
+    final historyGeneration = _historyGeneration;
+    final bufferGeneration = _bufferGeneration(snapshot.bufferId);
     return _enqueue(
       snapshot.bufferId,
-      () => _capture(snapshot, reason, force: force, ignoreBinding: true),
+      () => _capture(
+        snapshot,
+        reason,
+        force: force,
+        ignoreBinding: true,
+        acceptedHistoryGeneration: historyGeneration,
+        acceptedBufferGeneration: bufferGeneration,
+      ),
     );
   }
 

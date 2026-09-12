@@ -1480,8 +1480,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (state.hasUnsavedChanges) {
       return false;
     }
-    final closingBuffers = state.documentBuffers;
+    final closingBuffers = state.documentBuffers.toList(growable: false);
     final historySettled = await _localHistory.flushAll(closingBuffers);
+    final liveBuffers = state.documentBuffers;
+    if (!identical(state.workspace, workspace) ||
+        liveBuffers.length != closingBuffers.length ||
+        liveBuffers.indexed.any(
+          (entry) => !identical(entry.$2, closingBuffers[entry.$1]),
+        )) {
+      return false;
+    }
     _clearOpenFileTabs(workspace);
     for (final buffer in closingBuffers) {
       _localHistory.handleBufferClosed(
@@ -1791,25 +1799,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<bool> closeOpenFileTab(String path) async {
+  Future<bool> closeOpenFileTab(String path) => _closeOpenFileTabNow(path);
+
+  Future<bool> _closeOpenFileTabNow(
+    String path, {
+    DocumentBuffer? discardAuthorization,
+    bool? preflushedHistorySettled,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null || !workspace.openFilePaths.contains(path)) {
       return false;
     }
     final closingBuffer = state.bufferForPath(path);
-    if (closingBuffer?.isDirty == true) {
+    if (discardAuthorization != null &&
+        !identical(closingBuffer, discardAuthorization)) {
       return false;
     }
-    var historySettled = true;
-    if (closingBuffer != null) {
+    if (closingBuffer?.isDirty == true && discardAuthorization == null) {
+      return false;
+    }
+    var historySettled = preflushedHistorySettled ?? true;
+    if (closingBuffer != null && preflushedHistorySettled == null) {
       historySettled = await _localHistory.flushBuffer(closingBuffer);
       final currentClosingBuffer = state.documentBuffers
           .where((candidate) => candidate.id == closingBuffer.id)
           .firstOrNull;
-      if (currentClosingBuffer == null ||
-          currentClosingBuffer.filePath != closingBuffer.filePath ||
-          currentClosingBuffer.revision != closingBuffer.revision ||
-          currentClosingBuffer.isDirty) {
+      if (!identical(currentClosingBuffer, closingBuffer)) {
         if (currentClosingBuffer != null) {
           _scheduleAutoSave(currentClosingBuffer.id);
         }
@@ -1939,15 +1954,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     if (current.filePath case final path?) {
-      if (current.isDirty) {
-        state = state.copyWith(
-          documentBuffers: _replaceBuffer(
-            state.documentBuffers,
-            current.copyWith(dirty: false),
-          ),
-        );
-      }
-      return closeOpenFileTab(path);
+      return _closeOpenFileTabNow(
+        path,
+        discardAuthorization: current.isDirty ? current : null,
+        preflushedHistorySettled: historySettled,
+      );
     }
     final workspace = state.workspace;
     if (workspace == null) {

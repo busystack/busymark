@@ -123,8 +123,10 @@ newer matches. Search completion clears its loading state on success, scope
 change, cancellation, and read failure. Explicit clear invalidates affected
 queued work at the point it was accepted, before store access, and closes a
 comparison it owns. A queued automatic checkpoint cannot become current merely
-because it begins executing after Clear. Retention loss instead reports the
-existing missing-revision state.
+because it begins executing after Clear. Explicit-save and Save As wrappers
+revalidate the same acceptance generation after each capture or identity
+prerequisite, so a stale failure cannot reinstall a pending snapshot or retry
+timer. Retention loss instead reports the existing missing-revision state.
 
 `SourceComparisonInput` identifies immutable sources by ID, version, label,
 and text. The comparison uses unique patience anchors plus bounded local LCS
@@ -167,8 +169,12 @@ loaded document to the live list instead of an earlier captured list. Only
 documents that were genuine additions at activation start may be added during
 reconciliation, so tabs closed while parsing stay closed. A close that removes
 a document is aborted if that document's source or editor state changes during
-the final activation await. Refresh reschedules eligible autosaves on both
-success and failure because it cancels its incoming timers at the boundary.
+the final activation await. Discard authorization is carried to that removal
+without temporarily marking unsaved text clean. Close All revalidates the exact
+workspace and buffer instances after its history flush, so a new edit, tab, or
+replacement workspace aborts the stale close. Refresh reschedules eligible
+autosaves on both success and failure because it cancels its incoming timers at
+the boundary.
 
 ## Verification workflow
 
