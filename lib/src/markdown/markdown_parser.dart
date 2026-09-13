@@ -411,7 +411,10 @@ class MarkdownParser {
     }
 
     for (final block in _walkBlocks(document.blocks)) {
-      if (block.kind != BusyBlockKind.table) {
+      // Table containers and their rows share the same block kind. Rows carry
+      // the `header` attribute, so do not validate them as independent tables.
+      if (block.kind != BusyBlockKind.table ||
+          block.attributes.containsKey('header')) {
         continue;
       }
       final header = block.children.firstOrNull;

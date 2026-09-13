@@ -140,5 +140,28 @@ title: Product guide
       DiagnosticSeverity.hint,
     );
     expect(byCode, contains('markdown.table.empty-header'));
+    expect(byCode['markdown.table.empty-header']?.sourceSpan?.startLine, 9);
+  });
+
+  test('does not report populated table headers as empty', () {
+    final parsed = const MarkdownParser().parse(
+      filePath: 'table.md',
+      source: '''# Formatting
+
+| Formatting | Markdown | Result |
+| --- | --- | --- |
+| Bold text | `**text**` | **text** |
+| Italic text | `*text*` | *text* |
+''',
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+
+    expect(
+      parsed.diagnostics.where(
+        (diagnostic) => diagnostic.code == 'markdown.table.empty-header',
+      ),
+      isEmpty,
+    );
   });
 }
