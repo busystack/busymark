@@ -467,9 +467,27 @@ class MarkdownParser {
       // the AST and the lossless source scanner. Preserve top-level heading
       // spans independently: title and outline projection must not disappear
       // merely because unrelated content falls back to protected source.
+      // Verbatim blocks (notably Writerside XML) also retain their own ranges;
+      // a missing range must not turn an XML fragment into the entire topic.
       final headingSourceChunks = sourceChunks
           .where(_isScannedHeadingSource)
           .toList(growable: false);
+      final verbatimChunks = <String, List<_ScannedBlockSource>>{};
+      for (final chunk in modeledSourceChunks) {
+        verbatimChunks
+            .putIfAbsent(chunk.rawSource.trimRight(), () => [])
+            .add(chunk);
+      }
+      final verbatimOccurrences = <String, int>{};
+      _ScannedBlockSource? nextVerbatimChunk(BusyBlock block) {
+        final raw = block.rawSource?.trimRight();
+        final matches = verbatimChunks[raw];
+        if (raw == null || matches == null) return null;
+        final index = verbatimOccurrences[raw] ?? 0;
+        verbatimOccurrences[raw] = index + 1;
+        return index < matches.length ? matches[index] : null;
+      }
+
       var headingSourceIndex = 0;
       final contentWithMetadata = [
         for (final block in contentBlocks)
@@ -478,7 +496,7 @@ class MarkdownParser {
             block.kind == BusyBlockKind.heading &&
                     headingSourceIndex < headingSourceChunks.length
                 ? headingSourceChunks[headingSourceIndex++]
-                : null,
+                : nextVerbatimChunk(block),
           ),
       ];
       if (sourceChunks.any((chunk) => chunk.protectEdits)) {

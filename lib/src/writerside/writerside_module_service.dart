@@ -1095,7 +1095,8 @@ class WritersideModuleService {
         } else if (anchor != null && anchor.isNotEmpty) {
           final decodedAnchor = _decodeMarkdownAnchor(anchor);
           final anchors = target.elementIds.map((item) => item.id).toSet();
-          if (!anchors.contains(decodedAnchor)) {
+          if (!anchors.contains(decodedAnchor) &&
+              target.document.contentById(decodedAnchor) == null) {
             diagnostics.add(
               Diagnostic(
                 code: 'markdown.link.unresolved-anchor',

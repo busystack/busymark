@@ -450,6 +450,10 @@ class _ResolveState {
     final target = anchor.isEmpty
         ? null
         : targetTopic?.document.contentById(anchor)?.first;
+    // Alias lookup must link to the ID that the renderer actually emits.
+    final resolvedAnchor = target is WritersideMarkdownBlockNode
+        ? target.block.attributes['id'] ?? anchor
+        : anchor;
     final instance = context.instance;
     var available =
         targetModule != null &&
@@ -615,8 +619,8 @@ class _ResolveState {
         ignore: false,
       ),
       'resolved-destination': path.isEmpty
-          ? '#$anchor'
-          : '${targetTopic?.filePath ?? path}${anchor.isEmpty ? '' : '#$anchor'}',
+          ? '#$resolvedAnchor'
+          : '${targetTopic?.filePath ?? path}${resolvedAnchor.isEmpty ? '' : '#$resolvedAnchor'}',
       'resolved-available': '$available',
       if (summary != null) 'summary': summary.trim(),
       if (cardSummary != null) 'card-summary': cardSummary,

@@ -1,0 +1,4 @@
+<instance-profile id="guide" name="Compatibility" start-page="main.md">
+  <toc-element topic="main.md"/>
+  <toc-element topic="workflow.md"/>
+</instance-profile>

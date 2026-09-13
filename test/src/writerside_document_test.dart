@@ -18,6 +18,117 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final protectedSource in [false, true]) {
+    test(
+      'complex Markdown retains semantic XML spans (protected=$protectedSource)',
+      () async {
+        final file = File(
+          'test/fixtures/writerside/markdown_export_compatibility/topics/main.md',
+        );
+        final source =
+            '${await file.readAsString()}${protectedSource ? '\n> [nested]: https://example.com\n> Nested definition.\n' : ''}';
+        final markdown = const MarkdownParser().parse(
+          filePath: file.absolute.path,
+          source: source,
+          mode: MarkdownMode.writersideMarkdown,
+          validateLocalReferences: false,
+        );
+        expect(
+          markdown.busyDocument.blocks.any((b) => b.isSourceOnly),
+          protectedSource,
+        );
+        final document = const WritersideDocumentParser().parseMarkdown(
+          filePath: markdown.filePath,
+          source: source,
+          markdown: markdown.busyDocument,
+        );
+        expect(document.nodes.whereType<WritersideRawNode>(), isEmpty);
+        final structure = document.elements.singleWhere(
+          (e) => e.name == 'show-structure',
+        );
+        expect(structure.span.startLine, 1);
+        expect(structure.rawSource, '<show-structure/>');
+        final notes = document.elements.where((e) => e.name == 'note').toList();
+        expect(notes, hasLength(2));
+        const note = '<note><p>Repeated semantic note.</p></note>';
+        final positions = RegExp(
+          RegExp.escape(note),
+        ).allMatches(source).map((m) => m.start).toList();
+        // The first spelling is fenced code, not a semantic note.
+        expect(notes.map((e) => e.span.startOffset), positions.skip(1));
+        for (final node in notes) {
+          expect(
+            source.substring(node.span.startOffset, node.span.endOffset),
+            note,
+          );
+        }
+        expect(
+          const WritersideDocumentSerializer().serialize(document),
+          source,
+        );
+      },
+    );
+  }
+
+  test('Writerside heading aliases prefer exact IDs and reject ambiguity', () {
+    const source = '''# Links
+
+## Read.file
+
+## Explicit {id="read-file"}
+
+## Same.file
+
+## Same/file
+
+## Only.file {id="custom"}
+''';
+    final markdown = const MarkdownParser().parse(
+      filePath: '/tmp/aliases.md',
+      source: source,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    final document = const WritersideDocumentParser().parseMarkdown(
+      filePath: markdown.filePath,
+      source: source,
+      markdown: markdown.busyDocument,
+    );
+    expect(document.contentById('read-file')!.first.plainText, 'Explicit');
+    expect(document.contentById('same-file'), isNull);
+    expect(document.contentById('only-file'), isNull);
+    expect(document.contentById('custom')!.first.plainText, 'Only.file');
+  });
+
+  test('malformed semantic XML is still reported after a scanner mismatch', () {
+    const source = '''# Invalid
+
+1. First
+
+   Continuation.
+2. Second
+
+<note><p>Unclosed paragraph</note>
+''';
+    final markdown = const MarkdownParser().parse(
+      filePath: '/tmp/invalid.md',
+      source: source,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    final document = const WritersideDocumentParser().parseMarkdown(
+      filePath: markdown.filePath,
+      source: source,
+      markdown: markdown.busyDocument,
+    );
+    expect(
+      document.nodes.whereType<WritersideRawNode>().map(
+        (node) => node.rawSource,
+      ),
+      contains(contains('<note><p>Unclosed paragraph</note>')),
+    );
+  });
+
   test(
     'lossless XML nodes preserve exact duplicate ranges and generic markup',
     () {
