@@ -27,6 +27,8 @@ NESTED_BODY_SENTINEL stays linked.
 DEEP_BODY_SENTINEL stays present.
 ''';
 const _cover = PdfTitlePageData(title: 'COVER_ONLY_SENTINEL');
+const _chineseTitle = '中文技术文档编辑发布指南帮助团队编写清晰完整可靠的产品使用说明和参考资料';
+const _cjkFont = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';
 
 void main() {
   final compiler = Platform.environment['BUSYMARK_TYPST_PATH'];
@@ -83,6 +85,32 @@ void main() {
     );
     expect(result.warnings, isEmpty);
     return path;
+  }
+
+  Future<void> useCjkFont() async {
+    // Keep the normal bundled fonts and add a real CJK fallback for these
+    // layout regressions. Missing-glyph boxes cannot verify text retention.
+    final bundle = Directory(p.join(root.path, 'cjk-bundle'));
+    final executable = p.join(bundle.path, 'libexec', 'busymark', 'typst');
+    final fonts = Directory(p.join(bundle.path, 'share', 'busymark', 'fonts'));
+    await Directory(p.dirname(executable)).create(recursive: true);
+    await fonts.create(recursive: true);
+    await Link(executable).create(p.absolute(compiler!));
+    await Link(p.join(fonts.path, 'bundled')).create(
+      p.join(
+        p.dirname(p.dirname(p.dirname(p.absolute(compiler)))),
+        'share',
+        'busymark',
+        'fonts',
+      ),
+    );
+    await Link(p.join(fonts.path, p.basename(_cjkFont))).create(_cjkFont);
+    service = MarkdownPdfExportService(
+      compilerLocator: TypstCompilerLocator(
+        environment: {'BUSYMARK_TYPST_PATH': executable},
+      ),
+      templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+    );
   }
 
   for (final writerside in [false, true]) {
@@ -487,6 +515,78 @@ void main() {
     },
     skip: skip,
   );
+
+  for (final font in ExportBodyTypography.values) {
+    test(
+      'Chinese cover without spaces wraps onto two lines in ${font.name}',
+      () async {
+        await useCjkFont();
+        final options = PdfExportOptions(
+          includeTitlePage: true,
+          bodyTypography: font,
+          pageNumbers: PdfPageNumberPosition.off,
+        );
+        final path = await export(
+          'chinese-cover-${font.name}',
+          options,
+          source: '---\nlang: zh\n---\nBody.',
+          cover: const PdfTitlePageData(title: _chineseTitle),
+        );
+        final pages = await _boxes(path);
+        expect(pages, hasLength(2));
+        final words = _words(pages.first).toList();
+        expect(words.map((word) => word.innerText).join(), _chineseTitle);
+        expect(
+          words.map((word) => word.getAttribute('yMin')).toSet(),
+          hasLength(2),
+        );
+        _expectInsideContent(pages.first, options.geometry);
+      },
+      skip: File(_cjkFont).existsSync() ? skip : 'Requires fonts-noto-cjk.',
+    );
+  }
+
+  for (final separator in ['\u00a0', '\u2060']) {
+    test(
+      'CJK non-breaking sequence U+${separator.codeUnitAt(0).toRadixString(16)} fails without replacing the PDF',
+      () async {
+        await useCjkFont();
+        const options = PdfExportOptions(includeTitlePage: true);
+        final destination = File(await export('nonbreaking-cjk', options));
+        final original = await destination.readAsBytes();
+        await expectLater(
+          service.export(
+            MarkdownPdfExportRequest(
+              source: '---\nlang: zh\n---\nBody.',
+              filePath: p.join(root.path, 'source.md'),
+              workspaceRoot: root.path,
+              destinationPath: destination.path,
+              overwrite: true,
+              options: options,
+              titlePage: PdfTitlePageData(
+                title: _chineseTitle.split('').join(separator),
+              ),
+            ),
+          ),
+          throwsA(
+            isA<MarkdownPdfExportException>()
+                .having(
+                  (e) => e.code,
+                  'code',
+                  MarkdownPdfFailureCode.compilerFailed,
+                )
+                .having(
+                  (e) => e.detail,
+                  'fit error',
+                  contains('title page does not fit'),
+                ),
+          ),
+        );
+        expect(await destination.readAsBytes(), original);
+      },
+      skip: File(_cjkFont).existsSync() ? skip : 'Requires fonts-noto-cjk.',
+    );
+  }
 
   for (final narrow in [false, true]) {
     for (final field in [

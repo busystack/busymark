@@ -457,31 +457,47 @@
   let width = (geometry.widthPt - margins.left - margins.right) * 1pt
   let fit-error = "The PDF title page does not fit the selected page size and margins. Shorten the title-page text or choose a larger content area."
   let cover-text(value) = context {
-    // A constrained paragraph frame hides overflowing glyphs. Build lines at
-    // spaces and measure each candidate with infinite width in its actual text
-    // style. Explicit breaks also prevent Unicode no-break rules from joining
-    // individually fitting words into an overflowing line. Non-breaking spaces
-    // stay inside words, which must fit as a whole.
-    let lines = ()
-    for source-line in value.split("\n") {
-      let line = ""
-      for word in source-line.split(" ") {
-        let candidate = if line == "" { word } else { line + " " + word }
-        if measure(text(candidate), width: auto).width <= width {
-          line = candidate
-        } else {
-          assert(measure(text(word), width: auto).width <= width,
-            message: fit-error)
-          lines.push(line)
-          line = word
+    if measure(text(value), width: auto).width > width {
+      assert(measure(text(value), width: width).height <= content-height,
+        message: fit-error)
+      // At zero width, Typst puts each Unicode-unbreakable span on its own
+      // line. Probe two adjacent visible graphemes with 1pt top edges and give
+      // all other text zero-height metrics: a height of 2pt means a legal break
+      // separates them. Keep the complete string in every probe so punctuation,
+      // combining marks, non-breaking spaces, and word joiners retain context.
+      // Only the probe's height identifies breaks; it never proves width fits.
+      let start = 0
+      let offset = 0
+      let previous = none
+      for cluster in value.clusters() {
+        let next = offset + cluster.len()
+        if not cluster.contains(regex("^[\\s\\p{Default_Ignorable_Code_Point}]+$")) {
+          if previous != none {
+            let probe = {
+              set text(top-edge: 0pt, bottom-edge: 0pt, hyphenate: false)
+              set par(leading: 0pt, spacing: 0pt, linebreaks: "simple")
+              text(value.slice(0, previous))
+              text(top-edge: 1pt, value.slice(previous, next))
+              text(value.slice(next))
+            }
+            if measure(probe, width: 0pt).height > 1.5pt {
+              // Native soft breaks trim trailing whitespace. Check the span
+              // unconstrained, using the actual cover font, weight, and size.
+              let span = value.slice(start, offset).trim(at: end)
+              assert(measure(text(span), width: auto).width <= width,
+                message: fit-error)
+              start = offset
+            }
+          }
+          previous = offset
         }
+        offset = next
       }
-      lines.push(line)
+      assert(measure(text(value.slice(start)), width: auto).width <= width,
+        message: fit-error)
     }
-    for (index, line) in lines.enumerate() {
-      if index > 0 { linebreak() }
-      text(line)
-    }
+    // Keep the original text intact for native shaping and Unicode wrapping.
+    text(value)
   }
   let cover-content = {
     set text(font: typography.bodyFont, size: body-size,

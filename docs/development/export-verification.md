@@ -78,6 +78,12 @@ keep text bounds inside the content area; a clear fit failure must preserve the
 previous PDF byte for byte. Title and subtitle cases also check their larger
 rendered sizes. A constrained Typst paragraph frame width is not evidence that
 its glyphs fit.
+The CJK regressions additionally require `fonts-noto-cjk` (installed in CI).
+They add that font to an isolated test compiler bundle, require a Chinese title
+without spaces to succeed on exactly two lines with complete text and valid
+bounds, and require overwide sequences joined by non-breaking spaces or word
+joiners to fail without replacing the destination. These are layout tests;
+they do not extend the product bundle's font coverage.
 
 The title page counts as physical page 1 but never emits running text or its
 visible number. Subsequent pages obey configured header/footer placement and
