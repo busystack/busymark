@@ -90,6 +90,8 @@ void main() {
       'title',
       'viewMode',
       'canRefresh',
+      'canExportPdf',
+      'canExportHtml',
       'documentControlsVisible',
       'searchActive',
       'searchVisible',
@@ -214,7 +216,9 @@ void main() {
     expect(service, contains('syntaxReference'));
     expect(service, contains('reportIssue'));
     expect(service, contains('fullScreen'));
+    expect(service, contains("'export' => HeaderBarAction.export"));
     expect(app, contains('menu: l10n.mainMenu'));
+    expect(app, contains('export: label(BusyMarkCommandIds.export)'));
     expect(app, contains('settings: label(BusyMarkCommandIds.settings)'));
     expect(
       app,
@@ -244,6 +248,7 @@ void main() {
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(workspace, contains('case HeaderBarAction.syntaxReference:'));
     expect(workspace, contains('case HeaderBarAction.reportIssue:'));
+    expect(workspace, contains('case HeaderBarAction.export:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(settings, contains('case HeaderBarAction.syntaxReference:'));
     expect(settings, contains('case HeaderBarAction.reportIssue:'));
@@ -259,8 +264,12 @@ void main() {
       mainMenu,
       contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
     );
+    expect(
+      mainMenu,
+      contains('label: command(BusyMarkCommandIds.export).label(context)'),
+    );
+    expect(mainMenu, contains('enabled: canExport'));
     for (final removed in [
-      'BusyMarkCommandIds.export',
       'generateOrUpdateMarkdownToc',
       'BusyMarkCommandIds.clipboardHistory',
       'BusyMarkCommandIds.localHistory',
@@ -273,15 +282,16 @@ void main() {
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
     expect(native, isNot(contains('g_menu_item_new_submenu')));
-    expect(native, isNot(contains('localized_label_or(labels, "export", "")')));
+    expect(native, contains('localized_label_or(labels, "export", "")'));
     expect(native, contains('"header.keyboard-shortcuts"'));
-    expect(native, isNot(contains('"header.export"')));
+    expect(native, contains('"header.export"'));
     expect(native, isNot(contains('"header.export-pdf"')));
     expect(native, isNot(contains('"header.export-html"')));
     expect(native, contains('"header.full-screen"'));
     expect(native, contains('full_screen_gaction_activated_cb'));
     expect(native, contains('configuration.full_screen'));
-    expect(native, isNot(contains('configuration.can_export_pdf')));
+    expect(native, contains('configuration.can_export_pdf'));
+    expect(native, contains('configuration.can_export_html'));
     expect(native, isNot(contains('"header.clipboard-history"')));
     expect(native, isNot(contains('"header.local-history"')));
     expect(native, isNot(contains('"header.find-local-history"')));

@@ -6,9 +6,10 @@ are not required.
 
 ## Export
 
-Open a Writerside module and select **Topics → Actions → Export**, use the command
-palette, or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>. BusyMark first
-asks you to save or discard unsaved project changes, then lets you select:
+Open a Writerside module and select **Main menu → Export** or
+**Topics → Actions → Export**, use the command palette, or press
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>. BusyMark first asks you to save or
+discard unsaved project changes, then lets you select:
 
 - one non-library Writerside instance;
 - a generated table of contents with heading depth 1–6 and optional heading numbering;

@@ -272,12 +272,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.fullScreen), findsOneWidget);
     expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    final exportMenuItem = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> &&
+          widget.label == l10n.export,
+    );
+    expect(exportMenuItem, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkPopupMenuItem<Object?>>(exportMenuItem).enabled,
+      isFalse,
+    );
+    expect(find.text(BusyMarkAppShortcutLabels.export), findsOneWidget);
     for (final documentCommand in <String>{
       l10n.clipboardHistory,
       l10n.localHistory,
       l10n.findLocalHistoryEllipsis,
       l10n.generateOrUpdateMarkdownToc,
-      l10n.export,
     }) {
       expect(find.text(documentCommand), findsNothing);
     }
@@ -2469,6 +2479,28 @@ void main() {
       (node) => node.topicFileName == 'target.md',
     );
     expect(targetNode.children.single.topicFileName, 'loose.md');
+
+    await openPopup(find.byTooltip(l10n.mainMenu));
+    final mainMenuExportItem = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> &&
+          widget.label == l10n.export,
+    );
+    expect(mainMenuExportItem, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkPopupMenuItem<Object?>>(mainMenuExportItem).enabled,
+      isTrue,
+    );
+    await tester.tap(mainMenuExportItem);
+    for (var index = 0; index < 20; index++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkModalEditorSurface).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
 
     await openPopup(find.byTooltip(l10n.tocActions));
     final exportItem = find.byWidgetPredicate(

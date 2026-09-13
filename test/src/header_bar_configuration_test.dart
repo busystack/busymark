@@ -94,6 +94,8 @@ void main() {
         'searchQuery': '',
         'textDirection': 'ltr',
         'canRefresh': false,
+        'canExportPdf': false,
+        'canExportHtml': false,
         'documentControlsVisible': false,
         'searchActive': false,
         'searchVisible': false,
@@ -437,11 +439,14 @@ void main() {
       _labels.toMap(),
       containsPair('syntaxReferenceGtkAccelerator', 'F1'),
     );
+    expect(_labels.toMap(), containsPair('export', 'Export'));
+    expect(_labels.toMap(), containsPair('exportShortcut', 'Ctrl+Shift+E'));
+    expect(
+      _labels.toMap(),
+      containsPair('exportGtkAccelerator', '<Primary><Shift>e'),
+    );
     expect(_labels.toMap(), isNot(contains('markdownAndHtml')));
     for (final removedLabel in <String>{
-      'export',
-      'exportShortcut',
-      'exportGtkAccelerator',
       'clipboardHistory',
       'localHistory',
       'findLocalHistory',
@@ -503,6 +508,9 @@ const _labels = HeaderBarLabels(
   back: 'Back',
   backShortcut: 'Alt+Left',
   save: 'Save',
+  export: 'Export',
+  exportShortcut: 'Ctrl+Shift+E',
+  exportGtkAccelerator: '<Primary><Shift>e',
   fullScreen: 'Full Screen',
   fullScreenShortcut: 'F11',
   fullScreenGtkAccelerator: 'F11',

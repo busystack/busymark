@@ -779,6 +779,8 @@ class WorkspaceScreen extends ConsumerWidget {
           viewMode: _headerBarViewMode(settings.documentViewMode),
           searchQuery: searchState.query,
           canRefresh: true,
+          canExportPdf: canExportPdf,
+          canExportHtml: canExportHtml,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
@@ -972,6 +974,7 @@ class WorkspaceScreen extends ConsumerWidget {
                             },
                           ),
                         BusyMarkMainMenuButton(
+                          canExport: canExportPdf || canExportHtml,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -1109,6 +1112,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         execute(BusyMarkCommandIds.save);
+      case HeaderBarAction.export:
+        execute(BusyMarkCommandIds.export);
       case HeaderBarAction.fullScreen:
         execute(BusyMarkCommandIds.fullScreen);
       case HeaderBarAction.settings:
@@ -1158,6 +1163,8 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.export:
+        unawaited(exportWorkspace(context, ref));
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
