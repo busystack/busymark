@@ -135,6 +135,9 @@ class WritersidePdfExportService {
           workspaceRoot: moduleRoot,
           destinationPath: request.destinationPath,
           options: request.options,
+          titlePage: request.options.includeTitlePage
+              ? request.titlePage ?? PdfTitlePageData.forInstance(instance)
+              : null,
           overwrite: request.overwrite,
           mode: MarkdownMode.writersideMarkdown,
           document: document,

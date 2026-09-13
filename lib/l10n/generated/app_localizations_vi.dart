@@ -11,6 +11,41 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Trang tiêu đề';
+
+  @override
+  String get pdfIncludeTitlePage => 'Bao gồm trang tiêu đề';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Trang này không có đầu trang, chân trang hoặc số trang hiển thị.';
+
+  @override
+  String get pdfTitlePageTitle => 'Tiêu đề';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Phụ đề';
+
+  @override
+  String get pdfTitlePageAuthor => 'Tác giả';
+
+  @override
+  String get pdfTitlePageOrganization => 'Tổ chức';
+
+  @override
+  String get pdfTitlePageVersion => 'Phiên bản';
+
+  @override
+  String get pdfTitlePageDate => 'Ngày';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'Nhập tiêu đề cho trang tiêu đề.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Bắt đầu trên trang riêng và có thể kéo dài nhiều trang.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

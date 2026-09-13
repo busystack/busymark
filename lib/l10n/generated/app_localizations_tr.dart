@@ -11,6 +11,42 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Başlık sayfası';
+
+  @override
+  String get pdfIncludeTitlePage => 'Başlık sayfası ekle';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Bu sayfada üstbilgi, altbilgi veya görünür sayfa numarası bulunmaz.';
+
+  @override
+  String get pdfTitlePageTitle => 'Başlık';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Alt başlık';
+
+  @override
+  String get pdfTitlePageAuthor => 'Yazar';
+
+  @override
+  String get pdfTitlePageOrganization => 'Kuruluş';
+
+  @override
+  String get pdfTitlePageVersion => 'Sürüm';
+
+  @override
+  String get pdfTitlePageDate => 'Tarih';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Başlık sayfası için bir başlık girin.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Ayrı bir sayfada başlar ve birden fazla sayfa sürebilir.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

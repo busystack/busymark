@@ -11,6 +11,40 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'صفحة العنوان';
+
+  @override
+  String get pdfIncludeTitlePage => 'تضمين صفحة العنوان';
+
+  @override
+  String get pdfTitlePageNote =>
+      'لا تحتوي هذه الصفحة على رأس أو تذييل أو رقم صفحة ظاهر.';
+
+  @override
+  String get pdfTitlePageTitle => 'العنوان';
+
+  @override
+  String get pdfTitlePageSubtitle => 'العنوان الفرعي';
+
+  @override
+  String get pdfTitlePageAuthor => 'المؤلف';
+
+  @override
+  String get pdfTitlePageOrganization => 'المؤسسة';
+
+  @override
+  String get pdfTitlePageVersion => 'الإصدار';
+
+  @override
+  String get pdfTitlePageDate => 'التاريخ';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'أدخل عنوانًا لصفحة العنوان.';
+
+  @override
+  String get pdfTocSectionNote => 'يبدأ في صفحة منفصلة وقد يمتد إلى عدة صفحات.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

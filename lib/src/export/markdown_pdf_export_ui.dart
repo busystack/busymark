@@ -15,6 +15,8 @@ import '../platform/linux_header_bar_service.dart';
 import '../math/math_providers.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_controller.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/markdown_parser.dart';
 import '../visualization/visualization_providers.dart';
 import 'markdown_visualization_export.dart';
 import 'export_options_editor.dart';
@@ -62,8 +64,12 @@ Future<void> exportWorkspaceToPdf(
   BuildContext context,
   WidgetRef ref, {
   ExportOptionsSelection? configuredSelection,
+  WorkspaceState? exportSnapshot,
+  BusyDocument? documentSnapshot,
 }) {
-  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final WorkspaceState snapshot =
+      exportSnapshot ?? ref.read(workspaceControllerProvider);
+  final workspace = snapshot.workspace;
   if (workspace?.kind == WorkspaceKind.writersideModule) {
     return exportWritersideModuleToPdf(
       context,
@@ -75,6 +81,8 @@ Future<void> exportWorkspaceToPdf(
     context,
     ref,
     configuredSelection: configuredSelection,
+    exportSnapshot: exportSnapshot,
+    documentSnapshot: documentSnapshot,
   );
 }
 
@@ -82,16 +90,27 @@ Future<void> exportActiveMarkdownToPdf(
   BuildContext context,
   WidgetRef ref, {
   ExportOptionsSelection? configuredSelection,
+  WorkspaceState? exportSnapshot,
+  BusyDocument? documentSnapshot,
 }) async {
-  final snapshot = ref.read(workspaceControllerProvider);
+  final WorkspaceState snapshot =
+      exportSnapshot ?? ref.read(workspaceControllerProvider);
   if (!canExportActiveMarkdown(snapshot)) {
     return;
   }
   final workspace = snapshot.workspace!;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final document =
+      documentSnapshot ?? await prepareMarkdownPdfSnapshot(snapshot);
+  if (!context.mounted) return;
   final selected =
       configuredSelection ??
-      await showExportOptions(context, ref, canExportHtml: false);
+      await showExportOptions(
+        context,
+        ref,
+        canExportHtml: false,
+        pdfTitlePageDefaults: PdfTitlePageData.fromDocument(document),
+      );
   if (selected == null || selected.pdf == null || !context.mounted) return;
   final options = selected.pdf!;
 
@@ -147,6 +166,8 @@ Future<void> exportActiveMarkdownToPdf(
     destinationPath: destinationPath,
     options: options,
     overwrite: overwrite,
+    document: document,
+    titlePage: selected.titlePage,
   );
   final outcome = await showBusyMarkModalDialog<_PdfExportOutcome>(
     context,
@@ -185,6 +206,18 @@ Future<void> exportActiveMarkdownToPdf(
       ),
     ),
   );
+}
+
+/// One immutable snapshot supplies both the cover defaults and exported body.
+Future<BusyDocument> prepareMarkdownPdfSnapshot(WorkspaceState snapshot) async {
+  final workspace = snapshot.workspace!;
+  return (await const MarkdownParser().parseAsync(
+    source: snapshot.activeText,
+    filePath: workspace.activeFilePath ?? workspace.markdown?.filePath ?? '',
+    workspaceRoot: workspace.rootPath.isEmpty ? null : workspace.rootPath,
+    mode: workspace.markdown!.mode,
+    validateLocalReferences: false,
+  )).busyDocument;
 }
 
 String? _initialDirectory(Workspace workspace, String? activePath) {

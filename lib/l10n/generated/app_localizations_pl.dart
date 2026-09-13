@@ -11,6 +11,41 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Strona tytułowa';
+
+  @override
+  String get pdfIncludeTitlePage => 'Dołącz stronę tytułową';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Ta strona nie zawiera nagłówka, stopki ani widocznego numeru strony.';
+
+  @override
+  String get pdfTitlePageTitle => 'Tytuł';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Podtytuł';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autor';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organizacja';
+
+  @override
+  String get pdfTitlePageVersion => 'Wersja';
+
+  @override
+  String get pdfTitlePageDate => 'Data';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'Wpisz tytuł strony tytułowej.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Zaczyna się na osobnej stronie i może zajmować wiele stron.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

@@ -11,6 +11,41 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Title page';
+
+  @override
+  String get pdfIncludeTitlePage => 'Include title page';
+
+  @override
+  String get pdfTitlePageNote =>
+      'This page has no running header, footer, or visible page number.';
+
+  @override
+  String get pdfTitlePageTitle => 'Title';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Subtitle';
+
+  @override
+  String get pdfTitlePageAuthor => 'Author';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organization';
+
+  @override
+  String get pdfTitlePageVersion => 'Version';
+
+  @override
+  String get pdfTitlePageDate => 'Date';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'Enter a title for the title page.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Starts on a separate page and may span multiple pages.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

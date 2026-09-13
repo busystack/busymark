@@ -11,6 +11,10 @@ export paths. User-facing settings and limitations are documented in
   shared by the export dialogs.
 - `lib/src/export/export_options_editor.dart` provides the Markdown and
   Writerside settings editors.
+- `lib/src/export/pdf_title_page.dart` carries immutable, export-owned plain
+  text. Only `PdfExportOptions.includeTitlePage` is persisted. Markdown defaults
+  and body content share an editor snapshot; Writerside defaults follow the
+  selected instance. HTML and shared content options have no cover setting.
 - `lib/src/export/typst_payload_builder.dart`,
   `lib/src/export/markdown_export_mapper.dart`, and `assets/export/markdown.typ`
   implement the native PDF model and layout.
@@ -36,6 +40,53 @@ The tests cover option parsing and persistence, dialog behavior, output bounds,
 metadata, TOC hierarchy and numbering, CSS validation, embedded and external
 assets, math and diagram rendering, Writerside resolution, cancellation, and
 preservation of existing output after failure.
+
+## PDF front matter and actual rendering
+
+Set the bundled compiler path explicitly; skipped rendering tests do **not**
+verify pagination. Poppler’s `pdftotext`, `pdftohtml`, `pdfinfo`, and `pdffonts`
+provide text, link destinations, geometry, and font inspection:
+
+```bash
+export BUSYMARK_TYPST_PATH="$PWD/build/linux/x64/release/bundle/libexec/busymark/typst"
+export BUSYMARK_D2_PATH="$PWD/build/linux/x64/release/bundle/libexec/busymark/d2"
+flutter test --no-pub test/src/pdf_title_page_test.dart \
+  test/src/pdf_title_page_ui_test.dart test/src/pdf_front_matter_render_test.dart \
+  test/src/pdf_export_options_render_test.dart
+flutter test --no-pub
+```
+
+`pdf_title_page_test.dart` covers default-disabled serialization, copying,
+metadata precedence, plain-text payloads, clearing fields, validation, and
+separation from global settings. `pdf_title_page_ui_test.dart` exercises reset,
+cancel, format switching, instance changes, metadata editing, and both direct
+and unified export routes. Markdown defaults must reflect unsaved editor text,
+and later edits must not change an already captured export request.
+
+`pdf_front_matter_render_test.dart` compiles real Markdown and Writerside PDFs.
+For a one-page body and one-page TOC, title-page/TOC combinations off/off,
+on/off, off/on, and on/on must yield 1, 2, 2, and 3 pages. Body paragraph
+sentinels, not duplicated heading text, locate actual body pages. A 115-heading
+fixture requires a multipage native outline and checks every heading link and
+displayed page reference against its body paragraph’s physical page. Additional
+checks cover nested/depth-limited and numbered headings, excluded Writerside
+headings, bookmarks without a printed TOC, both body fonts, portrait/landscape,
+custom margins, Unicode, multiline metadata, and unchanged source files.
+
+The title page counts as physical page 1 but never emits running text or its
+visible number. Subsequent pages obey configured header/footer placement and
+the physical-first-page preference. Logical numbering stays enabled so the TOC
+retains destination numbers even with visible numbers off. Oversized cover
+content must fail clearly; failure and cancellation must preserve an existing
+destination. Keep the existing anchor, list, module-resolution, diagram, and
+HTML regression suites enabled.
+
+For visual review, optionally set `BUSYMARK_PDF_ARTIFACTS` to a fresh temporary
+directory while running the front-matter tests, then render representative
+cover, TOC, and body pages with `pdftoppm -png`. Inspect wrapping, margins,
+clipping, overlap, empty optional fields, blank pages, and typography isolation.
+Record actual pass/failure/skip counts separately, including the compiler used;
+a passing model or template-string test is not a substitute for rendered output.
 
 ## Release product-path smoke
 

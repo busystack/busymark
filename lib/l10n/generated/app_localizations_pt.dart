@@ -11,6 +11,42 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Página de título';
+
+  @override
+  String get pdfIncludeTitlePage => 'Incluir página de título';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Esta página não tem cabeçalho, rodapé nem número de página visível.';
+
+  @override
+  String get pdfTitlePageTitle => 'Título';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Subtítulo';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autor';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organização';
+
+  @override
+  String get pdfTitlePageVersion => 'Versão';
+
+  @override
+  String get pdfTitlePageDate => 'Data';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Introduza um título para a página de título.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Começa numa página separada e pode ocupar várias páginas.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override
@@ -4257,6 +4293,42 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get pdfTitlePage => 'Página de título';
+
+  @override
+  String get pdfIncludeTitlePage => 'Incluir página de título';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Esta página não tem cabeçalho, rodapé nem número de página visível.';
+
+  @override
+  String get pdfTitlePageTitle => 'Título';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Subtítulo';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autor';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organização';
+
+  @override
+  String get pdfTitlePageVersion => 'Versão';
+
+  @override
+  String get pdfTitlePageDate => 'Data';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Insira um título para a página de título.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Começa em uma página separada e pode ocupar várias páginas.';
 
   @override
   String get appTitle => 'BusyMark';

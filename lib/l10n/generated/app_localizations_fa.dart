@@ -11,6 +11,41 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'صفحهٔ عنوان';
+
+  @override
+  String get pdfIncludeTitlePage => 'افزودن صفحهٔ عنوان';
+
+  @override
+  String get pdfTitlePageNote =>
+      'این صفحه سربرگ، پابرگ یا شمارهٔ صفحهٔ قابل مشاهده ندارد.';
+
+  @override
+  String get pdfTitlePageTitle => 'عنوان';
+
+  @override
+  String get pdfTitlePageSubtitle => 'زیرعنوان';
+
+  @override
+  String get pdfTitlePageAuthor => 'نویسنده';
+
+  @override
+  String get pdfTitlePageOrganization => 'سازمان';
+
+  @override
+  String get pdfTitlePageVersion => 'نسخه';
+
+  @override
+  String get pdfTitlePageDate => 'تاریخ';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'عنوانی برای صفحهٔ عنوان وارد کنید.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'از صفحه‌ای جداگانه شروع می‌شود و ممکن است چند صفحه ادامه یابد.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

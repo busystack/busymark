@@ -125,6 +125,7 @@ Future<void> exportWritersideModuleToPdf(
     destinationPath: destination,
     overwrite: overwrite,
     options: selected.pdf!,
+    titlePage: selected.titlePage,
   );
   final outcome = await showBusyMarkModalDialog<_WritersidePdfOutcome>(
     context,

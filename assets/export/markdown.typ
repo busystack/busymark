@@ -15,7 +15,11 @@
 #let geometry = options.page
 #let margins = geometry.marginsPt
 #let content-height = (geometry.heightPt - margins.top - margins.bottom) * 1pt
-#let running-visible() = options.showHeaderFooterOnFirstPage or counter(page).get().first() > 1
+#let has-title-page = options.at("includeTitlePage", default: false)
+#let running-visible() = {
+  let first = counter(page).get().first() == 1
+  (not first or not has-title-page) and (not first or options.showHeaderFooterOnFirstPage)
+}
 #let number-position = if options.pageNumbers == "bottomLeft" { left } else if options.pageNumbers == "bottomRight" { right } else { center }
 #let footer-content(font-size) = {
   set text(size: font-size, top-edge: "ascender", bottom-edge: "descender")
@@ -447,9 +451,45 @@
   }
 }
 
+#let render-title-page() = context {
+  let cover = data.titlePage
+  let body-size = typography.bodySizePt * 1pt
+  let width = (geometry.widthPt - margins.left - margins.right) * 1pt
+  let cover-content = {
+    set text(font: typography.bodyFont, size: body-size,
+      top-edge: "ascender", bottom-edge: "descender")
+    set par(leading: 0.4em, spacing: 0pt)
+    let rows = (text(size: 2.4 * body-size, weight: "bold",
+      fill: rgb(options.accentColor), cover.title),)
+    let subtitle = cover.at("subtitle", default: "")
+    if subtitle != "" { rows.push(text(size: 1.3 * body-size, subtitle)) }
+    let details = ()
+    for key in ("author", "organization", "version", "date") {
+      let value = cover.at(key, default: "")
+      if value != "" { details.push(text(value)) }
+    }
+    if details.len() > 0 {
+      rows.push(stack(spacing: 0.5em, ..details))
+    }
+    align(center, stack(spacing: 1.5em, ..rows))
+  }
+  let natural = measure(cover-content, width: width)
+  assert(natural.height <= content-height and natural.width <= width,
+    message: "The PDF title page does not fit the selected page size and margins. Shorten the title-page text or choose a larger content area.")
+  block(width: width, height: content-height, breakable: false, above: 0pt, below: 0pt,
+    align(center + horizon, cover-content))
+}
+
+// Breaks stay in the top-level flow. A native outline may span many pages;
+// neither the cover nor the outline replaces or changes source headings.
+#if has-title-page {
+  render-title-page()
+  pagebreak(weak: true)
+}
+
 #if options.content.includeToc {
   outline(depth: options.content.tocDepth)
-  v(1em)
+  pagebreak(weak: true)
 }
 
 #for block-data in data.blocks { render-block(block-data) }

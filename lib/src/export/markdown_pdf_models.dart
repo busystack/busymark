@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 
 import '../markdown/markdown_model.dart';
 import 'export_options.dart';
+import 'pdf_title_page.dart';
 import '../markdown/busymark_document.dart';
 
 export 'export_options.dart';
+export 'pdf_title_page.dart';
 
 enum MarkdownPdfWarningCode {
   remoteImageSkipped,
@@ -39,6 +41,7 @@ class MarkdownPdfExportRequest {
     required this.overwrite,
     this.mode = MarkdownMode.commonMark,
     this.document,
+    this.titlePage,
   });
 
   final String source;
@@ -52,6 +55,9 @@ class MarkdownPdfExportRequest {
   /// A pre-parsed semantic document. When present, PDF export consumes this
   /// tree directly and [source] is not reparsed.
   final BusyDocument? document;
+
+  /// Resolved export-specific text, or null to use this request's snapshot.
+  final PdfTitlePageData? titlePage;
 }
 
 @immutable

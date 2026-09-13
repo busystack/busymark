@@ -8,12 +8,21 @@ class TypstPayloadBuilder {
     required MarkdownExportDocument document,
     required PdfExportOptions options,
     required Map<String, String> assets,
+    PdfTitlePageData? titlePage,
   }) {
     options.validateOrThrow();
+    if (options.includeTitlePage &&
+        (titlePage == null || titlePage.validate().isNotEmpty)) {
+      throw const ExportOptionsException([
+        ExportOptionIssue('titlePage.title'),
+      ]);
+    }
     return {
       'schemaVersion': 2,
       'metadata': document.metadata.toJson(),
+      if (options.includeTitlePage) 'titlePage': titlePage!.toJson(),
       'options': {
+        'includeTitlePage': options.includeTitlePage,
         'page': options.geometry.toJson(),
         'typography': {
           'bodyFont': options.bodyFont,

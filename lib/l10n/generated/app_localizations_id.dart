@@ -11,6 +11,41 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Halaman judul';
+
+  @override
+  String get pdfIncludeTitlePage => 'Sertakan halaman judul';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Halaman ini tidak memiliki header, footer, atau nomor halaman yang terlihat.';
+
+  @override
+  String get pdfTitlePageTitle => 'Judul';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Subjudul';
+
+  @override
+  String get pdfTitlePageAuthor => 'Penulis';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organisasi';
+
+  @override
+  String get pdfTitlePageVersion => 'Versi';
+
+  @override
+  String get pdfTitlePageDate => 'Tanggal';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'Masukkan judul untuk halaman judul.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Dimulai pada halaman terpisah dan dapat mencakup beberapa halaman.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

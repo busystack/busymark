@@ -1,0 +1,9 @@
+<topic id="body" title="Original heading">
+    <p>BODY_START_SENTINEL is only in the document body.</p>
+    <chapter id="nested" title="Nested heading">
+        <p>NESTED_BODY_SENTINEL stays linked.</p>
+        <chapter id="deep" title="Deep heading">
+            <p>DEEP_BODY_SENTINEL stays present.</p>
+        </chapter>
+    </chapter>
+</topic>

@@ -1258,6 +1258,9 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
 ];
 
 const _sharedEnglishMatches = <String>{
+  // Standard field labels also used verbatim in French and German.
+  'pdfTitlePageVersion',
+  'pdfTitlePageDate',
   'appTitle',
   'aboutLicenseName',
   'markdown',

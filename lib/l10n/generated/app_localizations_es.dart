@@ -11,6 +11,42 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Portada';
+
+  @override
+  String get pdfIncludeTitlePage => 'Incluir portada';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Esta página no tiene encabezado, pie de página ni número de página visible.';
+
+  @override
+  String get pdfTitlePageTitle => 'Título';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Subtítulo';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autor';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organización';
+
+  @override
+  String get pdfTitlePageVersion => 'Versión';
+
+  @override
+  String get pdfTitlePageDate => 'Fecha';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Introduzca un título para la portada.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Comienza en una página independiente y puede ocupar varias páginas.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

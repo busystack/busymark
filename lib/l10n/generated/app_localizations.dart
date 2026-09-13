@@ -139,6 +139,72 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// PDF-specific title-page settings group.
+  ///
+  /// In en, this message translates to:
+  /// **'Title page'**
+  String get pdfTitlePage;
+
+  /// Toggle for a generated PDF title page, disabled by default.
+  ///
+  /// In en, this message translates to:
+  /// **'Include title page'**
+  String get pdfIncludeTitlePage;
+
+  /// Explains that a PDF title page always suppresses running text and its visible number.
+  ///
+  /// In en, this message translates to:
+  /// **'This page has no running header, footer, or visible page number.'**
+  String get pdfTitlePageNote;
+
+  /// Required plain-text title for the current PDF export's title page.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get pdfTitlePageTitle;
+
+  /// Optional plain-text title-page subtitle; may contain multiple lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle'**
+  String get pdfTitlePageSubtitle;
+
+  /// Optional author display text on the current PDF title page.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get pdfTitlePageAuthor;
+
+  /// Optional organization display text on the current PDF title page.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get pdfTitlePageOrganization;
+
+  /// Optional free-form version display text, not the BusyMark application version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get pdfTitlePageVersion;
+
+  /// Optional free-form date display text; no particular date format is required.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get pdfTitlePageDate;
+
+  /// Validation message when the enabled PDF title page has an empty title.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for the title page.'**
+  String get pdfTitlePageTitleRequired;
+
+  /// PDF-only explanation that a native table of contents occupies its own section.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts on a separate page and may span multiple pages.'**
+  String get pdfTocSectionNote;
+
   /// Application name.
   ///
   /// In en, this message translates to:

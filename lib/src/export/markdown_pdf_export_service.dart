@@ -84,6 +84,15 @@ class MarkdownPdfExportService {
             validateLocalReferences: false,
           )).busyDocument;
       token.throwIfCancelled();
+      final titlePage = request.options.includeTitlePage
+          ? request.titlePage ?? PdfTitlePageData.fromDocument(busyDocument)
+          : null;
+      if (titlePage != null && titlePage.validate().isNotEmpty) {
+        throw const MarkdownPdfExportException(
+          MarkdownPdfFailureCode.compilerFailed,
+          detail: 'The PDF title page requires a non-empty title.',
+        );
+      }
       final visualizationPreparation = visualizationRenderer == null
           ? const MarkdownVisualizationExportPreparation(
               blockOverrides: {},
@@ -125,6 +134,7 @@ class MarkdownPdfExportService {
         document: document,
         options: request.options,
         assets: stagedAssets.assets,
+        titlePage: titlePage,
       );
       await Future.wait([
         File(

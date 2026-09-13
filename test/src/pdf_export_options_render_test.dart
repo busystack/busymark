@@ -250,10 +250,18 @@ ${List.filled(140, 'A paragraph of readable content to exercise later pages.\n')
           if (profile.value.content.includeToc) {
             expect(
               pages.first.split('Main').skip(1).join('Main'),
-              matches(r'Child[^\n]*1'),
+              matches(r'Child[^\n]*2'),
               reason:
                   'Native outline retains destination page numbers even with hidden first-page footers.',
             );
+          }
+          final bodyPage = pages.indexWhere(
+            (page) => page.contains('A paragraph of readable content'),
+          );
+          expect(bodyPage, profile.value.content.includeToc ? 1 : 0);
+          if (profile.value.content.includeToc) {
+            expect(pages.first, isNot(contains('void main()')));
+            expect(pages.first, isNot(contains('A paragraph')));
           }
           expect(text.stdout, contains('void main()'));
           if (profile.value.content.numberHeadings) {

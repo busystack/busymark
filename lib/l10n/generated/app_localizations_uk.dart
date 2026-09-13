@@ -11,6 +11,42 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Титульна сторінка';
+
+  @override
+  String get pdfIncludeTitlePage => 'Додати титульну сторінку';
+
+  @override
+  String get pdfTitlePageNote =>
+      'На цій сторінці немає колонтитулів і видимого номера сторінки.';
+
+  @override
+  String get pdfTitlePageTitle => 'Заголовок';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Підзаголовок';
+
+  @override
+  String get pdfTitlePageAuthor => 'Автор';
+
+  @override
+  String get pdfTitlePageOrganization => 'Організація';
+
+  @override
+  String get pdfTitlePageVersion => 'Версія';
+
+  @override
+  String get pdfTitlePageDate => 'Дата';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Введіть заголовок титульної сторінки.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Починається з окремої сторінки й може займати кілька сторінок.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

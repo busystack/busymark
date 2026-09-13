@@ -11,6 +11,39 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'タイトルページ';
+
+  @override
+  String get pdfIncludeTitlePage => 'タイトルページを含める';
+
+  @override
+  String get pdfTitlePageNote => 'このページにはヘッダー、フッター、ページ番号は表示されません。';
+
+  @override
+  String get pdfTitlePageTitle => 'タイトル';
+
+  @override
+  String get pdfTitlePageSubtitle => 'サブタイトル';
+
+  @override
+  String get pdfTitlePageAuthor => '著者';
+
+  @override
+  String get pdfTitlePageOrganization => '組織';
+
+  @override
+  String get pdfTitlePageVersion => 'バージョン';
+
+  @override
+  String get pdfTitlePageDate => '日付';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'タイトルページのタイトルを入力してください。';
+
+  @override
+  String get pdfTocSectionNote => '別のページから始まり、複数ページにわたる場合があります。';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

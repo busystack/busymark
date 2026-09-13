@@ -9,14 +9,21 @@ import '../platform/linux_header_bar_service.dart';
 import '../writerside/writerside_model.dart';
 import 'export_options.dart';
 import 'html_export_styles.dart';
+import 'pdf_title_page.dart';
 
 enum ExportFormat { pdf, html }
 
 class ExportOptionsSelection {
-  const ExportOptionsSelection({this.pdf, this.html, this.instance});
+  const ExportOptionsSelection({
+    this.pdf,
+    this.html,
+    this.instance,
+    this.titlePage,
+  });
   final PdfExportOptions? pdf;
   final HtmlExportOptions? html;
   final WritersideInstance? instance;
+  final PdfTitlePageData? titlePage;
 }
 
 Future<ExportOptionsSelection?> showExportOptions(
@@ -27,6 +34,7 @@ Future<ExportOptionsSelection?> showExportOptions(
   bool canExportHtml = true,
   List<WritersideInstance> instances = const [],
   String? workspaceRoot,
+  PdfTitlePageData? pdfTitlePageDefaults,
 }) async {
   assert(canExportPdf || canExportHtml);
   final controller = ref.read(appSettingsControllerProvider.notifier);
@@ -45,6 +53,7 @@ Future<ExportOptionsSelection?> showExportOptions(
       canExportPdf: canExportPdf,
       canExportHtml: canExportHtml,
       instances: instances,
+      pdfTitlePageDefaults: pdfTitlePageDefaults,
       instanceId: workspaceRoot == null
           ? null
           : settings.selectedWritersideInstanceId(workspaceRoot),
@@ -76,6 +85,7 @@ class ExportOptionsDialog extends StatefulWidget {
     this.canExportHtml = true,
     this.instances = const [],
     this.instanceId,
+    this.pdfTitlePageDefaults,
   }) : assert(canExportPdf || canExportHtml);
   final PdfExportOptions pdf;
   final HtmlExportOptions html;
@@ -84,6 +94,7 @@ class ExportOptionsDialog extends StatefulWidget {
   final bool canExportHtml;
   final List<WritersideInstance> instances;
   final String? instanceId;
+  final PdfTitlePageData? pdfTitlePageDefaults;
   @override
   State<ExportOptionsDialog> createState() => _ExportOptionsDialogState();
 }
@@ -98,12 +109,30 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
   var _revision = 0;
   var _saving = false;
   List<ExportOptionIssue> _fileErrors = [];
+  final _titlePageEdits = <String, String>{};
+  PdfTitlePageData? get _titlePage {
+    final defaults = _instance == null
+        ? widget.pdfTitlePageDefaults
+        : PdfTitlePageData.forInstance(_instance!);
+    if (defaults == null) return null;
+    return defaults.copyWith(
+      title: _titlePageEdits['title'],
+      subtitle: _titlePageEdits['subtitle'],
+      author: _titlePageEdits['author'],
+      organization: _titlePageEdits['organization'],
+      version: _titlePageEdits['version'],
+      date: _titlePageEdits['date'],
+    );
+  }
+
   List<ExportOptionIssue> get _issues => [
     ...switch (_format) {
       ExportFormat.pdf => _pdf.validate(),
       ExportFormat.html => _html.validate(),
     },
     ..._fileErrors,
+    if (_format == ExportFormat.pdf && _pdf.includeTitlePage)
+      ...?_titlePage?.validate(),
   ];
 
   ExportFormat _availableInitialFormat() {
@@ -122,6 +151,7 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
       pdf: _format == ExportFormat.pdf ? _pdf : null,
       html: _format == ExportFormat.html ? _html : null,
       instance: _instance,
+      titlePage: _format == ExportFormat.pdf ? _titlePage : null,
     );
     setState(() => _saving = true);
     try {
@@ -181,6 +211,7 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
             : () => setState(() {
                 if (_format == ExportFormat.pdf) {
                   _pdf = const PdfExportOptions();
+                  _titlePageEdits.clear();
                 } else {
                   _html = const HtmlExportOptions();
                 }
@@ -202,6 +233,9 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
           key: ValueKey((_format, _revision)),
           value: _pdf,
           instance: _instanceRow(context),
+          titlePageFields: _titlePage == null
+              ? null
+              : _titlePageFields(context),
           onChanged: (value) => setState(() => _pdf = value),
         )
       else
@@ -217,6 +251,35 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
     ],
   );
 
+  Widget _titlePageFields(BuildContext context) {
+    final l = context.l10n;
+    final values = _titlePage!.toJson();
+    return Column(
+      children: [
+        for (final (field, label) in [
+          ('title', l.pdfTitlePageTitle),
+          ('subtitle', l.pdfTitlePageSubtitle),
+          ('author', l.pdfTitlePageAuthor),
+          ('organization', l.pdfTitlePageOrganization),
+          ('version', l.pdfTitlePageVersion),
+          ('date', l.pdfTitlePageDate),
+        ])
+          BusyMarkGroupedTextEntry(
+            key: ValueKey(('pdf-title-page', field, _revision, _instance?.id)),
+            label: label,
+            initialValue: values[field] ?? '',
+            maxLines: field == 'title' || field == 'subtitle' ? 4 : 2,
+            keyboardType: TextInputType.multiline,
+            errorText: field == 'title' && _titlePage!.validate().isNotEmpty
+                ? l.pdfTitlePageTitleRequired
+                : null,
+            enabled: !_saving,
+            onChanged: (text) => setState(() => _titlePageEdits[field] = text),
+          ),
+      ],
+    );
+  }
+
   Widget? _instanceRow(BuildContext context) => _instance == null
       ? null
       : BusyMarkComboRow<WritersideInstance>(
@@ -231,6 +294,7 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
 String exportOptionError(BuildContext context, ExportOptionIssue issue) {
   final l = context.l10n;
   if (issue.field == 'pageGeometry') return l.exportInvalidGeometry;
+  if (issue.field == 'titlePage.title') return l.pdfTitlePageTitleRequired;
   if (issue.field == 'accentColor') return l.exportInvalidColor;
   if (issue.field.startsWith('customCss')) return l.exportInvalidCss;
   final name = switch (issue.field) {
@@ -255,10 +319,12 @@ class ExportContentOptionsEditor extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.instance,
+    this.tocSubtitle,
   });
   final ExportContentOptions value;
   final ValueChanged<ExportContentOptions> onChanged;
   final Widget? instance;
+  final String? tocSubtitle;
   @override
   Widget build(BuildContext context) => BusyMarkGroupedList(
     title: context.l10n.writersidePdfContent,
@@ -267,6 +333,7 @@ class ExportContentOptionsEditor extends StatelessWidget {
       if (instance != null) instance!,
       BusyMarkSwitchRow(
         title: context.l10n.exportToc,
+        subtitle: tocSubtitle,
         value: value.includeToc,
         onChanged: (v) => onChanged(value.copyWith(includeToc: v)),
       ),
@@ -293,10 +360,12 @@ class PdfExportOptionsEditor extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.instance,
+    this.titlePageFields,
   });
   final PdfExportOptions value;
   final ValueChanged<PdfExportOptions> onChanged;
   final Widget? instance;
+  final Widget? titlePageFields;
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -309,7 +378,18 @@ class PdfExportOptionsEditor extends StatelessWidget {
           value: o.content,
           onChanged: (v) => onChanged(o.copyWith(content: v)),
           instance: instance,
+          tocSubtitle: l.pdfTocSectionNote,
         ),
+        _group(l.pdfTitlePage, [
+          BusyMarkSwitchRow(
+            key: const ValueKey('pdf-include-title-page'),
+            title: l.pdfIncludeTitlePage,
+            subtitle: l.pdfTitlePageNote,
+            value: o.includeTitlePage,
+            onChanged: (v) => onChanged(o.copyWith(includeTitlePage: v)),
+          ),
+          if (o.includeTitlePage && titlePageFields != null) titlePageFields!,
+        ]),
         _group(l.writersidePdfPage, [
           BusyMarkComboRow<PdfPageSize>(
             title: l.pdfPageSize,
