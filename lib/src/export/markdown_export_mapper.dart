@@ -49,7 +49,7 @@ class MarkdownExportMapper {
       currentVariant = variant;
       final override = blockOverrides[block.id];
       if (override != null) {
-        result.add(override);
+        result.add(_withAnchor(override, block));
         index++;
         continue;
       }
@@ -86,15 +86,7 @@ class MarkdownExportMapper {
       }
       final mapped = _mapBlock(block, blockOverrides);
       if (mapped != null) {
-        result.add(
-          mapped.copyWith(
-            attributes: {
-              ...mapped.attributes,
-              if (block.attributes['pdf-anchor'] case final anchor?)
-                'anchor': anchor,
-            },
-          ),
-        );
+        result.add(_withAnchor(mapped, block));
         if (block.kind == BusyBlockKind.heading ||
             block.kind == BusyBlockKind.paragraph) {
           result.addAll(_mapBlocks(block.children, blockOverrides));
@@ -104,6 +96,16 @@ class MarkdownExportMapper {
     }
     return List.unmodifiable(result);
   }
+
+  MarkdownExportBlock _withAnchor(
+    MarkdownExportBlock mapped,
+    BusyBlock source,
+  ) => mapped.copyWith(
+    attributes: {
+      ...mapped.attributes,
+      if (source.attributes['pdf-anchor'] case final anchor?) 'anchor': anchor,
+    },
+  );
 
   MarkdownExportBlock _mapListItem(
     BusyBlock block,
@@ -115,6 +117,7 @@ class MarkdownExportMapper {
       children: _mapBlocks(block.children, blockOverrides),
       attributes: {
         if (block.attributes['task'] case final task?) 'task': task == 'true',
+        if (block.attributes['pdf-anchor'] case final anchor?) 'anchor': anchor,
       },
     );
   }

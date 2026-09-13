@@ -4,12 +4,62 @@ import 'package:busymark/src/export/markdown_export_document.dart';
 import 'package:busymark/src/export/markdown_export_mapper.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/typst_payload_builder.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const parser = MarkdownParser();
   const mapper = MarkdownExportMapper();
+
+  test('list items and visualization replacements retain source anchors', () {
+    const source = BusyDocument(
+      filePath: '/workspace/guide.md',
+      mode: MarkdownMode.gfm,
+      blocks: [
+        BusyBlock(
+          id: 'task',
+          kind: BusyBlockKind.taskListItem,
+          attributes: {'task': 'true', 'pdf-anchor': 'task-anchor'},
+        ),
+        BusyBlock(
+          id: 'diagram',
+          kind: BusyBlockKind.codeBlock,
+          attributes: {'language': 'mermaid', 'pdf-anchor': 'diagram-anchor'},
+        ),
+      ],
+    );
+    for (final replace in [false, true]) {
+      final result = mapper.map(
+        source,
+        blockOverrides: {
+          if (replace)
+            'diagram': const MarkdownExportBlock(
+              kind: MarkdownExportBlockKind.visualization,
+              attributes: {'asset': 'generated-assets/diagram.svg'},
+            ),
+        },
+      );
+      expect(result.blocks.first.children.single.attributes, {
+        'task': true,
+        'anchor': 'task-anchor',
+      });
+      expect(result.blocks.last.attributes['anchor'], 'diagram-anchor');
+      expect(
+        result.blocks.last.kind,
+        replace
+            ? MarkdownExportBlockKind.visualization
+            : MarkdownExportBlockKind.code,
+      );
+      if (replace) {
+        expect(
+          result.blocks.last.attributes['asset'],
+          'generated-assets/diagram.svg',
+        );
+      }
+    }
+  });
 
   test('maps Markdown semantics into renderer-neutral export blocks', () {
     final parsed = parser.parse(

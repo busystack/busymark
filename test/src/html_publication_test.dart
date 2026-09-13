@@ -49,6 +49,62 @@ void main() {
     overwrite: overwrite,
     options: options,
   );
+  test('single-file local video has a downloadable fallback', () async {
+    await module(
+      'module',
+      'module',
+      '<instance-profile id="guide" name="Guide" start-page="Start.topic"><toc-element topic="Start.topic"/></instance-profile>',
+    );
+    await put(
+      'module/topics/Start.topic',
+      '<topic id="Start" title="Video"><video src="clip.mp4" title="Local clip"/></topic>',
+    );
+    await put(
+      'module/images/clip.mp4',
+      '\u0000\u0000\u0000\u0018ftypmp42\u0000\u0000\u0000\u0000mp42',
+    );
+    final result = await site(
+      options: const HtmlExportOptions(packaging: HtmlPackaging.singleFile),
+    );
+    final doc = html.parse(await File(result.entryPointPath).readAsString());
+    final video = doc.querySelector('video')!;
+    final fallback = video.querySelector('a')!;
+    expect(video.attributes['src'], startsWith('data:video/mp4;base64,'));
+    expect(fallback.attributes['href'], video.attributes['src']);
+    expect(fallback.attributes['download'], 'clip.mp4');
+    expect(result.warnings, isEmpty);
+  });
+
+  test('Writerside list styles stay distinct across consecutive lists', () async {
+    await module(
+      'module',
+      'module',
+      '<instance-profile id="guide" name="Guide" start-page="Start.topic"><toc-element topic="Start.topic"/></instance-profile>',
+    );
+    await put('module/topics/Start.topic', '''<topic id="Start" title="Lists">
+      <list type="alpha-lower"><li>Alpha one</li><li>Alpha two</li></list>
+      <list type="decimal" start="3"><li>Decimal</li></list>
+      <list type="none"><li>Unmarked</li></list>
+      <list type="bullet"><li>Bullet</li></list>
+      <list type="checkbox"><li checked="true">Checked</li></list>
+    </topic>''');
+    final result = await site();
+    final doc = html.parse(await File(result.entryPointPath).readAsString());
+    final lists = doc.querySelectorAll('article > ol, article > ul');
+    expect(lists.map((e) => e.localName), ['ol', 'ol', 'ul', 'ul', 'ul']);
+    expect(lists.first.attributes['type'], 'a');
+    expect(lists.first.children, hasLength(2));
+    expect(lists[1].attributes['start'], '3');
+    expect(lists[1].attributes['type'], isNull);
+    final hiddenClass = lists[2].classes.single;
+    expect(
+      doc.querySelector('style')!.text,
+      contains('.$hiddenClass{list-style-type:none;}'),
+    );
+    expect(lists[3].classes, isEmpty);
+    expect(lists[4].querySelector('input[checked]'), isNotNull);
+  });
+
   test(
     'Writerside shares HTML appearance without changing TOC status or source',
     () async {

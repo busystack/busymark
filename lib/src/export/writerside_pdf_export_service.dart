@@ -211,54 +211,69 @@ class WritersidePdfExportService {
     Map<String, WritersideModule> modulesByOrigin,
     WritersidePdfCancellationToken token,
   ) async {
-    final selected = <({WritersideTopic topic, bool hidden})>[];
+    final selected =
+        <({WritersideModule module, WritersideTopic topic, bool hidden})>[];
     final selectedIndices = <String, int>{};
+    final startTopic = instance.startPage == null
+        ? null
+        : module.topicByReference(instance.startPage!);
+    bool? startHidden;
 
-    void addReference(String? reference, {required bool hidden}) {
+    void addReference(
+      String? reference,
+      WritersideModule owner, {
+      required bool hidden,
+    }) {
       if (reference == null) {
         return;
       }
-      final topic = module.topicByReference(reference);
-      if (topic == null) return;
+      final topic = owner.topicByReference(reference);
+      if (topic == null) {
+        throw WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'Missing TOC topic: $reference (${owner.rootPath}).',
+        );
+      }
       final existingIndex = selectedIndices[topic.filePath];
       if (existingIndex == null) {
         selectedIndices[topic.filePath] = selected.length;
-        selected.add((topic: topic, hidden: hidden));
+        selected.add((module: owner, topic: topic, hidden: hidden));
       } else if (selected[existingIndex].hidden && !hidden) {
-        selected[existingIndex] = (topic: topic, hidden: false);
+        selected[existingIndex] = (module: owner, topic: topic, hidden: false);
       }
     }
 
-    void addNode(TocNode node) {
+    void addNode(TocNode node, WritersideModule inherited) {
+      final owner = node.origin == null
+          ? inherited
+          : modulesByOrigin[node.origin];
+      if (owner == null) {
+        throw WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'Unknown TOC module origin: ${node.origin}.',
+        );
+      }
+      if (startTopic != null &&
+          node.topicReference != null &&
+          owner.topicByReference(node.topicReference!)?.filePath ==
+              startTopic.filePath) {
+        startHidden = (startHidden ?? true) && node.hidden;
+      }
       if (!node.workInProgress) {
-        addReference(node.topicReference, hidden: node.hidden);
+        addReference(node.topicReference, owner, hidden: node.hidden);
       }
       for (final child in node.children) {
-        addNode(child);
+        addNode(child, owner);
       }
     }
 
     for (final root in instance.navigationTocRoots) {
-      addNode(root);
+      addNode(root, module);
     }
-    final startTopic = instance.startPage == null
-        ? null
-        : module.topicByReference(instance.startPage!);
     if (startTopic != null) {
-      final startNodes = instance.navigationTocRoots
-          .expand((root) => root.flatten())
-          .where(
-            (node) =>
-                node.topicReference != null &&
-                module.topicByReference(node.topicReference!)?.filePath ==
-                    startTopic.filePath,
-          )
-          .toList(growable: false);
-      final startHidden =
-          startNodes.isNotEmpty && startNodes.every((node) => node.hidden);
       final existingIndex = selectedIndices[startTopic.filePath];
       final start = existingIndex == null
-          ? (topic: startTopic, hidden: startHidden)
+          ? (module: module, topic: startTopic, hidden: startHidden ?? false)
           : selected.removeAt(existingIndex);
       selected.insert(0, start);
       selectedIndices
@@ -271,7 +286,7 @@ class WritersidePdfExportService {
     }
     if (selected.isEmpty) {
       for (final reference in instance.topicFileSet) {
-        addReference(reference, hidden: false);
+        addReference(reference, module, hidden: false);
       }
     }
     if (selected.length > maximumTopics) {
@@ -320,7 +335,7 @@ class WritersidePdfExportService {
       final resolved = documentResolver.resolve(
         parsedTopic.document,
         WritersideResolveContext(
-          module: module,
+          module: selection.module,
           topic: parsedTopic,
           instance: instance,
           modulesByOrigin: modulesByOrigin,
@@ -347,7 +362,7 @@ class WritersidePdfExportService {
         );
       }
       final assets = await _resolveBusyAssets(
-        module,
+        selection.module,
         parsedTopic,
         rendered,
         modulesByOrigin,

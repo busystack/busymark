@@ -223,6 +223,8 @@
 #let render-list(block-data, render) = {
   let list-type = value-or(block-data, "listType", "bullet")
   let items = value-or(block-data, "children", ()).map(item => {
+    let anchor = value-or(item, "anchor", "")
+    if anchor != "" { [#metadata(anchor) #label(anchor)] }
     let task = value-or(item, "task", none)
     if task != none {
       box(width: 1.35em, text(if task { "☑" } else { "☐" }))
@@ -424,6 +426,7 @@
       raw(value-or(block-data, "text", ""), block: true),
     )
   } else if kind == "group" {
+    if inlines.len() > 0 { par(render-inlines(inlines)) }
     for child in children { render-block(child) }
   } else {
     render-inlines(inlines)

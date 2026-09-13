@@ -5,17 +5,240 @@ import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/markdown_export_mapper.dart';
 import 'package:busymark/src/export/markdown_export_document.dart';
+import 'package:busymark/src/export/markdown_visualization_export.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/typst_payload_builder.dart';
 import 'package:busymark/src/export/writerside_pdf_export_service.dart';
 import 'package:busymark/src/export/writerside_pdf_models.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/visualization/visualization_cache.dart';
+import 'package:busymark/src/visualization/visualization_coordinator.dart';
+import 'package:busymark/src/visualization/visualization_models.dart';
+import 'package:busymark/src/visualization/visualization_renderer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
   final compiler = _bundledTypstCompiler();
+  for (final origin in ['unknown', 'shared-pdf']) {
+    test(
+      'unresolved TOC origin or shared topic fails explicitly ($origin)',
+      () async {
+        final fixture = await _WritersideFixture.create();
+        addTearDown(fixture.dispose);
+        await File(p.join(fixture.module.path, 'guide.tree')).writeAsString(
+          '<instance-profile id="guide" name="Guide" start-page="intro.md">'
+          '<toc-element topic="intro.md"/>'
+          '<toc-element topic="missing.topic" origin="$origin"/>'
+          '</instance-profile>',
+        );
+        final exporter = _RecordingMarkdownExporter();
+        await expectLater(
+          WritersidePdfExportService(markdownExporter: exporter).export(
+            WritersidePdfExportRequest(
+              moduleRoot: fixture.module.path,
+              projectRoot: fixture.root.path,
+              instanceId: 'guide',
+              destinationPath: p.join(fixture.root.path, 'invalid.pdf'),
+              overwrite: false,
+            ),
+          ),
+          throwsA(
+            isA<WritersidePdfExportException>()
+                .having(
+                  (e) => e.code,
+                  'code',
+                  WritersidePdfFailureCode.invalidRequest,
+                )
+                .having(
+                  (e) => e.detail,
+                  'detail',
+                  contains(
+                    origin == 'unknown'
+                        ? 'Unknown TOC module origin'
+                        : 'Missing TOC topic',
+                  ),
+                ),
+          ),
+        );
+        expect(exporter.request, isNull);
+      },
+    );
+  }
+  for (final collision in [false, true]) {
+    test(
+      'PDF selects shared TOC topics with filename collision=$collision',
+      () async {
+        final fixture = await _WritersideFixture.create();
+        addTearDown(fixture.dispose);
+        final shared = p.join(fixture.root.path, 'Shared');
+        await File(p.join(shared, 'writerside.cfg')).writeAsString(
+          '<ihp version="2.0"><module name="shared-pdf"/><topics dir="topics"/><images dir="images"/><vars src="v.list"/></ihp>',
+        );
+        await File(p.join(shared, 'v.list')).writeAsString(
+          '<vars><var name="product" value="Shared product"/></vars>',
+        );
+        await File(p.join(shared, 'topics/library.topic')).writeAsString(
+          '<topic id="library" title="Shared library"><p>%product%</p><img src="shared.png"/></topic>',
+        );
+        if (collision) {
+          await File(
+            p.join(fixture.module.path, 'topics/library.topic'),
+          ).writeAsString(
+            '<topic id="library" title="Local library"><p>Unrelated local content</p></topic>',
+          );
+        }
+        await File(p.join(fixture.module.path, 'guide.tree')).writeAsString(
+          '<instance-profile id="guide" name="Guide" start-page="intro.md">'
+          '<toc-element topic="intro.md"/>'
+          '<toc-element topic="library.topic" origin="shared-pdf"/>'
+          '</instance-profile>',
+        );
+        final exporter = _RecordingMarkdownExporter();
+        await WritersidePdfExportService(markdownExporter: exporter).export(
+          WritersidePdfExportRequest(
+            moduleRoot: fixture.module.path,
+            projectRoot: fixture.root.path,
+            instanceId: 'guide',
+            destinationPath: p.join(fixture.root.path, 'shared.pdf'),
+            overwrite: false,
+          ),
+        );
+        final blocks = _allBlocks(exporter.request!.document!.blocks).toList();
+        final text = blocks.map((b) => b.plainText).join('\n');
+        expect(text, contains('Shared library'));
+        expect(text, contains('Shared product'));
+        final headings = blocks
+            .where((b) => b.kind == BusyBlockKind.heading)
+            .map((b) => b.plainText)
+            .toList();
+        expect(headings, isNot(contains('Local library')));
+        expect(text, isNot(contains('Unrelated local content')));
+        expect(
+          blocks
+              .expand((b) => _allInlines(b.inlines))
+              .where((i) => i.kind == BusyInlineKind.image)
+              .map((i) => i.destination),
+          contains(Uri.file(p.join(shared, 'images/shared.png')).toString()),
+        );
+      },
+    );
+  }
+
+  for (final rendered in [true, false]) {
+    test(
+      'final PDF retains procedure titles, definition terms and linked targets (diagram rendered=$rendered)',
+      () async {
+        final fixture = await _WritersideFixture.create();
+        addTearDown(fixture.dispose);
+        await File(
+          p.join(fixture.module.path, 'topics/intro.md'),
+        ).writeAsString('# Introduction');
+        await File(
+          p.join(fixture.module.path, 'topics/advanced.topic'),
+        ).writeAsString('''
+<topic id="advanced" title="Advanced">
+  <procedure title="Installation"><step id="install"><p>Install the package</p></step></procedure>
+  <deflist><def title="API key"><p>Credential explanation</p></def></deflist>
+  <list><li id="listed"><p>Listed target</p></li></list>
+  <code-block lang="mermaid" id="flow">graph LR; A--&gt;B</code-block>
+  <p><a anchor="install">Go to step</a> <a anchor="listed">Go to item</a> <a anchor="flow">Go to diagram</a></p>
+</topic>''');
+        final recording = _RecordingMarkdownExporter();
+        await WritersidePdfExportService(markdownExporter: recording).export(
+          WritersidePdfExportRequest(
+            moduleRoot: fixture.module.path,
+            projectRoot: fixture.root.path,
+            instanceId: 'guide',
+            destinationPath: p.join(fixture.root.path, 'recording.pdf'),
+            overwrite: false,
+          ),
+        );
+        final coordinator = VisualizationCoordinator(
+          renderers: [_PdfDiagramRenderer(rendered: rendered)],
+          cache: VisualizationCache(
+            diskRoot: Directory(p.join(fixture.root.path, 'cache')),
+          ),
+        );
+        addTearDown(coordinator.dispose);
+        final busyDocument = recording.request!.document!;
+        final preparation =
+            await MarkdownVisualizationExportRenderer(
+              coordinator: coordinator,
+            ).prepare(
+              document: busyDocument,
+              exportRoot: fixture.root,
+              documentPath: busyDocument.filePath,
+              workspaceRoot: fixture.root.path,
+              cancellationToken: MarkdownPdfCancellationToken(),
+            );
+        expect(preparation.blockOverrides, hasLength(rendered ? 1 : 0));
+        final document = const MarkdownExportMapper().map(
+          busyDocument,
+          blockOverrides: preparation.blockOverrides,
+        );
+        final blocks = _allExportBlocks(document.blocks).toList();
+        final anchors = blocks
+            .map((b) => b.attributes['anchor'])
+            .whereType<String>()
+            .toSet();
+        final links = blocks
+            .expand((b) => b.inlines)
+            .where((i) => i.kind == MarkdownExportInlineKind.link)
+            .toList();
+        expect(links, hasLength(3));
+        for (final link in links) {
+          expect(
+            anchors,
+            contains(link.destination!.substring(1)),
+            reason: link.text,
+          );
+        }
+        final payload = const TypstPayloadBuilder().build(
+          document: document,
+          options: const PdfExportOptions(),
+          assets: {},
+        );
+        await File(
+          p.join(fixture.root.path, 'document.json'),
+        ).writeAsString(jsonEncode(payload));
+        await File(
+          'assets/export/markdown.typ',
+        ).copy(p.join(fixture.root.path, 'main.typ'));
+        final pdf = p.join(fixture.root.path, 'regression.pdf');
+        final compiled = await Process.run(compiler!, [
+          'compile',
+          p.join(fixture.root.path, 'main.typ'),
+          pdf,
+        ]);
+        expect(compiled.exitCode, 0, reason: '${compiled.stderr}');
+        final extracted = await Process.run('/usr/bin/pdftotext', [pdf, '-']);
+        expect(extracted.exitCode, 0, reason: '${extracted.stderr}');
+        final text = extracted.stdout as String;
+        for (final content in [
+          'Installation',
+          'Install the package',
+          'API key',
+          'Credential explanation',
+          'Listed target',
+          'Go to diagram',
+        ]) {
+          expect(text, contains(content));
+        }
+        expect(
+          text.indexOf('Installation'),
+          lessThan(text.indexOf('Install the package')),
+        );
+        expect(
+          text.indexOf('API key'),
+          lessThan(text.indexOf('Credential explanation')),
+        );
+        if (!rendered) expect(text, contains('graph LR; A-->B'));
+      },
+      skip: compiler == null || !File('/usr/bin/pdftotext').existsSync(),
+    );
+  }
   test(
     'bundled Typst compiles semantic tables, anchors and glossary footnotes',
     () async {
@@ -690,6 +913,39 @@ Iterable<BusyInline> _allInlines(Iterable<BusyInline> inlines) sync* {
     yield inline;
     yield* _allInlines(inline.children);
   }
+}
+
+class _PdfDiagramRenderer implements VisualizationRenderer {
+  const _PdfDiagramRenderer({required this.rendered});
+  final bool rendered;
+
+  @override
+  Set<VisualizationRendererKind> get supportedKinds => {
+    VisualizationRendererKind.mermaid,
+  };
+
+  @override
+  Future<VisualizationRenderRequest> prepare(
+    VisualizationRenderRequest request,
+    VisualizationCancellationToken token,
+  ) async => request;
+
+  @override
+  Future<VisualizationRenderResult> render(
+    VisualizationRenderRequest request,
+    VisualizationCancellationToken token,
+  ) async => rendered
+      ? const SvgVisualizationResult(
+          svg:
+              '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"><rect width="40" height="20" fill="blue"/></svg>',
+          width: 40,
+          height: 20,
+        )
+      : const FailedVisualizationResult(
+          code: 'test.failed',
+          message: 'Use source fallback',
+          retryable: false,
+        );
 }
 
 class _WritersideFixture {

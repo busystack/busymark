@@ -145,8 +145,12 @@ class HtmlDocumentWriter {
         ),
       ],
     );
+    // HTML parsing normalizes line endings before CSP checks the style text.
+    // Hash and serialize that same text, including built-in and generated CSS.
     final css =
-        '$stylesheet\n${HtmlExportStyles.generate(options)}\n${_rules.join('\n')}\n$customCss';
+        '$stylesheet\n${HtmlExportStyles.generate(options)}\n${_rules.join('\n')}\n$customCss'
+            .replaceAll('\r\n', '\n')
+            .replaceAll('\r', '\n');
     // Meta CSP cannot enforce frame-ancestors or sandbox. All active source
     // content has already been rejected. file: images need an explicit source
     // in browsers that assign each local document an opaque origin.
@@ -348,6 +352,8 @@ class HtmlDocumentWriter {
   bool _ordered(BusyBlock b) =>
       b.kind == BusyBlockKind.orderedListItem ||
       b.attributes['ordered'] == 'true';
+  String _listType(BusyBlock b) =>
+      b.attributes['listType'] ?? (_ordered(b) ? 'decimal' : 'bullet');
   Future<List<dom.Node>> _blocks(
     List<BusyBlock> blocks, [
     int depth = 0,
@@ -363,7 +369,13 @@ class HtmlDocumentWriter {
       final b = blocks[i];
       if (_isList(b)) {
         final ordered = _ordered(b);
+        final listType = _listType(b);
+        final markerHidden = b.attributes['markerHidden'] == 'true';
         final list = _el(ordered ? 'ol' : 'ul');
+        if (listType == 'alpha-lower') list.attributes['type'] = 'a';
+        if (listType == 'none' || markerHidden) {
+          _style(list, 'list-style-type:none;');
+        }
         final start =
             int.tryParse(
               (b.attributes['marker'] ?? '').replaceAll(RegExp(r'[^0-9-]'), ''),
@@ -372,7 +384,9 @@ class HtmlDocumentWriter {
         if (ordered && start != 1) list.attributes['start'] = '$start';
         while (i < blocks.length &&
             _isList(blocks[i]) &&
-            _ordered(blocks[i]) == ordered) {
+            _ordered(blocks[i]) == ordered &&
+            _listType(blocks[i]) == listType &&
+            (blocks[i].attributes['markerHidden'] == 'true') == markerHidden) {
           final item = blocks[i];
           final li = _el('li');
           _attributes(li, item.attributes);
@@ -489,23 +503,25 @@ class HtmlDocumentWriter {
             '${page.filename}:${b.id}',
           );
           if (result?.reference case final reference?) {
-            return [await _reference(reference, b, depth)];
+            final rendered = await _reference(reference, b, depth);
+            _attributes(rendered, b.attributes);
+            return [rendered];
           }
           if (result?.url case final url?) {
-            return [
-              _el(
-                'figure',
-                children: [
-                  _el(
-                    'img',
-                    attrs: {
-                      'src': url,
-                      'alt': '${descriptor.kind.displayName} diagram',
-                    },
-                  ),
-                ],
-              ),
-            ];
+            final figure = _el(
+              'figure',
+              children: [
+                _el(
+                  'img',
+                  attrs: {
+                    'src': url,
+                    'alt': '${descriptor.kind.displayName} diagram',
+                  },
+                ),
+              ],
+            );
+            _attributes(figure, b.attributes);
+            return [figure];
           }
         }
         final language = b.attributes['language'] ?? '';
@@ -577,7 +593,12 @@ class HtmlDocumentWriter {
                 _el(
                   'a',
                   text: b.attributes['title'] ?? p.basename(src),
-                  attrs: {'href': url},
+                  attrs: {
+                    'href': url,
+                    'download': p.basename(
+                      Uri.decodeComponent(Uri.parse(src).path),
+                    ),
+                  },
                 ),
               ],
             );
@@ -857,22 +878,21 @@ class HtmlDocumentWriter {
         case BusyInlineKind.image:
           node = await _image(value.destination ?? '', value.text, a, block);
         case BusyInlineKind.link:
-          final url = await links.resolve(
+          final link = await links.resolve(
             value.destination,
             page,
             a,
             line: block.sourceSpan?.startLine ?? 1,
           );
-          if (url == null) {
+          if (link == null) {
             node = _el('span', children: nodes);
           } else {
             node = _el(
               'a',
               children: nodes,
               attrs: {
-                'href': url,
-                if (a['element'] == 'resource')
-                  'download': p.basename(value.text),
+                'href': link.url,
+                if (link.downloadName case final name?) 'download': name,
                 if (a['summary'] case final summary?) 'title': summary,
               },
             );
@@ -1039,11 +1059,16 @@ class HtmlDocumentWriter {
         final element = _el(tag, children: await nodes(value.nodes, depth + 1));
         _attributes(element, attrs);
         if (tag == 'a') {
-          final url = await links.resolve(attrs['href'], page, {
+          final link = await links.resolve(attrs['href'], page, {
             ...block.attributes,
             ...attrs,
           }, line: block.sourceSpan?.startLine ?? 1);
-          if (url != null) element.attributes['href'] = url;
+          if (link != null) {
+            element.attributes['href'] = link.url;
+            if (link.downloadName case final name?) {
+              element.attributes['download'] = name;
+            }
+          }
         }
         if (tag == 'details') {
           if (attrs.containsKey('open')) element.attributes['open'] = '';

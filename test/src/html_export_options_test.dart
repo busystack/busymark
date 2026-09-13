@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:busymark/src/export/html_export_models.dart';
 import 'package:busymark/src/export/html_export_service.dart';
 import 'package:busymark/src/export/html_export_styles.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
+
+import '../support/headless_chrome.dart';
 
 void main() {
   late Directory root;
@@ -153,6 +156,83 @@ void main() {
         await File(result.entryPointPath).readAsString(),
         isNot(contains(css.path)),
       );
+    },
+  );
+
+  for (final (name, ending) in [('LF', '\n'), ('CRLF', '\r\n'), ('CR', '\r')]) {
+    Future<String> styledExport() async {
+      final css = File(p.join(root.path, 'custom.css'));
+      await css.writeAsString(
+        ':root {$ending  font-size: 23px;$ending}$ending',
+      );
+      final result =
+          await HtmlExportService(
+            stylesheetLoader: () async => (await File(
+              'assets/export/html.css',
+            ).readAsString()).replaceAll('\n', ending),
+          ).exportMarkdown(
+            MarkdownHtmlExportRequest(
+              source: '# Styled\n\nBody',
+              filePath: p.join(root.path, 'source.md'),
+              workspaceRoot: root.path,
+              destinationPath: p.join(root.path, 'output.html'),
+              options: HtmlExportOptions(customCssPath: css.path),
+            ),
+          );
+      return result.entryPointPath;
+    }
+
+    test('$name CSS hashes the text seen by the HTML parser', () async {
+      final path = await styledExport();
+      final output = await File(path).readAsString();
+      final doc = html.parse(output);
+      final css = doc.querySelector('style')!.text;
+      expect(output, isNot(contains('\r')));
+      expect(css, contains('font-size: 23px;'));
+      final hash = base64.encode(sha256.convert(utf8.encode(css)).bytes);
+      expect(
+        doc.querySelector('meta[http-equiv]')!.attributes['content'],
+        contains("style-src 'sha256-$hash'"),
+      );
+    });
+
+    test('$name custom and built-in CSS apply in Chromium', () async {
+      final path = await styledExport();
+      final styles = await evaluateInChrome(path, '''({
+          font: getComputedStyle(document.documentElement).fontSize,
+          bodyMargin: getComputedStyle(document.body).marginTop
+        })''');
+      expect(styles, {'font': '23px', 'bodyMargin': '0px'});
+    }, skip: headlessChromePath == null ? 'Chromium is not installed.' : false);
+  }
+
+  test(
+    'single-file attachments retain download names and reject source data URLs',
+    () async {
+      await File(p.join(root.path, 'notes file.txt')).writeAsString('Notes');
+      const dataUrl = 'data:text/plain;base64,Tm90ZXM=';
+      final result = await export(
+        const HtmlExportOptions(packaging: HtmlPackaging.singleFile),
+        source:
+            '# Downloads\n\n[Notes](notes%20file.txt)\n\n'
+            '<a href="notes%20file.txt">Raw notes</a>\n\n'
+            '[Unsafe]($dataUrl)\n\n'
+            '<a href="$dataUrl" download="notes.txt">Unsafe raw</a>',
+      );
+      final doc = html.parse(await File(result.entryPointPath).readAsString());
+      final downloads = doc.querySelectorAll('article a[download]');
+      expect(downloads.map((e) => e.text), ['Notes', 'Raw notes']);
+      expect(
+        downloads.map((e) => e.attributes['download']),
+        everyElement('notes file.txt'),
+      );
+      expect(downloads.map((e) => e.attributes['href']), everyElement(dataUrl));
+      expect(doc.querySelectorAll('article a[href]'), hasLength(2));
+      expect(
+        result.warnings.where((w) => w.code == 'link.unresolved'),
+        isNotEmpty,
+      );
+      expect(result.assetsPath, isNull);
     },
   );
 

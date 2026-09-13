@@ -5,6 +5,14 @@ import 'html_export_assets.dart';
 import 'html_export_models.dart';
 import 'html_publication_plan.dart';
 
+/// A validated destination with attachment semantics retained for the writer.
+class HtmlResolvedLink {
+  const HtmlResolvedLink(this.url, {this.downloadName});
+
+  final String url;
+  final String? downloadName;
+}
+
 class HtmlExportLinks {
   HtmlExportLinks({
     required this.plan,
@@ -54,7 +62,7 @@ class HtmlExportLinks {
     return uri.toString();
   }
 
-  Future<String?> resolve(
+  Future<HtmlResolvedLink?> resolve(
     String? value,
     HtmlPage page,
     Map<String, String> attributes, {
@@ -62,7 +70,7 @@ class HtmlExportLinks {
   }) async {
     if (value == null || value.trim().isEmpty) return null;
     final destination = value.trim();
-    if (external(destination) case final url?) return url;
+    if (external(destination) case final url?) return HtmlResolvedLink(url);
     final origin = source(page, attributes);
     void warn(String message) => warnings.add(
       HtmlExportWarning(
@@ -77,13 +85,14 @@ class HtmlExportLinks {
       return null;
     }
     if (attributes['element'] == 'resource') {
-      return assets.local(
+      final url = await assets.local(
         destination,
         sourcePath: origin,
         searchRoots: roots(page, attributes),
         line: line,
         download: true,
       );
+      return url == null ? null : _attachment(url, destination);
     }
     final uri = Uri.tryParse(destination);
     if (uri == null ||
@@ -130,7 +139,9 @@ class HtmlExportLinks {
         warn('Missing anchor "$fragment" in ${p.basename(target.sourcePath)}.');
         return null;
       }
-      return '${target == page ? (fragment.isEmpty ? Uri.encodeComponent(target.filename) : '') : Uri.encodeComponent(target.filename)}${fragment.isEmpty ? '' : '#${Uri.encodeComponent(fragment)}'}';
+      return HtmlResolvedLink(
+        '${target == page ? (fragment.isEmpty ? Uri.encodeComponent(target.filename) : '') : Uri.encodeComponent(target.filename)}${fragment.isEmpty ? '' : '#${Uri.encodeComponent(fragment)}'}',
+      );
     }
     if (attributes['nullable'] == 'true') return null;
     if (const {
@@ -153,6 +164,14 @@ class HtmlExportLinks {
     if (asset == null) {
       warn('Link target ${p.basename(path)} could not be resolved.');
     }
-    return asset;
+    return asset == null ? null : _attachment(asset, destination);
   }
+
+  HtmlResolvedLink _attachment(String url, String destination) =>
+      HtmlResolvedLink(
+        url,
+        downloadName: p.basename(
+          Uri.decodeComponent(Uri.parse(destination).path),
+        ),
+      );
 }
