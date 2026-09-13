@@ -21,6 +21,56 @@ import 'package:path/path.dart' as p;
 
 void main() {
   final compiler = _bundledTypstCompiler();
+  test('repeated list includes restart numbering in the final PDF', () async {
+    final output = await Directory.systemTemp.createTemp(
+      'writerside-list-includes-',
+    );
+    addTearDown(() => output.delete(recursive: true));
+    final fixture = Directory(
+      'test/fixtures/writerside/repeated_list_include',
+    ).absolute;
+    final destination = p.join(output.path, 'lists.pdf');
+    final result =
+        await WritersidePdfExportService(
+          markdownExporter: MarkdownPdfExportService(
+            compilerLocator: TypstCompilerLocator(
+              environment: {'BUSYMARK_TYPST_PATH': compiler!},
+            ),
+            templateLoader: () =>
+                File('assets/export/markdown.typ').readAsString(),
+          ),
+        ).export(
+          WritersidePdfExportRequest(
+            moduleRoot: fixture.path,
+            instanceId: 'guide',
+            destinationPath: destination,
+            overwrite: false,
+          ),
+        );
+    final extracted = await Process.run('/usr/bin/pdftotext', [
+      '-layout',
+      destination,
+      '-',
+    ]);
+    expect(extracted.exitCode, 0, reason: '${extracted.stderr}');
+    final text = extracted.stdout as String;
+    final items = RegExp(
+      r'\b(\d+)\.\s+Included (first|second)\b',
+    ).allMatches(text);
+    expect(items.map((match) => '${match[1]} ${match[2]}'), [
+      '1 first',
+      '2 second',
+      '1 first',
+      '2 second',
+    ]);
+    expect(
+      result.warnings,
+      isEmpty,
+      reason: result.warnings
+          .map((w) => '${w.code}: ${w.destination}')
+          .join('\n'),
+    );
+  }, skip: compiler == null || !File('/usr/bin/pdftotext').existsSync());
   test(
     'final PDF keeps alphabetic starts, separate decimal lists and procedure numbering',
     () async {

@@ -113,6 +113,29 @@ void main() {
     },
   );
 
+  test('repeated list includes export as separate HTML containers', () async {
+    final fixture = Directory(
+      'test/fixtures/writerside/repeated_list_include',
+    ).absolute;
+    final result = await const HtmlExportService().exportWriterside(
+      projectRoot: fixture.path,
+      moduleRoot: fixture.path,
+      instanceId: 'guide',
+      destinationPath: p.join(root.path, 'site'),
+    );
+    final doc = html.parse(await File(result.entryPointPath).readAsString());
+    final lists = doc.querySelectorAll('article > ol');
+    expect(lists, hasLength(2));
+    for (final list in lists) {
+      expect(list.children.map((item) => item.text), [
+        'Included first',
+        'Included second',
+      ]);
+      expect(list.attributes['start'] ?? '1', '1');
+    }
+    expect(result.warnings, isEmpty);
+  });
+
   test('Writerside list styles stay distinct across consecutive lists', () async {
     await module(
       'module',

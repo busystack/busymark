@@ -304,6 +304,60 @@ void main() {
     expect({ids[0], ids[2], ids[4]}, hasLength(3));
   });
 
+  test(
+    'repeated list includes have distinct occurrence IDs and original source spans',
+    () async {
+      final fixture = Directory(
+        'test/fixtures/writerside/repeated_list_include',
+      ).absolute;
+      final module = await const WritersideModuleService().load(fixture.path);
+      final topic = module.topicByReference('start.topic')!;
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: module.instances.single,
+        ),
+      );
+      expect(resolved.diagnostics, isEmpty);
+      final originalItems = module
+          .topicByReference('library.topic')!
+          .document
+          .elements
+          .where((element) => element.name == 'li')
+          .toList();
+      const renderer = WritersideDocumentRenderer();
+      final rendered = renderer.toBusyDocument(resolved.document);
+      expect(rendered.blocks, hasLength(4));
+      final ids = rendered.blocks.map((b) => b.attributes['listId']).toList();
+      expect(ids, everyElement(isNotNull));
+      expect(ids[0], ids[1]);
+      expect(ids[2], ids[3]);
+      expect(ids[0], isNot(ids[2]));
+      expect(rendered.blocks.map((b) => b.attributes['listOrdinal']), [
+        '1',
+        '2',
+        '1',
+        '2',
+      ]);
+      for (var i = 0; i < rendered.blocks.length; i++) {
+        final span = rendered.blocks[i].sourceSpan!;
+        final original = originalItems[i % 2].span;
+        expect(span.filePath, original.filePath);
+        expect(span.startOffset, original.startOffset);
+        expect(span.endOffset, original.endOffset);
+      }
+      expect(
+        renderer
+            .toBusyDocument(resolved.document)
+            .blocks
+            .map((b) => b.attributes['listId']),
+        ids,
+      );
+    },
+  );
+
   test('workspace exposes resolver errors with exact source spans', () async {
     final fixture = await _ResolvedFixture.create();
     addTearDown(fixture.dispose);

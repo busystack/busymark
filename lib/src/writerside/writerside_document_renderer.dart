@@ -18,6 +18,22 @@ class WritersideDocumentRenderer {
     String? title,
     bool includeTitleHeading = false,
     int titleHeadingLevel = 1,
+  }) => _WritersideRenderSession().toBusyDocument(
+    document,
+    title: title,
+    includeTitleHeading: includeTitleHeading,
+    titleHeadingLevel: titleHeadingLevel,
+  );
+}
+
+class _WritersideRenderSession {
+  int _nextListOccurrence = 0;
+
+  BusyDocument toBusyDocument(
+    WritersideDocument document, {
+    String? title,
+    bool includeTitleHeading = false,
+    int titleHeadingLevel = 1,
   }) {
     final hasGeneratedTitle =
         includeTitleHeading && title?.trim().isNotEmpty == true;
@@ -944,7 +960,9 @@ class WritersideDocumentRenderer {
   }) {
     final type = list.attributes['type']?.trim().toLowerCase() ?? 'bullet';
     final start = int.tryParse(list.attributes['start'] ?? '') ?? 1;
-    final listId = '${list.span.filePath}:${_nodeId(list)}';
+    // Included copies retain their source spans. Allocate an ID for each
+    // rendered container so consecutive copies remain separate lists.
+    final listId = 'writerside-list-${_nextListOccurrence++}';
     var itemNumber = start;
     final result = <BusyBlock>[];
     for (final child in list.children) {

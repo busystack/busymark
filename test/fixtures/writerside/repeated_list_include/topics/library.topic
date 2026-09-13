@@ -1,0 +1,8 @@
+<topic id="library" title="List library">
+  <snippet id="numbered-list">
+    <list type="decimal">
+      <li>Included first</li>
+      <li>Included second</li>
+    </list>
+  </snippet>
+</topic>
