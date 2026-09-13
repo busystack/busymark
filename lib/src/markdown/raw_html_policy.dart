@@ -347,3 +347,13 @@ bool _isSafeRelativeHtmlPath(String value) {
 }
 
 String _normalizeName(String name) => name.trim().toLowerCase();
+
+/// Authored diagnostics only inspect actual HTML constructs. The renderer keeps
+/// using the more conservative `hasUnsafeHtml` policy above.
+bool hasUnsafeAuthoredHtml(String content) {
+  try {
+    return _hasUnsafeHtmlNode(html_parser.parseFragment(content));
+  } on Object {
+    return true;
+  }
+}

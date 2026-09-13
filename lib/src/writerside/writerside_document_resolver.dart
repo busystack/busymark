@@ -11,6 +11,52 @@ import 'writerside_schema.dart';
 import 'writerside_source_loader.dart';
 import 'writerside_code_selection.dart';
 
+/// Validates the same semantic documents consumed by preview and export.
+/// A topic can participate in multiple instances; validate each applicable one.
+List<Diagnostic> resolveWritersideModuleDiagnostics(
+  WritersideModule module, {
+  Map<String, WritersideModule>? modulesByOrigin,
+}) {
+  final diagnostics = <Diagnostic>[];
+  final seen = <String>{};
+  for (final topic in module.topics) {
+    final instances = module.instances
+        .where(
+          (instance) =>
+              !instance.isLibrary &&
+              instance.topicFileSet.any(
+                (reference) =>
+                    module.topicByReference(reference)?.filePath ==
+                    topic.filePath,
+              ),
+        )
+        .toList();
+    for (final instance in <WritersideInstance?>[
+      if (instances.isEmpty) null else ...instances,
+    ]) {
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: instance,
+          modulesByOrigin:
+              modulesByOrigin ??
+              {if (module.config.moduleName case final name?) name: module},
+        ),
+      );
+      for (final diagnostic in resolved.diagnostics) {
+        if (seen.add(
+          '${diagnostic.filePath}:${diagnostic.sourceSpan?.startOffset}:${diagnostic.code}:${diagnostic.args}',
+        )) {
+          diagnostics.add(diagnostic);
+        }
+      }
+    }
+  }
+  return sortDiagnostics(diagnostics);
+}
+
 class WritersideResolveContext {
   const WritersideResolveContext({
     required this.module,
@@ -54,11 +100,9 @@ class WritersideDocumentResolver {
       for (final variable in context.module.variables)
         if (state._matchesInstance(variable.instanceCondition, context.module))
           variable.name: variable.value,
-      if (context.instance case final instance?) ...{
-        'instance': instance.name,
-        'instance-lowercase': instance.name.toLowerCase(),
-        'currentId': instance.id,
-      },
+      'instance': context.instance?.name ?? '',
+      'instance-lowercase': context.instance?.name.toLowerCase() ?? '',
+      'currentId': context.instance?.id ?? '',
       'thisTopic': context.topic.id,
     };
     final nodes = state.resolveNodes(
@@ -472,6 +516,12 @@ class _ResolveState {
         attributes['anchor']?.replaceFirst(RegExp(r'^#'), '') ??
         (hash < 0 ? '' : href.substring(hash + 1));
     final destination = '$path${anchor.isEmpty ? '' : '#$anchor'}';
+    var decodedAnchor = anchor;
+    try {
+      decodedAnchor = Uri.decodeComponent(anchor);
+    } on FormatException {
+      // Preserve malformed fragments so normal reference validation reports them.
+    }
     if (Uri.tryParse(path)?.hasScheme == true) {
       return {
         'resolved-destination': destination,
@@ -492,10 +542,14 @@ class _ResolveState {
               targetModule?.topicsById[path];
     final target = anchor.isEmpty
         ? null
-        : targetTopic?.document.contentById(anchor)?.first;
+        : targetTopic?.document.contentById(decodedAnchor)?.first;
     // Alias lookup must link to the ID that the renderer actually emits.
     final resolvedAnchor = target is WritersideMarkdownBlockNode
-        ? target.block.attributes['id'] ?? anchor
+        ? (target.block.attributes['id'] == decodedAnchor
+              ? anchor
+              : Uri.encodeComponent(
+                  target.block.attributes['id'] ?? decodedAnchor,
+                ))
         : anchor;
     final instance = context.instance;
     var available =
@@ -647,7 +701,10 @@ class _ResolveState {
               : 'link-summary',
         );
     final cardSummary = attributes['summary'] ?? summaryFor('card-summary');
-    if (!available && attributes['nullable'] != 'true') {
+    if (!available &&
+        attributes['nullable'] != 'true' &&
+        !(targetTopic == null &&
+            targetModule?.isUnparsedTopicReference(path) == true)) {
       _referenceDiagnostic(
         code: 'writerside.link.unavailable',
         node: node,
@@ -712,7 +769,7 @@ class _ResolveState {
     }
     final nullable = include.attributes['nullable'] == 'true';
     if (targetTopic == null) {
-      if (!nullable) {
+      if (!nullable && !targetModule.isUnparsedTopicReference(from ?? '')) {
         _referenceDiagnostic(
           code: 'writerside.include.unresolved-source',
           node: include,
@@ -896,17 +953,28 @@ class _ResolveState {
         explicit == 'true' ||
         (explicit != 'false' && (ignoreVariables || smart));
     BusyInline resolveInline(BusyInline inline) {
+      final children = inline.children
+          .map(resolveInline)
+          .toList(growable: false);
+      final inlineIgnore = inline.attributes['ignore-vars'] == 'true' || ignore;
       final resolved = inline.copyWith(
-        text: _interpolate(inline.text, variables, sourceNode, ignore: ignore),
+        text: children.isEmpty
+            ? _interpolate(
+                inline.text,
+                variables,
+                sourceNode,
+                ignore: inlineIgnore,
+              )
+            : children.map((child) => child.plainText).join(),
         destination: inline.destination == null
             ? null
             : _interpolate(
                 inline.destination!,
                 variables,
                 sourceNode,
-                ignore: ignore,
+                ignore: inlineIgnore,
               ),
-        children: inline.children.map(resolveInline).toList(growable: false),
+        children: children,
       );
       if (resolved.kind != BusyInlineKind.link) return resolved;
       // Markdown's generated footnote targets live inside the retained HTML
@@ -1022,7 +1090,8 @@ class _ResolveState {
             );
           }
           final key = '${node.span.filePath}:${node.span.startOffset}:$name';
-          if (_unresolvedVariables.add(key)) {
+          if (_unresolvedVariables.add(key) &&
+              context.module.variablesAvailable) {
             diagnostics.add(
               Diagnostic(
                 code: 'writerside.variable.unresolved',

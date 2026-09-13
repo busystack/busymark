@@ -82,6 +82,7 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     'writerside.tree.invalid-xml' ||
     'writerside.variables.invalid-xml' ||
     'writerside.categories.invalid-xml' ||
+    'writerside.reference-data.invalid-xml' ||
     'writerside.topic.invalid-xml' => l10n.diagnosticInvalidXml(
       value('message'),
     ),

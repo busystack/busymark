@@ -1,6 +1,7 @@
 import 'package:markdown/markdown.dart' as md;
 
 import 'markdown_model.dart';
+import 'writerside_variable_syntax.dart';
 
 const busyMarkMathInlineTag = 'busymark-math-inline';
 const busyMarkMathBlockTag = 'busymark-math-block';
@@ -30,6 +31,8 @@ md.Document busyMarkMarkdownDocument(MarkdownMode mode) {
   return md.Document(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
+      if (mode == MarkdownMode.writersideMarkdown)
+        WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
       if (mode == MarkdownMode.writersideMarkdown) BusyWritersideMathSyntax(),
     ],

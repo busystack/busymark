@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:busymark/src/markdown/markdown_parser.dart';
+
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
@@ -25,6 +27,129 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'validation reports stale, busy and failed outcomes without publishing old results',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller._notifier;
+      await harness.settingsController.setValidateOnEdit(false);
+      await controller.openPath(service.rootPath);
+      controller.updateActiveWysiwygText(
+        '# Dirty A\n',
+        document: const MarkdownParser()
+            .parse(filePath: service.aPath, source: '# Dirty A\n')
+            .busyDocument,
+      );
+      final pending = controller.validateActive();
+      await service.validationStarted.future;
+      expect((await controller.validateActive()).status, ValidationStatus.busy);
+      await controller.openActiveFile(service.bPath);
+      service.finishValidation();
+      final outcome = await pending;
+      expect(outcome.status, ValidationStatus.stale);
+      expect(outcome.filePath, service.aPath);
+      expect(controller.isCurrentValidation(outcome), isFalse);
+      service.failValidation = true;
+      final failed = await controller.validateActive();
+      expect(failed.status, ValidationStatus.failed);
+      expect(failed.published, isFalse);
+      expect(
+        harness.controller.state.message?.code,
+        WorkspaceMessageCode.validationFailed,
+      );
+    },
+  );
+
+  for (final clearDuringValidation in [false, true]) {
+    test(
+      'validation preserves the latest runtime diagnostic change: clear=$clearDuringValidation',
+      () async {
+        final service = _DelayedValidationWorkspaceService();
+        final harness = await _createControllerHarness(service: service);
+        final controller = harness.controller._notifier;
+        await harness.settingsController.setValidateOnEdit(false);
+        await controller.openPath(service.rootPath);
+        controller.updateActiveWysiwygText(
+          '# Dirty A\n',
+          document: const MarkdownParser()
+              .parse(filePath: service.aPath, source: '# Dirty A\n')
+              .busyDocument,
+        );
+        if (clearDuringValidation) {
+          controller.updateMathRenderDiagnostic(
+            expressionId: 'math',
+            code: 'math.invalid',
+          );
+        }
+        final pending = controller.validateActive();
+        await service.validationStarted.future;
+        controller.updateMathRenderDiagnostic(
+          expressionId: 'math',
+          code: clearDuringValidation ? null : 'math.invalid',
+        );
+        service.finishValidation();
+        final outcome = await pending;
+        expect(outcome.status, ValidationStatus.published);
+        expect(
+          outcome.revision,
+          harness.controller.state.activeBuffer!.revision,
+        );
+        expect(controller.isCurrentValidation(outcome), isTrue);
+        expect(
+          harness.controller.state.workspace!.runtimeDiagnostics,
+          hasLength(clearDuringValidation ? 0 : 1),
+        );
+      },
+    );
+  }
+
+  test(
+    'math callbacks from an older editor revision cannot republish errors',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await harness.settingsController.setValidateOnEdit(false);
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final revision = controller.editRevision;
+      final path = harness.controller.state.workspace!.activeFilePath;
+      controller.updateActiveText('# Changed\n');
+      controller.updateMathRenderDiagnostic(
+        expressionId: 'old',
+        code: 'math.invalidTex',
+        expectedRevision: revision,
+        expectedFilePath: path,
+      );
+      expect(harness.controller.state.workspace!.runtimeDiagnostics, isEmpty);
+    },
+  );
+
+  test('Markdown validation uses the unsaved linked tab snapshot', () async {
+    final root = await Directory.systemTemp.createTemp('busymark-dirty-links-');
+    addTearDown(() => root.delete(recursive: true));
+    final a = File(p.join(root.path, 'a.md'));
+    final b = File(p.join(root.path, 'b.md'));
+    await a.writeAsString('# A\n[target](b.md#dirty)\n');
+    await b.writeAsString('# Saved\n');
+    final harness = await _createControllerHarness();
+    await harness.settingsController.setValidateOnEdit(false);
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller._notifier;
+    await controller.openPath(root.path);
+    await controller.openActiveFile(b.path);
+    controller.updateActiveText('# Dirty\n');
+    await controller.openActiveFile(a.path);
+    final outcome = await controller.validateActive();
+    expect(outcome.status, ValidationStatus.published);
+    expect(
+      harness.controller.state.workspace!.diagnostics.where(
+        (d) => d.filePath == a.path,
+      ),
+      isEmpty,
+    );
+    expect(await b.readAsString(), '# Saved\n');
+  });
+
   test(
     'Writerside rename stages verified edits across unsaved tabs with undo',
     () async {
@@ -3037,7 +3162,7 @@ class _WorkspaceControllerDriver {
   void keepBufferVersion(String bufferId) =>
       _notifier.keepBufferVersion(bufferId);
 
-  Future<void> validateActive() => _notifier.validateActive();
+  Future<ValidationOutcome> validateActive() => _notifier.validateActive();
 
   Future<bool> restorePreviousSession() => _notifier.restorePreviousSession();
 
@@ -3364,6 +3489,7 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
   final validationStarted = Completer<void>();
   final _finishValidation = Completer<void>();
   var _pausedValidation = false;
+  var failValidation = false;
 
   void _ensureDocuments() {
     _documents.putIfAbsent(aPath, () => '# A\n');
@@ -3440,6 +3566,7 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
       validationStarted.complete();
       await _finishValidation.future;
     }
+    if (failValidation) throw StateError('Validation failed');
     return workspace.copyWith(diagnostics: const []);
   }
 

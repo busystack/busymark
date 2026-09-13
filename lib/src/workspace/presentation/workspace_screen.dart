@@ -99,6 +99,23 @@ import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 
+final _problemsPresentationProvider =
+    NotifierProvider<_ProblemsPresentation, bool>(_ProblemsPresentation.new);
+
+class _ProblemsPresentation extends Notifier<bool> {
+  @override
+  bool build() => false;
+  bool begin() {
+    if (state) return false;
+    state = true;
+    return true;
+  }
+
+  void finish() {
+    if (ref.mounted) state = false;
+  }
+}
+
 final _outlineNavigationTargetProvider =
     NotifierProvider<
       _OutlineNavigationTargetController,
@@ -1335,35 +1352,39 @@ class WorkspaceScreen extends ConsumerWidget {
         );
   }
 
-  void _showProblemsDialog(BuildContext context, WidgetRef ref) {
-    final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (workspace == null) {
-      return;
-    }
+  Future<void> _showProblemsDialog(BuildContext context, WidgetRef ref) async {
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final count = workspace.allDiagnostics.length;
-    unawaited(
-      showBusyMarkModalDialog<void>(
-        context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
-        builder: (context) => BusyMarkDialogShell(
-          title: context.l10n.problems,
-          maxWidth: BusyMarkSizes.contentWidth,
-          children: [
-            Text(
-              context.l10n.diagnosticCount(count),
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: BusyMarkSurfaceColors.of(context).mutedForeground,
+    await showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (dialogContext) => Consumer(
+        builder: (context, ref, _) {
+          final workspace = ref.watch(workspaceControllerProvider).workspace;
+          return BusyMarkDialogShell(
+            title: context.l10n.problems,
+            maxWidth: BusyMarkSizes.contentWidth,
+            children: [
+              Text(
+                context.l10n.diagnosticCount(
+                  workspace?.allDiagnostics.length ?? 0,
+                ),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: BusyMarkSurfaceColors.of(context).mutedForeground,
+                ),
               ),
-            ),
-            const SizedBox(height: BusyMarkSpacing.md),
-            SizedBox(
-              width: BusyMarkSizes.problemsListWidth,
-              height: BusyMarkSizes.problemsListHeight,
-              child: _ProblemsList(workspace: workspace),
-            ),
-          ],
-        ),
+              const SizedBox(height: BusyMarkSpacing.md),
+              if (workspace != null)
+                SizedBox(
+                  width: BusyMarkSizes.problemsListWidth,
+                  height: BusyMarkSizes.problemsListHeight,
+                  child: _ProblemsList(
+                    workspace: workspace,
+                    onRevealed: () => Navigator.of(dialogContext).pop(),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1372,11 +1393,16 @@ class WorkspaceScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    await ref.read(workspaceControllerProvider.notifier).validateActive();
-    if (!context.mounted) {
-      return;
+    final presentation = ref.read(_problemsPresentationProvider.notifier);
+    if (!presentation.begin()) return;
+    try {
+      final controller = ref.read(workspaceControllerProvider.notifier);
+      final outcome = await controller.validateActive();
+      if (!context.mounted || !controller.isCurrentValidation(outcome)) return;
+      await _showProblemsDialog(context, ref);
+    } finally {
+      presentation.finish();
     }
-    _showProblemsDialog(context, ref);
   }
 }
 
@@ -10161,6 +10187,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewItemPositionsListener = ItemPositionsListener.create();
   PreviewDocument? _outlineStopsPreview;
   List<_PositionedOutlineHeading> _previewOutlineStops = const [];
+  _SourceNavigationTarget? _lastSourceNavigationTarget;
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
@@ -10273,19 +10300,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToOutlineTarget(next);
     });
-    ref.listen(_sourceNavigationTargetProvider, (previous, next) {
-      if (next == null) {
-        return;
-      }
-      if (next.filePath != widget.state.workspace?.activeFilePath) {
-        return;
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _sourceEditorKey.currentState?.scrollToLine(next.line);
-        }
-      });
-    });
     final searchTarget = ref.watch(_searchNavigationTargetProvider);
     if (searchTarget != null &&
         ref.read(_workspaceSearchProvider).active &&
@@ -10311,6 +10325,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final sourceVisible =
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
+    final sourceTarget = ref.watch(_sourceNavigationTargetProvider);
+    if (sourceVisible &&
+        sourceTarget != null &&
+        sourceTarget.filePath == widget.state.workspace?.activeFilePath &&
+        !identical(sourceTarget, _lastSourceNavigationTarget)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted ||
+            sourceTarget.filePath != widget.state.workspace?.activeFilePath) {
+          return;
+        }
+        final editor = _sourceEditorKey.currentState;
+        if (editor == null) return;
+        editor.scrollToLine(sourceTarget.line);
+        _lastSourceNavigationTarget = sourceTarget;
+      });
+    }
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
     final standaloneDocumentLayout = BusyMarkDocumentLayoutSpec.standalone
@@ -10487,6 +10517,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             expressionId: expressionId,
                             code: code,
                             sourceSpan: sourceSpan,
+                            expectedRevision: activeBuffer?.revision,
+                            expectedFilePath: activeBuffer?.filePath,
                           ),
                     ),
                   ),
@@ -12185,6 +12217,8 @@ class _PreviewBlockView extends ConsumerWidget {
     ref
         .read(workspaceControllerProvider.notifier)
         .updateMathRenderDiagnostic(
+          expectedRevision: editRevision,
+          expectedFilePath: workspace?.activeFilePath,
           expressionId: expressionId,
           code: code,
           sourceSpan: _previewMathSourceSpan(workspace, sourceBlock),
@@ -12486,6 +12520,8 @@ class _PreviewInlineText extends ConsumerWidget {
       ref
           .read(workspaceControllerProvider.notifier)
           .updateMathRenderDiagnostic(
+            expectedRevision: editRevision,
+            expectedFilePath: workspace?.activeFilePath,
             expressionId: expressionId,
             code: code,
             sourceSpan: _previewMathSourceSpan(workspace, block),
@@ -13763,9 +13799,10 @@ String _decodePreviewAnchor(String value) {
 }
 
 class _ProblemsList extends StatelessWidget {
-  const _ProblemsList({required this.workspace});
+  const _ProblemsList({required this.workspace, required this.onRevealed});
 
   final Workspace workspace;
+  final VoidCallback onRevealed;
 
   @override
   Widget build(BuildContext context) {
@@ -13780,7 +13817,10 @@ class _ProblemsList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
               itemCount: diagnostics.length,
               itemBuilder: (context, index) {
-                return _DiagnosticRow(diagnostic: diagnostics[index]);
+                return _DiagnosticRow(
+                  diagnostic: diagnostics[index],
+                  onRevealed: onRevealed,
+                );
               },
             ),
     );
@@ -14560,9 +14600,10 @@ String _documentKindLabel(BuildContext context, DocumentKind kind) {
 }
 
 class _DiagnosticRow extends ConsumerWidget {
-  const _DiagnosticRow({required this.diagnostic});
+  const _DiagnosticRow({required this.diagnostic, required this.onRevealed});
 
   final Diagnostic diagnostic;
+  final VoidCallback onRevealed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14572,24 +14613,25 @@ class _DiagnosticRow extends ConsumerWidget {
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
         onTap: () async {
-          final opened = await ref
-              .read(workspaceControllerProvider.notifier)
-              .openActiveFile(diagnostic.filePath);
-          if (!opened || !context.mounted) {
-            return;
-          }
-          final line = diagnostic.line;
-          if (line != null) {
+          final controller = ref.read(workspaceControllerProvider.notifier);
+          final opened = await controller.openActiveFile(diagnostic.filePath);
+          if (!opened || !context.mounted) return;
+          controller.updateActiveEditorMode(DocumentViewModePreference.source);
+          unawaited(
             ref
-                .read(_sourceNavigationTargetProvider.notifier)
-                .set(
-                  _SourceNavigationTarget(
-                    filePath: diagnostic.filePath,
-                    line: line,
-                  ),
-                );
-          }
+                .read(appSettingsControllerProvider.notifier)
+                .setDocumentViewMode(DocumentViewModePreference.source),
+          );
           _clearGitDetailSelection(ref);
+          ref
+              .read(_sourceNavigationTargetProvider.notifier)
+              .set(
+                _SourceNavigationTarget(
+                  filePath: diagnostic.filePath,
+                  line: diagnostic.line ?? 1,
+                ),
+              );
+          onRevealed();
         },
         child: Padding(
           padding: BusyMarkInsets.searchResultRow,

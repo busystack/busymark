@@ -1,6 +1,9 @@
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
+import '../core/diagnostic.dart';
+import '../core/source_span.dart';
+
 import 'writerside_model.dart';
 import 'writerside_source_loader.dart';
 
@@ -11,6 +14,7 @@ class WritersideReferenceData {
     this.layouts = const {},
     this.resources = const {},
     this.sources = const {},
+    this.diagnostics = const [],
   });
   final Map<String, String> glossary;
 
@@ -19,10 +23,12 @@ class WritersideReferenceData {
   final Map<String, Map<String, String>> layouts;
   final Map<String, WritersideSourceFile> resources;
   final Map<String, WritersideSourceFile> sources;
+  final List<Diagnostic> diagnostics;
 
   static Future<WritersideReferenceData> load(WritersideModule module) async {
     const loader = WritersideSourceLoader();
     final sources = <String, WritersideSourceFile>{};
+    final diagnostics = <Diagnostic>[];
     Future<XmlDocument?> xml(String path) async {
       final loaded = await loader.load(
         reference: path,
@@ -34,7 +40,22 @@ class WritersideReferenceData {
       if (loaded.text == null) return null;
       try {
         return XmlDocument.parse(loaded.text!);
-      } on FormatException {
+      } on FormatException catch (error) {
+        final filePath = loaded.path ?? p.join(module.rootPath, path);
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.reference-data.invalid-xml',
+            severity: DiagnosticSeverity.error,
+            filePath: filePath,
+            args: {'message': error.toString()},
+            sourceSpan: SourceSpan.fromOffsets(
+              filePath: filePath,
+              source: loaded.text!,
+              startOffset: error.offset ?? 0,
+              endOffset: (error.offset ?? 0) + 1,
+            ),
+          ),
+        );
         return null;
       }
     }
@@ -118,6 +139,7 @@ class WritersideReferenceData {
       layouts: layouts,
       resources: resources,
       sources: sources,
+      diagnostics: sortDiagnostics(diagnostics),
     );
   }
 }

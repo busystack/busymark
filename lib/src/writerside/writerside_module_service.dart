@@ -11,6 +11,7 @@ import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'writerside_model.dart';
+import 'writerside_document_resolver.dart';
 import 'writerside_source_loader.dart';
 import 'writerside_reference_data.dart';
 import 'writerside_parsers.dart';
@@ -427,7 +428,7 @@ class WritersideModuleService {
     }
 
     final variables = <WritersideVariable>[];
-    var validateVariables = true;
+    var variablesAvailable = true;
     if (variablesResolution?.type == FileSystemEntityType.file) {
       final file = File(variablesResolution!.path);
       if (await file.exists()) {
@@ -439,7 +440,7 @@ class WritersideModuleService {
           sourceOverrides: normalizedOverrides,
         );
         if (source == null) {
-          validateVariables = false;
+          variablesAvailable = false;
         } else {
           final parsed = variablesParser.parse(file.path, source);
           variables.addAll(parsed.$1);
@@ -477,6 +478,8 @@ class WritersideModuleService {
       variables: variables,
       categories: categories,
       diagnostics: const [],
+      unparsedTopicReferences: Set.unmodifiable(unparsedTopics._fileNames),
+      variablesAvailable: variablesAvailable,
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
@@ -487,24 +490,20 @@ class WritersideModuleService {
         module,
         validatedImageDirs,
         unparsedTopics: unparsedTopics,
-        validateVariables: validateVariables,
         validateCategories: validateCategories,
       ),
     );
-    return WritersideModule(
-      rootPath: module.rootPath,
-      config: module.config,
-      instances: module.instances,
-      topics: module.topics,
-      variables: module.variables,
-      categories: module.categories,
+    final loaded = module.copyWith(
       diagnostics: sortDiagnostics(diagnostics),
-      validatedImageDirs: module.validatedImageDirs,
-      buildProfiles: module.buildProfiles,
-      instanceGroups: module.instanceGroups,
-      sourceOverrides: normalizedOverrides,
       sourceFiles: await const WritersideSourceLoader().loadModule(module),
       referenceData: await WritersideReferenceData.load(module),
+    );
+    return loaded.copyWith(
+      diagnostics: sortDiagnostics([
+        ...loaded.structuralDiagnostics,
+        ...loaded.referenceData.diagnostics,
+      ]),
+      semanticDiagnostics: resolveWritersideModuleDiagnostics(loaded),
     );
   }
 
@@ -865,11 +864,9 @@ class WritersideModuleService {
     WritersideModule module,
     List<String> validatedImageDirs, {
     required _UnparsedTopicIndex unparsedTopics,
-    required bool validateVariables,
     required bool validateCategories,
   }) {
     final diagnostics = <Diagnostic>[];
-    final variableNames = module.variableNames;
     final categoryIds = module.categories.map((item) => item.id).toSet();
     final topicIds = <String, WritersideTopic>{};
     for (final topic in module.topics) {
@@ -1045,70 +1042,6 @@ class WritersideModuleService {
         }
         duplicateIds[id.id] = id.span;
       }
-      if (validateVariables) {
-        for (final variable in topic.variables) {
-          if (!variableNames.contains(variable.name)) {
-            diagnostics.add(
-              Diagnostic(
-                code: 'writerside.variable.unresolved',
-                severity: DiagnosticSeverity.warning,
-                filePath: topic.filePath,
-                args: {'name': variable.name},
-                sourceSpan: variable.span,
-              ),
-            );
-          }
-        }
-      }
-      for (final link in topic.links) {
-        final destination = link.destination;
-        if (hasUriScheme(destination)) {
-          continue;
-        }
-        final parts = destination.split('#');
-        final targetReference = parts.first;
-        final anchor = parts.length > 1 ? parts.sublist(1).join('#') : null;
-        final resolved = targetReference.isEmpty
-            ? _TopicResolution([topic])
-            : _resolveTopicReference(module, targetReference, fromTopic: topic);
-        final target = resolved.topic;
-        if (target == null) {
-          if (resolved.isMissing &&
-              unparsedTopics.matches(targetReference, fromTopic: topic)) {
-            continue;
-          }
-          diagnostics.add(
-            resolved.isAmbiguous
-                ? _ambiguousTopicReferenceDiagnostic(
-                    reference: targetReference,
-                    filePath: topic.filePath,
-                    sourceSpan: link.span,
-                  )
-                : Diagnostic(
-                    code: 'markdown.link.unresolved-target',
-                    severity: DiagnosticSeverity.error,
-                    filePath: topic.filePath,
-                    args: {'destination': destination},
-                    sourceSpan: link.span,
-                  ),
-          );
-        } else if (anchor != null && anchor.isNotEmpty) {
-          final decodedAnchor = _decodeMarkdownAnchor(anchor);
-          final anchors = target.elementIds.map((item) => item.id).toSet();
-          if (!anchors.contains(decodedAnchor) &&
-              target.document.contentById(decodedAnchor) == null) {
-            diagnostics.add(
-              Diagnostic(
-                code: 'markdown.link.unresolved-anchor',
-                severity: DiagnosticSeverity.warning,
-                filePath: topic.filePath,
-                args: {'anchor': anchor, 'targetName': target.fileName},
-                sourceSpan: link.span,
-              ),
-            );
-          }
-        }
-      }
       for (final image in topic.images) {
         if (image.alt.trim().isEmpty) {
           diagnostics.add(
@@ -1203,63 +1136,6 @@ class WritersideModuleService {
           );
         }
       }
-      for (final include in topic.includes) {
-        if (include.from == null || include.from!.isEmpty) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.include.unresolved-source',
-              severity: DiagnosticSeverity.error,
-              filePath: topic.filePath,
-              sourceSpan: include.span,
-            ),
-          );
-          continue;
-        }
-        final resolved = _resolveTopicReference(
-          module,
-          include.from!,
-          fromTopic: topic,
-        );
-        final target = resolved.topic;
-        if (target == null) {
-          if (resolved.isMissing &&
-              unparsedTopics.matches(include.from!, fromTopic: topic)) {
-            continue;
-          }
-          if (!include.nullable) {
-            diagnostics.add(
-              resolved.isAmbiguous
-                  ? _ambiguousTopicReferenceDiagnostic(
-                      reference: include.from!,
-                      filePath: topic.filePath,
-                      sourceSpan: include.span,
-                    )
-                  : Diagnostic(
-                      code: 'writerside.include.unresolved-source',
-                      severity: DiagnosticSeverity.error,
-                      filePath: topic.filePath,
-                      args: {'from': include.from},
-                      sourceSpan: include.span,
-                    ),
-            );
-          }
-          continue;
-        }
-        if (include.elementId != null &&
-            !target.elementIds.any((item) => item.id == include.elementId)) {
-          if (!include.nullable) {
-            diagnostics.add(
-              Diagnostic(
-                code: 'writerside.include.unresolved-element',
-                severity: DiagnosticSeverity.error,
-                filePath: topic.filePath,
-                args: {'elementId': include.elementId, 'from': include.from},
-                sourceSpan: include.span,
-              ),
-            );
-          }
-        }
-      }
       if (validateCategories) {
         for (final category in topic.document.elements.where(
           (element) => element.name == 'category',
@@ -1332,14 +1208,6 @@ class WritersideModuleService {
       }
     }
     return false;
-  }
-
-  String _decodeMarkdownAnchor(String value) {
-    try {
-      return Uri.decodeComponent(value);
-    } on FormatException {
-      return value;
-    }
   }
 
   SourceSpan _stringSpan(String filePath, String source, String value) {

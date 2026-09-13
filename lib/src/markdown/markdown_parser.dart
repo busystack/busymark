@@ -12,6 +12,7 @@ import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
+import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
 import 'raw_html_policy.dart';
@@ -46,6 +47,7 @@ class MarkdownParser {
     MarkdownMode mode = MarkdownMode.commonMark,
     String? workspaceRoot,
     bool validateLocalReferences = true,
+    Map<String, String> sourceOverrides = const {},
   }) async {
     final parsed =
         source.length < _backgroundParseThresholdBytes ||
@@ -72,6 +74,7 @@ class MarkdownParser {
     final diagnostics = sortDiagnostics([
       ...parsed.diagnostics,
       ...await _validateLocalReferencesAsync(
+        sourceOverrides: sourceOverrides,
         filePath: filePath,
         workspaceRoot: workspaceRoot,
         headings: parsed.headings,
@@ -83,6 +86,23 @@ class MarkdownParser {
   }
 
   ParsedMarkdownDocument parse({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) => SourceLocationMapper.withSource(
+    source,
+    () => _parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: validateLocalReferences,
+    ),
+  );
+
+  ParsedMarkdownDocument _parse({
     required String filePath,
     required String source,
     MarkdownMode mode = MarkdownMode.commonMark,
@@ -238,14 +258,6 @@ class MarkdownParser {
         lineOffset: offset,
         xmlBlocks: xmlBlocks,
       );
-      _extractUnsafeHtml(
-        filePath: filePath,
-        source: source,
-        line: line,
-        lineOffset: offset,
-        mode: mode,
-        diagnostics: diagnostics,
-      );
 
       if (inRawHtmlBlock) {
         previousSetextCandidateLine = null;
@@ -265,6 +277,7 @@ class MarkdownParser {
       lineIndex += 1;
     }
 
+    _extractAuthoredHtmlDiagnostics(filePath, source, mode, diagnostics);
     final renderedDocument = astAdapter.parse(
       filePath: filePath,
       source: source,
@@ -1309,28 +1322,18 @@ class MarkdownParser {
     return line.substring(start, end + 1).trimRight().endsWith('/>');
   }
 
-  int _frontMatterEndOffset(String source) {
-    if (!source.startsWith('---')) {
-      return 0;
-    }
-    final end = source.indexOf('\n---', 3);
-    if (end == -1) {
-      return 0;
-    }
-    final nextLine = source.indexOf('\n', end + 4);
-    return nextLine == -1 ? source.length : nextLine + 1;
-  }
+  int _frontMatterEndOffset(String source) => frontMatterEndOffset(source);
 
   String? _frontMatterTitle(
     String filePath,
     String source,
     List<Diagnostic> diagnostics,
   ) {
-    if (!source.startsWith('---')) {
+    if (!hasFrontMatterOpening(source)) {
       return null;
     }
-    final end = source.indexOf('\n---', 3);
-    if (end == -1) {
+    final closing = frontMatterClosing(source);
+    if (closing == null) {
       diagnostics.add(
         Diagnostic(
           code: 'markdown.front-matter.malformed',
@@ -1346,7 +1349,7 @@ class MarkdownParser {
       );
       return null;
     }
-    final block = source.substring(3, end);
+    final block = source.substring(3, closing.start);
     for (final line in block.split('\n')) {
       final match = RegExp(r'^\s*title\s*:\s*(.+?)\s*$').firstMatch(line);
       if (match != null) {
@@ -1442,6 +1445,101 @@ class MarkdownParser {
     );
   }
 
+  void _extractAuthoredHtmlDiagnostics(
+    String filePath,
+    String source,
+    MarkdownMode mode,
+    List<Diagnostic> diagnostics,
+  ) {
+    final bodyOffset = frontMatterEndOffset(source);
+    final document = md.Document(
+      blockSyntaxes: const [BusyDisplayMathSyntax()],
+      inlineSyntaxes: [
+        BusyDollarMathSyntax(),
+        if (mode == MarkdownMode.writersideMarkdown) BusyWritersideMathSyntax(),
+      ],
+      extensionSet: md.ExtensionSet.gitHubWeb,
+      encodeHtml: true,
+    );
+    var cursor = bodyOffset;
+    void visit(md.Node node) {
+      if (node is md.Element) {
+        if (node.tag == 'a' || node.tag == 'img') {
+          final url = node.attributes[node.tag == 'a' ? 'href' : 'src'];
+          if (url != null &&
+              RegExp(
+                r'^(?:javascript|vbscript|data):',
+                caseSensitive: false,
+              ).hasMatch(url.trim())) {
+            final start = source.indexOf(url, cursor);
+            diagnostics.add(
+              Diagnostic(
+                code: 'markdown.raw-html.unsafe',
+                severity: DiagnosticSeverity.warning,
+                filePath: filePath,
+                sourceSpan: SourceSpan.fromOffsets(
+                  filePath: filePath,
+                  source: source,
+                  startOffset: start < 0 ? cursor : start,
+                  endOffset: start < 0 ? cursor : start + url.length,
+                ),
+              ),
+            );
+          }
+        }
+        if (node.tag == 'code' ||
+            node.tag == 'pre' ||
+            node.tag == busyMarkMathInlineTag ||
+            node.tag == busyMarkMathBlockTag) {
+          final text = node.textContent;
+          final start = source.indexOf(text, cursor);
+          if (start >= 0) cursor = start + text.length;
+          return;
+        }
+        for (final child in node.children ?? const <md.Node>[]) {
+          visit(child);
+        }
+        return;
+      }
+      if (node is! md.Text) return;
+      final raw = node.text;
+      final found = source.indexOf(raw, cursor);
+      final start = found < 0 ? cursor : found;
+      if (found >= 0) cursor = start + raw.length;
+      if (!raw.contains('<') || !hasUnsafeAuthoredHtml(raw)) return;
+      final before = diagnostics.length;
+      var offset = start;
+      for (final line in raw.split('\n')) {
+        _extractUnsafeHtml(
+          filePath: filePath,
+          source: source,
+          line: line,
+          lineOffset: offset,
+          mode: mode,
+          diagnostics: diagnostics,
+        );
+        offset += line.length + 1;
+      }
+      // A URL or event attribute may span multiple lines in one HTML node.
+      if (diagnostics.length == before) {
+        _extractUnsafeHtml(
+          filePath: filePath,
+          source: source,
+          line: raw,
+          lineOffset: start,
+          mode: mode,
+          diagnostics: diagnostics,
+        );
+      }
+    }
+
+    for (final node in document.parseLines(
+      source.substring(bodyOffset).split('\n'),
+    )) {
+      visit(node);
+    }
+  }
+
   void _extractUnsafeHtml({
     required String filePath,
     required String source,
@@ -1457,7 +1555,7 @@ class MarkdownParser {
         ).hasMatch(line)) {
       return;
     }
-    if (!hasUnsafeHtml(line)) {
+    if (!hasUnsafeAuthoredHtml(line)) {
       return;
     }
     final unsafe =
@@ -1576,6 +1674,7 @@ class MarkdownParser {
   }
 
   Future<List<Diagnostic>> _validateLocalReferencesAsync({
+    Map<String, String> sourceOverrides = const {},
     required String filePath,
     required String? workspaceRoot,
     required List<MarkdownHeading> headings,
@@ -1584,6 +1683,25 @@ class MarkdownParser {
   }) async {
     final diagnostics = <Diagnostic>[];
     final anchors = headings.map((item) => item.id).toSet();
+    final hasFileTargets = links.any((link) {
+      final destination = link.destination.trim();
+      return destination.isNotEmpty &&
+          !hasUriScheme(destination) &&
+          !destination.startsWith('#');
+    });
+    final canonicalSelf =
+        (hasFileTargets ? await _canonicalBufferPath(filePath) : null) ??
+        p.normalize(p.absolute(filePath));
+    final sources = <String, String>{};
+    for (final entry
+        in hasFileTargets
+            ? sourceOverrides.entries
+            : const <MapEntry<String, String>>[]) {
+      sources[await _canonicalBufferPath(entry.key)] = entry.value;
+    }
+    final targetCache = <String, _LocalLinkTarget>{};
+    final anchorCache = <String, Set<String>>{canonicalSelf: anchors};
+    final bufferedPaths = {canonicalSelf, ...sources.keys};
     for (final link in links) {
       final destination = link.destination.trim();
       if (hasUriScheme(destination)) {
@@ -1599,11 +1717,13 @@ class MarkdownParser {
       final decodedAnchor = anchor == null
           ? null
           : _decodeLocalReferenceAnchor(anchor);
-      final target = await _resolveLocalLinkTargetAsync(
-        filePath: filePath,
-        workspaceRoot: workspaceRoot,
-        targetPath: targetPath,
-      );
+      final target = targetCache[targetPath] ??=
+          await _resolveLocalLinkTargetAsync(
+            filePath: filePath,
+            workspaceRoot: workspaceRoot,
+            targetPath: targetPath,
+            bufferedPaths: bufferedPaths,
+          );
       if (targetPath.isNotEmpty && target.blocksTargetValidation) {
         diagnostics.add(
           Diagnostic(
@@ -1637,13 +1757,18 @@ class MarkdownParser {
         continue;
       }
       try {
-        final targetSource = await File(target.path!).readAsString();
-        final targetAnchors = parse(
-          filePath: target.path!,
-          source: targetSource,
-          workspaceRoot: workspaceRoot,
-          validateLocalReferences: false,
-        ).anchors;
+        var targetAnchors = anchorCache[target.path!];
+        if (targetAnchors == null) {
+          final targetSource =
+              sources[target.path!] ?? await File(target.path!).readAsString();
+          targetAnchors = (await parseAsync(
+            filePath: target.path!,
+            source: targetSource,
+            workspaceRoot: workspaceRoot,
+            validateLocalReferences: false,
+          )).anchors;
+          anchorCache[target.path!] = targetAnchors;
+        }
         if (!targetAnchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
@@ -1757,6 +1882,7 @@ class MarkdownParser {
     required String filePath,
     required String? workspaceRoot,
     required String targetPath,
+    Set<String> bufferedPaths = const {},
   }) async {
     if (targetPath.isEmpty) {
       return const _LocalLinkTarget.currentDocument();
@@ -1773,9 +1899,19 @@ class MarkdownParser {
         ? p.normalize(localTargetPath)
         : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
-    final canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    var canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    if (canonicalTarget == null) {
+      final bufferPath = await _canonicalBufferPath(absoluteTarget);
+      if (bufferedPaths.contains(bufferPath)) canonicalTarget = bufferPath;
+    }
     if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
       return const _LocalLinkTarget.blocked();
+    }
+    if (bufferedPaths.contains(canonicalTarget)) {
+      return _LocalLinkTarget.found(
+        path: canonicalTarget,
+        canValidateAnchors: isMarkdownPath(canonicalTarget),
+      );
     }
     FileSystemEntityType type;
     try {
@@ -1802,6 +1938,14 @@ class MarkdownParser {
       path: canonicalTarget,
       canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
     );
+  }
+
+  Future<String> _canonicalBufferPath(String path) async {
+    final absolute = p.normalize(p.absolute(path));
+    final existing = await _canonicalExistingPath(absolute);
+    if (existing != null) return existing;
+    final parent = await _canonicalExistingPath(p.dirname(absolute));
+    return parent == null ? absolute : p.join(parent, p.basename(absolute));
   }
 
   String? _canonicalWorkspaceRootSync(String? workspaceRoot) {

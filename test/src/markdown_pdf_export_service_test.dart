@@ -448,6 +448,7 @@ class _WritersideMarkdownParser extends MarkdownParser {
     MarkdownMode mode = MarkdownMode.commonMark,
     String? workspaceRoot,
     bool validateLocalReferences = true,
+    Map<String, String> sourceOverrides = const {},
   }) {
     return super.parseAsync(
       filePath: filePath,
@@ -455,6 +456,7 @@ class _WritersideMarkdownParser extends MarkdownParser {
       mode: MarkdownMode.writersideMarkdown,
       workspaceRoot: workspaceRoot,
       validateLocalReferences: validateLocalReferences,
+      sourceOverrides: sourceOverrides,
     );
   }
 }

@@ -6,6 +6,7 @@ import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'writerside_document.dart';
+import 'writerside_document_resolver.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_schema.dart';
@@ -60,6 +61,7 @@ class WritersideReference {
     this.origin,
     this.sourceValue,
     this.scopeReference,
+    this.nullable = false,
   });
 
   final String value;
@@ -70,6 +72,7 @@ class WritersideReference {
   final String? origin;
   final String? sourceValue;
   final String? scopeReference;
+  final bool nullable;
 }
 
 class WritersideRenameEdit {
@@ -270,6 +273,11 @@ class WritersideProjectIndex {
           }
           for (final requiredAttribute
               in WritersideSchema.requiredAttributesFor(element.name)) {
+            if (element.semanticKind == WritersideSemanticKind.include &&
+                requiredAttribute == 'from') {
+              // An omitted source includes an element from the current topic.
+              continue;
+            }
             if (requiredAttribute == 'href' &&
                 element.attributes.containsKey('anchor')) {
               continue;
@@ -537,7 +545,18 @@ class WritersideProjectIndex {
           ? targetModule.topics
                 .where((topic) => topic.filePath == reference.filePath)
                 .toList()
-          : targetModule.topicsMatchingReference(from);
+          : targetModule.topicsMatchingReference(
+              from,
+              fromTopic: reference.origin == null
+                  ? targetModule.topics
+                        .where((topic) => topic.filePath == reference.filePath)
+                        .firstOrNull
+                  : null,
+            );
+      if (topics.isEmpty &&
+          (reference.nullable || targetModule.isUnparsedTopicReference(from))) {
+        continue;
+      }
       if (topics.length != 1) {
         diagnostics.add(
           _referenceDiagnostic(
@@ -549,7 +568,8 @@ class WritersideProjectIndex {
         );
         continue;
       }
-      if (id != null &&
+      if (!reference.nullable &&
+          id != null &&
           id.isNotEmpty &&
           topics.single.document.contentById(id) == null) {
         diagnostics.add(
@@ -940,13 +960,13 @@ class WritersideProject {
     if (!replaced) {
       return this;
     }
-    final nextModules = [
+    final nextModules = _resolveProjectModules([
       for (final candidate in modules)
         if (p.equals(candidate.rootPath, module.rootPath))
           module
         else
           candidate,
-    ];
+    ]);
     final nextIndex = WritersideProjectIndex.build(
       nextModules,
       fileSymbols: index.symbols.where(
@@ -1030,10 +1050,11 @@ class WritersideProjectService {
     String? preferredModuleRoot,
   }) async {
     final roots = await discoverModuleRoots(projectRoot);
-    final modules = <WritersideModule>[];
+    var modules = <WritersideModule>[];
     for (final root in roots) {
       modules.add(await moduleService.load(root, options: scanOptions));
     }
+    modules = _resolveProjectModules(modules);
     final index = WritersideProjectIndex.build(
       modules,
       fileSymbols: await _discoverFileSymbols(modules),
@@ -1254,6 +1275,7 @@ void _collectElementReferences(
         WritersideReference(
           value: id == null ? from ?? '' : '${from ?? ''}#$id',
           kind: WritersideSymbolKind.snippet,
+          nullable: element.attributes['nullable'] == 'true',
           moduleId: moduleId,
           filePath: filePath,
           span:
@@ -1443,4 +1465,19 @@ String _renamedReferenceValue(
 
 extension _FirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
+}
+
+/// Every dependency replacement gets a fresh semantic pass for every topic,
+/// including references from modules other than the one that changed.
+List<WritersideModule> _resolveProjectModules(List<WritersideModule> modules) {
+  final origins = {for (final module in modules) _moduleId(module): module};
+  return [
+    for (final module in modules)
+      module.copyWith(
+        semanticDiagnostics: resolveWritersideModuleDiagnostics(
+          module,
+          modulesByOrigin: origins,
+        ),
+      ),
+  ];
 }

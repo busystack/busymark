@@ -10244,7 +10244,14 @@ class _MutableWorkspaceController extends WorkspaceController {
   WorkspaceState build() => initialState;
 
   @override
-  Future<void> validateActive() async {}
+  Future<ValidationOutcome> validateActive() async => ValidationOutcome(
+    status: ValidationStatus.published,
+    workspaceId: state.workspace?.id,
+    filePath: state.workspace?.activeFilePath,
+    bufferId: state.activeBuffer?.id,
+    revision: editRevision,
+    documentRevision: 0,
+  );
 
   @override
   Future<bool> selectWritersideContext({
