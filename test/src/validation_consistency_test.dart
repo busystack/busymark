@@ -7,6 +7,8 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/raw_html_policy.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
+import 'package:busymark/src/writerside/writerside_document_resolver.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -170,6 +172,95 @@ void main() {
       expect(optional, hasLength(2));
     },
   );
+
+  test(
+    'interpolated includes agree across load, topic and config validation',
+    () async {
+      await module();
+      await write(
+        'topics/b.topic',
+        '<topic id="b" title="B">'
+            '<snippet id="my-section"><p>Target</p></snippet></topic>',
+      );
+      const source =
+          '<topic id="a" title="A">'
+          '<var name="target" value="b.topic"/>'
+          '<var name="part" value="my-section"/>'
+          '<var name="module" value="main"/>'
+          '<include origin="%module%" from="%target%" element-id="%part%"/>'
+          '</topic>';
+      await write('topics/a.topic', source);
+      var workspace = await service.openPath(root.path);
+      for (final stage in ['load', 'topic', 'config']) {
+        if (stage != 'load') {
+          workspace = await service.reparseActive(
+            workspace.copyWith(
+              activeFilePath: path(
+                stage == 'topic' ? 'topics/a.topic' : 'writerside.cfg',
+              ),
+            ),
+            stage == 'topic' ? source : config,
+          );
+        }
+        expect(signature(workspace.diagnostics), isEmpty, reason: stage);
+        final module = workspace.writersideModule!;
+        final topic = module.topicByReference('a.topic')!;
+        final resolved = const WritersideDocumentResolver().resolve(
+          topic.document,
+          WritersideResolveContext(
+            module: module,
+            topic: topic,
+            modulesByOrigin: workspace.writersideProject!.modulesByOrigin,
+          ),
+        );
+        expect(
+          resolved.document.nodes.map((node) => node.plainText).join(),
+          contains('Target'),
+          reason: stage,
+        );
+        final reference = workspace.writersideProject!.index.references
+            .singleWhere((r) => r.kind == WritersideSymbolKind.snippet);
+        expect(reference.value, '%target%#%part%');
+        expect(reference.origin, '%module%');
+      }
+    },
+  );
+
+  test('local variable scope identity includes its declaring topic', () async {
+    await module();
+    String topic(String id, String declarations) =>
+        '<topic id="$id" title="$id">$declarations<p>%product%</p></topic>';
+    const declaration = '<var name="product" value="A"/>';
+    await write('topics/a.topic', topic('a', declaration));
+    await write(
+      'topics/b.topic',
+      topic('b', '<var name="product" value="B"/>'),
+    );
+    var workspace = await service.openPath(root.path);
+    expect(signature(workspace.diagnostics), isEmpty);
+    workspace = await service.reparseActive(
+      workspace,
+      topic('a', declaration + declaration),
+    );
+    final duplicates = workspace.diagnostics.where(
+      (d) => d.code == 'writerside.index.duplicate-symbol',
+    );
+    expect(duplicates, hasLength(1));
+    expect(duplicates.single.filePath, path('topics/a.topic'));
+    expect(
+      duplicates.single.relatedSpans.single.filePath,
+      path('topics/a.topic'),
+    );
+    workspace = await service.reparseActive(
+      workspace,
+      topic(
+        'a',
+        '$declaration'
+            '<chapter title="Nested"><var name="product" value="Nested"/><p>%product%</p></chapter>',
+      ),
+    );
+    expect(signature(workspace.diagnostics), isEmpty);
+  });
 
   test('cross-module includes refresh when their target changes', () async {
     for (final name in ['main', 'shared']) {

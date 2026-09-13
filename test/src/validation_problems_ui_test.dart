@@ -120,6 +120,52 @@ void main() {
   });
 
   testWidgets(
+    'manual Validate supersedes queued automatic validation and presents once',
+    (tester) async {
+      final service = _QueuedValidationService();
+      final harness = await _open(
+        tester,
+        DocumentViewModePreference.source,
+        service: service,
+        validateOnEdit: true,
+      );
+      await tester.runAsync(() async {
+        harness.controller.updateActiveText('# Automatic first\n');
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await _settle(tester);
+      expect(
+        service.automaticStarted.isCompleted,
+        isTrue,
+        reason: service.sources.toString(),
+      );
+      await tester.runAsync(() async {
+        // Queue an automatic follow-up behind the blocked first pass.
+        harness.controller.updateActiveText('# Latest\n');
+        await tester.tap(find.byTooltip('Validate'));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await _settle(tester);
+      expect(
+        service.manualStarted.isCompleted,
+        isTrue,
+        reason: service.sources.toString(),
+      );
+      // Finish the first pass while the manual pass is still blocked.
+      service.releaseAutomatic.complete();
+      await _settle(tester);
+      expect(service.latestCalls, 1);
+      expect(find.text('Problems'), findsNothing);
+      service.releaseManual.complete();
+      await _settle(tester);
+      expect(find.text('Problems'), findsOneWidget);
+      expect(service.latestCalls, 1);
+      expect(harness.state.workspace!.markdown!.source, '# Latest\n');
+      await harness.dispose(tester);
+    },
+  );
+
+  testWidgets(
     'failed and stale validation do not show Problems; concurrent clicks publish once',
     (tester) async {
       final service = _ControlledValidationService();
@@ -157,6 +203,7 @@ Future<_Harness> _open(
   WidgetTester tester,
   DocumentViewModePreference mode, {
   WorkspaceService service = const WorkspaceService(),
+  bool validateOnEdit = false,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -172,7 +219,9 @@ Future<_Harness> _open(
     final container = ProviderContainer(
       overrides: [
         systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
-        localSettingsStoreProvider.overrideWithValue(_Settings(mode)),
+        localSettingsStoreProvider.overrideWithValue(
+          _Settings(mode, validateOnEdit: validateOnEdit),
+        ),
         workspaceServiceProvider.overrideWithValue(service),
         linuxHeaderBarServiceProvider.overrideWithValue(_HeaderBar()),
       ],
@@ -229,13 +278,14 @@ class _Harness {
 }
 
 class _Settings implements LocalSettingsStore {
-  _Settings(this.mode);
+  _Settings(this.mode, {this.validateOnEdit = false});
   final DocumentViewModePreference mode;
+  final bool validateOnEdit;
   @override
   Future<Map<String, Object?>> load() async => AppSettings.defaults()
       .copyWith(
         documentViewMode: mode,
-        validateOnEdit: false,
+        validateOnEdit: validateOnEdit,
         autoSave: false,
         sidebarVisible: false,
       )
@@ -262,6 +312,29 @@ class _ControlledValidationService extends WorkspaceService {
     calls++;
     if (fail) throw StateError('Validation failed');
     if (workspace.activeFilePath == blockedPath) await gate?.future;
+    return super.reparseActive(workspace, source);
+  }
+}
+
+class _QueuedValidationService extends WorkspaceService {
+  final automaticStarted = Completer<void>();
+  final manualStarted = Completer<void>();
+  final releaseAutomatic = Completer<void>();
+  final releaseManual = Completer<void>();
+  int latestCalls = 0;
+  final sources = <String>[];
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    sources.add(source);
+    if (source == '# Automatic first\n') {
+      automaticStarted.complete();
+      await releaseAutomatic.future;
+    } else if (source == '# Latest\n') {
+      latestCalls++;
+      if (!manualStarted.isCompleted) manualStarted.complete();
+      await releaseManual.future;
+    }
     return super.reparseActive(workspace, source);
   }
 }

@@ -10,6 +10,7 @@ import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
+import 'authored_html_diagnostics.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
 import 'markdown_front_matter.dart';
@@ -1451,131 +1452,8 @@ class MarkdownParser {
     MarkdownMode mode,
     List<Diagnostic> diagnostics,
   ) {
-    final bodyOffset = frontMatterEndOffset(source);
-    final document = md.Document(
-      blockSyntaxes: const [BusyDisplayMathSyntax()],
-      inlineSyntaxes: [
-        BusyDollarMathSyntax(),
-        if (mode == MarkdownMode.writersideMarkdown) BusyWritersideMathSyntax(),
-      ],
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: true,
-    );
-    var cursor = bodyOffset;
-    void visit(md.Node node) {
-      if (node is md.Element) {
-        if (node.tag == 'a' || node.tag == 'img') {
-          final url = node.attributes[node.tag == 'a' ? 'href' : 'src'];
-          if (url != null &&
-              RegExp(
-                r'^(?:javascript|vbscript|data):',
-                caseSensitive: false,
-              ).hasMatch(url.trim())) {
-            final start = source.indexOf(url, cursor);
-            diagnostics.add(
-              Diagnostic(
-                code: 'markdown.raw-html.unsafe',
-                severity: DiagnosticSeverity.warning,
-                filePath: filePath,
-                sourceSpan: SourceSpan.fromOffsets(
-                  filePath: filePath,
-                  source: source,
-                  startOffset: start < 0 ? cursor : start,
-                  endOffset: start < 0 ? cursor : start + url.length,
-                ),
-              ),
-            );
-          }
-        }
-        if (node.tag == 'code' ||
-            node.tag == 'pre' ||
-            node.tag == busyMarkMathInlineTag ||
-            node.tag == busyMarkMathBlockTag) {
-          final text = node.textContent;
-          final start = source.indexOf(text, cursor);
-          if (start >= 0) cursor = start + text.length;
-          return;
-        }
-        for (final child in node.children ?? const <md.Node>[]) {
-          visit(child);
-        }
-        return;
-      }
-      if (node is! md.Text) return;
-      final raw = node.text;
-      final found = source.indexOf(raw, cursor);
-      final start = found < 0 ? cursor : found;
-      if (found >= 0) cursor = start + raw.length;
-      if (!raw.contains('<') || !hasUnsafeAuthoredHtml(raw)) return;
-      final before = diagnostics.length;
-      var offset = start;
-      for (final line in raw.split('\n')) {
-        _extractUnsafeHtml(
-          filePath: filePath,
-          source: source,
-          line: line,
-          lineOffset: offset,
-          mode: mode,
-          diagnostics: diagnostics,
-        );
-        offset += line.length + 1;
-      }
-      // A URL or event attribute may span multiple lines in one HTML node.
-      if (diagnostics.length == before) {
-        _extractUnsafeHtml(
-          filePath: filePath,
-          source: source,
-          line: raw,
-          lineOffset: start,
-          mode: mode,
-          diagnostics: diagnostics,
-        );
-      }
-    }
-
-    for (final node in document.parseLines(
-      source.substring(bodyOffset).split('\n'),
-    )) {
-      visit(node);
-    }
-  }
-
-  void _extractUnsafeHtml({
-    required String filePath,
-    required String source,
-    required String line,
-    required int lineOffset,
-    required MarkdownMode mode,
-    required List<Diagnostic> diagnostics,
-  }) {
-    if (mode == MarkdownMode.writersideMarkdown &&
-        RegExp(
-          r'^\s{0,3}<video(?:\s|/?>)',
-          caseSensitive: false,
-        ).hasMatch(line)) {
-      return;
-    }
-    if (!hasUnsafeAuthoredHtml(line)) {
-      return;
-    }
-    final unsafe =
-        RegExp(
-          r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b|on[A-Za-z0-9_-]+\s*=|(?:java|vb)script:|data:',
-          caseSensitive: false,
-        ).firstMatch(line) ??
-        RegExp(r'\S+').firstMatch(line);
-    diagnostics.add(
-      Diagnostic(
-        code: 'markdown.raw-html.unsafe',
-        severity: DiagnosticSeverity.warning,
-        filePath: filePath,
-        sourceSpan: SourceSpan.fromOffsets(
-          filePath: filePath,
-          source: source,
-          startOffset: lineOffset + (unsafe?.start ?? 0),
-          endOffset: lineOffset + (unsafe?.end ?? line.length),
-        ),
-      ),
+    diagnostics.addAll(
+      authoredHtmlDiagnostics(filePath: filePath, source: source, mode: mode),
     );
   }
 

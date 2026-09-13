@@ -150,6 +150,58 @@ void main() {
     expect(await b.readAsString(), '# Saved\n');
   });
 
+  for (final savedAnchor in [true, false]) {
+    test('discarding an inactive Writerside tab restores disk dependencies: '
+        'savedAnchor=$savedAnchor', () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-discard-validation-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      String target(bool anchor) =>
+          '<topic id="b" title="B"><p'
+          '${anchor ? ' id="part"' : ''}>Target</p></topic>';
+      for (final entry in {
+        'writerside.cfg':
+            '<ihp><module name="docs"/><topics dir="topics"/></ihp>',
+        'topics/a.topic':
+            '<topic id="a" title="A"><a href="b.topic#part"/></topic>',
+        'topics/b.topic': target(savedAnchor),
+      }.entries) {
+        final file = File(p.join(root.path, entry.key));
+        await file.parent.create(recursive: true);
+        await file.writeAsString(entry.value);
+      }
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setValidateOnEdit(false);
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      final aPath = p.join(root.path, 'topics/a.topic');
+      final bPath = p.join(root.path, 'topics/b.topic');
+      await controller.openPath(root.path);
+      await controller.openActiveFile(bPath);
+      final bId = harness.controller.state.activeBuffer!.id;
+      controller.updateActiveText(target(!savedAnchor));
+      expect((await controller.validateActive()).published, isTrue);
+      await controller.openActiveFile(aPath);
+      expect((await controller.validateActive()).published, isTrue);
+      Iterable<Object> linkErrors() =>
+          harness.controller.state.workspace!.diagnostics.where(
+            (d) =>
+                d.filePath == aPath && d.code == 'writerside.link.unavailable',
+          );
+      expect(linkErrors(), hasLength(savedAnchor ? 1 : 0));
+      expect(await controller.closeDocumentBuffer(bId, discard: true), isTrue);
+      expect(harness.controller.state.bufferForPath(bPath), isNull);
+      expect((await controller.validateActive()).published, isTrue);
+      expect(linkErrors(), hasLength(savedAnchor ? 0 : 1));
+      expect(
+        harness.controller.state.workspace!.writersideModule!.sourceOverrides,
+        isNot(contains(bPath)),
+      );
+      expect(await File(bPath).readAsString(), target(savedAnchor));
+    });
+  }
+
   test(
     'Writerside rename stages verified edits across unsaved tabs with undo',
     () async {

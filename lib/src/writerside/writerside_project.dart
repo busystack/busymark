@@ -491,10 +491,18 @@ class WritersideProjectIndex {
           symbol.kind == WritersideSymbolKind.snippet ||
           symbol.kind == WritersideSymbolKind.variable,
     )) {
+      // Global variables share a module namespace; lexical scopes also belong
+      // to a specific source file, even when their offsets happen to match.
+      final scopedFile =
+          symbol.kind == WritersideSymbolKind.element ||
+              symbol.kind == WritersideSymbolKind.snippet ||
+              symbol.scopeSpan != null
+          ? symbol.filePath
+          : '';
       groupedDefinitions
           .putIfAbsent(
             '${symbol.moduleId}:${symbol.kind.name}:'
-            '${symbol.kind == WritersideSymbolKind.element || symbol.kind == WritersideSymbolKind.snippet ? symbol.filePath : ''}:'
+            '$scopedFile:'
             '${symbol.name}:${symbol.instanceCondition ?? ''}:${symbol.scopeSpan?.startOffset ?? ''}',
             () => [],
           )
@@ -524,62 +532,9 @@ class WritersideProjectIndex {
     final modulesById = {
       for (final module in modules) moduleIds[module]!: module,
     };
-    for (final reference in references.where(
-      (reference) => reference.kind == WritersideSymbolKind.snippet,
-    )) {
-      final targetModule = modulesById[reference.origin ?? reference.moduleId];
-      if (targetModule == null) {
-        diagnostics.add(
-          _referenceDiagnostic('writerside.index.unresolved-origin', reference),
-        );
-        continue;
-      }
-      final separator = reference.value.indexOf('#');
-      final from = separator == -1
-          ? reference.value
-          : reference.value.substring(0, separator);
-      final id = separator == -1
-          ? null
-          : reference.value.substring(separator + 1);
-      final topics = from.isEmpty
-          ? targetModule.topics
-                .where((topic) => topic.filePath == reference.filePath)
-                .toList()
-          : targetModule.topicsMatchingReference(
-              from,
-              fromTopic: reference.origin == null
-                  ? targetModule.topics
-                        .where((topic) => topic.filePath == reference.filePath)
-                        .firstOrNull
-                  : null,
-            );
-      if (topics.isEmpty &&
-          (reference.nullable || targetModule.isUnparsedTopicReference(from))) {
-        continue;
-      }
-      if (topics.length != 1) {
-        diagnostics.add(
-          _referenceDiagnostic(
-            topics.isEmpty
-                ? 'writerside.index.unresolved-reference'
-                : 'writerside.index.ambiguous-reference',
-            reference,
-          ),
-        );
-        continue;
-      }
-      if (!reference.nullable &&
-          id != null &&
-          id.isNotEmpty &&
-          topics.single.document.contentById(id) == null) {
-        diagnostics.add(
-          _referenceDiagnostic(
-            'writerside.index.unresolved-reference',
-            reference,
-          ),
-        );
-      }
-    }
+    // References retain authored values for navigation and source edits. Include
+    // diagnostics belong to the document resolver, which has the lexical
+    // variables, instance conditions, origins and optional-reference context.
 
     return WritersideProjectIndex(
       symbols: List.unmodifiable(symbols),
@@ -1387,15 +1342,6 @@ void _collectElementReferences(
     }
   }
 }
-
-Diagnostic _referenceDiagnostic(String code, WritersideReference reference) =>
-    Diagnostic(
-      code: code,
-      severity: DiagnosticSeverity.warning,
-      filePath: reference.filePath,
-      args: {'reference': reference.value},
-      sourceSpan: reference.span,
-    );
 
 String _moduleId(WritersideModule module) =>
     module.config.moduleName?.trim().isNotEmpty == true

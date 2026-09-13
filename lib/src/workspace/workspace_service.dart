@@ -1298,6 +1298,12 @@ class WorkspaceService {
     Workspace workspace,
     Map<String, String> sources,
   ) async {
+    // This is a complete buffer snapshot. A missing entry has relinquished
+    // editor ownership and must be read from disk again, including dependencies.
+    sources = {
+      for (final entry in sources.entries)
+        normalizePath(entry.key): entry.value,
+    };
     final project = workspace.writersideProject;
     if (project == null) {
       return workspace.copyWith(sourceOverrides: Map.unmodifiable(sources));
@@ -1306,20 +1312,24 @@ class WorkspaceService {
     for (final module in project.modules) {
       final overrides = {
         for (final entry in sources.entries)
-          if (p.isWithin(module.rootPath, entry.key) &&
-              module.sourceOverrides[entry.key] != entry.value)
-            entry.key: entry.value,
+          if (p.isWithin(module.rootPath, entry.key)) entry.key: entry.value,
       };
-      if (overrides.isEmpty) continue;
+      if (overrides.length == module.sourceOverrides.length &&
+          overrides.entries.every(
+            (entry) => module.sourceOverrides[entry.key] == entry.value,
+          )) {
+        continue;
+      }
       updated = updated.withModule(
         await writersideService.load(
           module.rootPath,
           options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
-          sourceOverrides: {...module.sourceOverrides, ...overrides},
+          sourceOverrides: overrides,
         ),
       );
     }
     return workspace.copyWith(
+      sourceOverrides: Map.unmodifiable(sources),
       writersideProject: updated,
       writersideModule: updated.activeModule,
       diagnostics: sortDiagnostics([
