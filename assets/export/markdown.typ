@@ -17,6 +17,14 @@
 #let content-height = (geometry.heightPt - margins.top - margins.bottom) * 1pt
 #let running-visible() = options.showHeaderFooterOnFirstPage or counter(page).get().first() > 1
 #let number-position = if options.pageNumbers == "bottomLeft" { left } else if options.pageNumbers == "bottomRight" { right } else { center }
+#let footer-content(font-size) = {
+  set text(size: font-size, top-edge: "ascender", bottom-edge: "descender")
+  set par(leading: 0.2em, spacing: 0pt)
+  let rows = ()
+  if options.footer == "documentTitle" { rows.push(align(center, text(document-metadata.title))) }
+  if options.pageNumbers != "off" { rows.push(align(number-position, counter(page).display("1"))) }
+  stack(spacing: 0.2em, ..rows)
+}
 #set page(
   width: geometry.widthPt * 1pt,
   height: geometry.heightPt * 1pt,
@@ -29,9 +37,15 @@
   header: if options.header == "none" { none } else { context { if running-visible() { text(document-metadata.title) } } },
   footer: if options.footer == "none" and options.pageNumbers == "off" { none } else { context {
     if running-visible() {
-      // Native page footer content combines title and counter without overlap.
-      if options.footer == "documentTitle" { align(center, text(document-metadata.title)) }
-      if options.pageNumbers != "off" { align(number-position, counter(page).display("1")) }
+      // The footer starts 30% into the bottom margin. Fit the complete stack
+      // into the remaining space, including font ascenders and descenders.
+      layout(size => {
+        let font-size = typography.bodySizePt * 1pt
+        let available-height = calc.max(1pt, margins.bottom * 0.7pt - 2pt)
+        let natural = measure(footer-content(font-size), width: size.width)
+        let factor = calc.min(1, available-height / natural.height)
+        footer-content(font-size * factor)
+      })
     }
   } },
 )

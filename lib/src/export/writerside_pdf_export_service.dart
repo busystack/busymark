@@ -97,8 +97,8 @@ class WritersidePdfExportService {
       throw WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
         detail:
-            'Writerside module validation failed: '
-            '${moduleErrors.map((diagnostic) => diagnostic.code).toSet().join(', ')}',
+            'Writerside module validation failed:\n'
+            '${_diagnosticDetails(moduleErrors, moduleRoot)}',
       );
     }
     final composition = await _composeInstanceDocument(
@@ -114,8 +114,8 @@ class WritersidePdfExportService {
       throw WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
         detail:
-            'Writerside resolution failed: '
-            '${resolutionErrors.map((diagnostic) => diagnostic.code).join(', ')}',
+            'Writerside resolution failed:\n'
+            '${_diagnosticDetails(resolutionErrors, moduleRoot)}',
       );
     }
     final document = composition.document;
@@ -405,6 +405,25 @@ class WritersidePdfExportService {
       for (final diagnostic in module.diagnostics)
         if (!_isDeferredCrossModuleDiagnostic(module, diagnostic)) diagnostic,
     ];
+  }
+
+  String _diagnosticDetails(
+    Iterable<Diagnostic> diagnostics,
+    String moduleRoot,
+  ) {
+    return diagnostics
+        .map((diagnostic) {
+          final path = p.relative(diagnostic.filePath, from: moduleRoot);
+          final location =
+              '$path${diagnostic.line == null ? '' : ':${diagnostic.line}'}';
+          final message = diagnostic.code == 'writerside.tree.missing-topic'
+              ? 'Missing topic "${diagnostic.args['topic']}"'
+              : diagnostic.args.entries
+                    .map((entry) => '${entry.key}=${entry.value}')
+                    .join(', ');
+          return '$location: ${message.isEmpty ? '' : '$message '}[${diagnostic.code}]';
+        })
+        .join('\n');
   }
 
   bool _isDeferredCrossModuleDiagnostic(

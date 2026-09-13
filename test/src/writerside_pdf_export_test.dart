@@ -806,6 +806,7 @@ void main() {
 <instance-profile id="guide" name="Guide" start-page="intro.md">
   <toc-element topic="intro.md"/>
   <toc-element topic="missing.topic"/>
+  <toc-element topic="another-missing.topic"/>
 </instance-profile>
 ''');
     final exporter = _RecordingMarkdownExporter();
@@ -830,7 +831,11 @@ void main() {
             .having(
               (error) => error.detail,
               'detail',
-              contains('writerside.tree.missing-topic'),
+              allOf(
+                contains('guide.tree:3: Missing topic "missing.topic"'),
+                contains('guide.tree:4: Missing topic "another-missing.topic"'),
+                contains('writerside.tree.missing-topic'),
+              ),
             ),
       ),
     );

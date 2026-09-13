@@ -53,6 +53,20 @@ void main() {
       content: ExportContentOptions(numberHeadings: true),
       footer: PdfRunningText.documentTitle,
     ),
+    for (final position in [
+      PdfPageNumberPosition.bottomLeft,
+      PdfPageNumberPosition.bottomCenter,
+      PdfPageNumberPosition.bottomRight,
+    ])
+      'narrow-title-${position.name}': PdfExportOptions(
+        pageSize: PdfPageSize.letter,
+        margin: PdfMarginPreset.narrow,
+        header: PdfRunningText.documentTitle,
+        footer: PdfRunningText.documentTitle,
+        pageNumbers: position,
+        showHeaderFooterOnFirstPage: false,
+        content: const ExportContentOptions(includeToc: true),
+      ),
   };
   for (final profile in profiles.entries) {
     test(
@@ -194,6 +208,11 @@ ${List.filled(140, 'A paragraph of readable content to exercise later pages.\n')
                 (pageIndex > 0 || o.showHeaderFooterOnFirstPage);
             expect(counters, hasLength(visible ? 1 : 0));
             if (visible) {
+              expect(
+                double.parse(counters.single.getAttribute('yMax')!),
+                lessThanOrEqualTo(o.geometry.heightPt - 2),
+                reason: 'The complete page number must remain inside the page.',
+              );
               final left = double.parse(counters.single.getAttribute('xMin')!);
               final right = double.parse(counters.single.getAttribute('xMax')!);
               final contentLeft =
