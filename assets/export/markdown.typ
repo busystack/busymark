@@ -455,18 +455,46 @@
   let cover = data.titlePage
   let body-size = typography.bodySizePt * 1pt
   let width = (geometry.widthPt - margins.left - margins.right) * 1pt
+  let fit-error = "The PDF title page does not fit the selected page size and margins. Shorten the title-page text or choose a larger content area."
+  let cover-text(value) = context {
+    // A constrained paragraph frame hides overflowing glyphs. Build lines at
+    // spaces and measure each candidate with infinite width in its actual text
+    // style. Explicit breaks also prevent Unicode no-break rules from joining
+    // individually fitting words into an overflowing line. Non-breaking spaces
+    // stay inside words, which must fit as a whole.
+    let lines = ()
+    for source-line in value.split("\n") {
+      let line = ""
+      for word in source-line.split(" ") {
+        let candidate = if line == "" { word } else { line + " " + word }
+        if measure(text(candidate), width: auto).width <= width {
+          line = candidate
+        } else {
+          assert(measure(text(word), width: auto).width <= width,
+            message: fit-error)
+          lines.push(line)
+          line = word
+        }
+      }
+      lines.push(line)
+    }
+    for (index, line) in lines.enumerate() {
+      if index > 0 { linebreak() }
+      text(line)
+    }
+  }
   let cover-content = {
     set text(font: typography.bodyFont, size: body-size,
-      top-edge: "ascender", bottom-edge: "descender")
+      top-edge: "ascender", bottom-edge: "descender", overhang: false)
     set par(leading: 0.4em, spacing: 0pt)
     let rows = (text(size: 2.4 * body-size, weight: "bold",
-      fill: rgb(options.accentColor), cover.title),)
+      fill: rgb(options.accentColor), cover-text(cover.title)),)
     let subtitle = cover.at("subtitle", default: "")
-    if subtitle != "" { rows.push(text(size: 1.3 * body-size, subtitle)) }
+    if subtitle != "" { rows.push(text(size: 1.3 * body-size, cover-text(subtitle))) }
     let details = ()
     for key in ("author", "organization", "version", "date") {
       let value = cover.at(key, default: "")
-      if value != "" { details.push(text(value)) }
+      if value != "" { details.push(cover-text(value)) }
     }
     if details.len() > 0 {
       rows.push(stack(spacing: 0.5em, ..details))
@@ -474,8 +502,7 @@
     align(center, stack(spacing: 1.5em, ..rows))
   }
   let natural = measure(cover-content, width: width)
-  assert(natural.height <= content-height and natural.width <= width,
-    message: "The PDF title page does not fit the selected page size and margins. Shorten the title-page text or choose a larger content area.")
+  assert(natural.height <= content-height, message: fit-error)
   block(width: width, height: content-height, breakable: false, above: 0pt, below: 0pt,
     align(center + horizon, cover-content))
 }

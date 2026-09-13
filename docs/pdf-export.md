@@ -19,7 +19,9 @@ Markdown and Writerside offer the same PDF controls:
 - **Title page:** optionally include a generated title page. Enabling it shows
   editable Title, Subtitle, Author, Organization, Version, and Date fields.
   Title is required; empty optional fields are omitted. This page never shows
-  a running header, footer, or visible page number.
+  a running header, footer, or visible page number. Cover text wraps at spaces.
+  If a word is wider than the content area or the cover is too tall, export
+  reports a fit error and preserves any existing destination PDF.
 - **Page:** A4, US Letter, US Legal, or custom dimensions in millimetres;
   portrait or landscape; narrow, normal, wide, or four independent custom
   margins. Custom dimensions are 50–1200 mm. Margins must leave at least 20 mm

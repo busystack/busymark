@@ -487,6 +487,114 @@ void main() {
     },
     skip: skip,
   );
+
+  for (final narrow in [false, true]) {
+    for (final field in [
+      'title',
+      'subtitle',
+      'author',
+      'organization',
+      'version',
+      'date',
+    ]) {
+      test(
+        'unbroken $field stays within ${narrow ? "narrow custom" : "A4"} cover bounds or fails without replacing the PDF',
+        () async {
+          final options = PdfExportOptions(
+            includeTitlePage: true,
+            pageSize: narrow ? PdfPageSize.custom : PdfPageSize.a4,
+            customWidthMm: 80,
+            customHeightMm: 150,
+            margin: PdfMarginPreset.custom,
+            customMargins: const PdfMargins(
+              top: 15,
+              bottom: 15,
+              left: 20,
+              right: 15,
+            ),
+            pageNumbers: PdfPageNumberPosition.off,
+          );
+          // Wide glyphs cannot be hyphenated; the shorter value only overflows
+          // with narrow geometry. Neither case requires excessive height.
+          final narrowLength = switch (field) {
+            // These fit at body size, but overflow in their rendered styles.
+            'title' => 8,
+            'subtitle' => 10,
+            _ => 15,
+          };
+          final value = List.filled(narrow ? narrowLength : 100, 'W').join();
+          final cover = PdfTitlePageData(
+            title: field == 'title' ? value : 'Cover',
+            subtitle: field == 'subtitle' ? value : '',
+            author: field == 'author' ? value : '',
+            organization: field == 'organization' ? value : '',
+            version: field == 'version' ? value : '',
+            date: field == 'date' ? value : '',
+          );
+          final destination = File(
+            await export(
+              'unbroken-$field-$narrow',
+              options,
+              source: 'Body.',
+              cover: const PdfTitlePageData(title: 'Cover'),
+            ),
+          );
+          final original = await destination.readAsBytes();
+          try {
+            await service.export(
+              MarkdownPdfExportRequest(
+                source: 'Body.',
+                filePath: p.join(root.path, 'source.md'),
+                workspaceRoot: root.path,
+                destinationPath: destination.path,
+                overwrite: true,
+                options: options,
+                titlePage: cover,
+              ),
+            );
+          } on MarkdownPdfExportException catch (error) {
+            expect(error.code, MarkdownPdfFailureCode.compilerFailed);
+            expect(error.detail, contains('title page does not fit'));
+            expect(await destination.readAsBytes(), original);
+            return;
+          }
+          final pages = await _boxes(destination.path);
+          expect(pages, hasLength(2));
+          // Bounds alone could miss text clipped outside the physical page.
+          final coverWords = _words(pages.first).toList();
+          expect(coverWords, isNotEmpty);
+          expect(
+            coverWords.map((word) => word.innerText).join(),
+            field == 'title' ? value : 'Cover$value',
+          );
+          for (final page in pages) {
+            _expectInsideContent(page, options.geometry);
+          }
+        },
+        skip: skip,
+      );
+    }
+  }
+}
+
+void _expectInsideContent(XmlElement page, PdfPageGeometry geometry) {
+  final left = geometry.margins.left * PdfPageGeometry.pointsPerMm;
+  final top = geometry.margins.top * PdfPageGeometry.pointsPerMm;
+  for (final word in _words(page)) {
+    for (final (attribute, minimum, maximum) in [
+      ('xMin', left, left + geometry.contentWidthPt),
+      ('xMax', left, left + geometry.contentWidthPt),
+      ('yMin', top, top + geometry.contentHeightPt),
+      ('yMax', top, top + geometry.contentHeightPt),
+    ]) {
+      expect(
+        double.parse(word.getAttribute(attribute)!),
+        inInclusiveRange(minimum - 1, maximum + 1),
+        reason:
+            '$attribute of ${word.innerText} must stay inside the content area',
+      );
+    }
+  }
 }
 
 Future<List<String>> _pages(String path) async {

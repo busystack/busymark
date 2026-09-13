@@ -72,6 +72,12 @@ displayed page reference against its body paragraph’s physical page. Additiona
 checks cover nested/depth-limited and numbered headings, excluded Writerside
 headings, bookmarks without a printed TOC, both body fonts, portrait/landscape,
 custom margins, Unicode, multiline metadata, and unchanged source files.
+Unbroken titles and every metadata field are exercised on A4 and narrow custom
+pages through the real export service. Success must retain all cover text and
+keep text bounds inside the content area; a clear fit failure must preserve the
+previous PDF byte for byte. Title and subtitle cases also check their larger
+rendered sizes. A constrained Typst paragraph frame width is not evidence that
+its glyphs fit.
 
 The title page counts as physical page 1 but never emits running text or its
 visible number. Subsequent pages obey configured header/footer placement and
