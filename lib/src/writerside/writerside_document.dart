@@ -8,6 +8,9 @@ const writersideSourceModuleRootAttribute =
     'busymark-writerside-source-module-root';
 const writersideSourceTopicPathAttribute =
     'busymark-writerside-source-topic-path';
+const writersideSourceOccurrenceAttribute =
+    'busymark-writerside-source-occurrence';
+const writersideFootnoteTargetAttribute = 'busymark-writerside-footnote-target';
 
 bool writersideIgnorableRaw(String source) {
   final value = source.trim();
@@ -21,10 +24,14 @@ class WritersideSourceProvenance {
   const WritersideSourceProvenance({
     required this.moduleRoot,
     required this.topicPath,
+    this.occurrence = 0,
   });
 
   final String moduleRoot;
   final String topicPath;
+
+  /// Distinguishes repeated includes within one resolved publication topic.
+  final int occurrence;
 }
 
 /// The source spelling of an XML attribute alongside its normalized semantic

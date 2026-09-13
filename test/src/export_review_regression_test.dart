@@ -67,6 +67,86 @@ void main() {
     return recording.document!;
   }
 
+  Future<String> compileWriterside() async {
+    final path = p.join(root.path, 'footnotes.pdf');
+    await WritersidePdfExportService(
+      markdownExporter: MarkdownPdfExportService(
+        compilerLocator: TypstCompilerLocator(
+          environment: {'BUSYMARK_TYPST_PATH': compiler!},
+        ),
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
+      ),
+    ).export(
+      WritersidePdfExportRequest(
+        moduleRoot: module,
+        projectRoot: root.path,
+        instanceId: 'guide',
+        destinationPath: path,
+        overwrite: false,
+      ),
+    );
+    final extracted = await Process.run('/usr/bin/pdftotext', [
+      '-layout',
+      path,
+      '-',
+    ]);
+    expect(extracted.exitCode, 0, reason: '${extracted.stderr}');
+    return extracted.stdout as String;
+  }
+
+  test(
+    'Writerside PDF retains percent-encoded non-ASCII footnote labels',
+    () async {
+      await configure('<toc-element topic="main.md"/>');
+      await put(
+        'Writerside/topics/main.md',
+        '# Notes\n\nFirst[^café] and repeated[^café].\n\n[^café]: Encoded label definition retained.\n',
+      );
+      final text = await compileWriterside();
+      expect(
+        'Encoded label definition retained.'.allMatches(text),
+        hasLength(1),
+      );
+      expect(text, matches(RegExp(r'First\s*1\s*and repeated\s*1')));
+    },
+    skip: !pdfAvailable,
+  );
+
+  test('included footnotes use separate document-occurrence namespaces', () async {
+    await configure('<toc-element topic="main.topic"/>');
+    await put(
+      'Writerside/topics/main.topic',
+      '<topic id="main" title="Notes"><include from="a.md"/><include from="b.md"/><include from="a.md"/></topic>',
+    );
+    for (final name in ['a', 'b']) {
+      await put(
+        'Writerside/topics/$name.md',
+        '# Included $name\n\nReference $name[^note] and repeated $name[^note].\n\n[^note]: Definition $name retained.\n',
+      );
+    }
+    final document = const MarkdownExportMapper().map(await compose());
+    final definitions = _exportBlocks(
+      document.blocks,
+    ).where((b) => b.attributes.containsKey('footnoteId')).toList();
+    expect(definitions, hasLength(3));
+    expect(
+      definitions.map((b) => b.attributes['footnoteId']).toSet(),
+      hasLength(3),
+    );
+    final text = await compileWriterside();
+    expect('Definition a retained.'.allMatches(text), hasLength(2));
+    expect('Definition b retained.'.allMatches(text), hasLength(1));
+    for (final (name, number) in [('a', 1), ('b', 2), ('a', 3)]) {
+      expect(
+        text,
+        matches(
+          RegExp('Reference $name\\s*$number\\s*and repeated $name\\s*$number'),
+        ),
+      );
+      expect(text, matches(RegExp('$number\\s*Definition $name retained\\.')));
+    }
+  }, skip: !pdfAvailable);
+
   final htmlService = HtmlExportService(
     stylesheetLoader: () => File('assets/export/html.css').readAsString(),
   );
@@ -529,5 +609,14 @@ class _DiagramRenderer implements VisualizationRenderer {
       width: 20,
       height: 10,
     );
+  }
+}
+
+Iterable<MarkdownExportBlock> _exportBlocks(
+  Iterable<MarkdownExportBlock> values,
+) sync* {
+  for (final block in values) {
+    yield block;
+    yield* _exportBlocks(block.children);
   }
 }

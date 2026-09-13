@@ -499,6 +499,17 @@ class WritersidePdfExportService {
       return (module: sourceModule, topic: sourceTopic);
     }
 
+    String footnoteAnchor(Map<String, String> attributes, String id) {
+      final source = sourceContext(attributes);
+      final identity = jsonEncode([
+        topic.filePath,
+        source.topic.filePath,
+        attributes[writersideSourceOccurrenceAttribute] ?? '0',
+        id,
+      ]);
+      return 'ws-fn-${sha256.convert(utf8.encode(identity)).toString().substring(0, 24)}';
+    }
+
     Future<BusyInline> resolveInline(BusyInline inline) async {
       final source = sourceContext(inline.attributes);
       var destination = inline.destination;
@@ -510,7 +521,10 @@ class WritersidePdfExportService {
         );
       }
       final attributes = {...inline.attributes};
-      if (inline.kind == BusyInlineKind.link &&
+      final footnoteTarget = attributes[writersideFootnoteTargetAttribute];
+      if (inline.kind == BusyInlineKind.link && footnoteTarget != null) {
+        destination = '#${footnoteAnchor(attributes, footnoteTarget)}';
+      } else if (inline.kind == BusyInlineKind.link &&
           destination != null &&
           !(Uri.tryParse(destination)?.hasScheme ?? false)) {
         final hash = destination.indexOf('#');
@@ -561,7 +575,7 @@ class WritersidePdfExportService {
       final attributes = {...block.attributes};
       final source = sourceContext(attributes);
       if (attributes['pdf-footnote-id'] case final footnoteId?) {
-        attributes['pdf-footnote-id'] = anchor(topic.filePath, footnoteId);
+        attributes['pdf-footnote-id'] = footnoteAnchor(attributes, footnoteId);
       }
       final id = attributes['id'];
       final candidate = block.id == 'writerside-document-title'

@@ -86,6 +86,7 @@ class _ResolveState {
   final List<Diagnostic> diagnostics = [];
   final Set<String> _unresolvedVariables = {};
   final Map<String, Set<String>> _footnoteTargets = {};
+  var _nextSourceOccurrence = 0;
 
   Set<String> _markdownFootnoteTargets(WritersideTopic topic) =>
       _footnoteTargets.putIfAbsent(topic.filePath, () {
@@ -133,6 +134,7 @@ class _ResolveState {
     required Set<String> includeStack,
     required bool inheritedIgnoreVariables,
     Map<String, String> arguments = const {},
+    int sourceOccurrence = 0,
   }) {
     final scopedVariables = {...variables};
     for (final node in nodes.whereType<WritersideElementNode>()) {
@@ -159,6 +161,7 @@ class _ResolveState {
     final provenance = WritersideSourceProvenance(
       moduleRoot: module.rootPath,
       topicPath: topic.filePath,
+      occurrence: sourceOccurrence,
     );
     final markdownChapters = <(int, bool)>[];
     for (final node in nodes) {
@@ -299,6 +302,7 @@ class _ResolveState {
         activeFilters: activeFilters,
         includeStack: includeStack,
         inheritedIgnoreVariables: ignoreVariables,
+        sourceOccurrence: sourceOccurrence,
       );
       if (element.semanticKind == WritersideSemanticKind.api) {
         final reference = attributes['openapi-path'] ?? '';
@@ -791,6 +795,7 @@ class _ResolveState {
         topic: targetTopic,
         variables: includeVariables,
         arguments: arguments,
+        sourceOccurrence: ++_nextSourceOccurrence,
         activeFilters: filters.isEmpty ? null : filters,
         includeStack: includeStack,
         inheritedIgnoreVariables: inheritedIgnoreVariables,
@@ -908,14 +913,24 @@ class _ResolveState {
       // section/inline references, outside Writerside's element-ID index.
       final destination = resolved.destination;
       if (destination != null && destination.startsWith('#')) {
+        final raw = destination.substring(1);
+        final targets = _markdownFootnoteTargets(topic);
+        String? target = targets.contains(raw) ? raw : null;
         try {
-          if (_markdownFootnoteTargets(
-            topic,
-          ).contains(Uri.decodeComponent(destination.substring(1)))) {
-            return resolved;
+          if (target == null) {
+            final decoded = Uri.decodeComponent(raw);
+            if (targets.contains(decoded)) target = decoded;
           }
         } on FormatException {
           // Let normal link validation report an unusable authored destination.
+        }
+        if (target != null) {
+          return resolved.copyWith(
+            attributes: {
+              ...resolved.attributes,
+              writersideFootnoteTargetAttribute: target,
+            },
+          );
         }
       }
       final attributes = _resolveLink(

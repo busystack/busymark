@@ -1203,6 +1203,7 @@ class _WritersideRenderSession {
     if (element.provenance case final provenance?) ...{
       writersideSourceModuleRootAttribute: provenance.moduleRoot,
       writersideSourceTopicPathAttribute: provenance.topicPath,
+      writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
     },
     if (element is WritersideGenericElementNode)
       'schemaKnown': '${element.schemaKnown}',
@@ -1235,6 +1236,7 @@ class _WritersideRenderSession {
         ...inline.attributes,
         writersideSourceModuleRootAttribute: provenance.moduleRoot,
         writersideSourceTopicPathAttribute: provenance.topicPath,
+        writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
       },
       children: inline.children.map(annotateInline).toList(growable: false),
     );
@@ -1244,6 +1246,7 @@ class _WritersideRenderSession {
         ...block.attributes,
         writersideSourceModuleRootAttribute: provenance.moduleRoot,
         writersideSourceTopicPathAttribute: provenance.topicPath,
+        writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
       },
       inlines: block.inlines.map(annotateInline).toList(growable: false),
       children: block.children
