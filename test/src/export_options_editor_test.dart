@@ -52,6 +52,29 @@ void main() {
     expect(await result, isNull);
   });
 
+  testWidgets('Export keeps breathing room below its final option', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(
+          body: ExportOptionsDialog(
+            pdf: PdfExportOptions(),
+            html: HtmlExportOptions(),
+            initialFormat: ExportFormat.pdf,
+          ),
+        ),
+      ),
+    );
+
+    final spacing = tester.widget<SizedBox>(
+      find.byKey(const ValueKey('export-options-bottom-spacing')),
+    );
+    expect(spacing.height, BusyMarkSpacing.lg);
+  });
+
   for (final pdf in [true, false]) {
     for (final writerside in [false, true]) {
       testWidgets(

@@ -248,6 +248,10 @@ class _ExportOptionsDialogState extends State<ExportOptionsDialog> {
             _fileErrors = [];
           }),
         ),
+      const SizedBox(
+        key: ValueKey('export-options-bottom-spacing'),
+        height: BusyMarkSpacing.lg,
+      ),
     ],
   );
 
