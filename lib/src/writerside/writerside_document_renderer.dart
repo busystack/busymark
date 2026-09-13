@@ -944,6 +944,7 @@ class WritersideDocumentRenderer {
   }) {
     final type = list.attributes['type']?.trim().toLowerCase() ?? 'bullet';
     final start = int.tryParse(list.attributes['start'] ?? '') ?? 1;
+    final listId = '${list.span.filePath}:${_nodeId(list)}';
     var itemNumber = start;
     final result = <BusyBlock>[];
     for (final child in list.children) {
@@ -953,6 +954,7 @@ class WritersideDocumentRenderer {
           _listItemBlock(
             child,
             listType: type,
+            listId: listId,
             itemNumber: itemNumber++,
             headingLevel: headingLevel,
           ),
@@ -969,6 +971,7 @@ class WritersideDocumentRenderer {
     required String listType,
     required int itemNumber,
     required int headingLevel,
+    String? listId,
   }) {
     final ordered = listType == 'decimal' || listType == 'alpha-lower';
     final checkbox = listType == 'checkbox';
@@ -992,6 +995,10 @@ class WritersideDocumentRenderer {
         'ordered': '$ordered',
         'marker': marker,
         'listType': listType,
+        // Exporters need the numeric position and container independently of
+        // the display marker, which can be alphabetic or absent.
+        'listOrdinal': '$itemNumber',
+        if (listId != null) 'listId': listId,
         if (listType == 'none') 'markerHidden': 'true',
         if (checkbox) 'task': item.attributes['checked'] ?? 'false',
       },

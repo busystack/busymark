@@ -1,0 +1,18 @@
+<topic id="list-numbering" title="List numbering">
+  <list type="alpha-lower" start="3">
+    <li>Charlie</li>
+    <li>Delta</li>
+  </list>
+  <list type="decimal" start="1">
+    <li>First one</li>
+    <li>First two</li>
+  </list>
+  <list type="decimal" start="1">
+    <li>Second one</li>
+    <li>Second two</li>
+  </list>
+  <procedure title="Procedure">
+    <step>Step one</step>
+    <step>Step two</step>
+  </procedure>
+</topic>

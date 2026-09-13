@@ -370,6 +370,7 @@ class HtmlDocumentWriter {
       if (_isList(b)) {
         final ordered = _ordered(b);
         final listType = _listType(b);
+        final listId = b.attributes['listId'];
         final markerHidden = b.attributes['markerHidden'] == 'true';
         final list = _el(ordered ? 'ol' : 'ul');
         if (listType == 'alpha-lower') list.attributes['type'] = 'a';
@@ -377,6 +378,7 @@ class HtmlDocumentWriter {
           _style(list, 'list-style-type:none;');
         }
         final start =
+            int.tryParse(b.attributes['listOrdinal'] ?? '') ??
             int.tryParse(
               (b.attributes['marker'] ?? '').replaceAll(RegExp(r'[^0-9-]'), ''),
             ) ??
@@ -386,6 +388,7 @@ class HtmlDocumentWriter {
             _isList(blocks[i]) &&
             _ordered(blocks[i]) == ordered &&
             _listType(blocks[i]) == listType &&
+            blocks[i].attributes['listId'] == listId &&
             (blocks[i].attributes['markerHidden'] == 'true') == markerHidden) {
           final item = blocks[i];
           final li = _el('li');

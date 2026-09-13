@@ -277,6 +277,33 @@ void main() {
     expect(blocks[5].attributes['markerHidden'], 'true');
   });
 
+  test('XML lists retain numeric ordinals and their container identity', () {
+    final document = const WritersideDocumentParser().parseXml(
+      filePath: '/tmp/lists.topic',
+      source: File(
+        'test/fixtures/writerside/list_numbering.topic',
+      ).readAsStringSync(),
+    );
+    final blocks = const WritersideDocumentRenderer()
+        .toBusyDocument(document)
+        .blocks;
+    expect(blocks.take(6).map((b) => b.attributes['listOrdinal']), [
+      '3',
+      '4',
+      '1',
+      '2',
+      '1',
+      '2',
+    ]);
+    expect(blocks.take(2).map((b) => b.attributes['marker']), ['c.', 'd.']);
+    final ids = blocks.take(6).map((b) => b.attributes['listId']).toList();
+    expect(ids, everyElement(isNotNull));
+    expect(ids[0], ids[1]);
+    expect(ids[2], ids[3]);
+    expect(ids[4], ids[5]);
+    expect({ids[0], ids[2], ids[4]}, hasLength(3));
+  });
+
   test('workspace exposes resolver errors with exact source spans', () async {
     final fixture = await _ResolvedFixture.create();
     addTearDown(fixture.dispose);

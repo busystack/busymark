@@ -21,6 +21,61 @@ import 'package:path/path.dart' as p;
 
 void main() {
   final compiler = _bundledTypstCompiler();
+  test(
+    'final PDF keeps alphabetic starts, separate decimal lists and procedure numbering',
+    () async {
+      final fixture = await _WritersideFixture.create();
+      addTearDown(fixture.dispose);
+      await File(
+        p.join(fixture.module.path, 'topics/intro.md'),
+      ).writeAsString('# Introduction');
+      await File(
+        p.join(fixture.module.path, 'topics/advanced.topic'),
+      ).writeAsString(
+        (await File(
+          'test/fixtures/writerside/list_numbering.topic',
+        ).readAsString()).replaceFirst('id="list-numbering"', 'id="advanced"'),
+      );
+      final destination = p.join(fixture.root.path, 'lists.pdf');
+      await WritersidePdfExportService(
+        markdownExporter: MarkdownPdfExportService(
+          compilerLocator: TypstCompilerLocator(
+            environment: {'BUSYMARK_TYPST_PATH': compiler!},
+          ),
+          templateLoader: () =>
+              File('assets/export/markdown.typ').readAsString(),
+        ),
+      ).export(
+        WritersidePdfExportRequest(
+          moduleRoot: fixture.module.path,
+          projectRoot: fixture.root.path,
+          instanceId: 'guide',
+          destinationPath: destination,
+          overwrite: false,
+        ),
+      );
+      final extracted = await Process.run('/usr/bin/pdftotext', [
+        '-layout',
+        destination,
+        '-',
+      ]);
+      expect(extracted.exitCode, 0, reason: '${extracted.stderr}');
+      final text = extracted.stdout as String;
+      for (final (marker, content) in [
+        ('c', 'Charlie'),
+        ('d', 'Delta'),
+        ('1', 'First one'),
+        ('2', 'First two'),
+        ('1', 'Second one'),
+        ('2', 'Second two'),
+        ('1', 'Step one'),
+        ('2', 'Step two'),
+      ]) {
+        expect(text, matches(RegExp('\\b$marker\\.\\s+$content\\b')));
+      }
+    },
+    skip: compiler == null || !File('/usr/bin/pdftotext').existsSync(),
+  );
   for (final origin in ['unknown', 'shared-pdf']) {
     test(
       'unresolved TOC origin or shared topic fails explicitly ($origin)',

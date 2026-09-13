@@ -75,6 +75,44 @@ void main() {
     expect(result.warnings, isEmpty);
   });
 
+  test(
+    'Writerside list starts and same-type boundaries survive HTML export',
+    () async {
+      await module(
+        'module',
+        'module',
+        '<instance-profile id="guide" name="Guide" start-page="Start.topic"><toc-element topic="Start.topic"/></instance-profile>',
+      );
+      await put(
+        'module/topics/Start.topic',
+        await File(
+          'test/fixtures/writerside/list_numbering.topic',
+        ).readAsString(),
+      );
+      final result = await site();
+      final doc = html.parse(await File(result.entryPointPath).readAsString());
+      final lists = doc.querySelectorAll('article > ol');
+      expect(lists, hasLength(3));
+      expect(lists[0].attributes['type'], 'a');
+      expect(lists[0].attributes['start'], '3');
+      expect(lists.map((list) => list.children.map((li) => li.text).toList()), [
+        ['Charlie', 'Delta'],
+        ['First one', 'First two'],
+        ['Second one', 'Second two'],
+      ]);
+      for (final list in lists.skip(1)) {
+        expect(list.attributes['start'] ?? '1', '1');
+      }
+      final steps = doc.querySelectorAll('.procedure > ol');
+      expect(steps, hasLength(1));
+      expect(steps.single.children.map((li) => li.text), [
+        'Step one',
+        'Step two',
+      ]);
+      expect(result.warnings, isEmpty);
+    },
+  );
+
   test('Writerside list styles stay distinct across consecutive lists', () async {
     await module(
       'module',

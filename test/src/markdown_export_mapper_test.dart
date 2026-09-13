@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:busymark/src/export/markdown_export_document.dart';
 import 'package:busymark/src/export/markdown_export_mapper.dart';
@@ -7,11 +8,42 @@ import 'package:busymark/src/export/typst_payload_builder.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/writerside/writerside_document_parser.dart';
+import 'package:busymark/src/writerside/writerside_document_renderer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const parser = MarkdownParser();
   const mapper = MarkdownExportMapper();
+
+  test('Writerside numeric list starts and container boundaries reach PDF', () {
+    final parsed = const WritersideDocumentParser().parseXml(
+      filePath: '/workspace/lists.topic',
+      source: File(
+        'test/fixtures/writerside/list_numbering.topic',
+      ).readAsStringSync(),
+    );
+    final document = mapper.map(
+      const WritersideDocumentRenderer().toBusyDocument(parsed),
+    );
+    final lists = document.blocks
+        .where((b) => b.kind == MarkdownExportBlockKind.list)
+        .toList();
+    expect(lists, hasLength(3));
+    expect(lists.map((b) => b.attributes['start']), [3, 1, 1]);
+    expect(lists.map((b) => b.attributes['listType']), [
+      'alpha-lower',
+      'decimal',
+      'decimal',
+    ]);
+    expect(lists.map((b) => b.children.length), [2, 2, 2]);
+    final procedure = document.blocks.last;
+    expect(procedure.kind, MarkdownExportBlockKind.group);
+    expect(procedure.children, hasLength(1));
+    expect(procedure.children.single.kind, MarkdownExportBlockKind.list);
+    expect(procedure.children.single.attributes['start'], 1);
+    expect(procedure.children.single.children, hasLength(2));
+  });
 
   test('list items and visualization replacements retain source anchors', () {
     const source = BusyDocument(

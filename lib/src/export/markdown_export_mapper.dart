@@ -57,15 +57,21 @@ class MarkdownExportMapper {
         final ordered = _isOrderedListItem(block);
         final listType =
             block.attributes['listType'] ?? (ordered ? 'decimal' : 'bullet');
+        final listId = block.attributes['listId'];
         final items = <MarkdownExportBlock>[];
-        final start = _listNumber(block.attributes['marker']) ?? 1;
+        final start =
+            int.tryParse(block.attributes['listOrdinal'] ?? '') ??
+            _listNumber(block.attributes['marker']) ??
+            1;
         while (index < blocks.length && _isListItem(blocks[index].kind)) {
           final candidate = blocks[index];
           final candidateOrdered = _isOrderedListItem(candidate);
           final candidateListType =
               candidate.attributes['listType'] ??
               (candidateOrdered ? 'decimal' : 'bullet');
-          if (candidateOrdered != ordered || candidateListType != listType) {
+          if (candidateOrdered != ordered ||
+              candidateListType != listType ||
+              candidate.attributes['listId'] != listId) {
             break;
           }
           items.add(_mapListItem(candidate, blockOverrides));
