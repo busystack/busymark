@@ -168,9 +168,7 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
     if (generation != _refreshGeneration || !ref.mounted) return;
 
     BusyMarkClipboardCapture? capture;
-    if (first.richFragment != null ||
-        first.sourceText != null ||
-        first.html != null) {
+    if (first.richFragment != null || first.html != null) {
       capture = BusyMarkClipboardCapture(
         kind: BusyMarkClipboardContentKind.richText,
         text: first.text,
@@ -182,11 +180,11 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
         origin: first.origin,
         external: !first.sessionOwned,
       );
-    } else if (first.text != null) {
+    } else if (first.text != null || first.sourceText != null) {
       capture = BusyMarkClipboardCapture(
         kind: BusyMarkClipboardContentKind.text,
-        text: first.text,
-        sourceText: first.text,
+        text: first.text ?? first.sourceText,
+        sourceText: first.sourceText ?? first.text,
         origin: first.origin,
         external: !first.sessionOwned,
       );

@@ -187,19 +187,30 @@ class WysiwygClipboardFragment {
       attributes: attributes(value.attributes),
       children: [for (final child in value.children) inline(child)],
     );
-    BusyBlock block(BusyBlock value) => BusyBlock(
-      id: value.id,
-      kind: value.kind,
-      inlines: [for (final child in value.inlines) inline(child)],
-      children: [for (final child in value.children) block(child)],
-      attributes: attributes(value.attributes),
-      rawSource: value.rawSource,
-      preserveRaw: value.preserveRaw,
-      isSourceOnly: value.isSourceOnly,
-      isGenerated: value.isGenerated,
-      isSourceProtected: value.isSourceProtected,
-      dirty: true,
-    );
+    BusyBlock block(BusyBlock value) {
+      final rebasedAttributes = attributes(value.attributes);
+      final rawSource = value.kind == BusyBlockKind.video
+          ? _rebaseVideoRawSource(
+              value.rawSource,
+              originalSource: value.attributes['src'],
+              rebasedSource: rebasedAttributes['src'],
+            )
+          : value.rawSource;
+      return BusyBlock(
+        id: value.id,
+        kind: value.kind,
+        inlines: [for (final child in value.inlines) inline(child)],
+        children: [for (final child in value.children) block(child)],
+        attributes: rebasedAttributes,
+        rawSource: rawSource,
+        preserveRaw: value.preserveRaw,
+        isSourceOnly: value.isSourceOnly,
+        isGenerated: value.isGenerated,
+        isSourceProtected: value.isSourceProtected,
+        dirty: true,
+      );
+    }
+
     return WysiwygClipboardFragment(
       mode: mode,
       sourcePath: targetPath.isEmpty ? sourcePath : targetPath,
@@ -229,6 +240,32 @@ class WysiwygClipboardFragment {
       ],
     );
   }
+}
+
+String? _rebaseVideoRawSource(
+  String? rawSource, {
+  required String? originalSource,
+  required String? rebasedSource,
+}) {
+  if (rawSource == null ||
+      originalSource == null ||
+      rebasedSource == null ||
+      originalSource == rebasedSource) {
+    return rawSource;
+  }
+  final attribute = RegExp(
+    r'''(\ssrc\s*=\s*)(["'])(.*?)\2''',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  return rawSource.replaceFirstMapped(attribute, (match) {
+    final quote = match.group(2)!;
+    final escaped = rebasedSource
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll(quote, quote == '"' ? '&quot;' : '&apos;');
+    return '${match.group(1)}$quote$escaped$quote';
+  });
 }
 
 Map<String, Object?> _encodeInline(BusyInline inline) => {

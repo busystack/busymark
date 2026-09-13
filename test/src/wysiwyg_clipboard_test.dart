@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
@@ -13,6 +15,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/writerside_video_player_host.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -322,6 +325,7 @@ void main() {
     late Completer<void>? writeGate;
     late bool failWrite;
     const channel = MethodChannel(richClipboardChannelName);
+    const videoChannel = MethodChannel(writersideVideoPlayerChannelName);
     setUp(() {
       systemData = {};
       readGate = null;
@@ -354,12 +358,14 @@ void main() {
         }
         return null;
       });
+      messenger.setMockMethodCallHandler(videoChannel, (_) async => null);
     });
     tearDown(() {
       final messenger =
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
       messenger.setMockMethodCallHandler(channel, null);
       messenger.setMockMethodCallHandler(SystemChannels.platform, null);
+      messenger.setMockMethodCallHandler(videoChannel, null);
     });
 
     Future<void> key(
@@ -382,6 +388,9 @@ void main() {
       ValueChanged<String> changed, {
       BusyMarkClipboardInsertionRegistry? registry,
       ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+      String? filePath,
+      String? workspaceRoot,
+      AssetWorkspaceKind? assetWorkspaceKind,
     }) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -393,9 +402,11 @@ void main() {
               clipboardService: RichClipboardService(),
               clipboardInsertionRegistry: registry,
               onClipboardCaptured: onCaptured,
+              workspaceRoot: workspaceRoot,
+              assetWorkspaceKind: assetWorkspaceKind,
               document: _parser
                   .parse(
-                    filePath: '/$id.md',
+                    filePath: filePath ?? '/$id.md',
                     source: source,
                     mode: MarkdownMode.writersideMarkdown,
                   )
@@ -826,6 +837,155 @@ void main() {
         expect(fallback, contains('Safe text alternative'));
       },
     );
+
+    testWidgets(
+      'external image history retains the bytes ingested before its dialog',
+      (tester) async {
+        final root = (await tester.runAsync(
+          () => Directory.systemTemp.createTemp(
+            'busymark-clipboard-image-snapshot-',
+          ),
+        ))!;
+        addTearDown(() async {
+          if (await root.exists()) await root.delete(recursive: true);
+        });
+        final original = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        );
+        final replacement = Uint8List.fromList(original);
+        replacement[replacement.length - 1] ^= 0xff;
+        final sourceFile = File('${root.path}/original.png');
+        await tester.runAsync(() => sourceFile.writeAsBytes(original));
+        systemData = {'text': sourceFile.path};
+        final captures = <BusyMarkClipboardCapture>[];
+        var changed = '';
+        await mount(
+          tester,
+          'image-snapshot',
+          'Target\n',
+          (value) => changed = value,
+          onCaptured: captures.add,
+          filePath: '${root.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        );
+
+        await key(tester, LogicalKeyboardKey.keyV);
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
+        await tester.runAsync(() => sourceFile.writeAsBytes(replacement));
+        await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+        await tester.pumpAndSettle();
+
+        expect(changed, contains('images/original.png'));
+        expect(captures, hasLength(1));
+        expect(captures.single.imageBytes, original);
+        expect(
+          await tester.runAsync(
+            () => File('${root.path}/images/original.png').readAsBytes(),
+          ),
+          original,
+        );
+      },
+    );
+
+    testWidgets('copied local video can be pasted from history in Editor', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () =>
+            Directory.systemTemp.createTemp('busymark-wysiwyg-history-video-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final video = Uint8List.fromList([
+        0,
+        0,
+        0,
+        20,
+        ...ascii.encode('ftypmp42'),
+        0,
+        0,
+        0,
+        0,
+      ]);
+      await tester.runAsync(
+        () => File('${root.path}/clip.mp4').writeAsBytes(video),
+      );
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'video-origin',
+        'Before\n\n<video src="clip.mp4" title="Local clip"/>\n\nAfter\n',
+        (_) {},
+        onCaptured: captures.add,
+        filePath: '${root.path}/origin.md',
+        workspaceRoot: root.path,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyC);
+      for (var attempt = 0; attempt < 100 && captures.isEmpty; attempt++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+
+      expect(captures, hasLength(1));
+      expect(captures.single.mediaComplete, isTrue);
+      expect(captures.single.mediaBytes['clip.mp4'], video);
+      final payload = BusyMarkClipboardPayload(
+        id: 'wysiwyg-video-history',
+        acquiredAt: DateTime.utc(2026),
+        kind: captures.single.kind,
+        text: captures.single.text,
+        sourceText: captures.single.sourceText,
+        html: captures.single.html,
+        richFragment: captures.single.richFragment,
+        mediaBytes: captures.single.mediaBytes,
+        mediaComplete: captures.single.mediaComplete,
+      );
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      var changed = '';
+      await mount(
+        tester,
+        'video-destination',
+        'Target\n',
+        (value) => changed = value,
+        registry: registry,
+        filePath: '${root.path}/target.md',
+        workspaceRoot: root.path,
+        assetWorkspaceKind: AssetWorkspaceKind.markdownWorkspace,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+
+      expect(registry.canPaste(payload), isTrue);
+      expect(
+        await tester.runAsync(() => registry.paste(payload)),
+        ClipboardPasteResult.inserted,
+      );
+      await tester.pump();
+      expect(changed, contains('<video src="images/clip.mp4"'));
+      expect(
+        await tester.runAsync(
+          () => File('${root.path}/images/clip.mp4').readAsBytes(),
+        ),
+        video,
+      );
+    });
 
     testWidgets('Ctrl+Shift+V is not an Editor paste command', (tester) async {
       await copyAll(tester);

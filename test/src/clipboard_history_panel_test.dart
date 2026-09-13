@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -181,6 +183,35 @@ void main() {
     );
     expect(selectedRect.top, greaterThanOrEqualTo(listRect.top));
     expect(selectedRect.bottom, lessThanOrEqualTo(listRect.bottom));
+  });
+
+  testWidgets('Delete edits the focused search without removing history', (
+    tester,
+  ) async {
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: 'retained entry',
+            sourceText: 'retained entry',
+          ),
+        );
+    await _pumpPanel(tester, container);
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    await tester.tap(find.byType(TextField));
+    await tester.enterText(find.byType(TextField), 'retained');
+    field.controller!.selection = const TextSelection.collapsed(offset: 6);
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pump();
+
+    expect(field.controller!.text, 'retaind');
+    expect(
+      container.read(clipboardHistoryControllerProvider).entries,
+      hasLength(1),
+    );
   });
 
   testWidgets('unsupported payload disables paste for the destination', (
@@ -398,6 +429,94 @@ void main() {
       );
     },
   );
+
+  testWidgets('successful external paste retains after the panel is disposed', (
+    tester,
+  ) async {
+    final clipboard = _PanelClipboard(
+      const RichClipboardData(text: 'delayed external', generation: 24),
+    );
+    final container = _container(clipboard: clipboard);
+    final result = Completer<ClipboardPasteResult>();
+    final target = _PanelInsertionTarget(resultFuture: result.future);
+    container.read(clipboardInsertionRegistryProvider).register(target);
+    await _pumpPanel(tester, container);
+
+    await _openEntryActions(tester);
+    await tester.tap(find.text('Paste'));
+    await tester.pump();
+    expect(target.pasteCalls, 1);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: SizedBox()),
+      ),
+    );
+    result.complete(ClipboardPasteResult.inserted);
+    await tester.pump();
+
+    expect(
+      container.read(clipboardHistoryControllerProvider).entries.single.text,
+      'delayed external',
+    );
+  });
+
+  testWidgets('plain source and Editor copies stay text and de-duplicate', (
+    tester,
+  ) async {
+    final clipboard = _PanelClipboard(
+      const RichClipboardData(
+        text: 'source selection',
+        sourceText: 'source selection',
+        generation: 25,
+      ),
+    );
+    final container = _container(clipboard: clipboard);
+    final history = container.read(clipboardHistoryControllerProvider.notifier);
+    history.retain(
+      const BusyMarkClipboardCapture(
+        kind: BusyMarkClipboardContentKind.text,
+        text: 'source selection',
+        sourceText: 'source selection',
+      ),
+    );
+    await _pumpPanel(tester, container);
+
+    for (final (index, value) in [
+      'source selection',
+      'Editor plain-text selection',
+    ].indexed) {
+      if (index > 0) {
+        history.clear();
+        clipboard.value = RichClipboardData(
+          text: value,
+          sourceText: value,
+          generation: 25 + index,
+        );
+        history.retain(
+          BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: value,
+            sourceText: value,
+          ),
+        );
+        await history.refreshCurrentClipboard();
+        await tester.pump();
+      }
+      expect(
+        container
+            .read(clipboardHistoryControllerProvider)
+            .currentClipboard!
+            .kind,
+        BusyMarkClipboardContentKind.text,
+      );
+      expect(
+        find.byWidgetPredicate((widget) => widget is BusyMarkSidebarRecordRow),
+        findsOneWidget,
+      );
+    }
+  });
 }
 
 Future<void> _openEntryActions(WidgetTester tester) async {
@@ -462,12 +581,14 @@ class _PanelInsertionTarget
     this.normalPasteAvailable,
     this.plainTextPasteAvailable,
     this.result = ClipboardPasteResult.inserted,
+    this.resultFuture,
   });
 
   final bool supportImages;
   final bool? normalPasteAvailable;
   final bool? plainTextPasteAvailable;
   final ClipboardPasteResult result;
+  final Future<ClipboardPasteResult>? resultFuture;
   int pasteCalls = 0;
   bool? lastPlainText;
   final payloads = <BusyMarkClipboardPayload>[];
@@ -501,7 +622,7 @@ class _PanelInsertionTarget
     pasteCalls++;
     lastPlainText = plainText;
     payloads.add(payload);
-    return result;
+    return resultFuture ?? result;
   }
 
   @override

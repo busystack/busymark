@@ -1884,7 +1884,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
         }
-        final asset = await widget.assetIngestionService.ingestBytes(
+        final asset = await widget.assetIngestionService.ingestMediaBytes(
           bytes: bytes,
           suggestedFileName: p.basename(entry.value),
           request: _assetIngestionRequest,
@@ -2972,7 +2972,22 @@ class _SourceClipboardInsertionTarget
       return state.widget.language != SourceSyntaxLanguage.plain &&
           payload.imageBytes?.isNotEmpty == true;
     }
-    if (payload.richFragment != null) return payload.mediaComplete;
+    if (payload.richFragment != null) {
+      final fragment = WysiwygClipboardFragment.decode(payload.richFragment!);
+      if (fragment == null) return payload.preferredSourceText != null;
+      if (fragment.mediaPaths.isNotEmpty) {
+        return payload.mediaComplete &&
+            fragment.mediaPaths.entries.every((entry) {
+              final bytes = payload.mediaBytes[entry.key];
+              return bytes != null &&
+                  state.widget.assetIngestionService.canIngestMediaBytes(
+                    bytes: bytes,
+                    suggestedFileName: p.basename(entry.value),
+                  );
+            });
+      }
+      return true;
+    }
     return payload.preferredSourceText != null;
   }
 
