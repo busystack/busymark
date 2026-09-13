@@ -336,7 +336,7 @@ void main() => print("Hello");
       expect(bytes.take(5), [0x25, 0x50, 0x44, 0x46, 0x2d]);
       expect(bytes.length, greaterThan(1000));
       expect(result.destinationPath, p.normalize(p.absolute(destination)));
-      expect(result.pageCount, anyOf(isNull, greaterThanOrEqualTo(1)));
+      expect(result.pageCount, isNull);
       expect(
         result.warnings.map((warning) => warning.code),
         contains(MarkdownPdfWarningCode.remoteImageSkipped),

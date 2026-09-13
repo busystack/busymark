@@ -68,6 +68,27 @@ class HtmlExportLinks {
     Map<String, String> attributes, {
     int line = 1,
   }) async {
+    try {
+      return await _resolve(value, page, attributes, line: line);
+    } on FormatException {
+      warnings.add(
+        HtmlExportWarning(
+          'link.unresolved',
+          'Malformed encoded link destination was omitted.',
+          sourcePath: source(page, attributes),
+          line: line,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<HtmlResolvedLink?> _resolve(
+    String? value,
+    HtmlPage page,
+    Map<String, String> attributes, {
+    int line = 1,
+  }) async {
     if (value == null || value.trim().isEmpty) return null;
     final destination = value.trim();
     if (external(destination) case final url?) return HtmlResolvedLink(url);

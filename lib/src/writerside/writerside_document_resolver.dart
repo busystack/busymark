@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
@@ -84,6 +85,44 @@ class _ResolveState {
   final WritersideResolveContext context;
   final List<Diagnostic> diagnostics = [];
   final Set<String> _unresolvedVariables = {};
+  final Map<String, Set<String>> _footnoteTargets = {};
+
+  Set<String> _markdownFootnoteTargets(WritersideTopic topic) =>
+      _footnoteTargets.putIfAbsent(topic.filePath, () {
+        final ids = <String>{};
+        void inlines(Iterable<BusyInline> values) {
+          for (final value in values) {
+            if (value.attributes['id'] case final id?
+                when id.startsWith('fnref-')) {
+              ids.add(id);
+            }
+            inlines(value.children);
+          }
+        }
+
+        void blocks(Iterable<BusyBlock> values) {
+          for (final block in values) {
+            if (block.attributes['html-footnotes'] case final source?) {
+              ids.addAll(
+                html
+                    .parseFragment(source)
+                    .querySelectorAll('li[id]')
+                    .map((e) => e.id),
+              );
+            }
+            inlines(block.inlines);
+            blocks(block.children);
+          }
+        }
+
+        for (final node
+            in topic.document.nodes
+                .expand((node) => node.walk())
+                .whereType<WritersideMarkdownBlockNode>()) {
+          blocks([node.block]);
+        }
+        return ids;
+      });
 
   List<WritersideDocumentNode> resolveNodes(
     Iterable<WritersideDocumentNode> nodes, {
@@ -865,6 +904,20 @@ class _ResolveState {
         children: inline.children.map(resolveInline).toList(growable: false),
       );
       if (resolved.kind != BusyInlineKind.link) return resolved;
+      // Markdown's generated footnote targets live inside the retained HTML
+      // section/inline references, outside Writerside's element-ID index.
+      final destination = resolved.destination;
+      if (destination != null && destination.startsWith('#')) {
+        try {
+          if (_markdownFootnoteTargets(
+            topic,
+          ).contains(Uri.decodeComponent(destination.substring(1)))) {
+            return resolved;
+          }
+        } on FormatException {
+          // Let normal link validation report an unusable authored destination.
+        }
+      }
       final attributes = _resolveLink(
         {...resolved.attributes, 'href': resolved.destination ?? ''},
         module: module,

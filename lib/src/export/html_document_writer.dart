@@ -63,6 +63,7 @@ class HtmlDocumentWriter {
       disclosureLabel;
   final List<String> _rules = [];
   final Set<String> _emittedIds = {};
+  final Map<dom.Element, String> _headingTargets = {};
   int _rawNodes = 0;
 
   void _warn(String code, String message, BusyBlock? block) => warnings.add(
@@ -208,7 +209,9 @@ class HtmlDocumentWriter {
   Map<String, String> _prepareOutline(dom.Element article) {
     final result = <String, String>{};
     final elements = {
-      for (final h in article.querySelectorAll('h1,h2,h3,h4,h5,h6')) h.id: h,
+      for (final h in article.querySelectorAll('h1,h2,h3,h4,h5,h6'))
+        if ((_headingTargets[h] ?? h.id).isNotEmpty)
+          _headingTargets[h] ?? h.id: h,
     };
     // Static API headings are added during rich-content preparation. Keep the
     // single publication outline in the final document order before numbering.
@@ -463,6 +466,10 @@ class HtmlDocumentWriter {
           disclosure: false,
         ),
       );
+      if (b.kind == BusyBlockKind.heading && details.id.isNotEmpty) {
+        final heading = details.querySelector('h1,h2,h3,h4,h5,h6');
+        if (heading != null) _headingTargets[heading] = details.id;
+      }
       return [details];
     }
     if (b.attributes['html-footnotes'] case final source?) {

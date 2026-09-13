@@ -118,17 +118,37 @@
   }
 }
 
-#let render-inlines(items) = {
+// Definitions remain in the semantic tree so asset/math preparation also
+// visits their content. Only the first reference emits their page footnote.
+#let collect-footnotes(blocks) = {
+  let result = (:)
+  for item in blocks {
+    if "footnoteId" in item { result.insert(item.footnoteId, item) }
+    result += collect-footnotes(value-or(item, "children", ()))
+  }
+  result
+}
+#let footnotes = collect-footnotes(data.blocks)
+
+#let render-inlines(items, render) = {
   for item in items {
     let kind = item.kind
     let children = value-or(item, "children", ())
     let body = if children.len() > 0 {
-      render-inlines(children)
+      render-inlines(children, render)
     } else {
       text(value-or(item, "text", ""))
     }
 
-    if kind == "text" {
+    if "footnoteId" in item {
+      let id = item.footnoteId
+      let target = label("pdf-note-" + id)
+      if item.footnoteFirst == "true" {
+        [#footnote(for child in value-or(footnotes.at(id), "children", ()) { render(child) })#target]
+      } else {
+        footnote(target)
+      }
+    } else if kind == "text" {
       body
     } else if kind == "strong" {
       strong(body)
@@ -202,7 +222,7 @@
       let is-header = value-or(row, "header", false)
       let row-cells = ()
       for cell in value-or(row, "children", ()) {
-        let cell-body = [#render-inlines(value-or(cell, "inlines", ()))#for child in value-or(cell, "children", ()) { render(child) }]
+        let cell-body = [#render-inlines(value-or(cell, "inlines", ()), render)#for child in value-or(cell, "children", ()) { render(child) }]
         let alignment = value-or(cell, "align", "left")
         let cell-align = if alignment == "center" {
           center
@@ -247,7 +267,7 @@
     if task != none {
       box(width: 1.35em, text(if task { "☑" } else { "☐" }))
     }
-    render-inlines(value-or(item, "inlines", ()))
+    render-inlines(value-or(item, "inlines", ()), render)
     let nested = value-or(item, "children", ())
     if nested.len() > 0 {
       for nested-block in nested { render(nested-block) }
@@ -291,6 +311,7 @@
 }
 
 #let render-block(block-data) = {
+  if "footnoteId" in block-data { return [] }
   let kind = block-data.kind
   let inlines = value-or(block-data, "inlines", ())
   let children = value-or(block-data, "children", ())
@@ -300,12 +321,12 @@
     let element = heading(
       level: value-or(block-data, "level", 1),
       outlined: value-or(block-data, "outlined", true),
-      render-inlines(inlines),
+      render-inlines(inlines, render-block),
     )
     let anchor = value-or(block-data, "id", "")
     if anchor == "" { element } else { [#element #label(anchor)] }
   } else if kind == "paragraph" {
-    par(render-inlines(inlines))
+    par(render-inlines(inlines, render-block))
   } else if kind == "code" {
     let language = value-or(block-data, "language", "")
     block(
@@ -342,7 +363,7 @@
     let body = if children.len() > 0 {
       for child in children { render-block(child) }
     } else {
-      render-inlines(inlines)
+      render-inlines(inlines, render-block)
     }
     let default-title = if style == "warning" {
       "Warning"
@@ -361,7 +382,7 @@
     let body = if children.len() > 0 {
       for child in children { render-block(child) }
     } else {
-      render-inlines(inlines)
+      render-inlines(inlines, render-block)
     }
     render-callout(
       body,
@@ -376,7 +397,7 @@
         if item.kind == "image" {
           render-display-image(item)
         } else {
-          render-inlines((item,))
+          render-inlines((item,), render-block)
         }
       }
     }
@@ -444,10 +465,10 @@
       raw(value-or(block-data, "text", ""), block: true),
     )
   } else if kind == "group" {
-    if inlines.len() > 0 { par(render-inlines(inlines)) }
+    if inlines.len() > 0 { par(render-inlines(inlines, render-block)) }
     for child in children { render-block(child) }
   } else {
-    render-inlines(inlines)
+    render-inlines(inlines, render-block)
   }
 }
 
