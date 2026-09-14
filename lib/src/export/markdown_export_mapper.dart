@@ -5,6 +5,7 @@ import '../markdown/busymark_document.dart';
 import '../writerside/writerside_video.dart';
 import 'markdown_export_document.dart';
 import 'export_metadata_mapper.dart';
+import 'pdf_footnotes.dart';
 
 class MarkdownExportMapper {
   const MarkdownExportMapper();
@@ -15,8 +16,62 @@ class MarkdownExportMapper {
   }) {
     return MarkdownExportDocument(
       metadata: const ExportMetadataMapper().map(document),
-      blocks: _mapBlocks(document.blocks, blockOverrides),
+      blocks: _connectFootnotes(
+        _mapBlocks(preparePdfFootnotes(document).blocks, blockOverrides),
+      ),
     );
+  }
+
+  List<MarkdownExportBlock> _connectFootnotes(
+    List<MarkdownExportBlock> blocks,
+  ) {
+    final definitions = <String>{};
+    void collect(Iterable<MarkdownExportBlock> values) {
+      for (final block in values) {
+        if (block.attributes['footnoteId'] case final String id) {
+          definitions.add(id);
+        }
+        collect(block.children);
+      }
+    }
+
+    collect(blocks);
+    final referenced = <String>{};
+    MarkdownExportInline inline(MarkdownExportInline value) {
+      final destination = value.destination;
+      String? id;
+      if (value.kind == MarkdownExportInlineKind.link &&
+          destination != null &&
+          destination.startsWith('#')) {
+        final raw = destination.substring(1);
+        if (definitions.contains(raw)) {
+          id = raw;
+        } else {
+          try {
+            final decoded = Uri.decodeComponent(raw);
+            if (definitions.contains(decoded)) id = decoded;
+          } on FormatException {
+            /* An unrelated malformed link is not a note. */
+          }
+        }
+      }
+      return value.copyWith(
+        attributes: {
+          ...value.attributes,
+          if (id != null) ...{
+            'footnoteId': id,
+            'footnoteFirst': referenced.add(id).toString(),
+          },
+        },
+        children: value.children.map(inline).toList(),
+      );
+    }
+
+    MarkdownExportBlock block(MarkdownExportBlock value) => value.copyWith(
+      inlines: value.inlines.map(inline).toList(),
+      children: value.children.map(block).toList(),
+    );
+    return blocks.map(block).toList();
   }
 
   List<MarkdownExportBlock> _mapBlocks(
@@ -47,9 +102,11 @@ class MarkdownExportMapper {
         );
       }
       currentVariant = variant;
-      final override = blockOverrides[block.id];
+      final override = block.kind == BusyBlockKind.codeBlock
+          ? blockOverrides[block.id]
+          : null;
       if (override != null) {
-        result.add(override);
+        result.add(_withAnchor(override, block));
         index++;
         continue;
       }
@@ -57,15 +114,21 @@ class MarkdownExportMapper {
         final ordered = _isOrderedListItem(block);
         final listType =
             block.attributes['listType'] ?? (ordered ? 'decimal' : 'bullet');
+        final listId = block.attributes['listId'];
         final items = <MarkdownExportBlock>[];
-        final start = _listNumber(block.attributes['marker']) ?? 1;
+        final start =
+            int.tryParse(block.attributes['listOrdinal'] ?? '') ??
+            _listNumber(block.attributes['marker']) ??
+            1;
         while (index < blocks.length && _isListItem(blocks[index].kind)) {
           final candidate = blocks[index];
           final candidateOrdered = _isOrderedListItem(candidate);
           final candidateListType =
               candidate.attributes['listType'] ??
               (candidateOrdered ? 'decimal' : 'bullet');
-          if (candidateOrdered != ordered || candidateListType != listType) {
+          if (candidateOrdered != ordered ||
+              candidateListType != listType ||
+              candidate.attributes['listId'] != listId) {
             break;
           }
           items.add(_mapListItem(candidate, blockOverrides));
@@ -86,15 +149,7 @@ class MarkdownExportMapper {
       }
       final mapped = _mapBlock(block, blockOverrides);
       if (mapped != null) {
-        result.add(
-          mapped.copyWith(
-            attributes: {
-              ...mapped.attributes,
-              if (block.attributes['pdf-anchor'] case final anchor?)
-                'anchor': anchor,
-            },
-          ),
-        );
+        result.add(_withAnchor(mapped, block));
         if (block.kind == BusyBlockKind.heading ||
             block.kind == BusyBlockKind.paragraph) {
           result.addAll(_mapBlocks(block.children, blockOverrides));
@@ -104,6 +159,17 @@ class MarkdownExportMapper {
     }
     return List.unmodifiable(result);
   }
+
+  MarkdownExportBlock _withAnchor(
+    MarkdownExportBlock mapped,
+    BusyBlock source,
+  ) => mapped.copyWith(
+    attributes: {
+      ...mapped.attributes,
+      if (source.attributes['pdf-anchor'] case final anchor?) 'anchor': anchor,
+      if (source.attributes['pdf-footnote-id'] case final id?) 'footnoteId': id,
+    },
+  );
 
   MarkdownExportBlock _mapListItem(
     BusyBlock block,
@@ -115,6 +181,7 @@ class MarkdownExportMapper {
       children: _mapBlocks(block.children, blockOverrides),
       attributes: {
         if (block.attributes['task'] case final task?) 'task': task == 'true',
+        if (block.attributes['pdf-anchor'] case final anchor?) 'anchor': anchor,
       },
     );
   }

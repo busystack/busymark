@@ -11,6 +11,41 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Tiitelleht';
+
+  @override
+  String get pdfIncludeTitlePage => 'Lisa tiitelleht';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Sellel lehel pole päist, jalust ega nähtavat leheküljenumbrit.';
+
+  @override
+  String get pdfTitlePageTitle => 'Pealkiri';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Alapealkiri';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autor';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organisatsioon';
+
+  @override
+  String get pdfTitlePageVersion => 'Versioon';
+
+  @override
+  String get pdfTitlePageDate => 'Kuupäev';
+
+  @override
+  String get pdfTitlePageTitleRequired => 'Sisesta tiitellehe pealkiri.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Algab eraldi lehelt ja võib hõlmata mitut lehte.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

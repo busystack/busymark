@@ -11,6 +11,42 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'शीर्षक पृष्ठ';
+
+  @override
+  String get pdfIncludeTitlePage => 'शीर्षक पृष्ठ शामिल करें';
+
+  @override
+  String get pdfTitlePageNote =>
+      'इस पृष्ठ पर शीर्षलेख, पादलेख या पृष्ठ संख्या नहीं दिखती है।';
+
+  @override
+  String get pdfTitlePageTitle => 'शीर्षक';
+
+  @override
+  String get pdfTitlePageSubtitle => 'उपशीर्षक';
+
+  @override
+  String get pdfTitlePageAuthor => 'लेखक';
+
+  @override
+  String get pdfTitlePageOrganization => 'संगठन';
+
+  @override
+  String get pdfTitlePageVersion => 'संस्करण';
+
+  @override
+  String get pdfTitlePageDate => 'तारीख';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'शीर्षक पृष्ठ के लिए शीर्षक दर्ज करें।';
+
+  @override
+  String get pdfTocSectionNote =>
+      'अलग पृष्ठ से शुरू होता है और कई पृष्ठों तक जा सकता है।';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

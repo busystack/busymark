@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -104,6 +105,89 @@ void main() {
     );
     expect(result.markdownPath, '../media/images/diagram.png');
   });
+
+  test(
+    'restores retained Writerside video bytes without widening image paste',
+    () async {
+      final workspace = await Directory.systemTemp.createTemp(
+        'busymark-video-assets-',
+      );
+      addTearDown(() => workspace.delete(recursive: true));
+      final document = File(p.join(workspace.path, 'topic.md'))
+        ..writeAsStringSync('');
+      final video = Uint8List.fromList([
+        0,
+        0,
+        0,
+        20,
+        ...ascii.encode('ftypmp42'),
+        0,
+        0,
+        0,
+        0,
+      ]);
+      const service = AssetIngestionService();
+      final request = AssetIngestionRequest(
+        documentFilePath: document.path,
+        workspaceKind: AssetWorkspaceKind.standalone,
+      );
+
+      expect(
+        service.canIngestMediaBytes(
+          bytes: video,
+          suggestedFileName: 'clip.mp4',
+        ),
+        isTrue,
+      );
+      final result = await service.ingestMediaBytes(
+        bytes: video,
+        suggestedFileName: 'clip.mp4',
+        request: request,
+        origin: AssetIngestionOrigin.clipboardImageFile,
+      );
+
+      expect(result.markdownPath, 'images/clip.mp4');
+      expect(result.mimeType, 'video/mp4');
+      expect(await File(result.absolutePath).readAsBytes(), video);
+      expect(
+        service.canIngestMediaBytes(
+          bytes: video,
+          suggestedFileName: 'clip.bin',
+        ),
+        isFalse,
+      );
+      expect(
+        () => service.ingestMediaBytes(
+          bytes: video,
+          suggestedFileName: 'clip.bin',
+          request: request,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        ),
+        throwsA(
+          isA<AssetIngestionException>().having(
+            (error) => error.code,
+            'code',
+            'asset.invalid-media-type',
+          ),
+        ),
+      );
+      expect(
+        () => service.ingestBytes(
+          bytes: video,
+          suggestedFileName: 'clip.mp4',
+          request: request,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        ),
+        throwsA(
+          isA<AssetIngestionException>().having(
+            (error) => error.code,
+            'code',
+            'asset.invalid-image-type',
+          ),
+        ),
+      );
+    },
+  );
 
   test('requires saving untitled documents and rejects non-images', () async {
     const service = AssetIngestionService();

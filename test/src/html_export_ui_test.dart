@@ -34,27 +34,40 @@ void main() {
     expect(await registry.execute(BusyMarkCommandIds.export), isTrue);
     expect(calls, 1);
     final native = File('linux/runner/my_application.cc').readAsStringSync();
-    expect(native, isNot(contains('"header.export"')));
+    expect(native, contains('"header.export"'));
     expect(native, isNot(contains('"header.export-html"')));
     expect(native, isNot(contains('"header.export-pdf"')));
-    expect(native, isNot(contains('configuration.can_export_html')));
-    expect(native, isNot(contains('"setCanExportHtml"')));
+    expect(native, contains('configuration.can_export_pdf'));
+    expect(native, contains('configuration.can_export_html'));
+    expect(native, contains('"setCanExportPdf"'));
+    expect(native, contains('"setCanExportHtml"'));
   });
 
-  testWidgets('Flutter Main menu excludes document export', (tester) async {
+  testWidgets('Flutter Main menu exposes document export', (tester) async {
+    var selected = false;
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: BusyMarkMainMenuButton(onSelected: (_) {})),
+          home: Scaffold(
+            body: BusyMarkMainMenuButton(
+              canExport: true,
+              onSelected: (action) =>
+                  selected = action == BusyMarkMainMenuAction.export,
+            ),
+          ),
         ),
       ),
     );
     await tester.tap(find.byType(BusyMarkMainMenuButton));
     await tester.pumpAndSettle();
-    expect(find.text('Export'), findsNothing);
+    expect(find.text('Export'), findsOneWidget);
+    expect(find.text('Ctrl+Shift+E'), findsOneWidget);
     expect(find.text('Full Screen'), findsOneWidget);
+    await tester.tap(find.text('Export'));
+    await tester.pumpAndSettle();
+    expect(selected, isTrue);
   });
 
   testWidgets(
@@ -159,23 +172,15 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Unsaved changes'), findsOneWidget);
         await tester.tap(find.text(action));
-        for (
-          var i = 0;
-          i < 60 && find.text('Instance').evaluate().isEmpty;
-          i++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 50)),
-          );
-          await tester.pump(const Duration(milliseconds: 100));
-        }
         if (action == 'Cancel') {
+          await tester.pumpAndSettle();
           expect(find.text('Instance'), findsNothing);
           expect(
             ref.read(workspaceControllerProvider).hasUnsavedChanges,
             isTrue,
           );
         } else {
+          await _pumpUntilFound(tester, find.text('Instance'));
           expect(find.text('Instance'), findsOneWidget);
           expect(
             File(p.join(root.path, 'topics/a.topic')).readAsStringSync(),
@@ -190,6 +195,17 @@ void main() {
       },
     );
   }
+}
+
+Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var attempt = 0; attempt < 240; attempt++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  fail('Timed out waiting for $finder.');
 }
 
 Widget _harness(HtmlExportService service, void Function(WidgetRef) ready) =>

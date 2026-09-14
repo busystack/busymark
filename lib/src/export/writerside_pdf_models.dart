@@ -11,6 +11,7 @@ class WritersidePdfExportRequest {
     required this.overwrite,
     this.projectRoot,
     this.options = const PdfExportOptions(),
+    this.titlePage,
   });
 
   final String moduleRoot;
@@ -19,6 +20,7 @@ class WritersidePdfExportRequest {
   final String destinationPath;
   final bool overwrite;
   final PdfExportOptions options;
+  final PdfTitlePageData? titlePage;
 }
 
 @immutable

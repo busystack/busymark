@@ -277,11 +277,38 @@ void prepareHtmlPage(
           );
         }
       }
+      final raw =
+          b.attributes['html-footnotes'] ??
+          (b.kind == BusyBlockKind.htmlBlock ? b.rawSource : null);
+      if (raw != null) {
+        explicit.addAll(
+          html.parseFragment(raw).querySelectorAll('[id]').map((e) => e.id),
+        );
+      }
+      void inlines(Iterable<BusyInline> values) {
+        for (final value in values) {
+          if (value.attributes['id'] case final id?) explicit.add(id);
+          if (value.kind == BusyInlineKind.html) {
+            explicit.addAll(
+              html
+                  .parseFragment(value.text)
+                  .querySelectorAll('[id]')
+                  .map((e) => e.id),
+            );
+          }
+          inlines(value.children);
+        }
+      }
+
+      inlines(b.inlines);
       collect(b.children, depth + 1);
     }
   }
 
   collect(page.document.blocks, 0);
+  if (page.topic?.document.rootElement?.attributes['id'] case final id?) {
+    explicit.add(id);
+  }
   final used = <String>{};
   var occurrence = 0;
   BusyBlock block(BusyBlock b) {
@@ -360,6 +387,14 @@ void prepareHtmlPage(
       void inlineIds(Iterable<BusyInline> values) {
         for (final value in values) {
           if (value.attributes['id'] case final id?) page.ids.add(id);
+          if (value.kind == BusyInlineKind.html) {
+            page.ids.addAll(
+              html
+                  .parseFragment(value.text)
+                  .querySelectorAll('[id]')
+                  .map((e) => e.id),
+            );
+          }
           inlineIds(value.children);
         }
       }

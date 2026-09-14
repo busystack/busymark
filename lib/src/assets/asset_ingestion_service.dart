@@ -65,12 +65,35 @@ class IngestedAsset {
   final AssetIngestionOrigin origin;
 }
 
+class IngestedAssetSnapshot {
+  const IngestedAssetSnapshot({required this.asset, required this.bytes});
+
+  final IngestedAsset asset;
+  final Uint8List bytes;
+}
+
 class AssetIngestionService {
   const AssetIngestionService({this.maximumAssetBytes = 100 * 1024 * 1024});
 
   final int maximumAssetBytes;
 
   Future<IngestedAsset> ingestFile({
+    required String sourcePath,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    return (await ingestFileSnapshot(
+      sourcePath: sourcePath,
+      request: request,
+      origin: origin,
+    )).asset;
+  }
+
+  /// Ingests one immutable read of [sourcePath] and returns that exact read.
+  ///
+  /// Callers that need to retain or otherwise reuse the inserted content must
+  /// use [bytes] instead of reopening a path that may have changed meanwhile.
+  Future<IngestedAssetSnapshot> ingestFileSnapshot({
     required String sourcePath,
     required AssetIngestionRequest request,
     required AssetIngestionOrigin origin,
@@ -89,12 +112,14 @@ class AssetIngestionService {
         'The image is empty or exceeds the supported size limit.',
       );
     }
-    return ingestBytes(
-      bytes: await source.readAsBytes(),
+    final bytes = await source.readAsBytes();
+    final asset = await ingestBytes(
+      bytes: bytes,
       suggestedFileName: p.basename(source.path),
       request: request,
       origin: origin,
     );
+    return IngestedAssetSnapshot(asset: asset, bytes: bytes);
   }
 
   Future<IngestedAsset> ingestBytes({
@@ -103,15 +128,7 @@ class AssetIngestionService {
     required AssetIngestionRequest request,
     required AssetIngestionOrigin origin,
   }) async {
-    if (request.documentFilePath.trim().isEmpty) {
-      throw const AssetSaveRequiredException();
-    }
-    if (bytes.isEmpty || bytes.length > maximumAssetBytes) {
-      throw const AssetIngestionException(
-        'asset.invalid-size',
-        'The image is empty or exceeds the supported size limit.',
-      );
-    }
+    _validateBytes(bytes, request: request);
     final imageType = _detectImageType(bytes);
     if (imageType == null) {
       throw const AssetIngestionException(
@@ -119,6 +136,74 @@ class AssetIngestionService {
         'The selected file is not a supported PNG, JPEG, GIF, WebP, or SVG image.',
       );
     }
+    return _publishBytes(
+      bytes: bytes,
+      suggestedFileName: suggestedFileName,
+      request: request,
+      origin: origin,
+      type: imageType,
+    );
+  }
+
+  /// Restores media captured from a rich clipboard fragment.
+  ///
+  /// Rich fragments can own both images and local Writerside videos. Ordinary
+  /// image ingestion remains image-only; this broader boundary is reserved for
+  /// restoring those already-captured media snapshots.
+  Future<IngestedAsset> ingestMediaBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    _validateBytes(bytes, request: request);
+    final type = _detectImageType(bytes) ?? _videoType(suggestedFileName);
+    if (type == null) {
+      throw const AssetIngestionException(
+        'asset.invalid-media-type',
+        'The retained file is not a supported image or video.',
+      );
+    }
+    return _publishBytes(
+      bytes: bytes,
+      suggestedFileName: suggestedFileName,
+      request: request,
+      origin: origin,
+      type: type,
+    );
+  }
+
+  bool canIngestMediaBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+  }) =>
+      bytes.isNotEmpty &&
+      bytes.length <= maximumAssetBytes &&
+      (_videoType(suggestedFileName) != null ||
+          _detectImageType(bytes) != null);
+
+  void _validateBytes(
+    Uint8List bytes, {
+    required AssetIngestionRequest request,
+  }) {
+    if (request.documentFilePath.trim().isEmpty) {
+      throw const AssetSaveRequiredException();
+    }
+    if (bytes.isEmpty || bytes.length > maximumAssetBytes) {
+      throw const AssetIngestionException(
+        'asset.invalid-size',
+        'The file is empty or exceeds the supported size limit.',
+      );
+    }
+  }
+
+  Future<IngestedAsset> _publishBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+    required _DetectedAssetType type,
+  }) async {
     final destination = await _destinationDirectory(request);
     final contentHash = sha256.convert(bytes).toString();
     final existing = await _identicalAsset(
@@ -135,7 +220,7 @@ class AssetIngestionService {
       published = await _publishUnique(
         destination,
         stem: stem,
-        extension: imageType.extension,
+        extension: type.extension,
         bytes: bytes,
       );
       reused = false;
@@ -145,7 +230,7 @@ class AssetIngestionService {
       markdownPath: p
           .relative(published.path, from: p.dirname(request.documentFilePath))
           .replaceAll(p.separator, '/'),
-      mimeType: imageType.mimeType,
+      mimeType: type.mimeType,
       reusedExisting: reused,
       origin: origin,
     );
@@ -289,7 +374,7 @@ class AssetIngestionService {
     return sanitized.length <= 80 ? sanitized : sanitized.substring(0, 80);
   }
 
-  _DetectedImageType? _detectImageType(Uint8List bytes) {
+  _DetectedAssetType? _detectImageType(Uint8List bytes) {
     if (bytes.length >= 8 &&
         bytes[0] == 0x89 &&
         bytes[1] == 0x50 &&
@@ -299,24 +384,24 @@ class AssetIngestionService {
         bytes[5] == 0x0a &&
         bytes[6] == 0x1a &&
         bytes[7] == 0x0a) {
-      return const _DetectedImageType('png', 'image/png');
+      return const _DetectedAssetType('png', 'image/png');
     }
     if (bytes.length >= 3 &&
         bytes[0] == 0xff &&
         bytes[1] == 0xd8 &&
         bytes[2] == 0xff) {
-      return const _DetectedImageType('jpg', 'image/jpeg');
+      return const _DetectedAssetType('jpg', 'image/jpeg');
     }
     if (bytes.length >= 6) {
       final signature = ascii.decode(bytes.sublist(0, 6), allowInvalid: true);
       if (signature == 'GIF87a' || signature == 'GIF89a') {
-        return const _DetectedImageType('gif', 'image/gif');
+        return const _DetectedAssetType('gif', 'image/gif');
       }
     }
     if (bytes.length >= 12 &&
         ascii.decode(bytes.sublist(0, 4), allowInvalid: true) == 'RIFF' &&
         ascii.decode(bytes.sublist(8, 12), allowInvalid: true) == 'WEBP') {
-      return const _DetectedImageType('webp', 'image/webp');
+      return const _DetectedAssetType('webp', 'image/webp');
     }
     try {
       final source = utf8.decode(bytes);
@@ -324,17 +409,29 @@ class AssetIngestionService {
         source.startsWith('\uFEFF') ? source.substring(1) : source,
       );
       if (document.rootElement.name.local.toLowerCase() == 'svg') {
-        return const _DetectedImageType('svg', 'image/svg+xml');
+        return const _DetectedAssetType('svg', 'image/svg+xml');
       }
     } on Object {
       // Binary or malformed XML is not SVG.
     }
     return null;
   }
+
+  _DetectedAssetType? _videoType(String suggestedFileName) =>
+      switch (p.extension(suggestedFileName).toLowerCase()) {
+        '.avi' => const _DetectedAssetType('avi', 'video/x-msvideo'),
+        '.m4v' => const _DetectedAssetType('m4v', 'video/x-m4v'),
+        '.mkv' => const _DetectedAssetType('mkv', 'video/x-matroska'),
+        '.mov' => const _DetectedAssetType('mov', 'video/quicktime'),
+        '.mp4' => const _DetectedAssetType('mp4', 'video/mp4'),
+        '.ogv' => const _DetectedAssetType('ogv', 'video/ogg'),
+        '.webm' => const _DetectedAssetType('webm', 'video/webm'),
+        _ => null,
+      };
 }
 
-class _DetectedImageType {
-  const _DetectedImageType(this.extension, this.mimeType);
+class _DetectedAssetType {
+  const _DetectedAssetType(this.extension, this.mimeType);
 
   final String extension;
   final String mimeType;

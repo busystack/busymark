@@ -11,6 +11,42 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Frontespizio';
+
+  @override
+  String get pdfIncludeTitlePage => 'Includi frontespizio';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Questa pagina non ha intestazione, piè di pagina o numero di pagina visibile.';
+
+  @override
+  String get pdfTitlePageTitle => 'Titolo';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Sottotitolo';
+
+  @override
+  String get pdfTitlePageAuthor => 'Autore';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organizzazione';
+
+  @override
+  String get pdfTitlePageVersion => 'Versione';
+
+  @override
+  String get pdfTitlePageDate => 'Data';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Inserisci un titolo per il frontespizio.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Inizia su una pagina separata e può occupare più pagine.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

@@ -1,8 +1,9 @@
 # HTML export
 
-For Markdown, choose **Outline → Actions → Export** or use the command palette.
-For Writerside, choose **Topics → Actions → Export**. HTML has no default shortcut;
-**Ctrl+Shift+E** continues to export PDF.
+Choose **Main menu → Export** or use the command palette. The contextual action
+also remains under **Outline → Actions** for Markdown and **Topics → Actions**
+for Writerside. HTML has no default shortcut; **Ctrl+Shift+E** continues to
+export PDF.
 
 Markdown exports the active document’s current editor text, including unsaved
 and untitled content. Writerside first offers Save, Discard, or Cancel for

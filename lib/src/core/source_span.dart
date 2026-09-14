@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:async';
 
 class SourceLocation {
   const SourceLocation({
@@ -37,8 +38,9 @@ class SourceSpan {
   }) {
     final safeStart = startOffset.clamp(0, source.length);
     final safeEnd = math.max(safeStart, endOffset.clamp(0, source.length));
-    final start = SourceLocationMapper(source).locationForOffset(safeStart);
-    final end = SourceLocationMapper(source).locationForOffset(safeEnd);
+    final mapper = SourceLocationMapper.forSource(source);
+    final start = mapper.locationForOffset(safeStart);
+    final end = mapper.locationForOffset(safeEnd);
     return SourceSpan(
       filePath: filePath,
       startOffset: safeStart,
@@ -79,6 +81,23 @@ class SourceSpan {
 }
 
 class SourceLocationMapper {
+  static final _zoneKey = Object();
+
+  /// Share location maps across helpers and nested parsers for one parse only.
+  static T withSource<T>(String source, T Function() parse) {
+    if (Zone.current[_zoneKey] != null) return parse();
+    return runZoned(
+      parse,
+      zoneValues: {_zoneKey: <String, SourceLocationMapper>{}},
+    );
+  }
+
+  static SourceLocationMapper forSource(String source) {
+    final maps = Zone.current[_zoneKey] as Map<String, SourceLocationMapper>?;
+    return maps?.putIfAbsent(source, () => SourceLocationMapper(source)) ??
+        SourceLocationMapper(source);
+  }
+
   SourceLocationMapper(String source) : _source = source {
     _lineStarts = <int>[0];
     for (var i = 0; i < source.length; i++) {

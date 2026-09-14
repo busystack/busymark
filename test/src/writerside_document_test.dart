@@ -18,6 +18,117 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final protectedSource in [false, true]) {
+    test(
+      'complex Markdown retains semantic XML spans (protected=$protectedSource)',
+      () async {
+        final file = File(
+          'test/fixtures/writerside/markdown_export_compatibility/topics/main.md',
+        );
+        final source =
+            '${await file.readAsString()}${protectedSource ? '\n> [nested]: https://example.com\n> Nested definition.\n' : ''}';
+        final markdown = const MarkdownParser().parse(
+          filePath: file.absolute.path,
+          source: source,
+          mode: MarkdownMode.writersideMarkdown,
+          validateLocalReferences: false,
+        );
+        expect(
+          markdown.busyDocument.blocks.any((b) => b.isSourceOnly),
+          protectedSource,
+        );
+        final document = const WritersideDocumentParser().parseMarkdown(
+          filePath: markdown.filePath,
+          source: source,
+          markdown: markdown.busyDocument,
+        );
+        expect(document.nodes.whereType<WritersideRawNode>(), isEmpty);
+        final structure = document.elements.singleWhere(
+          (e) => e.name == 'show-structure',
+        );
+        expect(structure.span.startLine, 1);
+        expect(structure.rawSource, '<show-structure/>');
+        final notes = document.elements.where((e) => e.name == 'note').toList();
+        expect(notes, hasLength(2));
+        const note = '<note><p>Repeated semantic note.</p></note>';
+        final positions = RegExp(
+          RegExp.escape(note),
+        ).allMatches(source).map((m) => m.start).toList();
+        // The first spelling is fenced code, not a semantic note.
+        expect(notes.map((e) => e.span.startOffset), positions.skip(1));
+        for (final node in notes) {
+          expect(
+            source.substring(node.span.startOffset, node.span.endOffset),
+            note,
+          );
+        }
+        expect(
+          const WritersideDocumentSerializer().serialize(document),
+          source,
+        );
+      },
+    );
+  }
+
+  test('Writerside heading aliases prefer exact IDs and reject ambiguity', () {
+    const source = '''# Links
+
+## Read.file
+
+## Explicit {id="read-file"}
+
+## Same.file
+
+## Same/file
+
+## Only.file {id="custom"}
+''';
+    final markdown = const MarkdownParser().parse(
+      filePath: '/tmp/aliases.md',
+      source: source,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    final document = const WritersideDocumentParser().parseMarkdown(
+      filePath: markdown.filePath,
+      source: source,
+      markdown: markdown.busyDocument,
+    );
+    expect(document.contentById('read-file')!.first.plainText, 'Explicit');
+    expect(document.contentById('same-file'), isNull);
+    expect(document.contentById('only-file'), isNull);
+    expect(document.contentById('custom')!.first.plainText, 'Only.file');
+  });
+
+  test('malformed semantic XML is still reported after a scanner mismatch', () {
+    const source = '''# Invalid
+
+1. First
+
+   Continuation.
+2. Second
+
+<note><p>Unclosed paragraph</note>
+''';
+    final markdown = const MarkdownParser().parse(
+      filePath: '/tmp/invalid.md',
+      source: source,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    final document = const WritersideDocumentParser().parseMarkdown(
+      filePath: markdown.filePath,
+      source: source,
+      markdown: markdown.busyDocument,
+    );
+    expect(
+      document.nodes.whereType<WritersideRawNode>().map(
+        (node) => node.rawSource,
+      ),
+      contains(contains('<note><p>Unclosed paragraph</note>')),
+    );
+  });
+
   test(
     'lossless XML nodes preserve exact duplicate ranges and generic markup',
     () {
@@ -276,6 +387,87 @@ void main() {
     expect(blocks[4].attributes['task'], 'false');
     expect(blocks[5].attributes['markerHidden'], 'true');
   });
+
+  test('XML lists retain numeric ordinals and their container identity', () {
+    final document = const WritersideDocumentParser().parseXml(
+      filePath: '/tmp/lists.topic',
+      source: File(
+        'test/fixtures/writerside/list_numbering.topic',
+      ).readAsStringSync(),
+    );
+    final blocks = const WritersideDocumentRenderer()
+        .toBusyDocument(document)
+        .blocks;
+    expect(blocks.take(6).map((b) => b.attributes['listOrdinal']), [
+      '3',
+      '4',
+      '1',
+      '2',
+      '1',
+      '2',
+    ]);
+    expect(blocks.take(2).map((b) => b.attributes['marker']), ['c.', 'd.']);
+    final ids = blocks.take(6).map((b) => b.attributes['listId']).toList();
+    expect(ids, everyElement(isNotNull));
+    expect(ids[0], ids[1]);
+    expect(ids[2], ids[3]);
+    expect(ids[4], ids[5]);
+    expect({ids[0], ids[2], ids[4]}, hasLength(3));
+  });
+
+  test(
+    'repeated list includes have distinct occurrence IDs and original source spans',
+    () async {
+      final fixture = Directory(
+        'test/fixtures/writerside/repeated_list_include',
+      ).absolute;
+      final module = await const WritersideModuleService().load(fixture.path);
+      final topic = module.topicByReference('start.topic')!;
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: module.instances.single,
+        ),
+      );
+      expect(resolved.diagnostics, isEmpty);
+      final originalItems = module
+          .topicByReference('library.topic')!
+          .document
+          .elements
+          .where((element) => element.name == 'li')
+          .toList();
+      const renderer = WritersideDocumentRenderer();
+      final rendered = renderer.toBusyDocument(resolved.document);
+      expect(rendered.blocks, hasLength(4));
+      final ids = rendered.blocks.map((b) => b.attributes['listId']).toList();
+      expect(ids, everyElement(isNotNull));
+      expect(ids[0], ids[1]);
+      expect(ids[2], ids[3]);
+      expect(ids[0], isNot(ids[2]));
+      expect(rendered.blocks.map((b) => b.attributes['listOrdinal']), [
+        '1',
+        '2',
+        '1',
+        '2',
+      ]);
+      for (var i = 0; i < rendered.blocks.length; i++) {
+        final span = rendered.blocks[i].sourceSpan!;
+        final original = originalItems[i % 2].span;
+        expect(span.filePath, original.filePath);
+        expect(span.startOffset, original.startOffset);
+        expect(span.endOffset, original.endOffset);
+      }
+      expect(
+        renderer
+            .toBusyDocument(resolved.document)
+            .blocks
+            .map((b) => b.attributes['listId']),
+        ids,
+      );
+    },
+  );
 
   test('workspace exposes resolver errors with exact source spans', () async {
     final fixture = await _ResolvedFixture.create();

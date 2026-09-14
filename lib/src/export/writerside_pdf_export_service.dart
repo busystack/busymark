@@ -14,6 +14,7 @@ import '../writerside/writerside_document.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_project.dart';
+import 'pdf_footnotes.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
 import 'writerside_pdf_models.dart';
@@ -97,8 +98,8 @@ class WritersidePdfExportService {
       throw WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
         detail:
-            'Writerside module validation failed: '
-            '${moduleErrors.map((diagnostic) => diagnostic.code).toSet().join(', ')}',
+            'Writerside module validation failed:\n'
+            '${_diagnosticDetails(moduleErrors, moduleRoot)}',
       );
     }
     final composition = await _composeInstanceDocument(
@@ -114,8 +115,8 @@ class WritersidePdfExportService {
       throw WritersidePdfExportException(
         WritersidePdfFailureCode.invalidRequest,
         detail:
-            'Writerside resolution failed: '
-            '${resolutionErrors.map((diagnostic) => diagnostic.code).join(', ')}',
+            'Writerside resolution failed:\n'
+            '${_diagnosticDetails(resolutionErrors, moduleRoot)}',
       );
     }
     final document = composition.document;
@@ -135,6 +136,9 @@ class WritersidePdfExportService {
           workspaceRoot: moduleRoot,
           destinationPath: request.destinationPath,
           options: request.options,
+          titlePage: request.options.includeTitlePage
+              ? request.titlePage ?? PdfTitlePageData.forInstance(instance)
+              : null,
           overwrite: request.overwrite,
           mode: MarkdownMode.writersideMarkdown,
           document: document,
@@ -211,54 +215,73 @@ class WritersidePdfExportService {
     Map<String, WritersideModule> modulesByOrigin,
     WritersidePdfCancellationToken token,
   ) async {
-    final selected = <({WritersideTopic topic, bool hidden})>[];
+    final selected =
+        <({WritersideModule module, WritersideTopic topic, bool hidden})>[];
     final selectedIndices = <String, int>{};
+    final startTopic = instance.startPage == null
+        ? null
+        : module.topicByReference(instance.startPage!);
+    bool? startHidden;
 
-    void addReference(String? reference, {required bool hidden}) {
+    void addReference(
+      String? reference,
+      WritersideModule owner, {
+      required bool hidden,
+    }) {
       if (reference == null) {
         return;
       }
-      final topic = module.topicByReference(reference);
-      if (topic == null) return;
+      final topic = owner.topicByReference(reference);
+      if (topic == null) {
+        throw WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'Missing TOC topic: $reference (${owner.rootPath}).',
+        );
+      }
       final existingIndex = selectedIndices[topic.filePath];
       if (existingIndex == null) {
         selectedIndices[topic.filePath] = selected.length;
-        selected.add((topic: topic, hidden: hidden));
+        selected.add((module: owner, topic: topic, hidden: hidden));
       } else if (selected[existingIndex].hidden && !hidden) {
-        selected[existingIndex] = (topic: topic, hidden: false);
+        selected[existingIndex] = (module: owner, topic: topic, hidden: false);
       }
     }
 
-    void addNode(TocNode node) {
-      if (!node.workInProgress) {
-        addReference(node.topicReference, hidden: node.hidden);
+    void addNode(TocNode node, WritersideModule inherited) {
+      final owner = node.origin == null
+          ? inherited
+          : modulesByOrigin[node.origin];
+      if (owner == null) {
+        throw WritersidePdfExportException(
+          WritersidePdfFailureCode.invalidRequest,
+          detail: 'Unknown TOC module origin: ${node.origin}.',
+        );
+      }
+      final publishesTopic =
+          node.referenceInstanceId == null ||
+          node.referenceInstanceId == instance.id;
+      if (publishesTopic &&
+          startTopic != null &&
+          node.topicReference != null &&
+          owner.topicByReference(node.topicReference!)?.filePath ==
+              startTopic.filePath) {
+        startHidden = (startHidden ?? true) && node.hidden;
+      }
+      if (publishesTopic && !node.workInProgress) {
+        addReference(node.topicReference, owner, hidden: node.hidden);
       }
       for (final child in node.children) {
-        addNode(child);
+        addNode(child, owner);
       }
     }
 
     for (final root in instance.navigationTocRoots) {
-      addNode(root);
+      addNode(root, module);
     }
-    final startTopic = instance.startPage == null
-        ? null
-        : module.topicByReference(instance.startPage!);
     if (startTopic != null) {
-      final startNodes = instance.navigationTocRoots
-          .expand((root) => root.flatten())
-          .where(
-            (node) =>
-                node.topicReference != null &&
-                module.topicByReference(node.topicReference!)?.filePath ==
-                    startTopic.filePath,
-          )
-          .toList(growable: false);
-      final startHidden =
-          startNodes.isNotEmpty && startNodes.every((node) => node.hidden);
       final existingIndex = selectedIndices[startTopic.filePath];
       final start = existingIndex == null
-          ? (topic: startTopic, hidden: startHidden)
+          ? (module: module, topic: startTopic, hidden: startHidden ?? false)
           : selected.removeAt(existingIndex);
       selected.insert(0, start);
       selectedIndices
@@ -268,11 +291,6 @@ class WritersidePdfExportService {
             (entry) => MapEntry(entry.$2.topic.filePath, entry.$1),
           ),
         );
-    }
-    if (selected.isEmpty) {
-      for (final reference in instance.topicFileSet) {
-        addReference(reference, hidden: false);
-      }
     }
     if (selected.length > maximumTopics) {
       throw const WritersidePdfExportException(
@@ -320,7 +338,7 @@ class WritersidePdfExportService {
       final resolved = documentResolver.resolve(
         parsedTopic.document,
         WritersideResolveContext(
-          module: module,
+          module: selection.module,
           topic: parsedTopic,
           instance: instance,
           modulesByOrigin: modulesByOrigin,
@@ -347,19 +365,27 @@ class WritersidePdfExportService {
         );
       }
       final assets = await _resolveBusyAssets(
-        module,
+        selection.module,
         parsedTopic,
-        rendered,
+        preparePdfFootnotes(rendered),
         modulesByOrigin,
       );
       output.addAll(assets.blocks);
     }
+    // Parser IDs are local to a source document, and repeated includes reuse
+    // them too. Rendering jobs and mapper overrides must identify occurrences
+    // throughout the complete publication, including nested/generated blocks.
+    var occurrence = 0;
+    BusyBlock identify(BusyBlock block) => block.copyWith(
+      id: 'writerside-export-${occurrence++}',
+      children: block.children.map(identify).toList(growable: false),
+    );
     return _ComposedWritersideDocument(
       document: BusyDocument(
         filePath: p.join(module.rootPath, '.busymark-writerside-export'),
         mode: MarkdownMode.writersideMarkdown,
         title: instance.name,
-        blocks: List.unmodifiable(output),
+        blocks: List.unmodifiable(output.map(identify)),
       ),
       diagnostics: sortDiagnostics(resolutionDiagnostics),
     );
@@ -390,6 +416,25 @@ class WritersidePdfExportService {
       for (final diagnostic in module.diagnostics)
         if (!_isDeferredCrossModuleDiagnostic(module, diagnostic)) diagnostic,
     ];
+  }
+
+  String _diagnosticDetails(
+    Iterable<Diagnostic> diagnostics,
+    String moduleRoot,
+  ) {
+    return diagnostics
+        .map((diagnostic) {
+          final path = p.relative(diagnostic.filePath, from: moduleRoot);
+          final location =
+              '$path${diagnostic.line == null ? '' : ':${diagnostic.line}'}';
+          final message = diagnostic.code == 'writerside.tree.missing-topic'
+              ? 'Missing topic "${diagnostic.args['topic']}"'
+              : diagnostic.args.entries
+                    .map((entry) => '${entry.key}=${entry.value}')
+                    .join(', ');
+          return '$location: ${message.isEmpty ? '' : '$message '}[${diagnostic.code}]';
+        })
+        .join('\n');
   }
 
   bool _isDeferredCrossModuleDiagnostic(
@@ -454,16 +499,32 @@ class WritersidePdfExportService {
       return (module: sourceModule, topic: sourceTopic);
     }
 
+    String footnoteAnchor(Map<String, String> attributes, String id) {
+      final source = sourceContext(attributes);
+      final identity = jsonEncode([
+        topic.filePath,
+        source.topic.filePath,
+        attributes[writersideSourceOccurrenceAttribute] ?? '0',
+        id,
+      ]);
+      return 'ws-fn-${sha256.convert(utf8.encode(identity)).toString().substring(0, 24)}';
+    }
+
     Future<BusyInline> resolveInline(BusyInline inline) async {
       final source = sourceContext(inline.attributes);
       var destination = inline.destination;
       if (inline.kind == BusyInlineKind.image && destination != null) {
-        destination =
-            await _resolvedAssetUri(source.module, source.topic, destination) ??
-            destination;
+        destination = await _resolvedAssetUri(
+          source.module,
+          source.topic,
+          destination,
+        );
       }
       final attributes = {...inline.attributes};
-      if (inline.kind == BusyInlineKind.link &&
+      final footnoteTarget = attributes[writersideFootnoteTargetAttribute];
+      if (inline.kind == BusyInlineKind.link && footnoteTarget != null) {
+        destination = '#${footnoteAnchor(attributes, footnoteTarget)}';
+      } else if (inline.kind == BusyInlineKind.link &&
           destination != null &&
           !(Uri.tryParse(destination)?.hasScheme ?? false)) {
         final hash = destination.indexOf('#');
@@ -481,9 +542,11 @@ class WritersidePdfExportService {
         if (value == null || value.trim().isEmpty) {
           continue;
         }
-        attributes[name] =
-            await _resolvedAssetUri(source.module, source.topic, value) ??
-            value;
+        attributes[name] = await _resolvedAssetUri(
+          source.module,
+          source.topic,
+          value,
+        );
       }
       var text = inline.text;
       var children = await Future.wait(inline.children.map(resolveInline));
@@ -511,6 +574,9 @@ class WritersidePdfExportService {
     Future<BusyBlock> resolveBlock(BusyBlock block) async {
       final attributes = {...block.attributes};
       final source = sourceContext(attributes);
+      if (attributes['pdf-footnote-id'] case final footnoteId?) {
+        attributes['pdf-footnote-id'] = footnoteAnchor(attributes, footnoteId);
+      }
       final id = attributes['id'];
       final candidate = block.id == 'writerside-document-title'
           ? anchor(topic.filePath, '')
@@ -527,9 +593,11 @@ class WritersidePdfExportService {
         if (value == null || value.trim().isEmpty) {
           continue;
         }
-        attributes[name] =
-            await _resolvedAssetUri(source.module, source.topic, value) ??
-            value;
+        attributes[name] = await _resolvedAssetUri(
+          source.module,
+          source.topic,
+          value,
+        );
       }
       return block.copyWith(
         inlines: await Future.wait(block.inlines.map(resolveInline)),
@@ -543,33 +611,50 @@ class WritersidePdfExportService {
     );
   }
 
-  Future<String?> _resolvedAssetUri(
+  Future<String> _resolvedAssetUri(
     WritersideModule module,
     WritersideTopic topic,
     String value,
   ) async {
     final destination = value.trim();
     final uri = parseSchemedUri(destination);
-    if (uri != null) {
-      return isRemoteResourceUriScheme(uri.scheme) ? null : destination;
+    // Remote/unsupported schemes are handled without local reads by the asset
+    // stager. File URIs must pass the same canonical containment check as paths.
+    if (uri != null && uri.scheme.toLowerCase() != 'file') return destination;
+    final unavailable = Uri(
+      scheme: 'busymark-unavailable',
+      path: destination,
+    ).toString();
+    final String decoded;
+    try {
+      decoded = uri == null
+          ? Uri.decodeComponent(destination)
+          : uri.toFilePath();
+    } on FormatException {
+      return unavailable;
+    } on UnsupportedError {
+      return unavailable;
     }
-    final relative = destination.startsWith('/')
-        ? destination.substring(1)
-        : destination;
-    final candidates = <String>[
-      p.join(p.dirname(topic.filePath), relative),
-      p.join(module.rootPath, relative),
-      p.join(module.rootPath, module.effectiveImagesDir, relative),
-      if (module.config.resourcesDir case final resourcesDir?)
-        p.join(module.rootPath, resourcesDir, relative),
-    ];
+    final relative = decoded.startsWith('/') ? decoded.substring(1) : decoded;
+    final candidates = uri != null
+        ? [decoded]
+        : <String>[
+            if (p.isAbsolute(decoded)) decoded,
+            p.join(p.dirname(topic.filePath), relative),
+            p.join(module.rootPath, relative),
+            p.join(module.rootPath, module.effectiveImagesDir, relative),
+            if (module.config.resourcesDir case final resourcesDir?)
+              p.join(module.rootPath, resourcesDir, relative),
+          ];
+    final root = p.normalize(
+      await Directory(module.rootPath).resolveSymbolicLinks(),
+    );
     for (final candidate in candidates) {
       try {
         final canonical = p.normalize(
           await File(candidate).resolveSymbolicLinks(),
         );
-        if ((p.equals(module.rootPath, canonical) ||
-                p.isWithin(module.rootPath, canonical)) &&
+        if ((p.equals(root, canonical) || p.isWithin(root, canonical)) &&
             await FileSystemEntity.type(canonical, followLinks: false) ==
                 FileSystemEntityType.file) {
           return Uri.file(canonical).toString();
@@ -578,7 +663,9 @@ class WritersidePdfExportService {
         // Try the next Writerside-compatible asset root.
       }
     }
-    return null;
+    // Never return the authored path after rejection: Markdown deliberately
+    // permits absolute images, so falling back to it would bypass this boundary.
+    return unavailable;
   }
 
   WritersidePdfFailureCode _failureCode(MarkdownPdfFailureCode code) {

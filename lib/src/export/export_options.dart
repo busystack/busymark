@@ -147,6 +147,7 @@ class PdfPageGeometry {
 class PdfExportOptions {
   const PdfExportOptions({
     this.content = const ExportContentOptions(),
+    this.includeTitlePage = false,
     this.pageSize = PdfPageSize.a4,
     this.orientation = PdfOrientation.portrait,
     this.margin = PdfMarginPreset.normal,
@@ -163,6 +164,7 @@ class PdfExportOptions {
     this.showHeaderFooterOnFirstPage = true,
   });
   final ExportContentOptions content;
+  final bool includeTitlePage;
   final PdfPageSize pageSize;
   final PdfOrientation orientation;
   final PdfMarginPreset margin;
@@ -247,6 +249,7 @@ class PdfExportOptions {
 
   PdfExportOptions copyWith({
     ExportContentOptions? content,
+    bool? includeTitlePage,
     PdfPageSize? pageSize,
     PdfOrientation? orientation,
     PdfMarginPreset? margin,
@@ -263,6 +266,7 @@ class PdfExportOptions {
     bool? showHeaderFooterOnFirstPage,
   }) => PdfExportOptions(
     content: content ?? this.content,
+    includeTitlePage: includeTitlePage ?? this.includeTitlePage,
     pageSize: pageSize ?? this.pageSize,
     orientation: orientation ?? this.orientation,
     margin: margin ?? this.margin,
@@ -281,6 +285,7 @@ class PdfExportOptions {
   );
   Map<String, Object> toJson() => {
     'content': content.toJson(),
+    'includeTitlePage': includeTitlePage,
     'pageSize': pageSize.name,
     'orientation': orientation.name,
     'margin': margin.name,
@@ -301,6 +306,7 @@ class PdfExportOptions {
     const d = PdfExportOptions();
     var result = PdfExportOptions(
       content: ExportContentOptions.fromJson(j['content']),
+      includeTitlePage: _bool(j['includeTitlePage'], d.includeTitlePage),
       pageSize: _enum(PdfPageSize.values, j['pageSize'], d.pageSize),
       orientation: _enum(
         PdfOrientation.values,

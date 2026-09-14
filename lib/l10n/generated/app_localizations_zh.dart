@@ -11,6 +11,39 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get pdfTitlePage => '标题页';
+
+  @override
+  String get pdfIncludeTitlePage => '包含标题页';
+
+  @override
+  String get pdfTitlePageNote => '此页不显示页眉、页脚或页码。';
+
+  @override
+  String get pdfTitlePageTitle => '标题';
+
+  @override
+  String get pdfTitlePageSubtitle => '副标题';
+
+  @override
+  String get pdfTitlePageAuthor => '作者';
+
+  @override
+  String get pdfTitlePageOrganization => '组织';
+
+  @override
+  String get pdfTitlePageVersion => '版本';
+
+  @override
+  String get pdfTitlePageDate => '日期';
+
+  @override
+  String get pdfTitlePageTitleRequired => '请输入标题页的标题。';
+
+  @override
+  String get pdfTocSectionNote => '从单独一页开始，可以跨多页。';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override
@@ -4007,6 +4040,39 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get pdfTitlePage => '标题页';
+
+  @override
+  String get pdfIncludeTitlePage => '包含标题页';
+
+  @override
+  String get pdfTitlePageNote => '此页不显示页眉、页脚或页码。';
+
+  @override
+  String get pdfTitlePageTitle => '标题';
+
+  @override
+  String get pdfTitlePageSubtitle => '副标题';
+
+  @override
+  String get pdfTitlePageAuthor => '作者';
+
+  @override
+  String get pdfTitlePageOrganization => '组织';
+
+  @override
+  String get pdfTitlePageVersion => '版本';
+
+  @override
+  String get pdfTitlePageDate => '日期';
+
+  @override
+  String get pdfTitlePageTitleRequired => '请输入标题页的标题。';
+
+  @override
+  String get pdfTocSectionNote => '从单独一页开始，可以跨多页。';
 
   @override
   String get appTitle => 'BusyMark';

@@ -11,6 +11,39 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get pdfTitlePage => '제목 페이지';
+
+  @override
+  String get pdfIncludeTitlePage => '제목 페이지 포함';
+
+  @override
+  String get pdfTitlePageNote => '이 페이지에는 머리글, 바닥글 또는 페이지 번호가 표시되지 않습니다.';
+
+  @override
+  String get pdfTitlePageTitle => '제목';
+
+  @override
+  String get pdfTitlePageSubtitle => '부제';
+
+  @override
+  String get pdfTitlePageAuthor => '작성자';
+
+  @override
+  String get pdfTitlePageOrganization => '조직';
+
+  @override
+  String get pdfTitlePageVersion => '버전';
+
+  @override
+  String get pdfTitlePageDate => '날짜';
+
+  @override
+  String get pdfTitlePageTitleRequired => '제목 페이지의 제목을 입력하세요.';
+
+  @override
+  String get pdfTocSectionNote => '별도 페이지에서 시작하며 여러 페이지에 걸칠 수 있습니다.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

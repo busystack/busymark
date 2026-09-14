@@ -254,6 +254,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.export:
       case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
@@ -285,6 +286,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.export:
+        return;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:

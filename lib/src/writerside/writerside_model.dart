@@ -525,14 +525,17 @@ class WritersideModule {
     required this.topics,
     required this.variables,
     required this.categories,
-    required this.diagnostics,
+    required List<Diagnostic> diagnostics,
     required this.validatedImageDirs,
     this.buildProfiles,
     this.instanceGroups,
     this.sourceOverrides = const {},
     this.sourceFiles = const {},
     this.referenceData = const WritersideReferenceData(),
-  });
+    this.semanticDiagnostics = const [],
+    this.unparsedTopicReferences = const {},
+    this.variablesAvailable = true,
+  }) : structuralDiagnostics = diagnostics;
 
   final String rootPath;
   final WritersideConfig config;
@@ -540,7 +543,15 @@ class WritersideModule {
   final List<WritersideTopic> topics;
   final List<WritersideVariable> variables;
   final List<WritersideCategory> categories;
-  final List<Diagnostic> diagnostics;
+
+  /// Syntax, filesystem, and module configuration checks. Document semantics
+  /// are replaced separately whenever the project dependency snapshot changes.
+  final List<Diagnostic> structuralDiagnostics;
+  final List<Diagnostic> semanticDiagnostics;
+  final Set<String> unparsedTopicReferences;
+  final bool variablesAvailable;
+  List<Diagnostic> get diagnostics =>
+      sortDiagnostics([...structuralDiagnostics, ...semanticDiagnostics]);
   final List<String> validatedImageDirs;
   final WritersideBuildProfilesConfig? buildProfiles;
   final WritersideInstanceGroupsConfig? instanceGroups;
@@ -554,6 +565,7 @@ class WritersideModule {
   WritersideModule copyWith({
     List<WritersideTopic>? topics,
     List<Diagnostic>? diagnostics,
+    List<Diagnostic>? semanticDiagnostics,
     Map<String, String>? sourceOverrides,
     Map<String, WritersideSourceFile>? sourceFiles,
     WritersideReferenceData? referenceData,
@@ -565,7 +577,10 @@ class WritersideModule {
       topics: topics ?? this.topics,
       variables: variables,
       categories: categories,
-      diagnostics: diagnostics ?? this.diagnostics,
+      diagnostics: diagnostics ?? structuralDiagnostics,
+      semanticDiagnostics: semanticDiagnostics ?? this.semanticDiagnostics,
+      unparsedTopicReferences: unparsedTopicReferences,
+      variablesAvailable: variablesAvailable,
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
@@ -636,6 +651,14 @@ class WritersideModule {
     'currentId',
     'thisTopic',
   };
+
+  bool isUnparsedTopicReference(String reference) =>
+      reference.isNotEmpty &&
+      unparsedTopicReferences.any(
+        (candidate) =>
+            candidate == _normalizedTopicReference(reference) ||
+            p.basename(candidate) == p.basename(reference),
+      );
 }
 
 String _normalizedTopicReference(String value) {

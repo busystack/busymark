@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
@@ -9,6 +10,52 @@ import 'writerside_model.dart';
 import 'writerside_schema.dart';
 import 'writerside_source_loader.dart';
 import 'writerside_code_selection.dart';
+
+/// Validates the same semantic documents consumed by preview and export.
+/// A topic can participate in multiple instances; validate each applicable one.
+List<Diagnostic> resolveWritersideModuleDiagnostics(
+  WritersideModule module, {
+  Map<String, WritersideModule>? modulesByOrigin,
+}) {
+  final diagnostics = <Diagnostic>[];
+  final seen = <String>{};
+  for (final topic in module.topics) {
+    final instances = module.instances
+        .where(
+          (instance) =>
+              !instance.isLibrary &&
+              instance.topicFileSet.any(
+                (reference) =>
+                    module.topicByReference(reference)?.filePath ==
+                    topic.filePath,
+              ),
+        )
+        .toList();
+    for (final instance in <WritersideInstance?>[
+      if (instances.isEmpty) null else ...instances,
+    ]) {
+      final resolved = const WritersideDocumentResolver().resolve(
+        topic.document,
+        WritersideResolveContext(
+          module: module,
+          topic: topic,
+          instance: instance,
+          modulesByOrigin:
+              modulesByOrigin ??
+              {if (module.config.moduleName case final name?) name: module},
+        ),
+      );
+      for (final diagnostic in resolved.diagnostics) {
+        if (seen.add(
+          '${diagnostic.filePath}:${diagnostic.sourceSpan?.startOffset}:${diagnostic.code}:${diagnostic.args}',
+        )) {
+          diagnostics.add(diagnostic);
+        }
+      }
+    }
+  }
+  return sortDiagnostics(diagnostics);
+}
 
 class WritersideResolveContext {
   const WritersideResolveContext({
@@ -53,11 +100,9 @@ class WritersideDocumentResolver {
       for (final variable in context.module.variables)
         if (state._matchesInstance(variable.instanceCondition, context.module))
           variable.name: variable.value,
-      if (context.instance case final instance?) ...{
-        'instance': instance.name,
-        'instance-lowercase': instance.name.toLowerCase(),
-        'currentId': instance.id,
-      },
+      'instance': context.instance?.name ?? '',
+      'instance-lowercase': context.instance?.name.toLowerCase() ?? '',
+      'currentId': context.instance?.id ?? '',
       'thisTopic': context.topic.id,
     };
     final nodes = state.resolveNodes(
@@ -84,6 +129,45 @@ class _ResolveState {
   final WritersideResolveContext context;
   final List<Diagnostic> diagnostics = [];
   final Set<String> _unresolvedVariables = {};
+  final Map<String, Set<String>> _footnoteTargets = {};
+  var _nextSourceOccurrence = 0;
+
+  Set<String> _markdownFootnoteTargets(WritersideTopic topic) =>
+      _footnoteTargets.putIfAbsent(topic.filePath, () {
+        final ids = <String>{};
+        void inlines(Iterable<BusyInline> values) {
+          for (final value in values) {
+            if (value.attributes['id'] case final id?
+                when id.startsWith('fnref-')) {
+              ids.add(id);
+            }
+            inlines(value.children);
+          }
+        }
+
+        void blocks(Iterable<BusyBlock> values) {
+          for (final block in values) {
+            if (block.attributes['html-footnotes'] case final source?) {
+              ids.addAll(
+                html
+                    .parseFragment(source)
+                    .querySelectorAll('li[id]')
+                    .map((e) => e.id),
+              );
+            }
+            inlines(block.inlines);
+            blocks(block.children);
+          }
+        }
+
+        for (final node
+            in topic.document.nodes
+                .expand((node) => node.walk())
+                .whereType<WritersideMarkdownBlockNode>()) {
+          blocks([node.block]);
+        }
+        return ids;
+      });
 
   List<WritersideDocumentNode> resolveNodes(
     Iterable<WritersideDocumentNode> nodes, {
@@ -94,6 +178,7 @@ class _ResolveState {
     required Set<String> includeStack,
     required bool inheritedIgnoreVariables,
     Map<String, String> arguments = const {},
+    int sourceOccurrence = 0,
   }) {
     final scopedVariables = {...variables};
     for (final node in nodes.whereType<WritersideElementNode>()) {
@@ -120,6 +205,7 @@ class _ResolveState {
     final provenance = WritersideSourceProvenance(
       moduleRoot: module.rootPath,
       topicPath: topic.filePath,
+      occurrence: sourceOccurrence,
     );
     final markdownChapters = <(int, bool)>[];
     for (final node in nodes) {
@@ -260,6 +346,7 @@ class _ResolveState {
         activeFilters: activeFilters,
         includeStack: includeStack,
         inheritedIgnoreVariables: ignoreVariables,
+        sourceOccurrence: sourceOccurrence,
       );
       if (element.semanticKind == WritersideSemanticKind.api) {
         final reference = attributes['openapi-path'] ?? '';
@@ -429,6 +516,12 @@ class _ResolveState {
         attributes['anchor']?.replaceFirst(RegExp(r'^#'), '') ??
         (hash < 0 ? '' : href.substring(hash + 1));
     final destination = '$path${anchor.isEmpty ? '' : '#$anchor'}';
+    var decodedAnchor = anchor;
+    try {
+      decodedAnchor = Uri.decodeComponent(anchor);
+    } on FormatException {
+      // Preserve malformed fragments so normal reference validation reports them.
+    }
     if (Uri.tryParse(path)?.hasScheme == true) {
       return {
         'resolved-destination': destination,
@@ -449,7 +542,15 @@ class _ResolveState {
               targetModule?.topicsById[path];
     final target = anchor.isEmpty
         ? null
-        : targetTopic?.document.contentById(anchor)?.first;
+        : targetTopic?.document.contentById(decodedAnchor)?.first;
+    // Alias lookup must link to the ID that the renderer actually emits.
+    final resolvedAnchor = target is WritersideMarkdownBlockNode
+        ? (target.block.attributes['id'] == decodedAnchor
+              ? anchor
+              : Uri.encodeComponent(
+                  target.block.attributes['id'] ?? decodedAnchor,
+                ))
+        : anchor;
     final instance = context.instance;
     var available =
         targetModule != null &&
@@ -600,7 +701,10 @@ class _ResolveState {
               : 'link-summary',
         );
     final cardSummary = attributes['summary'] ?? summaryFor('card-summary');
-    if (!available && attributes['nullable'] != 'true') {
+    if (!available &&
+        attributes['nullable'] != 'true' &&
+        !(targetTopic == null &&
+            targetModule?.isUnparsedTopicReference(path) == true)) {
       _referenceDiagnostic(
         code: 'writerside.link.unavailable',
         node: node,
@@ -615,8 +719,8 @@ class _ResolveState {
         ignore: false,
       ),
       'resolved-destination': path.isEmpty
-          ? '#$anchor'
-          : '${targetTopic?.filePath ?? path}${anchor.isEmpty ? '' : '#$anchor'}',
+          ? '#$resolvedAnchor'
+          : '${targetTopic?.filePath ?? path}${resolvedAnchor.isEmpty ? '' : '#$resolvedAnchor'}',
       'resolved-available': '$available',
       if (summary != null) 'summary': summary.trim(),
       if (cardSummary != null) 'card-summary': cardSummary,
@@ -665,7 +769,7 @@ class _ResolveState {
     }
     final nullable = include.attributes['nullable'] == 'true';
     if (targetTopic == null) {
-      if (!nullable) {
+      if (!nullable && !targetModule.isUnparsedTopicReference(from ?? '')) {
         _referenceDiagnostic(
           code: 'writerside.include.unresolved-source',
           node: include,
@@ -748,6 +852,7 @@ class _ResolveState {
         topic: targetTopic,
         variables: includeVariables,
         arguments: arguments,
+        sourceOccurrence: ++_nextSourceOccurrence,
         activeFilters: filters.isEmpty ? null : filters,
         includeStack: includeStack,
         inheritedIgnoreVariables: inheritedIgnoreVariables,
@@ -848,19 +953,54 @@ class _ResolveState {
         explicit == 'true' ||
         (explicit != 'false' && (ignoreVariables || smart));
     BusyInline resolveInline(BusyInline inline) {
+      final children = inline.children
+          .map(resolveInline)
+          .toList(growable: false);
+      final inlineIgnore = inline.attributes['ignore-vars'] == 'true' || ignore;
       final resolved = inline.copyWith(
-        text: _interpolate(inline.text, variables, sourceNode, ignore: ignore),
+        text: children.isEmpty
+            ? _interpolate(
+                inline.text,
+                variables,
+                sourceNode,
+                ignore: inlineIgnore,
+              )
+            : children.map((child) => child.plainText).join(),
         destination: inline.destination == null
             ? null
             : _interpolate(
                 inline.destination!,
                 variables,
                 sourceNode,
-                ignore: ignore,
+                ignore: inlineIgnore,
               ),
-        children: inline.children.map(resolveInline).toList(growable: false),
+        children: children,
       );
       if (resolved.kind != BusyInlineKind.link) return resolved;
+      // Markdown's generated footnote targets live inside the retained HTML
+      // section/inline references, outside Writerside's element-ID index.
+      final destination = resolved.destination;
+      if (destination != null && destination.startsWith('#')) {
+        final raw = destination.substring(1);
+        final targets = _markdownFootnoteTargets(topic);
+        String? target = targets.contains(raw) ? raw : null;
+        try {
+          if (target == null) {
+            final decoded = Uri.decodeComponent(raw);
+            if (targets.contains(decoded)) target = decoded;
+          }
+        } on FormatException {
+          // Let normal link validation report an unusable authored destination.
+        }
+        if (target != null) {
+          return resolved.copyWith(
+            attributes: {
+              ...resolved.attributes,
+              writersideFootnoteTargetAttribute: target,
+            },
+          );
+        }
+      }
       final attributes = _resolveLink(
         {...resolved.attributes, 'href': resolved.destination ?? ''},
         module: module,
@@ -950,7 +1090,8 @@ class _ResolveState {
             );
           }
           final key = '${node.span.filePath}:${node.span.startOffset}:$name';
-          if (_unresolvedVariables.add(key)) {
+          if (_unresolvedVariables.add(key) &&
+              context.module.variablesAvailable) {
             diagnostics.add(
               Diagnostic(
                 code: 'writerside.variable.unresolved',

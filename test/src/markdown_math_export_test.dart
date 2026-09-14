@@ -9,6 +9,7 @@ import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
 import 'package:busymark/src/export/typst_payload_builder.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/raw_html_adapter.dart';
 import 'package:busymark/src/math/math_coordinator.dart';
 import 'package:busymark/src/math/math_renderer.dart';
 import 'package:busymark/src/visualization/visualization_renderer.dart';
@@ -186,8 +187,114 @@ $$
     },
   );
 
+  test(
+    'footnote inline and display math retain surrounding semantics',
+    () async {
+      final mapped = const MarkdownExportMapper().map(
+        const MarkdownParser()
+            .parse(filePath: '/footnotes.md', source: _mathFootnoteSource)
+            .busyDocument,
+      );
+      final blocks = _allBlocks(mapped.blocks).toList();
+      final inlines = blocks.expand((b) => _allInlines(b.inlines)).toList();
+      expect(
+        inlines
+            .where((i) => i.kind == MarkdownExportInlineKind.math)
+            .map((i) => i.text),
+        [r'x^2'],
+      );
+      expect(
+        blocks
+            .where((b) => b.kind == MarkdownExportBlockKind.math)
+            .map((b) => b.text),
+        [r'\frac{a}{b}'],
+      );
+      expect(
+        inlines
+            .where((i) => i.kind == MarkdownExportInlineKind.strong)
+            .map((i) => i.text),
+        contains('Bold retained'),
+      );
+      expect(
+        inlines
+            .where((i) => i.kind == MarkdownExportInlineKind.emphasis)
+            .map((i) => i.text),
+        contains('Emphasis retained'),
+      );
+      expect(
+        inlines
+            .where((i) => i.kind == MarkdownExportInlineKind.link)
+            .map((i) => i.destination),
+        contains('https://example.com'),
+      );
+      expect(mapped.imageDestinations, contains('safe.svg'));
+      // Internal parser math tags remain forbidden in authored raw HTML.
+      expect(
+        const RawHtmlAdapter()
+            .parseRawHtmlBlock(
+              '<p><busymark-math-inline>x</busymark-math-inline></p>',
+              () => 'raw',
+            )!
+            .safe,
+        isFalse,
+      );
+    },
+  );
+
   final typstPath = Platform.environment['BUSYMARK_TYPST_PATH'];
   final canRunTypst = typstPath != null && File(typstPath).existsSync();
+  test('Typst compiles footnote math through the math renderer', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-footnote-math-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    await File(p.join(root.path, 'safe.svg')).writeAsString(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>',
+    );
+    final host = _PdfMathHost();
+    final coordinator = MathCoordinator(renderer: MathRenderer(host: host));
+    addTearDown(coordinator.dispose);
+    final destination = p.join(root.path, 'footnote.pdf');
+    final result =
+        await MarkdownPdfExportService(
+          compilerLocator: TypstCompilerLocator(
+            environment: {'BUSYMARK_TYPST_PATH': typstPath!},
+          ),
+          mathRenderer: MarkdownMathExportRenderer(coordinator: coordinator),
+          templateLoader: () =>
+              File('assets/export/markdown.typ').readAsString(),
+        ).export(
+          MarkdownPdfExportRequest(
+            source: _mathFootnoteSource,
+            filePath: p.join(root.path, 'notes.md'),
+            workspaceRoot: root.path,
+            destinationPath: destination,
+            options: const PdfExportOptions(),
+            overwrite: false,
+          ),
+        );
+    final requests = host.batches.expand((b) => b).toList();
+    expect(requests.map((r) => r['expression']), [r'x^2', r'\frac{a}{b}']);
+    expect(requests.map((r) => r['display']), [false, true]);
+    expect(result.warnings, isEmpty);
+    final extracted = await Process.run('/usr/bin/pdftotext', [
+      '-layout',
+      destination,
+      '-',
+    ]);
+    expect(extracted.exitCode, 0, reason: '${extracted.stderr}');
+    final text = extracted.stdout as String;
+    for (final value in [
+      'Bold retained',
+      'Emphasis retained',
+      'Linked text',
+      'After equation retained',
+    ]) {
+      expect(text, contains(value));
+    }
+    expect(text, isNot(contains(r'\frac{a}{b}')));
+  }, skip: !canRunTypst || !File('/usr/bin/pdftotext').existsSync());
+
   test(
     'Typst keeps MathJax SVG inline and exports failed math visibly',
     () async {
@@ -272,4 +379,37 @@ class _PdfMathHost implements WebRenderHost {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+const _mathFootnoteSource = r'''# Notes
+
+Reference[^math] and repeated[^math].
+
+[^math]: **Bold retained** before $x^2$ and *Emphasis retained*.
+
+    [Linked text](https://example.com) and ![Image retained](safe.svg).
+
+    $$
+    \frac{a}{b}
+    $$
+
+    After equation retained.
+''';
+
+Iterable<MarkdownExportBlock> _allBlocks(
+  Iterable<MarkdownExportBlock> values,
+) sync* {
+  for (final block in values) {
+    yield block;
+    yield* _allBlocks(block.children);
+  }
+}
+
+Iterable<MarkdownExportInline> _allInlines(
+  Iterable<MarkdownExportInline> values,
+) sync* {
+  for (final inline in values) {
+    yield inline;
+    yield* _allInlines(inline.children);
+  }
 }

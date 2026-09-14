@@ -11,6 +11,42 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Титульная страница';
+
+  @override
+  String get pdfIncludeTitlePage => 'Добавить титульную страницу';
+
+  @override
+  String get pdfTitlePageNote =>
+      'На этой странице нет колонтитулов и видимого номера страницы.';
+
+  @override
+  String get pdfTitlePageTitle => 'Заголовок';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Подзаголовок';
+
+  @override
+  String get pdfTitlePageAuthor => 'Автор';
+
+  @override
+  String get pdfTitlePageOrganization => 'Организация';
+
+  @override
+  String get pdfTitlePageVersion => 'Версия';
+
+  @override
+  String get pdfTitlePageDate => 'Дата';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Введите заголовок титульной страницы.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Начинается с отдельной страницы и может занимать несколько страниц.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

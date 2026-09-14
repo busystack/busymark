@@ -11,6 +11,42 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Titelpagina';
+
+  @override
+  String get pdfIncludeTitlePage => 'Titelpagina opnemen';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Deze pagina heeft geen koptekst, voettekst of zichtbaar paginanummer.';
+
+  @override
+  String get pdfTitlePageTitle => 'Titel';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Ondertitel';
+
+  @override
+  String get pdfTitlePageAuthor => 'Auteur';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organisatie';
+
+  @override
+  String get pdfTitlePageVersion => 'Versie';
+
+  @override
+  String get pdfTitlePageDate => 'Datum';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Voer een titel voor de titelpagina in.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Begint op een aparte pagina en kan meerdere pagina’s beslaan.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

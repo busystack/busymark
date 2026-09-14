@@ -4,10 +4,12 @@ import 'package:xml/xml.dart';
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_fence.dart';
+import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
+import 'writerside_variable_syntax.dart';
 import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
@@ -642,6 +644,16 @@ class MarkdownAstAdapter {
   }
 
   List<BusyInline> _inlineFromNode(md.Node node) {
+    if (node is md.Element &&
+        node.attributes[writersideLiteralPercentAttribute] == 'true') {
+      return const [
+        BusyInline(
+          kind: BusyInlineKind.text,
+          text: '%',
+          attributes: {'ignore-vars': 'true'},
+        ),
+      ];
+    }
     if (node is md.Text) {
       if (node.text.isEmpty) {
         return const [];
@@ -1381,17 +1393,11 @@ class MarkdownAstAdapter {
   }
 
   _FrontMatter? _extractFrontMatter(String source) {
-    if (!source.startsWith('---\n') && source != '---') {
-      return null;
-    }
-    final closing = RegExp(
-      r'^---\s*$',
-      multiLine: true,
-    ).allMatches(source).skip(1).firstOrNull;
+    final closing = frontMatterClosing(source);
     if (closing == null) {
       return null;
     }
-    final end = closing.end;
+    final end = frontMatterEndOffset(source);
     final raw = source.substring(0, end);
     final body = source.substring(4, closing.start);
     final values = <String, String>{};

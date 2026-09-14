@@ -98,6 +98,7 @@ class Workspace {
     required this.files,
     required this.diagnostics,
     this.runtimeDiagnostics = const [],
+    this.sourceOverrides = const {},
     this.directories = const [],
     List<String> openFilePaths = const [],
     this.activeFilePath,
@@ -122,6 +123,9 @@ class Workspace {
   final List<WorkspaceDirectory> directories;
   final List<Diagnostic> diagnostics;
   final List<Diagnostic> runtimeDiagnostics;
+
+  /// Current editor sources for a single validation snapshot.
+  final Map<String, String> sourceOverrides;
   List<Diagnostic> get allDiagnostics =>
       sortDiagnostics([...diagnostics, ...runtimeDiagnostics]);
   final ParsedMarkdownDocument? markdown;
@@ -137,6 +141,7 @@ class Workspace {
     List<WorkspaceDirectory>? directories,
     List<Diagnostic>? diagnostics,
     List<Diagnostic>? runtimeDiagnostics,
+    Map<String, String>? sourceOverrides,
     Object? markdown = _copyWithUnset,
     Object? writersideModule = _copyWithUnset,
     Object? writersideProject = _copyWithUnset,
@@ -174,6 +179,7 @@ class Workspace {
       directories: directories ?? this.directories,
       diagnostics: diagnostics ?? this.diagnostics,
       runtimeDiagnostics: runtimeDiagnostics ?? this.runtimeDiagnostics,
+      sourceOverrides: sourceOverrides ?? this.sourceOverrides,
       markdown: nextMarkdown,
       writersideModule: nextWritersideModule,
       writersideProject: nextWritersideProject,

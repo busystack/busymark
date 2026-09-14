@@ -8,6 +8,9 @@ const writersideSourceModuleRootAttribute =
     'busymark-writerside-source-module-root';
 const writersideSourceTopicPathAttribute =
     'busymark-writerside-source-topic-path';
+const writersideSourceOccurrenceAttribute =
+    'busymark-writerside-source-occurrence';
+const writersideFootnoteTargetAttribute = 'busymark-writerside-footnote-target';
 
 bool writersideIgnorableRaw(String source) {
   final value = source.trim();
@@ -21,10 +24,14 @@ class WritersideSourceProvenance {
   const WritersideSourceProvenance({
     required this.moduleRoot,
     required this.topicPath,
+    this.occurrence = 0,
   });
 
   final String moduleRoot;
   final String topicPath;
+
+  /// Distinguishes repeated includes within one resolved publication topic.
+  final int occurrence;
 }
 
 /// The source spelling of an XML attribute alongside its normalized semantic
@@ -80,18 +87,20 @@ class WritersideDocument {
 
   /// The source representation is immaterial to reference identity. Markdown
   /// headings own the following blocks up to the next peer or ancestor heading.
+  /// Exact IDs take precedence over unambiguous Writerside-generated aliases.
   List<WritersideDocumentNode>? contentById(String id) {
     List<WritersideDocumentNode>? search(
       List<WritersideDocumentNode> siblings,
+      String targetId,
     ) {
       for (var i = 0; i < siblings.length; i++) {
         final node = siblings[i];
         if (node is WritersideElementNode) {
-          if (node.attributes['id'] == id) return [node];
-          final nested = search(node.children);
+          if (node.attributes['id'] == targetId) return [node];
+          final nested = search(node.children, targetId);
           if (nested != null) return nested;
         } else if (node is WritersideMarkdownBlockNode) {
-          if (node.block.attributes['id'] == id) {
+          if (node.block.attributes['id'] == targetId) {
             if (node.block.kind != BusyBlockKind.heading) return [node];
             final level =
                 int.tryParse(node.block.attributes['level'] ?? '') ?? 1;
@@ -110,7 +119,7 @@ class WritersideDocument {
           }
           List<WritersideDocumentNode>? searchBlocks(List<BusyBlock> blocks) {
             for (final block in blocks) {
-              if (block.attributes['id'] == id) {
+              if (block.attributes['id'] == targetId) {
                 return [
                   WritersideMarkdownBlockNode(
                     block: block,
@@ -132,7 +141,29 @@ class WritersideDocument {
       return null;
     }
 
-    return search(nodes);
+    final exact = search(nodes, id);
+    if (exact != null) return exact;
+
+    // Writerside's default LOWER_CASE_DASHES IDs replace punctuation with
+    // dashes, whereas existing BusyMark Markdown IDs remove it. Accept an
+    // unambiguous Writerside spelling without changing existing destinations
+    // or overriding explicit IDs. In particular, CMakeLists.txt is cmakelists-txt.
+    final aliases = walk().whereType<WritersideMarkdownBlockNode>().where((
+      node,
+    ) {
+      final block = node.block;
+      return block.kind == BusyBlockKind.heading &&
+          block.attributes['generatedId'] == 'true' &&
+          block.plainText
+                  .toLowerCase()
+                  .replaceAll(RegExp(r'[^a-z0-9-]+'), '-')
+                  .replaceAll(RegExp(r'-{2,}'), '-')
+                  .replaceAll(RegExp(r'^-+|-+$'), '') ==
+              id;
+    }).toList();
+    if (id.isEmpty || aliases.length != 1) return null;
+    final canonical = aliases.single.block.attributes['id'];
+    return canonical == null ? null : search(nodes, canonical);
   }
 
   WritersideDocument copyWith({

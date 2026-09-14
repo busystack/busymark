@@ -1,5 +1,3 @@
-import '../writerside/writerside_source_loader.dart';
-import '../writerside/writerside_reference_data.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,7 +16,6 @@ import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
-import '../writerside/writerside_parsers.dart';
 import '../writerside/writerside_document_renderer.dart';
 import '../writerside/writerside_document_resolver.dart';
 import '../writerside/writerside_instance_service.dart';
@@ -1297,33 +1294,49 @@ class WorkspaceService {
     }
   }
 
-  Future<Workspace> withWritersideSources(
+  Future<Workspace> withDocumentSources(
     Workspace workspace,
     Map<String, String> sources,
   ) async {
+    // This is a complete buffer snapshot. A missing entry has relinquished
+    // editor ownership and must be read from disk again, including dependencies.
+    sources = {
+      for (final entry in sources.entries)
+        normalizePath(entry.key): entry.value,
+    };
     final project = workspace.writersideProject;
-    if (project == null) return workspace;
+    if (project == null) {
+      return workspace.copyWith(sourceOverrides: Map.unmodifiable(sources));
+    }
     var updated = project;
     for (final module in project.modules) {
       final overrides = {
         for (final entry in sources.entries)
-          if (p.isWithin(module.rootPath, entry.key) &&
-              module.sourceOverrides[entry.key] != entry.value)
-            entry.key: entry.value,
+          if (p.isWithin(module.rootPath, entry.key)) entry.key: entry.value,
       };
-      if (overrides.isEmpty) continue;
+      if (overrides.length == module.sourceOverrides.length &&
+          overrides.entries.every(
+            (entry) => module.sourceOverrides[entry.key] == entry.value,
+          )) {
+        continue;
+      }
       updated = updated.withModule(
         await writersideService.load(
           module.rootPath,
           options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
-          sourceOverrides: {...module.sourceOverrides, ...overrides},
+          sourceOverrides: overrides,
         ),
       );
     }
     return workspace.copyWith(
+      sourceOverrides: Map.unmodifiable(sources),
       writersideProject: updated,
       writersideModule: updated.activeModule,
-      diagnostics: updated.diagnostics,
+      diagnostics: sortDiagnostics([
+        ...updated.diagnostics,
+        for (final diagnostic in workspace.diagnostics)
+          if (!_isProjectDiagnostic(project, diagnostic)) diagnostic,
+      ]),
     );
   }
 
@@ -1333,41 +1346,32 @@ class WorkspaceService {
       return workspace;
     }
     if (workspace.kind == WorkspaceKind.writersideModule) {
+      final project = workspace.writersideProject;
+      final owner = project?.modulesByOrigin.entries
+          .where(
+            (entry) =>
+                entry.value.topics.any(
+                  (topic) => p.equals(topic.filePath, active),
+                ) ||
+                _isWritersideProjectFile(entry.value, active),
+          )
+          .firstOrNull;
+      if (owner != null &&
+          !p.equals(
+            owner.value.rootPath,
+            workspace.writersideModule?.rootPath ?? '',
+          )) {
+        workspace = workspace.copyWith(
+          writersideModule: owner.value,
+          writersideProject: project!.withSelection(moduleId: owner.key),
+        );
+      }
       final module = workspace.writersideModule;
       final topic = module?.topics
           .where((item) => item.filePath == active)
           .firstOrNull;
-      if (topic?.format == WritersideTopicFormat.markdown) {
-        final parsed =
-            WritersideTopicParser(
-              markdownParser: markdownParser,
-              documentParser: writersideService.topicParser.documentParser,
-            ).parseMarkdown(
-              filePath: active,
-              source: source,
-              topicsRoot: topic!.topicRoot,
-            );
-        return _workspaceWithReparsedWritersideTopic(
-          workspace,
-          module!,
-          topic,
-          parsed,
-        );
-      }
-      if (topic?.format == WritersideTopicFormat.xml) {
-        final parsed = writersideService.topicParser.parseXml(
-          filePath: active,
-          source: source,
-          topicsRoot: topic!.topicRoot,
-        );
-        return _workspaceWithReparsedWritersideTopic(
-          workspace,
-          module!,
-          topic,
-          parsed,
-        );
-      }
-      if (module != null && _isWritersideProjectFile(module, active)) {
+      if (module != null &&
+          (topic != null || _isWritersideProjectFile(module, active))) {
         final updatedModule = await writersideService.load(
           module.rootPath,
           options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
@@ -1390,73 +1394,16 @@ class WorkspaceService {
       source: source,
       mode: MarkdownMode.commonMark,
       workspaceRoot: workspace.rootPath,
+      sourceOverrides: workspace.sourceOverrides,
     );
     return workspace.copyWith(
       markdown: markdown,
-      diagnostics: markdown.diagnostics,
-    );
-  }
-
-  Future<Workspace> _workspaceWithReparsedWritersideTopic(
-    Workspace workspace,
-    WritersideModule module,
-    WritersideTopic previousTopic,
-    WritersideTopic parsedTopic,
-  ) async {
-    final activePath = parsedTopic.filePath;
-    var updatedModule = module.copyWith(
-      topics: List.unmodifiable([
-        for (final topic in module.topics)
-          if (p.equals(topic.filePath, activePath)) parsedTopic else topic,
-      ]),
       diagnostics: sortDiagnostics([
-        for (final diagnostic in module.diagnostics)
-          if (!p.equals(diagnostic.filePath, activePath)) diagnostic,
-        ...parsedTopic.diagnostics,
-      ]),
-      sourceOverrides: {
-        ...module.sourceOverrides,
-        normalizePath(activePath): parsedTopic.document.source,
-      },
-    );
-    updatedModule = updatedModule.copyWith(
-      sourceFiles: await const WritersideSourceLoader().loadModule(
-        updatedModule,
-      ),
-      referenceData: await WritersideReferenceData.load(updatedModule),
-    );
-    final previousProject = workspace.writersideProject;
-    final updatedProject = previousProject?.withModule(updatedModule);
-    final indexedWorkspace = workspace.copyWith(
-      markdown: parsedTopic.markdown,
-      writersideModule: updatedProject?.activeModule ?? updatedModule,
-      writersideProject: updatedProject,
-    );
-    final resolutionDiagnostics = _writersideResolutionDiagnostics(
-      indexedWorkspace,
-      indexedWorkspace.writersideModule!,
-      parsedTopic,
-    );
-    final previousResolutionDiagnostics = _writersideResolutionDiagnostics(
-      workspace,
-      module,
-      previousTopic,
-    );
-    final preservedWorkspaceDiagnostics = [
-      for (final diagnostic in workspace.diagnostics)
-        if (!_isProjectDiagnostic(previousProject, diagnostic) &&
-            !p.equals(diagnostic.filePath, activePath) &&
-            !previousResolutionDiagnostics.any(
-              (previous) => _sameDiagnostic(previous, diagnostic),
-            ))
-          diagnostic,
-    ];
-    return indexedWorkspace.copyWith(
-      diagnostics: sortDiagnostics([
-        ...?updatedProject?.diagnostics,
-        if (updatedProject == null) ...updatedModule.diagnostics,
-        ...preservedWorkspaceDiagnostics,
-        ...resolutionDiagnostics,
+        for (final diagnostic in workspace.diagnostics)
+          if (!p.equals(diagnostic.filePath, active) ||
+              !diagnostic.code.startsWith('markdown.'))
+            diagnostic,
+        ...markdown.diagnostics,
       ]),
     );
   }
@@ -1475,23 +1422,21 @@ class WorkspaceService {
             updatedModule,
             rediscoverFileSymbols: rediscoverFileSymbols,
           );
-    final previousResolutionDiagnostics = [
-      for (final topic in previousModule.topics)
-        ..._writersideResolutionDiagnostics(workspace, previousModule, topic),
-    ];
     final preservedWorkspaceDiagnostics = [
       for (final diagnostic in workspace.diagnostics)
         if (!_isProjectDiagnostic(previousProject, diagnostic) &&
             !previousModule.diagnostics.any(
               (candidate) => identical(candidate, diagnostic),
-            ) &&
-            !previousResolutionDiagnostics.any(
-              (previous) => _sameDiagnostic(previous, diagnostic),
             ))
           diagnostic,
     ];
     return workspace.copyWith(
-      markdown: null,
+      markdown: updatedModule.topics
+          .where(
+            (topic) => p.equals(topic.filePath, workspace.activeFilePath ?? ''),
+          )
+          .firstOrNull
+          ?.markdown,
       writersideModule: updatedProject?.activeModule ?? updatedModule,
       writersideProject: updatedProject,
       diagnostics: sortDiagnostics([
@@ -1543,14 +1488,6 @@ class WorkspaceService {
         (candidate) => identical(candidate, diagnostic),
       ) ??
       false;
-
-  bool _sameDiagnostic(Diagnostic first, Diagnostic second) {
-    return first.code == second.code &&
-        first.severity == second.severity &&
-        p.equals(first.filePath, second.filePath) &&
-        first.sourceSpan?.startOffset == second.sourceSpan?.startOffset &&
-        first.sourceSpan?.endOffset == second.sourceSpan?.endOffset;
-  }
 
   PreviewDocument? buildPreview(Workspace workspace, String source) {
     final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
@@ -1709,40 +1646,6 @@ class WorkspaceService {
     );
   }
 
-  List<Diagnostic> _writersideResolutionDiagnostics(
-    Workspace workspace,
-    WritersideModule module,
-    WritersideTopic topic,
-  ) {
-    final instance =
-        workspace.writersideProject?.activeInstance ??
-        module.instances
-            .where(
-              (candidate) =>
-                  !candidate.isLibrary &&
-                  candidate.topicFileSet.any(
-                    (reference) =>
-                        module.topicByReference(reference)?.filePath ==
-                        topic.filePath,
-                  ),
-            )
-            .firstOrNull ??
-        module.instances.where((candidate) => !candidate.isLibrary).firstOrNull;
-    return writersideDocumentResolver
-        .resolve(
-          topic.document,
-          WritersideResolveContext(
-            module: module,
-            topic: topic,
-            instance: instance,
-            modulesByOrigin:
-                workspace.writersideProject?.modulesByOrigin ??
-                {if (module.config.moduleName case final name?) name: module},
-          ),
-        )
-        .diagnostics;
-  }
-
   Future<Workspace> _openSingleMarkdown(String filePath) async {
     final load = await loadTextWithSnapshot(filePath);
     final rootPath = p.dirname(filePath);
@@ -1873,18 +1776,7 @@ class WorkspaceService {
           .whereType<ParsedMarkdownDocument>()
           .firstOrNull,
     );
-    final activeTopic = module.topics
-        .where((topic) => topic.filePath == firstTopic)
-        .firstOrNull;
-    if (activeTopic == null) {
-      return workspace;
-    }
-    return workspace.copyWith(
-      diagnostics: sortDiagnostics([
-        ...workspace.diagnostics,
-        ..._writersideResolutionDiagnostics(workspace, module, activeTopic),
-      ]),
-    );
+    return workspace;
   }
 
   WritersideProjectService get _writersideProjectService =>

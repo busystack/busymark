@@ -7,6 +7,7 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
+import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -216,7 +217,12 @@ void main() {
 # API
 ''');
       final parser = _RecordingMarkdownParser();
-      final parserService = WorkspaceService(markdownParser: parser);
+      final parserService = WorkspaceService(
+        markdownParser: parser,
+        writersideService: WritersideModuleService(
+          topicParser: WritersideTopicParser(markdownParser: parser),
+        ),
+      );
       final workspace = await parserService.openPath(root.path);
 
       final reparsed = await parserService.reparseActive(
@@ -228,7 +234,8 @@ void main() {
         activeFile.readAsStringSync(),
       );
 
-      expect(parser.validationFlags, [false]);
+      expect(parser.validationFlags, isNotEmpty);
+      expect(parser.validationFlags, everyElement(isFalse));
       expect(preview?.blocks.map((block) => block.text), ['Intro', 'API']);
       expect(
         reparsed.diagnostics.map((diagnostic) => diagnostic.code),

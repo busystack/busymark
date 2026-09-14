@@ -6,6 +6,7 @@ import '../workspace/workspace_model.dart';
 import 'export_options_editor.dart';
 import 'html_export_ui.dart';
 import 'markdown_pdf_export_ui.dart';
+import 'pdf_title_page.dart';
 
 export 'html_export_ui.dart' show canExportWorkspaceHtml;
 export 'markdown_pdf_export_ui.dart' show canExportWorkspacePdf;
@@ -21,6 +22,10 @@ Future<void> exportWorkspace(BuildContext context, WidgetRef ref) async {
 
   final workspace = state.workspace!;
   final writerside = workspace.kind == WorkspaceKind.writersideModule;
+  final pdfDocument = !writerside && canExportPdf
+      ? await prepareMarkdownPdfSnapshot(state)
+      : null;
+  if (!context.mounted) return;
   final selection = await showExportOptions(
     context,
     ref,
@@ -33,11 +38,20 @@ Future<void> exportWorkspace(BuildContext context, WidgetRef ref) async {
               .toList(growable: false)
         : const [],
     workspaceRoot: writerside ? workspace.rootPath : null,
+    pdfTitlePageDefaults: pdfDocument == null
+        ? null
+        : PdfTitlePageData.fromDocument(pdfDocument),
   );
   if (selection == null || !context.mounted) return;
 
   if (selection.pdf != null) {
-    await exportWorkspaceToPdf(context, ref, configuredSelection: selection);
+    await exportWorkspaceToPdf(
+      context,
+      ref,
+      configuredSelection: selection,
+      exportSnapshot: state,
+      documentSnapshot: pdfDocument,
+    );
   } else if (selection.html != null) {
     await exportWorkspaceToHtml(context, ref, configuredSelection: selection);
   }

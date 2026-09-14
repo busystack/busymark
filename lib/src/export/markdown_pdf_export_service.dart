@@ -84,6 +84,15 @@ class MarkdownPdfExportService {
             validateLocalReferences: false,
           )).busyDocument;
       token.throwIfCancelled();
+      final titlePage = request.options.includeTitlePage
+          ? request.titlePage ?? PdfTitlePageData.fromDocument(busyDocument)
+          : null;
+      if (titlePage != null && titlePage.validate().isNotEmpty) {
+        throw const MarkdownPdfExportException(
+          MarkdownPdfFailureCode.compilerFailed,
+          detail: 'The PDF title page requires a non-empty title.',
+        );
+      }
       final visualizationPreparation = visualizationRenderer == null
           ? const MarkdownVisualizationExportPreparation(
               blockOverrides: {},
@@ -125,6 +134,7 @@ class MarkdownPdfExportService {
         document: document,
         options: request.options,
         assets: stagedAssets.assets,
+        titlePage: titlePage,
       );
       await Future.wait([
         File(
@@ -192,7 +202,9 @@ class MarkdownPdfExportService {
       }
       return MarkdownPdfExportResult(
         destinationPath: p.normalize(p.absolute(request.destinationPath)),
-        pageCount: _pageCount(pdfBytes),
+        // Without a PDF page-tree parser, the count is unknown. Raw byte
+        // matches also count /Pages dictionaries and arbitrary stream contents.
+        pageCount: null,
         warnings: [
           ...visualizationPreparation.warnings,
           ...mathPreparation.warnings,
@@ -237,37 +249,6 @@ class MarkdownPdfExportService {
     }
     final tailStart = (bytes.length - 2048).clamp(0, bytes.length);
     return latin1.decode(bytes.sublist(tailStart)).contains('%%EOF');
-  }
-
-  int? _pageCount(List<int> bytes) {
-    const needle = [
-      0x2f,
-      0x54,
-      0x79,
-      0x70,
-      0x65,
-      0x20,
-      0x2f,
-      0x50,
-      0x61,
-      0x67,
-      0x65,
-    ];
-    var count = 0;
-    for (var index = 0; index <= bytes.length - needle.length; index++) {
-      var matches = true;
-      for (var offset = 0; offset < needle.length; offset++) {
-        if (bytes[index + offset] != needle[offset]) {
-          matches = false;
-          break;
-        }
-      }
-      if (matches) {
-        count++;
-        index += needle.length - 1;
-      }
-    }
-    return count == 0 ? null : count;
   }
 
   Future<void> _deleteExportRootBestEffort(Directory directory) async {

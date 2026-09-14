@@ -1,0 +1,4 @@
+<instance-profile id="guide" name="Instance cover default" start-page="body.topic">
+    <toc-element topic="body.topic"/>
+    <toc-element topic="hidden.topic" hidden="true"/>
+</instance-profile>

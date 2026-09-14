@@ -100,6 +100,7 @@ void main() {
 
     await sendNativeAction('save');
     await sendNativeAction('save');
+    await sendNativeAction('export');
     await sendNativeAction('fullScreen');
     await sendNativeAction('reportIssue');
     await sendNativeAction('sidebarFiles');
@@ -112,6 +113,7 @@ void main() {
     expect(events.map((event) => event.action), [
       HeaderBarAction.save,
       HeaderBarAction.save,
+      HeaderBarAction.export,
       HeaderBarAction.fullScreen,
       HeaderBarAction.reportIssue,
       HeaderBarAction.sidebarFiles,
@@ -132,6 +134,7 @@ void main() {
       8,
       9,
       10,
+      11,
     ]);
     expect(events.first, isNot(events.last));
   });

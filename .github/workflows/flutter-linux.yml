@@ -33,6 +33,7 @@ jobs:
             clang \
             cmake \
             fonts-noto-core \
+            fonts-noto-cjk \
             fonts-noto-mono \
             ninja-build \
             pkg-config \

@@ -62,7 +62,7 @@ class MarkdownVisualizationExportRenderer {
     }
     final selected = candidates.take(maximumBlocks).toList(growable: false);
     final keys = [
-      for (final block in selected) 'export:$documentPath:${block.id}',
+      for (final block in selected) 'export:${exportRoot.path}:${block.id}',
     ];
     cancellationToken.attach(() {
       for (final key in keys) {

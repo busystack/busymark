@@ -130,7 +130,7 @@ void main() {
       expect(
         workspace.diagnostics.where(
           (diagnostic) =>
-              diagnostic.code == 'writerside.index.unresolved-reference' &&
+              diagnostic.code == 'writerside.include.unresolved-source' &&
               p.equals(diagnostic.filePath, unrelatedPath),
         ),
         isNotEmpty,
@@ -185,7 +185,7 @@ void main() {
       expect(
         reparsed.diagnostics.where(
           (diagnostic) =>
-              diagnostic.code == 'writerside.index.unresolved-reference' &&
+              diagnostic.code == 'writerside.include.unresolved-source' &&
               p.equals(diagnostic.filePath, unrelatedPath),
         ),
         isNotEmpty,
@@ -350,7 +350,7 @@ void main() {
     expect(
       reparsed.diagnostics.where(
         (diagnostic) =>
-            diagnostic.code == 'writerside.index.unresolved-reference' &&
+            diagnostic.code == 'writerside.include.unresolved-source' &&
             p.equals(diagnostic.filePath, unrelatedPath),
       ),
       isNotEmpty,

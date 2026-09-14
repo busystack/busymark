@@ -10,8 +10,10 @@ import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
+import 'authored_html_diagnostics.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_fence.dart';
+import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
 import 'math_syntax.dart';
 import 'raw_html_policy.dart';
@@ -46,6 +48,7 @@ class MarkdownParser {
     MarkdownMode mode = MarkdownMode.commonMark,
     String? workspaceRoot,
     bool validateLocalReferences = true,
+    Map<String, String> sourceOverrides = const {},
   }) async {
     final parsed =
         source.length < _backgroundParseThresholdBytes ||
@@ -72,6 +75,7 @@ class MarkdownParser {
     final diagnostics = sortDiagnostics([
       ...parsed.diagnostics,
       ...await _validateLocalReferencesAsync(
+        sourceOverrides: sourceOverrides,
         filePath: filePath,
         workspaceRoot: workspaceRoot,
         headings: parsed.headings,
@@ -83,6 +87,23 @@ class MarkdownParser {
   }
 
   ParsedMarkdownDocument parse({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) => SourceLocationMapper.withSource(
+    source,
+    () => _parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: validateLocalReferences,
+    ),
+  );
+
+  ParsedMarkdownDocument _parse({
     required String filePath,
     required String source,
     MarkdownMode mode = MarkdownMode.commonMark,
@@ -238,14 +259,6 @@ class MarkdownParser {
         lineOffset: offset,
         xmlBlocks: xmlBlocks,
       );
-      _extractUnsafeHtml(
-        filePath: filePath,
-        source: source,
-        line: line,
-        lineOffset: offset,
-        mode: mode,
-        diagnostics: diagnostics,
-      );
 
       if (inRawHtmlBlock) {
         previousSetextCandidateLine = null;
@@ -265,6 +278,7 @@ class MarkdownParser {
       lineIndex += 1;
     }
 
+    _extractAuthoredHtmlDiagnostics(filePath, source, mode, diagnostics);
     final renderedDocument = astAdapter.parse(
       filePath: filePath,
       source: source,
@@ -411,7 +425,10 @@ class MarkdownParser {
     }
 
     for (final block in _walkBlocks(document.blocks)) {
-      if (block.kind != BusyBlockKind.table) {
+      // Table containers and their rows share the same block kind. Rows carry
+      // the `header` attribute, so do not validate them as independent tables.
+      if (block.kind != BusyBlockKind.table ||
+          block.attributes.containsKey('header')) {
         continue;
       }
       final header = block.children.firstOrNull;
@@ -467,9 +484,27 @@ class MarkdownParser {
       // the AST and the lossless source scanner. Preserve top-level heading
       // spans independently: title and outline projection must not disappear
       // merely because unrelated content falls back to protected source.
+      // Verbatim blocks (notably Writerside XML) also retain their own ranges;
+      // a missing range must not turn an XML fragment into the entire topic.
       final headingSourceChunks = sourceChunks
           .where(_isScannedHeadingSource)
           .toList(growable: false);
+      final verbatimChunks = <String, List<_ScannedBlockSource>>{};
+      for (final chunk in modeledSourceChunks) {
+        verbatimChunks
+            .putIfAbsent(chunk.rawSource.trimRight(), () => [])
+            .add(chunk);
+      }
+      final verbatimOccurrences = <String, int>{};
+      _ScannedBlockSource? nextVerbatimChunk(BusyBlock block) {
+        final raw = block.rawSource?.trimRight();
+        final matches = verbatimChunks[raw];
+        if (raw == null || matches == null) return null;
+        final index = verbatimOccurrences[raw] ?? 0;
+        verbatimOccurrences[raw] = index + 1;
+        return index < matches.length ? matches[index] : null;
+      }
+
       var headingSourceIndex = 0;
       final contentWithMetadata = [
         for (final block in contentBlocks)
@@ -478,7 +513,7 @@ class MarkdownParser {
             block.kind == BusyBlockKind.heading &&
                     headingSourceIndex < headingSourceChunks.length
                 ? headingSourceChunks[headingSourceIndex++]
-                : null,
+                : nextVerbatimChunk(block),
           ),
       ];
       if (sourceChunks.any((chunk) => chunk.protectEdits)) {
@@ -1288,28 +1323,18 @@ class MarkdownParser {
     return line.substring(start, end + 1).trimRight().endsWith('/>');
   }
 
-  int _frontMatterEndOffset(String source) {
-    if (!source.startsWith('---')) {
-      return 0;
-    }
-    final end = source.indexOf('\n---', 3);
-    if (end == -1) {
-      return 0;
-    }
-    final nextLine = source.indexOf('\n', end + 4);
-    return nextLine == -1 ? source.length : nextLine + 1;
-  }
+  int _frontMatterEndOffset(String source) => frontMatterEndOffset(source);
 
   String? _frontMatterTitle(
     String filePath,
     String source,
     List<Diagnostic> diagnostics,
   ) {
-    if (!source.startsWith('---')) {
+    if (!hasFrontMatterOpening(source)) {
       return null;
     }
-    final end = source.indexOf('\n---', 3);
-    if (end == -1) {
+    final closing = frontMatterClosing(source);
+    if (closing == null) {
       diagnostics.add(
         Diagnostic(
           code: 'markdown.front-matter.malformed',
@@ -1325,7 +1350,7 @@ class MarkdownParser {
       );
       return null;
     }
-    final block = source.substring(3, end);
+    final block = source.substring(3, closing.start);
     for (final line in block.split('\n')) {
       final match = RegExp(r'^\s*title\s*:\s*(.+?)\s*$').firstMatch(line);
       if (match != null) {
@@ -1421,42 +1446,14 @@ class MarkdownParser {
     );
   }
 
-  void _extractUnsafeHtml({
-    required String filePath,
-    required String source,
-    required String line,
-    required int lineOffset,
-    required MarkdownMode mode,
-    required List<Diagnostic> diagnostics,
-  }) {
-    if (mode == MarkdownMode.writersideMarkdown &&
-        RegExp(
-          r'^\s{0,3}<video(?:\s|/?>)',
-          caseSensitive: false,
-        ).hasMatch(line)) {
-      return;
-    }
-    if (!hasUnsafeHtml(line)) {
-      return;
-    }
-    final unsafe =
-        RegExp(
-          r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b|on[A-Za-z0-9_-]+\s*=|(?:java|vb)script:|data:',
-          caseSensitive: false,
-        ).firstMatch(line) ??
-        RegExp(r'\S+').firstMatch(line);
-    diagnostics.add(
-      Diagnostic(
-        code: 'markdown.raw-html.unsafe',
-        severity: DiagnosticSeverity.warning,
-        filePath: filePath,
-        sourceSpan: SourceSpan.fromOffsets(
-          filePath: filePath,
-          source: source,
-          startOffset: lineOffset + (unsafe?.start ?? 0),
-          endOffset: lineOffset + (unsafe?.end ?? line.length),
-        ),
-      ),
+  void _extractAuthoredHtmlDiagnostics(
+    String filePath,
+    String source,
+    MarkdownMode mode,
+    List<Diagnostic> diagnostics,
+  ) {
+    diagnostics.addAll(
+      authoredHtmlDiagnostics(filePath: filePath, source: source, mode: mode),
     );
   }
 
@@ -1555,6 +1552,7 @@ class MarkdownParser {
   }
 
   Future<List<Diagnostic>> _validateLocalReferencesAsync({
+    Map<String, String> sourceOverrides = const {},
     required String filePath,
     required String? workspaceRoot,
     required List<MarkdownHeading> headings,
@@ -1563,6 +1561,25 @@ class MarkdownParser {
   }) async {
     final diagnostics = <Diagnostic>[];
     final anchors = headings.map((item) => item.id).toSet();
+    final hasFileTargets = links.any((link) {
+      final destination = link.destination.trim();
+      return destination.isNotEmpty &&
+          !hasUriScheme(destination) &&
+          !destination.startsWith('#');
+    });
+    final canonicalSelf =
+        (hasFileTargets ? await _canonicalBufferPath(filePath) : null) ??
+        p.normalize(p.absolute(filePath));
+    final sources = <String, String>{};
+    for (final entry
+        in hasFileTargets
+            ? sourceOverrides.entries
+            : const <MapEntry<String, String>>[]) {
+      sources[await _canonicalBufferPath(entry.key)] = entry.value;
+    }
+    final targetCache = <String, _LocalLinkTarget>{};
+    final anchorCache = <String, Set<String>>{canonicalSelf: anchors};
+    final bufferedPaths = {canonicalSelf, ...sources.keys};
     for (final link in links) {
       final destination = link.destination.trim();
       if (hasUriScheme(destination)) {
@@ -1578,11 +1595,13 @@ class MarkdownParser {
       final decodedAnchor = anchor == null
           ? null
           : _decodeLocalReferenceAnchor(anchor);
-      final target = await _resolveLocalLinkTargetAsync(
-        filePath: filePath,
-        workspaceRoot: workspaceRoot,
-        targetPath: targetPath,
-      );
+      final target = targetCache[targetPath] ??=
+          await _resolveLocalLinkTargetAsync(
+            filePath: filePath,
+            workspaceRoot: workspaceRoot,
+            targetPath: targetPath,
+            bufferedPaths: bufferedPaths,
+          );
       if (targetPath.isNotEmpty && target.blocksTargetValidation) {
         diagnostics.add(
           Diagnostic(
@@ -1616,13 +1635,18 @@ class MarkdownParser {
         continue;
       }
       try {
-        final targetSource = await File(target.path!).readAsString();
-        final targetAnchors = parse(
-          filePath: target.path!,
-          source: targetSource,
-          workspaceRoot: workspaceRoot,
-          validateLocalReferences: false,
-        ).anchors;
+        var targetAnchors = anchorCache[target.path!];
+        if (targetAnchors == null) {
+          final targetSource =
+              sources[target.path!] ?? await File(target.path!).readAsString();
+          targetAnchors = (await parseAsync(
+            filePath: target.path!,
+            source: targetSource,
+            workspaceRoot: workspaceRoot,
+            validateLocalReferences: false,
+          )).anchors;
+          anchorCache[target.path!] = targetAnchors;
+        }
         if (!targetAnchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
@@ -1736,6 +1760,7 @@ class MarkdownParser {
     required String filePath,
     required String? workspaceRoot,
     required String targetPath,
+    Set<String> bufferedPaths = const {},
   }) async {
     if (targetPath.isEmpty) {
       return const _LocalLinkTarget.currentDocument();
@@ -1752,9 +1777,19 @@ class MarkdownParser {
         ? p.normalize(localTargetPath)
         : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
-    final canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    var canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    if (canonicalTarget == null) {
+      final bufferPath = await _canonicalBufferPath(absoluteTarget);
+      if (bufferedPaths.contains(bufferPath)) canonicalTarget = bufferPath;
+    }
     if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
       return const _LocalLinkTarget.blocked();
+    }
+    if (bufferedPaths.contains(canonicalTarget)) {
+      return _LocalLinkTarget.found(
+        path: canonicalTarget,
+        canValidateAnchors: isMarkdownPath(canonicalTarget),
+      );
     }
     FileSystemEntityType type;
     try {
@@ -1781,6 +1816,14 @@ class MarkdownParser {
       path: canonicalTarget,
       canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
     );
+  }
+
+  Future<String> _canonicalBufferPath(String path) async {
+    final absolute = p.normalize(p.absolute(path));
+    final existing = await _canonicalExistingPath(absolute);
+    if (existing != null) return existing;
+    final parent = await _canonicalExistingPath(p.dirname(absolute));
+    return parent == null ? absolute : p.join(parent, p.basename(absolute));
   }
 
   String? _canonicalWorkspaceRootSync(String? workspaceRoot) {

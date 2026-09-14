@@ -15,8 +15,20 @@
 #let geometry = options.page
 #let margins = geometry.marginsPt
 #let content-height = (geometry.heightPt - margins.top - margins.bottom) * 1pt
-#let running-visible() = options.showHeaderFooterOnFirstPage or counter(page).get().first() > 1
+#let has-title-page = options.at("includeTitlePage", default: false)
+#let running-visible() = {
+  let first = counter(page).get().first() == 1
+  (not first or not has-title-page) and (not first or options.showHeaderFooterOnFirstPage)
+}
 #let number-position = if options.pageNumbers == "bottomLeft" { left } else if options.pageNumbers == "bottomRight" { right } else { center }
+#let footer-content(font-size) = {
+  set text(size: font-size, top-edge: "ascender", bottom-edge: "descender")
+  set par(leading: 0.2em, spacing: 0pt)
+  let rows = ()
+  if options.footer == "documentTitle" { rows.push(align(center, text(document-metadata.title))) }
+  if options.pageNumbers != "off" { rows.push(align(number-position, counter(page).display("1"))) }
+  stack(spacing: 0.2em, ..rows)
+}
 #set page(
   width: geometry.widthPt * 1pt,
   height: geometry.heightPt * 1pt,
@@ -29,9 +41,15 @@
   header: if options.header == "none" { none } else { context { if running-visible() { text(document-metadata.title) } } },
   footer: if options.footer == "none" and options.pageNumbers == "off" { none } else { context {
     if running-visible() {
-      // Native page footer content combines title and counter without overlap.
-      if options.footer == "documentTitle" { align(center, text(document-metadata.title)) }
-      if options.pageNumbers != "off" { align(number-position, counter(page).display("1")) }
+      // The footer starts 30% into the bottom margin. Fit the complete stack
+      // into the remaining space, including font ascenders and descenders.
+      layout(size => {
+        let font-size = typography.bodySizePt * 1pt
+        let available-height = calc.max(1pt, margins.bottom * 0.7pt - 2pt)
+        let natural = measure(footer-content(font-size), width: size.width)
+        let factor = calc.min(1, available-height / natural.height)
+        footer-content(font-size * factor)
+      })
     }
   } },
 )
@@ -100,17 +118,37 @@
   }
 }
 
-#let render-inlines(items) = {
+// Definitions remain in the semantic tree so asset/math preparation also
+// visits their content. Only the first reference emits their page footnote.
+#let collect-footnotes(blocks) = {
+  let result = (:)
+  for item in blocks {
+    if "footnoteId" in item { result.insert(item.footnoteId, item) }
+    result += collect-footnotes(value-or(item, "children", ()))
+  }
+  result
+}
+#let footnotes = collect-footnotes(data.blocks)
+
+#let render-inlines(items, render) = {
   for item in items {
     let kind = item.kind
     let children = value-or(item, "children", ())
     let body = if children.len() > 0 {
-      render-inlines(children)
+      render-inlines(children, render)
     } else {
       text(value-or(item, "text", ""))
     }
 
-    if kind == "text" {
+    if "footnoteId" in item {
+      let id = item.footnoteId
+      let target = label("pdf-note-" + id)
+      if item.footnoteFirst == "true" {
+        [#footnote(for child in value-or(footnotes.at(id), "children", ()) { render(child) })#target]
+      } else {
+        footnote(target)
+      }
+    } else if kind == "text" {
       body
     } else if kind == "strong" {
       strong(body)
@@ -184,7 +222,7 @@
       let is-header = value-or(row, "header", false)
       let row-cells = ()
       for cell in value-or(row, "children", ()) {
-        let cell-body = [#render-inlines(value-or(cell, "inlines", ()))#for child in value-or(cell, "children", ()) { render(child) }]
+        let cell-body = [#render-inlines(value-or(cell, "inlines", ()), render)#for child in value-or(cell, "children", ()) { render(child) }]
         let alignment = value-or(cell, "align", "left")
         let cell-align = if alignment == "center" {
           center
@@ -223,11 +261,13 @@
 #let render-list(block-data, render) = {
   let list-type = value-or(block-data, "listType", "bullet")
   let items = value-or(block-data, "children", ()).map(item => {
+    let anchor = value-or(item, "anchor", "")
+    if anchor != "" { [#metadata(anchor) #label(anchor)] }
     let task = value-or(item, "task", none)
     if task != none {
       box(width: 1.35em, text(if task { "☑" } else { "☐" }))
     }
-    render-inlines(value-or(item, "inlines", ()))
+    render-inlines(value-or(item, "inlines", ()), render)
     let nested = value-or(item, "children", ())
     if nested.len() > 0 {
       for nested-block in nested { render(nested-block) }
@@ -271,6 +311,7 @@
 }
 
 #let render-block(block-data) = {
+  if "footnoteId" in block-data { return [] }
   let kind = block-data.kind
   let inlines = value-or(block-data, "inlines", ())
   let children = value-or(block-data, "children", ())
@@ -280,12 +321,12 @@
     let element = heading(
       level: value-or(block-data, "level", 1),
       outlined: value-or(block-data, "outlined", true),
-      render-inlines(inlines),
+      render-inlines(inlines, render-block),
     )
     let anchor = value-or(block-data, "id", "")
     if anchor == "" { element } else { [#element #label(anchor)] }
   } else if kind == "paragraph" {
-    par(render-inlines(inlines))
+    par(render-inlines(inlines, render-block))
   } else if kind == "code" {
     let language = value-or(block-data, "language", "")
     block(
@@ -322,7 +363,7 @@
     let body = if children.len() > 0 {
       for child in children { render-block(child) }
     } else {
-      render-inlines(inlines)
+      render-inlines(inlines, render-block)
     }
     let default-title = if style == "warning" {
       "Warning"
@@ -341,7 +382,7 @@
     let body = if children.len() > 0 {
       for child in children { render-block(child) }
     } else {
-      render-inlines(inlines)
+      render-inlines(inlines, render-block)
     }
     render-callout(
       body,
@@ -356,7 +397,7 @@
         if item.kind == "image" {
           render-display-image(item)
         } else {
-          render-inlines((item,))
+          render-inlines((item,), render-block)
         }
       }
     }
@@ -424,15 +465,95 @@
       raw(value-or(block-data, "text", ""), block: true),
     )
   } else if kind == "group" {
+    if inlines.len() > 0 { par(render-inlines(inlines, render-block)) }
     for child in children { render-block(child) }
   } else {
-    render-inlines(inlines)
+    render-inlines(inlines, render-block)
   }
+}
+
+#let render-title-page() = context {
+  let cover = data.titlePage
+  let body-size = typography.bodySizePt * 1pt
+  let width = (geometry.widthPt - margins.left - margins.right) * 1pt
+  let fit-error = "The PDF title page does not fit the selected page size and margins. Shorten the title-page text or choose a larger content area."
+  let cover-text(value) = context {
+    if measure(text(value), width: auto).width > width {
+      assert(measure(text(value), width: width).height <= content-height,
+        message: fit-error)
+      // At zero width, Typst puts each Unicode-unbreakable span on its own
+      // line. Probe two adjacent visible graphemes with 1pt top edges and give
+      // all other text zero-height metrics: a height of 2pt means a legal break
+      // separates them. Keep the complete string in every probe so punctuation,
+      // combining marks, non-breaking spaces, and word joiners retain context.
+      // Only the probe's height identifies breaks; it never proves width fits.
+      let start = 0
+      let offset = 0
+      let previous = none
+      for cluster in value.clusters() {
+        let next = offset + cluster.len()
+        if not cluster.contains(regex("^[\\s\\p{Default_Ignorable_Code_Point}]+$")) {
+          if previous != none {
+            let probe = {
+              set text(top-edge: 0pt, bottom-edge: 0pt, hyphenate: false)
+              set par(leading: 0pt, spacing: 0pt, linebreaks: "simple")
+              text(value.slice(0, previous))
+              text(top-edge: 1pt, value.slice(previous, next))
+              text(value.slice(next))
+            }
+            if measure(probe, width: 0pt).height > 1.5pt {
+              // Native soft breaks trim trailing whitespace. Check the span
+              // unconstrained, using the actual cover font, weight, and size.
+              let span = value.slice(start, offset).trim(at: end)
+              assert(measure(text(span), width: auto).width <= width,
+                message: fit-error)
+              start = offset
+            }
+          }
+          previous = offset
+        }
+        offset = next
+      }
+      assert(measure(text(value.slice(start)), width: auto).width <= width,
+        message: fit-error)
+    }
+    // Keep the original text intact for native shaping and Unicode wrapping.
+    text(value)
+  }
+  let cover-content = {
+    set text(font: typography.bodyFont, size: body-size,
+      top-edge: "ascender", bottom-edge: "descender", overhang: false)
+    set par(leading: 0.4em, spacing: 0pt)
+    let rows = (text(size: 2.4 * body-size, weight: "bold",
+      fill: rgb(options.accentColor), cover-text(cover.title)),)
+    let subtitle = cover.at("subtitle", default: "")
+    if subtitle != "" { rows.push(text(size: 1.3 * body-size, cover-text(subtitle))) }
+    let details = ()
+    for key in ("author", "organization", "version", "date") {
+      let value = cover.at(key, default: "")
+      if value != "" { details.push(cover-text(value)) }
+    }
+    if details.len() > 0 {
+      rows.push(stack(spacing: 0.5em, ..details))
+    }
+    align(center, stack(spacing: 1.5em, ..rows))
+  }
+  let natural = measure(cover-content, width: width)
+  assert(natural.height <= content-height, message: fit-error)
+  block(width: width, height: content-height, breakable: false, above: 0pt, below: 0pt,
+    align(center + horizon, cover-content))
+}
+
+// Breaks stay in the top-level flow. A native outline may span many pages;
+// neither the cover nor the outline replaces or changes source headings.
+#if has-title-page {
+  render-title-page()
+  pagebreak(weak: true)
 }
 
 #if options.content.includeToc {
   outline(depth: options.content.tocDepth)
-  v(1em)
+  pagebreak(weak: true)
 }
 
 #for block-data in data.blocks { render-block(block-data) }

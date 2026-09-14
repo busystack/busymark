@@ -46,10 +46,14 @@ class WritersideDocumentParser {
     for (final block in markdown.blocks) {
       final span = block.sourceSpan ?? SourceSpan.entireFile(filePath, source);
       final raw =
-          _safeSubstring(source, span.startOffset, span.endOffset) ??
+          (block.sourceSpan == null
+              ? null
+              : _safeSubstring(source, span.startOffset, span.endOffset)) ??
           block.rawSource ??
           block.plainText;
-      if (_isSemanticXmlBlock(block, raw)) {
+      // Source-only blocks preserve editing/serialization data. They are not
+      // rendered content and may contain the entire protected Markdown source.
+      if (!block.isSourceOnly && _isSemanticXmlBlock(block, raw)) {
         try {
           final parsed = _parseXmlNodes(
             filePath: filePath,

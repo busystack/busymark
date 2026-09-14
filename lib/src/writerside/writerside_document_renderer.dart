@@ -18,6 +18,22 @@ class WritersideDocumentRenderer {
     String? title,
     bool includeTitleHeading = false,
     int titleHeadingLevel = 1,
+  }) => _WritersideRenderSession().toBusyDocument(
+    document,
+    title: title,
+    includeTitleHeading: includeTitleHeading,
+    titleHeadingLevel: titleHeadingLevel,
+  );
+}
+
+class _WritersideRenderSession {
+  int _nextListOccurrence = 0;
+
+  BusyDocument toBusyDocument(
+    WritersideDocument document, {
+    String? title,
+    bool includeTitleHeading = false,
+    int titleHeadingLevel = 1,
   }) {
     final hasGeneratedTitle =
         includeTitleHeading && title?.trim().isNotEmpty == true;
@@ -944,6 +960,9 @@ class WritersideDocumentRenderer {
   }) {
     final type = list.attributes['type']?.trim().toLowerCase() ?? 'bullet';
     final start = int.tryParse(list.attributes['start'] ?? '') ?? 1;
+    // Included copies retain their source spans. Allocate an ID for each
+    // rendered container so consecutive copies remain separate lists.
+    final listId = 'writerside-list-${_nextListOccurrence++}';
     var itemNumber = start;
     final result = <BusyBlock>[];
     for (final child in list.children) {
@@ -953,6 +972,7 @@ class WritersideDocumentRenderer {
           _listItemBlock(
             child,
             listType: type,
+            listId: listId,
             itemNumber: itemNumber++,
             headingLevel: headingLevel,
           ),
@@ -969,6 +989,7 @@ class WritersideDocumentRenderer {
     required String listType,
     required int itemNumber,
     required int headingLevel,
+    String? listId,
   }) {
     final ordered = listType == 'decimal' || listType == 'alpha-lower';
     final checkbox = listType == 'checkbox';
@@ -992,6 +1013,10 @@ class WritersideDocumentRenderer {
         'ordered': '$ordered',
         'marker': marker,
         'listType': listType,
+        // Exporters need the numeric position and container independently of
+        // the display marker, which can be alphabetic or absent.
+        'listOrdinal': '$itemNumber',
+        if (listId != null) 'listId': listId,
         if (listType == 'none') 'markerHidden': 'true',
         if (checkbox) 'task': item.attributes['checked'] ?? 'false',
       },
@@ -1178,6 +1203,7 @@ class WritersideDocumentRenderer {
     if (element.provenance case final provenance?) ...{
       writersideSourceModuleRootAttribute: provenance.moduleRoot,
       writersideSourceTopicPathAttribute: provenance.topicPath,
+      writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
     },
     if (element is WritersideGenericElementNode)
       'schemaKnown': '${element.schemaKnown}',
@@ -1210,6 +1236,7 @@ class WritersideDocumentRenderer {
         ...inline.attributes,
         writersideSourceModuleRootAttribute: provenance.moduleRoot,
         writersideSourceTopicPathAttribute: provenance.topicPath,
+        writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
       },
       children: inline.children.map(annotateInline).toList(growable: false),
     );
@@ -1219,6 +1246,7 @@ class WritersideDocumentRenderer {
         ...block.attributes,
         writersideSourceModuleRootAttribute: provenance.moduleRoot,
         writersideSourceTopicPathAttribute: provenance.topicPath,
+        writersideSourceOccurrenceAttribute: '${provenance.occurrence}',
       },
       inlines: block.inlines.map(annotateInline).toList(growable: false),
       children: block.children

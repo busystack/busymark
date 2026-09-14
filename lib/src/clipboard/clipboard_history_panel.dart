@@ -213,6 +213,10 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
       widget.onEscape?.call();
       return KeyEventResult.handled;
     }
+    // Key events bubble through this Focus even while the search field owns
+    // primary focus. List navigation, activation, and especially deletion must
+    // never consume text-editing keys from that descendant.
+    if (!_listFocusNode.hasPrimaryFocus) return KeyEventResult.ignored;
     if (visible.isEmpty) return KeyEventResult.ignored;
     final index = visible.indexWhere((entry) => entry.id == _selectedId);
     if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
@@ -265,13 +269,14 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     BusyMarkClipboardPayload payload, {
     required bool plainText,
   }) async {
-    final result = await ref
-        .read(clipboardInsertionRegistryProvider)
-        .paste(payload, plainText: plainText);
+    // Both dependencies outlive this sidebar panel. Capture them before the
+    // asynchronous insertion so a successful editor operation can still be
+    // retained if the user switches sidebar tabs while it is in flight.
+    final registry = ref.read(clipboardInsertionRegistryProvider);
+    final history = ref.read(clipboardHistoryControllerProvider.notifier);
+    final result = await registry.paste(payload, plainText: plainText);
     if (result == ClipboardPasteResult.inserted && payload.external) {
-      ref
-          .read(clipboardHistoryControllerProvider.notifier)
-          .retainCurrentAfterPaste(payload);
+      history.retainCurrentAfterPaste(payload);
     } else if (result != ClipboardPasteResult.inserted && mounted) {
       BusyMarkToastOverlay.show(
         context,

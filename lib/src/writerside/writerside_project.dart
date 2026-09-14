@@ -6,6 +6,7 @@ import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'writerside_document.dart';
+import 'writerside_document_resolver.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_schema.dart';
@@ -60,6 +61,7 @@ class WritersideReference {
     this.origin,
     this.sourceValue,
     this.scopeReference,
+    this.nullable = false,
   });
 
   final String value;
@@ -70,6 +72,7 @@ class WritersideReference {
   final String? origin;
   final String? sourceValue;
   final String? scopeReference;
+  final bool nullable;
 }
 
 class WritersideRenameEdit {
@@ -270,6 +273,11 @@ class WritersideProjectIndex {
           }
           for (final requiredAttribute
               in WritersideSchema.requiredAttributesFor(element.name)) {
+            if (element.semanticKind == WritersideSemanticKind.include &&
+                requiredAttribute == 'from') {
+              // An omitted source includes an element from the current topic.
+              continue;
+            }
             if (requiredAttribute == 'href' &&
                 element.attributes.containsKey('anchor')) {
               continue;
@@ -483,10 +491,18 @@ class WritersideProjectIndex {
           symbol.kind == WritersideSymbolKind.snippet ||
           symbol.kind == WritersideSymbolKind.variable,
     )) {
+      // Global variables share a module namespace; lexical scopes also belong
+      // to a specific source file, even when their offsets happen to match.
+      final scopedFile =
+          symbol.kind == WritersideSymbolKind.element ||
+              symbol.kind == WritersideSymbolKind.snippet ||
+              symbol.scopeSpan != null
+          ? symbol.filePath
+          : '';
       groupedDefinitions
           .putIfAbsent(
             '${symbol.moduleId}:${symbol.kind.name}:'
-            '${symbol.kind == WritersideSymbolKind.element || symbol.kind == WritersideSymbolKind.snippet ? symbol.filePath : ''}:'
+            '$scopedFile:'
             '${symbol.name}:${symbol.instanceCondition ?? ''}:${symbol.scopeSpan?.startOffset ?? ''}',
             () => [],
           )
@@ -516,50 +532,9 @@ class WritersideProjectIndex {
     final modulesById = {
       for (final module in modules) moduleIds[module]!: module,
     };
-    for (final reference in references.where(
-      (reference) => reference.kind == WritersideSymbolKind.snippet,
-    )) {
-      final targetModule = modulesById[reference.origin ?? reference.moduleId];
-      if (targetModule == null) {
-        diagnostics.add(
-          _referenceDiagnostic('writerside.index.unresolved-origin', reference),
-        );
-        continue;
-      }
-      final separator = reference.value.indexOf('#');
-      final from = separator == -1
-          ? reference.value
-          : reference.value.substring(0, separator);
-      final id = separator == -1
-          ? null
-          : reference.value.substring(separator + 1);
-      final topics = from.isEmpty
-          ? targetModule.topics
-                .where((topic) => topic.filePath == reference.filePath)
-                .toList()
-          : targetModule.topicsMatchingReference(from);
-      if (topics.length != 1) {
-        diagnostics.add(
-          _referenceDiagnostic(
-            topics.isEmpty
-                ? 'writerside.index.unresolved-reference'
-                : 'writerside.index.ambiguous-reference',
-            reference,
-          ),
-        );
-        continue;
-      }
-      if (id != null &&
-          id.isNotEmpty &&
-          topics.single.document.contentById(id) == null) {
-        diagnostics.add(
-          _referenceDiagnostic(
-            'writerside.index.unresolved-reference',
-            reference,
-          ),
-        );
-      }
-    }
+    // References retain authored values for navigation and source edits. Include
+    // diagnostics belong to the document resolver, which has the lexical
+    // variables, instance conditions, origins and optional-reference context.
 
     return WritersideProjectIndex(
       symbols: List.unmodifiable(symbols),
@@ -940,13 +915,13 @@ class WritersideProject {
     if (!replaced) {
       return this;
     }
-    final nextModules = [
+    final nextModules = _resolveProjectModules([
       for (final candidate in modules)
         if (p.equals(candidate.rootPath, module.rootPath))
           module
         else
           candidate,
-    ];
+    ]);
     final nextIndex = WritersideProjectIndex.build(
       nextModules,
       fileSymbols: index.symbols.where(
@@ -1030,10 +1005,11 @@ class WritersideProjectService {
     String? preferredModuleRoot,
   }) async {
     final roots = await discoverModuleRoots(projectRoot);
-    final modules = <WritersideModule>[];
+    var modules = <WritersideModule>[];
     for (final root in roots) {
       modules.add(await moduleService.load(root, options: scanOptions));
     }
+    modules = _resolveProjectModules(modules);
     final index = WritersideProjectIndex.build(
       modules,
       fileSymbols: await _discoverFileSymbols(modules),
@@ -1254,6 +1230,7 @@ void _collectElementReferences(
         WritersideReference(
           value: id == null ? from ?? '' : '${from ?? ''}#$id',
           kind: WritersideSymbolKind.snippet,
+          nullable: element.attributes['nullable'] == 'true',
           moduleId: moduleId,
           filePath: filePath,
           span:
@@ -1366,15 +1343,6 @@ void _collectElementReferences(
   }
 }
 
-Diagnostic _referenceDiagnostic(String code, WritersideReference reference) =>
-    Diagnostic(
-      code: code,
-      severity: DiagnosticSeverity.warning,
-      filePath: reference.filePath,
-      args: {'reference': reference.value},
-      sourceSpan: reference.span,
-    );
-
 String _moduleId(WritersideModule module) =>
     module.config.moduleName?.trim().isNotEmpty == true
     ? module.config.moduleName!.trim()
@@ -1443,4 +1411,19 @@ String _renamedReferenceValue(
 
 extension _FirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
+}
+
+/// Every dependency replacement gets a fresh semantic pass for every topic,
+/// including references from modules other than the one that changed.
+List<WritersideModule> _resolveProjectModules(List<WritersideModule> modules) {
+  final origins = {for (final module in modules) _moduleId(module): module};
+  return [
+    for (final module in modules)
+      module.copyWith(
+        semanticDiagnostics: resolveWritersideModuleDiagnostics(
+          module,
+          modulesByOrigin: origins,
+        ),
+      ),
+  ];
 }

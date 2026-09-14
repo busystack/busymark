@@ -169,6 +169,27 @@ class WorkspaceSearchRequestController extends Notifier<int> {
   }
 }
 
+enum ValidationStatus { published, stale, failed, busy, unavailable }
+
+class ValidationOutcome {
+  const ValidationOutcome({
+    required this.status,
+    this.workspaceId,
+    this.filePath,
+    this.bufferId,
+    this.revision,
+    this.documentRevision,
+  });
+
+  final ValidationStatus status;
+  final String? workspaceId;
+  final String? filePath;
+  final String? bufferId;
+  final int? revision;
+  final int? documentRevision;
+  bool get published => status == ValidationStatus.published;
+}
+
 class WorkspaceController extends Notifier<WorkspaceState> {
   static const _autoSaveDelay = Duration(milliseconds: 1500);
 
@@ -188,6 +209,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _pendingPreviewRefresh = false;
   var _pendingOutlineRefresh = false;
   _ActivePreviewRevision? _activePreviewRevision;
+  var _manualValidationRunning = false;
+  var _validationSequence = 0;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
   var _workspaceRefreshRevision = 0;
@@ -202,9 +225,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required String expressionId,
     required String? code,
     SourceSpan? sourceSpan,
+    int? expectedRevision,
+    String? expectedFilePath,
   }) {
     final workspace = state.workspace;
-    if (workspace == null) {
+    if (workspace == null ||
+        (expectedRevision != null &&
+            (expectedRevision != editRevision ||
+                expectedFilePath != workspace.activeFilePath))) {
       return;
     }
     final filePath =
@@ -397,7 +425,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeFileSnapshot: active.diskSnapshot,
         openFilePaths: openPaths,
       );
-      final reparsed = await _service.reparseActive(nextWorkspace, active.text);
+      final reparsed = await _reparseWithDocumentBuffers(
+        nextWorkspace,
+        active.text,
+        buffers: buffers,
+      );
       state = WorkspaceState(
         workspace: reparsed,
         preview: _safePreview(reparsed, active.text),
@@ -786,7 +818,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         final workspace = state.workspace!.copyWith(
           activeFileSnapshot: disk.snapshot,
         );
-        final reparsed = await _service.reparseActive(workspace, disk.text);
+        final reparsed = await _reparseWithDocumentBuffers(
+          workspace,
+          disk.text,
+        );
         if (state.activeBufferId == reloaded.id &&
             state.activeBuffer?.revision == reloaded.revision) {
           state = state.copyWith(
@@ -922,7 +957,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             revision: remapped.revision,
             source: remapped.text,
           )) {
-        final reparsed = await _service.reparseActive(
+        final reparsed = await _reparseWithDocumentBuffers(
           derivedWorkspace,
           remapped.text,
         );
@@ -1024,7 +1059,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           revision: reloaded.revision,
           source: reloaded.text,
         )) {
-      final workspace = await _service.reparseActive(
+      final workspace = await _reparseWithDocumentBuffers(
         derivedWorkspace.copyWith(activeFileSnapshot: disk.snapshot),
         disk.text,
       );
@@ -2109,7 +2144,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           state.workspace?.id != workspaceId) {
         return false;
       }
-      final reparsed = await _service.reparseActive(nextWorkspace, load.text);
+      final reparsed = await _reparseWithDocumentBuffers(
+        nextWorkspace,
+        load.text,
+        buffers: buffers,
+      );
       if (!_isCurrentActiveDocumentOperation(operationRevision) ||
           state.workspace?.id != workspaceId) {
         return false;
@@ -2215,9 +2254,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       markdown: buffer.filePath == null ? workspace.markdown : null,
     );
     var parsedBuffer = buffer;
-    var reparsed = await _service.reparseActive(
+    var reparsed = await _reparseWithDocumentBuffers(
       nextWorkspace,
       parsedBuffer.text,
+      buffers: documentBuffers,
     );
     if (!_isCurrentActiveDocumentOperation(operationRevision)) {
       return false;
@@ -2230,7 +2270,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (liveBuffer.revision != parsedBuffer.revision ||
         liveBuffer.text != parsedBuffer.text) {
       parsedBuffer = liveBuffer;
-      reparsed = await _service.reparseActive(nextWorkspace, parsedBuffer.text);
+      reparsed = await _reparseWithDocumentBuffers(
+        nextWorkspace,
+        parsedBuffer.text,
+        buffers: documentBuffers,
+      );
       if (!_isCurrentActiveDocumentOperation(operationRevision) ||
           state.workspace?.id != workspaceId) {
         return false;
@@ -2634,7 +2678,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeFileSnapshot: load.snapshot,
         openFilePaths: _openFileTabPaths(selected, path),
       );
-      final reparsed = await _service.reparseActive(nextWorkspace, load.text);
+      final reparsed = await _reparseWithDocumentBuffers(
+        nextWorkspace,
+        load.text,
+      );
       if (!_isCurrentActiveDocumentOperation(operationRevision)) {
         return false;
       }
@@ -2777,12 +2824,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> _drainDerivedRefreshes() async {
-    if (_derivedRefreshRunning) {
+    if (_derivedRefreshRunning || _manualValidationRunning) {
       return;
     }
     _derivedRefreshRunning = true;
     try {
-      while (ref.mounted && _derivedRefreshPending) {
+      while (ref.mounted &&
+          _derivedRefreshPending &&
+          !_manualValidationRunning) {
         _derivedRefreshPending = false;
         final rebuildPreview = _pendingPreviewRefresh;
         final refreshOutline = _pendingOutlineRefresh;
@@ -2798,7 +2847,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     } finally {
       _derivedRefreshRunning = false;
-      if (ref.mounted && _derivedRefreshPending) {
+      if (ref.mounted && _derivedRefreshPending && !_manualValidationRunning) {
         unawaited(_drainDerivedRefreshes());
       }
     }
@@ -2823,14 +2872,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final editRevision = buffer.revision;
     final operationRevision = _activeDocumentRevision;
     try {
-      final overlaid = await _service.withWritersideSources(workspace, {
-        for (final buffer in state.documentBuffers)
-          if (buffer.filePath != null &&
-              buffer.filePath != workspace.activeFilePath &&
-              buffer.dirty)
-            buffer.filePath!: buffer.text,
-      });
-      final reparsed = await _service.reparseActive(overlaid, text);
+      final reparsed = await _reparseWithDocumentBuffers(workspace, text);
       if (!_isCurrentActiveDocument(
             operationRevision,
             workspaceId: workspaceId,
@@ -2870,14 +2912,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final editRevision = state.activeBuffer?.revision ?? _editRevision;
     final operationRevision = _activeDocumentRevision;
     try {
-      final overlaid = await _service.withWritersideSources(workspace, {
-        for (final buffer in state.documentBuffers)
-          if (buffer.filePath != null &&
-              buffer.filePath != workspace.activeFilePath &&
-              buffer.dirty)
-            buffer.filePath!: buffer.text,
-      });
-      final reparsed = await _service.reparseActive(overlaid, text);
+      final reparsed = await _reparseWithDocumentBuffers(workspace, text);
       final preview = await _service.buildPreviewAsync(reparsed, text);
       if (!_isCurrentActiveDocument(
             operationRevision,
@@ -3072,14 +3107,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     try {
-      final overlaid = await _service.withWritersideSources(workspace, {
-        for (final buffer in state.documentBuffers)
-          if (buffer.filePath != null &&
-              buffer.filePath != workspace.activeFilePath &&
-              buffer.dirty)
-            buffer.filePath!: buffer.text,
-      });
-      final reparsed = await _service.reparseActive(overlaid, text);
+      final reparsed = await _reparseWithDocumentBuffers(workspace, text);
       final currentWorkspace = state.workspace;
       final currentBuffer = state.documentBuffers
           .where((buffer) => buffer.id == bufferId)
@@ -3411,7 +3439,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (hasNewerEdits) {
         if (state.activeBufferId == savedBuffer.id &&
             _settingsController.state.validateOnEdit) {
-          unawaited(_validateActive(rebuildPreview: _activeModeShowsPreview));
+          _requestDerivedRefresh(rebuildPreview: _activeModeShowsPreview);
         }
         _scheduleAutoSave(savedBuffer.id);
       } else if (state.activeBufferId == savedBuffer.id) {
@@ -4265,7 +4293,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
     return activeBuffer == null
         ? Future.value(nextWorkspace.copyWith(markdown: null))
-        : _service.reparseActive(nextWorkspace, activeBuffer.text);
+        : _reparseWithDocumentBuffers(
+            nextWorkspace,
+            activeBuffer.text,
+            buffers: buffers,
+          );
   }
 
   Future<bool> _runWorkspaceFileOperation(
@@ -4374,43 +4406,105 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> validateActive() => _validateActive(rebuildPreview: true);
+  Future<Workspace> _reparseWithDocumentBuffers(
+    Workspace workspace,
+    String source, {
+    Iterable<DocumentBuffer>? buffers,
+  }) async {
+    final overlaid = await _service.withDocumentSources(workspace, {
+      for (final buffer in buffers ?? state.documentBuffers)
+        if (buffer.filePath != null) buffer.filePath!: buffer.text,
+      // Disk reloads and newly opened files may not yet be in the buffer list.
+      if (workspace.activeFilePath case final path?) path: source,
+    });
+    return _service.reparseActive(overlaid, source);
+  }
 
-  Future<void> _validateActive({required bool rebuildPreview}) async {
+  Future<ValidationOutcome> validateActive() async {
+    if (_manualValidationRunning) {
+      return const ValidationOutcome(status: ValidationStatus.busy);
+    }
+    _manualValidationRunning = true;
+    // The explicit request covers all edits queued so far. Running automatic
+    // work becomes stale; later edits can queue a refresh after this request.
+    _cancelPendingDerivedRefresh();
+    try {
+      return await _validateActive(rebuildPreview: true);
+    } finally {
+      _manualValidationRunning = false;
+      if (ref.mounted && _derivedRefreshPending) {
+        unawaited(_drainDerivedRefreshes());
+      }
+    }
+  }
+
+  bool isCurrentValidation(ValidationOutcome outcome) =>
+      outcome.published &&
+      state.workspace?.id == outcome.workspaceId &&
+      state.workspace?.activeFilePath == outcome.filePath &&
+      state.activeBuffer?.id == outcome.bufferId &&
+      editRevision == outcome.revision &&
+      _activeDocumentRevision == outcome.documentRevision;
+
+  Future<ValidationOutcome> _validateActive({
+    required bool rebuildPreview,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null) {
-      return;
+      return const ValidationOutcome(status: ValidationStatus.unavailable);
     }
+    final sequence = ++_validationSequence;
+    final buffers = List<DocumentBuffer>.of(state.documentBuffers);
+    final bufferId = state.activeBuffer?.id;
     final workspaceId = workspace.id;
     final activeFilePath = workspace.activeFilePath;
     final text = state.activeText;
     final editRevision = state.activeBuffer?.revision ?? _editRevision;
     final operationRevision = _activeDocumentRevision;
+    ValidationOutcome outcome(ValidationStatus status) => ValidationOutcome(
+      status: status,
+      workspaceId: workspaceId,
+      filePath: activeFilePath,
+      bufferId: bufferId,
+      revision: editRevision,
+      documentRevision: operationRevision,
+    );
+    bool current() =>
+        ref.mounted &&
+        sequence == _validationSequence &&
+        _isCurrentActiveDocument(
+          operationRevision,
+          workspaceId: workspaceId,
+          activeFilePath: activeFilePath,
+        ) &&
+        state.activeText == text &&
+        (state.activeBuffer?.revision ?? _editRevision) == editRevision &&
+        buffers.length == state.documentBuffers.length &&
+        buffers.every(
+          (buffer) => state.documentBuffers.any(
+            (live) =>
+                live.id == buffer.id &&
+                live.filePath == buffer.filePath &&
+                live.revision == buffer.revision &&
+                live.text == buffer.text,
+          ),
+        );
     try {
-      final overlaid = await _service.withWritersideSources(workspace, {
-        for (final buffer in state.documentBuffers)
-          if (buffer.filePath != null &&
-              buffer.filePath != workspace.activeFilePath &&
-              buffer.dirty)
-            buffer.filePath!: buffer.text,
-      });
-      final reparsed = await _service.reparseActive(overlaid, text);
+      final reparsed = await _reparseWithDocumentBuffers(
+        workspace,
+        text,
+        buffers: buffers,
+      );
       final currentWorkspace = state.workspace;
-      if (!_isCurrentActiveDocument(
-            operationRevision,
-            workspaceId: workspaceId,
-            activeFilePath: activeFilePath,
-          ) ||
-          currentWorkspace == null ||
-          state.activeText != text ||
-          state.activeBuffer?.revision != editRevision) {
-        return;
+      if (!current() || currentWorkspace == null) {
+        return outcome(ValidationStatus.stale);
       }
       final currentSnapshot = currentWorkspace.activeFileSnapshot;
       final validatedWorkspace = reparsed.copyWith(
         activeFileSnapshot: currentSnapshot,
         openFilePaths: currentWorkspace.openFilePaths,
         files: currentWorkspace.files,
+        runtimeDiagnostics: currentWorkspace.runtimeDiagnostics,
       );
       if (rebuildPreview) {
         state = state.copyWith(
@@ -4431,21 +4525,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           clearMessage: true,
         );
       }
+      return outcome(ValidationStatus.published);
     } on Object catch (error) {
-      if (_isCurrentActiveDocument(
-            operationRevision,
-            workspaceId: workspaceId,
-            activeFilePath: activeFilePath,
-          ) &&
-          state.activeText == text &&
-          state.activeBuffer?.revision == editRevision) {
+      if (current()) {
         state = state.copyWith(
           message: WorkspaceMessage(
             WorkspaceMessageCode.validationFailed,
             error: error,
           ),
         );
+        return outcome(ValidationStatus.failed);
       }
+      return outcome(ValidationStatus.stale);
     }
   }
 

@@ -11,6 +11,42 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get pdfTitlePage => 'Tittelside';
+
+  @override
+  String get pdfIncludeTitlePage => 'Ta med tittelside';
+
+  @override
+  String get pdfTitlePageNote =>
+      'Denne siden har ingen topptekst, bunntekst eller synlig sidetall.';
+
+  @override
+  String get pdfTitlePageTitle => 'Tittel';
+
+  @override
+  String get pdfTitlePageSubtitle => 'Undertittel';
+
+  @override
+  String get pdfTitlePageAuthor => 'Forfatter';
+
+  @override
+  String get pdfTitlePageOrganization => 'Organisasjon';
+
+  @override
+  String get pdfTitlePageVersion => 'Versjon';
+
+  @override
+  String get pdfTitlePageDate => 'Dato';
+
+  @override
+  String get pdfTitlePageTitleRequired =>
+      'Skriv inn en tittel for tittelsiden.';
+
+  @override
+  String get pdfTocSectionNote =>
+      'Starter på en egen side og kan gå over flere sider.';
+
+  @override
   String get appTitle => 'BusyMark';
 
   @override

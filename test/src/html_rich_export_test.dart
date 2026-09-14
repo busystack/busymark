@@ -16,6 +16,49 @@ import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
 void main() {
+  for (final language in ['mermaid', 'openapi']) {
+    test('rendered $language retains a linked Writerside block ID', () async {
+      final root = await Directory.systemTemp.createTemp(
+        'html-diagram-anchor-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp version="2.0"><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'guide.tree')).writeAsString(
+        '<instance-profile id="guide" name="Guide" start-page="Start.topic"><toc-element topic="Start.topic"/></instance-profile>',
+      );
+      await File(p.join(root.path, 'topics/Start.topic')).writeAsString(
+        '<topic id="Start" title="Diagrams"><code-block lang="$language" id="flow">'
+        '${language == 'mermaid' ? 'graph LR; A--&gt;B' : 'openapi: 3.1.0'}'
+        '</code-block><p><a anchor="flow">See diagram</a></p></topic>',
+      );
+      final visualization = VisualizationCoordinator(
+        renderers: [_Diagrams()],
+        cache: VisualizationCache(
+          diskRoot: Directory(p.join(root.path, 'cache')),
+        ),
+      );
+      addTearDown(visualization.dispose);
+      final result = await HtmlExportService(visualization: visualization)
+          .exportWriterside(
+            projectRoot: root.path,
+            moduleRoot: root.path,
+            instanceId: 'guide',
+            destinationPath: p.join(root.path, 'out'),
+          );
+      final doc = html.parse(await File(result.entryPointPath).readAsString());
+      expect(
+        doc.getElementById('flow')!.localName,
+        language == 'mermaid' ? 'figure' : 'section',
+      );
+      expect(doc.querySelectorAll('[id="flow"]'), hasLength(1));
+      expect(doc.querySelector('a[href="#flow"]')!.text, 'See diagram');
+      expect(doc.querySelector('pre'), isNull);
+      expect(result.warnings, isEmpty);
+    });
+  }
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
     'HTML uses unique occurrence jobs, standalone math and diagram/static API engines',

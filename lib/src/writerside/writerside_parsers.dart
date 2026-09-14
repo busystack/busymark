@@ -1032,6 +1032,19 @@ class WritersideTopicParser {
     required String filePath,
     required String source,
     required String topicsRoot,
+  }) => SourceLocationMapper.withSource(
+    source,
+    () => _parseMarkdown(
+      filePath: filePath,
+      source: source,
+      topicsRoot: topicsRoot,
+    ),
+  );
+
+  WritersideTopic _parseMarkdown({
+    required String filePath,
+    required String source,
+    required String topicsRoot,
   }) {
     final parsed = markdownParser.parse(
       filePath: filePath,
@@ -1141,6 +1154,15 @@ class WritersideTopicParser {
   }
 
   WritersideTopic parseXml({
+    required String filePath,
+    required String source,
+    String? topicsRoot,
+  }) => SourceLocationMapper.withSource(
+    source,
+    () => _parseXml(filePath: filePath, source: source, topicsRoot: topicsRoot),
+  );
+
+  WritersideTopic _parseXml({
     required String filePath,
     required String source,
     String? topicsRoot,
