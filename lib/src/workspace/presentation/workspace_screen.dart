@@ -6877,8 +6877,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
   ) async {
     if (_syncFromTree && selected != null) {
       final topic = _presenter?.present(selected.node).topic;
-      if (topic == null ||
-          widget.workspace.activeFilePath?.endsWith('.tree') == true) {
+      if (topic == null) {
         await _goToTocElement(context, selected);
       } else {
         await ref
@@ -6890,18 +6889,22 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final active = ref.read(workspaceControllerProvider).activeBuffer;
     final file = active?.filePath;
     if (active == null || file == null) return;
-    final key = file.toLowerCase().endsWith('.tree')
+    final treeEditor = file.toLowerCase().endsWith('.tree');
+    final key = treeEditor
         ? writersideTocEditorSyncKey(
             file,
             active.text,
             active.editorState.selection.extentOffset,
           )
-        : p.basename(file);
-    if (key == null) return;
-    final match = writersideTocBreadthFirstPath(
-      instance.navigationTocRoots,
-      (node) => node.topicReference == key,
-    );
+        : null;
+    if (treeEditor && key == null) return;
+    final match = writersideTocBreadthFirstPath(instance.navigationTocRoots, (
+      node,
+    ) {
+      if (treeEditor) return node.topicReference == key;
+      final topic = _presenter?.present(node).topic;
+      return topic != null && p.equals(topic.filePath, file);
+    });
     if (match == null) return;
     final path = match.join('/');
     setState(() {

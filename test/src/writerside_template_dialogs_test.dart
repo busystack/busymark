@@ -245,6 +245,64 @@ void main() {
       'Writerside_other',
     );
   });
+
+  for (final customFirst in [true, false]) {
+    testWidgets(
+      'Files and Internal Starter.md both save (custom first: $customFirst)',
+      (tester) async {
+        final builtin = (await tester.runAsync(service.bundled))!.firstWhere(
+          (entry) => entry.name == 'Starter' && entry.extension == 'md',
+        );
+        const custom = WritersideTemplate(
+          id: 'custom-starter',
+          name: 'Starter',
+          category: 'custom',
+          extension: 'md',
+          source: '# Custom',
+        );
+        await tester.runAsync(
+          () async => service.save(await service.read(), [
+            customFirst
+                ? custom
+                : builtin.copyWith(source: '# Internal override'),
+          ]),
+        );
+        await show(
+          tester,
+          WritersideTemplatesEditor(
+            createNew: !customFirst,
+            selectedId: customFirst ? builtin.id : null,
+          ),
+        );
+        if (!customFirst) {
+          await tester.enterText(
+            find.byKey(const ValueKey('template-editor-name')),
+            'Starter',
+          );
+        }
+        await tester.enterText(
+          find.byKey(const ValueKey('template-editor-source')),
+          customFirst ? '# Internal override' : '# Custom',
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('OK'));
+        await settle(tester);
+        expect(find.text('File and Code Templates'), findsNothing);
+        final entries = (await tester.runAsync(service.read))!.entries;
+        expect(
+          {
+            for (final entry in entries)
+              '${entry.category}:${entry.name}.${entry.extension}':
+                  entry.source,
+          },
+          {
+            'default:Starter.md': '# Internal override',
+            'custom:Starter.md': '# Custom',
+          },
+        );
+      },
+    );
+  }
 }
 
 Future<void> settle(WidgetTester tester) async {

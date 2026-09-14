@@ -166,6 +166,123 @@ void main() {
     },
   );
 
+  for (final scenario in [
+    (
+      name: 'empty instance',
+      attributes: '',
+      children: '',
+      topic: true,
+      home: 'unlinked.md',
+    ),
+    (
+      name: 'groups only',
+      attributes: '',
+      children: '<toc-element toc-title="Group"/>',
+      topic: true,
+      home: 'unlinked.md',
+    ),
+    (
+      name: 'existing home',
+      attributes: ' start-page="home.md"',
+      children: '',
+      topic: true,
+      home: 'home.md',
+    ),
+    (
+      name: 'library',
+      attributes: ' is-library="true"',
+      children: '',
+      topic: true,
+      home: null,
+    ),
+    (
+      name: 'empty group insertion',
+      attributes: '',
+      children: '',
+      topic: false,
+      home: null,
+    ),
+    (
+      name: 'existing nested topic',
+      attributes: '',
+      children:
+          '<toc-element toc-title="Group"><toc-element topic="home.md"/></toc-element>',
+      topic: true,
+      home: null,
+    ),
+  ]) {
+    test(
+      'linking initializes the first-topic home page: ${scenario.name}',
+      () async {
+        final root = await fixture();
+        final tree = File(p.join(root.path, 'guide.tree'));
+        await tree.writeAsString(
+          '<instance-profile id="guide" name="Guide"${scenario.attributes}>${scenario.children}</instance-profile>',
+        );
+        const service = WorkspaceService();
+        final workspace = await service.openPath(root.path);
+        final topic = workspace.writersideModule!.topicByReference(
+          'unlinked.md',
+        )!;
+        final bytes = await File(topic.filePath).readAsBytes();
+        await service.insertWritersideTocElement(
+          workspace,
+          treePath: tree.path,
+          request: WritersideTocInsertRequest(
+            placement: WritersideTopicCreatePlacement.root,
+            topicReference: scenario.topic ? 'unlinked.md' : null,
+            tocTitle: scenario.topic ? null : 'Empty group',
+          ),
+          expectedTopicPath: scenario.topic ? topic.filePath : null,
+          expectedTopicSource: scenario.topic ? topic.document.source : null,
+        );
+        final xml = XmlDocument.parse(await tree.readAsString()).rootElement;
+        expect(xml.getAttribute('start-page'), scenario.home);
+        expect(xml.getAttribute('name'), 'Guide');
+        expect(await File(topic.filePath).readAsBytes(), bytes);
+        expect(
+          xml.childElements.last.getAttribute(
+            scenario.topic ? 'topic' : 'toc-title',
+          ),
+          scenario.topic ? 'unlinked.md' : 'Empty group',
+        );
+      },
+    );
+  }
+
+  test(
+    'first linked topic and home assignment share the same publication guard',
+    () async {
+      final root = await fixture();
+      final tree = File(p.join(root.path, 'guide.tree'));
+      await tree.writeAsString('<instance-profile id="guide"/>');
+      const concurrent = '<instance-profile id="guide" start-page="home.md"/>';
+      final service = WorkspaceService(
+        writersideTocEditor: WritersideTocEditor(
+          beforeTreePublish: (_) => tree.writeAsString(concurrent),
+        ),
+      );
+      final workspace = await service.openPath(root.path);
+      final topic = workspace.writersideModule!.topicByReference(
+        'unlinked.md',
+      )!;
+      await expectLater(
+        service.insertWritersideTocElement(
+          workspace,
+          treePath: tree.path,
+          request: const WritersideTocInsertRequest(
+            placement: WritersideTopicCreatePlacement.root,
+            topicReference: 'unlinked.md',
+          ),
+          expectedTopicPath: topic.filePath,
+          expectedTopicSource: topic.document.source,
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+      expect(await tree.readAsString(), concurrent);
+    },
+  );
+
   test(
     'title transaction rolls back both files on a concurrent dirty-buffer guard',
     () async {

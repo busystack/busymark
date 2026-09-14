@@ -1352,7 +1352,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           _requireCleanAffectedFiles(workspace, paths),
     );
     return created.activeFilePath;
-  });
+  }, openForEditing: true);
 
   Future<List<WritersideMarkdownImportCandidate>?>
   discoverWritersideMarkdownImport(String sourceDirectoryPath) async {
@@ -4431,8 +4431,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> _runWorkspaceFileOperation(
-    Future<String?> Function(Workspace workspace) operation,
-  ) async {
+    Future<String?> Function(Workspace workspace) operation, {
+    bool openForEditing = false,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
@@ -4445,7 +4446,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       if (preferredActivePath != null) {
-        return await _openActiveFile(preferredActivePath);
+        final opened = await _openActiveFile(preferredActivePath);
+        if (opened &&
+            openForEditing &&
+            state.activeBuffer?.filePath == preferredActivePath &&
+            state.activeBuffer?.editorState.mode ==
+                DocumentViewModePreference.preview) {
+          // Creation opens an editable document without changing the global
+          // preference or the view modes of any other open buffers.
+          updateActiveEditorMode(DocumentViewModePreference.source);
+        }
+        return opened;
       }
       return true;
     } on Object catch (error, stackTrace) {

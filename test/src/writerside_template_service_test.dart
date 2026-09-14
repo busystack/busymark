@@ -255,6 +255,58 @@ void main() {
     });
   });
 
+  for (final customFirst in [true, false]) {
+    test(
+      'custom and Internal templates may share a name (custom first: $customFirst)',
+      () async {
+        final builtin = (await service.bundled()).firstWhere(
+          (entry) => entry.name == 'Starter' && entry.extension == 'md',
+        );
+        const custom = WritersideTemplate(
+          id: 'custom-starter',
+          name: 'Starter',
+          category: 'custom',
+          extension: 'md',
+          source: '# Custom',
+        );
+        final overridden = builtin.copyWith(source: '# Internal override');
+        await service.save(await service.read(), [
+          customFirst ? custom : overridden,
+        ]);
+        await service.save(
+          await service.read(),
+          customFirst ? [custom, overridden] : [overridden, custom],
+        );
+        final reloaded = WritersideTemplateService(
+          storagePath: p.join(root.path, 'support/templates.json'),
+          loadBundledSource: () =>
+              File('assets/writerside/templates.json').readAsString(),
+        );
+        final entries = (await reloaded.catalog()).where(
+          (entry) => entry.name == 'Starter' && entry.extension == 'md',
+        );
+        expect(
+          {for (final entry in entries) entry.category: entry.source},
+          {'default': '# Internal override', 'custom': '# Custom'},
+        );
+        await expectLater(
+          service.save(await service.read(), [
+            custom,
+            const WritersideTemplate(
+              id: 'second-custom',
+              name: 'Starter',
+              category: 'custom',
+              extension: 'md',
+              source: '# Duplicate',
+            ),
+          ]),
+          throwsFormatException,
+        );
+        expect((await service.read()).entries, hasLength(2));
+      },
+    );
+  }
+
   test('corrupt and symbolic-link stores are never replaced', () async {
     final path = service.storagePath!;
     await File(path).parent.create(recursive: true);

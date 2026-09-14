@@ -144,6 +144,9 @@ class WritersideTocEditor {
     } else if (request.referencePath != null) {
       throw const BusyMarkException('writerside.toc.path-invalid');
     }
+    if (request.topicReference case final topicReference?) {
+      initializeWritersideFirstTopicHomePage(session.root, topicReference);
+    }
     final element = XmlElement(XmlName.parts('toc-element'), [
       if (request.topicReference != null)
         XmlAttribute(XmlName.parts('topic'), request.topicReference!),

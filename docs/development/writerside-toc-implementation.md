@@ -269,3 +269,43 @@ Inspected Linux evidence:
 [template editor](/tmp/busymark-gtk-toc-final-acceptance/17-file-and-code-templates.png),
 [custom template reuse](/tmp/busymark-gtk-toc-final-acceptance/18-custom-template-preview.png).
 The disposable source results remain in `/tmp/busymark-toc-native-SZKSLU`.
+
+## Review corrections — 2026-09-14
+
+Applied to the clean implementation commit `f0ef33f`, without changing GTK
+menus or the approved Writerside build/template-storage decisions:
+
+| Reported defect | Correction | Regression coverage |
+| --- | --- | --- |
+| Tree-to-editor synchronization depended on the previous document's extension | `_synchronizeToc` opens the selected entry's resolved topic; only topic-less entries use element-source navigation. | `writerside_toc_regressions_test.dart`: open a `.tree` editor, right-select a topic, dismiss the menu, synchronize; then synchronize a topic-less group. |
+| Qualified topic references did not synchronize | Resolve each occurrence through the existing module-aware presenter and compare its topic file path with the active file, keeping breadth-first selection. The separately documented `.tree` ID rule is unchanged. | Same widget suite: `guides/install.md`, another `elsewhere/install.md`, a deeper occurrence, and two root occurrences; the first breadth-first matching file wins. |
+| Linking the first existing topic omitted `start-page` | Creation and linking share `initializeWritersideFirstTopicHomePage`, applied before insertion within the guarded tree mutation. | `writerside_toc_workspace_test.dart`: empty instance, groups only, existing home, library, empty-group insertion, existing nested topic, and concurrent publication; linked source bytes remain unchanged. |
+| Template editor and storage disagreed on uniqueness | Storage validates category/name/extension, matching the editor. Same-category duplicates remain invalid. | `writerside_template_service_test.dart` and `writerside_template_dialogs_test.dart`: custom `Starter.md` and Internal override saved in both orders, persisted and reloaded. |
+| Topic creation inherited preview-only mode | Successful `createWritersideTopic` makes only the new preview-only buffer editable, within the controller's file-operation boundary. Existing editable modes, other tabs, and the global preference remain unchanged. | `writerside_toc_regressions_test.dart`: actual Preview Topic followed by Empty MD, Empty XML, and template-dialog creation; verify source editor, template body, retained dirty content, and all existing tab modes. |
+
+The new full-workspace widget tests use real temporary project files and the
+production controller/services. Only desktop host/theme and persistence services
+are isolated. Their framework menu fallback is test-only; these checks do not
+replace or claim a new recording of the native GTK evidence above.
+
+Review verification (Flutter 3.47.2 / Dart 3.13.2):
+
+- Full `flutter test --no-pub --concurrency=2 --file-reporter
+  json:/tmp/busymark-toc-review-full.json`: exit 0, **1,921 passed, 58 optional
+  integration skips**. This includes all 16 new regressions.
+- Documented focused suite: exit 0, **416 passed, 1 optional Typst skip**;
+  `/tmp/busymark-toc-review-focused.json`.
+- `flutter analyze --no-pub`: exit 0, no issues.
+- `dart format --output=none --set-exit-if-changed` on all nine changed/new Dart
+  files: exit 0, no changes. `flutter gen-l10n` and `git diff --check`: exit 0.
+- `bash tools/validate_writerside_conformance.sh`: exit 0, **181 checks passed**;
+  `/tmp/busymark-toc-review-builder.log`.
+- `flutter build linux --debug --no-pub --target lib/main.dart`: exit 0;
+  `/tmp/busymark-toc-review-linux-build.log`. The bundle targets the normal app.
+
+An earlier full-suite attempt emitted an asynchronous local-history file-monitor
+teardown error before the user interrupted verification. The isolated
+`workspace rename settles a failed first-save promotion` test passed on rerun;
+the completed full-suite rerun above also passed. No unrelated local-history or
+monitoring behavior was changed to hide that failure. Interrupted processes and
+temporary logs were lost, so completed verification was rerun after resuming.

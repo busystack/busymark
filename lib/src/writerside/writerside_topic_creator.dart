@@ -10,6 +10,24 @@ import 'writerside_model.dart';
 
 enum WritersideTopicCreatePlacement { root, sibling, child }
 
+/// Shared by creation and linking, before inserting the first topic into a
+/// guarded tree snapshot. Empty groups do not count as existing topics.
+void initializeWritersideFirstTopicHomePage(
+  XmlElement root,
+  String topicReference,
+) {
+  final isFirstTopic = !root.descendants.whereType<XmlElement>().any(
+    (element) =>
+        element.name.local == 'toc-element' &&
+        element.getAttribute('topic')?.trim().isNotEmpty == true,
+  );
+  if (isFirstTopic &&
+      root.getAttribute('start-page') == null &&
+      root.getAttribute('is-library') != 'true') {
+    root.setAttribute('start-page', topicReference);
+  }
+}
+
 /// Semantic identity of a TOC subtree captured when the user selects it.
 ///
 /// Structural index paths can become stale when another writer inserts or
@@ -375,16 +393,7 @@ class WritersideTopicCreator {
     final element = XmlElement(XmlName.parts('toc-element'), [
       XmlAttribute(XmlName.parts('topic'), topicFileName),
     ]);
-    final isFirstTopic = !root.descendants.whereType<XmlElement>().any(
-      (element) =>
-          element.name.local == 'toc-element' &&
-          element.getAttribute('topic')?.trim().isNotEmpty == true,
-    );
-    if (isFirstTopic &&
-        root.getAttribute('start-page') == null &&
-        root.getAttribute('is-library') != 'true') {
-      root.setAttribute('start-page', topicFileName);
-    }
+    initializeWritersideFirstTopicHomePage(root, topicFileName);
     if (request.placement == WritersideTopicCreatePlacement.root) {
       root.children.add(element);
       return _treeXml(document);

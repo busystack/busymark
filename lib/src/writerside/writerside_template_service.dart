@@ -218,7 +218,7 @@ class WritersideTemplateService {
       WritersideTemplate.fromJson(entry.toJson());
       if (entry.category == 'tgdp' ||
           !ids.add(entry.id) ||
-          !names.add('${entry.name}.${entry.extension}')) {
+          !names.add('${entry.category}:${entry.name}.${entry.extension}')) {
         throw const FormatException('Duplicate or invalid user template');
       }
     }
