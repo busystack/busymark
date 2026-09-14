@@ -1,5 +1,9 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
+// HtmlParser exposes its tokenizer, but does not re-export the token types.
+// Inspect start tags before HTML tree construction can discard their attributes.
+// ignore: implementation_imports
+import 'package:html/src/token.dart' show StartTagToken;
 import 'package:markdown/markdown.dart' as md;
 
 import '../core/diagnostic.dart';
@@ -63,6 +67,7 @@ class _LocatedDocument extends md.Document {
   final _contexts = <_BlockContext>[];
   final _locations = Map<md.Node, _LocatedText>.identity();
   final _html = Map<md.Node, _LocatedText>.identity();
+  final _inlineHtml = Map<md.Node, _LocatedText>.identity();
   final _urls = Map<md.Node, _LocatedText>.identity();
   _LocatedText? _inlineSource;
 
@@ -108,19 +113,64 @@ class _LocatedDocument extends md.Document {
     }
 
     void warn(_LocatedText text, int start, int end) {
+      final offsets = text.offsets;
+      final hasLocation =
+          offsets != null && start >= 0 && end > start && end <= offsets.length;
       diagnostics.add(
         Diagnostic(
           code: 'markdown.raw-html.unsafe',
           severity: DiagnosticSeverity.warning,
           filePath: filePath,
-          sourceSpan: SourceSpan.fromOffsets(
-            filePath: filePath,
-            source: source,
-            startOffset: text.offsets[start],
-            endOffset: text.offsets[end - 1] + 1,
-          ),
+          // Location mapping is auxiliary to validation. If a source transform
+          // cannot be mapped, retain the warning on the file without inventing
+          // a location or preventing the Markdown document from being parsed.
+          sourceSpan: !hasLocation
+              ? null
+              : SourceSpan.fromOffsets(
+                  filePath: filePath,
+                  source: source,
+                  startOffset: offsets[start],
+                  endOffset: offsets[end - 1] + 1,
+                ),
         ),
       );
+    }
+
+    void warnHtmlTag(_LocatedText text, int? start, int? end) {
+      if (start == null || end == null) {
+        warn(text, 0, text.text.length);
+        return;
+      }
+      // HTML token spans can exclude '<' after a malformed prefix such as
+      // '<<img ...>'. Recover that adjacent character within this construct.
+      if (start > 0 && text.text[start] != '<' && text.text[start - 1] == '<') {
+        start--;
+      }
+      final name = RegExp(
+        r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b',
+      ).matchAsPrefix(text.text, start);
+      warn(text, start, name?.end ?? end);
+    }
+
+    void inspectInlineHtml(_LocatedText text) {
+      // Markdown already identified a single authored HTML construct. Tokenize
+      // it without a div-context tree, which would drop tags such as tr and td.
+      // This still uses HTML's attribute decoding and duplicate-name rules.
+      final tokens = html_parser.HtmlParser(
+        text.text,
+        generateSpans: true,
+      ).tokenizer;
+      while (tokens.moveNext()) {
+        final token = tokens.current;
+        if (token is! StartTagToken) continue;
+        final tag = token.name ?? '';
+        if (mode == MarkdownMode.writersideMarkdown && tag == 'video') continue;
+        if (isUnsafeHtmlTag(tag) ||
+            (isSafeHtmlTag(tag) &&
+                sanitizeHtmlAttributes(tag, token.data) == null)) {
+          warnHtmlTag(text, token.span?.start.offset, token.span?.end.offset);
+        }
+      }
     }
 
     void inspectHtml(_LocatedText text) {
@@ -145,22 +195,7 @@ class _LocatedDocument extends md.Document {
               (isSafeHtmlTag(tag) &&
                   sanitizeHtmlAttributes(tag, node.attributes) == null)) {
             final span = node.sourceSpan;
-            if (span != null) {
-              var start = span.start.offset;
-              // The HTML tokenizer can exclude the opening '<' when recovering
-              // from a malformed prefix such as '<<img ...>'.
-              if (!span.text.startsWith('<') &&
-                  start > 0 &&
-                  text.text[start - 1] == '<') {
-                start--;
-              }
-              final name = RegExp(
-                r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b',
-              ).matchAsPrefix(text.text, start);
-              warn(text, start, name?.end ?? span.end.offset);
-            } else {
-              warn(text, 0, text.text.length);
-            }
+            warnHtmlTag(text, span?.start.offset, span?.end.offset);
             // One diagnostic covers the removed element and its descendants.
             return;
           }
@@ -174,7 +209,9 @@ class _LocatedDocument extends md.Document {
     }
 
     void visit(md.Node node) {
-      if (_html[node] case final html?) {
+      if (_inlineHtml[node] case final inlineHtml?) {
+        inspectInlineHtml(inlineHtml);
+      } else if (_html[node] case final html?) {
         inspectHtml(html);
       } else if (node is md.UnparsedContent) {
         for (final child in inlineNodes[node] ?? const <md.Node>[]) {
@@ -223,7 +260,7 @@ class _LocatedDocument extends md.Document {
       // Containers strip only prefixes from their child lines. Bind each child
       // line in order within its parent, never against another source block.
       final parent = _contexts.last;
-      final offsets = <int>[];
+      final offsets = <int?>[];
       for (final child in parser.lines) {
         while (parent.childLine < parent.lines.lines.length &&
             !parent.lines.lines[parent.childLine].content.endsWith(
@@ -232,13 +269,17 @@ class _LocatedDocument extends md.Document {
           parent.childLine++;
         }
         if (parent.childLine == parent.lines.lines.length) {
-          throw StateError('Cannot map Markdown container line');
+          offsets.add(null);
+          continue;
         }
         final index = parent.childLine++;
+        final parentOffset = parent.lines.offsets[index];
         offsets.add(
-          parent.lines.offsets[index] +
-              parent.lines.lines[index].content.length -
-              child.content.length,
+          parentOffset == null
+              ? null
+              : parentOffset +
+                    parent.lines.lines[index].content.length -
+                    child.content.length,
         );
       }
       return _Lines(parser.lines, offsets);
@@ -267,9 +308,13 @@ class _LocatedDocument extends md.Document {
           final raw = blockSource();
           final mapped = raw.bind(node.textContent, cursor);
           _locations[node] = mapped;
-          if (mapped.offsets.isNotEmpty) {
-            while (cursor < raw.offsets.length &&
-                raw.offsets[cursor] <= mapped.offsets.last) {
+          final mappedOffsets = mapped.offsets;
+          final rawOffsets = raw.offsets;
+          if (mappedOffsets != null &&
+              mappedOffsets.isNotEmpty &&
+              rawOffsets != null) {
+            while (cursor < rawOffsets.length &&
+                rawOffsets[cursor] <= mappedOffsets.last) {
               cursor++;
             }
           }
@@ -281,14 +326,23 @@ class _LocatedDocument extends md.Document {
       }
 
       if (node is md.Element && node.tag == 'table') {
-        // Extra cells are discarded by Markdown. Bind each retained row to its
-        // own source line so a later cell cannot match a discarded occurrence.
+        // Table syntax removes escaped pipes before parsing inline content.
+        // Bind by cell boundaries, including discarded and synthetic cells;
+        // decoded text must never be searched for across neighboring cells.
         var line = start;
         for (final section in node.children!.whereType<md.Element>()) {
           for (final row in section.children!.whereType<md.Element>()) {
-            block = lines.text(line, line + 1);
-            cursor = 0;
-            bind(row);
+            final cells = lines.text(line, line + 1).tableCells();
+            final elements = row.children!.whereType<md.Element>().toList();
+            for (var i = 0; i < elements.length; i++) {
+              for (final content
+                  in elements[i].children!.whereType<md.UnparsedContent>()) {
+                final cell = i < cells.length ? cells[i] : null;
+                _locations[content] = cell?.text == content.textContent
+                    ? cell!
+                    : _LocatedText(content.textContent, null);
+              }
+            }
             line += line == start ? 2 : 1; // Skip the delimiter row.
           }
         }
@@ -307,21 +361,31 @@ class _Lines {
           for (var i = 0; i < lines.length; i++) MapEntry(lines[i], i),
         ]);
   final List<md.Line> lines;
-  final List<int> offsets;
+  final List<int?> offsets;
   final Map<md.Line, int> indices;
 
   _LocatedText text(int start, int end) {
     final text = StringBuffer();
-    final positions = <int>[];
+    List<int>? positions = <int>[];
     for (var i = start; i < end; i++) {
       if (i > start) {
         text.write('\n');
-        positions.add(offsets[i - 1] + lines[i - 1].content.length);
+        final previousOffset = offsets[i - 1];
+        if (previousOffset == null) {
+          positions = null;
+        } else {
+          positions?.add(previousOffset + lines[i - 1].content.length);
+        }
       }
       text.write(lines[i].content);
-      positions.addAll([
-        for (var j = 0; j < lines[i].content.length; j++) offsets[i] + j,
-      ]);
+      final offset = offsets[i];
+      if (offset == null) {
+        positions = null;
+      } else {
+        positions?.addAll([
+          for (var j = 0; j < lines[i].content.length; j++) offset + j,
+        ]);
+      }
     }
     return _LocatedText(text.toString(), positions);
   }
@@ -336,27 +400,74 @@ class _BlockContext {
 class _LocatedText {
   _LocatedText(this.text, this.offsets);
   final String text;
-  final List<int> offsets;
+  final List<int>? offsets;
   _LocatedText slice(int start, int end) =>
-      _LocatedText(text.substring(start, end), offsets.sublist(start, end));
+      _LocatedText(text.substring(start, end), offsets?.sublist(start, end));
+
+  List<_LocatedText> tableCells() {
+    final cells = <_LocatedText>[];
+    final sourceOffsets = offsets;
+    var buffer = StringBuffer();
+    var positions = <int>[];
+    var index = 0;
+    void skipWhitespace() {
+      while (index < text.length &&
+          (text.codeUnitAt(index) == 0x20 || text.codeUnitAt(index) == 0x09)) {
+        index++;
+      }
+    }
+
+    void append(int offset) {
+      buffer.writeCharCode(text.codeUnitAt(offset));
+      if (sourceOffsets != null) positions.add(sourceOffsets[offset]);
+    }
+
+    void finishCell() {
+      final content = buffer.toString().trimRight();
+      cells.add(
+        _LocatedText(
+          content,
+          sourceOffsets == null ? null : positions.sublist(0, content.length),
+        ),
+      );
+      buffer = StringBuffer();
+      positions = <int>[];
+    }
+
+    skipWhitespace();
+    if (index < text.length && text.codeUnitAt(index) == 0x7c) {
+      index++;
+      skipWhitespace();
+    }
+    while (index < text.length) {
+      final unit = text.codeUnitAt(index);
+      if (unit == 0x5c && index + 1 < text.length) {
+        // Like Markdown's TableSyntax, consume backslash pairs before testing
+        // delimiters. Only a backslash immediately escaping a pipe is removed.
+        if (text.codeUnitAt(index + 1) != 0x7c) append(index);
+        append(index + 1);
+        index += 2;
+      } else if (unit == 0x7c) {
+        finishCell();
+        index++;
+        skipWhitespace();
+        if (index == text.length) return cells;
+      } else {
+        append(index++);
+      }
+    }
+    finishCell();
+    return cells;
+  }
 
   _LocatedText bind(String content, int cursor) {
     // This is *unparsed* inline source within the block that produced it,
-    // before entity encoding or code-span normalization. Markdown tables can
-    // additionally remove backslashes before pipes; map those as deletions.
+    // before entity encoding or code-span normalization. Tables use their own
+    // source boundaries and transformation map above.
     final start = text.indexOf(content, cursor);
-    if (start >= 0) return slice(start, start + content.length);
-    final positions = <int>[];
-    for (final unit in content.codeUnits) {
-      while (cursor < text.length && text.codeUnitAt(cursor) != unit) {
-        cursor++;
-      }
-      if (cursor == text.length) {
-        throw StateError('Cannot map Markdown inline source');
-      }
-      positions.add(offsets[cursor++]);
-    }
-    return _LocatedText(content, positions);
+    return start < 0
+        ? _LocatedText(content, null)
+        : slice(start, start + content.length);
   }
 }
 
@@ -452,7 +563,7 @@ class _InlineHtml extends md.InlineHtmlSyntax {
     // An element wrapper keeps this authored node separate from encoded prose
     // when the Markdown parser combines adjacent text nodes.
     final node = md.Element.text('busymark-authored-html', match[0]!);
-    document._html[node] = document._inlineSource!.slice(
+    document._inlineHtml[node] = document._inlineSource!.slice(
       match.start,
       match.end,
     );

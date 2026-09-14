@@ -27,6 +27,30 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test('Validate publishes a valid table containing an escaped pipe', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-table-validation-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final file = File(p.join(root.path, 'table.md'));
+    await file.writeAsString('# Table\n');
+    final harness = await _createControllerHarness();
+    await harness.settingsController.setValidateOnEdit(false);
+    await harness.settingsController.setAutoSave(false);
+    final controller = harness.controller._notifier;
+    await controller.openPath(file.path);
+    const source =
+        '| One | Two | Three |\n| --- | --- | --- |\n'
+        r'| a\|b | a|b |'
+        '\n';
+    controller.updateActiveText(source);
+    final result = await controller.validateActive();
+    expect(result.status, ValidationStatus.published);
+    expect(controller.isCurrentValidation(result), isTrue);
+    expect(harness.controller.state.workspace!.markdown!.source, source);
+    expect(harness.controller.state.workspace!.diagnostics, isEmpty);
+  });
+
   test(
     'validation reports stale, busy and failed outcomes without publishing old results',
     () async {
