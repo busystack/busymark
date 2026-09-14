@@ -11,6 +11,219 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'موضوع از الگو...';
+
+  @override
+  String get tocSaveAsTemplate => 'ذخیره به‌عنوان الگو';
+
+  @override
+  String get tocTemplateDialog => 'ایجاد موضوع از الگو';
+
+  @override
+  String get tocTemplatesEditor => 'الگوهای فایل و کد';
+
+  @override
+  String get tocEditTemplates => 'ویرایش الگوها...';
+
+  @override
+  String get tocCreateCustomTemplate => 'ایجاد الگوی سفارشی...';
+
+  @override
+  String get tocTemplateCreated => 'الگو ایجاد شد';
+
+  @override
+  String get tocTemplateDefault => 'پیش‌فرض';
+
+  @override
+  String get tocTemplateCustom => 'سفارشی';
+
+  @override
+  String get tocTemplateFilename => 'نام فایل:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'داخلی';
+
+  @override
+  String get tocTemplateUnnamed => 'بی‌نام';
+
+  @override
+  String get tocTemplateNew => 'الگوی جدید...';
+
+  @override
+  String get tocTemplateName => 'نام:';
+
+  @override
+  String get tocTemplateExtension => 'پسوند:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'بارگیری الگوها ممکن نشد. الگوهای موجود تغییر نکرده‌اند.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'ذخیره الگوها ممکن نشد. ویرایش‌های شما همچنان اینجا هستند.';
+
+  @override
+  String get tocTemplateConflict =>
+      'الگوها در پنجره دیگری تغییر کرده‌اند. لغو کنید و ویرایشگر را دوباره باز کنید.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'الگویی با این نام و پسوند از قبل وجود دارد.';
+
+  @override
+  String get tocTemplateFormat => 'قالب:';
+
+  @override
+  String get tocTemplateReset => 'بازنشانی';
+
+  @override
+  String get tocTemplateRetry => 'تلاش مجدد';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'حذف $count عنصر فهرست مطالب';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'فایل‌های منبع مرتبط با این عناصر فهرست مطالب حذف نخواهند شد.';
+
+  @override
+  String get tocOk => 'تأیید';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'موضوعی برای افزودن به نمونهٔ کنونی انتخاب کنید';
+
+  @override
+  String get tocGroupName => 'نام گروه';
+
+  @override
+  String get tocMoveLineUp => 'انتقال سطر به بالا';
+
+  @override
+  String get tocMoveLineDown => 'انتقال سطر به پایین';
+
+  @override
+  String get tocEmptyMdTopic => 'موضوع MD خالی';
+
+  @override
+  String get tocEmptyXmlTopic => 'موضوع XML خالی';
+
+  @override
+  String get tocCopySpecial => 'کپی ویژه';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'نام پروندهٔ موضوع \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'مسیر پروندهٔ موضوع';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'عنوان موضوع \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'شناسهٔ عنصر فهرست مطالب \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'نام پروندهٔ موضوع';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'عنوان موضوع';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'شناسهٔ عنصر فهرست مطالب';
+
+  @override
+  String get tocPreviewTopic => 'پیش‌نمایش موضوع';
+
+  @override
+  String get tocEditTitleAction => 'ویرایش عنوان...';
+
+  @override
+  String get tocEditTitleDialog => 'ویرایش عنوان';
+
+  @override
+  String get tocRemoveElementAction => 'حذف عنصر فهرست مطالب...';
+
+  @override
+  String get tocSetHomePage => 'تنظیم به‌عنوان صفحهٔ اصلی';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'رفتن به عنصر فهرست مطالب در «$fileName»';
+  }
+
+  @override
+  String get tocSynchronize => 'همگام‌سازی فهرست مطالب و ویرایشگر';
+
+  @override
+  String get tocEmptyGroupAction => 'گروه خالی';
+
+  @override
+  String get tocNewEmptyGroup => 'گروه خالی جدید';
+
+  @override
+  String get tocGroupAction => 'گروه‌بندی';
+
+  @override
+  String get tocNewGroup => 'گروه جدید';
+
+  @override
+  String get tocSortChildren => 'مرتب‌سازی الفبایی زیرموضوع‌ها';
+
+  @override
+  String get tocLinkTopicFiles => 'پیوند پرونده‌های موضوع به فهرست مطالب...';
+
+  @override
+  String get tocTitleField => 'عنوان فهرست مطالب:';
+
+  @override
+  String get tocTopicTitleField => 'عنوان موضوع:';
+
+  @override
+  String get tocAdvancedSettings => 'تنظیمات پیشرفته';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'عنوان برای «$instanceId»:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'عنوان مختص فهرست مطالب:';
+
+  @override
+  String get tocFindUsages => 'یافتن';
+
+  @override
+  String get tocRefactorMenu => 'بازآرایی';
+
+  @override
+  String get tocSafeDelete => 'حذف ایمن';
+
+  @override
+  String get tocDuplicate => 'تکثیر';
+
+  @override
+  String get tocDuplicateFilename => 'نام پروندهٔ موضوع:';
+
+  @override
+  String get tocDuplicateDialog => 'تکثیر موضوع';
+
+  @override
   String get pdfTitlePage => 'صفحهٔ عنوان';
 
   @override
@@ -1180,7 +1393,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get files => 'فایل‌ها';
 
   @override
-  String get toc => 'موضوعات';
+  String get toc => 'فهرست مطالب';
 
   @override
   String get tocActions => 'عملیات فهرست مطالب';
@@ -1222,7 +1435,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get newChildTopic => 'موضوع فرزند جدید';
 
   @override
-  String get newSiblingTopic => 'موضوع هم‌سطح جدید';
+  String get newSiblingTopic => 'موضوع جدید';
 
   @override
   String get renameTopicFile => 'تغییر نام فایل موضوع';
@@ -3180,7 +3393,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get editInstance => 'ویرایش نمونه';
 
   @override
-  String get openTocFile => 'باز کردن فایل فهرست مطالب';
+  String get openTocFile => 'باز کردن پروندهٔ فهرست مطالب';
 
   @override
   String get createInstance => 'ایجاد نمونه';

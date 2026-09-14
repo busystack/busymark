@@ -660,7 +660,19 @@ class WritersideTreeParser {
     XmlElement parent, {
     required List<int>? tocParentPath,
     required List<Diagnostic> diagnostics,
+    Map<XmlElement, SourceSpan>? sourceSpans,
   }) {
+    if (sourceSpans == null) {
+      final authored = [parent, ...parent.descendants.whereType<XmlElement>()];
+      final semantic = const WritersideDocumentParser()
+          .parseXml(filePath: filePath, source: source)
+          .elements
+          .toList();
+      sourceSpans = {
+        for (var i = 0; i < authored.length && i < semantic.length; i++)
+          authored[i]: semantic[i].span,
+      };
+    }
     final result = <WritersideTreeEntry>[];
     var tocIndex = 0;
     for (final child in parent.childElements) {
@@ -676,13 +688,16 @@ class WritersideTreeParser {
               child,
               tocPath: tocPath,
               diagnostics: diagnostics,
+              sourceSpans: sourceSpans,
             ),
           );
           tocIndex++;
         case 'include':
           final from = _trimmedAttribute(child, 'from');
           final elementId = _trimmedAttribute(child, 'element-id');
-          final span = _elementSpan(filePath, source, 'include', elementId);
+          final span =
+              sourceSpans[child] ??
+              _elementSpan(filePath, source, 'include', elementId);
           if (from == null || elementId == null) {
             diagnostics.add(
               Diagnostic(
@@ -706,7 +721,9 @@ class WritersideTreeParser {
           );
         case 'snippet':
           final id = _trimmedAttribute(child, 'id');
-          final span = _elementSpan(filePath, source, 'snippet', id);
+          final span =
+              sourceSpans[child] ??
+              _elementSpan(filePath, source, 'snippet', id);
           if (id == null) {
             diagnostics.add(
               Diagnostic(
@@ -729,6 +746,7 @@ class WritersideTreeParser {
                 child,
                 tocParentPath: null,
                 diagnostics: diagnostics,
+                sourceSpans: sourceSpans,
               ),
               span: span,
             ),
@@ -744,6 +762,7 @@ class WritersideTreeParser {
     XmlElement element, {
     required List<int>? tocPath,
     required List<Diagnostic> diagnostics,
+    required Map<XmlElement, SourceSpan> sourceSpans,
   }) {
     final topic = _trimmedAttribute(element, 'topic');
     final reference = _trimmedAttribute(element, 'ref');
@@ -753,12 +772,9 @@ class WritersideTreeParser {
       element,
       'target-for-accept-web-file-names',
     );
-    final span = _elementSpan(
-      filePath,
-      source,
-      'toc-element',
-      topic ?? reference,
-    );
+    final span =
+        sourceSpans[element] ??
+        _elementSpan(filePath, source, 'toc-element', topic ?? reference);
     if ((reference == null) != (referenceInstance == null)) {
       diagnostics.add(
         Diagnostic(
@@ -791,7 +807,15 @@ class WritersideTreeParser {
       element,
       tocParentPath: tocPath,
       diagnostics: diagnostics,
+      sourceSpans: sourceSpans,
     );
+    final xmlPath = <int>[];
+    var current = element;
+    while (current.parent is XmlElement) {
+      final parent = current.parent! as XmlElement;
+      xmlPath.insert(0, parent.childElements.toList().indexOf(current));
+      current = parent;
+    }
     return TocNode(
       topicFileName: topic,
       referenceTopicFileName: reference,
@@ -814,6 +838,7 @@ class WritersideTreeParser {
       children: entries.whereType<TocNode>().toList(),
       sourceTreePath: filePath,
       sourceTocPath: tocPath,
+      sourceXmlPath: List.unmodifiable(xmlPath),
       span: span,
     );
   }

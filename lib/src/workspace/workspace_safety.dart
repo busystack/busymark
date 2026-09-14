@@ -35,6 +35,25 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   );
 }
 
+/// Covers every affected tab, including inactive dirty tree/topic buffers.
+Future<bool> confirmSafeToChangeWorkspaceFiles(
+  BuildContext context,
+  WidgetRef ref,
+  Iterable<String> paths,
+) {
+  final affected = paths.toList();
+  return _confirmUnsavedChanges(
+    context,
+    ref,
+    dirtyBufferIds: [
+      for (final buffer in ref.read(workspaceControllerProvider).dirtyBuffers)
+        if (buffer.filePath != null &&
+            affected.any((path) => p.equals(path, buffer.filePath!)))
+          buffer.id,
+    ],
+  );
+}
+
 Future<bool> confirmSafeToCloseActiveDocument(
   BuildContext context,
   WidgetRef ref,

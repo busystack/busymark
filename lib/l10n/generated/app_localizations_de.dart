@@ -11,6 +11,221 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Thema aus Vorlage...';
+
+  @override
+  String get tocSaveAsTemplate => 'Als Vorlage speichern';
+
+  @override
+  String get tocTemplateDialog => 'Thema aus Vorlage erstellen';
+
+  @override
+  String get tocTemplatesEditor => 'Datei- und Codevorlagen';
+
+  @override
+  String get tocEditTemplates => 'Vorlagen bearbeiten...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Eigene Vorlage erstellen...';
+
+  @override
+  String get tocTemplateCreated => 'Vorlage erstellt';
+
+  @override
+  String get tocTemplateDefault => 'Standard';
+
+  @override
+  String get tocTemplateCustom => 'Benutzerdefiniert';
+
+  @override
+  String get tocTemplateFilename => 'Dateiname:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Intern';
+
+  @override
+  String get tocTemplateUnnamed => 'Unbenannt';
+
+  @override
+  String get tocTemplateNew => 'Neue Vorlage...';
+
+  @override
+  String get tocTemplateName => 'Name:';
+
+  @override
+  String get tocTemplateExtension => 'Erweiterung:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Vorlagen konnten nicht geladen werden. Bestehende Vorlagen wurden nicht geändert.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Vorlagen konnten nicht gespeichert werden. Ihre Änderungen sind hier noch verfügbar.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Vorlagen wurden in einem anderen Fenster geändert. Brechen Sie ab und öffnen Sie den Editor erneut.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Eine Vorlage mit diesem Namen und dieser Erweiterung existiert bereits.';
+
+  @override
+  String get tocTemplateFormat => 'Format:';
+
+  @override
+  String get tocTemplateReset => 'Zurücksetzen';
+
+  @override
+  String get tocTemplateRetry => 'Erneut versuchen';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '$count Inhaltsverzeichniselemente entfernen';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Die mit diesen Inhaltsverzeichniselementen verknüpften Quelldateien werden nicht gelöscht.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Thema zum Hinzufügen zur aktuellen Instanz auswählen';
+
+  @override
+  String get tocGroupName => 'Gruppenname';
+
+  @override
+  String get tocMoveLineUp => 'Zeile nach oben verschieben';
+
+  @override
+  String get tocMoveLineDown => 'Zeile nach unten verschieben';
+
+  @override
+  String get tocEmptyMdTopic => 'Leeres MD-Thema';
+
+  @override
+  String get tocEmptyXmlTopic => 'Leeres XML-Thema';
+
+  @override
+  String get tocCopySpecial => 'Speziell kopieren';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Themendateiname \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Themendateipfad';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Thementitel \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID des Inhaltsverzeichniselements \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Themendateiname';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Thementitel';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID des Inhaltsverzeichniselements';
+
+  @override
+  String get tocPreviewTopic => 'Thema in Vorschau anzeigen';
+
+  @override
+  String get tocEditTitleAction => 'Titel bearbeiten...';
+
+  @override
+  String get tocEditTitleDialog => 'Titel bearbeiten';
+
+  @override
+  String get tocRemoveElementAction => 'Inhaltsverzeichniselement entfernen...';
+
+  @override
+  String get tocSetHomePage => 'Als Startseite festlegen';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Zum Inhaltsverzeichniselement in \'$fileName\' wechseln';
+  }
+
+  @override
+  String get tocSynchronize => 'Inhaltsverzeichnis und Editor synchronisieren';
+
+  @override
+  String get tocEmptyGroupAction => 'Leere Gruppe';
+
+  @override
+  String get tocNewEmptyGroup => 'Neue leere Gruppe';
+
+  @override
+  String get tocGroupAction => 'Gruppieren';
+
+  @override
+  String get tocNewGroup => 'Neue Gruppe';
+
+  @override
+  String get tocSortChildren => 'Untergeordnete Themen alphabetisch sortieren';
+
+  @override
+  String get tocLinkTopicFiles =>
+      'Themendateien mit Inhaltsverzeichnis verknüpfen...';
+
+  @override
+  String get tocTitleField => 'Inhaltsverzeichnistitel:';
+
+  @override
+  String get tocTopicTitleField => 'Thementitel:';
+
+  @override
+  String get tocAdvancedSettings => 'Erweiterte Einstellungen';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Titel für \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField =>
+      'Nur im Inhaltsverzeichnis verwendeter Titel:';
+
+  @override
+  String get tocFindUsages => 'Suchen';
+
+  @override
+  String get tocRefactorMenu => 'Refaktorieren';
+
+  @override
+  String get tocSafeDelete => 'Sicher löschen';
+
+  @override
+  String get tocDuplicate => 'Duplizieren';
+
+  @override
+  String get tocDuplicateFilename => 'Themendateiname:';
+
+  @override
+  String get tocDuplicateDialog => 'Thema duplizieren';
+
+  @override
   String get pdfTitlePage => 'Titelseite';
 
   @override
@@ -1176,7 +1391,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get files => 'Dateien';
 
   @override
-  String get toc => 'Themen';
+  String get toc => 'Inhaltsverzeichnis';
 
   @override
   String get tocActions => 'Inhaltsverzeichnisaktionen';
@@ -1214,7 +1429,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get newChildTopic => 'Neues untergeordnetes Thema';
 
   @override
-  String get newSiblingTopic => 'Neues Thema auf gleicher Ebene';
+  String get newSiblingTopic => 'Neues Thema';
 
   @override
   String get renameTopicFile => 'Themendatei umbenennen';
@@ -3162,7 +3377,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editInstance => 'Instanz bearbeiten';
 
   @override
-  String get openTocFile => 'TOC-Datei öffnen';
+  String get openTocFile => 'Inhaltsverzeichnisdatei öffnen';
 
   @override
   String get createInstance => 'Instanz erstellen';

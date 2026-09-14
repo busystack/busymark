@@ -11,6 +11,219 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Tema desde plantilla...';
+
+  @override
+  String get tocSaveAsTemplate => 'Guardar como plantilla';
+
+  @override
+  String get tocTemplateDialog => 'Crear tema desde plantilla';
+
+  @override
+  String get tocTemplatesEditor => 'Plantillas de archivo y código';
+
+  @override
+  String get tocEditTemplates => 'Editar plantillas...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Crear plantilla personalizada...';
+
+  @override
+  String get tocTemplateCreated => 'Plantilla creada';
+
+  @override
+  String get tocTemplateDefault => 'Predeterminadas';
+
+  @override
+  String get tocTemplateCustom => 'Personalizadas';
+
+  @override
+  String get tocTemplateFilename => 'Nombre de archivo:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internas';
+
+  @override
+  String get tocTemplateUnnamed => 'Sin nombre';
+
+  @override
+  String get tocTemplateNew => 'Nueva plantilla...';
+
+  @override
+  String get tocTemplateName => 'Nombre:';
+
+  @override
+  String get tocTemplateExtension => 'Extensión:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'No se pudieron cargar las plantillas. No se han cambiado las existentes.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'No se pudieron guardar las plantillas. Los cambios siguen disponibles aquí.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Las plantillas cambiaron en otra ventana. Cancela y vuelve a abrir el editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Ya existe una plantilla con este nombre y extensión.';
+
+  @override
+  String get tocTemplateFormat => 'Formato:';
+
+  @override
+  String get tocTemplateReset => 'Restablecer';
+
+  @override
+  String get tocTemplateRetry => 'Reintentar';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Eliminar $count elementos del índice';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'No se eliminarán los archivos fuente asociados a estos elementos del índice.';
+
+  @override
+  String get tocOk => 'Aceptar';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Seleccionar un tema para añadir a la instancia actual';
+
+  @override
+  String get tocGroupName => 'Nombre del grupo';
+
+  @override
+  String get tocMoveLineUp => 'Mover línea hacia arriba';
+
+  @override
+  String get tocMoveLineDown => 'Mover línea hacia abajo';
+
+  @override
+  String get tocEmptyMdTopic => 'Tema MD vacío';
+
+  @override
+  String get tocEmptyXmlTopic => 'Tema XML vacío';
+
+  @override
+  String get tocCopySpecial => 'Copia especial';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nombre del archivo del tema \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Ruta del archivo del tema';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Título del tema \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID del elemento del índice \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nombre del archivo del tema';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Título del tema';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID del elemento del índice';
+
+  @override
+  String get tocPreviewTopic => 'Vista previa del tema';
+
+  @override
+  String get tocEditTitleAction => 'Editar título...';
+
+  @override
+  String get tocEditTitleDialog => 'Editar título';
+
+  @override
+  String get tocRemoveElementAction => 'Quitar elemento del índice...';
+
+  @override
+  String get tocSetHomePage => 'Establecer como página de inicio';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Ir al elemento del índice en \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sincronizar índice y editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Grupo vacío';
+
+  @override
+  String get tocNewEmptyGroup => 'Nuevo grupo vacío';
+
+  @override
+  String get tocGroupAction => 'Agrupar';
+
+  @override
+  String get tocNewGroup => 'Nuevo grupo';
+
+  @override
+  String get tocSortChildren => 'Ordenar temas secundarios alfabéticamente';
+
+  @override
+  String get tocLinkTopicFiles => 'Vincular archivos de temas al índice...';
+
+  @override
+  String get tocTitleField => 'Título del índice:';
+
+  @override
+  String get tocTopicTitleField => 'Título del tema:';
+
+  @override
+  String get tocAdvancedSettings => 'Configuración avanzada';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Título para \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Título exclusivo del índice:';
+
+  @override
+  String get tocFindUsages => 'Buscar';
+
+  @override
+  String get tocRefactorMenu => 'Refactorizar';
+
+  @override
+  String get tocSafeDelete => 'Eliminación segura';
+
+  @override
+  String get tocDuplicate => 'Duplicar';
+
+  @override
+  String get tocDuplicateFilename => 'Nombre del archivo del tema:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplicar tema';
+
+  @override
   String get pdfTitlePage => 'Portada';
 
   @override
@@ -1176,7 +1389,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get files => 'Archivos';
 
   @override
-  String get toc => 'Temas';
+  String get toc => 'Tabla de contenidos';
 
   @override
   String get tocActions => 'Acciones del índice';
@@ -1214,7 +1427,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get newChildTopic => 'Nuevo subtema';
 
   @override
-  String get newSiblingTopic => 'Nuevo tema del mismo nivel';
+  String get newSiblingTopic => 'Nuevo tema';
 
   @override
   String get renameTopicFile => 'Renombrar archivo del tema';
@@ -3167,7 +3380,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get editInstance => 'Editar instancia';
 
   @override
-  String get openTocFile => 'Abrir archivo de TOC';
+  String get openTocFile => 'Abrir archivo del índice';
 
   @override
   String get createInstance => 'Crear instancia';

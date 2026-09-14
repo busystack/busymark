@@ -139,6 +139,396 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic from Template...'**
+  String get tocTopicFromTemplate;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Template'**
+  String get tocSaveAsTemplate;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Topic from Template'**
+  String get tocTemplateDialog;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'File and Code Templates'**
+  String get tocTemplatesEditor;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit templates...'**
+  String get tocEditTemplates;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Create custom template...'**
+  String get tocCreateCustomTemplate;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Template created'**
+  String get tocTemplateCreated;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get tocTemplateDefault;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get tocTemplateCustom;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Filename:'**
+  String get tocTemplateFilename;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown (.md)'**
+  String get tocTemplateMarkdown;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'XML (.topic)'**
+  String get tocTemplateXml;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal'**
+  String get tocTemplatesInternal;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed'**
+  String get tocTemplateUnnamed;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'New template...'**
+  String get tocTemplateNew;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Name:'**
+  String get tocTemplateName;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension:'**
+  String get tocTemplateExtension;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load templates. Existing templates have not been changed.'**
+  String get tocTemplateLoadError;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save templates. Your edits are still available here.'**
+  String get tocTemplateSaveError;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Templates changed in another window. Cancel and reopen the editor before editing again.'**
+  String get tocTemplateConflict;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'A template with this name and extension already exists.'**
+  String get tocTemplateDuplicateName;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Format:'**
+  String get tocTemplateFormat;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get tocTemplateReset;
+
+  /// Writerside template dialog or user-template storage feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get tocTemplateRetry;
+
+  /// Compact removal confirmation title; counts selected elements, not promoted descendants.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {count} TOC Elements'**
+  String tocRemoveElementsDialog(int count);
+
+  /// Original compact group/multiple TOC removal explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The source files associated with these TOC elements won\'t be deleted.'**
+  String get tocRemoveElementsRetainFiles;
+
+  /// No description provided for @tocOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get tocOk;
+
+  /// No description provided for @tocSelectExistingTopic.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Topic to Add to the Current Instance'**
+  String get tocSelectExistingTopic;
+
+  /// No description provided for @tocGroupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Name'**
+  String get tocGroupName;
+
+  /// No description provided for @tocMoveLineUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Line Up'**
+  String get tocMoveLineUp;
+
+  /// No description provided for @tocMoveLineDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Line Down'**
+  String get tocMoveLineDown;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty MD Topic'**
+  String get tocEmptyMdTopic;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty XML Topic'**
+  String get tocEmptyXmlTopic;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Special'**
+  String get tocCopySpecial;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic File Name \'{name}\''**
+  String tocCopyFileName(String name);
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic File Path'**
+  String get tocCopyFilePath;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Title \'{title}\''**
+  String tocCopyTopicTitle(String title);
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC Element ID \'{id}\''**
+  String tocCopyElementId(String id);
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic File Name'**
+  String get tocCopyFileNameUnavailable;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Title'**
+  String get tocCopyTopicTitleUnavailable;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC Element ID'**
+  String get tocCopyElementIdUnavailable;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Topic'**
+  String get tocPreviewTopic;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Title...'**
+  String get tocEditTitleAction;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Title'**
+  String get tocEditTitleDialog;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC Element...'**
+  String get tocRemoveElementAction;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as Home Page'**
+  String get tocSetHomePage;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to TOC Element in \'{fileName}\''**
+  String tocGoToElement(String fileName);
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize TOC and Editor'**
+  String get tocSynchronize;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty Group'**
+  String get tocEmptyGroupAction;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'New Empty Group'**
+  String get tocNewEmptyGroup;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get tocGroupAction;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'New Group'**
+  String get tocNewGroup;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Child Topics Alphabetically'**
+  String get tocSortChildren;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Link Topic Files to TOC...'**
+  String get tocLinkTopicFiles;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC title:'**
+  String get tocTitleField;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic title:'**
+  String get tocTopicTitleField;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Settings'**
+  String get tocAdvancedSettings;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Title for \'{instanceId}\':'**
+  String tocInstanceTitleField(String instanceId);
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC-only title:'**
+  String get tocOnlyTitleField;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get tocFindUsages;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Refactor'**
+  String get tocRefactorMenu;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe Delete'**
+  String get tocSafeDelete;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get tocDuplicate;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Filename:'**
+  String get tocDuplicateFilename;
+
+  /// Writerside Table of Contents command or dialog text.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate Topic'**
+  String get tocDuplicateDialog;
+
   /// PDF-specific title-page settings group.
   ///
   /// In en, this message translates to:
@@ -2224,7 +2614,7 @@ abstract class AppLocalizations {
   /// Writerside Topics sidebar tab label.
   ///
   /// In en, this message translates to:
-  /// **'Topics'**
+  /// **'Table of Contents'**
   String get toc;
 
   /// Tooltip for the Writerside TOC action menu button.
@@ -2284,7 +2674,7 @@ abstract class AppLocalizations {
   /// Create new sibling Writerside topic action label.
   ///
   /// In en, this message translates to:
-  /// **'New Sibling Topic'**
+  /// **'New Topic'**
   String get newSiblingTopic;
 
   /// Context-menu action that renames a Writerside topic file.
@@ -5289,7 +5679,7 @@ abstract class AppLocalizations {
   /// Action that opens the selected Writerside instance tree file.
   ///
   /// In en, this message translates to:
-  /// **'Open TOC file'**
+  /// **'Open TOC File'**
   String get openTocFile;
 
   /// Dialog title for creating a Writerside instance.

@@ -11,6 +11,219 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Тема из шаблона...';
+
+  @override
+  String get tocSaveAsTemplate => 'Сохранить как шаблон';
+
+  @override
+  String get tocTemplateDialog => 'Создать тему из шаблона';
+
+  @override
+  String get tocTemplatesEditor => 'Шаблоны файлов и кода';
+
+  @override
+  String get tocEditTemplates => 'Изменить шаблоны...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Создать пользовательский шаблон...';
+
+  @override
+  String get tocTemplateCreated => 'Шаблон создан';
+
+  @override
+  String get tocTemplateDefault => 'Стандартные';
+
+  @override
+  String get tocTemplateCustom => 'Пользовательские';
+
+  @override
+  String get tocTemplateFilename => 'Имя файла:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Внутренние';
+
+  @override
+  String get tocTemplateUnnamed => 'Без имени';
+
+  @override
+  String get tocTemplateNew => 'Новый шаблон...';
+
+  @override
+  String get tocTemplateName => 'Имя:';
+
+  @override
+  String get tocTemplateExtension => 'Расширение:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Не удалось загрузить шаблоны. Существующие шаблоны не изменены.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Не удалось сохранить шаблоны. Ваши изменения остались в редакторе.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Шаблоны изменены в другом окне. Отмените изменения и снова откройте редактор.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Шаблон с таким именем и расширением уже существует.';
+
+  @override
+  String get tocTemplateFormat => 'Формат:';
+
+  @override
+  String get tocTemplateReset => 'Сбросить';
+
+  @override
+  String get tocTemplateRetry => 'Повторить';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Удалить $count элементов оглавления';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Исходные файлы, связанные с этими элементами оглавления, не будут удалены.';
+
+  @override
+  String get tocOk => 'ОК';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Выберите тему для добавления в текущий экземпляр';
+
+  @override
+  String get tocGroupName => 'Название группы';
+
+  @override
+  String get tocMoveLineUp => 'Переместить строку вверх';
+
+  @override
+  String get tocMoveLineDown => 'Переместить строку вниз';
+
+  @override
+  String get tocEmptyMdTopic => 'Пустая тема MD';
+
+  @override
+  String get tocEmptyXmlTopic => 'Пустая тема XML';
+
+  @override
+  String get tocCopySpecial => 'Специальное копирование';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Имя файла темы \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Путь к файлу темы';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Заголовок темы \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID элемента оглавления \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Имя файла темы';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Заголовок темы';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID элемента оглавления';
+
+  @override
+  String get tocPreviewTopic => 'Предпросмотр темы';
+
+  @override
+  String get tocEditTitleAction => 'Изменить заголовок...';
+
+  @override
+  String get tocEditTitleDialog => 'Изменить заголовок';
+
+  @override
+  String get tocRemoveElementAction => 'Удалить элемент оглавления...';
+
+  @override
+  String get tocSetHomePage => 'Назначить домашней страницей';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Перейти к элементу оглавления в «$fileName»';
+  }
+
+  @override
+  String get tocSynchronize => 'Синхронизировать оглавление и редактор';
+
+  @override
+  String get tocEmptyGroupAction => 'Пустая группа';
+
+  @override
+  String get tocNewEmptyGroup => 'Новая пустая группа';
+
+  @override
+  String get tocGroupAction => 'Сгруппировать';
+
+  @override
+  String get tocNewGroup => 'Новая группа';
+
+  @override
+  String get tocSortChildren => 'Сортировать дочерние темы по алфавиту';
+
+  @override
+  String get tocLinkTopicFiles => 'Связать файлы тем с оглавлением...';
+
+  @override
+  String get tocTitleField => 'Заголовок в оглавлении:';
+
+  @override
+  String get tocTopicTitleField => 'Заголовок темы:';
+
+  @override
+  String get tocAdvancedSettings => 'Дополнительные настройки';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Заголовок для «$instanceId»:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Заголовок только для оглавления:';
+
+  @override
+  String get tocFindUsages => 'Поиск';
+
+  @override
+  String get tocRefactorMenu => 'Рефакторинг';
+
+  @override
+  String get tocSafeDelete => 'Безопасное удаление';
+
+  @override
+  String get tocDuplicate => 'Дублировать';
+
+  @override
+  String get tocDuplicateFilename => 'Имя файла темы:';
+
+  @override
+  String get tocDuplicateDialog => 'Дублировать тему';
+
+  @override
   String get pdfTitlePage => 'Титульная страница';
 
   @override
@@ -1176,7 +1389,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get files => 'Файлы';
 
   @override
-  String get toc => 'Темы';
+  String get toc => 'Оглавление';
 
   @override
   String get tocActions => 'Действия с оглавлением';
@@ -1216,7 +1429,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get newChildTopic => 'Новая дочерняя тема';
 
   @override
-  String get newSiblingTopic => 'Новая тема на том же уровне';
+  String get newSiblingTopic => 'Новая тема';
 
   @override
   String get renameTopicFile => 'Переименовать файл темы';

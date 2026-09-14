@@ -11,6 +11,214 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'テンプレートからトピック...';
+
+  @override
+  String get tocSaveAsTemplate => 'テンプレートとして保存';
+
+  @override
+  String get tocTemplateDialog => 'テンプレートからトピックを作成';
+
+  @override
+  String get tocTemplatesEditor => 'ファイルおよびコードテンプレート';
+
+  @override
+  String get tocEditTemplates => 'テンプレートを編集...';
+
+  @override
+  String get tocCreateCustomTemplate => 'カスタムテンプレートを作成...';
+
+  @override
+  String get tocTemplateCreated => 'テンプレートを作成しました';
+
+  @override
+  String get tocTemplateDefault => 'デフォルト';
+
+  @override
+  String get tocTemplateCustom => 'カスタム';
+
+  @override
+  String get tocTemplateFilename => 'ファイル名:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => '内部';
+
+  @override
+  String get tocTemplateUnnamed => '無題';
+
+  @override
+  String get tocTemplateNew => '新規テンプレート...';
+
+  @override
+  String get tocTemplateName => '名前:';
+
+  @override
+  String get tocTemplateExtension => '拡張子:';
+
+  @override
+  String get tocTemplateLoadError => 'テンプレートを読み込めませんでした。既存のテンプレートは変更されていません。';
+
+  @override
+  String get tocTemplateSaveError => 'テンプレートを保存できませんでした。編集内容はここに保持されています。';
+
+  @override
+  String get tocTemplateConflict =>
+      '別のウィンドウでテンプレートが変更されました。キャンセルしてエディターを開き直してください。';
+
+  @override
+  String get tocTemplateDuplicateName => 'この名前と拡張子のテンプレートは既に存在します。';
+
+  @override
+  String get tocTemplateFormat => '形式:';
+
+  @override
+  String get tocTemplateReset => 'リセット';
+
+  @override
+  String get tocTemplateRetry => '再試行';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '目次要素 $count 個を削除';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles => 'これらの目次要素に関連付けられたソースファイルは削除されません。';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic => '現在のインスタンスに追加するトピックを選択';
+
+  @override
+  String get tocGroupName => 'グループ名';
+
+  @override
+  String get tocMoveLineUp => '行を上に移動';
+
+  @override
+  String get tocMoveLineDown => '行を下に移動';
+
+  @override
+  String get tocEmptyMdTopic => '空の MD トピック';
+
+  @override
+  String get tocEmptyXmlTopic => '空の XML トピック';
+
+  @override
+  String get tocCopySpecial => '特殊コピー';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'トピックのファイル名 \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'トピックのファイルパス';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'トピックのタイトル \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return '目次要素 ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'トピックのファイル名';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'トピックのタイトル';
+
+  @override
+  String get tocCopyElementIdUnavailable => '目次要素 ID';
+
+  @override
+  String get tocPreviewTopic => 'トピックをプレビュー';
+
+  @override
+  String get tocEditTitleAction => 'タイトルを編集...';
+
+  @override
+  String get tocEditTitleDialog => 'タイトルを編集';
+
+  @override
+  String get tocRemoveElementAction => '目次要素を削除...';
+
+  @override
+  String get tocSetHomePage => 'ホームページに設定';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '「$fileName」の目次要素に移動';
+  }
+
+  @override
+  String get tocSynchronize => '目次とエディターを同期';
+
+  @override
+  String get tocEmptyGroupAction => '空のグループ';
+
+  @override
+  String get tocNewEmptyGroup => '新しい空のグループ';
+
+  @override
+  String get tocGroupAction => 'グループ化';
+
+  @override
+  String get tocNewGroup => '新しいグループ';
+
+  @override
+  String get tocSortChildren => '子トピックをアルファベット順に並べ替え';
+
+  @override
+  String get tocLinkTopicFiles => 'トピックファイルを目次にリンク...';
+
+  @override
+  String get tocTitleField => '目次タイトル:';
+
+  @override
+  String get tocTopicTitleField => 'トピックのタイトル:';
+
+  @override
+  String get tocAdvancedSettings => '詳細設定';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '「$instanceId」のタイトル:';
+  }
+
+  @override
+  String get tocOnlyTitleField => '目次専用タイトル:';
+
+  @override
+  String get tocFindUsages => '検索';
+
+  @override
+  String get tocRefactorMenu => 'リファクタリング';
+
+  @override
+  String get tocSafeDelete => '安全な削除';
+
+  @override
+  String get tocDuplicate => '複製';
+
+  @override
+  String get tocDuplicateFilename => 'トピックのファイル名:';
+
+  @override
+  String get tocDuplicateDialog => 'トピックを複製';
+
+  @override
   String get pdfTitlePage => 'タイトルページ';
 
   @override
@@ -1120,7 +1328,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get files => 'ファイル';
 
   @override
-  String get toc => 'トピック';
+  String get toc => '目次';
 
   @override
   String get tocActions => '目次の操作';
@@ -1158,7 +1366,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get newChildTopic => '新しい子トピック';
 
   @override
-  String get newSiblingTopic => '新しい兄弟トピック';
+  String get newSiblingTopic => '新しいトピック';
 
   @override
   String get renameTopicFile => 'トピックファイルの名前を変更';

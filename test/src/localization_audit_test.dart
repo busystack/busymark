@@ -1258,6 +1258,9 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
 ];
 
 const _sharedEnglishMatches = <String>{
+  'tocTemplateMarkdown', // Format names and literal file extensions.
+  'tocTemplateXml',
+  'tocOk', // Standard confirmation caption in the reviewed locales.
   // Standard field labels also used verbatim in French and German.
   'pdfTitlePageVersion',
   'pdfTitlePageDate',
@@ -1310,6 +1313,8 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
+    'tocTemplateName', // Name and Format are also German words.
+    'tocTemplateFormat',
     'exportLayout',
     'aboutWebsite',
     'editor',
@@ -1361,8 +1366,14 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'foldKindTag',
     'gitCommit',
   },
-  'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
-  'pl': {'folder', 'foldKindTag', 'aiModel'},
+  'nb': {
+    'systemTheme',
+    'systemLanguage',
+    'gitCommit',
+    'instanceStatus',
+    'tocTemplateFormat',
+  },
+  'pl': {'folder', 'foldKindTag', 'aiModel', 'tocTemplateFormat'},
   'pt_BR': {
     'exportLayout',
     'editor',
@@ -1379,6 +1390,8 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'id': {
+    'tocTemplatesInternal', // Reviewed Indonesian technical terms.
+    'tocTemplateFormat',
     'editor',
     'file',
     'folder',

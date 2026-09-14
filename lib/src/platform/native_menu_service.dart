@@ -28,7 +28,19 @@ final class NativeMenuEntry {
     this.enabled = true,
     this.checkable = false,
     this.selected = false,
-  }) : separator = false;
+  }) : separator = false,
+       children = null;
+
+  const NativeMenuEntry.submenu({
+    required this.label,
+    required List<NativeMenuEntry> this.children,
+    this.enabled = true,
+  }) : iconName = null,
+       iconColorArgb = null,
+       shortcut = null,
+       checkable = false,
+       selected = false,
+       separator = false;
 
   const NativeMenuEntry.separator()
     : label = '',
@@ -38,7 +50,8 @@ final class NativeMenuEntry {
       enabled = false,
       checkable = false,
       selected = false,
-      separator = true;
+      separator = true,
+      children = null;
 
   final String label;
   final String? iconName;
@@ -48,6 +61,7 @@ final class NativeMenuEntry {
   final bool checkable;
   final bool selected;
   final bool separator;
+  final List<NativeMenuEntry>? children;
 
   Map<String, Object> _toPlatformMap() {
     return <String, Object>{
@@ -59,6 +73,8 @@ final class NativeMenuEntry {
       'checkable': checkable,
       'selected': selected,
       'separator': separator,
+      if (children != null)
+        'children': [for (final child in children!) child._toPlatformMap()],
     };
   }
 }
@@ -90,6 +106,7 @@ class NativeMenuService {
     required List<NativeMenuEntry> entries,
     bool focusFirst = false,
     bool preferAbove = false,
+    TextDirection? textDirection,
   }) async {
     try {
       final selectedIndex = await _channel.invokeMethod<int>('show', {
@@ -103,6 +120,7 @@ class NativeMenuService {
         'entries': [for (final entry in entries) entry._toPlatformMap()],
         'focusFirst': focusFirst,
         'preferredPosition': preferAbove ? 'top' : 'bottom',
+        if (textDirection != null) 'textDirection': textDirection.name,
       });
       return NativeMenuResult.available(selectedIndex: selectedIndex);
     } on MissingPluginException {

@@ -11,6 +11,221 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Onderwerp uit sjabloon...';
+
+  @override
+  String get tocSaveAsTemplate => 'Opslaan als sjabloon';
+
+  @override
+  String get tocTemplateDialog => 'Onderwerp uit sjabloon maken';
+
+  @override
+  String get tocTemplatesEditor => 'Bestands- en codesjablonen';
+
+  @override
+  String get tocEditTemplates => 'Sjablonen bewerken...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Aangepast sjabloon maken...';
+
+  @override
+  String get tocTemplateCreated => 'Sjabloon gemaakt';
+
+  @override
+  String get tocTemplateDefault => 'Standaard';
+
+  @override
+  String get tocTemplateCustom => 'Aangepast';
+
+  @override
+  String get tocTemplateFilename => 'Bestandsnaam:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Intern';
+
+  @override
+  String get tocTemplateUnnamed => 'Naamloos';
+
+  @override
+  String get tocTemplateNew => 'Nieuw sjabloon...';
+
+  @override
+  String get tocTemplateName => 'Naam:';
+
+  @override
+  String get tocTemplateExtension => 'Extensie:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Sjablonen konden niet worden geladen. Bestaande sjablonen zijn niet gewijzigd.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Sjablonen konden niet worden opgeslagen. Uw wijzigingen zijn hier nog beschikbaar.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Sjablonen zijn in een ander venster gewijzigd. Annuleer en open de editor opnieuw.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Er bestaat al een sjabloon met deze naam en extensie.';
+
+  @override
+  String get tocTemplateFormat => 'Indeling:';
+
+  @override
+  String get tocTemplateReset => 'Herstellen';
+
+  @override
+  String get tocTemplateRetry => 'Opnieuw proberen';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '$count inhoudsopgave-elementen verwijderen';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'De bronbestanden die aan deze inhoudsopgave-elementen zijn gekoppeld, worden niet verwijderd.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Onderwerp selecteren om aan de huidige instantie toe te voegen';
+
+  @override
+  String get tocGroupName => 'Groepsnaam';
+
+  @override
+  String get tocMoveLineUp => 'Regel omhoog verplaatsen';
+
+  @override
+  String get tocMoveLineDown => 'Regel omlaag verplaatsen';
+
+  @override
+  String get tocEmptyMdTopic => 'Leeg MD-onderwerp';
+
+  @override
+  String get tocEmptyXmlTopic => 'Leeg XML-onderwerp';
+
+  @override
+  String get tocCopySpecial => 'Speciaal kopiëren';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Onderwerpbestandsnaam \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Onderwerpbestandspad';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Onderwerptitel \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID van inhoudsopgave-element \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Onderwerpbestandsnaam';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Onderwerptitel';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID van inhoudsopgave-element';
+
+  @override
+  String get tocPreviewTopic => 'Onderwerpvoorbeeld';
+
+  @override
+  String get tocEditTitleAction => 'Titel bewerken...';
+
+  @override
+  String get tocEditTitleDialog => 'Titel bewerken';
+
+  @override
+  String get tocRemoveElementAction => 'Inhoudsopgave-element verwijderen...';
+
+  @override
+  String get tocSetHomePage => 'Als startpagina instellen';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Naar inhoudsopgave-element in \'$fileName\' gaan';
+  }
+
+  @override
+  String get tocSynchronize => 'Inhoudsopgave en editor synchroniseren';
+
+  @override
+  String get tocEmptyGroupAction => 'Lege groep';
+
+  @override
+  String get tocNewEmptyGroup => 'Nieuwe lege groep';
+
+  @override
+  String get tocGroupAction => 'Groeperen';
+
+  @override
+  String get tocNewGroup => 'Nieuwe groep';
+
+  @override
+  String get tocSortChildren =>
+      'Onderliggende onderwerpen alfabetisch sorteren';
+
+  @override
+  String get tocLinkTopicFiles =>
+      'Onderwerpbestanden aan inhoudsopgave koppelen...';
+
+  @override
+  String get tocTitleField => 'Titel in inhoudsopgave:';
+
+  @override
+  String get tocTopicTitleField => 'Onderwerptitel:';
+
+  @override
+  String get tocAdvancedSettings => 'Geavanceerde instellingen';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Titel voor \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Titel alleen voor inhoudsopgave:';
+
+  @override
+  String get tocFindUsages => 'Zoeken';
+
+  @override
+  String get tocRefactorMenu => 'Refactoren';
+
+  @override
+  String get tocSafeDelete => 'Veilig verwijderen';
+
+  @override
+  String get tocDuplicate => 'Dupliceren';
+
+  @override
+  String get tocDuplicateFilename => 'Onderwerpbestandsnaam:';
+
+  @override
+  String get tocDuplicateDialog => 'Onderwerp dupliceren';
+
+  @override
   String get pdfTitlePage => 'Titelpagina';
 
   @override
@@ -1163,7 +1378,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get files => 'Bestanden';
 
   @override
-  String get toc => 'Onderwerpen';
+  String get toc => 'Inhoudsopgave';
 
   @override
   String get tocActions => 'TOC-acties';
@@ -1201,7 +1416,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get newChildTopic => 'Nieuw onderliggend onderwerp';
 
   @override
-  String get newSiblingTopic => 'Nieuw naastliggend onderwerp';
+  String get newSiblingTopic => 'Nieuw onderwerp';
 
   @override
   String get renameTopicFile => 'Onderwerpbestand hernoemen';
@@ -3146,7 +3361,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get editInstance => 'Instantie bewerken';
 
   @override
-  String get openTocFile => 'TOC-bestand openen';
+  String get openTocFile => 'Inhoudsopgavebestand openen';
 
   @override
   String get createInstance => 'Instantie maken';

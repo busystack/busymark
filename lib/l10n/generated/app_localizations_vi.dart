@@ -11,6 +11,219 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Chủ đề từ mẫu...';
+
+  @override
+  String get tocSaveAsTemplate => 'Lưu thành mẫu';
+
+  @override
+  String get tocTemplateDialog => 'Tạo chủ đề từ mẫu';
+
+  @override
+  String get tocTemplatesEditor => 'Mẫu tệp và mã';
+
+  @override
+  String get tocEditTemplates => 'Chỉnh sửa mẫu...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Tạo mẫu tùy chỉnh...';
+
+  @override
+  String get tocTemplateCreated => 'Đã tạo mẫu';
+
+  @override
+  String get tocTemplateDefault => 'Mặc định';
+
+  @override
+  String get tocTemplateCustom => 'Tùy chỉnh';
+
+  @override
+  String get tocTemplateFilename => 'Tên tệp:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Nội bộ';
+
+  @override
+  String get tocTemplateUnnamed => 'Chưa đặt tên';
+
+  @override
+  String get tocTemplateNew => 'Mẫu mới...';
+
+  @override
+  String get tocTemplateName => 'Tên:';
+
+  @override
+  String get tocTemplateExtension => 'Phần mở rộng:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Không thể tải mẫu. Các mẫu hiện có không bị thay đổi.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Không thể lưu mẫu. Các chỉnh sửa của bạn vẫn còn ở đây.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Mẫu đã thay đổi trong cửa sổ khác. Hãy hủy và mở lại trình chỉnh sửa.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Đã có mẫu với tên và phần mở rộng này.';
+
+  @override
+  String get tocTemplateFormat => 'Định dạng:';
+
+  @override
+  String get tocTemplateReset => 'Đặt lại';
+
+  @override
+  String get tocTemplateRetry => 'Thử lại';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Xóa $count phần tử mục lục';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Các tệp nguồn liên kết với những phần tử mục lục này sẽ không bị xóa.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Chọn chủ đề để thêm vào phiên bản hiện tại';
+
+  @override
+  String get tocGroupName => 'Tên nhóm';
+
+  @override
+  String get tocMoveLineUp => 'Di chuyển dòng lên';
+
+  @override
+  String get tocMoveLineDown => 'Di chuyển dòng xuống';
+
+  @override
+  String get tocEmptyMdTopic => 'Chủ đề MD trống';
+
+  @override
+  String get tocEmptyXmlTopic => 'Chủ đề XML trống';
+
+  @override
+  String get tocCopySpecial => 'Sao chép đặc biệt';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Tên tệp chủ đề \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Đường dẫn tệp chủ đề';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Tiêu đề chủ đề \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID phần tử mục lục \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Tên tệp chủ đề';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Tiêu đề chủ đề';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID phần tử mục lục';
+
+  @override
+  String get tocPreviewTopic => 'Xem trước chủ đề';
+
+  @override
+  String get tocEditTitleAction => 'Sửa tiêu đề...';
+
+  @override
+  String get tocEditTitleDialog => 'Sửa tiêu đề';
+
+  @override
+  String get tocRemoveElementAction => 'Xóa phần tử mục lục...';
+
+  @override
+  String get tocSetHomePage => 'Đặt làm trang chủ';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Đi đến phần tử mục lục trong \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Đồng bộ mục lục và trình soạn thảo';
+
+  @override
+  String get tocEmptyGroupAction => 'Nhóm trống';
+
+  @override
+  String get tocNewEmptyGroup => 'Nhóm trống mới';
+
+  @override
+  String get tocGroupAction => 'Nhóm lại';
+
+  @override
+  String get tocNewGroup => 'Nhóm mới';
+
+  @override
+  String get tocSortChildren => 'Sắp xếp chủ đề con theo bảng chữ cái';
+
+  @override
+  String get tocLinkTopicFiles => 'Liên kết tệp chủ đề với mục lục...';
+
+  @override
+  String get tocTitleField => 'Tiêu đề mục lục:';
+
+  @override
+  String get tocTopicTitleField => 'Tiêu đề chủ đề:';
+
+  @override
+  String get tocAdvancedSettings => 'Cài đặt nâng cao';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Tiêu đề cho \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Tiêu đề chỉ dành cho mục lục:';
+
+  @override
+  String get tocFindUsages => 'Tìm';
+
+  @override
+  String get tocRefactorMenu => 'Tái cấu trúc';
+
+  @override
+  String get tocSafeDelete => 'Xóa an toàn';
+
+  @override
+  String get tocDuplicate => 'Nhân bản';
+
+  @override
+  String get tocDuplicateFilename => 'Tên tệp chủ đề:';
+
+  @override
+  String get tocDuplicateDialog => 'Nhân bản chủ đề';
+
+  @override
   String get pdfTitlePage => 'Trang tiêu đề';
 
   @override
@@ -1155,7 +1368,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get files => 'Tệp';
 
   @override
-  String get toc => 'Chủ đề';
+  String get toc => 'Mục lục';
 
   @override
   String get tocActions => 'Thao tác với mục lục';
@@ -1193,7 +1406,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get newChildTopic => 'Chủ đề con mới';
 
   @override
-  String get newSiblingTopic => 'Chủ đề cùng cấp mới';
+  String get newSiblingTopic => 'Chủ đề mới';
 
   @override
   String get renameTopicFile => 'Đổi tên tệp chủ đề';

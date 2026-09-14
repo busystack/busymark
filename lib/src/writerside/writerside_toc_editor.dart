@@ -58,21 +58,28 @@ class WritersideTocBatchMoveRequest {
     required this.placement,
     this.referencePath,
     this.referenceIdentity,
+    this.beforeReference = false,
   });
 
   final List<WritersideTocMoveEntry> sources;
   final WritersideTopicCreatePlacement placement;
   final List<int>? referencePath;
   final WritersideTocNodeIdentity? referenceIdentity;
+  final bool beforeReference;
 }
 
 class WritersideTocMutationResult {
-  const WritersideTocMutationResult({required this.treePath, this.entryPath});
+  const WritersideTocMutationResult({
+    required this.treePath,
+    this.entryPath,
+    this.entryPaths = const [],
+  });
 
   final String treePath;
 
   /// The moved entry's structural path after a move, or `null` after removal.
   final List<int>? entryPath;
+  final List<List<int>> entryPaths;
 }
 
 class WritersideTocRemovalRequest {
@@ -83,6 +90,21 @@ class WritersideTocRemovalRequest {
 
   final List<int> entryPath;
   final WritersideTocNodeIdentity? expectedIdentity;
+}
+
+class WritersideTocInsertRequest {
+  const WritersideTocInsertRequest({
+    required this.placement,
+    this.referencePath,
+    this.referenceIdentity,
+    this.topicReference,
+    this.tocTitle,
+  });
+  final WritersideTopicCreatePlacement placement;
+  final List<int>? referencePath;
+  final WritersideTocNodeIdentity? referenceIdentity;
+  final String? topicReference;
+  final String? tocTitle;
 }
 
 /// Performs structural Writerside TOC mutations inside a guarded module root.
@@ -98,10 +120,166 @@ class WritersideTocEditor {
   /// concurrent writer without weakening the publication guard.
   final Future<void> Function(String treePath)? _beforeTreePublish;
 
+  Future<WritersideTocMutationResult> insertElement(
+    WritersideTocEditTarget target,
+    WritersideTocInsertRequest request, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    if ((request.topicReference == null) == (request.tocTitle == null) ||
+        (request.topicReference ?? request.tocTitle)!.trim().isEmpty) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final session = await _load(target);
+    XmlElement? reference;
+    if (request.placement != WritersideTopicCreatePlacement.root) {
+      final path = request.referencePath;
+      if (path == null || request.referenceIdentity == null) {
+        throw const BusyMarkException('writerside.toc.destination-required');
+      }
+      _validatePath(path, role: 'destination');
+      reference = _elementAtPath(session.root, path, role: 'destination');
+      if (!request.referenceIdentity!.matches(reference)) {
+        throw _invalidPath(path, role: 'destination');
+      }
+    } else if (request.referencePath != null) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final element = XmlElement(XmlName.parts('toc-element'), [
+      if (request.topicReference != null)
+        XmlAttribute(XmlName.parts('topic'), request.topicReference!),
+      if (request.tocTitle != null)
+        XmlAttribute(XmlName.parts('toc-title'), request.tocTitle!),
+    ]);
+    switch (request.placement) {
+      case WritersideTopicCreatePlacement.root:
+        session.root.children.add(element);
+      case WritersideTopicCreatePlacement.sibling:
+        _insertAfter(reference!, element);
+      case WritersideTopicCreatePlacement.child:
+        reference!.children.add(element);
+    }
+    await _write(session, validateBeforePublish: validateBeforePublish);
+    return WritersideTocMutationResult(
+      treePath: session.treePath,
+      entryPath: _pathOfElement(session.root, element),
+    );
+  }
+
+  /// Build 2026.07.8925 enables Group only for at least two siblings.
+  Future<WritersideTocMutationResult> groupElements(
+    WritersideTocEditTarget target, {
+    required List<WritersideTocMoveEntry> entries,
+    required String title,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    if (entries.length < 2 || title.isEmpty) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final session = await _load(target);
+    final elements = <XmlElement>[];
+    for (final entry in entries) {
+      _validatePath(entry.sourcePath, role: 'source');
+      final element = _elementAtPath(
+        session.root,
+        entry.sourcePath,
+        role: 'source',
+      );
+      if (entry.sourceIdentity == null ||
+          !entry.sourceIdentity!.matches(element) ||
+          elements.contains(element) ||
+          (elements.isNotEmpty &&
+              !identical(elements.first.parent, element.parent))) {
+        throw _invalidPath(entry.sourcePath, role: 'source');
+      }
+      elements.add(element);
+    }
+    final parent = elements.first.parent! as XmlElement;
+    elements.sort(
+      (a, b) =>
+          parent.children.indexOf(a).compareTo(parent.children.indexOf(b)),
+    );
+    final group = XmlElement(XmlName.parts('toc-element'), [
+      XmlAttribute(XmlName.parts('toc-title'), title),
+    ]);
+    parent.children.insert(parent.children.indexOf(elements.first), group);
+    for (final element in elements) {
+      parent.children.remove(element);
+      group.children.add(element);
+    }
+    await _write(session, validateBeforePublish: validateBeforePublish);
+    return WritersideTocMutationResult(
+      treePath: session.treePath,
+      entryPath: _pathOfElement(session.root, group),
+    );
+  }
+
+  Future<WritersideTocMutationResult> reorderChildren(
+    WritersideTocEditTarget target, {
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity identity,
+    required List<int> permutation,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    _validatePath(nodePath, role: 'source');
+    final session = await _load(target);
+    final parent = _elementAtPath(session.root, nodePath, role: 'source');
+    if (!identity.matches(parent)) throw _invalidPath(nodePath, role: 'source');
+    final children = parent.childElements.toList();
+    // The original build deletes non-TOC sub-tags when sorting. The handoff
+    // requires preserving embedded structures, so reject this case explicitly.
+    if (children.any((element) => element.name.local != 'toc-element') ||
+        permutation.length != children.length ||
+        permutation.toSet().length != children.length ||
+        permutation.any((index) => index < 0 || index >= children.length)) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final slots = [
+      for (var i = 0; i < parent.children.length; i++)
+        if (parent.children[i] is XmlElement) i,
+    ];
+    for (final index in slots.reversed) {
+      parent.children.removeAt(index);
+    }
+    for (var i = 0; i < slots.length; i++) {
+      parent.children.insert(slots[i], children[permutation[i]]);
+    }
+    await _write(session, validateBeforePublish: validateBeforePublish);
+    return WritersideTocMutationResult(
+      treePath: session.treePath,
+      entryPath: nodePath,
+    );
+  }
+
+  Future<WritersideTocMutationResult> setHomePage(
+    WritersideTocEditTarget target, {
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity expectedIdentity,
+    required String topicReference,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    _validatePath(nodePath, role: 'source');
+    final session = await _load(target);
+    final element = _elementAtPath(session.root, nodePath, role: 'source');
+    if (!expectedIdentity.matches(element) ||
+        element.getAttribute('topic') != topicReference ||
+        topicReference.isEmpty ||
+        element.getAttribute('href') != null ||
+        session.root.getAttribute('is-library') == 'true') {
+      throw _invalidPath(nodePath, role: 'source');
+    }
+    session.root.setAttribute('start-page', topicReference);
+    await _write(session, validateBeforePublish: validateBeforePublish);
+    return WritersideTocMutationResult(
+      treePath: session.treePath,
+      entryPath: nodePath,
+    );
+  }
+
   Future<WritersideTocMutationResult> moveSubtree(
     WritersideTocEditTarget target,
-    WritersideTocMoveRequest request,
-  ) async {
+    WritersideTocMoveRequest request, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
     _validatePath(request.sourcePath, role: 'source');
     final referencePath = request.referencePath;
     if (request.placement == WritersideTopicCreatePlacement.root) {
@@ -158,7 +336,7 @@ class WritersideTocEditor {
     if (movedPath == null) {
       throw const BusyMarkException('writerside.toc.move-invalid-target');
     }
-    await _write(session);
+    await _write(session, validateBeforePublish: validateBeforePublish);
     return WritersideTocMutationResult(
       treePath: session.treePath,
       entryPath: movedPath,
@@ -168,8 +346,13 @@ class WritersideTocEditor {
   /// Moves several complete subtrees as one ordered group.
   Future<WritersideTocMutationResult> moveSubtrees(
     WritersideTocEditTarget target,
-    WritersideTocBatchMoveRequest request,
-  ) async {
+    WritersideTocBatchMoveRequest request, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    if (request.beforeReference &&
+        request.placement != WritersideTopicCreatePlacement.sibling) {
+      throw const BusyMarkException('writerside.toc.move-invalid-target');
+    }
     if (request.sources.isEmpty) {
       throw const BusyMarkException('writerside.toc.path-invalid');
     }
@@ -249,7 +432,10 @@ class WritersideTocEditor {
         if (index < 0) {
           throw const BusyMarkException('writerside.toc.move-invalid-target');
         }
-        parent.children.insertAll(index + 1, elements);
+        parent.children.insertAll(
+          index + (request.beforeReference ? 0 : 1),
+          elements,
+        );
       case WritersideTopicCreatePlacement.child:
         reference!.children.addAll(elements);
     }
@@ -257,10 +443,13 @@ class WritersideTocEditor {
     if (firstPath == null) {
       throw const BusyMarkException('writerside.toc.move-invalid-target');
     }
-    await _write(session);
+    await _write(session, validateBeforePublish: validateBeforePublish);
     return WritersideTocMutationResult(
       treePath: session.treePath,
       entryPath: firstPath,
+      entryPaths: [
+        for (final element in elements) _pathOfElement(session.root, element)!,
+      ],
     );
   }
 
@@ -272,6 +461,7 @@ class WritersideTocEditor {
     WritersideTocEditTarget target,
     List<int> entryPath, {
     WritersideTocNodeIdentity? expectedIdentity,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     _validatePath(entryPath, role: 'source');
     final session = await _load(target);
@@ -294,7 +484,7 @@ class WritersideTocEditor {
     parent.children.removeAt(rawIndex);
     parent.children.insertAll(rawIndex, promotedChildren);
 
-    await _write(session);
+    await _write(session, validateBeforePublish: validateBeforePublish);
     return WritersideTocMutationResult(treePath: session.treePath);
   }
 
@@ -305,8 +495,9 @@ class WritersideTocEditor {
   /// the tree snapshot the user selected.
   Future<WritersideTocMutationResult> removeEntries(
     WritersideTocEditTarget target,
-    List<WritersideTocRemovalRequest> requests,
-  ) async {
+    List<WritersideTocRemovalRequest> requests, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
     if (requests.isEmpty) {
       throw const BusyMarkException('writerside.toc.path-invalid');
     }
@@ -358,7 +549,7 @@ class WritersideTocEditor {
       parent.children.removeAt(rawIndex);
       parent.children.insertAll(rawIndex, promotedChildren);
     }
-    await _write(session);
+    await _write(session, validateBeforePublish: validateBeforePublish);
     return WritersideTocMutationResult(treePath: session.treePath);
   }
 
@@ -404,7 +595,10 @@ class WritersideTocEditor {
     );
   }
 
-  Future<void> _write(_TocEditSession session) async {
+  Future<void> _write(
+    _TocEditSession session, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
     final checkedTree = await _treePath(session.anchor, session.treePath);
     await _ensureTreeUnchanged(session, checkedTree);
     final targetStat = await File(checkedTree.path).stat();
@@ -416,6 +610,7 @@ class WritersideTocEditor {
       );
       await _copyFileMode(targetStat, temporary);
       await _beforeTreePublish?.call(checkedTree.path);
+      await validateBeforePublish?.call();
 
       final publishTarget = await _treePath(session.anchor, session.treePath);
       await _ensureTreeUnchanged(session, publishTarget);

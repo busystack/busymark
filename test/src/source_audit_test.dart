@@ -263,26 +263,21 @@ void main() {
     ).readAsStringSync();
     final createTopicDialog = RegExp(
       r'class _CreateWritersideTopicDialogState[\s\S]*?'
-      r'  String _dialogTitle',
+      r'  String\? _titleError',
     ).firstMatch(workspace)!.group(0)!;
 
     expect(workspace, contains('BusyMarkPushButton.standardIcon('));
     expect(workspace, isNot(contains('FilledButton.icon(')));
-    expect(createTopicDialog, contains('BusyMarkModalEditorScaffold('));
-    expect(
-      RegExp(
-        r'BusyMarkGroupedTextEntry\(',
-      ).allMatches(createTopicDialog).length,
-      2,
-    );
+    expect(createTopicDialog, contains('BusyMarkDialogShell('));
+    expect(RegExp(r'TextField\(').allMatches(createTopicDialog).length, 2);
     expect(
       RegExp(r'BusyMarkComboRow<').allMatches(createTopicDialog).length,
-      2,
+      0,
     );
-    expect(createTopicDialog, isNot(contains('BusyMarkDialogShell(')));
+    expect(createTopicDialog, contains('context.l10n.newTopic'));
     expect(createTopicDialog, isNot(contains('SegmentedButton<')));
     expect(createTopicDialog, isNot(contains('BusyMarkFloatingTextEntry')));
-    expect(createTopicDialog, isNot(contains('InputDecoration(')));
+    expect(createTopicDialog, contains('InputDecoration('));
   });
 
   test('shared row hover delegates to Yaru interaction state', () {
@@ -1242,7 +1237,7 @@ void main() {
     );
     expect(
       workspace,
-      contains('BusyMarkComboRow<WritersideTopicCreatePlacement>'),
+      isNot(contains('BusyMarkComboRow<WritersideTopicCreatePlacement>')),
     );
     final selector = RegExp(
       r'class BusyMarkPopupSelector<T>[\s\S]*?'
@@ -1336,7 +1331,7 @@ void main() {
     expect(welcome, contains('BusyMarkModalEditorScaffold('));
     expect(RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(welcome).length, 5);
     expect(workspace, contains('showBusyMarkModalEditorDialog<String>('));
-    expect(workspace, contains('showBusyMarkModalEditorDialog<void>('));
+    expect(workspace, contains('showBusyMarkModalDialog<void>('));
     expect(editor, contains('showBusyMarkModalEditorDialog<T>('));
     expect(welcome, isNot(contains('BusyMarkFloatingTextEntry')));
     expect(workspace, isNot(contains('BusyMarkFloatingTextEntry')));
@@ -1415,7 +1410,7 @@ void main() {
     expect(workspace, contains('class _WritersideTopicUsagesSidebar'));
     expect(workspace, contains('analyzeWritersideTopicRemoval('));
     expect(workspace, contains('applyWritersideTopicRemoval('));
-    expect(workspace, contains('context.l10n.safeDeleteTopicFile'));
+    expect(workspace, contains('context.l10n.tocSafeDelete'));
     expect(workspace, contains('context.l10n.removeTocElement'));
     expect(workspace, contains('label: context.l10n.newFile'));
     expect(workspace, contains('label: context.l10n.rename'));
@@ -1470,8 +1465,10 @@ void main() {
     expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(tocHeader, contains('highlightWhenOpen: false'));
-    expect(tocHeader, contains('label: context.l10n.newTopic'));
-    expect(tocHeader, isNot(contains('BusyMarkHeaderIconButton')));
+    expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
+    expect(tocHeader, contains('label: context.l10n.tocEmptyMdTopic'));
+    expect(tocHeader, contains('label: context.l10n.tocEmptyXmlTopic'));
+    expect(tocHeader, contains('BusyMarkCompactIconButton'));
     expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));

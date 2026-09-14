@@ -11,6 +11,213 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => '从模板创建主题...';
+
+  @override
+  String get tocSaveAsTemplate => '保存为模板';
+
+  @override
+  String get tocTemplateDialog => '从模板创建主题';
+
+  @override
+  String get tocTemplatesEditor => '文件和代码模板';
+
+  @override
+  String get tocEditTemplates => '编辑模板...';
+
+  @override
+  String get tocCreateCustomTemplate => '创建自定义模板...';
+
+  @override
+  String get tocTemplateCreated => '已创建模板';
+
+  @override
+  String get tocTemplateDefault => '默认';
+
+  @override
+  String get tocTemplateCustom => '自定义';
+
+  @override
+  String get tocTemplateFilename => '文件名：';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => '内部';
+
+  @override
+  String get tocTemplateUnnamed => '未命名';
+
+  @override
+  String get tocTemplateNew => '新建模板...';
+
+  @override
+  String get tocTemplateName => '名称：';
+
+  @override
+  String get tocTemplateExtension => '扩展名：';
+
+  @override
+  String get tocTemplateLoadError => '无法加载模板。现有模板未更改。';
+
+  @override
+  String get tocTemplateSaveError => '无法保存模板。您的编辑内容仍保留在此处。';
+
+  @override
+  String get tocTemplateConflict => '模板已在其他窗口中更改。请取消并重新打开编辑器。';
+
+  @override
+  String get tocTemplateDuplicateName => '已存在相同名称和扩展名的模板。';
+
+  @override
+  String get tocTemplateFormat => '格式：';
+
+  @override
+  String get tocTemplateReset => '重置';
+
+  @override
+  String get tocTemplateRetry => '重试';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '移除 $count 个目录元素';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles => '不会删除与这些目录元素关联的源文件。';
+
+  @override
+  String get tocOk => '确定';
+
+  @override
+  String get tocSelectExistingTopic => '选择要添加到当前实例的主题';
+
+  @override
+  String get tocGroupName => '组名';
+
+  @override
+  String get tocMoveLineUp => '上移行';
+
+  @override
+  String get tocMoveLineDown => '下移行';
+
+  @override
+  String get tocEmptyMdTopic => '空 MD 主题';
+
+  @override
+  String get tocEmptyXmlTopic => '空 XML 主题';
+
+  @override
+  String get tocCopySpecial => '特殊复制';
+
+  @override
+  String tocCopyFileName(String name) {
+    return '主题文件名 \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => '主题文件路径';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return '主题标题 \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return '目录元素 ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => '主题文件名';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => '主题标题';
+
+  @override
+  String get tocCopyElementIdUnavailable => '目录元素 ID';
+
+  @override
+  String get tocPreviewTopic => '预览主题';
+
+  @override
+  String get tocEditTitleAction => '编辑标题...';
+
+  @override
+  String get tocEditTitleDialog => '编辑标题';
+
+  @override
+  String get tocRemoveElementAction => '移除目录元素...';
+
+  @override
+  String get tocSetHomePage => '设为主页';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '转到“$fileName”中的目录元素';
+  }
+
+  @override
+  String get tocSynchronize => '同步目录与编辑器';
+
+  @override
+  String get tocEmptyGroupAction => '空组';
+
+  @override
+  String get tocNewEmptyGroup => '新建空组';
+
+  @override
+  String get tocGroupAction => '分组';
+
+  @override
+  String get tocNewGroup => '新建组';
+
+  @override
+  String get tocSortChildren => '按字母顺序排列子主题';
+
+  @override
+  String get tocLinkTopicFiles => '将主题文件链接到目录...';
+
+  @override
+  String get tocTitleField => '目录标题:';
+
+  @override
+  String get tocTopicTitleField => '主题标题:';
+
+  @override
+  String get tocAdvancedSettings => '高级设置';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '“$instanceId”的标题:';
+  }
+
+  @override
+  String get tocOnlyTitleField => '仅用于目录的标题:';
+
+  @override
+  String get tocFindUsages => '查找';
+
+  @override
+  String get tocRefactorMenu => '重构';
+
+  @override
+  String get tocSafeDelete => '安全删除';
+
+  @override
+  String get tocDuplicate => '创建副本';
+
+  @override
+  String get tocDuplicateFilename => '主题文件名:';
+
+  @override
+  String get tocDuplicateDialog => '创建主题副本';
+
+  @override
   String get pdfTitlePage => '标题页';
 
   @override
@@ -1105,7 +1312,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get files => '文件';
 
   @override
-  String get toc => '主题';
+  String get toc => '目录';
 
   @override
   String get tocActions => '目录操作';
@@ -1143,7 +1350,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get newChildTopic => '新建子主题';
 
   @override
-  String get newSiblingTopic => '新建同级主题';
+  String get newSiblingTopic => '新建主题';
 
   @override
   String get renameTopicFile => '重命名主题文件';
@@ -4042,6 +4249,213 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
 
   @override
+  String get tocTopicFromTemplate => '从模板创建主题...';
+
+  @override
+  String get tocSaveAsTemplate => '保存为模板';
+
+  @override
+  String get tocTemplateDialog => '从模板创建主题';
+
+  @override
+  String get tocTemplatesEditor => '文件和代码模板';
+
+  @override
+  String get tocEditTemplates => '编辑模板...';
+
+  @override
+  String get tocCreateCustomTemplate => '创建自定义模板...';
+
+  @override
+  String get tocTemplateCreated => '已创建模板';
+
+  @override
+  String get tocTemplateDefault => '默认';
+
+  @override
+  String get tocTemplateCustom => '自定义';
+
+  @override
+  String get tocTemplateFilename => '文件名：';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => '内部';
+
+  @override
+  String get tocTemplateUnnamed => '未命名';
+
+  @override
+  String get tocTemplateNew => '新建模板...';
+
+  @override
+  String get tocTemplateName => '名称：';
+
+  @override
+  String get tocTemplateExtension => '扩展名：';
+
+  @override
+  String get tocTemplateLoadError => '无法加载模板。现有模板未更改。';
+
+  @override
+  String get tocTemplateSaveError => '无法保存模板。您的编辑内容仍保留在此处。';
+
+  @override
+  String get tocTemplateConflict => '模板已在其他窗口中更改。请取消并重新打开编辑器。';
+
+  @override
+  String get tocTemplateDuplicateName => '已存在相同名称和扩展名的模板。';
+
+  @override
+  String get tocTemplateFormat => '格式：';
+
+  @override
+  String get tocTemplateReset => '重置';
+
+  @override
+  String get tocTemplateRetry => '重试';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '移除 $count 个目录元素';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles => '不会删除与这些目录元素关联的源文件。';
+
+  @override
+  String get tocOk => '确定';
+
+  @override
+  String get tocSelectExistingTopic => '选择要添加到当前实例的主题';
+
+  @override
+  String get tocGroupName => '组名';
+
+  @override
+  String get tocMoveLineUp => '上移行';
+
+  @override
+  String get tocMoveLineDown => '下移行';
+
+  @override
+  String get tocEmptyMdTopic => '空 MD 主题';
+
+  @override
+  String get tocEmptyXmlTopic => '空 XML 主题';
+
+  @override
+  String get tocCopySpecial => '特殊复制';
+
+  @override
+  String tocCopyFileName(String name) {
+    return '主题文件名 \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => '主题文件路径';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return '主题标题 \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return '目录元素 ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => '主题文件名';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => '主题标题';
+
+  @override
+  String get tocCopyElementIdUnavailable => '目录元素 ID';
+
+  @override
+  String get tocPreviewTopic => '预览主题';
+
+  @override
+  String get tocEditTitleAction => '编辑标题...';
+
+  @override
+  String get tocEditTitleDialog => '编辑标题';
+
+  @override
+  String get tocRemoveElementAction => '移除目录元素...';
+
+  @override
+  String get tocSetHomePage => '设为主页';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '转到“$fileName”中的目录元素';
+  }
+
+  @override
+  String get tocSynchronize => '同步目录与编辑器';
+
+  @override
+  String get tocEmptyGroupAction => '空组';
+
+  @override
+  String get tocNewEmptyGroup => '新建空组';
+
+  @override
+  String get tocGroupAction => '分组';
+
+  @override
+  String get tocNewGroup => '新建组';
+
+  @override
+  String get tocSortChildren => '按字母顺序排列子主题';
+
+  @override
+  String get tocLinkTopicFiles => '将主题文件链接到目录...';
+
+  @override
+  String get tocTitleField => '目录标题:';
+
+  @override
+  String get tocTopicTitleField => '主题标题:';
+
+  @override
+  String get tocAdvancedSettings => '高级设置';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '“$instanceId”的标题:';
+  }
+
+  @override
+  String get tocOnlyTitleField => '仅用于目录的标题:';
+
+  @override
+  String get tocFindUsages => '查找';
+
+  @override
+  String get tocRefactorMenu => '重构';
+
+  @override
+  String get tocSafeDelete => '安全删除';
+
+  @override
+  String get tocDuplicate => '创建副本';
+
+  @override
+  String get tocDuplicateFilename => '主题文件名:';
+
+  @override
+  String get tocDuplicateDialog => '创建主题副本';
+
+  @override
   String get pdfTitlePage => '标题页';
 
   @override
@@ -5136,7 +5550,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get files => '文件';
 
   @override
-  String get toc => '主题';
+  String get toc => '目录';
 
   @override
   String get tocActions => '目录操作';
@@ -5174,7 +5588,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get newChildTopic => '新建子主题';
 
   @override
-  String get newSiblingTopic => '新建同级主题';
+  String get newSiblingTopic => '新建主题';
 
   @override
   String get renameTopicFile => '重命名主题文件';

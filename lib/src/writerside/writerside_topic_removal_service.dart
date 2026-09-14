@@ -338,8 +338,9 @@ class WritersideTopicRemovalService {
   }
 
   Future<WritersideTopicRemovalResult> apply(
-    WritersideTopicRemovalRequest request,
-  ) async {
+    WritersideTopicRemovalRequest request, {
+    void Function(Iterable<String>)? validateBeforeCommit,
+  }) async {
     final analysis = request.analysis;
     final snapshot = await _snapshot(analysis.moduleRoot, analysis.topicPath);
     if (snapshot.fingerprint != analysis.fingerprint) {
@@ -615,6 +616,11 @@ class WritersideTopicRemovalService {
           ),
     ];
     final applied = <_SourceEdit>[];
+    final affected = <String>{
+      ...edits.map((edit) => edit.path),
+      analysis.topicPath,
+    };
+    void validate() => validateBeforeCommit?.call(affected);
     try {
       for (final edit in edits) {
         await _replaceAtomically(
@@ -622,15 +628,18 @@ class WritersideTopicRemovalService {
           edit.path,
           edit.updated,
           expected: edit.original,
+          validateBeforeCommit: validate,
         );
         applied.add(edit);
       }
       await _ensureExpectedState(snapshot, edits);
+      validate();
       if (analysis.mode == WritersideTopicRemovalMode.safeDeleteFile) {
         await _deleteExpectedFile(
           snapshot.anchor,
           snapshot.topic.filePath,
           expected: snapshot.sources[snapshot.topic.filePath]!,
+          validateBeforeCommit: validate,
         );
       }
     } on Object catch (error, stackTrace) {
@@ -1487,6 +1496,7 @@ class WritersideTopicRemovalService {
     String path,
     String source, {
     required String expected,
+    void Function()? validateBeforeCommit,
   }) async {
     final resolution = await resolveAnchoredPath(
       anchor,
@@ -1540,6 +1550,7 @@ class WritersideTopicRemovalService {
           args: {'path': path},
         );
       }
+      validateBeforeCommit?.call();
       final atomicApi = LinuxAtomicFileApi.instance;
       if (atomicApi.isAvailable) {
         final exchangeError = atomicApi.exchange(temporary.path, checked.path);
@@ -1603,6 +1614,7 @@ class WritersideTopicRemovalService {
     CanonicalPathAnchor anchor,
     String path, {
     required String expected,
+    void Function()? validateBeforeCommit,
   }) async {
     final resolution = await resolveAnchoredPath(
       anchor,
@@ -1630,6 +1642,7 @@ class WritersideTopicRemovalService {
           continue;
         }
         try {
+          validateBeforeCommit?.call();
           quarantined = await File(resolution.path).rename(candidate.path);
           break;
         } on FileSystemException {
@@ -1659,6 +1672,7 @@ class WritersideTopicRemovalService {
           args: {'path': path},
         );
       }
+      validateBeforeCommit?.call();
       await quarantined.delete();
       quarantined = null;
     } on Object catch (error, stackTrace) {

@@ -91,6 +91,27 @@ class ResolvedWritersideDocument {
 class WritersideDocumentResolver {
   const WritersideDocumentResolver();
 
+  /// Navigation-only attributes share the renderer's condition and variable
+  /// engine, without manufacturing a document for groups and external links.
+  String resolveNavigationTitle(
+    String value, {
+    required WritersideModule module,
+    required WritersideInstance instance,
+    WritersideTopic? topic,
+  }) => _interpolateWritersideVariables(value, {
+    for (final variable in module.variables)
+      if (_matchesWritersideInstance(
+        variable.instanceCondition,
+        module,
+        instance,
+      ))
+        variable.name: variable.value,
+    'instance': instance.name,
+    'instance-lowercase': instance.name.toLowerCase(),
+    'currentId': instance.id,
+    'thisTopic': topic?.id ?? '',
+  });
+
   ResolvedWritersideDocument resolve(
     WritersideDocument document,
     WritersideResolveContext context,
@@ -890,30 +911,7 @@ class _ResolveState {
   }
 
   bool _matchesInstance(String? condition, WritersideModule module) {
-    final normalized = condition?.trim() ?? '';
-    final negated = normalized.startsWith('!');
-    final tokens = _tokens(negated ? normalized.substring(1) : normalized);
-    if (tokens.isEmpty) {
-      return true;
-    }
-    final matches = tokens.any((token) => _instanceTokenMatches(token, module));
-    if (negated) {
-      return !matches;
-    }
-    return matches;
-  }
-
-  bool _instanceTokenMatches(String token, WritersideModule module) {
-    final instance = context.instance;
-    if (instance == null) {
-      return false;
-    }
-    if (token.startsWith('@')) {
-      return module.instanceGroups?.groups[token.substring(1)]?.instanceIds
-              .contains(instance.id) ??
-          false;
-    }
-    return token == instance.id;
+    return _matchesWritersideInstance(condition, module, context.instance);
   }
 
   bool _ignoreVariablesFor(WritersideElementNode element, bool inherited) {
@@ -1068,47 +1066,33 @@ class _ResolveState {
     required bool ignore,
     Set<String> resolving = const {},
   }) {
-    if (ignore || !value.contains('%')) {
-      return value.replaceAll('&percnt;', '%');
-    }
-    return value
-        .replaceAllMapped(RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%'), (
-          match,
-        ) {
-          final name = match.group(2)!;
-          if (match.group(1) != null) {
-            return '%$name%';
-          }
-          final replacement = variables[name];
-          if (replacement != null && !resolving.contains(name)) {
-            return _interpolate(
-              replacement,
-              variables,
-              node,
-              ignore: false,
-              resolving: {...resolving, name},
-            );
-          }
-          final key = '${node.span.filePath}:${node.span.startOffset}:$name';
-          if (_unresolvedVariables.add(key) &&
-              context.module.variablesAvailable) {
-            diagnostics.add(
-              Diagnostic(
-                code: 'writerside.variable.unresolved',
-                severity: DiagnosticSeverity.warning,
-                filePath: node.span.filePath,
-                args: {'name': name},
-                sourceSpan: node.span,
-              ),
-            );
-          }
-          return match.group(0)!;
-        })
-        .replaceAll('&percnt;', '%');
+    return _interpolateWritersideVariables(
+      value,
+      variables,
+      ignore: ignore,
+      resolving: resolving,
+      onUnresolved: (name) {
+        final key = '${node.span.filePath}:${node.span.startOffset}:$name';
+        if (_unresolvedVariables.add(key) &&
+            context.module.variablesAvailable) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.variable.unresolved',
+              severity: DiagnosticSeverity.warning,
+              filePath: node.span.filePath,
+              args: {'name': name},
+              sourceSpan: node.span,
+            ),
+          );
+        }
+      },
+    );
   }
 
   String? titleFor(WritersideDocument document) {
-    final root = document.rootElement;
+    final root = document.format == WritersideDocumentFormat.xmlTopic
+        ? document.rootElement
+        : null;
     final titleScope = root?.children ?? document.nodes;
     final conditional = titleScope
         .whereType<WritersideElementNode>()
@@ -1150,6 +1134,54 @@ class _ResolveState {
       ),
     );
   }
+}
+
+bool _matchesWritersideInstance(
+  String? condition,
+  WritersideModule module,
+  WritersideInstance? instance,
+) {
+  final normalized = condition?.trim() ?? '';
+  final negated = normalized.startsWith('!');
+  final tokens = _tokens(negated ? normalized.substring(1) : normalized);
+  if (tokens.isEmpty) return true;
+  final matches =
+      instance != null &&
+      tokens.any(
+        (token) => token.startsWith('@')
+            ? module.instanceGroups?.groups[token.substring(1)]?.instanceIds
+                      .contains(instance.id) ??
+                  false
+            : token == instance.id,
+      );
+  return negated ? !matches : matches;
+}
+
+String _interpolateWritersideVariables(
+  String value,
+  Map<String, String> variables, {
+  bool ignore = false,
+  Set<String> resolving = const {},
+  void Function(String)? onUnresolved,
+}) {
+  if (ignore || !value.contains('%')) return value.replaceAll('&percnt;', '%');
+  return value
+      .replaceAllMapped(RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%'), (match) {
+        final name = match.group(2)!;
+        if (match.group(1) != null) return '%$name%';
+        final replacement = variables[name];
+        if (replacement != null && !resolving.contains(name)) {
+          return _interpolateWritersideVariables(
+            replacement,
+            variables,
+            resolving: {...resolving, name},
+            onUnresolved: onUnresolved,
+          );
+        }
+        onUnresolved?.call(name);
+        return match.group(0)!;
+      })
+      .replaceAll('&percnt;', '%');
 }
 
 Set<String> _tokens(String? value) => {

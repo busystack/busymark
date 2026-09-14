@@ -11,6 +11,219 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Topic from Template...';
+
+  @override
+  String get tocSaveAsTemplate => 'Save as Template';
+
+  @override
+  String get tocTemplateDialog => 'Create Topic from Template';
+
+  @override
+  String get tocTemplatesEditor => 'File and Code Templates';
+
+  @override
+  String get tocEditTemplates => 'Edit templates...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Create custom template...';
+
+  @override
+  String get tocTemplateCreated => 'Template created';
+
+  @override
+  String get tocTemplateDefault => 'Default';
+
+  @override
+  String get tocTemplateCustom => 'Custom';
+
+  @override
+  String get tocTemplateFilename => 'Filename:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internal';
+
+  @override
+  String get tocTemplateUnnamed => 'Unnamed';
+
+  @override
+  String get tocTemplateNew => 'New template...';
+
+  @override
+  String get tocTemplateName => 'Name:';
+
+  @override
+  String get tocTemplateExtension => 'Extension:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Could not load templates. Existing templates have not been changed.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Could not save templates. Your edits are still available here.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Templates changed in another window. Cancel and reopen the editor before editing again.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'A template with this name and extension already exists.';
+
+  @override
+  String get tocTemplateFormat => 'Format:';
+
+  @override
+  String get tocTemplateReset => 'Reset';
+
+  @override
+  String get tocTemplateRetry => 'Retry';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Remove $count TOC Elements';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'The source files associated with these TOC elements won\'t be deleted.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Select Topic to Add to the Current Instance';
+
+  @override
+  String get tocGroupName => 'Group Name';
+
+  @override
+  String get tocMoveLineUp => 'Move Line Up';
+
+  @override
+  String get tocMoveLineDown => 'Move Line Down';
+
+  @override
+  String get tocEmptyMdTopic => 'Empty MD Topic';
+
+  @override
+  String get tocEmptyXmlTopic => 'Empty XML Topic';
+
+  @override
+  String get tocCopySpecial => 'Copy Special';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Topic File Name \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Topic File Path';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Topic Title \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'TOC Element ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Topic File Name';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Topic Title';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'TOC Element ID';
+
+  @override
+  String get tocPreviewTopic => 'Preview Topic';
+
+  @override
+  String get tocEditTitleAction => 'Edit Title...';
+
+  @override
+  String get tocEditTitleDialog => 'Edit Title';
+
+  @override
+  String get tocRemoveElementAction => 'Remove TOC Element...';
+
+  @override
+  String get tocSetHomePage => 'Set as Home Page';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Go to TOC Element in \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Synchronize TOC and Editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Empty Group';
+
+  @override
+  String get tocNewEmptyGroup => 'New Empty Group';
+
+  @override
+  String get tocGroupAction => 'Group';
+
+  @override
+  String get tocNewGroup => 'New Group';
+
+  @override
+  String get tocSortChildren => 'Sort Child Topics Alphabetically';
+
+  @override
+  String get tocLinkTopicFiles => 'Link Topic Files to TOC...';
+
+  @override
+  String get tocTitleField => 'TOC title:';
+
+  @override
+  String get tocTopicTitleField => 'Topic title:';
+
+  @override
+  String get tocAdvancedSettings => 'Advanced Settings';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Title for \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'TOC-only title:';
+
+  @override
+  String get tocFindUsages => 'Find';
+
+  @override
+  String get tocRefactorMenu => 'Refactor';
+
+  @override
+  String get tocSafeDelete => 'Safe Delete';
+
+  @override
+  String get tocDuplicate => 'Duplicate';
+
+  @override
+  String get tocDuplicateFilename => 'Topic Filename:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplicate Topic';
+
+  @override
   String get pdfTitlePage => 'Title page';
 
   @override
@@ -1156,7 +1369,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get files => 'Files';
 
   @override
-  String get toc => 'Topics';
+  String get toc => 'Table of Contents';
 
   @override
   String get tocActions => 'TOC actions';
@@ -1194,7 +1407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newChildTopic => 'New Child Topic';
 
   @override
-  String get newSiblingTopic => 'New Sibling Topic';
+  String get newSiblingTopic => 'New Topic';
 
   @override
   String get renameTopicFile => 'Rename Topic File';
@@ -3132,7 +3345,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editInstance => 'Edit instance';
 
   @override
-  String get openTocFile => 'Open TOC file';
+  String get openTocFile => 'Open TOC File';
 
   @override
   String get createInstance => 'Create instance';

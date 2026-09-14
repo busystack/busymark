@@ -11,6 +11,220 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Argomento da modello...';
+
+  @override
+  String get tocSaveAsTemplate => 'Salva come modello';
+
+  @override
+  String get tocTemplateDialog => 'Crea argomento da modello';
+
+  @override
+  String get tocTemplatesEditor => 'Modelli di file e codice';
+
+  @override
+  String get tocEditTemplates => 'Modifica modelli...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Crea modello personalizzato...';
+
+  @override
+  String get tocTemplateCreated => 'Modello creato';
+
+  @override
+  String get tocTemplateDefault => 'Predefiniti';
+
+  @override
+  String get tocTemplateCustom => 'Personalizzati';
+
+  @override
+  String get tocTemplateFilename => 'Nome file:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Interni';
+
+  @override
+  String get tocTemplateUnnamed => 'Senza nome';
+
+  @override
+  String get tocTemplateNew => 'Nuovo modello...';
+
+  @override
+  String get tocTemplateName => 'Nome:';
+
+  @override
+  String get tocTemplateExtension => 'Estensione:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Impossibile caricare i modelli. I modelli esistenti non sono stati modificati.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Impossibile salvare i modelli. Le modifiche sono ancora disponibili qui.';
+
+  @override
+  String get tocTemplateConflict =>
+      'I modelli sono cambiati in un’altra finestra. Annulla e riapri l’editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Esiste già un modello con questo nome ed estensione.';
+
+  @override
+  String get tocTemplateFormat => 'Formato:';
+
+  @override
+  String get tocTemplateReset => 'Ripristina';
+
+  @override
+  String get tocTemplateRetry => 'Riprova';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Rimuovi $count elementi dell’indice';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'I file sorgente associati a questi elementi dell’indice non verranno eliminati.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Seleziona un argomento da aggiungere all’istanza corrente';
+
+  @override
+  String get tocGroupName => 'Nome del gruppo';
+
+  @override
+  String get tocMoveLineUp => 'Sposta riga in alto';
+
+  @override
+  String get tocMoveLineDown => 'Sposta riga in basso';
+
+  @override
+  String get tocEmptyMdTopic => 'Argomento MD vuoto';
+
+  @override
+  String get tocEmptyXmlTopic => 'Argomento XML vuoto';
+
+  @override
+  String get tocCopySpecial => 'Copia speciale';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nome del file dell’argomento \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Percorso del file dell’argomento';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Titolo dell’argomento \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID dell’elemento del sommario \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nome del file dell’argomento';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Titolo dell’argomento';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID dell’elemento del sommario';
+
+  @override
+  String get tocPreviewTopic => 'Anteprima argomento';
+
+  @override
+  String get tocEditTitleAction => 'Modifica titolo...';
+
+  @override
+  String get tocEditTitleDialog => 'Modifica titolo';
+
+  @override
+  String get tocRemoveElementAction => 'Rimuovi elemento del sommario...';
+
+  @override
+  String get tocSetHomePage => 'Imposta come pagina iniziale';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Vai all’elemento del sommario in \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sincronizza sommario ed editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Gruppo vuoto';
+
+  @override
+  String get tocNewEmptyGroup => 'Nuovo gruppo vuoto';
+
+  @override
+  String get tocGroupAction => 'Raggruppa';
+
+  @override
+  String get tocNewGroup => 'Nuovo gruppo';
+
+  @override
+  String get tocSortChildren =>
+      'Ordina alfabeticamente gli argomenti secondari';
+
+  @override
+  String get tocLinkTopicFiles => 'Collega file di argomenti al sommario...';
+
+  @override
+  String get tocTitleField => 'Titolo nel sommario:';
+
+  @override
+  String get tocTopicTitleField => 'Titolo dell’argomento:';
+
+  @override
+  String get tocAdvancedSettings => 'Impostazioni avanzate';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Titolo per \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Titolo solo nel sommario:';
+
+  @override
+  String get tocFindUsages => 'Trova';
+
+  @override
+  String get tocRefactorMenu => 'Refactoring';
+
+  @override
+  String get tocSafeDelete => 'Eliminazione sicura';
+
+  @override
+  String get tocDuplicate => 'Duplica';
+
+  @override
+  String get tocDuplicateFilename => 'Nome del file dell’argomento:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplica argomento';
+
+  @override
   String get pdfTitlePage => 'Frontespizio';
 
   @override
@@ -1171,7 +1385,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Argomenti';
+  String get toc => 'Sommario';
 
   @override
   String get tocActions => 'Azioni dell\'indice';
@@ -1209,7 +1423,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get newChildTopic => 'Nuovo sottoargomento';
 
   @override
-  String get newSiblingTopic => 'Nuovo argomento allo stesso livello';
+  String get newSiblingTopic => 'Nuovo argomento';
 
   @override
   String get renameTopicFile => 'Rinomina il file dell\'argomento';

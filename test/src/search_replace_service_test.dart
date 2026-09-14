@@ -654,11 +654,17 @@ class _PausedBatchWorkspaceService extends WorkspaceService {
 
   @override
   Future<Map<String, WorkspaceFileSnapshot>> saveFormattedTextBatch(
-    List<WorkspaceBatchTextWrite> writes,
-  ) async {
+    List<WorkspaceBatchTextWrite> writes, {
+    void Function()? validateBeforeCommit,
+    void Function(Map<String, WorkspaceFileSnapshot>)? onCommitted,
+  }) async {
     batchStarted.complete();
     await _release.future;
-    return super.saveFormattedTextBatch(writes);
+    return super.saveFormattedTextBatch(
+      writes,
+      validateBeforeCommit: validateBeforeCommit,
+      onCommitted: onCommitted,
+    );
   }
 }
 

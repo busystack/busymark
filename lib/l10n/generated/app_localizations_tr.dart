@@ -11,6 +11,218 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Şablondan Konu...';
+
+  @override
+  String get tocSaveAsTemplate => 'Şablon Olarak Kaydet';
+
+  @override
+  String get tocTemplateDialog => 'Şablondan Konu Oluştur';
+
+  @override
+  String get tocTemplatesEditor => 'Dosya ve Kod Şablonları';
+
+  @override
+  String get tocEditTemplates => 'Şablonları düzenle...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Özel şablon oluştur...';
+
+  @override
+  String get tocTemplateCreated => 'Şablon oluşturuldu';
+
+  @override
+  String get tocTemplateDefault => 'Varsayılan';
+
+  @override
+  String get tocTemplateCustom => 'Özel';
+
+  @override
+  String get tocTemplateFilename => 'Dosya adı:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Dahili';
+
+  @override
+  String get tocTemplateUnnamed => 'Adsız';
+
+  @override
+  String get tocTemplateNew => 'Yeni şablon...';
+
+  @override
+  String get tocTemplateName => 'Ad:';
+
+  @override
+  String get tocTemplateExtension => 'Uzantı:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Şablonlar yüklenemedi. Mevcut şablonlar değiştirilmedi.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Şablonlar kaydedilemedi. Düzenlemeleriniz burada duruyor.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Şablonlar başka bir pencerede değiştirildi. İptal edip düzenleyiciyi yeniden açın.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Bu ada ve uzantıya sahip bir şablon zaten var.';
+
+  @override
+  String get tocTemplateFormat => 'Biçim:';
+
+  @override
+  String get tocTemplateReset => 'Sıfırla';
+
+  @override
+  String get tocTemplateRetry => 'Yeniden dene';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '$count İçindekiler Öğesini Kaldır';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Bu içindekiler öğeleriyle ilişkili kaynak dosyalar silinmeyecek.';
+
+  @override
+  String get tocOk => 'Tamam';
+
+  @override
+  String get tocSelectExistingTopic => 'Geçerli örneğe eklenecek konuyu seçin';
+
+  @override
+  String get tocGroupName => 'Grup adı';
+
+  @override
+  String get tocMoveLineUp => 'Satırı yukarı taşı';
+
+  @override
+  String get tocMoveLineDown => 'Satırı aşağı taşı';
+
+  @override
+  String get tocEmptyMdTopic => 'Boş MD konusu';
+
+  @override
+  String get tocEmptyXmlTopic => 'Boş XML konusu';
+
+  @override
+  String get tocCopySpecial => 'Özel kopyala';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Konu dosyası adı \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Konu dosyası yolu';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Konu başlığı \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'İçindekiler öğesi kimliği \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Konu dosyası adı';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Konu başlığı';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'İçindekiler öğesi kimliği';
+
+  @override
+  String get tocPreviewTopic => 'Konuyu önizle';
+
+  @override
+  String get tocEditTitleAction => 'Başlığı düzenle...';
+
+  @override
+  String get tocEditTitleDialog => 'Başlığı düzenle';
+
+  @override
+  String get tocRemoveElementAction => 'İçindekiler öğesini kaldır...';
+
+  @override
+  String get tocSetHomePage => 'Ana sayfa olarak ayarla';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '\'$fileName\' içindeki içindekiler öğesine git';
+  }
+
+  @override
+  String get tocSynchronize => 'İçindekiler ve düzenleyiciyi eşitle';
+
+  @override
+  String get tocEmptyGroupAction => 'Boş grup';
+
+  @override
+  String get tocNewEmptyGroup => 'Yeni boş grup';
+
+  @override
+  String get tocGroupAction => 'Grupla';
+
+  @override
+  String get tocNewGroup => 'Yeni grup';
+
+  @override
+  String get tocSortChildren => 'Alt konuları alfabetik sırala';
+
+  @override
+  String get tocLinkTopicFiles => 'Konu dosyalarını içindekilere bağla...';
+
+  @override
+  String get tocTitleField => 'İçindekiler başlığı:';
+
+  @override
+  String get tocTopicTitleField => 'Konu başlığı:';
+
+  @override
+  String get tocAdvancedSettings => 'Gelişmiş ayarlar';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '\'$instanceId\' için başlık:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Yalnızca içindekiler başlığı:';
+
+  @override
+  String get tocFindUsages => 'Bul';
+
+  @override
+  String get tocRefactorMenu => 'Yeniden düzenle';
+
+  @override
+  String get tocSafeDelete => 'Güvenli sil';
+
+  @override
+  String get tocDuplicate => 'Çoğalt';
+
+  @override
+  String get tocDuplicateFilename => 'Konu dosyası adı:';
+
+  @override
+  String get tocDuplicateDialog => 'Konuyu çoğalt';
+
+  @override
   String get pdfTitlePage => 'Başlık sayfası';
 
   @override
@@ -1163,7 +1375,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get files => 'Dosyalar';
 
   @override
-  String get toc => 'Konular';
+  String get toc => 'İçindekiler';
 
   @override
   String get tocActions => 'İçindekiler eylemleri';
@@ -1201,7 +1413,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get newChildTopic => 'Yeni alt konu';
 
   @override
-  String get newSiblingTopic => 'Yeni kardeş konu';
+  String get newSiblingTopic => 'Yeni konu';
 
   @override
   String get renameTopicFile => 'Konu dosyasını yeniden adlandır';
@@ -3133,7 +3345,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editInstance => 'Örneği düzenle';
 
   @override
-  String get openTocFile => 'TOC dosyasını aç';
+  String get openTocFile => 'İçindekiler dosyasını aç';
 
   @override
   String get createInstance => 'Örnek oluştur';

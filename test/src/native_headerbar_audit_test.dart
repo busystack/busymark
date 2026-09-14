@@ -281,7 +281,10 @@ void main() {
     expect(native, contains('GMenu* main_menu_model;'));
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
-    expect(native, isNot(contains('g_menu_item_new_submenu')));
+    final mainMenuBuilder = RegExp(
+      r'static void rebuild_main_menu_model[\s\S]*?(?=\nstatic )',
+    ).firstMatch(native)!.group(0)!;
+    expect(mainMenuBuilder, isNot(contains('g_menu_item_new_submenu')));
     expect(native, contains('localized_label_or(labels, "export", "")'));
     expect(native, contains('"header.keyboard-shortcuts"'));
     expect(native, contains('"header.export"'));

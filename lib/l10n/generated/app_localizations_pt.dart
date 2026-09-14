@@ -11,6 +11,219 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Tópico a partir de modelo...';
+
+  @override
+  String get tocSaveAsTemplate => 'Guardar como modelo';
+
+  @override
+  String get tocTemplateDialog => 'Criar tópico a partir de modelo';
+
+  @override
+  String get tocTemplatesEditor => 'Modelos de ficheiros e código';
+
+  @override
+  String get tocEditTemplates => 'Editar modelos...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Criar modelo personalizado...';
+
+  @override
+  String get tocTemplateCreated => 'Modelo criado';
+
+  @override
+  String get tocTemplateDefault => 'Predefinidos';
+
+  @override
+  String get tocTemplateCustom => 'Personalizados';
+
+  @override
+  String get tocTemplateFilename => 'Nome do ficheiro:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internos';
+
+  @override
+  String get tocTemplateUnnamed => 'Sem nome';
+
+  @override
+  String get tocTemplateNew => 'Novo modelo...';
+
+  @override
+  String get tocTemplateName => 'Nome:';
+
+  @override
+  String get tocTemplateExtension => 'Extensão:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Não foi possível carregar os modelos. Os modelos existentes não foram alterados.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Não foi possível guardar os modelos. As alterações continuam disponíveis aqui.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Os modelos foram alterados noutra janela. Cancele e reabra o editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Já existe um modelo com este nome e extensão.';
+
+  @override
+  String get tocTemplateFormat => 'Formato:';
+
+  @override
+  String get tocTemplateReset => 'Repor';
+
+  @override
+  String get tocTemplateRetry => 'Tentar novamente';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Remover $count elementos do índice';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Os ficheiros de origem associados a estes elementos do índice não serão eliminados.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Selecionar tópico para adicionar à instância atual';
+
+  @override
+  String get tocGroupName => 'Nome do grupo';
+
+  @override
+  String get tocMoveLineUp => 'Mover linha para cima';
+
+  @override
+  String get tocMoveLineDown => 'Mover linha para baixo';
+
+  @override
+  String get tocEmptyMdTopic => 'Tópico MD vazio';
+
+  @override
+  String get tocEmptyXmlTopic => 'Tópico XML vazio';
+
+  @override
+  String get tocCopySpecial => 'Cópia especial';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nome do ficheiro do tópico \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Caminho do ficheiro do tópico';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Título do tópico \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID do elemento do índice \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nome do ficheiro do tópico';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Título do tópico';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID do elemento do índice';
+
+  @override
+  String get tocPreviewTopic => 'Pré-visualizar tópico';
+
+  @override
+  String get tocEditTitleAction => 'Editar título...';
+
+  @override
+  String get tocEditTitleDialog => 'Editar título';
+
+  @override
+  String get tocRemoveElementAction => 'Remover elemento do índice...';
+
+  @override
+  String get tocSetHomePage => 'Definir como página inicial';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Ir para o elemento do índice em \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sincronizar índice e editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Grupo vazio';
+
+  @override
+  String get tocNewEmptyGroup => 'Novo grupo vazio';
+
+  @override
+  String get tocGroupAction => 'Agrupar';
+
+  @override
+  String get tocNewGroup => 'Novo grupo';
+
+  @override
+  String get tocSortChildren => 'Ordenar subtópicos alfabeticamente';
+
+  @override
+  String get tocLinkTopicFiles => 'Ligar ficheiros de tópicos ao índice...';
+
+  @override
+  String get tocTitleField => 'Título no índice:';
+
+  @override
+  String get tocTopicTitleField => 'Título do tópico:';
+
+  @override
+  String get tocAdvancedSettings => 'Definições avançadas';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Título para \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Título exclusivo do índice:';
+
+  @override
+  String get tocFindUsages => 'Localizar';
+
+  @override
+  String get tocRefactorMenu => 'Refatorizar';
+
+  @override
+  String get tocSafeDelete => 'Eliminação segura';
+
+  @override
+  String get tocDuplicate => 'Duplicar';
+
+  @override
+  String get tocDuplicateFilename => 'Nome do ficheiro do tópico:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplicar tópico';
+
+  @override
   String get pdfTitlePage => 'Página de título';
 
   @override
@@ -1170,7 +1383,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get files => 'Ficheiros';
 
   @override
-  String get toc => 'Tópicos';
+  String get toc => 'Índice';
 
   @override
   String get tocActions => 'Ações do sumário';
@@ -1208,7 +1421,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get newChildTopic => 'Novo subtópico';
 
   @override
-  String get newSiblingTopic => 'Novo tópico no mesmo nível';
+  String get newSiblingTopic => 'Novo tópico';
 
   @override
   String get renameTopicFile => 'Renomear ficheiro do tópico';
@@ -4295,6 +4508,219 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
 
   @override
+  String get tocTopicFromTemplate => 'Tópico a partir de modelo...';
+
+  @override
+  String get tocSaveAsTemplate => 'Salvar como modelo';
+
+  @override
+  String get tocTemplateDialog => 'Criar tópico a partir de modelo';
+
+  @override
+  String get tocTemplatesEditor => 'Modelos de arquivos e código';
+
+  @override
+  String get tocEditTemplates => 'Editar modelos...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Criar modelo personalizado...';
+
+  @override
+  String get tocTemplateCreated => 'Modelo criado';
+
+  @override
+  String get tocTemplateDefault => 'Padrão';
+
+  @override
+  String get tocTemplateCustom => 'Personalizados';
+
+  @override
+  String get tocTemplateFilename => 'Nome do arquivo:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internos';
+
+  @override
+  String get tocTemplateUnnamed => 'Sem nome';
+
+  @override
+  String get tocTemplateNew => 'Novo modelo...';
+
+  @override
+  String get tocTemplateName => 'Nome:';
+
+  @override
+  String get tocTemplateExtension => 'Extensão:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Não foi possível carregar os modelos. Os modelos existentes não foram alterados.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Não foi possível salvar os modelos. Suas alterações continuam disponíveis aqui.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Os modelos foram alterados em outra janela. Cancele e reabra o editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Já existe um modelo com este nome e extensão.';
+
+  @override
+  String get tocTemplateFormat => 'Formato:';
+
+  @override
+  String get tocTemplateReset => 'Redefinir';
+
+  @override
+  String get tocTemplateRetry => 'Tentar novamente';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Remover $count elementos do sumário';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Os arquivos de origem associados a estes elementos do sumário não serão excluídos.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Selecionar tópico para adicionar à instância atual';
+
+  @override
+  String get tocGroupName => 'Nome do grupo';
+
+  @override
+  String get tocMoveLineUp => 'Mover linha para cima';
+
+  @override
+  String get tocMoveLineDown => 'Mover linha para baixo';
+
+  @override
+  String get tocEmptyMdTopic => 'Tópico MD vazio';
+
+  @override
+  String get tocEmptyXmlTopic => 'Tópico XML vazio';
+
+  @override
+  String get tocCopySpecial => 'Cópia especial';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nome do arquivo do tópico \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Caminho do arquivo do tópico';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Título do tópico \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID do elemento do índice \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nome do arquivo do tópico';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Título do tópico';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID do elemento do índice';
+
+  @override
+  String get tocPreviewTopic => 'Pré-visualizar tópico';
+
+  @override
+  String get tocEditTitleAction => 'Editar título...';
+
+  @override
+  String get tocEditTitleDialog => 'Editar título';
+
+  @override
+  String get tocRemoveElementAction => 'Remover elemento do índice...';
+
+  @override
+  String get tocSetHomePage => 'Definir como página inicial';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Ir para o elemento do índice em \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sincronizar índice e editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Grupo vazio';
+
+  @override
+  String get tocNewEmptyGroup => 'Novo grupo vazio';
+
+  @override
+  String get tocGroupAction => 'Agrupar';
+
+  @override
+  String get tocNewGroup => 'Novo grupo';
+
+  @override
+  String get tocSortChildren => 'Ordenar subtópicos alfabeticamente';
+
+  @override
+  String get tocLinkTopicFiles => 'Vincular arquivos de tópicos ao índice...';
+
+  @override
+  String get tocTitleField => 'Título no índice:';
+
+  @override
+  String get tocTopicTitleField => 'Título do tópico:';
+
+  @override
+  String get tocAdvancedSettings => 'Configurações avançadas';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Título para \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Título exclusivo do índice:';
+
+  @override
+  String get tocFindUsages => 'Localizar';
+
+  @override
+  String get tocRefactorMenu => 'Refatorar';
+
+  @override
+  String get tocSafeDelete => 'Exclusão segura';
+
+  @override
+  String get tocDuplicate => 'Duplicar';
+
+  @override
+  String get tocDuplicateFilename => 'Nome do arquivo do tópico:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplicar tópico';
+
+  @override
   String get pdfTitlePage => 'Página de título';
 
   @override
@@ -5455,7 +5881,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get files => 'Arquivos';
 
   @override
-  String get toc => 'Tópicos';
+  String get toc => 'Índice';
 
   @override
   String get tocActions => 'Ações do sumário';
@@ -5493,7 +5919,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get newChildTopic => 'Novo subtópico';
 
   @override
-  String get newSiblingTopic => 'Novo tópico no mesmo nível';
+  String get newSiblingTopic => 'Novo tópico';
 
   @override
   String get renameTopicFile => 'Renomear arquivo do tópico';

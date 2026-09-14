@@ -394,6 +394,7 @@ class WritersideTreeResolver {
       entries: node.entries,
       sourceTreePath: sourceTreePath,
       sourceTocPath: node.sourceTocPath,
+      sourceXmlPath: node.sourceXmlPath,
       included: included,
       span: node.span,
     );

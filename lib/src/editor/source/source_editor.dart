@@ -316,8 +316,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   void scrollToLine(int line) {
+    scrollToOffset(_textOffsetForLine(_controller.fullText, line));
+  }
+
+  /// Reveals a full-document offset, including a destination inside a fold.
+  void scrollToOffset(int offset) {
+    final textOffset = offset.clamp(0, _controller.fullText.length);
+    final line =
+        '\n'.allMatches(_controller.fullText.substring(0, textOffset)).length +
+        1;
     _unfoldSourceLine(line);
-    final textOffset = _textOffsetForLine(_controller.fullText, line);
     _focusNode.requestFocus();
     _controller.fullSelection = TextSelection.collapsed(offset: textOffset);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -383,6 +391,28 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     });
   }
 
+  void _moveSourceLines({required bool down}) {
+    final before = _fullEditingValue();
+    final after = SourceCommands.moveLines(before, down: down);
+    if (after == before) return;
+    var start = 0;
+    while (start < before.text.length &&
+        start < after.text.length &&
+        before.text.codeUnitAt(start) == after.text.codeUnitAt(start)) {
+      start++;
+    }
+    var end = before.text.length;
+    var nextEnd = after.text.length;
+    while (end > start &&
+        nextEnd > start &&
+        before.text.codeUnitAt(end - 1) == after.text.codeUnitAt(nextEnd - 1)) {
+      end--;
+      nextEnd--;
+    }
+    _unfoldSourceRange(start, end);
+    _applyFullEditingValue(after);
+  }
+
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -434,6 +464,22 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final commands =
         BusyMarkCommandRegistryScope.read(context) ??
         BusyMarkCommandCatalog.metadata;
+    if (widget.filePath?.toLowerCase().endsWith('.tree') == true) {
+      final up = commands.shortcutAccepts(
+        BusyMarkCommandIds.treeMoveLineUp,
+        event,
+        keyboard,
+      );
+      final down = commands.shortcutAccepts(
+        BusyMarkCommandIds.treeMoveLineDown,
+        event,
+        keyboard,
+      );
+      if (up || down) {
+        _moveSourceLines(down: down);
+        return KeyEventResult.handled;
+      }
+    }
     if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch();
       return KeyEventResult.handled;
@@ -582,12 +628,31 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                               isCommandEnabled: (commandId) =>
                                   !_hasActiveComposition &&
                                   (commandId.startsWith('editor.') ||
+                                      (widget.filePath?.toLowerCase().endsWith(
+                                                '.tree',
+                                              ) ==
+                                              true &&
+                                          {
+                                            BusyMarkCommandIds.treeMoveLineUp,
+                                            BusyMarkCommandIds.treeMoveLineDown,
+                                          }.contains(commandId)) ||
                                       {
                                         BusyMarkCommandIds.textCopy,
                                         BusyMarkCommandIds.textCut,
                                         BusyMarkCommandIds.textPaste,
                                       }.contains(commandId)),
                               onCommand: (commandId) {
+                                if (commandId ==
+                                        BusyMarkCommandIds.treeMoveLineUp ||
+                                    commandId ==
+                                        BusyMarkCommandIds.treeMoveLineDown) {
+                                  _moveSourceLines(
+                                    down:
+                                        commandId ==
+                                        BusyMarkCommandIds.treeMoveLineDown,
+                                  );
+                                  return;
+                                }
                                 if (commandId == BusyMarkCommandIds.textCopy) {
                                   unawaited(_copyOrCutSource(cut: false));
                                   return;

@@ -177,8 +177,10 @@ class WritersideTopicCreator {
 
   Future<WritersideTopicCreateResult> create(
     WritersideTopicCreateTarget target,
-    WritersideTopicCreateRequest request,
-  ) async {
+    WritersideTopicCreateRequest request, {
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
     final rootPath = normalizePath(target.rootPath);
     final CanonicalPathAnchor rootAnchor;
     try {
@@ -225,6 +227,26 @@ class WritersideTopicCreator {
     if (title.isEmpty) {
       throw const BusyMarkException('writerside.topic.title-required');
     }
+    if (initialSource != null && request.format == WritersideTopicFormat.xml) {
+      // A customized template is untrusted authoring input. Validate it before
+      // any directory/file publication, just like the filename and TOC identity.
+      XmlDocument templateDocument;
+      try {
+        templateDocument = XmlDocument.parse(initialSource);
+        if (templateDocument.rootElement.name.local != 'topic') {
+          throw const FormatException('Expected a topic root');
+        }
+      } on Object {
+        throw const BusyMarkException('writerside.toc.path-invalid');
+      }
+      final sourceId = templateDocument.rootElement.getAttribute('id');
+      if (sourceId != null && target.existingTopicIds.contains(sourceId)) {
+        throw BusyMarkException(
+          'writerside.topic.id-exists',
+          args: {'topicId': sourceId},
+        );
+      }
+    }
 
     final topicResolution = await _topicTargetPath(
       rootAnchor,
@@ -257,9 +279,11 @@ class WritersideTopicCreator {
     if (createdTopicsRoot.type != FileSystemEntityType.directory) {
       throw const BusyMarkException('writerside.topic.topics-root-unsafe');
     }
-    final topicSource = _topicSource(request.format, topicId, title);
+    final topicSource =
+        initialSource ?? _topicSource(request.format, topicId, title);
     var topicCreated = false;
     try {
+      await validateBeforePublish?.call();
       await _writeNewFile(rootAnchor, topicPath, topicSource);
       topicCreated = true;
       await _replaceTreeAtomically(
@@ -267,6 +291,7 @@ class WritersideTopicCreator {
         treePath,
         updatedTree,
         expectedCurrentSource: treeSource,
+        validateBeforePublish: validateBeforePublish,
       );
     } on Object {
       if (topicCreated) {
@@ -534,6 +559,7 @@ class WritersideTopicCreator {
     String path,
     String source, {
     required String expectedCurrentSource,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     final tree = await _treePath(anchor, path);
     await _ensureTreeUnchanged(tree, expectedCurrentSource);
@@ -543,6 +569,7 @@ class WritersideTopicCreator {
       await temporary.writeAsString(source, flush: true);
       await _copyFileMode(targetStat, temporary);
       await _beforeTreePublish?.call(tree.path);
+      await validateBeforePublish?.call();
 
       final publishTarget = await _treePath(anchor, path);
       await _ensureTreeUnchanged(publishTarget, expectedCurrentSource);

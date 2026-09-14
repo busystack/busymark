@@ -11,6 +11,213 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => '템플릿에서 토픽...';
+
+  @override
+  String get tocSaveAsTemplate => '템플릿으로 저장';
+
+  @override
+  String get tocTemplateDialog => '템플릿에서 토픽 만들기';
+
+  @override
+  String get tocTemplatesEditor => '파일 및 코드 템플릿';
+
+  @override
+  String get tocEditTemplates => '템플릿 편집...';
+
+  @override
+  String get tocCreateCustomTemplate => '사용자 지정 템플릿 만들기...';
+
+  @override
+  String get tocTemplateCreated => '템플릿 생성됨';
+
+  @override
+  String get tocTemplateDefault => '기본';
+
+  @override
+  String get tocTemplateCustom => '사용자 지정';
+
+  @override
+  String get tocTemplateFilename => '파일 이름:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => '내부';
+
+  @override
+  String get tocTemplateUnnamed => '이름 없음';
+
+  @override
+  String get tocTemplateNew => '새 템플릿...';
+
+  @override
+  String get tocTemplateName => '이름:';
+
+  @override
+  String get tocTemplateExtension => '확장자:';
+
+  @override
+  String get tocTemplateLoadError => '템플릿을 불러올 수 없습니다. 기존 템플릿은 변경되지 않았습니다.';
+
+  @override
+  String get tocTemplateSaveError => '템플릿을 저장할 수 없습니다. 편집 내용은 여기에 유지됩니다.';
+
+  @override
+  String get tocTemplateConflict => '다른 창에서 템플릿이 변경되었습니다. 취소하고 편집기를 다시 여세요.';
+
+  @override
+  String get tocTemplateDuplicateName => '이 이름과 확장자를 가진 템플릿이 이미 있습니다.';
+
+  @override
+  String get tocTemplateFormat => '형식:';
+
+  @override
+  String get tocTemplateReset => '초기화';
+
+  @override
+  String get tocTemplateRetry => '다시 시도';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '목차 요소 $count개 제거';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles => '이 목차 요소와 연결된 소스 파일은 삭제되지 않습니다.';
+
+  @override
+  String get tocOk => '확인';
+
+  @override
+  String get tocSelectExistingTopic => '현재 인스턴스에 추가할 토픽 선택';
+
+  @override
+  String get tocGroupName => '그룹 이름';
+
+  @override
+  String get tocMoveLineUp => '줄 위로 이동';
+
+  @override
+  String get tocMoveLineDown => '줄 아래로 이동';
+
+  @override
+  String get tocEmptyMdTopic => '빈 MD 토픽';
+
+  @override
+  String get tocEmptyXmlTopic => '빈 XML 토픽';
+
+  @override
+  String get tocCopySpecial => '특수 복사';
+
+  @override
+  String tocCopyFileName(String name) {
+    return '토픽 파일 이름 \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => '토픽 파일 경로';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return '토픽 제목 \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return '목차 요소 ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => '토픽 파일 이름';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => '토픽 제목';
+
+  @override
+  String get tocCopyElementIdUnavailable => '목차 요소 ID';
+
+  @override
+  String get tocPreviewTopic => '토픽 미리보기';
+
+  @override
+  String get tocEditTitleAction => '제목 편집...';
+
+  @override
+  String get tocEditTitleDialog => '제목 편집';
+
+  @override
+  String get tocRemoveElementAction => '목차 요소 제거...';
+
+  @override
+  String get tocSetHomePage => '홈 페이지로 설정';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '\'$fileName\'의 목차 요소로 이동';
+  }
+
+  @override
+  String get tocSynchronize => '목차와 편집기 동기화';
+
+  @override
+  String get tocEmptyGroupAction => '빈 그룹';
+
+  @override
+  String get tocNewEmptyGroup => '새 빈 그룹';
+
+  @override
+  String get tocGroupAction => '그룹화';
+
+  @override
+  String get tocNewGroup => '새 그룹';
+
+  @override
+  String get tocSortChildren => '하위 토픽을 알파벳순으로 정렬';
+
+  @override
+  String get tocLinkTopicFiles => '토픽 파일을 목차에 연결...';
+
+  @override
+  String get tocTitleField => '목차 제목:';
+
+  @override
+  String get tocTopicTitleField => '토픽 제목:';
+
+  @override
+  String get tocAdvancedSettings => '고급 설정';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '\'$instanceId\'의 제목:';
+  }
+
+  @override
+  String get tocOnlyTitleField => '목차 전용 제목:';
+
+  @override
+  String get tocFindUsages => '찾기';
+
+  @override
+  String get tocRefactorMenu => '리팩터링';
+
+  @override
+  String get tocSafeDelete => '안전하게 삭제';
+
+  @override
+  String get tocDuplicate => '복제';
+
+  @override
+  String get tocDuplicateFilename => '토픽 파일 이름:';
+
+  @override
+  String get tocDuplicateDialog => '토픽 복제';
+
+  @override
   String get pdfTitlePage => '제목 페이지';
 
   @override
@@ -1118,7 +1325,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get files => '파일';
 
   @override
-  String get toc => '토픽';
+  String get toc => '목차';
 
   @override
   String get tocActions => '목차 작업';
@@ -1156,7 +1363,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get newChildTopic => '새 하위 토픽';
 
   @override
-  String get newSiblingTopic => '새 형제 토픽';
+  String get newSiblingTopic => '새 토픽';
 
   @override
   String get renameTopicFile => '토픽 파일 이름 바꾸기';

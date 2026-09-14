@@ -11,6 +11,219 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Topik dari Templat...';
+
+  @override
+  String get tocSaveAsTemplate => 'Simpan sebagai Templat';
+
+  @override
+  String get tocTemplateDialog => 'Buat Topik dari Templat';
+
+  @override
+  String get tocTemplatesEditor => 'Templat File dan Kode';
+
+  @override
+  String get tocEditTemplates => 'Edit templat...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Buat templat khusus...';
+
+  @override
+  String get tocTemplateCreated => 'Templat dibuat';
+
+  @override
+  String get tocTemplateDefault => 'Bawaan';
+
+  @override
+  String get tocTemplateCustom => 'Khusus';
+
+  @override
+  String get tocTemplateFilename => 'Nama file:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internal';
+
+  @override
+  String get tocTemplateUnnamed => 'Tanpa nama';
+
+  @override
+  String get tocTemplateNew => 'Templat baru...';
+
+  @override
+  String get tocTemplateName => 'Nama:';
+
+  @override
+  String get tocTemplateExtension => 'Ekstensi:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Tidak dapat memuat templat. Templat yang ada tidak diubah.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Tidak dapat menyimpan templat. Edit Anda masih tersedia di sini.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Templat berubah di jendela lain. Batalkan dan buka kembali editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Templat dengan nama dan ekstensi ini sudah ada.';
+
+  @override
+  String get tocTemplateFormat => 'Format:';
+
+  @override
+  String get tocTemplateReset => 'Atur ulang';
+
+  @override
+  String get tocTemplateRetry => 'Coba lagi';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Hapus $count Elemen Daftar Isi';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Berkas sumber yang terkait dengan elemen daftar isi ini tidak akan dihapus.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Pilih topik untuk ditambahkan ke instans saat ini';
+
+  @override
+  String get tocGroupName => 'Nama grup';
+
+  @override
+  String get tocMoveLineUp => 'Pindahkan baris ke atas';
+
+  @override
+  String get tocMoveLineDown => 'Pindahkan baris ke bawah';
+
+  @override
+  String get tocEmptyMdTopic => 'Topik MD kosong';
+
+  @override
+  String get tocEmptyXmlTopic => 'Topik XML kosong';
+
+  @override
+  String get tocCopySpecial => 'Salin khusus';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nama berkas topik \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Jalur berkas topik';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Judul topik \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID elemen daftar isi \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nama berkas topik';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Judul topik';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID elemen daftar isi';
+
+  @override
+  String get tocPreviewTopic => 'Pratinjau topik';
+
+  @override
+  String get tocEditTitleAction => 'Edit judul...';
+
+  @override
+  String get tocEditTitleDialog => 'Edit judul';
+
+  @override
+  String get tocRemoveElementAction => 'Hapus elemen daftar isi...';
+
+  @override
+  String get tocSetHomePage => 'Jadikan halaman utama';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Buka elemen daftar isi di \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sinkronkan daftar isi dan editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Grup kosong';
+
+  @override
+  String get tocNewEmptyGroup => 'Grup kosong baru';
+
+  @override
+  String get tocGroupAction => 'Kelompokkan';
+
+  @override
+  String get tocNewGroup => 'Grup baru';
+
+  @override
+  String get tocSortChildren => 'Urutkan subtopik berdasarkan abjad';
+
+  @override
+  String get tocLinkTopicFiles => 'Tautkan berkas topik ke daftar isi...';
+
+  @override
+  String get tocTitleField => 'Judul daftar isi:';
+
+  @override
+  String get tocTopicTitleField => 'Judul topik:';
+
+  @override
+  String get tocAdvancedSettings => 'Pengaturan lanjutan';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Judul untuk \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Judul khusus daftar isi:';
+
+  @override
+  String get tocFindUsages => 'Cari';
+
+  @override
+  String get tocRefactorMenu => 'Refaktor';
+
+  @override
+  String get tocSafeDelete => 'Hapus dengan aman';
+
+  @override
+  String get tocDuplicate => 'Duplikat';
+
+  @override
+  String get tocDuplicateFilename => 'Nama berkas topik:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplikat topik';
+
+  @override
   String get pdfTitlePage => 'Halaman judul';
 
   @override
@@ -1162,7 +1375,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Topik';
+  String get toc => 'Daftar Isi';
 
   @override
   String get tocActions => 'Tindakan TOC';
@@ -1200,7 +1413,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get newChildTopic => 'Topik anak baru';
 
   @override
-  String get newSiblingTopic => 'Topik saudara baru';
+  String get newSiblingTopic => 'Topik baru';
 
   @override
   String get renameTopicFile => 'Ganti nama file topik';
@@ -3141,7 +3354,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get editInstance => 'Ubah instance';
 
   @override
-  String get openTocFile => 'Buka file TOC';
+  String get openTocFile => 'Buka berkas daftar isi';
 
   @override
   String get createInstance => 'Buat instance';

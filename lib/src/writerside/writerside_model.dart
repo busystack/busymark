@@ -267,6 +267,7 @@ class TocNode extends WritersideTreeEntry {
     this.entries = const [],
     this.sourceTreePath,
     this.sourceTocPath,
+    this.sourceXmlPath,
     this.included = false,
     this.includeFrom,
     this.includeElementId,
@@ -294,6 +295,10 @@ class TocNode extends WritersideTreeEntry {
   final List<WritersideTreeEntry> entries;
   final String? sourceTreePath;
   final List<int>? sourceTocPath;
+
+  /// Exact XML-element child indexes, including snippet ancestors. Navigation
+  /// only: this does not grant structural mutation rights to included nodes.
+  final List<int>? sourceXmlPath;
   final bool included;
   final String? includeFrom;
   final String? includeElementId;

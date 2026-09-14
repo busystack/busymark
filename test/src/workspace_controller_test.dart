@@ -19,6 +19,7 @@ import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,106 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'TOC writes reject an inactive dirty tree without discarding either buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-toc-dirty-');
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'));
+      const original =
+          '<instance-profile id="g" name="Guide" start-page="a.md"><toc-element topic="a.md"/></instance-profile>';
+      await tree.writeAsString(original);
+      final topic = File(p.join(root.path, 'topics/a.md'));
+      await topic.writeAsString('# Original\n');
+      final harness = await _createControllerHarness(
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(tree.path);
+      controller.updateActiveText('$original\n<!-- unsaved -->');
+      await controller.openActiveFile(topic.path);
+      final result = await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Blocked',
+          fileName: 'blocked.md',
+          format: WritersideTopicFormat.markdown,
+        ),
+        instanceTreePath: tree.path,
+      );
+      expect(result, isFalse);
+      expect(await tree.readAsString(), original);
+      expect(
+        await File(p.join(root.path, 'topics/blocked.md')).exists(),
+        isFalse,
+      );
+      expect(
+        harness.controller.state.bufferForPath(tree.path)!.text,
+        contains('unsaved'),
+      );
+      expect(
+        harness.controller.state.bufferForPath(tree.path)!.isDirty,
+        isTrue,
+      );
+      expect(harness.controller.state.activeBuffer?.filePath, topic.path);
+    },
+  );
+
+  test(
+    'TOC creation defers its monitor events until the new document is open',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-toc-monitor-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'g.tree')).writeAsString(
+        '<instance-profile id="g" name="Guide" start-page="a.md"><toc-element topic="a.md"/></instance-profile>',
+      );
+      await File(
+        p.join(root.path, 'topics/a.md'),
+      ).writeAsString('# Original\n');
+      final monitor = _ControlledFileMonitor();
+      final service = _TocCreationMonitorService(monitor);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.controller.openPath(root.path);
+      final result = await harness.controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Created',
+          fileName: 'created.md',
+          format: WritersideTopicFormat.markdown,
+        ),
+      );
+      expect(result, isTrue);
+      expect(
+        harness.controller.state.activeBuffer?.filePath,
+        p.join(root.path, 'topics/created.md'),
+      );
+      expect(
+        harness.controller.state.documentBuffers.map(
+          (buffer) => p.basename(buffer.filePath!),
+        ),
+        containsAll(['a.md', 'created.md']),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(
+        harness.controller.state.activeBuffer?.filePath,
+        p.join(root.path, 'topics/created.md'),
+      );
+    },
+  );
+
   test('Validate publishes a valid table containing an escaped pipe', () async {
     final root = await Directory.systemTemp.createTemp(
       'busymark-table-validation-',
@@ -3683,6 +3784,37 @@ class _ControlledFileMonitor extends WorkspaceFileMonitor {
   void updateOpenFilePaths(Iterable<String> paths) {}
   @override
   Future<void> dispose() => _events.close();
+}
+
+class _TocCreationMonitorService extends WorkspaceService {
+  _TocCreationMonitorService(this.monitor);
+  final _ControlledFileMonitor monitor;
+  @override
+  Future<Workspace> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final result = await super.createWritersideTopic(
+      workspace,
+      request,
+      instanceTreePath: instanceTreePath,
+      validateBeforePublish: validateBeforePublish,
+      initialSource: initialSource,
+    );
+    monitor.emit(workspace.rootPath);
+    return result;
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (path.endsWith('/created.md')) {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 }
 
 class _GatedRefreshWorkspaceService extends WorkspaceService {

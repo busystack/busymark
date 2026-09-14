@@ -1,0 +1,12 @@
+<instance-profile id="guide" name="User Guide" start-page="home.md">
+  <toc-element topic="home.md" id="home"/>
+  <toc-element toc-title="Workspace" id="workspace">
+    <toc-element topic="details.topic" id="details"/>
+    <toc-element topic="reused.md" toc-title="Navigation-only title" id="reused"/>
+    <toc-element topic="hidden.md" hidden="true"/>
+  </toc-element>
+  <toc-element toc-title="Empty group" id="empty"/>
+  <toc-element toc-title="JetBrains Writerside" href="https://www.jetbrains.com/writerside/"/>
+  <include from="library.tree" element-id="shared"/>
+  <toc-element topic="review.md"/>
+</instance-profile>
