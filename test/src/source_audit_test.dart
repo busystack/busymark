@@ -509,7 +509,8 @@ void main() {
 
       expect(workspace, contains('_showProblemsDialog'));
       expect(workspace, contains('_validateActiveAndShowProblems'));
-      expect(workspace, contains(').validateActive()'));
+      expect(workspace, contains('await controller.validateActive()'));
+      expect(workspace, contains('controller.isCurrentValidation(outcome)'));
       expect(workspace, contains('class _ProblemsList'));
       expect(workspace, isNot(contains("tooltip: 'Problems'")));
       expect(workspace, isNot(contains('_ProblemsPanel')));

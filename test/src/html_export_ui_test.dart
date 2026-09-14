@@ -172,23 +172,15 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Unsaved changes'), findsOneWidget);
         await tester.tap(find.text(action));
-        for (
-          var i = 0;
-          i < 60 && find.text('Instance').evaluate().isEmpty;
-          i++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 50)),
-          );
-          await tester.pump(const Duration(milliseconds: 100));
-        }
         if (action == 'Cancel') {
+          await tester.pumpAndSettle();
           expect(find.text('Instance'), findsNothing);
           expect(
             ref.read(workspaceControllerProvider).hasUnsavedChanges,
             isTrue,
           );
         } else {
+          await _pumpUntilFound(tester, find.text('Instance'));
           expect(find.text('Instance'), findsOneWidget);
           expect(
             File(p.join(root.path, 'topics/a.topic')).readAsStringSync(),
@@ -203,6 +195,17 @@ void main() {
       },
     );
   }
+}
+
+Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var attempt = 0; attempt < 240; attempt++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  fail('Timed out waiting for $finder.');
 }
 
 Widget _harness(HtmlExportService service, void Function(WidgetRef) ready) =>
