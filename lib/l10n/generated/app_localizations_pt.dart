@@ -206,6 +206,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tocOnlyTitleField => 'Título exclusivo do índice:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Utilizado apenas na instância atual. Por predefinição, é herdado do título do tópico.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Utilizado apenas no índice. Por predefinição, é herdado do título do tópico ou do título específico da instância, se definido. Os títulos são explicados';
+
+  @override
+  String get tocTitleDocumentationLink => 'aqui';
+
+  @override
   String get tocFindUsages => 'Localizar';
 
   @override
@@ -1484,7 +1495,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Remova “$topic” da instância selecionada. O ficheiro do tópico será mantido.';
+    return 'Remover o elemento «$topic» do índice? O ficheiro de origem associado ao índice não será eliminado.';
   }
 
   @override
@@ -1509,7 +1520,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Usos ($count)';
+    return '$count utilizações encontradas.';
   }
 
   @override
@@ -1558,7 +1569,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Alguns usos exigem alterações manuais antes desta refatoração.';
 
   @override
-  String get setRedirectTo => 'Redirecionar para';
+  String get setRedirectTo => 'Redirecionar para:';
 
   @override
   String get noRedirectDescription =>
@@ -4703,6 +4714,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get tocOnlyTitleField => 'Título exclusivo do índice:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Usado apenas na instância atual. Por padrão, é herdado do título do tópico.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Usado apenas no índice. Por padrão, é herdado do título do tópico ou do título específico da instância, se definido. Os títulos são explicados';
+
+  @override
+  String get tocTitleDocumentationLink => 'aqui';
+
+  @override
   String get tocFindUsages => 'Localizar';
 
   @override
@@ -5982,7 +6004,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Remova “$topic” da instância selecionada. O arquivo do tópico será mantido.';
+    return 'Remover o elemento “$topic” do índice? O arquivo-fonte associado ao índice não será excluído.';
   }
 
   @override
@@ -6007,7 +6029,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Usos ($count)';
+    return '$count usos encontrados.';
   }
 
   @override
@@ -6056,7 +6078,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Alguns usos exigem alterações manuais antes desta refatoração.';
 
   @override
-  String get setRedirectTo => 'Redirecionar para';
+  String get setRedirectTo => 'Redirecionar para:';
 
   @override
   String get noRedirectDescription =>

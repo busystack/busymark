@@ -206,6 +206,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tocOnlyTitleField => 'Заголовок только для оглавления:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Используется только для текущего экземпляра. По умолчанию наследуется от заголовка темы.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Используется только в оглавлении. По умолчанию наследуется от заголовка темы или заголовка экземпляра, если он задан. О заголовках рассказано';
+
+  @override
+  String get tocTitleDocumentationLink => 'здесь';
+
+  @override
   String get tocFindUsages => 'Поиск';
 
   @override
@@ -1491,7 +1502,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Удалить «$topic» из выбранного экземпляра. Файл темы будет сохранён.';
+    return 'Удалить элемент оглавления «$topic»? Связанный с оглавлением исходный файл не будет удалён.';
   }
 
   @override
@@ -1518,7 +1529,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Использования ($count)';
+    return 'Найдено использований: $count.';
   }
 
   @override
@@ -1569,7 +1580,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Некоторые использования необходимо изменить вручную перед этим рефакторингом.';
 
   @override
-  String get setRedirectTo => 'Перенаправить на';
+  String get setRedirectTo => 'Перенаправить на:';
 
   @override
   String get noRedirectDescription =>

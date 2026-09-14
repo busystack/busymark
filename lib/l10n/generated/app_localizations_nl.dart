@@ -208,6 +208,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get tocOnlyTitleField => 'Titel alleen voor inhoudsopgave:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Alleen gebruikt voor de huidige instantie. Standaard overgenomen van de onderwerptitel.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Alleen gebruikt in de inhoudsopgave. Standaard overgenomen van de onderwerptitel of de instantiespecifieke titel, indien ingesteld. Titels worden uitgelegd';
+
+  @override
+  String get tocTitleDocumentationLink => 'hier';
+
+  @override
   String get tocFindUsages => 'Zoeken';
 
   @override
@@ -1478,7 +1489,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Verwijder “$topic” uit de geselecteerde instantie. Het onderwerpbestand wordt bewaard.';
+    return 'Inhoudsopgave-element ‘$topic’ verwijderen? Het bijbehorende bronbestand wordt niet verwijderd.';
   }
 
   @override
@@ -1504,7 +1515,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Gebruik ($count)';
+    return '$count gebruikslocaties gevonden.';
   }
 
   @override
@@ -1553,7 +1564,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Voor sommige verwijzingen zijn handmatige wijzigingen vereist voordat deze refactoring plaatsvindt.';
 
   @override
-  String get setRedirectTo => 'Omleiding instellen naar';
+  String get setRedirectTo => 'Omleiding instellen naar:';
 
   @override
   String get noRedirectDescription =>

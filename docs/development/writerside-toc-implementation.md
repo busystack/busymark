@@ -1,8 +1,10 @@
 # Writerside Table of Contents implementation record
 
-Status: implemented, including native GTK submenus and the approved template
-workflow. This is **not a claim of complete IDE, website, or pixel-perfect
-Writerside parity**; retained safety and integration differences are listed below.
+Status: authoring workflows implemented, including native GTK submenus and the
+approved template workflow; exact-original UI coverage remains incomplete.
+The two unidentified icon-only toolbar controls are still unimplemented.
+This is **not a claim of complete IDE, website, or pixel-perfect Writerside
+parity**; retained safety and integration differences are listed below.
 
 ## Baseline and decisions
 
@@ -309,3 +311,65 @@ teardown error before the user interrupted verification. The isolated
 the completed full-suite rerun above also passed. No unrelated local-history or
 monitoring behavior was changed to hide that failure. Interrupted processes and
 temporary logs were lost, so completed verification was rerun after resuming.
+
+## Edit Title and dialog-copy review — 2026-09-14
+
+This follow-up starts from clean commit `7023934`; the five earlier corrections
+remain intact. No GTK menu implementation or approved adaptation was replaced.
+
+| Finding | Correction and regression evidence |
+| --- | --- |
+| Literal newlines inside quoted XML attributes had no source range | `_attributeSpans` now matches multiline values. `WritersideTitleEditor` refuses to treat an existing attribute with a missing range as absent, and validates the resulting full XML topic/tree (including duplicate attribute names) before `WorkspaceService` can stage either write. Generated Markdown title elements are also XML-validated. |
+| CRLF attributes differed between raw tree identities and normalized editor buffers | Title editing opts into line-ending-normalized identity comparison. Raw structural mutations retain exact matching, and the original file snapshots are still checked before publication. Changed semantic content remains a conflict. |
+| Markdown instance titles exposed and re-escaped entity spellings | `_topicTitleOverrides` reads top-level parsed semantic title elements, not raw-source matches. XML entities are decoded once by the parser; the writer still escapes text. Fenced examples are excluded and single-quoted instance attributes work. |
+| Removal and advanced title dialog copy differed | English removal now uses `Set redirect to:`, `{count} usages found.`, and the pictured confirmation paragraph. Advanced title settings show the two inheritance explanations beneath their fields and a working documentation link. All 23 maintained ARBs were updated and localizations regenerated. |
+
+`writerside_title_regressions_test.dart` covers LF/CRLF and both quote styles,
+changing and clearing overrides, preserved unrelated attributes/content,
+missing/corrupt ranges with neither file published, duplicate XML attributes,
+semantic title extraction, and actual save–reopen–edit dialog workflows. It also
+checks unchanged OK and documentation-link activation. The live removal dialog
+copy and cancellation are checked in `writerside_toc_regressions_test.dart`.
+
+Copy evidence: the official [instance-title screenshot](https://resources.jetbrains.com/help/img/writerside/edit_title_instance_specific.png),
+[TOC-title screenshot](https://resources.jetbrains.com/help/img/writerside/edit_title_toc_title.png),
+and [removal screenshot](https://resources.jetbrains.com/help/img/writerside/remove_topic_dialog.png),
+cross-checked against installed 2026.07.8925 `EditTitleDialog.comment.*` and
+`RemoveTocElementDialog.*` bundle entries. The usage-count period follows the
+specified screenshot (the installed bundle omits it). The documentation link
+opens the current [Topics page](https://www.jetbrains.com/help/writerside/topics.html),
+which contains title inheritance and overrides; the installed dialog's older
+`changing-topic-title.html` URL was not retrievable.
+
+This corrects the reported functional defects and specified copy gaps, not all
+original-product presentation differences. The two unidentified icon-only
+toolbar controls remain unimplemented/unverified; no guessed controls or names
+were added. The existing removal promotion, mixed-XML sorting restriction,
+BusyMark preview renderer, approved template editor/storage and Find sidebar
+remain explicitly documented adaptations. Full original-Writerside parity is
+not claimed. Translations are BusyMark translations, not verified original
+JetBrains locale strings.
+
+Verification for this follow-up (Flutter 3.47.2 / Dart 3.13.2):
+
+- Full `flutter test --no-pub --concurrency=2 --file-reporter json:/tmp/busymark-title-full.json`:
+  exit 0, **1,938 passed, 58 optional integration skips**; 17 new regressions.
+- Documented Writerside/source/controller/export suite, with `--concurrency=2`:
+  exit 0, **433 passed, 1 optional Typst skip**;
+  `/tmp/busymark-title-focused-suite.json`.
+- `flutter analyze --no-pub`: exit 0, no issues. Localization generation,
+  formatting checks on nine non-generated Dart files, and `git diff --check`:
+  exit 0.
+- `bash tools/validate_writerside_conformance.sh`: exit 0, **181 checks passed**;
+  `/tmp/busymark-title-builder.log`.
+- Native Linux harness: exit 0, **36 checks passed, 20 captures**;
+  [result](/tmp/busymark-title-native-review/result.json). The production
+  [advanced title dialog](/tmp/busymark-title-native-review/03-edit-title.png)
+  and [removal dialog](/tmp/busymark-title-native-review/06-removal.png) were
+  visually inspected. Real GTK menus and their keyboard/focus tests passed.
+  The private desktop emitted portal, synthetic-popup and D-Bus teardown
+  diagnostics; this is not a warning-free desktop claim. Only the disposable
+  `/tmp/busymark-toc-native-ZIOBPT` fixture was mutated.
+- `flutter build linux --debug --no-pub --target lib/main.dart`: exit 0;
+  `/tmp/busymark-title-linux-build.log`. The bundle was restored to the normal
+  application after the harness run.

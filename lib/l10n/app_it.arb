@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Impostazioni avanzate",
   "tocInstanceTitleField": "Titolo per '{instanceId}':",
   "tocOnlyTitleField": "Titolo solo nel sommario:",
+  "tocInstanceTitleExplanation": "Usato solo per l’istanza corrente. Per impostazione predefinita, viene ereditato dal titolo dell’argomento.",
+  "tocOnlyTitleExplanation": "Usato solo nel sommario. Per impostazione predefinita, viene ereditato dal titolo dell’argomento o da quello specifico dell’istanza, se impostato. I titoli sono spiegati",
+  "tocTitleDocumentationLink": "qui",
   "tocFindUsages": "Trova",
   "tocRefactorMenu": "Refactoring",
   "tocSafeDelete": "Eliminazione sicura",
@@ -2576,7 +2579,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Rimuovi «{topic}» dall’istanza selezionata. Il file dell’argomento verrà conservato.",
+  "topicRemovalSummary": "Rimuovere l’elemento «{topic}» dal sommario? Il file sorgente associato al sommario non verrà eliminato.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2607,7 +2610,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Utilizzi ({count})",
+  "topicUsagesCount": "{count} utilizzi trovati.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2665,7 +2668,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Reindirizza a",
+  "setRedirectTo": "Reindirizza a:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

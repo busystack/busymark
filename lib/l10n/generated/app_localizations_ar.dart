@@ -206,6 +206,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tocOnlyTitleField => 'عنوان خاص بجدول المحتويات:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'يُستخدم للمثيل الحالي فقط. يُورث من عنوان الموضوع افتراضيًا.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'يُستخدم في جدول المحتويات فقط. يُورث افتراضيًا من عنوان الموضوع أو من العنوان الخاص بالمثيل إن وُجد. تجد شرحًا للعناوين';
+
+  @override
+  String get tocTitleDocumentationLink => 'هنا';
+
+  @override
   String get tocFindUsages => 'بحث';
 
   @override
@@ -1474,7 +1485,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'أزِل «⁨$topic⁩» من المثيل المحدد. سيُحتفظ بملف الموضوع.';
+    return 'هل تريد إزالة عنصر جدول المحتويات «⁨$topic⁩»؟ لن يُحذف الملف المصدر المرتبط بجدول المحتويات.';
   }
 
   @override
@@ -1503,7 +1514,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'الاستخدامات ($count)';
+    return 'تم العثور على $count من مواضع الاستخدام.';
   }
 
   @override
@@ -1555,7 +1566,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
 
   @override
-  String get setRedirectTo => 'تعيين إعادة التوجيه إلى';
+  String get setRedirectTo => 'تعيين إعادة التوجيه إلى:';
 
   @override
   String get noRedirectDescription =>

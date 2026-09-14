@@ -207,6 +207,17 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tocOnlyTitleField => 'Titolo solo nel sommario:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Usato solo per l’istanza corrente. Per impostazione predefinita, viene ereditato dal titolo dell’argomento.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Usato solo nel sommario. Per impostazione predefinita, viene ereditato dal titolo dell’argomento o da quello specifico dell’istanza, se impostato. I titoli sono spiegati';
+
+  @override
+  String get tocTitleDocumentationLink => 'qui';
+
+  @override
   String get tocFindUsages => 'Trova';
 
   @override
@@ -1486,7 +1497,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Rimuovi «$topic» dall’istanza selezionata. Il file dell’argomento verrà conservato.';
+    return 'Rimuovere l’elemento «$topic» dal sommario? Il file sorgente associato al sommario non verrà eliminato.';
   }
 
   @override
@@ -1512,7 +1523,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Utilizzi ($count)';
+    return '$count utilizzi trovati.';
   }
 
   @override
@@ -1562,7 +1573,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Alcuni utilizzi richiedono modifiche manuali prima di questo refactoring.';
 
   @override
-  String get setRedirectTo => 'Reindirizza a';
+  String get setRedirectTo => 'Reindirizza a:';
 
   @override
   String get noRedirectDescription =>

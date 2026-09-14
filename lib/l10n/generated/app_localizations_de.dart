@@ -208,6 +208,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nur im Inhaltsverzeichnis verwendeter Titel:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Wird nur für die aktuelle Instanz verwendet. Standardmäßig vom Thementitel übernommen.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Wird nur im Inhaltsverzeichnis verwendet. Standardmäßig vom Thementitel oder, falls gesetzt, vom instanzspezifischen Titel übernommen. Erläuterungen zu Titeln finden Sie';
+
+  @override
+  String get tocTitleDocumentationLink => 'hier';
+
+  @override
   String get tocFindUsages => 'Suchen';
 
   @override
@@ -1492,7 +1503,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '„$topic“ aus der ausgewählten Instanz entfernen. Die Themendatei bleibt erhalten.';
+    return 'Inhaltsverzeichniseintrag „$topic“ entfernen? Die zugehörige Quelldatei wird nicht gelöscht.';
   }
 
   @override
@@ -1518,7 +1529,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Verwendungen ($count)';
+    return '$count Verwendungen gefunden.';
   }
 
   @override
@@ -1568,7 +1579,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Einige Verwendungen müssen vor diesem Refactoring manuell geändert werden.';
 
   @override
-  String get setRedirectTo => 'Weiterleiten an';
+  String get setRedirectTo => 'Weiterleiten an:';
 
   @override
   String get noRedirectDescription =>

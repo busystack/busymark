@@ -206,6 +206,17 @@ class AppLocalizationsEt extends AppLocalizations {
   String get tocOnlyTitleField => 'Ainult sisukorra pealkiri:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate';
+
+  @override
+  String get tocTitleDocumentationLink => 'siit';
+
+  @override
   String get tocFindUsages => 'Otsi';
 
   @override
@@ -1473,7 +1484,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Eemalda „$topic” valitud eksemplarist. Teemafail säilitatakse.';
+    return 'Kas eemaldada sisukorra element „$topic”? Sisukorraga seotud lähtefaili ei kustutata.';
   }
 
   @override
@@ -1498,7 +1509,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Kasutuskohad ($count)';
+    return 'Leiti $count kasutuskohta.';
   }
 
   @override
@@ -1547,7 +1558,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Mõnda kasutuskohta tuleb enne refaktoreerimist käsitsi muuta.';
 
   @override
-  String get setRedirectTo => 'Määra ümbersuunamine';
+  String get setRedirectTo => 'Määra ümbersuunamine:';
 
   @override
   String get noRedirectDescription => 'Ära suuna vana avaldatud lehte ümber.';

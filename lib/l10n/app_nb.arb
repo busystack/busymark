@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Avanserte innstillinger",
   "tocInstanceTitleField": "Tittel for '{instanceId}':",
   "tocOnlyTitleField": "Tittel kun for innholdsfortegnelsen:",
+  "tocInstanceTitleExplanation": "Brukes bare for den gjeldende instansen. Arves som standard fra emnetittelen.",
+  "tocOnlyTitleExplanation": "Brukes bare i innholdsfortegnelsen. Arves som standard fra emnetittelen eller den instansspesifikke tittelen hvis den er angitt. Titler er forklart",
+  "tocTitleDocumentationLink": "her",
   "tocFindUsages": "Finn",
   "tocRefactorMenu": "Refaktorer",
   "tocSafeDelete": "Sikker sletting",
@@ -2576,7 +2579,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Fjern «{topic}» fra den valgte instansen. Emnefilen beholdes.",
+  "topicRemovalSummary": "Fjerne innholdsfortegnelseselementet «{topic}»? Den tilknyttede kildefilen blir ikke slettet.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2607,7 +2610,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Bruk ({count})",
+  "topicUsagesCount": "{count} brukssteder funnet.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2665,7 +2668,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Omdiriger til",
+  "setRedirectTo": "Omdiriger til:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

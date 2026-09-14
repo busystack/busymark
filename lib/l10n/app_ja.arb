@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "詳細設定",
   "tocInstanceTitleField": "「{instanceId}」のタイトル:",
   "tocOnlyTitleField": "目次専用タイトル:",
+  "tocInstanceTitleExplanation": "現在のインスタンスにのみ使用されます。既定ではトピックのタイトルを継承します。",
+  "tocOnlyTitleExplanation": "目次にのみ使用されます。既定ではトピックのタイトル、または設定されている場合はインスタンス固有のタイトルを継承します。タイトルの説明は",
+  "tocTitleDocumentationLink": "こちら",
   "tocFindUsages": "検索",
   "tocRefactorMenu": "リファクタリング",
   "tocSafeDelete": "安全な削除",
@@ -1596,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "選択したインスタンスから「{topic}」を削除します。トピックファイルは保持されます。",
+  "topicRemovalSummary": "目次要素「{topic}」を削除しますか？目次に関連付けられたソースファイルは削除されません。",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1627,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "使用箇所（{count}）",
+  "topicUsagesCount": "{count} 件の使用箇所が見つかりました。",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1685,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "リダイレクト先を設定",
+  "setRedirectTo": "リダイレクト先を設定：",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },

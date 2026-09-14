@@ -55,6 +55,7 @@ SourceSpan? writersideTocSourceSpan({
   required List<int> path,
   required WritersideTocNodeIdentity identity,
   bool xmlChildren = false,
+  bool normalizedText = false,
 }) {
   if (path.isEmpty) return null;
   final document = const WritersideDocumentParser().parseXml(
@@ -80,7 +81,9 @@ SourceSpan? writersideTocSourceSpan({
         final element = XmlDocument.parse(
           source.substring(node.span.startOffset, node.span.endOffset),
         ).rootElement;
-        return identity.matches(element) ? node.span : null;
+        return identity.matches(element, normalizedText: normalizedText)
+            ? node.span
+            : null;
       } on XmlParserException {
         return null;
       }

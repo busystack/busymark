@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Додаткові налаштування",
   "tocInstanceTitleField": "Заголовок для «{instanceId}»:",
   "tocOnlyTitleField": "Заголовок лише для змісту:",
+  "tocInstanceTitleExplanation": "Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.",
+  "tocOnlyTitleExplanation": "Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено",
+  "tocTitleDocumentationLink": "тут",
   "tocFindUsages": "Пошук",
   "tocRefactorMenu": "Рефакторинг",
   "tocSafeDelete": "Безпечне видалення",
@@ -2602,7 +2605,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Вилучити «{topic}» із вибраного екземпляра. Файл теми буде збережено.",
+  "topicRemovalSummary": "Вилучити елемент змісту «{topic}»? Пов’язаний зі змістом вихідний файл не буде видалено.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2633,7 +2636,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Використання ({count})",
+  "topicUsagesCount": "Знайдено використань: {count}.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2691,7 +2694,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Переспрямувати на",
+  "setRedirectTo": "Переспрямувати на:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

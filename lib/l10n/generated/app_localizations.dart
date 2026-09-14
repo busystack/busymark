@@ -493,6 +493,24 @@ abstract class AppLocalizations {
   /// **'TOC-only title:'**
   String get tocOnlyTitleField;
 
+  /// Visible inheritance explanation below the instance-specific title field.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for the current instance only. By default, inherited from topic title.'**
+  String get tocInstanceTitleExplanation;
+
+  /// Visible TOC-only title inheritance explanation, followed by the documentation link.
+  ///
+  /// In en, this message translates to:
+  /// **'Used in TOC only. By default, inherited from the topic title or instance-specific title if set. Titles are explained'**
+  String get tocOnlyTitleExplanation;
+
+  /// Link following the title explanation, opening Writerside's title documentation.
+  ///
+  /// In en, this message translates to:
+  /// **'here'**
+  String get tocTitleDocumentationLink;
+
   /// Writerside Table of Contents command or dialog text.
   ///
   /// In en, this message translates to:
@@ -2788,7 +2806,7 @@ abstract class AppLocalizations {
   /// Summary in the dialog for removing a topic from one Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'Remove “{topic}” from the selected instance. The topic file will be kept.'**
+  /// **'Remove TOC element \'{topic}\'? The source file associated with the TOC won\'t be deleted.'**
   String topicRemovalSummary(String topic);
 
   /// Summary in the Writerside safe-delete dialog.
@@ -2809,10 +2827,10 @@ abstract class AppLocalizations {
   /// **'This topic is used as an instance start page. Review its usages and assign another start page before continuing.'**
   String get topicIsStartPageRemovalWarning;
 
-  /// Heading with the number of Writerside topic usages.
+  /// Sentence reporting the number of Writerside topic usages in the removal dialog.
   ///
   /// In en, this message translates to:
-  /// **'Usages ({count})'**
+  /// **'{count} usages found.'**
   String topicUsagesCount(int count);
 
   /// Safe-delete message when no breaking references were found.
@@ -2884,7 +2902,7 @@ abstract class AppLocalizations {
   /// Option to redirect an old Writerside page to another topic.
   ///
   /// In en, this message translates to:
-  /// **'Set redirect to'**
+  /// **'Set redirect to:'**
   String get setRedirectTo;
 
   /// Description when no Writerside page redirect is selected.

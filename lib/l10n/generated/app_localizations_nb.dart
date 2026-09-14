@@ -207,6 +207,17 @@ class AppLocalizationsNb extends AppLocalizations {
   String get tocOnlyTitleField => 'Tittel kun for innholdsfortegnelsen:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Brukes bare for den gjeldende instansen. Arves som standard fra emnetittelen.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Brukes bare i innholdsfortegnelsen. Arves som standard fra emnetittelen eller den instansspesifikke tittelen hvis den er angitt. Titler er forklart';
+
+  @override
+  String get tocTitleDocumentationLink => 'her';
+
+  @override
   String get tocFindUsages => 'Finn';
 
   @override
@@ -1476,7 +1487,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Fjern «$topic» fra den valgte instansen. Emnefilen beholdes.';
+    return 'Fjerne innholdsfortegnelseselementet «$topic»? Den tilknyttede kildefilen blir ikke slettet.';
   }
 
   @override
@@ -1501,7 +1512,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Bruk ($count)';
+    return '$count brukssteder funnet.';
   }
 
   @override
@@ -1550,7 +1561,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Noe bruk må endres manuelt før denne refaktoreringen.';
 
   @override
-  String get setRedirectTo => 'Omdiriger til';
+  String get setRedirectTo => 'Omdiriger til:';
 
   @override
   String get noRedirectDescription =>

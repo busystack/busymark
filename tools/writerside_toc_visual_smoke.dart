@@ -420,6 +420,25 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('02-context-and-creation-menu');
       await _tapLabel('Edit Title...');
       await _tapLabel('Advanced Settings');
+      _check(
+        _elements(
+              (widget) =>
+                  widget is Text &&
+                  widget.data ==
+                      'Used for the current instance only. By default, inherited from topic title.',
+            ).isNotEmpty &&
+            _elements(
+              (widget) =>
+                  widget is Text &&
+                  (widget.textSpan?.toPlainText() ?? '').contains(
+                    'Used in TOC only.',
+                  ),
+            ).isNotEmpty &&
+            _elements(
+              (widget) => widget is Text && widget.data == 'here',
+            ).isNotEmpty,
+        'Advanced title settings show inheritance explanations and documentation link',
+      );
       await _capture('03-edit-title');
       await _tapLabel('Cancel');
       await _menu('Welcome to BusyMark');

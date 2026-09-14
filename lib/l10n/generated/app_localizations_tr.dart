@@ -205,6 +205,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocOnlyTitleField => 'Yalnızca içindekiler başlığı:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Yalnızca geçerli örnek için kullanılır. Varsayılan olarak konu başlığından devralınır.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Yalnızca içindekilerde kullanılır. Varsayılan olarak konu başlığından veya ayarlanmışsa örneğe özgü başlıktan devralınır. Başlıklar hakkında açıklama:';
+
+  @override
+  String get tocTitleDocumentationLink => 'burada';
+
+  @override
   String get tocFindUsages => 'Bul';
 
   @override
@@ -1475,7 +1486,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Seçili örnekten “$topic” konusunu kaldır. Konu dosyası korunur.';
+    return '“$topic” içindekiler öğesi kaldırılsın mı? İçindekiler ile ilişkili kaynak dosya silinmeyecek.';
   }
 
   @override
@@ -1500,7 +1511,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Kullanımlar ($count)';
+    return '$count kullanım bulundu.';
   }
 
   @override

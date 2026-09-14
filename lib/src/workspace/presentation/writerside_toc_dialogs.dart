@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -68,14 +69,29 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
     String label,
     TextEditingController controller, {
     String? hint,
+    Widget? explanation,
     bool autofocus = false,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: BusyMarkSpacing.md),
-    child: TextField(
-      controller: controller,
-      autofocus: autofocus,
-      decoration: InputDecoration(labelText: label, hintText: hint),
-      onSubmitted: (_) => _submit(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          autofocus: autofocus,
+          decoration: InputDecoration(labelText: label, hintText: hint),
+          onSubmitted: (_) => _submit(),
+        ),
+        if (explanation != null) ...[
+          const SizedBox(height: BusyMarkSpacing.xs),
+          DefaultTextStyle.merge(
+            style: TextStyle(
+              color: BusyMarkSurfaceColors.of(context).mutedForeground,
+            ),
+            child: explanation,
+          ),
+        ],
+      ],
     ),
   );
   @override
@@ -109,11 +125,43 @@ class _WritersideTitleDialogState extends State<WritersideTitleDialog> {
           context.l10n.tocInstanceTitleField(widget.session.instanceId),
           _instance,
           hint: _title.text,
+          explanation: Text(context.l10n.tocInstanceTitleExplanation),
         ),
         _field(
           context.l10n.tocOnlyTitleField,
           _toc,
           hint: _instance.text.isEmpty ? _title.text : _instance.text,
+          explanation: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '${context.l10n.tocOnlyTitleExplanation} '),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => launchUrl(
+                      Uri.parse(
+                        'https://www.jetbrains.com/help/writerside/topics.html',
+                      ),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(context.l10n.tocTitleDocumentationLink),
+                        const SizedBox(width: BusyMarkSpacing.xs),
+                        const Icon(BusyMarkGlyphs.externalLink, size: 14),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     ],

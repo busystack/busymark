@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Configurações avançadas",
   "tocInstanceTitleField": "Título para '{instanceId}':",
   "tocOnlyTitleField": "Título exclusivo do índice:",
+  "tocInstanceTitleExplanation": "Usado apenas na instância atual. Por padrão, é herdado do título do tópico.",
+  "tocOnlyTitleExplanation": "Usado apenas no índice. Por padrão, é herdado do título do tópico ou do título específico da instância, se definido. Os títulos são explicados",
+  "tocTitleDocumentationLink": "aqui",
   "tocFindUsages": "Localizar",
   "tocRefactorMenu": "Refatorar",
   "tocSafeDelete": "Exclusão segura",
@@ -2576,7 +2579,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Remova “{topic}” da instância selecionada. O arquivo do tópico será mantido.",
+  "topicRemovalSummary": "Remover o elemento “{topic}” do índice? O arquivo-fonte associado ao índice não será excluído.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2607,7 +2610,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Usos ({count})",
+  "topicUsagesCount": "{count} usos encontrados.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2665,7 +2668,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Redirecionar para",
+  "setRedirectTo": "Redirecionar para:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

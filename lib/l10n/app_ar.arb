@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "إعدادات متقدمة",
   "tocInstanceTitleField": "عنوان '{instanceId}':",
   "tocOnlyTitleField": "عنوان خاص بجدول المحتويات:",
+  "tocInstanceTitleExplanation": "يُستخدم للمثيل الحالي فقط. يُورث من عنوان الموضوع افتراضيًا.",
+  "tocOnlyTitleExplanation": "يُستخدم في جدول المحتويات فقط. يُورث افتراضيًا من عنوان الموضوع أو من العنوان الخاص بالمثيل إن وُجد. تجد شرحًا للعناوين",
+  "tocTitleDocumentationLink": "هنا",
   "tocFindUsages": "بحث",
   "tocRefactorMenu": "إعادة الهيكلة",
   "tocSafeDelete": "حذف آمن",
@@ -2576,7 +2579,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "أزِل «⁨{topic}⁩» من المثيل المحدد. سيُحتفظ بملف الموضوع.",
+  "topicRemovalSummary": "هل تريد إزالة عنصر جدول المحتويات «⁨{topic}⁩»؟ لن يُحذف الملف المصدر المرتبط بجدول المحتويات.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2607,7 +2610,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "الاستخدامات ({count})",
+  "topicUsagesCount": "تم العثور على {count} من مواضع الاستخدام.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2665,7 +2668,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "تعيين إعادة التوجيه إلى",
+  "setRedirectTo": "تعيين إعادة التوجيه إلى:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

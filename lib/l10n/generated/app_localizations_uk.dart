@@ -206,6 +206,17 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tocOnlyTitleField => 'Заголовок лише для змісту:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено';
+
+  @override
+  String get tocTitleDocumentationLink => 'тут';
+
+  @override
   String get tocFindUsages => 'Пошук';
 
   @override
@@ -1498,7 +1509,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Вилучити «$topic» із вибраного екземпляра. Файл теми буде збережено.';
+    return 'Вилучити елемент змісту «$topic»? Пов’язаний зі змістом вихідний файл не буде видалено.';
   }
 
   @override
@@ -1525,7 +1536,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Використання ($count)';
+    return 'Знайдено використань: $count.';
   }
 
   @override
@@ -1576,7 +1587,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Деякі використання потрібно змінити вручну перед цим рефакторингом.';
 
   @override
-  String get setRedirectTo => 'Переспрямувати на';
+  String get setRedirectTo => 'Переспрямувати на:';
 
   @override
   String get noRedirectDescription =>

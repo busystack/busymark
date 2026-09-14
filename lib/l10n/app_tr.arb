@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Gelişmiş ayarlar",
   "tocInstanceTitleField": "'{instanceId}' için başlık:",
   "tocOnlyTitleField": "Yalnızca içindekiler başlığı:",
+  "tocInstanceTitleExplanation": "Yalnızca geçerli örnek için kullanılır. Varsayılan olarak konu başlığından devralınır.",
+  "tocOnlyTitleExplanation": "Yalnızca içindekilerde kullanılır. Varsayılan olarak konu başlığından veya ayarlanmışsa örneğe özgü başlıktan devralınır. Başlıklar hakkında açıklama:",
+  "tocTitleDocumentationLink": "burada",
   "tocFindUsages": "Bul",
   "tocRefactorMenu": "Yeniden düzenle",
   "tocSafeDelete": "Güvenli sil",
@@ -1596,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Seçili örnekten “{topic}” konusunu kaldır. Konu dosyası korunur.",
+  "topicRemovalSummary": "“{topic}” içindekiler öğesi kaldırılsın mı? İçindekiler ile ilişkili kaynak dosya silinmeyecek.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1627,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Kullanımlar ({count})",
+  "topicUsagesCount": "{count} kullanım bulundu.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {

@@ -1,6 +1,7 @@
 import 'package:xml/xml.dart';
 
 import '../core/busymark_exception.dart';
+import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
 import 'writerside_document.dart';
 import 'writerside_document_parser.dart';
@@ -49,6 +50,7 @@ class WritersideTitleEditor {
           source: treeSource,
           path: tocPath,
           identity: tocIdentity,
+          normalizedText: true,
         ) ==
         null) {
       throw const BusyMarkException('writerside.toc.tree-changed');
@@ -64,7 +66,7 @@ class WritersideTitleEditor {
       }
       if (topic.format == WritersideTopicFormat.xml) {
         final root = document.rootElement!;
-        final span = root.attributeSpans['title'];
+        final span = _attributeSpan(root, 'title');
         if (span != null) {
           changes.add((
             start: span.startOffset,
@@ -148,6 +150,7 @@ class WritersideTitleEditor {
               [XmlAttribute(XmlName.parts('instance'), instanceId)],
               [XmlText(value)],
             ).toXmlString();
+      if (replacement.isNotEmpty) _validateXml(replacement);
       if (overrides.isNotEmpty) {
         final node = overrides.single;
         changes.add((
@@ -204,6 +207,7 @@ class WritersideTitleEditor {
         source: treeSource,
         path: tocPath,
         identity: tocIdentity,
+        normalizedText: true,
       );
       if (span == null) {
         throw const BusyMarkException('writerside.toc.tree-changed');
@@ -214,7 +218,7 @@ class WritersideTitleEditor {
         source: fragment,
       );
       final root = parsed.rootElement!;
-      final valueSpan = root.attributeSpans['toc-title'];
+      final valueSpan = _attributeSpan(root, 'toc-title');
       final value = edit.tocTitle!;
       if (valueSpan != null) {
         if (value.trim().isEmpty) {
@@ -243,10 +247,41 @@ class WritersideTitleEditor {
         );
       }
     }
+    // Validate both generated XML documents before the caller stages any
+    // writes. The fragment parser intentionally permits non-document input.
+    if (topic.format == WritersideTopicFormat.xml) {
+      _validateXml(topicSource);
+    }
+    _validateXml(resultTree);
     return WritersideTitleEditResult(
       topicSource: topicSource,
       treeSource: resultTree,
     );
+  }
+
+  static SourceSpan? _attributeSpan(WritersideElementNode node, String name) {
+    final span = node.attributeSpans[name];
+    if (span == null && node.attributes.containsKey(name)) {
+      // A missing source range is not evidence of an absent attribute.
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    return span;
+  }
+
+  static void _validateXml(String source) {
+    try {
+      final document = XmlDocument.parse(source);
+      for (final element in document.descendants.whereType<XmlElement>()) {
+        final names = <XmlName>{};
+        for (final attribute in element.attributes) {
+          if (!names.add(attribute.name)) {
+            throw const FormatException('Duplicate XML attribute');
+          }
+        }
+      }
+    } on Object {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
   }
 
   static String _attribute(String text) => text

@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Дополнительные настройки",
   "tocInstanceTitleField": "Заголовок для «{instanceId}»:",
   "tocOnlyTitleField": "Заголовок только для оглавления:",
+  "tocInstanceTitleExplanation": "Используется только для текущего экземпляра. По умолчанию наследуется от заголовка темы.",
+  "tocOnlyTitleExplanation": "Используется только в оглавлении. По умолчанию наследуется от заголовка темы или заголовка экземпляра, если он задан. О заголовках рассказано",
+  "tocTitleDocumentationLink": "здесь",
   "tocFindUsages": "Поиск",
   "tocRefactorMenu": "Рефакторинг",
   "tocSafeDelete": "Безопасное удаление",
@@ -2602,7 +2605,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Удалить «{topic}» из выбранного экземпляра. Файл темы будет сохранён.",
+  "topicRemovalSummary": "Удалить элемент оглавления «{topic}»? Связанный с оглавлением исходный файл не будет удалён.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2633,7 +2636,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Использования ({count})",
+  "topicUsagesCount": "Найдено использований: {count}.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2691,7 +2694,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Перенаправить на",
+  "setRedirectTo": "Перенаправить на:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

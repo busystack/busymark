@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Pengaturan lanjutan",
   "tocInstanceTitleField": "Judul untuk '{instanceId}':",
   "tocOnlyTitleField": "Judul khusus daftar isi:",
+  "tocInstanceTitleExplanation": "Hanya digunakan untuk instance saat ini. Secara default, diwarisi dari judul topik.",
+  "tocOnlyTitleExplanation": "Hanya digunakan dalam daftar isi. Secara default, diwarisi dari judul topik atau judul khusus instance jika ditetapkan. Penjelasan judul tersedia",
+  "tocTitleDocumentationLink": "di sini",
   "tocFindUsages": "Cari",
   "tocRefactorMenu": "Refaktor",
   "tocSafeDelete": "Hapus dengan aman",
@@ -1596,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Hapus “{topic}” dari instance yang dipilih. File topik akan disimpan.",
+  "topicRemovalSummary": "Hapus elemen daftar isi “{topic}”? File sumber yang terkait dengan daftar isi tidak akan dihapus.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1627,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Penggunaan ({count})",
+  "topicUsagesCount": "{count} penggunaan ditemukan.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1685,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Alihkan ke",
+  "setRedirectTo": "Alihkan ke:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },

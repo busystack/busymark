@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Cài đặt nâng cao",
   "tocInstanceTitleField": "Tiêu đề cho '{instanceId}':",
   "tocOnlyTitleField": "Tiêu đề chỉ dành cho mục lục:",
+  "tocInstanceTitleExplanation": "Chỉ dùng cho thực thể hiện tại. Theo mặc định, kế thừa từ tiêu đề chủ đề.",
+  "tocOnlyTitleExplanation": "Chỉ dùng trong mục lục. Theo mặc định, kế thừa từ tiêu đề chủ đề hoặc tiêu đề riêng của thực thể nếu đã đặt. Phần giải thích về tiêu đề có",
+  "tocTitleDocumentationLink": "tại đây",
   "tocFindUsages": "Tìm",
   "tocRefactorMenu": "Tái cấu trúc",
   "tocSafeDelete": "Xóa an toàn",
@@ -1596,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Xóa “{topic}” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.",
+  "topicRemovalSummary": "Xóa phần tử mục lục “{topic}”? Tệp nguồn được liên kết với mục lục sẽ không bị xóa.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1627,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Các tham chiếu ({count})",
+  "topicUsagesCount": "Tìm thấy {count} lượt sử dụng.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1685,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Đặt chuyển hướng đến",
+  "setRedirectTo": "Đặt chuyển hướng đến:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },

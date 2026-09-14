@@ -206,6 +206,17 @@ class AppLocalizationsFa extends AppLocalizations {
   String get tocOnlyTitleField => 'عنوان مختص فهرست مطالب:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'فقط برای نمونهٔ فعلی استفاده می‌شود. به‌طور پیش‌فرض از عنوان موضوع به ارث می‌رسد.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'فقط در فهرست مطالب استفاده می‌شود. به‌طور پیش‌فرض از عنوان موضوع یا، در صورت تنظیم، عنوان مختص نمونه به ارث می‌رسد. توضیح عنوان‌ها را ببینید:';
+
+  @override
+  String get tocTitleDocumentationLink => 'اینجا';
+
+  @override
   String get tocFindUsages => 'یافتن';
 
   @override
@@ -1497,7 +1508,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '«⁨$topic⁩» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
+    return 'عنصر فهرست مطالب «⁨$topic⁩» حذف شود؟ فایل منبع مرتبط با فهرست مطالب حذف نخواهد شد.';
   }
 
   @override
@@ -1530,7 +1541,7 @@ class AppLocalizationsFa extends AppLocalizations {
         intl.NumberFormat.decimalPattern(localeName);
     final String countString = countNumberFormat.format(count);
 
-    return 'موارد استفاده ($countString)';
+    return '$countString مورد استفاده پیدا شد.';
   }
 
   @override
@@ -1582,7 +1593,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'برخی موارد استفاده پیش از این بازآرایی به تغییر دستی نیاز دارند.';
 
   @override
-  String get setRedirectTo => 'تنظیم تغییر مسیر به';
+  String get setRedirectTo => 'تنظیم تغییر مسیر به:';
 
   @override
   String get noRedirectDescription =>

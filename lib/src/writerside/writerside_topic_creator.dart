@@ -91,22 +91,30 @@ class WritersideTocNodeIdentity {
   final bool workInProgress;
   final List<WritersideTocNodeIdentity> children;
 
-  bool matches(XmlElement element) {
+  bool matches(XmlElement element, {bool normalizedText = false}) {
+    // Editor buffers normalize CRLF/CR to LF; raw disk mutations keep exact
+    // identity matching. Snapshot checks still protect the original bytes.
+    String? value(String? text) => normalizedText
+        ? text?.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+        : text;
+    bool attribute(String name, String? expected) =>
+        value(element.getAttribute(name)) == value(expected);
     if (element.name.local != 'toc-element' ||
-        element.getAttribute('topic') != topicFileName ||
-        element.getAttribute('ref') != referenceTopicFileName ||
-        element.getAttribute('in') != referenceInstanceId ||
-        element.getAttribute('href') != href ||
-        element.getAttribute('toc-title') != tocTitle ||
-        element.getAttribute('id') != id ||
-        element.getAttribute('accepts-web-file-names') != acceptsWebFileNames ||
-        element.getAttribute('accepts-web-file-names-ref') !=
-            acceptsWebFileNamesRef ||
-        element.getAttribute('target-for-accept-web-file-names') !=
-            targetForAcceptWebFileNames ||
-        element.getAttribute('instance') != instanceCondition ||
-        element.getAttribute('filter') != customFilter ||
-        element.getAttribute('origin') != origin ||
+        !attribute('topic', topicFileName) ||
+        !attribute('ref', referenceTopicFileName) ||
+        !attribute('in', referenceInstanceId) ||
+        !attribute('href', href) ||
+        !attribute('toc-title', tocTitle) ||
+        !attribute('id', id) ||
+        !attribute('accepts-web-file-names', acceptsWebFileNames) ||
+        !attribute('accepts-web-file-names-ref', acceptsWebFileNamesRef) ||
+        !attribute(
+          'target-for-accept-web-file-names',
+          targetForAcceptWebFileNames,
+        ) ||
+        !attribute('instance', instanceCondition) ||
+        !attribute('filter', customFilter) ||
+        !attribute('origin', origin) ||
         (element.getAttribute('wip') == 'true') != workInProgress ||
         (element.getAttribute('hidden') == 'true') != hidden) {
       return false;
@@ -118,7 +126,10 @@ class WritersideTocNodeIdentity {
       return false;
     }
     for (var index = 0; index < children.length; index += 1) {
-      if (!children[index].matches(elementChildren[index])) {
+      if (!children[index].matches(
+        elementChildren[index],
+        normalizedText: normalizedText,
+      )) {
         return false;
       }
     }

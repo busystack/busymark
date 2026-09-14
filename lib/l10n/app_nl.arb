@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Geavanceerde instellingen",
   "tocInstanceTitleField": "Titel voor '{instanceId}':",
   "tocOnlyTitleField": "Titel alleen voor inhoudsopgave:",
+  "tocInstanceTitleExplanation": "Alleen gebruikt voor de huidige instantie. Standaard overgenomen van de onderwerptitel.",
+  "tocOnlyTitleExplanation": "Alleen gebruikt in de inhoudsopgave. Standaard overgenomen van de onderwerptitel of de instantiespecifieke titel, indien ingesteld. Titels worden uitgelegd",
+  "tocTitleDocumentationLink": "hier",
   "tocFindUsages": "Zoeken",
   "tocRefactorMenu": "Refactoren",
   "tocSafeDelete": "Veilig verwijderen",
@@ -1596,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Verwijder “{topic}” uit de geselecteerde instantie. Het onderwerpbestand wordt bewaard.",
+  "topicRemovalSummary": "Inhoudsopgave-element ‘{topic}’ verwijderen? Het bijbehorende bronbestand wordt niet verwijderd.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1627,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Gebruik ({count})",
+  "topicUsagesCount": "{count} gebruikslocaties gevonden.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1685,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Omleiding instellen naar",
+  "setRedirectTo": "Omleiding instellen naar:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },

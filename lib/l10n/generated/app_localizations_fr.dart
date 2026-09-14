@@ -211,6 +211,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tocOnlyTitleField => 'Titre propre à la table des matières:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Utilisé uniquement pour l’instance actuelle. Hérité par défaut du titre du sujet.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Utilisé uniquement dans la table des matières. Hérité par défaut du titre du sujet ou du titre propre à l’instance, s’il est défini. Les titres sont expliqués';
+
+  @override
+  String get tocTitleDocumentationLink => 'ici';
+
+  @override
   String get tocFindUsages => 'Rechercher';
 
   @override
@@ -1494,7 +1505,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Retirez « $topic » de l’instance sélectionnée. Le fichier du sujet sera conservé.';
+    return 'Supprimer l’élément « $topic » de la table des matières ? Le fichier source associé ne sera pas supprimé.';
   }
 
   @override
@@ -1519,7 +1530,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Utilisations ($count)';
+    return '$count utilisations trouvées.';
   }
 
   @override
@@ -1569,7 +1580,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Certaines utilisations nécessitent des modifications manuelles avant cette refactorisation.';
 
   @override
-  String get setRedirectTo => 'Rediriger vers';
+  String get setRedirectTo => 'Rediriger vers :';
 
   @override
   String get noRedirectDescription =>

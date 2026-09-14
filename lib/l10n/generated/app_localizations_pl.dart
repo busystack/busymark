@@ -206,6 +206,17 @@ class AppLocalizationsPl extends AppLocalizations {
   String get tocOnlyTitleField => 'Tytuł tylko w spisie treści:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Używany tylko w bieżącej instancji. Domyślnie dziedziczony z tytułu tematu.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Używany tylko w spisie treści. Domyślnie dziedziczony z tytułu tematu lub tytułu instancji, jeśli został ustawiony. Objaśnienia tytułów znajdziesz';
+
+  @override
+  String get tocTitleDocumentationLink => 'tutaj';
+
+  @override
   String get tocFindUsages => 'Znajdź';
 
   @override
@@ -1494,7 +1505,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Usuń „$topic” z wybranej instancji. Plik tematu zostanie zachowany.';
+    return 'Usunąć element spisu treści „$topic”? Plik źródłowy powiązany ze spisem treści nie zostanie usunięty.';
   }
 
   @override
@@ -1522,7 +1533,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Użycia ($count)';
+    return 'Znalezione użycia: $count.';
   }
 
   @override
@@ -1573,7 +1584,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Niektóre użycia wymagają ręcznych zmian przed tą refaktoryzacją.';
 
   @override
-  String get setRedirectTo => 'Ustaw przekierowanie do';
+  String get setRedirectTo => 'Ustaw przekierowanie do:';
 
   @override
   String get noRedirectDescription =>

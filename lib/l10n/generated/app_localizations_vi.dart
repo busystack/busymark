@@ -206,6 +206,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tocOnlyTitleField => 'Tiêu đề chỉ dành cho mục lục:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Chỉ dùng cho thực thể hiện tại. Theo mặc định, kế thừa từ tiêu đề chủ đề.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Chỉ dùng trong mục lục. Theo mặc định, kế thừa từ tiêu đề chủ đề hoặc tiêu đề riêng của thực thể nếu đã đặt. Phần giải thích về tiêu đề có';
+
+  @override
+  String get tocTitleDocumentationLink => 'tại đây';
+
+  @override
   String get tocFindUsages => 'Tìm';
 
   @override
@@ -1468,7 +1479,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Xóa “$topic” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.';
+    return 'Xóa phần tử mục lục “$topic”? Tệp nguồn được liên kết với mục lục sẽ không bị xóa.';
   }
 
   @override
@@ -1493,7 +1504,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Các tham chiếu ($count)';
+    return 'Tìm thấy $count lượt sử dụng.';
   }
 
   @override
@@ -1542,7 +1553,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Một số cách sử dụng cần được thay đổi thủ công trước khi thực hiện tái cấu trúc này.';
 
   @override
-  String get setRedirectTo => 'Đặt chuyển hướng đến';
+  String get setRedirectTo => 'Đặt chuyển hướng đến:';
 
   @override
   String get noRedirectDescription =>

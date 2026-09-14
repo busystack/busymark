@@ -201,6 +201,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tocOnlyTitleField => '目次専用タイトル:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      '現在のインスタンスにのみ使用されます。既定ではトピックのタイトルを継承します。';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      '目次にのみ使用されます。既定ではトピックのタイトル、または設定されている場合はインスタンス固有のタイトルを継承します。タイトルの説明は';
+
+  @override
+  String get tocTitleDocumentationLink => 'こちら';
+
+  @override
   String get tocFindUsages => '検索';
 
   @override
@@ -1428,7 +1439,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '選択したインスタンスから「$topic」を削除します。トピックファイルは保持されます。';
+    return '目次要素「$topic」を削除しますか？目次に関連付けられたソースファイルは削除されません。';
   }
 
   @override
@@ -1453,7 +1464,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return '使用箇所（$count）';
+    return '$count 件の使用箇所が見つかりました。';
   }
 
   @override
@@ -1499,7 +1510,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get manualUsageUpdatesRequired => 'このリファクタリングの前に手動で変更が必要な使用箇所があります。';
 
   @override
-  String get setRedirectTo => 'リダイレクト先を設定';
+  String get setRedirectTo => 'リダイレクト先を設定：';
 
   @override
   String get noRedirectDescription => '以前公開されたページをリダイレクトしない';

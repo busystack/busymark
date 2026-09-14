@@ -1120,7 +1120,7 @@ class WritersideTopicParser {
             span: element.span,
           ),
     ];
-    final titleOverrides = _topicTitleOverrides(source);
+    final titleOverrides = _topicTitleOverrides(document);
     final videos = <WritersideVideo>[];
     void collectVideos(Iterable<BusyBlock> blocks) {
       for (final block in blocks) {
@@ -1455,16 +1455,19 @@ List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {
   ];
 }
 
-List<WritersideTopicTitleOverride> _topicTitleOverrides(String source) {
+List<WritersideTopicTitleOverride> _topicTitleOverrides(
+  WritersideDocument document,
+) {
   return [
-    for (final match in RegExp(
-      r'<title\b(?=[^>]*\binstance="([^"]+)")[^>]*>(.*?)</title>',
-      dotAll: true,
-    ).allMatches(source))
-      WritersideTopicTitleOverride(
-        instance: match.group(1)!.trim(),
-        title: match.group(2)!.trim(),
-      ),
+    // Only authored top-level semantic titles are overrides. Their text is
+    // already XML-decoded; fenced examples remain Markdown blocks.
+    for (final element in document.nodes.whereType<WritersideElementNode>())
+      if (element.name == 'title')
+        if (_trimmedOrNull(element.attributes['instance']) case final instance?)
+          WritersideTopicTitleOverride(
+            instance: instance,
+            title: element.plainText.trim(),
+          ),
   ];
 }
 

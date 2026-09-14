@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "Täpsemad seaded",
   "tocInstanceTitleField": "Pealkiri eksemplarile '{instanceId}':",
   "tocOnlyTitleField": "Ainult sisukorra pealkiri:",
+  "tocInstanceTitleExplanation": "Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.",
+  "tocOnlyTitleExplanation": "Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate",
+  "tocTitleDocumentationLink": "siit",
   "tocFindUsages": "Otsi",
   "tocRefactorMenu": "Refaktoreeri",
   "tocSafeDelete": "Turvaline kustutamine",
@@ -1508,7 +1511,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Eemalda „{topic}” valitud eksemplarist. Teemafail säilitatakse.",
+  "topicRemovalSummary": "Kas eemaldada sisukorra element „{topic}”? Sisukorraga seotud lähtefaili ei kustutata.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1539,7 +1542,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Kasutuskohad ({count})",
+  "topicUsagesCount": "Leiti {count} kasutuskohta.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1597,7 +1600,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Määra ümbersuunamine",
+  "setRedirectTo": "Määra ümbersuunamine:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },

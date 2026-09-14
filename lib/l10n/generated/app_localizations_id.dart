@@ -206,6 +206,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get tocOnlyTitleField => 'Judul khusus daftar isi:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Hanya digunakan untuk instance saat ini. Secara default, diwarisi dari judul topik.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Hanya digunakan dalam daftar isi. Secara default, diwarisi dari judul topik atau judul khusus instance jika ditetapkan. Penjelasan judul tersedia';
+
+  @override
+  String get tocTitleDocumentationLink => 'di sini';
+
+  @override
   String get tocFindUsages => 'Cari';
 
   @override
@@ -1475,7 +1486,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Hapus “$topic” dari instance yang dipilih. File topik akan disimpan.';
+    return 'Hapus elemen daftar isi “$topic”? File sumber yang terkait dengan daftar isi tidak akan dihapus.';
   }
 
   @override
@@ -1500,7 +1511,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Penggunaan ($count)';
+    return '$count penggunaan ditemukan.';
   }
 
   @override
@@ -1548,7 +1559,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Beberapa penggunaan memerlukan perubahan manual sebelum pemfaktoran ulang ini.';
 
   @override
-  String get setRedirectTo => 'Alihkan ke';
+  String get setRedirectTo => 'Alihkan ke:';
 
   @override
   String get noRedirectDescription =>

@@ -206,6 +206,17 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tocOnlyTitleField => 'केवल विषय-सूची का शीर्षक:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'केवल वर्तमान इंस्टेंस के लिए उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक से प्राप्त होता है।';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'केवल विषय-सूची में उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक या, यदि सेट हो, इंस्टेंस-विशिष्ट शीर्षक से प्राप्त होता है। शीर्षकों का विवरण पढ़ें:';
+
+  @override
+  String get tocTitleDocumentationLink => 'यहाँ';
+
+  @override
   String get tocFindUsages => 'खोजें';
 
   @override
@@ -1469,7 +1480,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '“$topic” को चुने गए इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
+    return 'विषय-सूची से “$topic” तत्व हटाएँ? विषय-सूची से जुड़ी स्रोत फ़ाइल नहीं हटाई जाएगी।';
   }
 
   @override
@@ -1494,7 +1505,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'उपयोग ($count)';
+    return '$count उपयोग मिले।';
   }
 
   @override
@@ -1542,7 +1553,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।';
 
   @override
-  String get setRedirectTo => 'इस पर रीडायरेक्ट करें';
+  String get setRedirectTo => 'इस पर रीडायरेक्ट करें:';
 
   @override
   String get noRedirectDescription =>

@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "تنظیمات پیشرفته",
   "tocInstanceTitleField": "عنوان برای «{instanceId}»:",
   "tocOnlyTitleField": "عنوان مختص فهرست مطالب:",
+  "tocInstanceTitleExplanation": "فقط برای نمونهٔ فعلی استفاده می‌شود. به‌طور پیش‌فرض از عنوان موضوع به ارث می‌رسد.",
+  "tocOnlyTitleExplanation": "فقط در فهرست مطالب استفاده می‌شود. به‌طور پیش‌فرض از عنوان موضوع یا، در صورت تنظیم، عنوان مختص نمونه به ارث می‌رسد. توضیح عنوان‌ها را ببینید:",
+  "tocTitleDocumentationLink": "اینجا",
   "tocFindUsages": "یافتن",
   "tocRefactorMenu": "بازآرایی",
   "tocSafeDelete": "حذف ایمن",
@@ -2615,7 +2618,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "«⁨{topic}⁩» را از نمونهٔ انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.",
+  "topicRemovalSummary": "عنصر فهرست مطالب «⁨{topic}⁩» حذف شود؟ فایل منبع مرتبط با فهرست مطالب حذف نخواهد شد.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2647,7 +2650,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "موارد استفاده ({count})",
+  "topicUsagesCount": "{count} مورد استفاده پیدا شد.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2707,7 +2710,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "تنظیم تغییر مسیر به",
+  "setRedirectTo": "تنظیم تغییر مسیر به:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

@@ -206,6 +206,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tocOnlyTitleField => 'TOC-only title:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      'Used for the current instance only. By default, inherited from topic title.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Used in TOC only. By default, inherited from the topic title or instance-specific title if set. Titles are explained';
+
+  @override
+  String get tocTitleDocumentationLink => 'here';
+
+  @override
   String get tocFindUsages => 'Find';
 
   @override
@@ -1469,7 +1480,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Remove “$topic” from the selected instance. The topic file will be kept.';
+    return 'Remove TOC element \'$topic\'? The source file associated with the TOC won\'t be deleted.';
   }
 
   @override
@@ -1494,7 +1505,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Usages ($count)';
+    return '$count usages found.';
   }
 
   @override
@@ -1543,7 +1554,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Some usages require manual changes before this refactoring.';
 
   @override
-  String get setRedirectTo => 'Set redirect to';
+  String get setRedirectTo => 'Set redirect to:';
 
   @override
   String get noRedirectDescription => 'Do not redirect the old published page.';

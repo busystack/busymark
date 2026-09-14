@@ -58,6 +58,9 @@
   "tocAdvancedSettings": "उन्नत सेटिंग्स",
   "tocInstanceTitleField": "'{instanceId}' के लिए शीर्षक:",
   "tocOnlyTitleField": "केवल विषय-सूची का शीर्षक:",
+  "tocInstanceTitleExplanation": "केवल वर्तमान इंस्टेंस के लिए उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक से प्राप्त होता है।",
+  "tocOnlyTitleExplanation": "केवल विषय-सूची में उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक या, यदि सेट हो, इंस्टेंस-विशिष्ट शीर्षक से प्राप्त होता है। शीर्षकों का विवरण पढ़ें:",
+  "tocTitleDocumentationLink": "यहाँ",
   "tocFindUsages": "खोजें",
   "tocRefactorMenu": "रिफ़ैक्टर",
   "tocSafeDelete": "सुरक्षित रूप से हटाएँ",
@@ -2576,7 +2579,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "“{topic}” को चुने गए इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।",
+  "topicRemovalSummary": "विषय-सूची से “{topic}” तत्व हटाएँ? विषय-सूची से जुड़ी स्रोत फ़ाइल नहीं हटाई जाएगी।",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2607,7 +2610,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "उपयोग ({count})",
+  "topicUsagesCount": "{count} उपयोग मिले।",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2665,7 +2668,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "इस पर रीडायरेक्ट करें",
+  "setRedirectTo": "इस पर रीडायरेक्ट करें:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },

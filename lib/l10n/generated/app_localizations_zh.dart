@@ -200,6 +200,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tocOnlyTitleField => '仅用于目录的标题:';
 
   @override
+  String get tocInstanceTitleExplanation => '仅用于当前实例。默认继承主题标题。';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
+
+  @override
+  String get tocTitleDocumentationLink => '此处';
+
+  @override
   String get tocFindUsages => '查找';
 
   @override
@@ -1412,7 +1422,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '从选中的实例中移除“$topic”。主题文件将被保留。';
+    return '移除目录元素“$topic”？与目录关联的源文件不会被删除。';
   }
 
   @override
@@ -1437,7 +1447,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return '使用情况（$count）';
+    return '找到 $count 处使用。';
   }
 
   @override
@@ -1482,7 +1492,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get manualUsageUpdatesRequired => '执行此重构前，某些使用情况需要手动更改。';
 
   @override
-  String get setRedirectTo => '设置重定向到';
+  String get setRedirectTo => '设置重定向到：';
 
   @override
   String get noRedirectDescription => '不重定向旧的已发布页面。';
@@ -4438,6 +4448,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get tocOnlyTitleField => '仅用于目录的标题:';
 
   @override
+  String get tocInstanceTitleExplanation => '仅用于当前实例。默认继承主题标题。';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      '仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见';
+
+  @override
+  String get tocTitleDocumentationLink => '此处';
+
+  @override
   String get tocFindUsages => '查找';
 
   @override
@@ -5650,7 +5670,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '从选中的实例中移除“$topic”。主题文件将被保留。';
+    return '移除目录元素“$topic”？与目录关联的源文件不会被删除。';
   }
 
   @override
@@ -5675,7 +5695,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String topicUsagesCount(int count) {
-    return '使用情况（$count）';
+    return '找到 $count 处使用。';
   }
 
   @override
@@ -5720,7 +5740,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get manualUsageUpdatesRequired => '执行此重构前，某些使用情况需要手动更改。';
 
   @override
-  String get setRedirectTo => '设置重定向到';
+  String get setRedirectTo => '设置重定向到：';
 
   @override
   String get noRedirectDescription => '不重定向旧的已发布页面。';

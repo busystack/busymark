@@ -230,6 +230,42 @@ void main() {
     },
   );
 
+  testWidgets(
+    'live removal dialog uses documented confirmation, redirect label and usage count',
+    (tester) async {
+      await start(tester);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      final original = await tester.runAsync(tree.readAsString);
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => tester.tap(find.text('Remove TOC Element...')),
+      );
+      await _settle(
+        tester,
+        until: () => find.text('Remove TOC Element').evaluate().isNotEmpty,
+      );
+      expect(
+        find.text(
+          "Remove TOC element 'Other topic'? The source file associated with the TOC won't be deleted.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Set redirect to:'), findsOneWidget);
+      expect(
+        find.textContaining(RegExp(r'^\d+ usages found\.$')),
+        findsOneWidget,
+      );
+      expect(find.text('Set redirect to'), findsNothing);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(await tester.runAsync(tree.readAsString), original);
+    },
+  );
+
   for (final choice in [
     'Empty MD Topic',
     'Empty XML Topic',

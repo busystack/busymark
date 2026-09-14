@@ -200,6 +200,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tocOnlyTitleField => '목차 전용 제목:';
 
   @override
+  String get tocInstanceTitleExplanation =>
+      '현재 인스턴스에만 사용됩니다. 기본적으로 토픽 제목을 상속합니다.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      '목차에만 사용됩니다. 기본적으로 토픽 제목 또는 설정된 인스턴스별 제목을 상속합니다. 제목에 대한 설명:';
+
+  @override
+  String get tocTitleDocumentationLink => '여기';
+
+  @override
   String get tocFindUsages => '찾기';
 
   @override
@@ -1425,7 +1436,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '선택한 인스턴스에서 “$topic”을(를) 제거합니다. 토픽 파일은 유지됩니다.';
+    return '목차 요소 “$topic”을(를) 제거하시겠습니까? 목차에 연결된 소스 파일은 삭제되지 않습니다.';
   }
 
   @override
@@ -1450,7 +1461,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return '사용처 ($count)';
+    return '사용처 $count개를 찾았습니다.';
   }
 
   @override
@@ -1496,7 +1507,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get manualUsageUpdatesRequired => '일부 사용처는 이 리팩터링 전에 수동으로 변경해야 합니다.';
 
   @override
-  String get setRedirectTo => '다음으로 리디렉션 설정';
+  String get setRedirectTo => '다음으로 리디렉션 설정:';
 
   @override
   String get noRedirectDescription => '이전에 게시된 페이지를 리디렉션하지 마세요.';
