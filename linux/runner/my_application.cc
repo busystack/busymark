@@ -2610,6 +2610,17 @@ static gboolean validate_native_menu_entries(FlValue* entries,
   return TRUE;
 }
 
+static gchar* escape_native_menu_label(const gchar* label) {
+  GString* literal = g_string_new(nullptr);
+  for (const gchar* cursor = label; *cursor != '\0'; cursor++) {
+    if (*cursor == '_') {
+      g_string_append_c(literal, '_');
+    }
+    g_string_append_c(literal, *cursor);
+  }
+  return g_string_free(literal, FALSE);
+}
+
 static void build_native_menu_model(FlValue* entries,
                                      NativeMenuSession* session,
                                      GMenu* model,
@@ -2640,6 +2651,10 @@ static void build_native_menu_model(FlValue* entries,
 
     const size_t entry_index = (*next_index)++;
     const gchar* label = fl_lookup_string_arg(entry, "label");
+    // GMenu's GtkMenu adapter treats underscores as mnemonic markers. Flutter
+    // labels are literal presentation text, so double every underscore only at
+    // this native boundary; action indexes and clipboard payloads stay intact.
+    g_autofree gchar* literal_label = escape_native_menu_label(label);
     const gchar* icon_name = fl_lookup_string_arg(entry, "icon");
     const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
     gboolean enabled = TRUE;
@@ -2656,7 +2671,8 @@ static void build_native_menu_model(FlValue* entries,
       g_autoptr(GMenu) submenu = g_menu_new();
       build_native_menu_model(children, session, submenu, next_index,
                               ancestors_enabled && enabled);
-      g_autoptr(GMenuItem) item = g_menu_item_new_submenu(label, G_MENU_MODEL(submenu));
+      g_autoptr(GMenuItem) item =
+          g_menu_item_new_submenu(literal_label, G_MENU_MODEL(submenu));
       g_menu_append_item(section, item);
       section_length++;
       index++;
@@ -2704,11 +2720,13 @@ static void build_native_menu_model(FlValue* entries,
       for (size_t run_index = run_start; run_index < run_end; run_index++) {
         FlValue* run_entry = fl_value_get_list_value(entries, run_index);
         const gchar* run_label = fl_lookup_string_arg(run_entry, "label");
+        g_autofree gchar* run_literal_label =
+            escape_native_menu_label(run_label);
         const gchar* run_icon = fl_lookup_string_arg(run_entry, "icon");
         const gchar* run_shortcut =
             fl_lookup_string_arg(run_entry, "shortcut");
         g_autofree gchar* target = g_strdup_printf("%zu", entry_index + run_index - run_start);
-        g_autoptr(GMenuItem) item = g_menu_item_new(run_label, nullptr);
+        g_autoptr(GMenuItem) item = g_menu_item_new(run_literal_label, nullptr);
         g_menu_item_set_action_and_target_value(
             item, detailed_group_action, g_variant_new_string(target));
         if (run_icon != nullptr && run_icon[0] != '\0') {
@@ -2740,7 +2758,8 @@ static void build_native_menu_model(FlValue* entries,
 
     g_autofree gchar* detailed_action =
         g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
-    g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
+    g_autoptr(GMenuItem) item =
+        g_menu_item_new(literal_label, detailed_action);
     if (icon_name != nullptr && icon_name[0] != '\0') {
       g_autoptr(GIcon) icon = create_native_menu_icon(icon_name, entry);
       g_menu_item_set_icon(item, icon);

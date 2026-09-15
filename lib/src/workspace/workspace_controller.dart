@@ -1644,6 +1644,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required String treePath,
     required List<int> tocPath,
     required WritersideTocNodeIdentity identity,
+    required String topicModuleRoot,
+    required String topicPath,
   }) async {
     final workspace = state.workspace;
     if (workspace == null) return null;
@@ -1653,6 +1655,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         treePath: treePath,
         tocPath: tocPath,
         identity: identity,
+        topicModuleRoot: topicModuleRoot,
+        topicPath: topicPath,
       );
     } on Object catch (error) {
       state = state.copyWith(
@@ -1881,13 +1885,31 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     });
   }
 
-  Future<bool> renameWritersideTopicFile(String topicPath, String newFileName) {
+  Future<bool> renameWritersideTopicFile(
+    String topicPath,
+    String newFileName, {
+    String? topicModuleRoot,
+  }) {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
+      final ownerRoot = topicModuleRoot ?? workspace.writersideModule?.rootPath;
+      if (ownerRoot == null) {
+        throw const BusyMarkException('writerside.topic.module-not-open');
+      }
+      final affectedPaths = await _service.writersideTopicRenameAffectedPaths(
+        workspace,
+        topicPath: topicPath,
+        topicModuleRoot: ownerRoot,
+      );
+      void validate(Iterable<String> paths) =>
+          _requireCleanAffectedFiles(workspace, paths);
+      validate(affectedPaths);
       final target = await _service.renameWritersideTopicFile(
         workspace,
         topicPath,
         newFileName,
+        topicModuleRoot: ownerRoot,
+        validateBeforePublish: validate,
       );
       final transitions = _beginLocalHistoryPathTransitions(topicPath, target);
       var committed = false;

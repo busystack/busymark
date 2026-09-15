@@ -6,8 +6,10 @@ import 'package:xml/xml.dart';
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
+import '../core/source_span.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
+import 'writerside_project.dart';
 
 class WritersideTopicFileRenameResult {
   const WritersideTopicFileRenameResult({
@@ -39,7 +41,8 @@ class WritersideTopicFileDeleteResult {
   final int removedTocEntries;
 }
 
-/// Mutates a resolved Writerside topic file and all configured instance trees.
+/// Mutates a resolved Writerside topic file and every semantically resolved
+/// project reference supplied to the rename transaction.
 ///
 /// Topic files and instance trees must be regular files below the module's
 /// canonical root. Symlinked path components and paths outside that root are
@@ -60,9 +63,18 @@ class WritersideTopicFileEditor {
     required WritersideModule module,
     required WritersideTopic topic,
     required String newFileName,
+    List<WritersideModule>? projectModules,
+    void Function(Iterable<String>)? validateBeforePublish,
   }) async {
     final snapshot = await _currentModuleSnapshot(module, topic);
     final context = await _mutationContext(snapshot);
+    final referenceContexts = <_ReferenceModuleContext>[
+      _ReferenceModuleContext.fromMutation(context),
+    ];
+    for (final candidate in projectModules ?? const <WritersideModule>[]) {
+      if (p.equals(candidate.rootPath, context.module.rootPath)) continue;
+      referenceContexts.add(await _referenceModuleContext(candidate));
+    }
     final safeFileName = _safeRenamedFileName(
       newFileName,
       oldPath: context.topicPath,
@@ -89,16 +101,30 @@ class WritersideTopicFileEditor {
       newTopicFileName: newTopicFileName,
       newFileName: safeFileName,
     );
-    final treeEdits = await _renameTreeEdits(
-      context,
+    final referenceEdits = _renameProjectReferenceEdits(
+      referenceContexts,
+      target: context,
       newTopicFileName: newTopicFileName,
       newFileName: safeFileName,
     );
+    final targetReferenceEdit = referenceEdits
+        .where((edit) => p.equals(edit.path, context.topicPath))
+        .singleOrNull;
     final topicEdit = _renamedTopicSource(
       path: context.topicPath,
-      source: context.topicSource,
+      source: targetReferenceEdit?.updatedSource ?? context.topicSource,
       newFileName: safeFileName,
     );
+    final publishedEdits = referenceEdits
+        .where((edit) => !p.equals(edit.path, context.topicPath))
+        .toList();
+
+    final affectedPaths = <String>{
+      context.topicPath,
+      targetPath,
+      for (final edit in publishedEdits) edit.path,
+    };
+    validateBeforePublish?.call(affectedPaths);
 
     await _writeNewFile(
       context.anchor,
@@ -108,16 +134,19 @@ class WritersideTopicFileEditor {
     );
     final appliedTreeEdits = <_TreeEdit>[];
     try {
+      validateBeforePublish?.call(affectedPaths);
       await _applyTreeEdits(
         context.anchor,
-        treeEdits,
+        publishedEdits,
         applied: appliedTreeEdits,
       );
-      await _ensureTreesAtExpectedSources(context, treeEdits);
-      await _ensureConfigurationUnchanged(context);
-      await _ensureTopicSourcesUnchanged(
-        context,
-        additionalSources: {targetPath: topicEdit.source},
+      validateBeforePublish?.call(affectedPaths);
+      await _ensureReferenceContextsUnchanged(
+        referenceContexts,
+        publishedEdits,
+        targetPath: targetPath,
+        targetSource: topicEdit.source,
+        targetModuleRoot: context.module.rootPath,
       );
       await _deleteUnchangedTopicSource(context);
     } on Object {
@@ -148,7 +177,8 @@ class WritersideTopicFileEditor {
       oldTopicFileName: context.topic.fileName,
       newTopicFileName: newTopicFileName,
       updatedTreePaths: List.unmodifiable([
-        for (final edit in treeEdits) edit.path,
+        for (final edit in publishedEdits)
+          if (_isTreePath(edit.path)) edit.path,
       ]),
       updatedXmlTopicId: topicEdit.updatedXmlTopicId,
     );
@@ -389,6 +419,35 @@ class WritersideTopicFileEditor {
     );
   }
 
+  Future<_ReferenceModuleContext> _referenceModuleContext(
+    WritersideModule suppliedModule,
+  ) async {
+    final anchor = await _moduleAnchor(suppliedModule.rootPath);
+    final configurationBefore = await _configurationSources(
+      suppliedModule.rootPath,
+    );
+    final initiallyLoaded = await moduleService.load(suppliedModule.rootPath);
+    final topicSourcesBefore = await _topicSources(anchor, initiallyLoaded);
+    final module = await moduleService.load(suppliedModule.rootPath);
+    final topicSources = await _topicSources(anchor, module);
+    final configurationSources = await _configurationSources(module.rootPath);
+    if (!_sameStringMap(configurationBefore, configurationSources) ||
+        !_sameStringMap(topicSourcesBefore, topicSources) ||
+        module.instances.length != module.config.instanceSources.length) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-changed',
+        args: {'path': module.config.filePath},
+      );
+    }
+    return _ReferenceModuleContext(
+      anchor: anchor,
+      module: module,
+      configurationSources: configurationSources,
+      topicSources: topicSources,
+      trees: await _loadTrees(anchor, module),
+    );
+  }
+
   Future<CanonicalPathAnchor> _moduleAnchor(String rootPath) async {
     try {
       final anchor = await captureCanonicalDirectoryAnchor(
@@ -485,57 +544,284 @@ class WritersideTopicFileEditor {
     }
   }
 
-  Future<List<_TreeEdit>> _renameTreeEdits(
-    _MutationContext context, {
+  List<_TreeEdit> _renameProjectReferenceEdits(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
     required String newTopicFileName,
     required String newFileName,
-  }) async {
-    final edits = <_TreeEdit>[];
-    for (final tree in context.trees) {
-      var changed = false;
-      final root = tree.document.rootElement;
-      final startPage = root.getAttribute('start-page');
-      if (startPage != null &&
-          _referenceTargetsTopic(context, startPage, tree.path)) {
-        root.setAttribute(
-          'start-page',
-          _renamedReference(
-            startPage,
-            oldTopicFileName: context.topic.fileName,
-            newTopicFileName: newTopicFileName,
-            newFileName: newFileName,
-          ),
-        );
-        changed = true;
+  }) {
+    final modules = [for (final context in contexts) context.module];
+    final index = WritersideProjectIndex.build(modules);
+    final usages = <String, WritersideReference>{};
+    for (final usage in index.references) {
+      final topicPart = usage.value.split('#').first;
+      if (topicPart.isEmpty ||
+          !index
+              .definitions(
+                topicPart,
+                moduleId: usage.moduleId,
+                origin: usage.origin,
+                kind: WritersideSymbolKind.topic,
+                filePath: usage.filePath,
+                referenceOffset: usage.span.startOffset,
+              )
+              .any((symbol) => p.equals(symbol.filePath, target.topicPath))) {
+        continue;
       }
-      for (final element in tree.document.findAllElements('toc-element')) {
-        final reference = element.getAttribute('topic');
-        if (reference == null ||
-            !_referenceTargetsTopic(context, reference, tree.path)) {
-          continue;
+      final key =
+          '${usage.filePath}:${usage.span.startOffset}:'
+          '${usage.span.endOffset}:${usage.sourceValue ?? usage.value}';
+      usages[key] = usage;
+    }
+    // The Markdown AST may assign several inline links one broad source span.
+    // The general project index intentionally coalesces such semantic entries;
+    // rename still needs every concrete destination occurrence.
+    for (final context in contexts) {
+      final moduleId = index.modulesById.entries
+          .where(
+            (entry) => p.equals(entry.value.rootPath, context.module.rootPath),
+          )
+          .map((entry) => entry.key)
+          .single;
+      for (final topic in context.module.topics) {
+        final nextSearchOffsetBySpan = <String, int>{};
+        for (final link in topic.links) {
+          final topicPart = link.destination.split('#').first;
+          if (topicPart.isEmpty ||
+              !index
+                  .definitions(
+                    topicPart,
+                    moduleId: moduleId,
+                    kind: WritersideSymbolKind.topic,
+                    filePath: topic.filePath,
+                    referenceOffset: link.span.startOffset,
+                  )
+                  .any(
+                    (symbol) => p.equals(symbol.filePath, target.topicPath),
+                  )) {
+            continue;
+          }
+          final source = topic.document.source;
+          final spanKey = '${link.span.startOffset}:${link.span.endOffset}';
+          final searchOffset =
+              nextSearchOffsetBySpan[spanKey] ?? link.span.startOffset;
+          final start = source.indexOf(link.destination, searchOffset);
+          if (start < 0 ||
+              start + link.destination.length > link.span.endOffset) {
+            throw BusyMarkException(
+              'writerside.topic-file.tree-changed',
+              args: {'path': topic.filePath},
+            );
+          }
+          nextSearchOffsetBySpan[spanKey] = start + link.destination.length;
+          final span = SourceSpan.fromOffsets(
+            filePath: topic.filePath,
+            source: source,
+            startOffset: start,
+            endOffset: start + link.destination.length,
+          );
+          final usage = WritersideReference(
+            value: link.destination,
+            kind: WritersideSymbolKind.topic,
+            moduleId: moduleId,
+            filePath: topic.filePath,
+            span: span,
+            sourceValue: link.destination,
+          );
+          final key =
+              '${usage.filePath}:${span.startOffset}:'
+              '${span.endOffset}:${usage.sourceValue}';
+          usages[key] = usage;
         }
-        element.setAttribute(
-          'topic',
-          _renamedReference(
-            reference,
-            oldTopicFileName: context.topic.fileName,
-            newTopicFileName: newTopicFileName,
-            newFileName: newFileName,
-          ),
-        );
-        changed = true;
       }
-      if (changed) {
-        edits.add(
-          _TreeEdit(
-            path: tree.path,
-            originalSource: tree.source,
-            updatedSource: _xmlSource(tree.document),
-          ),
-        );
+    }
+
+    final edits = <_TreeEdit>[];
+    for (final context in contexts) {
+      for (final sourceEntry in context.topicSources.entries) {
+        final references =
+            usages.values
+                .where((usage) => p.equals(usage.filePath, sourceEntry.key))
+                .toList()
+              ..sort(
+                (left, right) =>
+                    right.span.startOffset.compareTo(left.span.startOffset),
+              );
+        if (references.isEmpty) continue;
+        var updated = sourceEntry.value;
+        var lastStart = updated.length + 1;
+        for (final reference in references) {
+          if (reference.span.startOffset < 0 ||
+              reference.span.endOffset > updated.length ||
+              reference.span.startOffset >= lastStart) {
+            throw BusyMarkException(
+              'writerside.topic-file.ambiguous-reference',
+              args: {
+                'reference': reference.value,
+                'treePath': reference.filePath,
+              },
+            );
+          }
+          final expected = reference.sourceValue ?? reference.value;
+          final actual = updated.substring(
+            reference.span.startOffset,
+            reference.span.endOffset,
+          );
+          if (actual != expected) {
+            throw BusyMarkException(
+              'writerside.topic-file.tree-changed',
+              args: {'path': reference.filePath},
+            );
+          }
+          updated = updated.replaceRange(
+            reference.span.startOffset,
+            reference.span.endOffset,
+            _renamedDocumentReference(
+              reference.value,
+              oldTopic: target.topic,
+              newTopicFileName: newTopicFileName,
+              newFileName: newFileName,
+            ),
+          );
+          lastStart = reference.span.startOffset;
+        }
+        if (updated != sourceEntry.value) {
+          edits.add(
+            _TreeEdit(
+              anchor: context.anchor,
+              path: sourceEntry.key,
+              originalSource: sourceEntry.value,
+              updatedSource: updated,
+            ),
+          );
+        }
+      }
+
+      final moduleId = index.modulesById.entries
+          .where(
+            (entry) => p.equals(entry.value.rootPath, context.module.rootPath),
+          )
+          .map((entry) => entry.key)
+          .single;
+      for (final tree in context.trees) {
+        var changed = false;
+        final root = tree.document.rootElement;
+        final startPage = root.getAttribute('start-page');
+        if (startPage != null &&
+            _projectReferenceTargetsTopic(
+              index,
+              target,
+              startPage,
+              moduleId: moduleId,
+              filePath: tree.path,
+            )) {
+          root.setAttribute(
+            'start-page',
+            _renamedDocumentReference(
+              startPage,
+              oldTopic: target.topic,
+              newTopicFileName: newTopicFileName,
+              newFileName: newFileName,
+            ),
+          );
+          changed = true;
+        }
+        for (final element in tree.document.findAllElements('toc-element')) {
+          for (final attributeName in const [
+            'topic',
+            'ref',
+            'target-for-accept-web-filenames',
+          ]) {
+            final reference = element.getAttribute(attributeName);
+            if (reference == null ||
+                !_projectReferenceTargetsTopic(
+                  index,
+                  target,
+                  reference,
+                  moduleId: moduleId,
+                  origin: element.getAttribute('origin'),
+                  filePath: tree.path,
+                )) {
+              continue;
+            }
+            element.setAttribute(
+              attributeName,
+              _renamedDocumentReference(
+                reference,
+                oldTopic: target.topic,
+                newTopicFileName: newTopicFileName,
+                newFileName: newFileName,
+              ),
+            );
+            changed = true;
+          }
+        }
+        if (changed) {
+          edits.add(
+            _TreeEdit(
+              anchor: context.anchor,
+              path: tree.path,
+              originalSource: tree.source,
+              updatedSource: _xmlSource(tree.document),
+            ),
+          );
+        }
       }
     }
     return edits;
+  }
+
+  bool _projectReferenceTargetsTopic(
+    WritersideProjectIndex index,
+    _MutationContext target,
+    String reference, {
+    required String moduleId,
+    required String filePath,
+    String? origin,
+  }) {
+    return index
+        .definitions(
+          reference.split('#').first,
+          moduleId: moduleId,
+          origin: origin,
+          kind: WritersideSymbolKind.topic,
+          filePath: filePath,
+        )
+        .any((symbol) => p.equals(symbol.filePath, target.topicPath));
+  }
+
+  String _renamedDocumentReference(
+    String reference, {
+    required WritersideTopic oldTopic,
+    required String newTopicFileName,
+    required String newFileName,
+  }) {
+    final hash = reference.indexOf('#');
+    final pathPart = hash < 0 ? reference : reference.substring(0, hash);
+    final suffix = hash < 0 ? '' : reference.substring(hash);
+    if (pathPart.isEmpty) return reference;
+    final normalized = _normalizedReference(pathPart);
+    final directory = p.dirname(normalized);
+    final oldId = oldTopic.id;
+    final usesId =
+        p.extension(normalized).isEmpty && p.basename(normalized) == oldId;
+    if (usesId &&
+        oldId !=
+            p.basenameWithoutExtension(
+              _normalizedReference(oldTopic.fileName),
+            )) {
+      return reference;
+    }
+    final replacementName = usesId
+        ? p.basenameWithoutExtension(newFileName)
+        : newFileName;
+    if (normalized == _normalizedReference(oldTopic.fileName)) {
+      return '$newTopicFileName$suffix';
+    }
+    final replacement = directory == '.'
+        ? replacementName
+        : p.join(directory, replacementName).replaceAll(r'\', '/');
+    return '$replacement$suffix';
   }
 
   Future<_DeleteTreeMutation> _deleteTreeEdits(_MutationContext context) async {
@@ -688,7 +974,7 @@ class WritersideTopicFileEditor {
   }) async {
     for (final edit in edits) {
       await _replaceFileAtomically(
-        anchor,
+        edit.anchor ?? anchor,
         edit.path,
         edit.updatedSource,
         expectedCurrentSource: edit.originalSource,
@@ -705,7 +991,7 @@ class WritersideTopicFileEditor {
     for (final edit in edits.reversed) {
       try {
         await _replaceFileAtomically(
-          anchor,
+          edit.anchor ?? anchor,
           edit.path,
           edit.originalSource,
           expectedCurrentSource: edit.updatedSource,
@@ -893,6 +1179,59 @@ class WritersideTopicFileEditor {
     }
   }
 
+  Future<void> _ensureReferenceContextsUnchanged(
+    List<_ReferenceModuleContext> contexts,
+    List<_TreeEdit> edits, {
+    required String targetPath,
+    required String targetSource,
+    required String targetModuleRoot,
+  }) async {
+    final updatedSources = {
+      for (final edit in edits) normalizePath(edit.path): edit.updatedSource,
+    };
+    for (final context in contexts) {
+      final configuration = await _configurationSources(
+        context.module.rootPath,
+      );
+      if (!_sameStringMap(configuration, context.configurationSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.tree-changed',
+          args: {'path': context.module.config.filePath},
+        );
+      }
+      for (final tree in context.trees) {
+        final expected = updatedSources[tree.path] ?? tree.source;
+        final resolved = await _resolvePath(
+          context.anchor,
+          tree.path,
+          allowRoot: false,
+        );
+        if (resolved.type != FileSystemEntityType.file ||
+            await File(resolved.path).readAsString() != expected) {
+          throw BusyMarkException(
+            'writerside.topic-file.tree-changed',
+            args: {'path': resolved.path},
+          );
+        }
+      }
+      final expectedTopics = <String, String>{
+        ...context.topicSources,
+        for (final entry in updatedSources.entries)
+          if (context.topicSources.containsKey(entry.key))
+            entry.key: entry.value,
+        if (p.equals(context.module.rootPath, targetModuleRoot))
+          normalizePath(targetPath): targetSource,
+      };
+      final currentTopics = await _topicSources(context.anchor, context.module);
+      if (!_sameStringMap(currentTopics, expectedTopics)) {
+        throw BusyMarkException(
+          'writerside.topic-file.topic-inventory-changed',
+          args: {'path': context.module.rootPath},
+        );
+      }
+    }
+  }
+
   Future<bool> _renameTargetIsSafeToCleanUp(
     _MutationContext context, {
     required String targetPath,
@@ -997,19 +1336,6 @@ class WritersideTopicFileEditor {
         : p.join(directory, newFileName).replaceAll(r'\', '/');
   }
 
-  String _renamedReference(
-    String reference, {
-    required String oldTopicFileName,
-    required String newTopicFileName,
-    required String newFileName,
-  }) {
-    final normalized = _normalizedReference(reference);
-    if (normalized == _normalizedReference(oldTopicFileName)) {
-      return newTopicFileName;
-    }
-    return newFileName;
-  }
-
   String _normalizedReference(String value) {
     return p.normalize(value.trim()).replaceAll(r'\', '/');
   }
@@ -1057,6 +1383,32 @@ class _CurrentModuleSnapshot {
   final Map<String, String> topicSources;
 }
 
+class _ReferenceModuleContext {
+  const _ReferenceModuleContext({
+    required this.anchor,
+    required this.module,
+    required this.configurationSources,
+    required this.topicSources,
+    required this.trees,
+  });
+
+  factory _ReferenceModuleContext.fromMutation(_MutationContext context) {
+    return _ReferenceModuleContext(
+      anchor: context.anchor,
+      module: context.module,
+      configurationSources: context.configurationSources,
+      topicSources: context.topicSources,
+      trees: context.trees,
+    );
+  }
+
+  final CanonicalPathAnchor anchor;
+  final WritersideModule module;
+  final Map<String, String?> configurationSources;
+  final Map<String, String> topicSources;
+  final List<_LoadedTree> trees;
+}
+
 class _LoadedTree {
   const _LoadedTree({
     required this.path,
@@ -1071,11 +1423,13 @@ class _LoadedTree {
 
 class _TreeEdit {
   const _TreeEdit({
+    this.anchor,
     required this.path,
     required this.originalSource,
     required this.updatedSource,
   });
 
+  final CanonicalPathAnchor? anchor;
   final String path;
   final String originalSource;
   final String updatedSource;
@@ -1112,3 +1466,5 @@ bool _sameStringMap(Map<String, String?> first, Map<String, String?> second) {
   }
   return true;
 }
+
+bool _isTreePath(String path) => p.extension(path).toLowerCase() == '.tree';

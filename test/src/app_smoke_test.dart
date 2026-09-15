@@ -52,6 +52,7 @@ import 'package:busymark/src/writerside/writerside_toc_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -4834,6 +4835,203 @@ void main() {
       expect(clipboardText, expected);
       expect(clipboardText, isNot(contains(RegExp('[\u2066-\u2069]'))));
     }
+  });
+
+  testWidgets('TOC Copy uses an inactive origin topic open buffer', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(
+      () => binding.platformDispatcher.defaultRouteNameTestValue = '/',
+    );
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-toc-copy-buffer-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    final mainTopics = Directory(p.join(root.path, 'topics'))..createSync();
+    final sharedRoot = Directory(p.join(root.path, 'shared'))..createSync();
+    final sharedTopics = Directory(p.join(sharedRoot.path, 'topics'))
+      ..createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+    File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" start-page="active.md">
+  <toc-element topic="shared.md" origin="shared"/>
+  <toc-element topic="active.md"/>
+</instance-profile>
+''');
+    final active = File(p.join(mainTopics.path, 'active.md'))
+      ..writeAsStringSync('# Active\n');
+    File(p.join(sharedRoot.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="library.tree"/></ihp>
+''');
+    File(p.join(sharedRoot.path, 'library.tree')).writeAsStringSync('''
+<instance-profile id="library" is-library="true"><toc-element topic="shared.md"/></instance-profile>
+''');
+    final shared = File(p.join(sharedTopics.path, 'shared.md'))
+      ..writeAsStringSync('# Shared saved\n');
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace.copyWith(
+          activeFilePath: active.path,
+          openFilePaths: [shared.path, active.path],
+        ),
+        documentBuffers: [
+          DocumentBuffer(
+            id: 'shared',
+            filePath: shared.path,
+            text: '# Shared unsaved\n',
+            lastSavedText: '# Shared saved\n',
+            dirty: true,
+          ),
+          DocumentBuffer(
+            id: 'active',
+            filePath: active.path,
+            text: '# Active\n',
+            lastSavedText: '# Active\n',
+            dirty: false,
+          ),
+        ],
+        activeBufferId: 'active',
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final en = AppLocalizationsEn();
+    await tester.tap(find.byTooltip(en.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.toc));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Shared saved'), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.copy));
+    await tester.pumpAndSettle();
+    expect(clipboardText, '# Shared unsaved\n');
+  });
+
+  testWidgets('TOC Paste reviews an inactive dirty tree before moving', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(
+      () => binding.platformDispatcher.defaultRouteNameTestValue = '/',
+    );
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-toc-paste-tree-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    final topics = Directory(p.join(root.path, 'topics'))..createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+    final tree = File(p.join(root.path, 'guide.tree'))
+      ..writeAsStringSync('''
+<instance-profile id="guide" start-page="a.md">
+  <toc-element topic="a.md"/>
+  <toc-element topic="b.md"/>
+</instance-profile>
+''');
+    File(p.join(topics.path, 'a.md')).writeAsStringSync('# Topic A\n');
+    final active = File(p.join(topics.path, 'b.md'))
+      ..writeAsStringSync('# Topic B\n');
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace.copyWith(
+          activeFilePath: active.path,
+          openFilePaths: [tree.path, active.path],
+        ),
+        documentBuffers: [
+          DocumentBuffer(
+            id: 'tree',
+            filePath: tree.path,
+            text: '${tree.readAsStringSync()}<!-- unsaved -->\n',
+            lastSavedText: tree.readAsStringSync(),
+            dirty: true,
+          ),
+          DocumentBuffer(
+            id: 'active',
+            filePath: active.path,
+            text: '# Topic B\n',
+            lastSavedText: '# Topic B\n',
+            dirty: false,
+          ),
+        ],
+        activeBufferId: 'active',
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final en = AppLocalizationsEn();
+    await tester.tap(find.byTooltip(en.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.toc));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Topic A'), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text(en.cut));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.cut));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Topic B').first, buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text(en.pasteAfterTopic));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.pasteAfterTopic));
+    await tester.pumpAndSettle();
+    expect(find.text(en.unsavedChanges), findsOneWidget);
+    expect(find.textContaining('guide.tree'), findsWidgets);
+    expect(controller.movedTopicPlacement, isNull);
+    await tester.tap(find.text(en.cancel));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('source undo cannot restore saved text from previous tab', (
@@ -10454,6 +10652,9 @@ class _MutableWorkspaceController extends WorkspaceController {
 
   @override
   WorkspaceState build() => initialState;
+
+  @override
+  Future<void> flushPersistence() async {}
 
   @override
   Future<ValidationOutcome> validateActive() async => ValidationOutcome(

@@ -938,6 +938,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       NativeMenuEntry.separator(),
       NativeMenuEntry.command(label: 'Extra'),
+      NativeMenuEntry.command(label: "Topic File Name 'first_topic.md'"),
+      NativeMenuEntry.command(label: 'Repeated __ and ___ underscores'),
     ];
     for (final direction in TextDirection.values) {
       final previousFocus = FocusManager.instance.primaryFocus;
@@ -956,6 +958,16 @@ class _HarnessState extends ConsumerState<_Harness> {
               row['name'] == 'Unavailable' && row['enabled'] == false,
         ),
         'GTK disables submenu headings in ${direction.name}',
+      );
+      _check(
+        tree.any(
+              (dynamic row) =>
+                  row['name'] == "Topic File Name 'first_topic.md'",
+            ) &&
+            tree.any(
+              (dynamic row) => row['name'] == 'Repeated __ and ___ underscores',
+            ),
+        'GTK renders single and repeated underscores literally in ${direction.name}',
       );
       await _native('key', direction == TextDirection.ltr ? 'Right' : 'Left');
       await _pause();

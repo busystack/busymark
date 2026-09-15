@@ -68,6 +68,159 @@ void main() {
     },
   );
 
+  test(
+    'rename refactors links, includes, ref entries, and leaves unrelated text',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+          'other.tree': '''
+<instance-profile id="other" start-page="other.topic">
+  <toc-element ref="guide.md" in="guide"/>
+  <toc-element topic="other.topic"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n\n<a id="part"/>\n',
+          'links.md': '''
+# Links
+
+[Guide](guide.md), [again](guide.md), and [part](guide.md#part).
+
+Literal guide.md must stay literal.
+''',
+          'other.topic': '''
+<topic id="other" title="Other">
+  <include from="guide.md" element-id="part"/>
+  <a href="guide.md#part">Guide</a>
+</topic>
+''',
+        },
+      );
+      final topic = _topic(fixture.module, 'guide.md');
+
+      await editor.rename(
+        module: fixture.module,
+        topic: topic,
+        newFileName: 'setup.md',
+      );
+
+      final links = File(
+        p.join(fixture.root.path, 'topics', 'links.md'),
+      ).readAsStringSync();
+    expect(links, contains('[Guide](setup.md)'));
+    expect(links, contains('[again](setup.md)'));
+      expect(links, contains('[part](setup.md#part)'));
+      expect(links, contains('Literal guide.md must stay literal.'));
+      final other = File(
+        p.join(fixture.root.path, 'topics', 'other.topic'),
+      ).readAsStringSync();
+      expect(other, contains('from="setup.md"'));
+      expect(other, contains('href="setup.md#part"'));
+      final otherTree = _tree(fixture.root, 'other.tree');
+      expect(
+        otherTree.findAllElements('toc-element').first.getAttribute('ref'),
+        'setup.md',
+      );
+    },
+  );
+
+  test(
+    'rename follows origin across modules without touching a local namesake',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-project-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      Future<WritersideModule> writeModule({
+        required String directory,
+        required String moduleName,
+        required String tree,
+        required Map<String, String> topics,
+      }) async {
+        final moduleRoot = await Directory(
+          p.join(root.path, directory),
+        ).create();
+        final topicRoot = await Directory(
+          p.join(moduleRoot.path, 'topics'),
+        ).create();
+        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+        for (final entry in topics.entries) {
+          await File(
+            p.join(topicRoot.path, entry.key),
+          ).writeAsString(entry.value);
+        }
+        return const WritersideModuleService().load(moduleRoot.path);
+      }
+
+      final main = await writeModule(
+        directory: 'main',
+        moduleName: 'main',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="guide.md" origin="shared"/>
+</instance-profile>
+''',
+        topics: {
+          'guide.md': '# Local namesake\n',
+          'links.topic': '''
+<topic id="links" title="Links"><a href="guide.md" origin="shared">Shared</a></topic>
+''',
+        },
+      );
+      final shared = await writeModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/></instance-profile>
+''',
+        topics: {'guide.md': '# Shared guide\n'},
+      );
+
+      await editor.rename(
+        module: shared,
+        topic: _topic(shared, 'guide.md'),
+        newFileName: 'setup.md',
+        projectModules: [main, shared],
+      );
+
+      expect(
+        File(p.join(main.rootPath, 'topics', 'guide.md')).readAsStringSync(),
+        '# Local namesake\n',
+      );
+      expect(
+        File(p.join(main.rootPath, 'topics', 'links.topic')).readAsStringSync(),
+        contains('href="setup.md" origin="shared"'),
+      );
+      final mainTree = XmlDocument.parse(
+        File(p.join(main.rootPath, 'guide.tree')).readAsStringSync(),
+      );
+      expect(
+        mainTree
+            .findAllElements('toc-element')
+            .map((element) => element.getAttribute('topic')),
+        ['guide.md', 'setup.md'],
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'guide.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
+        isTrue,
+      );
+    },
+  );
+
   test('rename updates a matching XML topic root id', () async {
     final fixture = await _fixture(
       trees: {

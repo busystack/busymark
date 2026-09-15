@@ -5358,7 +5358,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
 
   void _rememberSyncFocus() {
     final focused = FocusManager.instance.primaryFocus?.context;
-    if (focused == null ||
+    if (!mounted ||
+        focused == null ||
+        !focused.mounted ||
         focused.findAncestorWidgetOfExactType<_TocHeader>() != null) {
       return;
     }
@@ -6155,22 +6157,31 @@ class _TocTabState extends ConsumerState<_TocTab> {
   }
 
   Future<void> _copyTocEntries(List<_TocTreeEntry> entries) async {
-    final module = widget.workspace.writersideModule;
     final pieces = <String>[];
     final state = ref.read(workspaceControllerProvider);
-    final activePath = state.workspace?.activeFilePath;
     for (final entry in entries) {
       final reference = entry.node.topicReference;
-      final topic = reference == null || entry.node.origin != null
+      final owner = entry.node.origin == null
+          ? widget.workspace.writersideModule
+          : widget.workspace.writersideProject?.modulesByOrigin[entry
+                .node
+                .origin];
+      final topic = reference == null
           ? null
-          : module?.topicByReference(reference);
+          : owner?.topicByReference(reference);
       if (topic == null) {
         pieces.add(_tocNodeLabel(context, entry.node));
-      } else if (activePath != null && p.equals(activePath, topic.filePath)) {
-        pieces.add(state.activeText);
       } else {
+        final openBuffer = state.documentBuffers
+            .where(
+              (buffer) =>
+                  buffer.filePath != null &&
+                  p.equals(buffer.filePath!, topic.filePath),
+            )
+            .firstOrNull;
         pieces.add(
-          await ref.read(workspaceServiceProvider).loadText(topic.filePath),
+          openBuffer?.text ??
+              await ref.read(workspaceServiceProvider).loadText(topic.filePath),
         );
       }
     }
@@ -6236,6 +6247,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final rawNode = canEditStructure
         ? _rawTocNodeForEntry(widget.workspace, instanceTreePath, entry)
         : null;
+    final topicOwner = entry.node.origin == null
+        ? widget.workspace.writersideModule
+        : widget.workspace.writersideProject?.modulesByOrigin[entry
+              .node
+              .origin];
+    final canEditTopicEntry = rawNode?.topicFileName != null;
     final canPaste =
         _cutEntries.isNotEmpty &&
         _cutEntries.every(
@@ -6263,6 +6280,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       context,
       position,
       hasTopicFile: topicPath != null,
+      canEditTopicEntry: canEditTopicEntry,
       showHistory: historyFile != null,
       showPaste: canPaste,
       enableGitActions: gitRelativePath != null,
@@ -6271,11 +6289,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
       canRefineSelection: canRefineSelection,
       canEditSelection: canEditSelection,
       canSetHome:
+          canEditTopicEntry &&
           _tocInstanceForTreePath(
-            widget.workspace.writersideModule!,
-            instanceTreePath,
-          )?.isLibrary ==
-          false,
+                widget.workspace.writersideModule!,
+                instanceTreePath,
+              )?.isLibrary ==
+              false,
       topicReference: entry.node.topicReference,
       topicTitle: topic?.title,
       tocId: entry.node.id,
@@ -6373,7 +6392,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
           choice: _TocCreationChoice.template,
         );
       case _TocTreeAction.editTitle:
-        if (rawNode == null || topic == null) return;
+        if (rawNode == null ||
+            topic == null ||
+            topicOwner == null ||
+            !canEditTopicEntry) {
+          return;
+        }
         if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
               topic.filePath,
               instanceTreePath,
@@ -6387,6 +6411,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
           treePath: instanceTreePath,
           tocPath: entry.editPath!,
           identity: WritersideTocNodeIdentity.fromNode(rawNode),
+          topicModuleRoot: topicOwner.rootPath,
+          topicPath: topic.filePath,
         );
         if (session == null || !mounted || !context.mounted) return;
         final originalTitle = session.topic.title ?? '';
@@ -6670,7 +6696,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           await Clipboard.setData(ClipboardData(text: value));
         }
       case _TocTreeAction.setHome:
-        if (rawNode == null || topic == null) return;
+        if (rawNode == null || topic == null || !canEditTopicEntry) return;
         if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
               instanceTreePath,
             ]) ||
@@ -6686,7 +6712,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
             );
       case _TocTreeAction.rename:
         final path = topicPath;
-        if (path == null) {
+        if (path == null || topicOwner == null) {
           return;
         }
         final newName = await _showFileNameDialog(
@@ -6698,16 +6724,29 @@ class _TocTabState extends ConsumerState<_TocTab> {
         if (newName == null || !context.mounted || !mounted) {
           return;
         }
-        final canRename = await saveOrConfirmSafeToChangeActiveFile(
+        final affectedPaths = await ref
+            .read(workspaceServiceProvider)
+            .writersideTopicRenameAffectedPaths(
+              widget.workspace,
+              topicPath: path,
+              topicModuleRoot: topicOwner.rootPath,
+            );
+        if (!mounted || !context.mounted || !entryIsCurrent()) return;
+        final canRename = await confirmSafeToChangeWorkspaceFiles(
           context,
           ref,
+          affectedPaths,
         );
         if (!canRename || !mounted || !context.mounted || !entryIsCurrent()) {
           return;
         }
         final renamed = await ref
             .read(workspaceControllerProvider.notifier)
-            .renameWritersideTopicFile(path, newName);
+            .renameWritersideTopicFile(
+              path,
+              newName,
+              topicModuleRoot: topicOwner.rootPath,
+            );
         if (!mounted) {
           return;
         }
@@ -6757,7 +6796,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           }
           return;
         }
-        final canMove = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+        final canMove = await confirmSafeToChangeWorkspaceFiles(context, ref, [
+          instanceTreePath,
+        ]);
         if (!canMove ||
             !mounted ||
             !context.mounted ||
@@ -7492,6 +7533,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
   BuildContext context,
   Offset position, {
   required bool hasTopicFile,
+  required bool canEditTopicEntry,
   required bool showHistory,
   required bool showPaste,
   required bool enableGitActions,
@@ -7615,7 +7657,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         BusyMarkPopupMenuItem(
           value: _TocTreeAction.editTitle,
           label: context.l10n.tocEditTitleAction,
-          enabled: hasTopicFile && canEditStructure,
+          enabled: canEditTopicEntry && hasTopicFile && canEditStructure,
         ),
         BusyMarkPopupMenuItem(
           value: _TocTreeAction.removeFromToc,
@@ -7626,7 +7668,11 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         BusyMarkPopupMenuItem(
           value: _TocTreeAction.setHome,
           label: context.l10n.tocSetHomePage,
-          enabled: canSetHome && hasTopicFile && canEditStructure,
+          enabled:
+              canEditTopicEntry &&
+              canSetHome &&
+              hasTopicFile &&
+              canEditStructure,
         ),
         BusyMarkPopupMenuItem(
           value: _TocTreeAction.saveTemplate,

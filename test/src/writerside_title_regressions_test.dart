@@ -62,11 +62,14 @@ void main() {
   Future<WritersideTitleEditSession> session(Directory root) async {
     final workspace = await service.openPath(root.path);
     final instance = workspace.writersideModule!.instances.single;
+    final topic = workspace.writersideModule!.topics.single;
     return service.prepareWritersideTitleEdit(
       workspace,
       treePath: instance.sourceTreePath,
       tocPath: [0],
       identity: WritersideTocNodeIdentity.fromNode(instance.tocRoots.first),
+      topicModuleRoot: workspace.writersideModule!.rootPath,
+      topicPath: topic.filePath,
     );
   }
 
@@ -81,6 +84,59 @@ void main() {
       onCommitted: (_, _) {},
     );
   }
+
+  test(
+    'title edit preserves the resolved topic owner across modules',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-title-owner-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final mainTopics = await Directory(p.join(root.path, 'topics')).create();
+      final sharedRoot = await Directory(p.join(root.path, 'shared')).create();
+      final sharedTopics = await Directory(
+        p.join(sharedRoot.path, 'topics'),
+      ).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+      await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide"><toc-element topic="shared.md" origin="shared"/></instance-profile>
+''');
+      final mainTopic = File(p.join(mainTopics.path, 'shared.md'));
+      await mainTopic.writeAsString('# Main title\n');
+      await File(p.join(sharedRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="library.tree"/></ihp>
+''');
+      await File(p.join(sharedRoot.path, 'library.tree')).writeAsString('''
+<instance-profile id="library" is-library="true"><toc-element topic="shared.md"/></instance-profile>
+''');
+      final sharedTopic = File(p.join(sharedTopics.path, 'shared.md'));
+      await sharedTopic.writeAsString('# Shared title\n');
+
+      final workspace = await service.openPath(root.path);
+      final instance = workspace.writersideModule!.instances.single;
+      final node = instance.tocRoots.single;
+      final owner = workspace.writersideProject!.modulesByOrigin['shared']!;
+      final resolved = owner.topicByReference(node.topicReference!)!;
+      final editSession = await service.prepareWritersideTitleEdit(
+        workspace,
+        treePath: instance.sourceTreePath,
+        tocPath: [0],
+        identity: WritersideTocNodeIdentity.fromNode(node),
+        topicModuleRoot: owner.rootPath,
+        topicPath: resolved.filePath,
+      );
+
+      expect(editSession.topic.title, 'Shared title');
+      await save(
+        editSession,
+        const WritersideTitleEdit(title: 'Shared updated'),
+      );
+      expect(await mainTopic.readAsString(), '# Main title\n');
+      expect(await sharedTopic.readAsString(), '# Shared updated\n');
+    },
+  );
 
   for (final newline in ['\n', '\r\n']) {
     for (final quote in ['"', "'"]) {
@@ -235,6 +291,7 @@ void main() {
             );
         final broken = WritersideTitleEditSession(
           topic: topic,
+          topicModuleRoot: original.topicModuleRoot,
           instanceId: original.instanceId,
           treePath: original.treePath,
           tocPath: original.tocPath,

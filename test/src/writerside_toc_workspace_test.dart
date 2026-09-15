@@ -302,6 +302,10 @@ void main() {
         treePath: guide.sourceTreePath,
         tocPath: [0],
         identity: WritersideTocNodeIdentity.fromNode(guide.tocRoots.first),
+        topicModuleRoot: workspace.writersideModule!.rootPath,
+        topicPath: workspace.writersideModule!
+            .topicByReference(guide.tocRoots.first.topicReference!)!
+            .filePath,
       );
       var committed = false;
       await expectLater(
