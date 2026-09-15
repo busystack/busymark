@@ -77,6 +77,7 @@ import '../../local_history/local_history_comparison_view.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_panel.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../platform/native_writerside_dialog_service.dart';
 import '../../search/search_replace_service.dart';
 import '../../search/workspace_search_scope.dart';
 import '../../visualization/visualization_card.dart';
@@ -6388,35 +6389,107 @@ class _TocTabState extends ConsumerState<_TocTab> {
           identity: WritersideTocNodeIdentity.fromNode(rawNode),
         );
         if (session == null || !mounted || !context.mounted) return;
-        final edit = await showBusyMarkModalDialog<WritersideTitleEdit>(
-          context,
-          builder: (_) => WritersideTitleDialog(session: session),
-        );
+        final originalTitle = session.topic.title ?? '';
+        final originalInstanceTitle =
+            session.topic.titleOverrides
+                .where((override) => override.instance == session.instanceId)
+                .firstOrNull
+                ?.title ??
+            '';
+        final originalTocTitle = session.identity.tocTitle ?? '';
+        final nativeEdit = await const NativeWritersideDialogService()
+            .showEditTitle(
+              dialogTitle: context.l10n.tocEditTitleDialog,
+              topicTitleLabel: context.l10n.tocTopicTitleField,
+              advancedLabel: context.l10n.tocAdvancedSettings,
+              instanceTitleLabel: context.l10n.tocInstanceTitleField(
+                session.instanceId,
+              ),
+              tocTitleLabel: context.l10n.tocOnlyTitleField,
+              instanceExplanation: context.l10n.tocInstanceTitleExplanation,
+              tocExplanation: context.l10n.tocOnlyTitleExplanation,
+              documentationLabel: context.l10n.tocTitleDocumentationLink,
+              documentationUrl:
+                  'https://www.jetbrains.com/help/writerside/topics.html',
+              initialTitle: originalTitle,
+              initialInstanceTitle: originalInstanceTitle,
+              initialTocTitle: originalTocTitle,
+              cancelLabel: context.l10n.cancel,
+              okLabel: context.l10n.tocOk,
+              textDirection: Directionality.of(context),
+            );
+        if (!mounted || !context.mounted) return;
+        final WritersideTitleEdit? edit;
+        if (nativeEdit.available) {
+          final values = nativeEdit.value;
+          edit = values == null
+              ? null
+              : WritersideTitleEdit(
+                  title: values.title == originalTitle ? null : values.title,
+                  instanceTitle: values.instanceTitle == originalInstanceTitle
+                      ? null
+                      : values.instanceTitle,
+                  tocTitle: values.tocTitle == originalTocTitle
+                      ? null
+                      : values.tocTitle,
+                );
+        } else {
+          edit = await showBusyMarkModalDialog<WritersideTitleEdit>(
+            context,
+            builder: (_) => WritersideTitleDialog(session: session),
+          );
+        }
         if (edit != null && mounted) {
           await controller.editWritersideTitles(session, edit);
         }
       case _TocTreeAction.duplicate:
         if (topic == null || rawNode == null) return;
-        final name = await showBusyMarkModalDialog<String>(
-          context,
-          builder: (_) => WritersideTocTextDialog(
-            title: context.l10n.tocDuplicateDialog,
-            label: context.l10n.tocDuplicateFilename,
-            initialValue: p.basenameWithoutExtension(topic.fileName),
-            validate: (name) {
-              if (name.trim().isEmpty) return context.l10n.fileNameRequired;
-              if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(name)) {
-                return context.l10n.useIdentifierCharacters;
-              }
-              if (widget.workspace.writersideModule!.topics.any(
-                (candidate) => candidate.id == name,
-              )) {
-                return context.l10n.topicIdAlreadyExists;
-              }
-              return null;
-            },
-          ),
-        );
+        String? validateDuplicateName(String name) {
+          if (name.trim().isEmpty) return context.l10n.fileNameRequired;
+          if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(name)) {
+            return context.l10n.useIdentifierCharacters;
+          }
+          if (widget.workspace.writersideModule!.topics.any(
+            (candidate) => candidate.id == name,
+          )) {
+            return context.l10n.topicIdAlreadyExists;
+          }
+          return null;
+        }
+
+        final nativeName = await const NativeWritersideDialogService()
+            .showDuplicateTopic(
+              title: context.l10n.tocDuplicateDialog,
+              fileNameLabel: context.l10n.tocDuplicateFilename,
+              initialValue: p.basenameWithoutExtension(topic.fileName),
+              cancelLabel: context.l10n.cancel,
+              okLabel: context.l10n.tocOk,
+              requiredError: context.l10n.fileNameRequired,
+              invalidCharactersError: context.l10n.useIdentifierCharacters,
+              duplicateError: context.l10n.topicIdAlreadyExists,
+              existingTopicIds: widget.workspace.writersideModule!.topics.map(
+                (candidate) => candidate.id,
+              ),
+              textDirection: Directionality.of(context),
+            );
+        if (!mounted || !context.mounted) return;
+        final String? name;
+        if (nativeName.available) {
+          final value = nativeName.value;
+          name = value != null && validateDuplicateName(value) == null
+              ? value
+              : null;
+        } else {
+          name = await showBusyMarkModalDialog<String>(
+            context,
+            builder: (_) => WritersideTocTextDialog(
+              title: context.l10n.tocDuplicateDialog,
+              label: context.l10n.tocDuplicateFilename,
+              initialValue: p.basenameWithoutExtension(topic.fileName),
+              validate: validateDuplicateName,
+            ),
+          );
+        }
         if (name == null || !mounted || !context.mounted) return;
         if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
               instanceTreePath,

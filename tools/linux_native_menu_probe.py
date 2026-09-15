@@ -34,6 +34,15 @@ def walk(node, depth=0):
         yield from walk(node.get_child_at_index(index), depth + 1)
 
 
+def visible_dialog_nodes(app):
+    dialogs = [node for node in walk(app)
+               if node.get_role() == Atspi.Role.DIALOG
+               and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+    if len(dialogs) != 1:
+        raise RuntimeError(f"Expected one visible native dialog, got {len(dialogs)}")
+    return list(walk(dialogs[0]))
+
+
 def key(name):
     x11 = ctypes.CDLL("libX11.so.6")
     xtst = ctypes.CDLL("libXtst.so.6")
@@ -91,6 +100,37 @@ def main():
             raise RuntimeError(f"Could not activate native menu item: {args[0]}")
         time.sleep(0.3)
         print("submenu" if submenu else "command")
+    elif command == "activate":
+        matches = [node for node in visible_dialog_nodes(app)
+                   if node.get_name() == args[0]
+                   and node.get_role() in (Atspi.Role.PUSH_BUTTON,
+                                           Atspi.Role.TOGGLE_BUTTON,
+                                           Atspi.Role.LINK)
+                   and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+        if len(matches) != 1:
+            raise RuntimeError(f"Expected one visible native control {args[0]!r}, got {len(matches)}")
+        control = matches[0]
+        if not control.get_state_set().contains(Atspi.StateType.ENABLED):
+            raise RuntimeError(f"Native control disabled: {args[0]}")
+        if not control.get_action_iface().do_action(0):
+            raise RuntimeError(f"Could not activate native control: {args[0]}")
+        time.sleep(0.3)
+    elif command == "has":
+        matches = [node for node in visible_dialog_nodes(app)
+                   if node.get_name() == args[0]
+                   and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+        print("true" if matches else "false")
+    elif command == "set-entry":
+        index_arg, value = args[0].split("\n", 1)
+        entries = [node for node in visible_dialog_nodes(app)
+                   if node.get_role() in (Atspi.Role.ENTRY, Atspi.Role.TEXT)
+                   and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+        index = int(index_arg)
+        if index < 0 or index >= len(entries):
+            raise RuntimeError(f"Visible native entry {index} not found; got {len(entries)}")
+        if not entries[index].set_text_contents(value):
+            raise RuntimeError(f"Could not set native entry {index}")
+        time.sleep(0.3)
     else:
         raise RuntimeError(f"Unknown probe command {command}")
 

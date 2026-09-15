@@ -14,6 +14,7 @@
 #include "secure_credential_host.h"
 #include "video_player_host.h"
 #include "web_render_host.h"
+#include "writerside_dialog_host.h"
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
@@ -84,6 +85,7 @@ struct _MyApplication {
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
   FlMethodChannel* native_menu_channel;
+  FlMethodChannel* writerside_dialog_channel;
   FlMethodChannel* asset_input_channel;
   FlMethodChannel* secure_credential_channel;
   FlMethodChannel* rich_clipboard_channel;
@@ -3169,6 +3171,8 @@ static void my_application_activate(GApplication* application) {
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
   register_native_menu_channel(self, view);
+  self->writerside_dialog_channel =
+      busymark_writerside_dialog_channel_new(view, window);
   register_asset_input_channel(self, view);
   self->rich_clipboard_channel = busymark_rich_clipboard_channel_new(view);
   self->secure_credential_channel =
@@ -3235,6 +3239,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_bar_css_provider);
   g_clear_object(&self->header_bar_channel);
   g_clear_object(&self->native_menu_channel);
+  g_clear_object(&self->writerside_dialog_channel);
   g_clear_object(&self->asset_input_channel);
   g_clear_object(&self->rich_clipboard_channel);
   g_clear_object(&self->secure_credential_channel);
@@ -3279,6 +3284,7 @@ static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
   self->native_menu_channel = nullptr;
+  self->writerside_dialog_channel = nullptr;
   self->asset_input_channel = nullptr;
   self->secure_credential_channel = nullptr;
   self->visualization_host = nullptr;
