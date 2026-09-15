@@ -211,6 +211,81 @@ Text <span title="[example](guide.md)">label</span> and [Guide](setup.md).
   );
 
   test(
+    'rename binds reference links outside image titles and HTML attributes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'image-links.md': '''
+# Image links
+
+![Screenshot](image.png "[example][fake]") and [Guide][real].
+
+[fake]: guide.md
+[real]: guide.md
+''',
+          'html-links.md': '''
+# HTML links
+
+Text <span title="[example][fake]">label</span> and [Guide][real].
+
+[fake]: guide.md
+[real]: guide.md
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final imageLinks = File(
+        p.join(fixture.root.path, 'topics', 'image-links.md'),
+      ).readAsStringSync();
+      expect(imageLinks, '''
+# Image links
+
+![Screenshot](image.png "[example][fake]") and [Guide][real].
+
+[fake]: guide.md
+[real]: setup.md
+''');
+      final htmlLinks = File(
+        p.join(fixture.root.path, 'topics', 'html-links.md'),
+      ).readAsStringSync();
+      expect(htmlLinks, '''
+# HTML links
+
+Text <span title="[example][fake]">label</span> and [Guide][real].
+
+[fake]: guide.md
+[real]: setup.md
+''');
+
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'image-links.md').links.single.destination,
+        'setup.md',
+      );
+      expect(
+        _topic(reloaded, 'html-links.md').links.single.destination,
+        'setup.md',
+      );
+    },
+  );
+
+  test(
     'rename follows origin across modules without touching a local namesake',
     () async {
       final root = await Directory.systemTemp.createTemp(

@@ -10,6 +10,7 @@ import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_ast_adapter.dart';
 import '../markdown/markdown_model.dart';
+import '../markdown/markdown_parser.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_project.dart';
@@ -890,6 +891,7 @@ class WritersideTopicFileEditor {
     final bound = <_AuthoredMarkdownTopicReference>[];
     final unbound = <MarkdownLink>[];
     final consumed = <int>{};
+    final referenceOccurrenceValidity = <int, bool>{};
     for (final link in topic.links) {
       int? selected;
       for (var index = 0; index < authored.length; index++) {
@@ -908,6 +910,14 @@ class WritersideTopicFileEditor {
               link,
               candidate,
             )) {
+          continue;
+        }
+        if (candidate.referenceLabelSpan != null &&
+            !(referenceOccurrenceValidity[index] ??=
+                _referenceMarkdownOccurrenceBelongsToParsedLink(
+                  topic,
+                  candidate,
+                ))) {
           continue;
         }
         selected = index;
@@ -973,6 +983,71 @@ class WritersideTopicFileEditor {
     return containsProbe(parsed);
   }
 
+  bool _referenceMarkdownOccurrenceBelongsToParsedLink(
+    WritersideTopic topic,
+    _AuthoredMarkdownTopicReference candidate,
+  ) {
+    final source = topic.document.source;
+    final referenceLabelSpan = candidate.referenceLabelSpan;
+    final definitionLabelSpan = candidate.definitionLabelSpan;
+    if (referenceLabelSpan == null || definitionLabelSpan == null) {
+      return false;
+    }
+    final spans = [
+      referenceLabelSpan,
+      definitionLabelSpan,
+      candidate.destinationSpan,
+    ];
+    if (spans.any(
+      (span) =>
+          span.startOffset < 0 ||
+          span.endOffset > source.length ||
+          span.startOffset >= span.endOffset,
+    )) {
+      return false;
+    }
+
+    var probeLabel = 'busymark-rename-reference-${candidate.occurrenceOffset}';
+    while (source.toLowerCase().contains(probeLabel.toLowerCase())) {
+      probeLabel = 'x$probeLabel';
+    }
+    var probeDestination =
+        'busymark-rename-destination-${candidate.occurrenceOffset}.invalid';
+    while (source.contains(probeDestination) ||
+        probeDestination == candidate.destination ||
+        topic.links.any((link) => link.destination == probeDestination)) {
+      probeDestination = 'x$probeDestination';
+    }
+
+    final replacements =
+        <({SourceSpan span, String value})>[
+          (span: referenceLabelSpan, value: probeLabel),
+          (span: definitionLabelSpan, value: probeLabel),
+          (span: candidate.destinationSpan, value: probeDestination),
+        ]..sort(
+          (left, right) =>
+              right.span.startOffset.compareTo(left.span.startOffset),
+        );
+    var probed = source;
+    for (final replacement in replacements) {
+      probed = probed.replaceRange(
+        replacement.span.startOffset,
+        replacement.span.endOffset,
+        replacement.value,
+      );
+    }
+    final parsed = const MarkdownParser().parse(
+      filePath: topic.filePath,
+      source: probed,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    return parsed.links
+            .where((link) => link.destination == probeDestination)
+            .length ==
+        1;
+  }
+
   List<bool> _markdownLiteralMask(WritersideTopic topic) {
     final source = topic.document.source;
     final protected = List<bool>.filled(source.length, false);
@@ -1036,13 +1111,23 @@ class WritersideTopicFileEditor {
     for (final match in pattern.allMatches(source)) {
       if (_rangeIsProtected(protected, match.start, match.end)) continue;
       final rawDestination = match.group(3) ?? match.group(4)!;
+      final definitionPrefix = match.group(1)!;
+      final rawLabel = match.group(2)!;
+      final definitionLabelStart =
+          match.start + definitionPrefix.indexOf('[') + 1;
       final destinationStart =
           match.start +
-          match.group(1)!.length +
+          definitionPrefix.length +
           (match.group(3) == null ? 0 : 1);
       final definition = _MarkdownReferenceDefinition(
         destination: _decodeMarkdownDestination(rawDestination),
         rawDestination: rawDestination,
+        labelSpan: SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: definitionLabelStart,
+          endOffset: definitionLabelStart + rawLabel.length,
+        ),
         destinationSpan: SourceSpan.fromOffsets(
           filePath: topic.filePath,
           source: source,
@@ -1111,15 +1196,28 @@ class WritersideTopicFileEditor {
       }
 
       String? referenceLabel;
+      SourceSpan? referenceLabelSpan;
       var referenceEnd = afterLabel;
       if (afterLabel < source.length && source[afterLabel] == '[') {
         final closing = _closingMarkdownBracket(source, afterLabel, protected);
         if (closing == null) continue;
         final explicit = source.substring(afterLabel + 1, closing);
         referenceLabel = explicit.isEmpty ? label : explicit;
+        referenceLabelSpan = SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: explicit.isEmpty ? labelStart + 1 : afterLabel + 1,
+          endOffset: explicit.isEmpty ? labelEnd : closing,
+        );
         referenceEnd = closing + 1;
       } else {
         referenceLabel = label;
+        referenceLabelSpan = SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: labelStart + 1,
+          endOffset: labelEnd,
+        );
       }
       final definition = definitions[_normalizedMarkdownLabel(referenceLabel)];
       if (definition == null) continue;
@@ -1130,6 +1228,8 @@ class WritersideTopicFileEditor {
           rawDestination: definition.rawDestination,
           destinationSpan: definition.destinationSpan,
           angleDestination: definition.angleDestination,
+          referenceLabelSpan: referenceLabelSpan,
+          definitionLabelSpan: definition.labelSpan,
         ),
       );
       cursor = referenceEnd;
@@ -2075,6 +2175,8 @@ class _AuthoredMarkdownTopicReference {
     this.xmlAttribute = false,
     this.angleDestination = false,
     this.inlineMarkdownDestination = false,
+    this.referenceLabelSpan,
+    this.definitionLabelSpan,
   });
 
   final int occurrenceOffset;
@@ -2085,6 +2187,8 @@ class _AuthoredMarkdownTopicReference {
   final bool xmlAttribute;
   final bool angleDestination;
   final bool inlineMarkdownDestination;
+  final SourceSpan? referenceLabelSpan;
+  final SourceSpan? definitionLabelSpan;
 }
 
 class _AuthoredMarkdownProjection {
@@ -2102,11 +2206,13 @@ class _MarkdownReferenceDefinition {
     required this.destination,
     required this.rawDestination,
     required this.destinationSpan,
+    this.labelSpan,
     this.angleDestination = false,
   });
 
   final String destination;
   final String rawDestination;
+  final SourceSpan? labelSpan;
   final SourceSpan destinationSpan;
   final bool angleDestination;
 }
