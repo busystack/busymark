@@ -87,10 +87,15 @@ void main() {
         },
         topics: {
           'guide.md': '# Guide\n\n<a id="part"/>\n',
+          'other.md': '# Other\n',
           'links.md': '''
 # Links
 
 Example: `[sample](guide.md)`; guide.md appears before [guide.md](guide.md), [again](guide.md), and [part](guide.md#part).
+
+[Other](other.md "[example](guide.md)") and [Guide](guide.md).
+
+Comment: <!-- [fake](guide.md) --> and [Guide again](guide.md).
 
 Literal guide.md must stay literal.
 ''',
@@ -123,6 +128,19 @@ Literal guide.md must stay literal.
         ),
       );
       expect(links, contains('[part](setup.md#part)'));
+      expect(
+        links,
+        contains(
+          '[Other](other.md "[example](guide.md)") and '
+          '[Guide](setup.md).',
+        ),
+      );
+      expect(
+        links,
+        contains(
+          'Comment: <!-- [fake](guide.md) --> and [Guide again](setup.md).',
+        ),
+      );
       expect(links, contains('Literal guide.md must stay literal.'));
       final other = File(
         p.join(fixture.root.path, 'topics', 'other.topic'),
@@ -340,9 +358,13 @@ Shared: <a href="guide.md" origin="shared">Shared</a>; local: [Local](guide.md).
 
 Full [Guide][g] and repeated [again][g].
 Collapsed [Guide][] and shortcut [Guide].
+Inline code label: [`Guide`](guide.md).
+Following-line destination: [Guide][next].
 
 [g]: guide.md
 [guide]: guide.md
+[next]:
+  guide.md
 ''',
       },
     );
@@ -358,6 +380,8 @@ Collapsed [Guide][] and shortcut [Guide].
     ).readAsStringSync();
     expect(references, contains('Full [Guide][g] and repeated [again][g].'));
     expect(references, contains('Collapsed [Guide][] and shortcut [Guide].'));
+    expect(references, contains('Inline code label: [`Guide`](setup.md).'));
+    expect(references, contains('Following-line destination: [Guide][next].'));
     expect(
       RegExp(r'^\[g\]: setup\.md$', multiLine: true).allMatches(references),
       hasLength(1),
@@ -366,6 +390,7 @@ Collapsed [Guide][] and shortcut [Guide].
       RegExp(r'^\[guide\]: setup\.md$', multiLine: true).allMatches(references),
       hasLength(1),
     );
+    expect(references, contains('[next]:\n  setup.md'));
     expect(references, isNot(contains(']: guide.md')));
   });
 
@@ -402,6 +427,51 @@ Collapsed [Guide][] and shortcut [Guide].
         linksSource,
       ).findAllElements('a').single.getAttribute('href'),
       'setup.md',
+    );
+  });
+
+  test('rename escapes decoded XML attribute replacements', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api&amp;tools/guide.md">
+  <toc-element topic="api&amp;tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api&tools/guide.md': '# Guide\n',
+        'links.topic': '''
+<topic id="links" title="Links">
+  <a href="api&amp;tools/guide.md">Guide</a>
+</topic>
+''',
+      },
+    );
+
+    final result = await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api&tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    expect(
+      p.normalize(result.newTopicPath),
+      p.normalize(p.join(fixture.root.path, 'topics', 'api&tools', 'setup.md')),
+    );
+    final linksSource = File(
+      p.join(fixture.root.path, 'topics', 'links.topic'),
+    ).readAsStringSync();
+    expect(linksSource, contains('href="api&amp;tools/setup.md"'));
+    expect(
+      XmlDocument.parse(
+        linksSource,
+      ).findAllElements('a').single.getAttribute('href'),
+      'api&tools/setup.md',
+    );
+    expect(
+      _tree(fixture.root, 'guide.tree').rootElement.getAttribute('start-page'),
+      'api&tools/setup.md',
     );
   });
 

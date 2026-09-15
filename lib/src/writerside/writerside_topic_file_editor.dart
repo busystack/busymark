@@ -7,6 +7,7 @@ import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../markdown/markdown_model.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_project.dart';
@@ -119,6 +120,13 @@ class WritersideTopicFileEditor {
     final publishedEdits = referenceEdits
         .where((edit) => !p.equals(edit.path, context.topicPath))
         .toList();
+
+    _validateGeneratedXmlRenameSources(
+      referenceContexts,
+      target: context,
+      targetSource: topicEdit.source,
+      publishedEdits: publishedEdits,
+    );
 
     final affectedPaths = <String>{
       context.topicPath,
@@ -559,15 +567,14 @@ class WritersideTopicFileEditor {
           normalizePath(topic.filePath): topic,
     };
     final usages = <String, WritersideReference>{};
+    final xmlAttributeSpans = <String>{};
     for (final usage in index.references) {
       if (usage.kind != WritersideSymbolKind.topic) continue;
       final containingTopic = topicsByPath[normalizePath(usage.filePath)];
       if (containingTopic == null) continue;
-      final writableUsage = _indexedWritableTopicReference(
-        containingTopic,
-        usage,
-      );
-      if (writableUsage == null) continue;
+      final writable = _indexedWritableTopicReference(containingTopic, usage);
+      if (writable == null) continue;
+      final writableUsage = writable.reference;
       final topicPart = usage.value.split('#').first;
       if (topicPart.isEmpty ||
           !index
@@ -587,6 +594,9 @@ class WritersideTopicFileEditor {
           '${writableUsage.span.endOffset}:'
           '${writableUsage.sourceValue ?? writableUsage.value}';
       usages[key] = writableUsage;
+      if (writable.xmlAttribute) {
+        xmlAttributeSpans.add(_referenceSpanKey(writableUsage));
+      }
     }
     // The Markdown AST may assign several inline links one broad source span.
     // The general project index intentionally coalesces such semantic entries;
@@ -600,7 +610,31 @@ class WritersideTopicFileEditor {
           .single;
       for (final topic in context.module.topics) {
         if (topic.format != WritersideTopicFormat.markdown) continue;
-        for (final reference in _authoredMarkdownTopicReferences(topic)) {
+        final projection = _authoredMarkdownTopicReferences(topic);
+        for (final unbound in projection.unboundLinks) {
+          final topicPart = unbound.destination.split('#').first;
+          if (topicPart.isNotEmpty &&
+              index
+                  .definitions(
+                    topicPart,
+                    moduleId: moduleId,
+                    kind: WritersideSymbolKind.topic,
+                    filePath: topic.filePath,
+                    referenceOffset: unbound.span.startOffset,
+                  )
+                  .any(
+                    (symbol) => p.equals(symbol.filePath, target.topicPath),
+                  )) {
+            throw BusyMarkException(
+              'writerside.topic-file.ambiguous-reference',
+              args: {
+                'reference': unbound.destination,
+                'treePath': topic.filePath,
+              },
+            );
+          }
+        }
+        for (final reference in projection.references) {
           final topicPart = reference.destination.split('#').first;
           if (topicPart.isEmpty ||
               !index
@@ -630,6 +664,9 @@ class WritersideTopicFileEditor {
               '${usage.filePath}:${usage.span.startOffset}:'
               '${usage.span.endOffset}:${usage.sourceValue}';
           usages[key] = usage;
+          if (reference.xmlAttribute) {
+            xmlAttributeSpans.add(_referenceSpanKey(usage));
+          }
         }
       }
     }
@@ -671,15 +708,19 @@ class WritersideTopicFileEditor {
               args: {'path': reference.filePath},
             );
           }
+          var replacement = _renamedDocumentReference(
+            reference.value,
+            oldTopic: target.topic,
+            newTopicFileName: newTopicFileName,
+            newFileName: newFileName,
+          );
+          if (xmlAttributeSpans.contains(_referenceSpanKey(reference))) {
+            replacement = _escapeXmlAttributeValue(replacement);
+          }
           updated = updated.replaceRange(
             reference.span.startOffset,
             reference.span.endOffset,
-            _renamedDocumentReference(
-              reference.value,
-              oldTopic: target.topic,
-              newTopicFileName: newTopicFileName,
-              newFileName: newFileName,
-            ),
+            replacement,
           );
           lastStart = reference.span.startOffset;
         }
@@ -769,7 +810,8 @@ class WritersideTopicFileEditor {
     return edits;
   }
 
-  WritersideReference? _indexedWritableTopicReference(
+  ({WritersideReference reference, bool xmlAttribute})?
+  _indexedWritableTopicReference(
     WritersideTopic topic,
     WritersideReference reference,
   ) {
@@ -796,20 +838,23 @@ class WritersideTopicFileEditor {
       });
       if (!isTypedAttribute) return null;
     }
-    return WritersideReference(
-      value: reference.value,
-      kind: reference.kind,
-      moduleId: reference.moduleId,
-      filePath: reference.filePath,
-      span: span,
-      origin: reference.origin,
-      sourceValue: source.substring(span.startOffset, span.endOffset),
-      scopeReference: reference.scopeReference,
-      nullable: reference.nullable,
+    return (
+      reference: WritersideReference(
+        value: reference.value,
+        kind: reference.kind,
+        moduleId: reference.moduleId,
+        filePath: reference.filePath,
+        span: span,
+        origin: reference.origin,
+        sourceValue: source.substring(span.startOffset, span.endOffset),
+        scopeReference: reference.scopeReference,
+        nullable: reference.nullable,
+      ),
+      xmlAttribute: true,
     );
   }
 
-  List<_AuthoredMarkdownTopicReference> _authoredMarkdownTopicReferences(
+  _AuthoredMarkdownProjection _authoredMarkdownTopicReferences(
     WritersideTopic topic,
   ) {
     final protected = _markdownLiteralMask(topic);
@@ -823,6 +868,7 @@ class WritersideTopicFileEditor {
               left.occurrenceOffset.compareTo(right.occurrenceOffset),
         );
     final bound = <_AuthoredMarkdownTopicReference>[];
+    final unbound = <MarkdownLink>[];
     final consumed = <int>{};
     for (final link in topic.links) {
       int? selected;
@@ -842,9 +888,14 @@ class WritersideTopicFileEditor {
       if (selected != null) {
         consumed.add(selected);
         bound.add(authored[selected]);
+      } else {
+        unbound.add(link);
       }
     }
-    return bound;
+    return _AuthoredMarkdownProjection(
+      references: List.unmodifiable(bound),
+      unboundLinks: List.unmodifiable(unbound),
+    );
   }
 
   List<bool> _markdownLiteralMask(WritersideTopic topic) {
@@ -860,6 +911,9 @@ class WritersideTopicFileEditor {
 
     for (final codeBlock in topic.markdown?.codeBlocks ?? const []) {
       protect(codeBlock.span.startOffset, codeBlock.span.endOffset);
+    }
+    for (final comment in RegExp(r'<!--[\s\S]*?(?:-->|$)').allMatches(source)) {
+      protect(comment.start, comment.end);
     }
     for (var cursor = 0; cursor < source.length; cursor++) {
       if (protected[cursor] ||
@@ -901,7 +955,7 @@ class WritersideTopicFileEditor {
     final source = topic.document.source;
     final definitions = <String, _MarkdownReferenceDefinition>{};
     final pattern = RegExp(
-      r'''^([ \t]{0,3}\[([^\]\r\n]+)\]:[ \t]*)(?:<([^>\r\n]+)>|([^\s\r\n]+))''',
+      r'''^([ \t]{0,3}\[([^\]\r\n]+)\]:[ \t]*(?:\r?\n[ \t]+)?)(?:<([^>\r\n]+)>|([^\s\r\n]+))''',
       multiLine: true,
     );
     for (final match in pattern.allMatches(source)) {
@@ -925,7 +979,9 @@ class WritersideTopicFileEditor {
         _normalizedMarkdownLabel(match.group(2)!),
         () => definition,
       );
-      for (var index = match.start; index < match.end; index++) {
+      final lineEnd = source.indexOf('\n', match.end);
+      final protectedEnd = lineEnd < 0 ? source.length : lineEnd;
+      for (var index = match.start; index < protectedEnd; index++) {
         protected[index] = true;
       }
     }
@@ -970,7 +1026,7 @@ class WritersideTopicFileEditor {
               destinationSpan: destination.destinationSpan,
             ),
           );
-          cursor = destination.destinationSpan.endOffset;
+          cursor = destination.linkEndOffset;
         }
         continue;
       }
@@ -1045,6 +1101,7 @@ class WritersideTopicFileEditor {
               endOffset: hrefStart + rawDestination.length,
             ),
             origin: origin?.isEmpty == true ? null : origin,
+            xmlAttribute: true,
           ),
         );
       } on XmlParserException {
@@ -1054,7 +1111,7 @@ class WritersideTopicFileEditor {
     return occurrences;
   }
 
-  _MarkdownReferenceDefinition? _inlineMarkdownDestination(
+  _InlineMarkdownDestination? _inlineMarkdownDestination(
     WritersideTopic topic,
     int openingParenthesis,
     List<bool> protected,
@@ -1096,8 +1153,14 @@ class WritersideTopicFileEditor {
       }
     }
     if (end <= start) return null;
+    final linkEnd = _inlineMarkdownLinkEnd(
+      source,
+      openingParenthesis,
+      protected,
+    );
+    if (linkEnd == null) return null;
     final rawDestination = source.substring(start, end);
-    return _MarkdownReferenceDefinition(
+    return _InlineMarkdownDestination(
       destination: _decodeMarkdownDestination(rawDestination),
       rawDestination: rawDestination,
       destinationSpan: SourceSpan.fromOffsets(
@@ -1106,7 +1169,36 @@ class WritersideTopicFileEditor {
         startOffset: start,
         endOffset: end,
       ),
+      linkEndOffset: linkEnd,
     );
+  }
+
+  int? _inlineMarkdownLinkEnd(
+    String source,
+    int openingParenthesis,
+    List<bool> protected,
+  ) {
+    var nestedParentheses = 0;
+    String? quote;
+    for (var index = openingParenthesis + 1; index < source.length; index++) {
+      if (protected[index] || _isEscapedMarkdownCharacter(source, index)) {
+        continue;
+      }
+      final character = source[index];
+      if (quote != null) {
+        if (character == quote) quote = null;
+        continue;
+      }
+      if (character == '"' || character == "'") {
+        quote = character;
+      } else if (character == '(') {
+        nestedParentheses++;
+      } else if (character == ')') {
+        if (nestedParentheses == 0) return index + 1;
+        nestedParentheses--;
+      }
+    }
+    return null;
   }
 
   int? _closingMarkdownBracket(
@@ -1116,7 +1208,7 @@ class WritersideTopicFileEditor {
   ) {
     var depth = 1;
     for (var index = opening + 1; index < source.length; index++) {
-      if (protected[index]) return null;
+      if (protected[index]) continue;
       if (_isEscapedMarkdownCharacter(source, index)) continue;
       if (source[index] == '[') {
         depth++;
@@ -1152,6 +1244,71 @@ class WritersideTopicFileEditor {
       // binding below discards source candidates that do not match it.
     }
     return decoded;
+  }
+
+  String _referenceSpanKey(WritersideReference reference) =>
+      '${normalizePath(reference.filePath)}:'
+      '${reference.span.startOffset}:${reference.span.endOffset}';
+
+  String _escapeXmlAttributeValue(String value) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&apos;');
+
+  void _validateGeneratedXmlRenameSources(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
+    required String targetSource,
+    required List<_TreeEdit> publishedEdits,
+  }) {
+    if (target.topic.format == WritersideTopicFormat.xml) {
+      _validateGeneratedXmlTopic(target.topicPath, targetSource);
+    }
+    final xmlTopicPaths = <String>{
+      for (final context in contexts)
+        for (final topic in context.module.topics)
+          if (topic.format == WritersideTopicFormat.xml)
+            normalizePath(topic.filePath),
+    };
+    for (final edit in publishedEdits) {
+      if (_isTreePath(edit.path)) {
+        _validateGeneratedTree(edit.path, edit.updatedSource);
+      } else if (xmlTopicPaths.contains(normalizePath(edit.path))) {
+        _validateGeneratedXmlTopic(edit.path, edit.updatedSource);
+      }
+    }
+  }
+
+  void _validateGeneratedXmlTopic(String path, String source) {
+    try {
+      final document = XmlDocument.parse(source);
+      if (document.rootElement.name.local != 'topic') {
+        throw const FormatException('Expected a topic root element.');
+      }
+    } on Object catch (error) {
+      throw BusyMarkException(
+        'writerside.topic-file.topic-invalid',
+        args: {'path': path, 'error': '$error'},
+      );
+    }
+  }
+
+  void _validateGeneratedTree(String path, String source) {
+    try {
+      final document = XmlDocument.parse(source);
+      if (document.rootElement.name.local != 'instance-profile') {
+        throw const FormatException(
+          'Expected an instance-profile root element.',
+        );
+      }
+    } on Object catch (error) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-invalid',
+        args: {'path': path, 'error': '$error'},
+      );
+    }
   }
 
   bool _sameSpan(SourceSpan left, SourceSpan right) =>
@@ -1753,6 +1910,7 @@ class _AuthoredMarkdownTopicReference {
     required this.rawDestination,
     required this.destinationSpan,
     this.origin,
+    this.xmlAttribute = false,
   });
 
   final int occurrenceOffset;
@@ -1760,6 +1918,17 @@ class _AuthoredMarkdownTopicReference {
   final String rawDestination;
   final SourceSpan destinationSpan;
   final String? origin;
+  final bool xmlAttribute;
+}
+
+class _AuthoredMarkdownProjection {
+  const _AuthoredMarkdownProjection({
+    required this.references,
+    required this.unboundLinks,
+  });
+
+  final List<_AuthoredMarkdownTopicReference> references;
+  final List<MarkdownLink> unboundLinks;
 }
 
 class _MarkdownReferenceDefinition {
@@ -1772,6 +1941,17 @@ class _MarkdownReferenceDefinition {
   final String destination;
   final String rawDestination;
   final SourceSpan destinationSpan;
+}
+
+class _InlineMarkdownDestination extends _MarkdownReferenceDefinition {
+  const _InlineMarkdownDestination({
+    required super.destination,
+    required super.rawDestination,
+    required super.destinationSpan,
+    required this.linkEndOffset,
+  });
+
+  final int linkEndOffset;
 }
 
 class _MutationContext {
