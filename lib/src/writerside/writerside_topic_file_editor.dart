@@ -904,12 +904,8 @@ class WritersideTopicFileEditor {
             (candidate.destinationSpan.startOffset >= link.span.startOffset &&
                 candidate.destinationSpan.endOffset <= link.span.endOffset);
         if (!belongsToParsedLink) continue;
-        if (candidate.inlineMarkdownDestination &&
-            !_inlineMarkdownDestinationBelongsToParsedLink(
-              topic,
-              link,
-              candidate,
-            )) {
+        if ((candidate.inlineMarkdownDestination || candidate.xmlAttribute) &&
+            !_markdownDestinationBelongsToParsedLink(topic, link, candidate)) {
           continue;
         }
         if (candidate.referenceLabelSpan != null &&
@@ -936,7 +932,7 @@ class WritersideTopicFileEditor {
     );
   }
 
-  bool _inlineMarkdownDestinationBelongsToParsedLink(
+  bool _markdownDestinationBelongsToParsedLink(
     WritersideTopic topic,
     MarkdownLink link,
     _AuthoredMarkdownTopicReference candidate,
@@ -1248,17 +1244,19 @@ class WritersideTopicFileEditor {
       caseSensitive: false,
       dotAll: true,
     );
-    final hrefPattern = RegExp(
-      r'''\bhref\s*=\s*(["'])(.*?)\1''',
-      caseSensitive: false,
+    final attributePattern = RegExp(
+      r'''([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])(.*?)\2''',
       dotAll: true,
     );
     for (final tagMatch in tagPattern.allMatches(source)) {
       if (_rangeIsProtected(protected, tagMatch.start, tagMatch.end)) continue;
       final tag = tagMatch.group(0)!;
-      final hrefMatch = hrefPattern.firstMatch(tag);
+      final hrefMatch = attributePattern
+          .allMatches(tag)
+          .where((match) => match.group(1) == 'href')
+          .firstOrNull;
       if (hrefMatch == null) continue;
-      final rawDestination = hrefMatch.group(2)!;
+      final rawDestination = hrefMatch.group(3)!;
       final hrefStart =
           tagMatch.start + hrefMatch.end - 1 - rawDestination.length;
       try {

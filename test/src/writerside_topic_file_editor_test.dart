@@ -286,6 +286,57 @@ Text <span title="[example][fake]">label</span> and [Guide][real].
   );
 
   test(
+    'rename binds exact HTML hrefs outside Markdown link and image titles',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'links.md': '''
+# Links
+
+![Screenshot](image.png "<a href='guide.md'>Example</a>") and [Guide](guide.md).
+
+[Other](other.md "<a href='guide.md'>Example</a>") and [Guide](guide.md).
+
+Text <a data-href="keep.md" href="guide.md">Guide</a>.
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+![Screenshot](image.png "<a href='guide.md'>Example</a>") and [Guide](setup.md).
+
+[Other](other.md "<a href='guide.md'>Example</a>") and [Guide](setup.md).
+
+Text <a data-href="keep.md" href="setup.md">Guide</a>.
+''');
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'links.md').links.map((link) => link.destination),
+        ['setup.md', 'other.md', 'setup.md', 'setup.md'],
+      );
+    },
+  );
+
+  test(
     'rename follows origin across modules without touching a local namesake',
     () async {
       final root = await Directory.systemTemp.createTemp(
