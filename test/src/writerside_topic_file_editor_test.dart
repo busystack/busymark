@@ -90,7 +90,7 @@ void main() {
           'links.md': '''
 # Links
 
-[Guide](guide.md), [again](guide.md), and [part](guide.md#part).
+guide.md appears before [guide.md](guide.md), [again](guide.md), and [part](guide.md#part).
 
 Literal guide.md must stay literal.
 ''',
@@ -98,6 +98,7 @@ Literal guide.md must stay literal.
 <topic id="other" title="Other">
   <include from="guide.md" element-id="part"/>
   <a href="guide.md#part">Guide</a>
+  <p instance="guide">Same-named instance</p>
 </topic>
 ''',
         },
@@ -113,15 +114,22 @@ Literal guide.md must stay literal.
       final links = File(
         p.join(fixture.root.path, 'topics', 'links.md'),
       ).readAsStringSync();
-    expect(links, contains('[Guide](setup.md)'));
-    expect(links, contains('[again](setup.md)'));
+      expect(
+        links,
+        contains(
+          'guide.md appears before [guide.md](setup.md), '
+          '[again](setup.md), and [part](setup.md#part).',
+        ),
+      );
       expect(links, contains('[part](setup.md#part)'));
       expect(links, contains('Literal guide.md must stay literal.'));
       final other = File(
         p.join(fixture.root.path, 'topics', 'other.topic'),
       ).readAsStringSync();
       expect(other, contains('from="setup.md"'));
+      expect(other, contains('element-id="part"'));
       expect(other, contains('href="setup.md#part"'));
+      expect(other, contains('instance="guide"'));
       final otherTree = _tree(fixture.root, 'other.tree');
       expect(
         otherTree.findAllElements('toc-element').first.getAttribute('ref'),
@@ -217,6 +225,97 @@ Literal guide.md must stay literal.
       expect(
         File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
         isTrue,
+      );
+    },
+  );
+
+  test(
+    'renaming a local namesake preserves origin-qualified Markdown XML links',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-project-reverse-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      Future<WritersideModule> writeModule({
+        required String directory,
+        required String moduleName,
+        required String tree,
+        required Map<String, String> topics,
+      }) async {
+        final moduleRoot = await Directory(
+          p.join(root.path, directory),
+        ).create();
+        final topicRoot = await Directory(
+          p.join(moduleRoot.path, 'topics'),
+        ).create();
+        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+        for (final entry in topics.entries) {
+          await File(
+            p.join(topicRoot.path, entry.key),
+          ).writeAsString(entry.value);
+        }
+        return const WritersideModuleService().load(moduleRoot.path);
+      }
+
+      final main = await writeModule(
+        directory: 'main',
+        moduleName: 'main',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="guide.md" origin="shared"/>
+</instance-profile>
+''',
+        topics: {
+          'guide.md': '# Local guide\n',
+          'links.md': '''
+# Links
+
+[Local](guide.md)
+
+<include from="guide.md" element-id="part"/>
+
+<a href="guide.md" origin="shared">Shared</a>
+''',
+        },
+      );
+      final shared = await writeModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/></instance-profile>
+''',
+        topics: {'guide.md': '# Shared guide\n'},
+      );
+
+      await editor.rename(
+        module: main,
+        topic: _topic(main, 'guide.md'),
+        newFileName: 'setup.md',
+        projectModules: [main, shared],
+      );
+
+      final links = File(
+        p.join(main.rootPath, 'topics', 'links.md'),
+      ).readAsStringSync();
+      expect(links, contains('[Local](setup.md)'));
+      expect(links, contains('from="setup.md" element-id="part"'));
+      expect(links, contains('href="guide.md" origin="shared"'));
+      final mainTree = XmlDocument.parse(
+        File(p.join(main.rootPath, 'guide.tree')).readAsStringSync(),
+      );
+      expect(
+        mainTree
+            .findAllElements('toc-element')
+            .map((element) => element.getAttribute('topic')),
+        ['setup.md', 'guide.md'],
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'guide.md')).readAsStringSync(),
+        '# Shared guide\n',
       );
     },
   );
