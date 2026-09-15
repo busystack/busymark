@@ -618,18 +618,28 @@ class WritersideTopicFileEditor {
         final projection = _authoredMarkdownTopicReferences(topic);
         for (final unbound in projection.unboundLinks) {
           final topicPart = unbound.destination.split('#').first;
-          if (topicPart.isNotEmpty &&
+          final resolvesInRecordedScope =
+              topicPart.isNotEmpty &&
               index
                   .definitions(
                     topicPart,
                     moduleId: moduleId,
+                    origin: unbound.origin,
                     kind: WritersideSymbolKind.topic,
                     filePath: topic.filePath,
                     referenceOffset: unbound.span.startOffset,
                   )
+                  .any((symbol) => p.equals(symbol.filePath, target.topicPath));
+          final resolvesConservativelyToTarget =
+              topicPart.isNotEmpty &&
+              unbound.origin == null &&
+              target.module
+                  .topicsMatchingReference(topicPart)
                   .any(
-                    (symbol) => p.equals(symbol.filePath, target.topicPath),
-                  )) {
+                    (candidate) =>
+                        p.equals(candidate.filePath, target.topicPath),
+                  );
+          if (resolvesInRecordedScope || resolvesConservativelyToTarget) {
             throw BusyMarkException(
               'writerside.topic-file.ambiguous-reference',
               args: {
@@ -889,10 +899,12 @@ class WritersideTopicFileEditor {
               left.occurrenceOffset.compareTo(right.occurrenceOffset),
         );
     final bound = <_AuthoredMarkdownTopicReference>[];
-    final unbound = <MarkdownLink>[];
+    final unbound = <_UnboundMarkdownTopicReference>[];
     final consumed = <int>{};
     final referenceOccurrenceValidity = <int, bool>{};
-    for (final link in topic.links) {
+    final linkOrigins = _markdownLinkOriginsInParseOrder(topic);
+    for (var linkIndex = 0; linkIndex < topic.links.length; linkIndex++) {
+      final link = topic.links[linkIndex];
       int? selected;
       for (var index = 0; index < authored.length; index++) {
         if (consumed.contains(index)) continue;
@@ -923,13 +935,49 @@ class WritersideTopicFileEditor {
         consumed.add(selected);
         bound.add(authored[selected]);
       } else {
-        unbound.add(link);
+        unbound.add(
+          _UnboundMarkdownTopicReference(
+            link: link,
+            origin: linkIndex < linkOrigins.length
+                ? linkOrigins[linkIndex]
+                : null,
+          ),
+        );
       }
     }
     return _AuthoredMarkdownProjection(
       references: List.unmodifiable(bound),
       unboundLinks: List.unmodifiable(unbound),
     );
+  }
+
+  List<String?> _markdownLinkOriginsInParseOrder(WritersideTopic topic) {
+    final origins = <String?>[];
+
+    void visitInline(BusyInline inline) {
+      if (inline.kind == BusyInlineKind.link &&
+          inline.destination?.trim().isNotEmpty == true) {
+        final origin = inline.attributes['origin']?.trim();
+        origins.add(origin?.isEmpty == true ? null : origin);
+      }
+      for (final child in inline.children) {
+        visitInline(child);
+      }
+    }
+
+    void visitBlock(BusyBlock block) {
+      for (final inline in block.inlines) {
+        visitInline(inline);
+      }
+      for (final child in block.children) {
+        visitBlock(child);
+      }
+    }
+
+    for (final block in topic.markdown?.busyDocument.blocks ?? const []) {
+      visitBlock(block);
+    }
+    return origins;
   }
 
   bool _markdownDestinationBelongsToParsedLink(
@@ -1239,18 +1287,13 @@ class WritersideTopicFileEditor {
   ) {
     final source = topic.document.source;
     final occurrences = <_AuthoredMarkdownTopicReference>[];
-    final tagPattern = RegExp(
-      r'''<a\b[^>]*>''',
-      caseSensitive: false,
-      dotAll: true,
-    );
     final attributePattern = RegExp(
       r'''([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])(.*?)\2''',
       dotAll: true,
     );
-    for (final tagMatch in tagPattern.allMatches(source)) {
-      if (_rangeIsProtected(protected, tagMatch.start, tagMatch.end)) continue;
-      final tag = tagMatch.group(0)!;
+    for (final tagRange in _markdownXmlAnchorOpeningTagRanges(source)) {
+      if (_rangeIsProtected(protected, tagRange.start, tagRange.end)) continue;
+      final tag = source.substring(tagRange.start, tagRange.end);
       final hrefMatch = attributePattern
           .allMatches(tag)
           .where((match) => match.group(1) == 'href')
@@ -1258,7 +1301,7 @@ class WritersideTopicFileEditor {
       if (hrefMatch == null) continue;
       final rawDestination = hrefMatch.group(3)!;
       final hrefStart =
-          tagMatch.start + hrefMatch.end - 1 - rawDestination.length;
+          tagRange.start + hrefMatch.end - 1 - rawDestination.length;
       try {
         final selfClosing = tag.endsWith('/>')
             ? tag
@@ -1269,7 +1312,7 @@ class WritersideTopicFileEditor {
         final origin = element.getAttribute('origin')?.trim();
         occurrences.add(
           _AuthoredMarkdownTopicReference(
-            occurrenceOffset: tagMatch.start,
+            occurrenceOffset: tagRange.start,
             destination: destination,
             rawDestination: rawDestination,
             destinationSpan: SourceSpan.fromOffsets(
@@ -1287,6 +1330,30 @@ class WritersideTopicFileEditor {
       }
     }
     return occurrences;
+  }
+
+  Iterable<({int start, int end})> _markdownXmlAnchorOpeningTagRanges(
+    String source,
+  ) sync* {
+    final openingPattern = RegExp(r'''<a(?=[\s/>])''', caseSensitive: false);
+    for (final opening in openingPattern.allMatches(source)) {
+      String? quote;
+      for (var index = opening.end; index < source.length; index++) {
+        final character = source[index];
+        if (quote != null) {
+          if (character == quote) quote = null;
+          continue;
+        }
+        if (character == '"' || character == "'") {
+          quote = character;
+        } else if (character == '>') {
+          yield (start: opening.start, end: index + 1);
+          break;
+        } else if (character == '<') {
+          break;
+        }
+      }
+    }
   }
 
   _InlineMarkdownDestination? _inlineMarkdownDestination(
@@ -2196,7 +2263,17 @@ class _AuthoredMarkdownProjection {
   });
 
   final List<_AuthoredMarkdownTopicReference> references;
-  final List<MarkdownLink> unboundLinks;
+  final List<_UnboundMarkdownTopicReference> unboundLinks;
+}
+
+class _UnboundMarkdownTopicReference {
+  const _UnboundMarkdownTopicReference({required this.link, this.origin});
+
+  final MarkdownLink link;
+  final String? origin;
+
+  String get destination => link.destination;
+  SourceSpan get span => link.span;
 }
 
 class _MarkdownReferenceDefinition {
