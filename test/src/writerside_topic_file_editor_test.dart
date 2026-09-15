@@ -90,7 +90,7 @@ void main() {
           'links.md': '''
 # Links
 
-guide.md appears before [guide.md](guide.md), [again](guide.md), and [part](guide.md#part).
+Example: `[sample](guide.md)`; guide.md appears before [guide.md](guide.md), [again](guide.md), and [part](guide.md#part).
 
 Literal guide.md must stay literal.
 ''',
@@ -117,7 +117,8 @@ Literal guide.md must stay literal.
       expect(
         links,
         contains(
-          'guide.md appears before [guide.md](setup.md), '
+          'Example: `[sample](guide.md)`; guide.md appears before '
+          '[guide.md](setup.md), '
           '[again](setup.md), and [part](setup.md#part).',
         ),
       );
@@ -274,11 +275,9 @@ Literal guide.md must stay literal.
           'links.md': '''
 # Links
 
-[Local](guide.md)
+Shared: <a href="guide.md" origin="shared">Shared</a>; local: [Local](guide.md).
 
 <include from="guide.md" element-id="part"/>
-
-<a href="guide.md" origin="shared">Shared</a>
 ''',
         },
       );
@@ -301,9 +300,14 @@ Literal guide.md must stay literal.
       final links = File(
         p.join(main.rootPath, 'topics', 'links.md'),
       ).readAsStringSync();
-      expect(links, contains('[Local](setup.md)'));
+      expect(
+        links,
+        contains(
+          'href="guide.md" origin="shared">Shared</a>; '
+          'local: [Local](setup.md)',
+        ),
+      );
       expect(links, contains('from="setup.md" element-id="part"'));
-      expect(links, contains('href="guide.md" origin="shared"'));
       final mainTree = XmlDocument.parse(
         File(p.join(main.rootPath, 'guide.tree')).readAsStringSync(),
       );
@@ -319,6 +323,87 @@ Literal guide.md must stay literal.
       );
     },
   );
+
+  test('rename updates shared Markdown reference definitions once', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'references.md': '''
+# References
+
+Full [Guide][g] and repeated [again][g].
+Collapsed [Guide][] and shortcut [Guide].
+
+[g]: guide.md
+[guide]: guide.md
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final references = File(
+      p.join(fixture.root.path, 'topics', 'references.md'),
+    ).readAsStringSync();
+    expect(references, contains('Full [Guide][g] and repeated [again][g].'));
+    expect(references, contains('Collapsed [Guide][] and shortcut [Guide].'));
+    expect(
+      RegExp(r'^\[g\]: setup\.md$', multiLine: true).allMatches(references),
+      hasLength(1),
+    );
+    expect(
+      RegExp(r'^\[guide\]: setup\.md$', multiLine: true).allMatches(references),
+      hasLength(1),
+    );
+    expect(references, isNot(contains(']: guide.md')));
+  });
+
+  test('rename rewrites an XML-encoded topic destination', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'links.topic': '''
+<topic id="links" title="Links">
+  <a href="guide&#46;md">Guide</a>
+</topic>
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.topic');
+    final linksSource = File(linksPath).readAsStringSync();
+    expect(linksSource, contains('href="setup.md"'));
+    expect(
+      XmlDocument.parse(
+        linksSource,
+      ).findAllElements('a').single.getAttribute('href'),
+      'setup.md',
+    );
+  });
 
   test('rename updates a matching XML topic root id', () async {
     final fixture = await _fixture(

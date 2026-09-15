@@ -7,7 +7,6 @@ import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
-import '../markdown/markdown_model.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_project.dart';
@@ -563,10 +562,12 @@ class WritersideTopicFileEditor {
     for (final usage in index.references) {
       if (usage.kind != WritersideSymbolKind.topic) continue;
       final containingTopic = topicsByPath[normalizePath(usage.filePath)];
-      if (containingTopic == null ||
-          !_isWritableTopicReferenceSpan(containingTopic, usage)) {
-        continue;
-      }
+      if (containingTopic == null) continue;
+      final writableUsage = _indexedWritableTopicReference(
+        containingTopic,
+        usage,
+      );
+      if (writableUsage == null) continue;
       final topicPart = usage.value.split('#').first;
       if (topicPart.isEmpty ||
           !index
@@ -582,9 +583,10 @@ class WritersideTopicFileEditor {
         continue;
       }
       final key =
-          '${usage.filePath}:${usage.span.startOffset}:'
-          '${usage.span.endOffset}:${usage.sourceValue ?? usage.value}';
-      usages[key] = usage;
+          '${writableUsage.filePath}:${writableUsage.span.startOffset}:'
+          '${writableUsage.span.endOffset}:'
+          '${writableUsage.sourceValue ?? writableUsage.value}';
+      usages[key] = writableUsage;
     }
     // The Markdown AST may assign several inline links one broad source span.
     // The general project index intentionally coalesces such semantic entries;
@@ -598,68 +600,35 @@ class WritersideTopicFileEditor {
           .single;
       for (final topic in context.module.topics) {
         if (topic.format != WritersideTopicFormat.markdown) continue;
-        final nextSearchOffsetBySpan = <String, int>{};
-        for (final link in topic.links) {
-          // Markdown's link projection also contains embedded XML <a> nodes,
-          // but it drops their origin. Recover the typed XML attribute here
-          // instead of treating those nodes as origin-less Markdown links.
-          final xmlLink = _markdownXmlTopicReference(topic, link);
-          final topicPart = link.destination.split('#').first;
+        for (final reference in _authoredMarkdownTopicReferences(topic)) {
+          final topicPart = reference.destination.split('#').first;
           if (topicPart.isEmpty ||
               !index
                   .definitions(
                     topicPart,
                     moduleId: moduleId,
-                    origin: xmlLink?.origin,
+                    origin: reference.origin,
                     kind: WritersideSymbolKind.topic,
                     filePath: topic.filePath,
-                    referenceOffset: link.span.startOffset,
+                    referenceOffset: reference.occurrenceOffset,
                   )
                   .any(
                     (symbol) => p.equals(symbol.filePath, target.topicPath),
                   )) {
             continue;
           }
-          if (xmlLink != null) {
-            final usage = WritersideReference(
-              value: link.destination,
-              kind: WritersideSymbolKind.topic,
-              moduleId: moduleId,
-              filePath: topic.filePath,
-              span: xmlLink.span,
-              origin: xmlLink.origin,
-              sourceValue: link.destination,
-            );
-            final key =
-                '${usage.filePath}:${usage.span.startOffset}:'
-                '${usage.span.endOffset}:${usage.sourceValue}';
-            usages[key] = usage;
-            continue;
-          }
-          final spanKey = '${link.span.startOffset}:${link.span.endOffset}';
-          final searchOffset =
-              nextSearchOffsetBySpan[spanKey] ?? link.span.startOffset;
-          final span = _markdownLinkDestinationSpans(topic, link)
-              .where((candidate) => candidate.startOffset >= searchOffset)
-              .firstOrNull;
-          if (span == null) {
-            throw BusyMarkException(
-              'writerside.topic-file.tree-changed',
-              args: {'path': topic.filePath},
-            );
-          }
-          nextSearchOffsetBySpan[spanKey] = span.endOffset;
           final usage = WritersideReference(
-            value: link.destination,
+            value: reference.destination,
             kind: WritersideSymbolKind.topic,
             moduleId: moduleId,
             filePath: topic.filePath,
-            span: span,
-            sourceValue: link.destination,
+            span: reference.destinationSpan,
+            origin: reference.origin,
+            sourceValue: reference.rawDestination,
           );
           final key =
-              '${usage.filePath}:${span.startOffset}:'
-              '${span.endOffset}:${usage.sourceValue}';
+              '${usage.filePath}:${usage.span.startOffset}:'
+              '${usage.span.endOffset}:${usage.sourceValue}';
           usages[key] = usage;
         }
       }
@@ -800,67 +769,244 @@ class WritersideTopicFileEditor {
     return edits;
   }
 
-  bool _isWritableTopicReferenceSpan(
+  WritersideReference? _indexedWritableTopicReference(
     WritersideTopic topic,
     WritersideReference reference,
   ) {
     final source = topic.document.source;
     final span = reference.span;
-    final expected = reference.sourceValue ?? reference.value;
     if (span.startOffset < 0 ||
         span.endOffset > source.length ||
-        source.substring(span.startOffset, span.endOffset) != expected) {
-      return false;
+        span.startOffset > span.endOffset) {
+      return null;
     }
-    if (topic.format != WritersideTopicFormat.markdown) return true;
-
-    if (topic.links.any((link) {
-      if (link.destination != expected) return false;
-      final xmlLink = _markdownXmlTopicReference(topic, link);
-      return xmlLink != null && _sameSpan(xmlLink.span, span);
-    })) {
-      // XML links in Markdown are collected separately so their origin is
-      // recovered from source instead of discarded by the Markdown model.
-      return false;
+    if (topic.format == WritersideTopicFormat.markdown) {
+      final isTypedAttribute = topic.document.elements.any((element) {
+        final attributeName = switch (element.semanticKind) {
+          WritersideSemanticKind.include => 'from',
+          WritersideSemanticKind.link || WritersideSemanticKind.card => 'href',
+          _ => null,
+        };
+        if (attributeName == null ||
+            element.attributes[attributeName] != reference.value) {
+          return false;
+        }
+        final attributeSpan = element.attributeSpans[attributeName];
+        return attributeSpan != null && _sameSpan(attributeSpan, span);
+      });
+      if (!isTypedAttribute) return null;
     }
-
-    for (final element in topic.document.elements) {
-      final attributeName = switch (element.semanticKind) {
-        WritersideSemanticKind.include => 'from',
-        WritersideSemanticKind.link || WritersideSemanticKind.card => 'href',
-        _ => null,
-      };
-      if (attributeName == null ||
-          element.attributes[attributeName] != expected) {
-        continue;
-      }
-      final attributeSpan = element.attributeSpans[attributeName];
-      if (attributeSpan != null && _sameSpan(attributeSpan, span)) return true;
-    }
-
-    for (final link in topic.links) {
-      if (link.destination != expected ||
-          _isSemanticXmlTopicLink(topic, link)) {
-        continue;
-      }
-      if (_markdownLinkDestinationSpans(
-        topic,
-        link,
-      ).any((candidate) => _sameSpan(candidate, span))) {
-        return true;
-      }
-    }
-    return false;
+    return WritersideReference(
+      value: reference.value,
+      kind: reference.kind,
+      moduleId: reference.moduleId,
+      filePath: reference.filePath,
+      span: span,
+      origin: reference.origin,
+      sourceValue: source.substring(span.startOffset, span.endOffset),
+      scopeReference: reference.scopeReference,
+      nullable: reference.nullable,
+    );
   }
 
-  ({SourceSpan span, String? origin})? _markdownXmlTopicReference(
+  List<_AuthoredMarkdownTopicReference> _authoredMarkdownTopicReferences(
     WritersideTopic topic,
-    MarkdownLink link,
+  ) {
+    final protected = _markdownLiteralMask(topic);
+    final definitions = _markdownReferenceDefinitions(topic, protected);
+    final authored =
+        <_AuthoredMarkdownTopicReference>[
+          ..._markdownLinkOccurrences(topic, protected, definitions),
+          ..._markdownXmlLinkOccurrences(topic, protected),
+        ]..sort(
+          (left, right) =>
+              left.occurrenceOffset.compareTo(right.occurrenceOffset),
+        );
+    final bound = <_AuthoredMarkdownTopicReference>[];
+    final consumed = <int>{};
+    for (final link in topic.links) {
+      int? selected;
+      for (var index = 0; index < authored.length; index++) {
+        if (consumed.contains(index)) continue;
+        final candidate = authored[index];
+        if (candidate.destination != link.destination) continue;
+        final belongsToParsedLink =
+            (candidate.occurrenceOffset >= link.span.startOffset &&
+                candidate.occurrenceOffset < link.span.endOffset) ||
+            (candidate.destinationSpan.startOffset >= link.span.startOffset &&
+                candidate.destinationSpan.endOffset <= link.span.endOffset);
+        if (!belongsToParsedLink) continue;
+        selected = index;
+        break;
+      }
+      if (selected != null) {
+        consumed.add(selected);
+        bound.add(authored[selected]);
+      }
+    }
+    return bound;
+  }
+
+  List<bool> _markdownLiteralMask(WritersideTopic topic) {
+    final source = topic.document.source;
+    final protected = List<bool>.filled(source.length, false);
+    void protect(int start, int end) {
+      final safeStart = start.clamp(0, source.length);
+      final safeEnd = end.clamp(safeStart, source.length);
+      for (var index = safeStart; index < safeEnd; index++) {
+        protected[index] = true;
+      }
+    }
+
+    for (final codeBlock in topic.markdown?.codeBlocks ?? const []) {
+      protect(codeBlock.span.startOffset, codeBlock.span.endOffset);
+    }
+    for (var cursor = 0; cursor < source.length; cursor++) {
+      if (protected[cursor] ||
+          source[cursor] != '`' ||
+          _isEscapedMarkdownCharacter(source, cursor)) {
+        continue;
+      }
+      var delimiterLength = 1;
+      while (cursor + delimiterLength < source.length &&
+          source[cursor + delimiterLength] == '`') {
+        delimiterLength++;
+      }
+      var closing = cursor + delimiterLength;
+      while (closing < source.length) {
+        if (!protected[closing] && source[closing] == '`') {
+          var runLength = 1;
+          while (closing + runLength < source.length &&
+              source[closing + runLength] == '`') {
+            runLength++;
+          }
+          if (runLength == delimiterLength) break;
+          closing += runLength;
+        } else {
+          closing++;
+        }
+      }
+      if (closing < source.length) {
+        protect(cursor, closing + delimiterLength);
+        cursor = closing + delimiterLength - 1;
+      }
+    }
+    return protected;
+  }
+
+  Map<String, _MarkdownReferenceDefinition> _markdownReferenceDefinitions(
+    WritersideTopic topic,
+    List<bool> protected,
   ) {
     final source = topic.document.source;
-    final lowerBound = link.span.startOffset.clamp(0, source.length);
-    final upperBound = link.span.endOffset.clamp(lowerBound, source.length);
-    final raw = source.substring(lowerBound, upperBound);
+    final definitions = <String, _MarkdownReferenceDefinition>{};
+    final pattern = RegExp(
+      r'''^([ \t]{0,3}\[([^\]\r\n]+)\]:[ \t]*)(?:<([^>\r\n]+)>|([^\s\r\n]+))''',
+      multiLine: true,
+    );
+    for (final match in pattern.allMatches(source)) {
+      if (_rangeIsProtected(protected, match.start, match.end)) continue;
+      final rawDestination = match.group(3) ?? match.group(4)!;
+      final destinationStart =
+          match.start +
+          match.group(1)!.length +
+          (match.group(3) == null ? 0 : 1);
+      final definition = _MarkdownReferenceDefinition(
+        destination: _decodeMarkdownDestination(rawDestination),
+        rawDestination: rawDestination,
+        destinationSpan: SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: destinationStart,
+          endOffset: destinationStart + rawDestination.length,
+        ),
+      );
+      definitions.putIfAbsent(
+        _normalizedMarkdownLabel(match.group(2)!),
+        () => definition,
+      );
+      for (var index = match.start; index < match.end; index++) {
+        protected[index] = true;
+      }
+    }
+    return definitions;
+  }
+
+  List<_AuthoredMarkdownTopicReference> _markdownLinkOccurrences(
+    WritersideTopic topic,
+    List<bool> protected,
+    Map<String, _MarkdownReferenceDefinition> definitions,
+  ) {
+    final source = topic.document.source;
+    final occurrences = <_AuthoredMarkdownTopicReference>[];
+    var cursor = 0;
+    while (cursor < source.length) {
+      final labelStart = source.indexOf('[', cursor);
+      if (labelStart < 0) break;
+      cursor = labelStart + 1;
+      if (protected[labelStart] ||
+          _isEscapedMarkdownCharacter(source, labelStart) ||
+          (labelStart > 0 &&
+              source[labelStart - 1] == '!' &&
+              !_isEscapedMarkdownCharacter(source, labelStart - 1))) {
+        continue;
+      }
+      final labelEnd = _closingMarkdownBracket(source, labelStart, protected);
+      if (labelEnd == null) continue;
+      final label = source.substring(labelStart + 1, labelEnd);
+      final afterLabel = labelEnd + 1;
+      if (afterLabel < source.length && source[afterLabel] == '(') {
+        final destination = _inlineMarkdownDestination(
+          topic,
+          afterLabel,
+          protected,
+        );
+        if (destination != null) {
+          occurrences.add(
+            _AuthoredMarkdownTopicReference(
+              occurrenceOffset: labelStart,
+              destination: destination.destination,
+              rawDestination: destination.rawDestination,
+              destinationSpan: destination.destinationSpan,
+            ),
+          );
+          cursor = destination.destinationSpan.endOffset;
+        }
+        continue;
+      }
+
+      String? referenceLabel;
+      var referenceEnd = afterLabel;
+      if (afterLabel < source.length && source[afterLabel] == '[') {
+        final closing = _closingMarkdownBracket(source, afterLabel, protected);
+        if (closing == null) continue;
+        final explicit = source.substring(afterLabel + 1, closing);
+        referenceLabel = explicit.isEmpty ? label : explicit;
+        referenceEnd = closing + 1;
+      } else {
+        referenceLabel = label;
+      }
+      final definition = definitions[_normalizedMarkdownLabel(referenceLabel)];
+      if (definition == null) continue;
+      occurrences.add(
+        _AuthoredMarkdownTopicReference(
+          occurrenceOffset: labelStart,
+          destination: definition.destination,
+          rawDestination: definition.rawDestination,
+          destinationSpan: definition.destinationSpan,
+        ),
+      );
+      cursor = referenceEnd;
+    }
+    return occurrences;
+  }
+
+  List<_AuthoredMarkdownTopicReference> _markdownXmlLinkOccurrences(
+    WritersideTopic topic,
+    List<bool> protected,
+  ) {
+    final source = topic.document.source;
+    final occurrences = <_AuthoredMarkdownTopicReference>[];
     final tagPattern = RegExp(
       r'''<a\b[^>]*>''',
       caseSensitive: false,
@@ -871,138 +1017,141 @@ class WritersideTopicFileEditor {
       caseSensitive: false,
       dotAll: true,
     );
-    final originPattern = RegExp(
-      r'''\borigin\s*=\s*(["'])(.*?)\1''',
-      caseSensitive: false,
-      dotAll: true,
-    );
-    for (final tagMatch in tagPattern.allMatches(raw)) {
+    for (final tagMatch in tagPattern.allMatches(source)) {
+      if (_rangeIsProtected(protected, tagMatch.start, tagMatch.end)) continue;
       final tag = tagMatch.group(0)!;
       final hrefMatch = hrefPattern.firstMatch(tag);
-      if (hrefMatch == null || hrefMatch.group(2) != link.destination) continue;
-      final start =
-          lowerBound +
-          tagMatch.start +
-          hrefMatch.end -
-          1 -
-          link.destination.length;
-      final origin = originPattern.firstMatch(tag)?.group(2)?.trim();
-      return (
-        span: SourceSpan.fromOffsets(
-          filePath: topic.filePath,
-          source: source,
-          startOffset: start,
-          endOffset: start + link.destination.length,
-        ),
-        origin: origin?.isEmpty == true ? null : origin,
-      );
+      if (hrefMatch == null) continue;
+      final rawDestination = hrefMatch.group(2)!;
+      final hrefStart =
+          tagMatch.start + hrefMatch.end - 1 - rawDestination.length;
+      try {
+        final selfClosing = tag.endsWith('/>')
+            ? tag
+            : '${tag.substring(0, tag.length - 1)}/>';
+        final element = XmlDocument.parse(selfClosing).rootElement;
+        final destination = element.getAttribute('href');
+        if (destination == null || destination.isEmpty) continue;
+        final origin = element.getAttribute('origin')?.trim();
+        occurrences.add(
+          _AuthoredMarkdownTopicReference(
+            occurrenceOffset: tagMatch.start,
+            destination: destination,
+            rawDestination: rawDestination,
+            destinationSpan: SourceSpan.fromOffsets(
+              filePath: topic.filePath,
+              source: source,
+              startOffset: hrefStart,
+              endOffset: hrefStart + rawDestination.length,
+            ),
+            origin: origin?.isEmpty == true ? null : origin,
+          ),
+        );
+      } on XmlParserException {
+        continue;
+      }
+    }
+    return occurrences;
+  }
+
+  _MarkdownReferenceDefinition? _inlineMarkdownDestination(
+    WritersideTopic topic,
+    int openingParenthesis,
+    List<bool> protected,
+  ) {
+    final source = topic.document.source;
+    var start = openingParenthesis + 1;
+    while (start < source.length &&
+        _isMarkdownWhitespace(source.codeUnitAt(start))) {
+      start++;
+    }
+    if (start >= source.length || protected[start]) return null;
+    var end = start;
+    if (source[start] == '<') {
+      start++;
+      end = start;
+      while (end < source.length &&
+          !protected[end] &&
+          (source[end] != '>' || _isEscapedMarkdownCharacter(source, end))) {
+        end++;
+      }
+      if (end >= source.length || protected[end]) return null;
+    } else {
+      var nestedParentheses = 0;
+      while (end < source.length && !protected[end]) {
+        final character = source[end];
+        if (_isEscapedMarkdownCharacter(source, end)) {
+          end++;
+          continue;
+        }
+        if (character == '(') {
+          nestedParentheses++;
+        } else if (character == ')') {
+          if (nestedParentheses == 0) break;
+          nestedParentheses--;
+        } else if (_isMarkdownWhitespace(source.codeUnitAt(end))) {
+          break;
+        }
+        end++;
+      }
+    }
+    if (end <= start) return null;
+    final rawDestination = source.substring(start, end);
+    return _MarkdownReferenceDefinition(
+      destination: _decodeMarkdownDestination(rawDestination),
+      rawDestination: rawDestination,
+      destinationSpan: SourceSpan.fromOffsets(
+        filePath: topic.filePath,
+        source: source,
+        startOffset: start,
+        endOffset: end,
+      ),
+    );
+  }
+
+  int? _closingMarkdownBracket(
+    String source,
+    int opening,
+    List<bool> protected,
+  ) {
+    var depth = 1;
+    for (var index = opening + 1; index < source.length; index++) {
+      if (protected[index]) return null;
+      if (_isEscapedMarkdownCharacter(source, index)) continue;
+      if (source[index] == '[') {
+        depth++;
+      } else if (source[index] == ']') {
+        depth--;
+        if (depth == 0) return index;
+      }
     }
     return null;
   }
 
-  bool _isSemanticXmlTopicLink(WritersideTopic topic, MarkdownLink link) {
-    for (final element in topic.document.elements) {
-      if (element.semanticKind != WritersideSemanticKind.link &&
-          element.semanticKind != WritersideSemanticKind.card) {
-        continue;
-      }
-      if (element.attributes['href'] != link.destination) continue;
-      final hrefSpan = element.attributeSpans['href'];
-      if (hrefSpan != null && _sameSpan(hrefSpan, link.span)) return true;
-      if (hrefSpan == null && _sameSpan(element.span, link.span)) return true;
+  bool _rangeIsProtected(List<bool> protected, int start, int end) {
+    for (var index = start; index < end; index++) {
+      if (protected[index]) return true;
     }
     return false;
   }
 
-  List<SourceSpan> _markdownLinkDestinationSpans(
-    WritersideTopic topic,
-    MarkdownLink link,
-  ) {
-    final source = topic.document.source;
-    final lowerBound = link.span.startOffset.clamp(0, source.length);
-    final upperBound = link.span.endOffset.clamp(lowerBound, source.length);
-    final spans = <SourceSpan>[];
-    var cursor = lowerBound;
-    while (cursor < upperBound) {
-      final labelStart = source.indexOf('[', cursor);
-      if (labelStart < 0 || labelStart >= upperBound) break;
-      cursor = labelStart + 1;
-      if ((labelStart > lowerBound && source[labelStart - 1] == '!') ||
-          _isEscapedMarkdownCharacter(source, labelStart)) {
-        continue;
-      }
+  String _normalizedMarkdownLabel(String value) =>
+      value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
 
-      var labelDepth = 1;
-      var labelEnd = -1;
-      for (var index = labelStart + 1; index < upperBound; index++) {
-        if (_isEscapedMarkdownCharacter(source, index)) continue;
-        if (source[index] == '[') {
-          labelDepth++;
-        } else if (source[index] == ']') {
-          labelDepth--;
-          if (labelDepth == 0) {
-            labelEnd = index;
-            break;
-          }
-        }
-      }
-      if (labelEnd < 0 ||
-          labelEnd + 1 >= upperBound ||
-          source[labelEnd + 1] != '(') {
-        continue;
-      }
-
-      var destinationStart = labelEnd + 2;
-      while (destinationStart < upperBound &&
-          _isMarkdownWhitespace(source.codeUnitAt(destinationStart))) {
-        destinationStart++;
-      }
-      if (destinationStart >= upperBound) continue;
-
-      var destinationEnd = destinationStart;
-      if (source[destinationStart] == '<') {
-        destinationStart++;
-        destinationEnd = destinationStart;
-        while (destinationEnd < upperBound &&
-            (source[destinationEnd] != '>' ||
-                _isEscapedMarkdownCharacter(source, destinationEnd))) {
-          destinationEnd++;
-        }
-        if (destinationEnd >= upperBound) continue;
-      } else {
-        var nestedParentheses = 0;
-        while (destinationEnd < upperBound) {
-          final character = source[destinationEnd];
-          if (_isEscapedMarkdownCharacter(source, destinationEnd)) {
-            destinationEnd++;
-            continue;
-          }
-          if (character == '(') {
-            nestedParentheses++;
-          } else if (character == ')') {
-            if (nestedParentheses == 0) break;
-            nestedParentheses--;
-          } else if (_isMarkdownWhitespace(source.codeUnitAt(destinationEnd))) {
-            break;
-          }
-          destinationEnd++;
-        }
-      }
-      if (destinationEnd > destinationStart &&
-          source.substring(destinationStart, destinationEnd) ==
-              link.destination) {
-        spans.add(
-          SourceSpan.fromOffsets(
-            filePath: topic.filePath,
-            source: source,
-            startOffset: destinationStart,
-            endOffset: destinationEnd,
-          ),
-        );
-      }
-      cursor = labelEnd + 2;
+  String _decodeMarkdownDestination(String value) {
+    var decoded = value.replaceAllMapped(
+      RegExp(r'''\\([!"#\$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'''),
+      (match) => match.group(1)!,
+    );
+    try {
+      decoded = XmlDocument.parse(
+        '<value>$decoded</value>',
+      ).rootElement.innerText;
+    } on XmlParserException {
+      // The Markdown parser remains authoritative for unusual destinations;
+      // binding below discards source candidates that do not match it.
     }
-    return spans;
+    return decoded;
   }
 
   bool _sameSpan(SourceSpan left, SourceSpan right) =>
@@ -1595,6 +1744,34 @@ class WritersideTopicFileEditor {
   String _xmlSource(XmlDocument document) {
     return '${document.toXmlString(pretty: true, indent: '  ')}\n';
   }
+}
+
+class _AuthoredMarkdownTopicReference {
+  const _AuthoredMarkdownTopicReference({
+    required this.occurrenceOffset,
+    required this.destination,
+    required this.rawDestination,
+    required this.destinationSpan,
+    this.origin,
+  });
+
+  final int occurrenceOffset;
+  final String destination;
+  final String rawDestination;
+  final SourceSpan destinationSpan;
+  final String? origin;
+}
+
+class _MarkdownReferenceDefinition {
+  const _MarkdownReferenceDefinition({
+    required this.destination,
+    required this.rawDestination,
+    required this.destinationSpan,
+  });
+
+  final String destination;
+  final String rawDestination;
+  final SourceSpan destinationSpan;
 }
 
 class _MutationContext {
