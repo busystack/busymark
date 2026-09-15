@@ -801,6 +801,27 @@ class WritersideTreeParser {
         ),
       );
     }
+    if (primaryTargets == 0) {
+      for (final attributeName in const [
+        'accepts-web-file-names',
+        'accepts-web-file-names-ref',
+      ]) {
+        if (element.getAttribute(attributeName) == null) continue;
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.tree.invalid-empty-group-attribute',
+            severity: DiagnosticSeverity.error,
+            filePath: filePath,
+            args: {
+              'element': 'toc-element',
+              'attribute': attributeName,
+              'reason': 'The attribute is not allowed on an empty TOC element.',
+            },
+            sourceSpan: span,
+          ),
+        );
+      }
+    }
     final entries = _treeEntries(
       filePath,
       source,

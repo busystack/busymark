@@ -116,6 +116,12 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
       l10n.diagnosticWritersideTreeInvalidCrossInstanceReference,
     'writerside.tree.conflicting-toc-targets' =>
       l10n.diagnosticWritersideTreeConflictingTargets,
+    'writerside.tree.invalid-empty-group-attribute' =>
+      l10n.diagnosticWritersideSchema(
+        value('element'),
+        value('attribute'),
+        value('reason'),
+      ),
     'writerside.tree.duplicate-element-id' =>
       l10n.diagnosticWritersideTreeDuplicateElementId(value('id')),
     'writerside.instance-groups.invalid-root' =>

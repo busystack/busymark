@@ -801,6 +801,82 @@ void main() {
     expect(instance.diagnostics.where(isError), isEmpty);
   });
 
+  test('rejects redirect-source attributes on empty TOC groups', () {
+    final instance = treeParser.parse('/project/guide.tree', '''
+<instance-profile id="guide" start-page="first.md">
+  <toc-element toc-title="First group" accepts-web-file-names="old.html">
+    <toc-element topic="first.md"/>
+  </toc-element>
+  <toc-element toc-title="Second group" accepts-web-file-names-ref="legacy">
+    <toc-element topic="second.md"/>
+  </toc-element>
+</instance-profile>
+''');
+
+    final diagnostics = instance.diagnostics
+        .where(
+          (diagnostic) =>
+              diagnostic.code ==
+              'writerside.tree.invalid-empty-group-attribute',
+        )
+        .toList();
+    expect(diagnostics, hasLength(2));
+    expect(diagnostics.every(isError), isTrue);
+    expect(diagnostics.map((diagnostic) => diagnostic.args['attribute']), [
+      'accepts-web-file-names',
+      'accepts-web-file-names-ref',
+    ]);
+  });
+
+  test(
+    'module service retains empty-group redirect-source diagnostics',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-empty-group-redirect-source-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" start-page="first.md">
+  <toc-element toc-title="First group" accepts-web-file-names="old.html">
+    <toc-element topic="first.md"/>
+  </toc-element>
+  <toc-element toc-title="Second group" accepts-web-file-names-ref="legacy">
+    <toc-element topic="second.md"/>
+  </toc-element>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'first.md'),
+      ).writeAsStringSync('# First\n');
+      File(
+        p.join(root.path, 'topics', 'second.md'),
+      ).writeAsStringSync('# Second\n');
+
+      final module = await moduleService.load(root.path);
+      final diagnostics = module.diagnostics
+          .where(
+            (diagnostic) =>
+                diagnostic.code ==
+                'writerside.tree.invalid-empty-group-attribute',
+          )
+          .toList();
+
+      expect(diagnostics, hasLength(2));
+      expect(diagnostics.every(isError), isTrue);
+      expect(diagnostics.map((diagnostic) => diagnostic.args['attribute']), [
+        'accepts-web-file-names',
+        'accepts-web-file-names-ref',
+      ]);
+    },
+  );
+
   test(
     'resolves registered TOC libraries, filters, groups, and cross-instance refs',
     () async {
