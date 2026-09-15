@@ -655,6 +655,51 @@ Text <a href=setup.md origin=shared>Shared guide</a>.
     );
   });
 
+  test('rename keeps decoded whitespace safe in unquoted HTML hrefs', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api tools/guide.md">
+  <toc-element topic="api tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api tools/guide.md': '# Guide\n',
+        'links.md': '''
+# Links
+
+Decimal: <a href=api&#32;tools/guide.md>Guide</a>.
+
+Hexadecimal: <a href=api&#x20;tools/guide.md>Guide</a>.
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+Decimal: <a href=api&#32;tools/setup.md>Guide</a>.
+
+Hexadecimal: <a href=api&#32;tools/setup.md>Guide</a>.
+''');
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    expect(_topic(reloaded, 'links.md').links.map((link) => link.destination), [
+      'api tools/setup.md',
+      'api tools/setup.md',
+    ]);
+    expect(reloaded.topicByReference('api tools/setup.md')?.title, 'Guide');
+  });
+
   test('rename updates shared Markdown reference definitions once', () async {
     final fixture = await _fixture(
       trees: {

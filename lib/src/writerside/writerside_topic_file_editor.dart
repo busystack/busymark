@@ -578,6 +578,7 @@ class WritersideTopicFileEditor {
     };
     final usages = <String, WritersideReference>{};
     final xmlAttributeSpans = <String>{};
+    final htmlAttributeQuotes = <String, _HtmlAttributeQuote>{};
     final markdownDestinationSpans = <String>{};
     final markdownAngleDestinationSpans = <String>{};
     for (final usage in index.references) {
@@ -686,12 +687,15 @@ class WritersideTopicFileEditor {
               '${usage.filePath}:${usage.span.startOffset}:'
               '${usage.span.endOffset}:${usage.sourceValue}';
           usages[key] = usage;
-          if (reference.xmlAttribute) {
-            xmlAttributeSpans.add(_referenceSpanKey(usage));
+          final spanKey = _referenceSpanKey(usage);
+          if (reference.htmlAttributeQuote case final quote?) {
+            htmlAttributeQuotes[spanKey] = quote;
+          } else if (reference.xmlAttribute) {
+            xmlAttributeSpans.add(spanKey);
           } else {
-            markdownDestinationSpans.add(_referenceSpanKey(usage));
+            markdownDestinationSpans.add(spanKey);
             if (reference.angleDestination) {
-              markdownAngleDestinationSpans.add(_referenceSpanKey(usage));
+              markdownAngleDestinationSpans.add(spanKey);
             }
           }
         }
@@ -741,18 +745,17 @@ class WritersideTopicFileEditor {
             newTopicFileName: newTopicFileName,
             newFileName: newFileName,
           );
-          if (xmlAttributeSpans.contains(_referenceSpanKey(reference))) {
+          final spanKey = _referenceSpanKey(reference);
+          if (htmlAttributeQuotes[spanKey] case final quote?) {
+            replacement = _escapeHtmlAttributeValue(replacement, quote);
+          } else if (xmlAttributeSpans.contains(spanKey)) {
             replacement = _escapeXmlAttributeValue(replacement);
-          } else if (markdownDestinationSpans.contains(
-            _referenceSpanKey(reference),
-          )) {
+          } else if (markdownDestinationSpans.contains(spanKey)) {
             replacement = _renamedMarkdownReferenceSource(
               decodedOriginal: reference.value,
               rawOriginal: expected,
               decodedReplacement: replacement,
-              angleDestination: markdownAngleDestinationSpans.contains(
-                _referenceSpanKey(reference),
-              ),
+              angleDestination: markdownAngleDestinationSpans.contains(spanKey),
             );
           }
           updated = updated.replaceRange(
@@ -1326,6 +1329,15 @@ class WritersideTopicFileEditor {
         continue;
       }
       final origin = token.data['origin']?.trim();
+      final htmlAttributeQuote = switch (hrefStart > tagSpan.start.offset
+          ? source[hrefStart - 1]
+          : null) {
+        '"' when hrefEnd < tagSpan.end.offset && source[hrefEnd] == '"' =>
+          _HtmlAttributeQuote.doubleQuoted,
+        "'" when hrefEnd < tagSpan.end.offset && source[hrefEnd] == "'" =>
+          _HtmlAttributeQuote.singleQuoted,
+        _ => _HtmlAttributeQuote.unquoted,
+      };
       occurrences.add(
         _AuthoredMarkdownTopicReference(
           occurrenceOffset: tagSpan.start.offset,
@@ -1339,6 +1351,7 @@ class WritersideTopicFileEditor {
           ),
           origin: origin?.isEmpty == true ? null : origin,
           xmlAttribute: true,
+          htmlAttributeQuote: htmlAttributeQuote,
         ),
       );
     }
@@ -1503,6 +1516,31 @@ class WritersideTopicFileEditor {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
+
+  String _escapeHtmlAttributeValue(String value, _HtmlAttributeQuote quote) {
+    if (quote != _HtmlAttributeQuote.unquoted) {
+      return _escapeXmlAttributeValue(value);
+    }
+    final escaped = StringBuffer();
+    for (final rune in value.runes) {
+      escaped.write(switch (rune) {
+        0x09 => '&#9;',
+        0x0A => '&#10;',
+        0x0C => '&#12;',
+        0x0D => '&#13;',
+        0x20 => '&#32;',
+        0x22 => '&quot;',
+        0x26 => '&amp;',
+        0x27 => '&#39;',
+        0x3C => '&lt;',
+        0x3D => '&#61;',
+        0x3E => '&gt;',
+        0x60 => '&#96;',
+        _ => String.fromCharCode(rune),
+      });
+    }
+    return escaped.toString();
+  }
 
   String _renamedMarkdownReferenceSource({
     required String decodedOriginal,
@@ -2227,6 +2265,7 @@ class _AuthoredMarkdownTopicReference {
     required this.destinationSpan,
     this.origin,
     this.xmlAttribute = false,
+    this.htmlAttributeQuote,
     this.angleDestination = false,
     this.inlineMarkdownDestination = false,
     this.referenceLabelSpan,
@@ -2239,11 +2278,14 @@ class _AuthoredMarkdownTopicReference {
   final SourceSpan destinationSpan;
   final String? origin;
   final bool xmlAttribute;
+  final _HtmlAttributeQuote? htmlAttributeQuote;
   final bool angleDestination;
   final bool inlineMarkdownDestination;
   final SourceSpan? referenceLabelSpan;
   final SourceSpan? definitionLabelSpan;
 }
+
+enum _HtmlAttributeQuote { doubleQuoted, singleQuoted, unquoted }
 
 class _AuthoredMarkdownProjection {
   const _AuthoredMarkdownProjection({
