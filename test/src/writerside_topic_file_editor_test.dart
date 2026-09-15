@@ -164,6 +164,53 @@ Literal guide.md must stay literal.
   );
 
   test(
+    'rename ignores link-shaped text in image titles and HTML attributes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'links.md': '''
+# Links
+
+![Screenshot](image.png "[example](guide.md)") and [Guide](guide.md).
+
+Text <span title="[example](guide.md)">label</span> and [Guide](guide.md).
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+![Screenshot](image.png "[example](guide.md)") and [Guide](setup.md).
+
+Text <span title="[example](guide.md)">label</span> and [Guide](setup.md).
+''');
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'links.md').links.map((link) => link.destination),
+        ['setup.md', 'setup.md'],
+      );
+    },
+  );
+
+  test(
     'rename follows origin across modules without touching a local namesake',
     () async {
       final root = await Directory.systemTemp.createTemp(

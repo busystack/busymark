@@ -902,6 +902,14 @@ class WritersideTopicFileEditor {
             (candidate.destinationSpan.startOffset >= link.span.startOffset &&
                 candidate.destinationSpan.endOffset <= link.span.endOffset);
         if (!belongsToParsedLink) continue;
+        if (candidate.inlineMarkdownDestination &&
+            !_inlineMarkdownDestinationBelongsToParsedLink(
+              topic,
+              link,
+              candidate,
+            )) {
+          continue;
+        }
         selected = index;
         break;
       }
@@ -916,6 +924,53 @@ class WritersideTopicFileEditor {
       references: List.unmodifiable(bound),
       unboundLinks: List.unmodifiable(unbound),
     );
+  }
+
+  bool _inlineMarkdownDestinationBelongsToParsedLink(
+    WritersideTopic topic,
+    MarkdownLink link,
+    _AuthoredMarkdownTopicReference candidate,
+  ) {
+    final source = topic.document.source;
+    final contextStart = link.span.startOffset;
+    final contextEnd = link.span.endOffset;
+    final destinationStart = candidate.destinationSpan.startOffset;
+    final destinationEnd = candidate.destinationSpan.endOffset;
+    if (contextStart < 0 ||
+        contextEnd > source.length ||
+        contextStart >= contextEnd ||
+        destinationStart < contextStart ||
+        destinationEnd > contextEnd ||
+        destinationStart >= destinationEnd) {
+      return false;
+    }
+
+    var probe = 'busymark-rename-probe-$destinationStart.invalid';
+    while (source.contains(probe)) {
+      probe = 'x$probe';
+    }
+    final context = source.substring(contextStart, contextEnd);
+    final probed = context.replaceRange(
+      destinationStart - contextStart,
+      destinationEnd - contextStart,
+      probe,
+    );
+    final parsed = const MarkdownAstAdapter().parseInlineFragment(
+      source: probed,
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    bool containsProbe(Iterable<BusyInline> inlines) {
+      for (final inline in inlines) {
+        if (inline.kind == BusyInlineKind.link && inline.destination == probe) {
+          return true;
+        }
+        if (containsProbe(inline.children)) return true;
+      }
+      return false;
+    }
+
+    return containsProbe(parsed);
   }
 
   List<bool> _markdownLiteralMask(WritersideTopic topic) {
@@ -1047,6 +1102,7 @@ class WritersideTopicFileEditor {
               rawDestination: destination.rawDestination,
               destinationSpan: destination.destinationSpan,
               angleDestination: destination.angleDestination,
+              inlineMarkdownDestination: true,
             ),
           );
           cursor = destination.linkEndOffset;
@@ -2018,6 +2074,7 @@ class _AuthoredMarkdownTopicReference {
     this.origin,
     this.xmlAttribute = false,
     this.angleDestination = false,
+    this.inlineMarkdownDestination = false,
   });
 
   final int occurrenceOffset;
@@ -2027,6 +2084,7 @@ class _AuthoredMarkdownTopicReference {
   final String? origin;
   final bool xmlAttribute;
   final bool angleDestination;
+  final bool inlineMarkdownDestination;
 }
 
 class _AuthoredMarkdownProjection {
