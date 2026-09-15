@@ -95,6 +95,8 @@ Example: `[sample](guide.md)`; guide.md appears before [guide.md](guide.md), [ag
 
 [Other](other.md "[example](guide.md)") and [Guide](guide.md).
 
+[not a link](guide.md unexpected) and [Guide](guide.md).
+
 Comment: <!-- [fake](guide.md) --> and [Guide again](guide.md).
 
 Literal guide.md must stay literal.
@@ -134,6 +136,10 @@ Literal guide.md must stay literal.
           '[Other](other.md "[example](guide.md)") and '
           '[Guide](setup.md).',
         ),
+      );
+      expect(
+        links,
+        contains('[not a link](guide.md unexpected) and [Guide](setup.md).'),
       );
       expect(
         links,
@@ -392,6 +398,45 @@ Following-line destination: [Guide][next].
     );
     expect(references, contains('[next]:\n  setup.md'));
     expect(references, isNot(contains(']: guide.md')));
+  });
+
+  test('rename preserves escapes required by a Markdown destination', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api(tools/guide.md">
+  <toc-element topic="api(tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api(tools/guide.md': '# Guide\n',
+        'links.md': '''
+# Links
+
+[Guide](api\\(tools/guide.md)
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api(tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    expect(
+      File(linksPath).readAsStringSync(),
+      contains(r'[Guide](api\(tools/setup.md)'),
+    );
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    expect(
+      _topic(reloaded, 'links.md').links.single.destination,
+      'api(tools/setup.md',
+    );
   });
 
   test('rename rewrites an XML-encoded topic destination', () async {

@@ -7,6 +7,8 @@ import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/markdown_ast_adapter.dart';
 import '../markdown/markdown_model.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
@@ -568,6 +570,8 @@ class WritersideTopicFileEditor {
     };
     final usages = <String, WritersideReference>{};
     final xmlAttributeSpans = <String>{};
+    final markdownDestinationSpans = <String>{};
+    final markdownAngleDestinationSpans = <String>{};
     for (final usage in index.references) {
       if (usage.kind != WritersideSymbolKind.topic) continue;
       final containingTopic = topicsByPath[normalizePath(usage.filePath)];
@@ -666,6 +670,11 @@ class WritersideTopicFileEditor {
           usages[key] = usage;
           if (reference.xmlAttribute) {
             xmlAttributeSpans.add(_referenceSpanKey(usage));
+          } else {
+            markdownDestinationSpans.add(_referenceSpanKey(usage));
+            if (reference.angleDestination) {
+              markdownAngleDestinationSpans.add(_referenceSpanKey(usage));
+            }
           }
         }
       }
@@ -716,6 +725,17 @@ class WritersideTopicFileEditor {
           );
           if (xmlAttributeSpans.contains(_referenceSpanKey(reference))) {
             replacement = _escapeXmlAttributeValue(replacement);
+          } else if (markdownDestinationSpans.contains(
+            _referenceSpanKey(reference),
+          )) {
+            replacement = _renamedMarkdownReferenceSource(
+              decodedOriginal: reference.value,
+              rawOriginal: expected,
+              decodedReplacement: replacement,
+              angleDestination: markdownAngleDestinationSpans.contains(
+                _referenceSpanKey(reference),
+              ),
+            );
           }
           updated = updated.replaceRange(
             reference.span.startOffset,
@@ -974,6 +994,7 @@ class WritersideTopicFileEditor {
           startOffset: destinationStart,
           endOffset: destinationStart + rawDestination.length,
         ),
+        angleDestination: match.group(3) != null,
       );
       definitions.putIfAbsent(
         _normalizedMarkdownLabel(match.group(2)!),
@@ -1014,6 +1035,7 @@ class WritersideTopicFileEditor {
       if (afterLabel < source.length && source[afterLabel] == '(') {
         final destination = _inlineMarkdownDestination(
           topic,
+          labelStart,
           afterLabel,
           protected,
         );
@@ -1024,6 +1046,7 @@ class WritersideTopicFileEditor {
               destination: destination.destination,
               rawDestination: destination.rawDestination,
               destinationSpan: destination.destinationSpan,
+              angleDestination: destination.angleDestination,
             ),
           );
           cursor = destination.linkEndOffset;
@@ -1050,6 +1073,7 @@ class WritersideTopicFileEditor {
           destination: definition.destination,
           rawDestination: definition.rawDestination,
           destinationSpan: definition.destinationSpan,
+          angleDestination: definition.angleDestination,
         ),
       );
       cursor = referenceEnd;
@@ -1113,6 +1137,7 @@ class WritersideTopicFileEditor {
 
   _InlineMarkdownDestination? _inlineMarkdownDestination(
     WritersideTopic topic,
+    int linkStart,
     int openingParenthesis,
     List<bool> protected,
   ) {
@@ -1124,7 +1149,8 @@ class WritersideTopicFileEditor {
     }
     if (start >= source.length || protected[start]) return null;
     var end = start;
-    if (source[start] == '<') {
+    final angleDestination = source[start] == '<';
+    if (angleDestination) {
       start++;
       end = start;
       while (end < source.length &&
@@ -1160,8 +1186,18 @@ class WritersideTopicFileEditor {
     );
     if (linkEnd == null) return null;
     final rawDestination = source.substring(start, end);
+    final decodedDestination = _decodeMarkdownDestination(rawDestination);
+    final parsed = const MarkdownAstAdapter().parseInlineFragment(
+      source: source.substring(linkStart, linkEnd),
+      mode: MarkdownMode.writersideMarkdown,
+    );
+    if (parsed.length != 1 ||
+        parsed.single.kind != BusyInlineKind.link ||
+        parsed.single.destination != decodedDestination) {
+      return null;
+    }
     return _InlineMarkdownDestination(
-      destination: _decodeMarkdownDestination(rawDestination),
+      destination: decodedDestination,
       rawDestination: rawDestination,
       destinationSpan: SourceSpan.fromOffsets(
         filePath: topic.filePath,
@@ -1169,6 +1205,7 @@ class WritersideTopicFileEditor {
         startOffset: start,
         endOffset: end,
       ),
+      angleDestination: angleDestination,
       linkEndOffset: linkEnd,
     );
   }
@@ -1256,6 +1293,75 @@ class WritersideTopicFileEditor {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
+
+  String _renamedMarkdownReferenceSource({
+    required String decodedOriginal,
+    required String rawOriginal,
+    required String decodedReplacement,
+    required bool angleDestination,
+  }) {
+    if (decodedReplacement == decodedOriginal) return rawOriginal;
+    final decodedHash = decodedOriginal.indexOf('#');
+    final decodedPath = decodedHash < 0
+        ? decodedOriginal
+        : decodedOriginal.substring(0, decodedHash);
+    final decodedSuffix = decodedHash < 0
+        ? ''
+        : decodedOriginal.substring(decodedHash);
+    final replacementHash = decodedReplacement.indexOf('#');
+    final replacementPath = replacementHash < 0
+        ? decodedReplacement
+        : decodedReplacement.substring(0, replacementHash);
+    final replacementSuffix = replacementHash < 0
+        ? ''
+        : decodedReplacement.substring(replacementHash);
+    final rawHash = rawOriginal.indexOf('#');
+    final rawPath = rawHash < 0
+        ? rawOriginal
+        : rawOriginal.substring(0, rawHash);
+    final rawSuffix = rawHash < 0 ? '' : rawOriginal.substring(rawHash);
+
+    final decodedSlash = decodedPath.lastIndexOf('/');
+    final replacementSlash = replacementPath.lastIndexOf('/');
+    final rawSlash = rawPath.lastIndexOf('/');
+    final decodedPrefix = decodedSlash < 0
+        ? ''
+        : decodedPath.substring(0, decodedSlash + 1);
+    final replacementPrefix = replacementSlash < 0
+        ? ''
+        : replacementPath.substring(0, replacementSlash + 1);
+    final rawPrefix = rawSlash < 0 ? '' : rawPath.substring(0, rawSlash + 1);
+    final canPreserveAuthoredPrefix =
+        decodedPrefix == replacementPrefix &&
+        _decodeMarkdownDestination(rawPrefix) == decodedPrefix;
+    final canPreserveAuthoredSuffix =
+        decodedSuffix == replacementSuffix &&
+        _decodeMarkdownDestination(rawSuffix) == decodedSuffix;
+    final replacementName = replacementSlash < 0
+        ? replacementPath
+        : replacementPath.substring(replacementSlash + 1);
+    return '${canPreserveAuthoredPrefix ? rawPrefix : _escapeMarkdownDestination(replacementPrefix, angleDestination: angleDestination)}'
+        '${_escapeMarkdownDestination(replacementName, angleDestination: angleDestination)}'
+        '${canPreserveAuthoredSuffix ? rawSuffix : _escapeMarkdownDestination(replacementSuffix, angleDestination: angleDestination)}';
+  }
+
+  String _escapeMarkdownDestination(
+    String value, {
+    required bool angleDestination,
+  }) {
+    final result = StringBuffer();
+    for (final rune in value.runes) {
+      final character = String.fromCharCode(rune);
+      final escape =
+          character == '\\' ||
+          (angleDestination
+              ? character == '>'
+              : character == '(' || character == ')');
+      if (escape) result.write('\\');
+      result.write(character);
+    }
+    return '$result';
+  }
 
   void _validateGeneratedXmlRenameSources(
     List<_ReferenceModuleContext> contexts, {
@@ -1911,6 +2017,7 @@ class _AuthoredMarkdownTopicReference {
     required this.destinationSpan,
     this.origin,
     this.xmlAttribute = false,
+    this.angleDestination = false,
   });
 
   final int occurrenceOffset;
@@ -1919,6 +2026,7 @@ class _AuthoredMarkdownTopicReference {
   final SourceSpan destinationSpan;
   final String? origin;
   final bool xmlAttribute;
+  final bool angleDestination;
 }
 
 class _AuthoredMarkdownProjection {
@@ -1936,11 +2044,13 @@ class _MarkdownReferenceDefinition {
     required this.destination,
     required this.rawDestination,
     required this.destinationSpan,
+    this.angleDestination = false,
   });
 
   final String destination;
   final String rawDestination;
   final SourceSpan destinationSpan;
+  final bool angleDestination;
 }
 
 class _InlineMarkdownDestination extends _MarkdownReferenceDefinition {
@@ -1948,6 +2058,7 @@ class _InlineMarkdownDestination extends _MarkdownReferenceDefinition {
     required super.destination,
     required super.rawDestination,
     required super.destinationSpan,
+    required super.angleDestination,
     required this.linkEndOffset,
   });
 
