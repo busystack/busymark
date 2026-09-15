@@ -1,5 +1,12 @@
 import 'dart:io';
 
+// HtmlParser exposes its tokenizer but does not expose per-attribute source
+// spans. Use the package tokenizer so raw HTML references are interpreted with
+// the same HTML rules as BusyMark's Markdown parser.
+// ignore: implementation_imports
+import 'package:html/src/token.dart' show StartTagToken;
+// ignore: implementation_imports
+import 'package:html/src/tokenizer.dart' show HtmlTokenizer;
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
@@ -797,11 +804,7 @@ class WritersideTopicFileEditor {
           changed = true;
         }
         for (final element in tree.document.findAllElements('toc-element')) {
-          for (final attributeName in const [
-            'topic',
-            'ref',
-            'target-for-accept-web-filenames',
-          ]) {
+          for (final attributeName in const ['topic', 'ref']) {
             final reference = element.getAttribute(attributeName);
             if (reference == null ||
                 !_projectReferenceTargetsTopic(
@@ -893,7 +896,7 @@ class WritersideTopicFileEditor {
     final authored =
         <_AuthoredMarkdownTopicReference>[
           ..._markdownLinkOccurrences(topic, protected, definitions),
-          ..._markdownXmlLinkOccurrences(topic, protected),
+          ..._markdownHtmlLinkOccurrences(topic, protected),
         ]..sort(
           (left, right) =>
               left.occurrenceOffset.compareTo(right.occurrenceOffset),
@@ -1281,79 +1284,65 @@ class WritersideTopicFileEditor {
     return occurrences;
   }
 
-  List<_AuthoredMarkdownTopicReference> _markdownXmlLinkOccurrences(
+  List<_AuthoredMarkdownTopicReference> _markdownHtmlLinkOccurrences(
     WritersideTopic topic,
     List<bool> protected,
   ) {
     final source = topic.document.source;
     final occurrences = <_AuthoredMarkdownTopicReference>[];
-    final attributePattern = RegExp(
-      r'''([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])(.*?)\2''',
-      dotAll: true,
+    final tokenizer = HtmlTokenizer(
+      source,
+      generateSpans: true,
+      attributeSpans: true,
     );
-    for (final tagRange in _markdownXmlAnchorOpeningTagRanges(source)) {
-      if (_rangeIsProtected(protected, tagRange.start, tagRange.end)) continue;
-      final tag = source.substring(tagRange.start, tagRange.end);
-      final hrefMatch = attributePattern
-          .allMatches(tag)
-          .where((match) => match.group(1) == 'href')
-          .firstOrNull;
-      if (hrefMatch == null) continue;
-      final rawDestination = hrefMatch.group(3)!;
-      final hrefStart =
-          tagRange.start + hrefMatch.end - 1 - rawDestination.length;
-      try {
-        final selfClosing = tag.endsWith('/>')
-            ? tag
-            : '${tag.substring(0, tag.length - 1)}/>';
-        final element = XmlDocument.parse(selfClosing).rootElement;
-        final destination = element.getAttribute('href');
-        if (destination == null || destination.isEmpty) continue;
-        final origin = element.getAttribute('origin')?.trim();
-        occurrences.add(
-          _AuthoredMarkdownTopicReference(
-            occurrenceOffset: tagRange.start,
-            destination: destination,
-            rawDestination: rawDestination,
-            destinationSpan: SourceSpan.fromOffsets(
-              filePath: topic.filePath,
-              source: source,
-              startOffset: hrefStart,
-              endOffset: hrefStart + rawDestination.length,
-            ),
-            origin: origin?.isEmpty == true ? null : origin,
-            xmlAttribute: true,
-          ),
-        );
-      } on XmlParserException {
+    while (tokenizer.moveNext()) {
+      final token = tokenizer.current;
+      if (token is! StartTagToken || token.name != 'a') continue;
+      final tagSpan = token.span;
+      if (tagSpan == null ||
+          _rangeIsProtected(
+            protected,
+            tagSpan.start.offset,
+            tagSpan.end.offset,
+          )) {
         continue;
       }
+      final attributes = token.attributeSpans;
+      if (attributes == null) continue;
+      final href = attributes
+          .where((attribute) => attribute.name == 'href')
+          .firstOrNull;
+      final hrefStart = href?.startValue;
+      final hrefEnd = href?.endValue;
+      final destination = href?.value;
+      if (href == null ||
+          hrefStart == null ||
+          hrefEnd == null ||
+          hrefStart < 0 ||
+          hrefEnd > source.length ||
+          hrefStart >= hrefEnd ||
+          destination == null ||
+          destination.isEmpty) {
+        continue;
+      }
+      final origin = token.data['origin']?.trim();
+      occurrences.add(
+        _AuthoredMarkdownTopicReference(
+          occurrenceOffset: tagSpan.start.offset,
+          destination: destination,
+          rawDestination: source.substring(hrefStart, hrefEnd),
+          destinationSpan: SourceSpan.fromOffsets(
+            filePath: topic.filePath,
+            source: source,
+            startOffset: hrefStart,
+            endOffset: hrefEnd,
+          ),
+          origin: origin?.isEmpty == true ? null : origin,
+          xmlAttribute: true,
+        ),
+      );
     }
     return occurrences;
-  }
-
-  Iterable<({int start, int end})> _markdownXmlAnchorOpeningTagRanges(
-    String source,
-  ) sync* {
-    final openingPattern = RegExp(r'''<a(?=[\s/>])''', caseSensitive: false);
-    for (final opening in openingPattern.allMatches(source)) {
-      String? quote;
-      for (var index = opening.end; index < source.length; index++) {
-        final character = source[index];
-        if (quote != null) {
-          if (character == quote) quote = null;
-          continue;
-        }
-        if (character == '"' || character == "'") {
-          quote = character;
-        } else if (character == '>') {
-          yield (start: opening.start, end: index + 1);
-          break;
-        } else if (character == '<') {
-          break;
-        }
-      }
-    }
   }
 
   _InlineMarkdownDestination? _inlineMarkdownDestination(

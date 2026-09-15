@@ -81,7 +81,9 @@ void main() {
           'other.tree': '''
 <instance-profile id="other" start-page="other.topic">
   <toc-element ref="guide.md" in="guide"/>
-  <toc-element topic="other.topic"/>
+  <toc-element topic="other.topic"
+               target-for-accept-web-filenames="guide.md"
+               target-for-accept-web-file-names="https://example.com/guide.md"/>
 </instance-profile>
 ''',
         },
@@ -159,6 +161,15 @@ Literal guide.md must stay literal.
       expect(
         otherTree.findAllElements('toc-element').first.getAttribute('ref'),
         'setup.md',
+      );
+      final externalRedirect = otherTree.findAllElements('toc-element').last;
+      expect(
+        externalRedirect.getAttribute('target-for-accept-web-filenames'),
+        'guide.md',
+      );
+      expect(
+        externalRedirect.getAttribute('target-for-accept-web-file-names'),
+        'https://example.com/guide.md',
       );
     },
   );
@@ -310,6 +321,12 @@ Text <a data-href="keep.md" href="guide.md">Guide</a>.
 Text <a title="A > B" href="guide.md">Guide</a>.
 
 Text <a href='guide.md' title='A > B'>Guide</a>.
+
+Text <a href=guide.md data-note=keep>Guide</a>.
+
+Text <a HREF="guide.md" DATA-HREF="keep.md">Guide</a>.
+
+Text <a title="A&nbsp;B" href="guide.md">Guide</a>.
 ''',
         },
       );
@@ -333,6 +350,12 @@ Text <a data-href="keep.md" href="setup.md">Guide</a>.
 Text <a title="A > B" href="setup.md">Guide</a>.
 
 Text <a href='setup.md' title='A > B'>Guide</a>.
+
+Text <a href=setup.md data-note=keep>Guide</a>.
+
+Text <a HREF="setup.md" DATA-HREF="keep.md">Guide</a>.
+
+Text <a title="A&nbsp;B" href="setup.md">Guide</a>.
 ''');
       final reloaded = await const WritersideModuleService().load(
         fixture.root.path,
@@ -342,6 +365,9 @@ Text <a href='setup.md' title='A > B'>Guide</a>.
         [
           'setup.md',
           'other.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
           'setup.md',
           'setup.md',
           'setup.md',
@@ -545,98 +571,89 @@ Shared: <a href="guide.md" origin="shared">Shared</a>; local: [Local](guide.md).
     },
   );
 
-  test(
-    'unbound origin-qualified Markdown links block cross-module rename',
-    () async {
-      final root = await Directory.systemTemp.createTemp(
-        'busymark-topic-file-project-unbound-origin-',
-      );
-      addTearDown(() => root.delete(recursive: true));
-      Future<WritersideModule> writeModule({
-        required String directory,
-        required String moduleName,
-        required String tree,
-        required Map<String, String> topics,
-      }) async {
-        final moduleRoot = await Directory(
-          p.join(root.path, directory),
-        ).create();
-        final topicRoot = await Directory(
-          p.join(moduleRoot.path, 'topics'),
-        ).create();
-        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+  test('rename supports unquoted origin-qualified raw HTML links', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-topic-file-project-unbound-origin-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    Future<WritersideModule> writeModule({
+      required String directory,
+      required String moduleName,
+      required String tree,
+      required Map<String, String> topics,
+    }) async {
+      final moduleRoot = await Directory(p.join(root.path, directory)).create();
+      final topicRoot = await Directory(
+        p.join(moduleRoot.path, 'topics'),
+      ).create();
+      await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
 <ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
 ''');
-        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
-        for (final entry in topics.entries) {
-          await File(
-            p.join(topicRoot.path, entry.key),
-          ).writeAsString(entry.value);
-        }
-        return const WritersideModuleService().load(moduleRoot.path);
+      await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+      for (final entry in topics.entries) {
+        await File(
+          p.join(topicRoot.path, entry.key),
+        ).writeAsString(entry.value);
       }
+      return const WritersideModuleService().load(moduleRoot.path);
+    }
 
-      final main = await writeModule(
-        directory: 'main',
-        moduleName: 'main',
-        tree: '''
+    final main = await writeModule(
+      directory: 'main',
+      moduleName: 'main',
+      tree: '''
 <instance-profile id="guide" start-page="links.md">
   <toc-element topic="links.md"/>
   <toc-element topic="guide.md" origin="shared"/>
 </instance-profile>
 ''',
-        topics: {
-          'links.md': '''
+      topics: {
+        'links.md': '''
 # Links
 
 Text <a href=guide.md origin=shared>Shared guide</a>.
 ''',
-        },
-      );
-      final shared = await writeModule(
-        directory: 'shared',
-        moduleName: 'shared',
-        tree: '''
+      },
+    );
+    final shared = await writeModule(
+      directory: 'shared',
+      moduleName: 'shared',
+      tree: '''
 <instance-profile id="guide" start-page="guide.md">
   <toc-element topic="guide.md"/>
 </instance-profile>
 ''',
-        topics: {'guide.md': '# Shared guide\n'},
-      );
-      final originalLinkSource = File(
-        p.join(main.rootPath, 'topics', 'links.md'),
-      ).readAsStringSync();
+      topics: {'guide.md': '# Shared guide\n'},
+    );
+    await editor.rename(
+      module: shared,
+      topic: _topic(shared, 'guide.md'),
+      newFileName: 'setup.md',
+      projectModules: [main, shared],
+    );
 
-      await expectLater(
-        editor.rename(
-          module: shared,
-          topic: _topic(shared, 'guide.md'),
-          newFileName: 'setup.md',
-          projectModules: [main, shared],
-        ),
-        throwsA(
-          isA<BusyMarkException>().having(
-            (error) => error.code,
-            'code',
-            'writerside.topic-file.ambiguous-reference',
-          ),
-        ),
-      );
+    final linkPath = p.join(main.rootPath, 'topics', 'links.md');
+    expect(File(linkPath).readAsStringSync(), '''
+# Links
 
-      expect(
-        File(p.join(main.rootPath, 'topics', 'links.md')).readAsStringSync(),
-        originalLinkSource,
-      );
-      expect(
-        File(p.join(shared.rootPath, 'topics', 'guide.md')).existsSync(),
-        isTrue,
-      );
-      expect(
-        File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
-        isFalse,
-      );
-    },
-  );
+Text <a href=setup.md origin=shared>Shared guide</a>.
+''');
+    expect(
+      File(p.join(shared.rootPath, 'topics', 'guide.md')).existsSync(),
+      isFalse,
+    );
+    expect(
+      File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
+      isTrue,
+    );
+    final reloadedMain = await const WritersideModuleService().load(
+      main.rootPath,
+    );
+    expect(
+      _topic(reloadedMain, 'links.md').links.single.destination,
+      'setup.md',
+    );
+  });
 
   test('rename updates shared Markdown reference definitions once', () async {
     final fixture = await _fixture(
