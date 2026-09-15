@@ -21,6 +21,7 @@ import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -712,10 +713,18 @@ void main() {
       expect(first.childElements.single.getAttribute('topic'), 'secondary.md');
       expect(controller.state.workspace?.activeFilePath, startPath);
 
-      expect(
-        await controller.renameWritersideTopicFile(secondaryPath, 'renamed.md'),
-        isTrue,
+      final renamePlan = await controller.prepareWritersideTopicRename(
+        secondaryPath,
+        'renamed.md',
+        topicModuleRoot: rootPath,
       );
+      expect(renamePlan, isNotNull);
+      expect(File(secondaryPath).existsSync(), isTrue);
+      expect(
+        File(p.join(rootPath, 'topics', 'renamed.md')).existsSync(),
+        isFalse,
+      );
+      expect(await controller.applyWritersideTopicRename(renamePlan!), isTrue);
       final renamedPath = p.join(rootPath, 'topics', 'renamed.md');
       tree = XmlDocument.parse(File(treePath).readAsStringSync());
       first = tree.rootElement.childElements
@@ -3248,6 +3257,19 @@ class _WorkspaceControllerDriver {
     String topicPath,
     String newFileName,
   ) => _notifier.renameWritersideTopicFile(topicPath, newFileName);
+
+  Future<WritersideTopicRenamePlan?> prepareWritersideTopicRename(
+    String topicPath,
+    String newFileName, {
+    required String topicModuleRoot,
+  }) => _notifier.prepareWritersideTopicRename(
+    topicPath,
+    newFileName,
+    topicModuleRoot: topicModuleRoot,
+  );
+
+  Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) =>
+      _notifier.applyWritersideTopicRename(plan);
 
   Future<bool> deleteWritersideTopicFile(String topicPath) =>
       _notifier.deleteWritersideTopicFile(topicPath);

@@ -22,6 +22,18 @@ typedef LocalHistoryComparisonComputer =
       SourceComparisonInput currentInput,
     );
 
+/// Read-only rendering of the shared source-comparison model. Refactoring
+/// previews reuse this instead of maintaining a second diff presentation.
+class SourceComparisonView extends StatelessWidget {
+  const SourceComparisonView({super.key, required this.comparison});
+
+  final SourceComparison comparison;
+
+  @override
+  Widget build(BuildContext context) =>
+      _UnifiedComparisonPane(comparison: comparison);
+}
+
 final localHistoryComparisonComputerProvider =
     Provider<LocalHistoryComparisonComputer>(
       (ref) =>

@@ -1581,6 +1581,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get doRefactor => 'Tái cấu trúc';
 
   @override
+  String get preview => 'Xem trước';
+
+  @override
+  String get topicRenamePreviewTitle => 'Xem trước việc đổi tên';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Đường dẫn: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID chủ đề: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Phiên bản $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Các tệp bị ảnh hưởng';
+
+  @override
   String get orphanTopicTitle => 'Tệp chủ đề không còn được sử dụng';
 
   @override
@@ -2408,6 +2432,25 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'ID phần tử \"$id\" xuất hiện nhiều hơn một lần.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Phiên bản \"$instanceId\" xuất bản tên tệp web không hợp lệ \"$webFileName\" cho chủ đề \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Phiên bản \"$instanceId\" xuất bản cả \"$firstTopic\" và \"$secondTopic\" dưới tên \"$webFileName\".';
   }
 
   @override
@@ -3957,6 +4000,10 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Không thể đổi tên ký hiệu một cách an toàn. Kiểm tra tên và làm mới tham chiếu trước khi thử lại.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.';
 
   @override
   String get keyboardLayout => 'Bố cục bàn phím';

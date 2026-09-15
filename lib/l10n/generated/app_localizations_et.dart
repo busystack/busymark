@@ -1585,6 +1585,30 @@ class AppLocalizationsEt extends AppLocalizations {
   String get doRefactor => 'Refaktoreeri';
 
   @override
+  String get preview => 'Eelvaade';
+
+  @override
+  String get topicRenamePreviewTitle => 'Ümbernimetamise eelvaade';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Tee: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Teema ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Eksemplar $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Mõjutatud failid';
+
+  @override
   String get orphanTopicTitle => 'Teemafaili ei kasutata enam';
 
   @override
@@ -2414,6 +2438,25 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Elemendi ID „$id” esineb mitu korda.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Eksemplar \"$instanceId\" avaldab teema \"$topic\" jaoks sobimatu veebifailinime \"$webFileName\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Eksemplar \"$instanceId\" avaldab nii \"$firstTopic\" kui ka \"$secondTopic\" nimega \"$webFileName\".';
   }
 
   @override
@@ -3960,6 +4003,10 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.';
 
   @override
   String get keyboardLayout => 'Klaviatuuripaigutus';

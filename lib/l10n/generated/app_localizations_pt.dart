@@ -1597,6 +1597,30 @@ class AppLocalizationsPt extends AppLocalizations {
   String get doRefactor => 'Refatorar';
 
   @override
+  String get preview => 'Pré-visualizar';
+
+  @override
+  String get topicRenamePreviewTitle => 'Pré-visualização da mudança de nome';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Caminho: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID do tópico: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instância $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Ficheiros afetados';
+
+  @override
   String get orphanTopicTitle => 'O ficheiro do tópico não é mais usado';
 
   @override
@@ -2430,6 +2454,25 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'O ID do elemento \"$id\" aparece mais de uma vez.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'A instância \"$instanceId\" publica o nome de ficheiro Web inválido \"$webFileName\" para o tópico \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'A instância \"$instanceId\" publica \"$firstTopic\" e \"$secondTopic\" como \"$webFileName\".';
   }
 
   @override
@@ -4019,6 +4062,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Não é possível mudar o nome do símbolo com segurança. Verifique o nome e atualize a referência antes de tentar novamente.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Os IDs dos tópicos provêm dos nomes dos ficheiros. Utilize Mudar o nome do ficheiro de tópico no índice ou na barra lateral Ficheiros.';
 
   @override
   String get keyboardLayout => 'Disposição do teclado';
@@ -6106,6 +6153,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get doRefactor => 'Refatorar';
 
   @override
+  String get preview => 'Prévia';
+
+  @override
+  String get topicRenamePreviewTitle => 'Prévia da renomeação';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Caminho: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID do tópico: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instância $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Arquivos afetados';
+
+  @override
   String get orphanTopicTitle => 'O arquivo do tópico não é mais usado';
 
   @override
@@ -6939,6 +7010,25 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'O ID do elemento \"$id\" aparece mais de uma vez.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'A instância \"$instanceId\" publica o nome de arquivo da Web inválido \"$webFileName\" para o tópico \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'A instância \"$instanceId\" publica \"$firstTopic\" e \"$secondTopic\" como \"$webFileName\".';
   }
 
   @override
@@ -8525,6 +8615,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get cannotRenameSymbol =>
       'Não é possível renomear o símbolo com segurança. Verifique o nome e atualize a referência antes de tentar novamente.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Os IDs dos tópicos vêm dos nomes dos arquivos. Use Renomear arquivo do tópico no sumário ou na barra lateral Arquivos.';
 
   @override
   String get keyboardLayout => 'Layout do teclado';

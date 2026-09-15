@@ -1586,6 +1586,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get doRefactor => 'Yeniden düzenle';
 
   @override
+  String get preview => 'Önizleme';
+
+  @override
+  String get topicRenamePreviewTitle => 'Yeniden adlandırma önizlemesi';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Yol: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Konu kimliği: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Örnek $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Etkilenen dosyalar';
+
+  @override
   String get orphanTopicTitle => 'Konu dosyası artık kullanılmıyor';
 
   @override
@@ -2415,6 +2439,25 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Öğe kimliği \"$id\" birden fazla görünüyor.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return '\"$instanceId\" örneği, \"$topic\" konusu için geçersiz \"$webFileName\" web dosyası adını yayımlıyor.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return '\"$instanceId\" örneği hem \"$firstTopic\" hem de \"$secondTopic\" konusunu \"$webFileName\" olarak yayımlıyor.';
   }
 
   @override
@@ -3962,6 +4005,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Simge güvenle yeniden adlandırılamıyor. Yeniden denemeden önce adı kontrol edin ve başvuruyu yenileyin.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır\'ı kullanın.';
 
   @override
   String get keyboardLayout => 'Klavye düzeni';

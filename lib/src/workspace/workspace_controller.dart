@@ -23,6 +23,7 @@ import '../writerside/writerside_project.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
+import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_title_editor.dart';
 import 'document_buffer.dart';
@@ -1889,35 +1890,72 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String topicPath,
     String newFileName, {
     String? topicModuleRoot,
-  }) {
-    final activeFilePath = state.workspace?.activeFilePath;
-    return _runWorkspaceFileOperation((workspace) async {
-      final ownerRoot = topicModuleRoot ?? workspace.writersideModule?.rootPath;
-      if (ownerRoot == null) {
-        throw const BusyMarkException('writerside.topic.module-not-open');
-      }
-      final affectedPaths = await _service.writersideTopicRenameAffectedPaths(
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) return false;
+    final ownerRoot = topicModuleRoot ?? workspace.writersideModule?.rootPath;
+    if (ownerRoot == null) return false;
+    final plan = await prepareWritersideTopicRename(
+      topicPath,
+      newFileName,
+      topicModuleRoot: ownerRoot,
+    );
+    return plan == null ? false : await applyWritersideTopicRename(plan);
+  }
+
+  Future<WritersideTopicRenamePlan?> prepareWritersideTopicRename(
+    String topicPath,
+    String newFileName, {
+    required String topicModuleRoot,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) return null;
+    try {
+      final plan = await _service.prepareWritersideTopicRename(
         workspace,
         topicPath: topicPath,
-        topicModuleRoot: ownerRoot,
+        newFileName: newFileName,
+        topicModuleRoot: topicModuleRoot,
       );
+      return plan;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Prepare topic rename failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
       void validate(Iterable<String> paths) =>
           _requireCleanAffectedFiles(workspace, paths);
-      validate(affectedPaths);
-      final target = await _service.renameWritersideTopicFile(
-        workspace,
-        topicPath,
-        newFileName,
-        topicModuleRoot: ownerRoot,
+      validate(plan.affectedPaths);
+      final result = await _service.applyWritersideTopicRename(
+        plan,
         validateBeforePublish: validate,
       );
-      final transitions = _beginLocalHistoryPathTransitions(topicPath, target);
+      final target = result.newTopicPath;
+      final transitions = _beginLocalHistoryPathTransitions(
+        plan.oldTopicPath,
+        target,
+      );
       var committed = false;
       try {
-        await _localHistory.remapPath(topicPath, target);
-        _remapOpenWorkspacePaths(workspace, topicPath, target);
+        await _localHistory.remapPath(plan.oldTopicPath, target);
+        _remapOpenWorkspacePaths(workspace, plan.oldTopicPath, target);
         committed = true;
-        return _remapMovedPath(activeFilePath, topicPath, target);
+        return _remapMovedPath(activeFilePath, plan.oldTopicPath, target);
       } finally {
         await _finishLocalHistoryPathTransitions(
           transitions,

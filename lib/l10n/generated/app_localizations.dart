@@ -2947,6 +2947,42 @@ abstract class AppLocalizations {
   /// **'Do Refactor'**
   String get doRefactor;
 
+  /// Action that opens a read-only refactoring preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get preview;
+
+  /// Title of the Writerside topic-file refactoring review.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Preview'**
+  String get topicRenamePreviewTitle;
+
+  /// Old and new topic paths in a rename preview.
+  ///
+  /// In en, this message translates to:
+  /// **'{oldPath} → {newPath}'**
+  String topicRenamePathChange(String oldPath, String newPath);
+
+  /// XML topic ID change in a rename preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic ID: {oldId} → {newId}'**
+  String topicRenameIdChange(String oldId, String newId);
+
+  /// Published URL filename change in a rename preview.
+  ///
+  /// In en, this message translates to:
+  /// **'{instance}: {oldName} → {newName}'**
+  String topicRenameUrlChange(String instance, String oldName, String newName);
+
+  /// Heading for files changed by a topic refactoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Affected files'**
+  String get topicRenameAffectedFiles;
+
   /// Dialog title after a topic is removed from its last table of contents.
   ///
   /// In en, this message translates to:
@@ -4160,6 +4196,27 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Element id \"{id}\" appears more than once.'**
   String diagnosticWritersideTopicDuplicateId(String id);
+
+  /// Invalid effective Writerside web filename diagnostic.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance \"{instanceId}\" publishes invalid web filename \"{webFileName}\" for topic \"{topic}\".'**
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  );
+
+  /// Per-instance Writerside web filename collision diagnostic.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance \"{instanceId}\" publishes both \"{firstTopic}\" and \"{secondTopic}\" as \"{webFileName}\".'**
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  );
 
   /// Writerside module diagnostic for a TOC reference to a missing topic.
   ///
@@ -6696,6 +6753,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.'**
   String get cannotRenameSymbol;
+
+  /// Message shown when source semantic rename targets a Writerside topic ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic IDs come from their filenames. Use Rename Topic File in the Table of Contents or Files sidebar.'**
+  String get renameTopicFileInstead;
 
   /// No description provided for @keyboardLayout.
   ///

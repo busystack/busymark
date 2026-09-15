@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "Ein absoluter Pfad pro Zeile",
   "settingsSecondsValue": "{value} Sekunden",
   "settingsDaysValue": "{value} Tage",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Vorschau",
+  "topicRenamePreviewTitle": "Umbenennungsvorschau",
+  "topicRenamePathChange": "Pfad: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Themen-ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instanz {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Betroffene Dateien",
+  "renameTopicFileInstead": "Themen-IDs werden aus ihren Dateinamen abgeleitet. Verwenden Sie „Themendatei umbenennen“ im Inhaltsverzeichnis oder in der Seitenleiste „Dateien“.",
+  "diagnosticWritersideWebFileNameInvalid": "Instanz \"{instanceId}\" veröffentlicht den ungültigen Webdateinamen \"{webFileName}\" für das Thema \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Instanz \"{instanceId}\" veröffentlicht sowohl \"{firstTopic}\" als auch \"{secondTopic}\" unter \"{webFileName}\"."
 }

@@ -486,6 +486,9 @@ class WritersideTopic {
   final List<WritersideInclude> includes;
   final WritersideDocument document;
   final List<Diagnostic> diagnostics;
+
+  /// A direct, authored topic-level value when one is unconditionally
+  /// available. This is not an instance-effective publication filename.
   final String? webFileName;
   final ParsedMarkdownDocument? markdown;
   final List<WritersideTopicTitleOverride> titleOverrides;

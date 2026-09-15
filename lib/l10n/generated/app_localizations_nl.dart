@@ -1592,6 +1592,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String get doRefactor => 'Refactoring uitvoeren';
 
   @override
+  String get preview => 'Voorbeeld';
+
+  @override
+  String get topicRenamePreviewTitle => 'Voorbeeld van naamswijziging';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Pad: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Onderwerp-ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instantie $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Betrokken bestanden';
+
+  @override
   String get orphanTopicTitle => 'Onderwerpbestand wordt niet meer gebruikt';
 
   @override
@@ -2427,6 +2451,25 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Element-ID \"$id\" komt meerdere keren voor.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instantie \"$instanceId\" publiceert de ongeldige webbestandsnaam \"$webFileName\" voor onderwerp \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instantie \"$instanceId\" publiceert zowel \"$firstTopic\" als \"$secondTopic\" als \"$webFileName\".';
   }
 
   @override
@@ -4007,6 +4050,10 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Het symbool kan niet veilig worden hernoemd. Controleer de naam en vernieuw de verwijzing voordat u het opnieuw probeert.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Onderwerp-ID\'s zijn afgeleid van de bestandsnamen. Gebruik Onderwerpbestand hernoemen in de inhoudsopgave of de zijbalk Bestanden.';
 
   @override
   String get keyboardLayout => 'Toetsenbordindeling';

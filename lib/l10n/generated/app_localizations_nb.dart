@@ -1589,6 +1589,30 @@ class AppLocalizationsNb extends AppLocalizations {
   String get doRefactor => 'Utfør refaktorering';
 
   @override
+  String get preview => 'Forhåndsvisning';
+
+  @override
+  String get topicRenamePreviewTitle => 'Forhåndsvisning av navneendring';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Sti: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Emne-ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instans $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Berørte filer';
+
+  @override
   String get orphanTopicTitle => 'Emnefilen brukes ikke lenger';
 
   @override
@@ -2417,6 +2441,25 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Element-ID-en «$id» vises mer enn én gang.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instansen \"$instanceId\" publiserer det ugyldige nettfilnavnet \"$webFileName\" for emnet \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instansen \"$instanceId\" publiserer både \"$firstTopic\" og \"$secondTopic\" som \"$webFileName\".';
   }
 
   @override
@@ -3963,6 +4006,10 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.';
 
   @override
   String get keyboardLayout => 'Tastaturoppsett';

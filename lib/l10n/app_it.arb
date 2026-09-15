@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "Un percorso assoluto per riga",
   "settingsSecondsValue": "{value} secondi",
   "settingsDaysValue": "{value} giorni",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Anteprima",
+  "topicRenamePreviewTitle": "Anteprima della ridenominazione",
+  "topicRenamePathChange": "Percorso: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID argomento: {oldId} → {newId}",
+  "topicRenameUrlChange": "Istanza {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "File interessati",
+  "renameTopicFileInstead": "Gli ID degli argomenti derivano dai nomi dei file. Usa Rinomina file argomento nel sommario o nella barra laterale File.",
+  "diagnosticWritersideWebFileNameInvalid": "L’istanza \"{instanceId}\" pubblica il nome file web non valido \"{webFileName}\" per l’argomento \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "L’istanza \"{instanceId}\" pubblica sia \"{firstTopic}\" sia \"{secondTopic}\" come \"{webFileName}\"."
 }

@@ -1581,6 +1581,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doRefactor => 'Do Refactor';
 
   @override
+  String get preview => 'Preview';
+
+  @override
+  String get topicRenamePreviewTitle => 'Rename Preview';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return '$oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Topic ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return '$instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Affected files';
+
+  @override
   String get orphanTopicTitle => 'Topic file is no longer used';
 
   @override
@@ -2416,6 +2440,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Element id \"$id\" appears more than once.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instance \"$instanceId\" publishes invalid web filename \"$webFileName\" for topic \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instance \"$instanceId\" publishes both \"$firstTopic\" and \"$secondTopic\" as \"$webFileName\".';
   }
 
   @override
@@ -3989,6 +4032,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'The symbol cannot be renamed safely. Check the name and refresh the reference before trying again.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Topic IDs come from their filenames. Use Rename Topic File in the Table of Contents or Files sidebar.';
 
   @override
   String get keyboardLayout => 'Keyboard layout';

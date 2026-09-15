@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "Una ruta absoluta por línea",
   "settingsSecondsValue": "{value} segundos",
   "settingsDaysValue": "{value} días",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Vista previa",
+  "topicRenamePreviewTitle": "Vista previa del cambio de nombre",
+  "topicRenamePathChange": "Ruta: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID del tema: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instancia {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Archivos afectados",
+  "renameTopicFileInstead": "Los ID de los temas proceden de sus nombres de archivo. Use «Cambiar nombre del archivo de tema» en la tabla de contenido o en la barra lateral Archivos.",
+  "diagnosticWritersideWebFileNameInvalid": "La instancia \"{instanceId}\" publica el nombre de archivo web no válido \"{webFileName}\" para el tema \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "La instancia \"{instanceId}\" publica \"{firstTopic}\" y \"{secondTopic}\" como \"{webFileName}\"."
 }

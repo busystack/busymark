@@ -1607,6 +1607,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String get doRefactor => 'Refactoring ausführen';
 
   @override
+  String get preview => 'Vorschau';
+
+  @override
+  String get topicRenamePreviewTitle => 'Umbenennungsvorschau';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Pfad: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Themen-ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instanz $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Betroffene Dateien';
+
+  @override
   String get orphanTopicTitle => 'Themendatei wird nicht mehr verwendet';
 
   @override
@@ -2441,6 +2465,25 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Die Element-ID „$id“ kommt mehr als einmal vor.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instanz \"$instanceId\" veröffentlicht den ungültigen Webdateinamen \"$webFileName\" für das Thema \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instanz \"$instanceId\" veröffentlicht sowohl \"$firstTopic\" als auch \"$secondTopic\" unter \"$webFileName\".';
   }
 
   @override
@@ -3997,6 +4040,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Das Symbol kann nicht sicher umbenannt werden. Prüfen Sie den Namen und aktualisieren Sie die Referenz, bevor Sie es erneut versuchen.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Themen-IDs werden aus ihren Dateinamen abgeleitet. Verwenden Sie „Themendatei umbenennen“ im Inhaltsverzeichnis oder in der Seitenleiste „Dateien“.';
 
   @override
   String get keyboardLayout => 'Tastaturbelegung';

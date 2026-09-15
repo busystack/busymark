@@ -3768,5 +3768,14 @@
   "settingsHistoryExcludedPathsHint": "Üks absoluutne tee per rida",
   "settingsSecondsValue": "{value} sekundid",
   "settingsDaysValue": "{value} päevad",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Eelvaade",
+  "topicRenamePreviewTitle": "Ümbernimetamise eelvaade",
+  "topicRenamePathChange": "Tee: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Teema ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "Eksemplar {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Mõjutatud failid",
+  "renameTopicFileInstead": "Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.",
+  "diagnosticWritersideWebFileNameInvalid": "Eksemplar \"{instanceId}\" avaldab teema \"{topic}\" jaoks sobimatu veebifailinime \"{webFileName}\".",
+  "diagnosticWritersideWebFileNameCollision": "Eksemplar \"{instanceId}\" avaldab nii \"{firstTopic}\" kui ka \"{secondTopic}\" nimega \"{webFileName}\"."
 }

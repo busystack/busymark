@@ -170,6 +170,26 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
         l10n.errorTopicFileExtensionMismatch(value('extension')),
       'writerside.topic-file.file-name-invalid' =>
         l10n.errorTopicFileNameInvalid,
+      'writerside.topic-file.missing-root-id' =>
+        l10n.diagnosticWritersideTopicMissingRootId,
+      'writerside.topic-file.root-id-mismatch' =>
+        l10n.diagnosticWritersideTopicRootIdMismatch(
+          value('id'),
+          value('expectedId'),
+        ),
+      'writerside.topic-file.web-file-name-invalid' =>
+        l10n.diagnosticWritersideWebFileNameInvalid(
+          value('instanceId'),
+          value('webFileName'),
+          value('topic'),
+        ),
+      'writerside.topic-file.web-file-name-collision' =>
+        l10n.diagnosticWritersideWebFileNameCollision(
+          value('instanceId'),
+          value('webFileName'),
+          value('firstTopic'),
+          value('secondTopic'),
+        ),
       'writerside.topic-file.path-unsafe' => l10n.errorFileOperationOutsideRoot,
       'writerside.topic-file.source-unsafe' =>
         l10n.errorFileOperationOutsideRoot,

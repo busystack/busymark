@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "Bir mutlak yol her satırda",
   "settingsSecondsValue": "{value} saniye",
   "settingsDaysValue": "{value} gün",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Önizleme",
+  "topicRenamePreviewTitle": "Yeniden adlandırma önizlemesi",
+  "topicRenamePathChange": "Yol: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Konu kimliği: {oldId} → {newId}",
+  "topicRenameUrlChange": "Örnek {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Etkilenen dosyalar",
+  "renameTopicFileInstead": "Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır'ı kullanın.",
+  "diagnosticWritersideWebFileNameInvalid": "\"{instanceId}\" örneği, \"{topic}\" konusu için geçersiz \"{webFileName}\" web dosyası adını yayımlıyor.",
+  "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor."
 }

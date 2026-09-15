@@ -7,6 +7,7 @@ import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import 'writerside_model.dart';
+import 'writerside_topic_file_name.dart';
 
 enum WritersideTopicCreatePlacement { root, sibling, child }
 
@@ -684,32 +685,19 @@ class WritersideTopicCreator {
 
   String _topicFileName(String value, WritersideTopicFormat format) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty ||
-        trimmed == '.' ||
-        trimmed == '..' ||
-        p.isAbsolute(trimmed) ||
-        trimmed.contains('/') ||
-        trimmed.contains(r'\') ||
-        trimmed.contains('..')) {
-      throw const BusyMarkException('writerside.topic.file-name-unsafe');
-    }
     final expectedExtension = switch (format) {
       WritersideTopicFormat.markdown => '.md',
       WritersideTopicFormat.xml => '.topic',
     };
     final extension = p.extension(trimmed).toLowerCase();
     final fileName = extension.isEmpty ? '$trimmed$expectedExtension' : trimmed;
-    if (p.extension(fileName).toLowerCase() != expectedExtension) {
-      throw BusyMarkException(
-        'writerside.topic.file-extension-mismatch',
-        args: {'extension': expectedExtension},
-      );
-    }
-    final id = p.basenameWithoutExtension(fileName);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      throw const BusyMarkException('writerside.topic.file-name-invalid');
-    }
-    return fileName;
+    return validateWritersideTopicFileName(
+      fileName,
+      requiredExtension: expectedExtension,
+      unsafeCode: 'writerside.topic.file-name-unsafe',
+      invalidCode: 'writerside.topic.file-name-invalid',
+      extensionCode: 'writerside.topic.file-extension-mismatch',
+    );
   }
 
   String _topicSource(WritersideTopicFormat format, String id, String title) {

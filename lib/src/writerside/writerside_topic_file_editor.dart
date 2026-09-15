@@ -22,6 +22,82 @@ import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_project.dart';
 import 'writerside_schema.dart';
+import 'writerside_topic_file_name.dart';
+import 'writerside_web_file_name.dart';
+
+class WritersideTopicRenameFileChange {
+  const WritersideTopicRenameFileChange({
+    required this.path,
+    required this.originalSource,
+    required this.resultingSource,
+  });
+
+  final String path;
+  final String originalSource;
+  final String resultingSource;
+}
+
+class WritersideTopicRenameUrlChange {
+  const WritersideTopicRenameUrlChange({
+    required this.moduleRoot,
+    required this.instanceId,
+    required this.oldWebFileName,
+    required this.newWebFileName,
+  });
+
+  final String moduleRoot;
+  final String instanceId;
+  final String oldWebFileName;
+  final String newWebFileName;
+
+  bool get changed => oldWebFileName != newWebFileName;
+}
+
+/// An immutable, fully calculated topic-file refactoring. Applying this object
+/// never recalculates reference edits; every participating source is checked
+/// against the captured snapshots before the first write.
+class WritersideTopicRenamePlan {
+  WritersideTopicRenamePlan._({
+    required this.owningModule,
+    required this.oldTopicPath,
+    required this.newTopicPath,
+    required this.oldTopicReference,
+    required this.newTopicReference,
+    required this.oldTopicId,
+    required this.newTopicId,
+    required this.format,
+    required this.originalTargetSource,
+    required this.resultingTargetSource,
+    required List<WritersideTopicRenameFileChange> changedFiles,
+    required this.createsNewTopicFile,
+    required this.deletesOldTopicFile,
+    required this.updatesXmlTopicId,
+    required Set<String> affectedPaths,
+    required List<WritersideTopicRenameUrlChange> webFileNameChanges,
+    required _PreparedTopicRename prepared,
+  }) : changedFiles = List.unmodifiable(changedFiles),
+       affectedPaths = Set.unmodifiable(affectedPaths),
+       webFileNameChanges = List.unmodifiable(webFileNameChanges),
+       _prepared = prepared;
+
+  final WritersideModule owningModule;
+  final String oldTopicPath;
+  final String newTopicPath;
+  final String oldTopicReference;
+  final String newTopicReference;
+  final String oldTopicId;
+  final String newTopicId;
+  final WritersideTopicFormat format;
+  final String originalTargetSource;
+  final String resultingTargetSource;
+  final List<WritersideTopicRenameFileChange> changedFiles;
+  final bool createsNewTopicFile;
+  final bool deletesOldTopicFile;
+  final bool updatesXmlTopicId;
+  final Set<String> affectedPaths;
+  final List<WritersideTopicRenameUrlChange> webFileNameChanges;
+  final _PreparedTopicRename _prepared;
+}
 
 class WritersideTopicFileRenameResult {
   const WritersideTopicFileRenameResult({
@@ -78,6 +154,21 @@ class WritersideTopicFileEditor {
     List<WritersideModule>? projectModules,
     void Function(Iterable<String>)? validateBeforePublish,
   }) async {
+    final plan = await prepareRename(
+      module: module,
+      topic: topic,
+      newFileName: newFileName,
+      projectModules: projectModules,
+    );
+    return applyRename(plan, validateBeforePublish: validateBeforePublish);
+  }
+
+  Future<WritersideTopicRenamePlan> prepareRename({
+    required WritersideModule module,
+    required WritersideTopic topic,
+    required String newFileName,
+    List<WritersideModule>? projectModules,
+  }) async {
     final snapshot = await _currentModuleSnapshot(module, topic);
     final context = await _mutationContext(snapshot);
     final referenceContexts = <_ReferenceModuleContext>[
@@ -97,13 +188,29 @@ class WritersideTopicFileEditor {
       safeFileName,
     );
     if (p.equals(targetPath, context.topicPath)) {
-      return WritersideTopicFileRenameResult(
+      return WritersideTopicRenamePlan._(
+        owningModule: context.module,
         oldTopicPath: context.topicPath,
         newTopicPath: context.topicPath,
-        oldTopicFileName: context.topic.fileName,
-        newTopicFileName: context.topic.fileName,
-        updatedTreePaths: const [],
-        updatedXmlTopicId: false,
+        oldTopicReference: context.topic.fileName,
+        newTopicReference: context.topic.fileName,
+        oldTopicId: context.topic.id,
+        newTopicId: context.topic.id,
+        format: context.topic.format,
+        originalTargetSource: context.topicSource,
+        resultingTargetSource: context.topicSource,
+        changedFiles: const [],
+        createsNewTopicFile: false,
+        deletesOldTopicFile: false,
+        updatesXmlTopicId: false,
+        affectedPaths: {context.topicPath},
+        webFileNameChanges: const [],
+        prepared: _PreparedTopicRename(
+          target: context,
+          referenceContexts: referenceContexts,
+          targetSource: context.topicSource,
+          publishedEdits: const [],
+        ),
       );
     }
 
@@ -138,33 +245,93 @@ class WritersideTopicFileEditor {
       publishedEdits: publishedEdits,
     );
 
+    final webFileNameChanges = _validateProspectiveWebFileNames(
+      referenceContexts,
+      target: context,
+      newTopicFileName: newTopicFileName,
+    );
+
     final affectedPaths = <String>{
       context.topicPath,
       targetPath,
       for (final edit in publishedEdits) edit.path,
     };
-    validateBeforePublish?.call(affectedPaths);
+    return WritersideTopicRenamePlan._(
+      owningModule: context.module,
+      oldTopicPath: context.topicPath,
+      newTopicPath: targetPath,
+      oldTopicReference: context.topic.fileName,
+      newTopicReference: newTopicFileName,
+      oldTopicId: p.basenameWithoutExtension(context.topic.fileName),
+      newTopicId: p.basenameWithoutExtension(newTopicFileName),
+      format: context.topic.format,
+      originalTargetSource: context.topicSource,
+      resultingTargetSource: topicEdit.source,
+      changedFiles: [
+        for (final edit in publishedEdits)
+          WritersideTopicRenameFileChange(
+            path: edit.path,
+            originalSource: edit.originalSource,
+            resultingSource: edit.updatedSource,
+          ),
+      ],
+      createsNewTopicFile: true,
+      deletesOldTopicFile: true,
+      updatesXmlTopicId: topicEdit.updatedXmlTopicId,
+      affectedPaths: affectedPaths,
+      webFileNameChanges: webFileNameChanges,
+      prepared: _PreparedTopicRename(
+        target: context,
+        referenceContexts: referenceContexts,
+        targetSource: topicEdit.source,
+        publishedEdits: publishedEdits,
+      ),
+    );
+  }
+
+  Future<WritersideTopicFileRenameResult> applyRename(
+    WritersideTopicRenamePlan plan, {
+    void Function(Iterable<String>)? validateBeforePublish,
+  }) async {
+    final prepared = plan._prepared;
+    final context = prepared.target;
+    final referenceContexts = prepared.referenceContexts;
+    final publishedEdits = prepared.publishedEdits;
+    if (!plan.createsNewTopicFile) {
+      return WritersideTopicFileRenameResult(
+        oldTopicPath: plan.oldTopicPath,
+        newTopicPath: plan.newTopicPath,
+        oldTopicFileName: plan.oldTopicReference,
+        newTopicFileName: plan.newTopicReference,
+        updatedTreePaths: const [],
+        updatedXmlTopicId: false,
+      );
+    }
+
+    validateBeforePublish?.call(plan.affectedPaths);
+    await _ensurePreparedPlanUnchanged(plan);
+    validateBeforePublish?.call(plan.affectedPaths);
 
     await _writeNewFile(
       context.anchor,
-      targetPath,
-      topicEdit.source,
+      plan.newTopicPath,
+      prepared.targetSource,
       sourceStat: context.topicStat,
     );
     final appliedTreeEdits = <_TreeEdit>[];
     try {
-      validateBeforePublish?.call(affectedPaths);
+      validateBeforePublish?.call(plan.affectedPaths);
       await _applyTreeEdits(
         context.anchor,
         publishedEdits,
         applied: appliedTreeEdits,
       );
-      validateBeforePublish?.call(affectedPaths);
+      validateBeforePublish?.call(plan.affectedPaths);
       await _ensureReferenceContextsUnchanged(
         referenceContexts,
         publishedEdits,
-        targetPath: targetPath,
-        targetSource: topicEdit.source,
+        targetPath: plan.newTopicPath,
+        targetSource: prepared.targetSource,
         targetModuleRoot: context.module.rootPath,
       );
       await _deleteUnchangedTopicSource(context);
@@ -177,29 +344,29 @@ class WritersideTopicFileEditor {
           restored &&
           await _renameTargetIsSafeToCleanUp(
             context,
-            targetPath: targetPath,
-            targetSource: topicEdit.source,
+            targetPath: plan.newTopicPath,
+            targetSource: prepared.targetSource,
           );
       if (safeToCleanUp) {
         await _deleteCreatedFileBestEffort(
           context.anchor,
-          targetPath,
-          topicEdit.source,
+          plan.newTopicPath,
+          prepared.targetSource,
         );
       }
       rethrow;
     }
 
     return WritersideTopicFileRenameResult(
-      oldTopicPath: context.topicPath,
-      newTopicPath: targetPath,
-      oldTopicFileName: context.topic.fileName,
-      newTopicFileName: newTopicFileName,
+      oldTopicPath: plan.oldTopicPath,
+      newTopicPath: plan.newTopicPath,
+      oldTopicFileName: plan.oldTopicReference,
+      newTopicFileName: plan.newTopicReference,
       updatedTreePaths: List.unmodifiable([
         for (final edit in publishedEdits)
           if (_isTreePath(edit.path)) edit.path,
       ]),
-      updatedXmlTopicId: topicEdit.updatedXmlTopicId,
+      updatedXmlTopicId: plan.updatesXmlTopicId,
     );
   }
 
@@ -561,6 +728,97 @@ class WritersideTopicFileEditor {
         );
       }
     }
+  }
+
+  List<WritersideTopicRenameUrlChange> _validateProspectiveWebFileNames(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
+    required String newTopicFileName,
+  }) {
+    final modules = [for (final context in contexts) context.module];
+    final origins = <String, WritersideModule>{
+      for (final module in modules)
+        (module.config.moduleName?.trim().isNotEmpty == true
+                ? module.config.moduleName!.trim()
+                : p.basename(module.rootPath)):
+            module,
+    };
+    const resolver = WritersideWebFileNameResolver();
+    final result = <WritersideTopicRenameUrlChange>[];
+    for (final host in modules) {
+      for (final instance in host.instances.where(
+        (value) => !value.isLibrary,
+      )) {
+        final published = writersidePublishedTopicsForInstance(
+          hostModule: host,
+          instance: instance,
+          modulesByOrigin: origins,
+        );
+        final publishesTarget = published.any(
+          (item) =>
+              p.equals(item.sourceModule.rootPath, target.module.rootPath) &&
+              p.equals(item.topic.filePath, target.topicPath),
+        );
+        if (!publishesTarget) continue;
+        final oldEffective = resolver.resolve(
+          module: target.module,
+          topic: target.topic,
+          instance: instance,
+          modulesByOrigin: origins,
+        );
+        final newEffective = resolver.resolve(
+          module: target.module,
+          topic: target.topic,
+          instance: instance,
+          modulesByOrigin: origins,
+          topicFileName: newTopicFileName,
+        );
+        if (!newEffective.isValid) {
+          throw BusyMarkException(
+            'writerside.topic-file.web-file-name-invalid',
+            args: {
+              'instanceId': instance.id,
+              'webFileName': newEffective.value,
+              'topic': newTopicFileName,
+            },
+          );
+        }
+        for (final other in published) {
+          if (p.equals(other.sourceModule.rootPath, target.module.rootPath) &&
+              p.equals(other.topic.filePath, target.topicPath)) {
+            continue;
+          }
+          final otherEffective = resolver.resolve(
+            module: other.sourceModule,
+            topic: other.topic,
+            instance: instance,
+            modulesByOrigin: origins,
+          );
+          if (otherEffective.isValid &&
+              otherEffective.value.toLowerCase() ==
+                  newEffective.value.toLowerCase()) {
+            throw BusyMarkException(
+              'writerside.topic-file.web-file-name-collision',
+              args: {
+                'instanceId': instance.id,
+                'webFileName': newEffective.value,
+                'firstTopic': newTopicFileName,
+                'secondTopic': other.topic.fileName,
+              },
+            );
+          }
+        }
+        result.add(
+          WritersideTopicRenameUrlChange(
+            moduleRoot: host.rootPath,
+            instanceId: instance.id,
+            oldWebFileName: oldEffective.value,
+            newWebFileName: newEffective.value,
+          ),
+        );
+      }
+    }
+    return List.unmodifiable(result);
   }
 
   List<_TreeEdit> _renameProjectReferenceEdits(
@@ -1869,8 +2127,18 @@ class WritersideTopicFileEditor {
       );
     }
     final oldId = p.basenameWithoutExtension(path);
-    if (root.getAttribute('id') != oldId) {
-      return _RenamedTopicSource(source: source, updatedXmlTopicId: false);
+    final currentId = root.getAttribute('id');
+    if (currentId == null || currentId.isEmpty) {
+      throw BusyMarkException(
+        'writerside.topic-file.missing-root-id',
+        args: {'path': path},
+      );
+    }
+    if (currentId != oldId) {
+      throw BusyMarkException(
+        'writerside.topic-file.root-id-mismatch',
+        args: {'path': path, 'id': currentId, 'expectedId': oldId},
+      );
     }
     root.setAttribute('id', p.basenameWithoutExtension(newFileName));
     return _RenamedTopicSource(
@@ -2144,6 +2412,55 @@ class WritersideTopicFileEditor {
     }
   }
 
+  Future<void> _ensurePreparedPlanUnchanged(
+    WritersideTopicRenamePlan plan,
+  ) async {
+    final prepared = plan._prepared;
+    for (final context in prepared.referenceContexts) {
+      final configuration = await _configurationSources(
+        context.module.rootPath,
+      );
+      if (!_sameStringMap(configuration, context.configurationSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.tree-changed',
+          args: {'path': context.module.config.filePath},
+        );
+      }
+      for (final tree in context.trees) {
+        final resolved = await _resolvePath(
+          context.anchor,
+          tree.path,
+          allowRoot: false,
+        );
+        if (resolved.type != FileSystemEntityType.file ||
+            await File(resolved.path).readAsString() != tree.source) {
+          throw BusyMarkException(
+            'writerside.topic-file.tree-changed',
+            args: {'path': tree.path},
+          );
+        }
+      }
+      final currentTopics = await _topicSources(context.anchor, context.module);
+      if (!_sameStringMap(currentTopics, context.topicSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.topic-inventory-changed',
+          args: {'path': context.module.rootPath},
+        );
+      }
+    }
+    final destination = await _resolvePath(
+      prepared.target.anchor,
+      plan.newTopicPath,
+      allowRoot: false,
+    );
+    if (destination.type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'writerside.topic-file.target-exists',
+        args: {'path': destination.path},
+      );
+    }
+  }
+
   Future<bool> _renameTargetIsSafeToCleanUp(
     _MutationContext context, {
     required String targetPath,
@@ -2216,29 +2533,11 @@ class WritersideTopicFileEditor {
   }
 
   String _safeRenamedFileName(String value, {required String oldPath}) {
-    final fileName = value.trim();
-    if (fileName.isEmpty ||
-        fileName == '.' ||
-        fileName == '..' ||
-        p.isAbsolute(fileName) ||
-        fileName.contains('/') ||
-        fileName.contains(r'\') ||
-        fileName.contains('..')) {
-      throw const BusyMarkException('writerside.topic-file.file-name-unsafe');
-    }
     final oldExtension = p.extension(oldPath).toLowerCase();
-    if (!{'.md', '.markdown', '.topic'}.contains(oldExtension) ||
-        p.extension(fileName).toLowerCase() != oldExtension) {
-      throw BusyMarkException(
-        'writerside.topic-file.file-extension-mismatch',
-        args: {'extension': oldExtension},
-      );
-    }
-    final id = p.basenameWithoutExtension(fileName);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      throw const BusyMarkException('writerside.topic-file.file-name-invalid');
-    }
-    return fileName;
+    return validateWritersideTopicFileName(
+      value,
+      requiredExtension: oldExtension,
+    );
   }
 
   String _renamedTopicFileName(String oldFileName, String newFileName) {
@@ -2443,6 +2742,20 @@ class _RenamedTopicSource {
 
   final String source;
   final bool updatedXmlTopicId;
+}
+
+class _PreparedTopicRename {
+  const _PreparedTopicRename({
+    required this.target,
+    required this.referenceContexts,
+    required this.targetSource,
+    required this.publishedEdits,
+  });
+
+  final _MutationContext target;
+  final List<_ReferenceModuleContext> referenceContexts;
+  final String targetSource;
+  final List<_TreeEdit> publishedEdits;
 }
 
 bool _sameStringMap(Map<String, String?> first, Map<String, String?> second) {

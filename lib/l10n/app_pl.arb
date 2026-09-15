@@ -3334,5 +3334,14 @@
   "settingsHistoryExcludedPathsHint": "Jedna absolutna ścieżka na linię",
   "settingsSecondsValue": "{value} sekundy",
   "settingsDaysValue": "{value} dni",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Podgląd",
+  "topicRenamePreviewTitle": "Podgląd zmiany nazwy",
+  "topicRenamePathChange": "Ścieżka: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Identyfikator tematu: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instancja {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Pliki objęte zmianą",
+  "renameTopicFileInstead": "Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.",
+  "diagnosticWritersideWebFileNameInvalid": "Instancja \"{instanceId}\" publikuje nieprawidłową nazwę pliku internetowego \"{webFileName}\" dla tematu \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\"."
 }

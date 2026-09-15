@@ -1601,6 +1601,30 @@ class AppLocalizationsIt extends AppLocalizations {
   String get doRefactor => 'Esegui refactoring';
 
   @override
+  String get preview => 'Anteprima';
+
+  @override
+  String get topicRenamePreviewTitle => 'Anteprima della ridenominazione';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Percorso: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID argomento: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Istanza $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'File interessati';
+
+  @override
   String get orphanTopicTitle => 'Il file dell’argomento non è più utilizzato';
 
   @override
@@ -2437,6 +2461,25 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'L\'ID dell\'elemento \"$id\" compare più di una volta.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'L’istanza \"$instanceId\" pubblica il nome file web non valido \"$webFileName\" per l’argomento \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'L’istanza \"$instanceId\" pubblica sia \"$firstTopic\" sia \"$secondTopic\" come \"$webFileName\".';
   }
 
   @override
@@ -3992,6 +4035,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Impossibile rinominare il simbolo in sicurezza. Verifica il nome e aggiorna il riferimento prima di riprovare.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Gli ID degli argomenti derivano dai nomi dei file. Usa Rinomina file argomento nel sommario o nella barra laterale File.';
 
   @override
   String get keyboardLayout => 'Disposizione della tastiera';

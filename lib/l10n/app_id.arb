@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "Satu jalur absolut per baris",
   "settingsSecondsValue": "{value} detik",
   "settingsDaysValue": "{value} hari",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Pratinjau",
+  "topicRenamePreviewTitle": "Pratinjau penggantian nama",
+  "topicRenamePathChange": "Jalur: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID topik: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instans {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "File yang terpengaruh",
+  "renameTopicFileInstead": "ID topik berasal dari nama filenya. Gunakan Ganti Nama File Topik di daftar isi atau bilah samping File.",
+  "diagnosticWritersideWebFileNameInvalid": "Instans \"{instanceId}\" menerbitkan nama file web tidak valid \"{webFileName}\" untuk topik \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Instans \"{instanceId}\" menerbitkan \"{firstTopic}\" dan \"{secondTopic}\" sebagai \"{webFileName}\"."
 }

@@ -1615,6 +1615,30 @@ class AppLocalizationsUk extends AppLocalizations {
   String get doRefactor => 'Виконати рефакторинг';
 
   @override
+  String get preview => 'Попередній перегляд';
+
+  @override
+  String get topicRenamePreviewTitle => 'Попередній перегляд перейменування';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Шлях: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID теми: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Екземпляр $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Змінені файли';
+
+  @override
   String get orphanTopicTitle => 'Файл теми більше не використовується';
 
   @override
@@ -2455,6 +2479,25 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Ідентифікатор елемента «$id» з’являється більше одного разу.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Екземпляр \"$instanceId\" публікує неприпустиме ім’я вебфайлу \"$webFileName\" для теми \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Екземпляр \"$instanceId\" публікує теми \"$firstTopic\" і \"$secondTopic\" під одним іменем \"$webFileName\".';
   }
 
   @override
@@ -4023,6 +4066,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».';
 
   @override
   String get keyboardLayout => 'Розкладка клавіатури';

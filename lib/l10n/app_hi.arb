@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "प्रति पंक्ति एक पूर्ण पथ",
   "settingsSecondsValue": "{value} सेकंड",
   "settingsDaysValue": "{value} दिन",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "पूर्वावलोकन",
+  "topicRenamePreviewTitle": "नाम बदलने का पूर्वावलोकन",
+  "topicRenamePathChange": "पथ: {oldPath} → {newPath}",
+  "topicRenameIdChange": "विषय ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "इंस्टेंस {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "प्रभावित फ़ाइलें",
+  "renameTopicFileInstead": "विषय ID उनके फ़ाइल नामों से बनते हैं। विषय-सूची या फ़ाइलें साइडबार में ‘विषय फ़ाइल का नाम बदलें’ का उपयोग करें।",
+  "diagnosticWritersideWebFileNameInvalid": "इंस्टेंस \"{instanceId}\" विषय \"{topic}\" के लिए अमान्य वेब फ़ाइल नाम \"{webFileName}\" प्रकाशित करता है।",
+  "diagnosticWritersideWebFileNameCollision": "इंस्टेंस \"{instanceId}\" \"{firstTopic}\" और \"{secondTopic}\" दोनों को \"{webFileName}\" के रूप में प्रकाशित करता है।"
 }

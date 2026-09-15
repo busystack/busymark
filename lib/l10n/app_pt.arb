@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "Um caminho absoluto por linha",
   "settingsSecondsValue": "{value} segundos",
   "settingsDaysValue": "{value} dias",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Pré-visualizar",
+  "topicRenamePreviewTitle": "Pré-visualização da mudança de nome",
+  "topicRenamePathChange": "Caminho: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID do tópico: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instância {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Ficheiros afetados",
+  "renameTopicFileInstead": "Os IDs dos tópicos provêm dos nomes dos ficheiros. Utilize Mudar o nome do ficheiro de tópico no índice ou na barra lateral Ficheiros.",
+  "diagnosticWritersideWebFileNameInvalid": "A instância \"{instanceId}\" publica o nome de ficheiro Web inválido \"{webFileName}\" para o tópico \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\"."
 }

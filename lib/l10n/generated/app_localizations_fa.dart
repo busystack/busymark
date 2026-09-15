@@ -1621,6 +1621,30 @@ class AppLocalizationsFa extends AppLocalizations {
   String get doRefactor => 'انجام بازآرایی';
 
   @override
+  String get preview => 'پیش‌نمایش';
+
+  @override
+  String get topicRenamePreviewTitle => 'پیش‌نمایش تغییر نام';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'مسیر: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'شناسهٔ موضوع: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'نمونهٔ $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'فایل‌های تحت تأثیر';
+
+  @override
   String get orphanTopicTitle => 'فایل موضوع دیگر استفاده نمی‌شود';
 
   @override
@@ -2455,6 +2479,25 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'شناسه عنصر «⁨$id⁩» بیش از یک بار ظاهر شده است.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'نمونهٔ \"$instanceId\" نام فایل وب نامعتبر \"$webFileName\" را برای موضوع \"$topic\" منتشر می‌کند.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'نمونهٔ \"$instanceId\" هر دو موضوع \"$firstTopic\" و \"$secondTopic\" را با نام \"$webFileName\" منتشر می‌کند.';
   }
 
   @override
@@ -4006,6 +4049,10 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'نمی‌توان نام نماد را با اطمینان تغییر داد. نام را بررسی و ارجاع را تازه‌سازی کنید، سپس دوباره تلاش کنید.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'شناسه‌های موضوع از نام فایل‌هایشان گرفته می‌شوند. از «تغییر نام فایل موضوع» در فهرست مطالب یا نوار کناری فایل‌ها استفاده کنید.';
 
   @override
   String get keyboardLayout => 'چیدمان صفحه‌کلید';

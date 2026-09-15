@@ -1587,6 +1587,30 @@ class AppLocalizationsId extends AppLocalizations {
   String get doRefactor => 'Lakukan refaktor';
 
   @override
+  String get preview => 'Pratinjau';
+
+  @override
+  String get topicRenamePreviewTitle => 'Pratinjau penggantian nama';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Jalur: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID topik: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instans $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'File yang terpengaruh';
+
+  @override
   String get orphanTopicTitle => 'File topik tidak lagi digunakan';
 
   @override
@@ -2417,6 +2441,25 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'ID elemen \"$id\" muncul lebih dari sekali.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instans \"$instanceId\" menerbitkan nama file web tidak valid \"$webFileName\" untuk topik \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instans \"$instanceId\" menerbitkan \"$firstTopic\" dan \"$secondTopic\" sebagai \"$webFileName\".';
   }
 
   @override
@@ -3968,6 +4011,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Nama simbol tidak dapat diubah dengan aman. Periksa nama dan segarkan referensi sebelum mencoba lagi.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'ID topik berasal dari nama filenya. Gunakan Ganti Nama File Topik di daftar isi atau bilah samping File.';
 
   @override
   String get keyboardLayout => 'Tata letak papan ketik';

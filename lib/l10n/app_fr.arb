@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "Un chemin absolu par ligne",
   "settingsSecondsValue": "{value} secondes",
   "settingsDaysValue": "{value} jours",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Aperçu",
+  "topicRenamePreviewTitle": "Aperçu du renommage",
+  "topicRenamePathChange": "Chemin : {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID du sujet : {oldId} → {newId}",
+  "topicRenameUrlChange": "Instance {instance} : {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Fichiers concernés",
+  "renameTopicFileInstead": "Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.",
+  "diagnosticWritersideWebFileNameInvalid": "L’instance \"{instanceId}\" publie le nom de fichier web non valide \"{webFileName}\" pour le sujet \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\"."
 }

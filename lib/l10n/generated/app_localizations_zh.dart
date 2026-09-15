@@ -1518,6 +1518,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get doRefactor => '执行重构';
 
   @override
+  String get preview => '预览';
+
+  @override
+  String get topicRenamePreviewTitle => '重命名预览';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return '路径：$oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return '主题 ID：$oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return '实例 $instance：$oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => '受影响的文件';
+
+  @override
   String get orphanTopicTitle => '主题文件已不再使用';
 
   @override
@@ -2299,6 +2323,25 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return '元素 ID“$id”出现多次。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return '实例 \"$instanceId\" 为主题 \"$topic\" 发布了无效的 Web 文件名 \"$webFileName\"。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return '实例 \"$instanceId\" 将 \"$firstTopic\" 和 \"$secondTopic\" 都发布为 \"$webFileName\"。';
   }
 
   @override
@@ -3787,6 +3830,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cannotRenameSymbol => '无法安全地重命名此符号。请检查名称并刷新引用，然后重试。';
+
+  @override
+  String get renameTopicFileInstead => '主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。';
 
   @override
   String get keyboardLayout => '键盘布局';
@@ -5766,6 +5812,30 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get doRefactor => '执行重构';
 
   @override
+  String get preview => '预览';
+
+  @override
+  String get topicRenamePreviewTitle => '重命名预览';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return '路径：$oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return '主题 ID：$oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return '实例 $instance：$oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => '受影响的文件';
+
+  @override
   String get orphanTopicTitle => '主题文件已不再使用';
 
   @override
@@ -6547,6 +6617,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return '元素 ID“$id”出现多次。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return '实例 \"$instanceId\" 为主题 \"$topic\" 发布了无效的 Web 文件名 \"$webFileName\"。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return '实例 \"$instanceId\" 将 \"$firstTopic\" 和 \"$secondTopic\" 都发布为 \"$webFileName\"。';
   }
 
   @override
@@ -8035,6 +8124,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get cannotRenameSymbol => '无法安全地重命名此符号。请检查名称并刷新引用，然后重试。';
+
+  @override
+  String get renameTopicFileInstead => '主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。';
 
   @override
   String get keyboardLayout => '键盘布局';

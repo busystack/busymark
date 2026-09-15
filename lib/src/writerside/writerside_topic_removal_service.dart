@@ -13,6 +13,7 @@ import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
+import 'writerside_web_file_name.dart';
 
 enum WritersideTopicRemovalMode { removeFromInstance, safeDeleteFile }
 
@@ -313,11 +314,7 @@ class WritersideTopicRemovalService {
       topicPath: snapshot.topic.filePath,
       topicFileName: snapshot.topic.fileName,
       topicTitle: snapshot.topic.title,
-      oldWebFileName: _oldWebFileName(
-        snapshot.topic,
-        disablePreprocessing:
-            snapshot.module.config.settings.disableWebNamePreprocessing == true,
-      ),
+      oldWebFileName: _effectiveWebFileName(snapshot, preferredTree),
       selectedTreePath: selectedTree,
       selectedNodePath: selectedNodePath,
       childCount: childCount,
@@ -498,6 +495,7 @@ class WritersideTopicRemovalService {
                         snapshot,
                         element,
                         analysis.oldWebFileName,
+                        treePath: entry.key,
                       )),
             );
         if (conflictingRedirect) {
@@ -515,6 +513,7 @@ class WritersideTopicRemovalService {
               snapshot,
               entry.value,
               analysis.oldWebFileName,
+              treePath: entry.key,
             )) {
           continue;
         }
@@ -1239,8 +1238,9 @@ class WritersideTopicRemovalService {
   bool _elementPublishesWebFileName(
     _RemovalSnapshot snapshot,
     XmlElement element,
-    String webFileName,
-  ) {
+    String webFileName, {
+    required String treePath,
+  }) {
     final reference = element.getAttribute('topic');
     if (reference == null) {
       return false;
@@ -1249,13 +1249,48 @@ class WritersideTopicRemovalService {
     if (matches.length != 1) {
       return false;
     }
-    return _oldWebFileName(
-          matches.single,
-          disablePreprocessing:
-              snapshot.module.config.settings.disableWebNamePreprocessing ==
-              true,
-        ) ==
+    return _effectiveWebFileName(snapshot, treePath, topic: matches.single) ==
         webFileName;
+  }
+
+  String _effectiveWebFileName(
+    _RemovalSnapshot snapshot,
+    String? treePath, {
+    WritersideTopic? topic,
+  }) {
+    final instance = snapshot.module.instances
+        .where(
+          (candidate) =>
+              treePath != null && p.equals(candidate.sourceTreePath, treePath),
+        )
+        .firstOrNull;
+    final effectiveInstance =
+        instance ??
+        snapshot.module.instances
+            .where((value) => !value.isLibrary)
+            .firstOrNull ??
+        snapshot.module.instances.firstOrNull;
+    final target = topic ?? snapshot.topic;
+    if (effectiveInstance == null) {
+      return WritersideWebFileNameResolver.defaultName(
+        target.fileName,
+        disablePreprocessing:
+            snapshot.module.config.settings.disableWebNamePreprocessing == true,
+      );
+    }
+    return const WritersideWebFileNameResolver()
+        .resolve(
+          module: snapshot.module,
+          topic: target,
+          instance: effectiveInstance,
+          modulesByOrigin: {
+            (snapshot.module.config.moduleName?.trim().isNotEmpty == true
+                    ? snapshot.module.config.moduleName!.trim()
+                    : p.basename(snapshot.module.rootPath)):
+                snapshot.module,
+          },
+        )
+        .value;
   }
 
   bool _canRewriteLink(
@@ -1810,28 +1845,6 @@ bool _samePath(List<int> first, List<int> second) {
 
 String _referenceWithoutAnchor(String destination) =>
     destination.split('#').first.split('?').first;
-
-String _oldWebFileName(
-  WritersideTopic topic, {
-  required bool disablePreprocessing,
-}) {
-  final explicit = topic.webFileName?.trim();
-  if (explicit != null && explicit.isNotEmpty) {
-    return explicit;
-  }
-  final rawBase = p.basenameWithoutExtension(topic.fileName).trim();
-  final base = disablePreprocessing
-      ? _replaceUnsafeWebFileNameCharacters(rawBase)
-      : rawBase
-            .toLowerCase()
-            .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), '-')
-            .replaceAll(RegExp(r'^-+|-+$'), '');
-  return '$base.html';
-}
-
-String _replaceUnsafeWebFileNameCharacters(String value) => value
-    .replaceAll(RegExp(r'[^\p{L}\p{N}._~-]+', unicode: true), '-')
-    .replaceAll(RegExp(r'^-+|-+$'), '');
 
 String _xmlSource(XmlDocument document) =>
     '${document.toXmlString(pretty: true, indent: '  ')}\n';

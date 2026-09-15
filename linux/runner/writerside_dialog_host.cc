@@ -68,12 +68,27 @@ GtkWidget* wrapping_explanation(const gchar* text) {
 }
 
 gboolean has_only_identifier_characters(const gchar* value) {
-  if (value == nullptr || value[0] == '\0') {
+  if (value == nullptr || value[0] == '\0' ||
+      !g_utf8_validate(value, -1, nullptr)) {
     return FALSE;
   }
-  for (const guchar* current = reinterpret_cast<const guchar*>(value);
-       *current != '\0'; ++current) {
-    if (!g_ascii_isalnum(*current) && *current != '_' && *current != '-') {
+  for (const gchar* current = value; *current != '\0';
+       current = g_utf8_next_char(current)) {
+    const gunichar character = g_utf8_get_char(current);
+    if (!g_unichar_isalnum(character) && character != '_' &&
+        character != '-') {
+      return FALSE;
+    }
+  }
+  g_autofree gchar* upper = g_ascii_strup(value, -1);
+  const gchar* reserved[] = {
+      "CON",  "PRN",  "AUX",  "NUL",  "COM1", "COM2", "COM3",
+      "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
+      "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+      "LPT9",
+  };
+  for (const gchar* candidate : reserved) {
+    if (std::strcmp(upper, candidate) == 0) {
       return FALSE;
     }
   }

@@ -3350,5 +3350,14 @@
   "settingsHistoryExcludedPathsHint": "یک مسیر مطلق در هر خط",
   "settingsSecondsValue": "{value} ثانیه",
   "settingsDaysValue": "{value} روز",
-  "settingsMebibytesValue": "{value} مگابایت"
+  "settingsMebibytesValue": "{value} مگابایت",
+  "preview": "پیش‌نمایش",
+  "topicRenamePreviewTitle": "پیش‌نمایش تغییر نام",
+  "topicRenamePathChange": "مسیر: {oldPath} → {newPath}",
+  "topicRenameIdChange": "شناسهٔ موضوع: {oldId} → {newId}",
+  "topicRenameUrlChange": "نمونهٔ {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "فایل‌های تحت تأثیر",
+  "renameTopicFileInstead": "شناسه‌های موضوع از نام فایل‌هایشان گرفته می‌شوند. از «تغییر نام فایل موضوع» در فهرست مطالب یا نوار کناری فایل‌ها استفاده کنید.",
+  "diagnosticWritersideWebFileNameInvalid": "نمونهٔ \"{instanceId}\" نام فایل وب نامعتبر \"{webFileName}\" را برای موضوع \"{topic}\" منتشر می‌کند.",
+  "diagnosticWritersideWebFileNameCollision": "نمونهٔ \"{instanceId}\" هر دو موضوع \"{firstTopic}\" و \"{secondTopic}\" را با نام \"{webFileName}\" منتشر می‌کند."
 }

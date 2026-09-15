@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "한 줄에 하나의 절대 경로",
   "settingsSecondsValue": "{value} 초",
   "settingsDaysValue": "{value} 일",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "미리 보기",
+  "topicRenamePreviewTitle": "이름 바꾸기 미리 보기",
+  "topicRenamePathChange": "경로: {oldPath} → {newPath}",
+  "topicRenameIdChange": "토픽 ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "인스턴스 {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "영향을 받는 파일",
+  "renameTopicFileInstead": "토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.",
+  "diagnosticWritersideWebFileNameInvalid": "인스턴스 \"{instanceId}\"에서 토픽 \"{topic}\"의 웹 파일 이름 \"{webFileName}\"이 올바르지 않습니다.",
+  "diagnosticWritersideWebFileNameCollision": "인스턴스 \"{instanceId}\"에서 \"{firstTopic}\"과 \"{secondTopic}\"이 모두 \"{webFileName}\"으로 게시됩니다."
 }

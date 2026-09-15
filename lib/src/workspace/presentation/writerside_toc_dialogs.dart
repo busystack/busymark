@@ -1,13 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_topic_file_name.dart';
 import '../../writerside/writerside_title_editor.dart';
 import '../workspace_service.dart';
+
+enum WritersideTopicRenameDialogAction { preview, refactor }
+
+class WritersideTopicRenameDialogResult {
+  const WritersideTopicRenameDialogResult({
+    required this.fileName,
+    required this.action,
+  });
+
+  final String fileName;
+  final WritersideTopicRenameDialogAction action;
+}
+
+class WritersideTopicRenameDialog extends StatefulWidget {
+  const WritersideTopicRenameDialog({super.key, required this.currentFileName});
+
+  final String currentFileName;
+
+  @override
+  State<WritersideTopicRenameDialog> createState() =>
+      _WritersideTopicRenameDialogState();
+}
+
+class _WritersideTopicRenameDialogState
+    extends State<WritersideTopicRenameDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.currentFileName,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String? get _error {
+    try {
+      validateWritersideTopicFileName(
+        _controller.text,
+        requiredExtension: p.extension(widget.currentFileName).toLowerCase(),
+      );
+      return null;
+    } on Object {
+      return context.l10n.errorTopicFileNameInvalid;
+    }
+  }
+
+  void _submit(WritersideTopicRenameDialogAction action) {
+    if (_error != null) return;
+    Navigator.pop(
+      context,
+      WritersideTopicRenameDialogResult(
+        fileName: _controller.text.trim(),
+        action: action,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => BusyMarkDialogShell(
+    title: context.l10n.rename,
+    maxWidth: BusyMarkSizes.dialog,
+    actions: [
+      BusyMarkDialogButton(
+        label: context.l10n.cancel,
+        onPressed: () => Navigator.pop(context),
+      ),
+      BusyMarkDialogButton(
+        label: context.l10n.preview,
+        onPressed: _error == null
+            ? () => _submit(WritersideTopicRenameDialogAction.preview)
+            : null,
+      ),
+      BusyMarkDialogButton(
+        label: context.l10n.tocRefactorMenu,
+        suggested: true,
+        onPressed: _error == null
+            ? () => _submit(WritersideTopicRenameDialogAction.refactor)
+            : null,
+      ),
+    ],
+    children: [
+      Text(widget.currentFileName),
+      const SizedBox(height: BusyMarkSpacing.sm),
+      TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          labelText: context.l10n.fileName,
+          errorText: _error,
+        ),
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (_) => _submit(WritersideTopicRenameDialogAction.refactor),
+      ),
+    ],
+  );
+}
 
 class WritersideTitleDialog extends StatefulWidget {
   const WritersideTitleDialog({super.key, required this.session});

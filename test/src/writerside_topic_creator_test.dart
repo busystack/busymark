@@ -73,6 +73,42 @@ void main() {
     },
   );
 
+  test('creates Unicode Markdown and XML topic filenames', () async {
+    final root = await tempModule();
+    final target = WritersideTopicCreateTarget(
+      rootPath: root.path,
+      treePath: p.join(root.path, 'ug.tree'),
+      topicsRootDir: 'topics',
+      existingTopicIds: const {'intro'},
+    );
+
+    final markdown = await creator.create(
+      target,
+      const WritersideTopicCreateRequest(
+        title: 'Руководство',
+        fileName: 'Руководство',
+      ),
+    );
+    final xml = await creator.create(
+      target,
+      const WritersideTopicCreateRequest(
+        title: '開始',
+        fileName: '開始.topic',
+        format: WritersideTopicFormat.xml,
+      ),
+    );
+
+    expect(p.basename(markdown.topicPath), 'Руководство.md');
+    expect(File(markdown.topicPath).existsSync(), isTrue);
+    expect(p.basename(xml.topicPath), '開始.topic');
+    expect(
+      XmlDocument.parse(
+        File(xml.topicPath).readAsStringSync(),
+      ).rootElement.getAttribute('id'),
+      '開始',
+    );
+  });
+
   test('requires a reference for every non-root placement', () async {
     final root = await tempModule();
 

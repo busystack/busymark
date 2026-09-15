@@ -92,6 +92,27 @@ void main() {
   );
 
   test(
+    'topic symbols cannot be renamed independently of their files',
+    () async {
+      final fixture = await _ProjectFixture.create();
+      addTearDown(fixture.dispose);
+      final project = await const WritersideProjectService().load(fixture.path);
+      final topics = project.index.symbols.where(
+        (symbol) =>
+            symbol.kind == WritersideSymbolKind.topic &&
+            symbol.filePath.endsWith(
+              'main${p.separator}topics${p.separator}main.topic',
+            ),
+      );
+
+      expect(topics, isNotEmpty);
+      for (final topic in topics) {
+        expect(project.index.safeRenameEdits(topic, 'renamed-main'), isEmpty);
+      }
+    },
+  );
+
+  test(
     'workspace module and instance selection changes active context',
     () async {
       final fixture = await _ProjectFixture.create();

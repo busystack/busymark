@@ -1608,6 +1608,30 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doRefactor => 'Refactoriser';
 
   @override
+  String get preview => 'Aperçu';
+
+  @override
+  String get topicRenamePreviewTitle => 'Aperçu du renommage';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Chemin : $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID du sujet : $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instance $instance : $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Fichiers concernés';
+
+  @override
   String get orphanTopicTitle => 'Le fichier du sujet n’est plus utilisé';
 
   @override
@@ -2445,6 +2469,25 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'L’ID d’élément « $id » apparaît plusieurs fois.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'L’instance \"$instanceId\" publie le nom de fichier web non valide \"$webFileName\" pour le sujet \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'L’instance \"$instanceId\" publie \"$firstTopic\" et \"$secondTopic\" sous le nom \"$webFileName\".';
   }
 
   @override
@@ -4000,6 +4043,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Impossible de renommer ce symbole en toute sécurité. Vérifiez son nom et actualisez la référence avant de réessayer.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.';
 
   @override
   String get keyboardLayout => 'Disposition du clavier';

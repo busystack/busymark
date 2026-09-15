@@ -19,6 +19,7 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
@@ -48,13 +49,16 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_toc_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
+import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/gestures.dart';
@@ -2722,6 +2726,234 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.dragRequest!.sources.single.sourcePath, [0]);
       expect(controller.dragRequest!.referencePath, [41]);
+    },
+  );
+
+  testWidgets(
+    'Writerside topic rename uses Preview, Do Refactor, and shared entry points',
+    (tester) async {
+      const yaruWindowChannel = MethodChannel('yaru_window');
+      const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(yaruWindowChannel, (call) async {
+            if (call.method == 'state') return <String, Object?>{};
+            return null;
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(yaruWindowEventsChannel, (_) async => null);
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          ..setMockMethodCallHandler(yaruWindowChannel, null)
+          ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
+      });
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+      await binding.setSurfaceSize(const Size(1440, 900));
+      addTearDown(() async {
+        binding.platformDispatcher.defaultRouteNameTestValue = '/';
+        await binding.setSurfaceSize(null);
+      });
+      final root = Directory.systemTemp.createTempSync(
+        'busymark-topic-rename-ui-',
+      );
+      addTearDown(() {
+        if (root.existsSync()) root.deleteSync(recursive: true);
+      });
+      final topics = Directory(p.join(root.path, 'topics'))..createSync();
+      final configPath = p.join(root.path, 'writerside.cfg');
+      final treePath = p.join(root.path, 'guide.tree');
+      final topicPath = p.join(topics.path, 'guide.topic');
+      final linksPath = p.join(topics.path, 'links.md');
+      File(configPath).writeAsStringSync('''
+<ihp version="2.0"><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+      File(treePath).writeAsStringSync('''
+<instance-profile id="guide" start-page="guide.topic">
+  <toc-element topic="guide.topic"/>
+  <toc-element topic="links.md"/>
+</instance-profile>
+''');
+      const topicSource =
+          '<topic id="guide" title="Guide">'
+          '<chapter id="install" title="Install"/>'
+          '</topic>\n';
+      File(topicPath).writeAsStringSync(topicSource);
+      File(linksPath).writeAsStringSync('# Links\n\n[Guide](guide.topic)\n');
+      final workspace = (await tester.runAsync(
+        () => const WorkspaceService().openPath(root.path),
+      ))!;
+      final setupPlan = (await tester.runAsync(
+        () => const WorkspaceService().prepareWritersideTopicRename(
+          workspace,
+          topicPath: topicPath,
+          newFileName: 'setup.topic',
+          topicModuleRoot: root.path,
+        ),
+      ))!;
+      final controller =
+          _MutableWorkspaceController(
+              WorkspaceState(workspace: workspace, activeText: topicSource),
+            )
+            ..topicRenamePlans['setup.topic'] = setupPlan
+            ..simulateTopicRename = true;
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceControllerProvider.overrideWith(() => controller),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pump();
+      for (var index = 0; index < 10; index++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      Future<void> openPopup(Finder anchor) async {
+        await tester.tap(anchor, buttons: kSecondaryButton);
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> pressShiftF6() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.f6);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.f6);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> enterRename(String fileName) async {
+        final field = find.descendant(
+          of: find.byType(BusyMarkDialogShell),
+          matching: find.byType(TextField),
+        );
+        expect(field, findsOneWidget);
+        await tester.enterText(field, fileName);
+        await tester.pump();
+      }
+
+      await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.toc));
+      await tester.pumpAndSettle();
+      final firstRow = find.byKey(
+        const ValueKey('workspace-sidebar-toc-row-0'),
+      );
+      await tester.tap(firstRow);
+      await tester.pump();
+
+      await pressShiftF6();
+      expect(find.text(l10n.rename), findsOneWidget);
+      expect(find.text(l10n.preview), findsOneWidget);
+      expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+      expect(File(topicPath).readAsStringSync(), topicSource);
+
+      await openPopup(firstRow);
+      final renameMenuItem = find.text(l10n.renameTopicFile);
+      expect(renameMenuItem, findsOneWidget);
+      await tester.tap(renameMenuItem);
+      await tester.pumpAndSettle();
+      await enterRename('setup.topic');
+      await tester.tap(find.text(l10n.preview));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        find.text(l10n.topicRenamePreviewTitle),
+        findsOneWidget,
+        reason:
+            'prepared=${controller.topicRenamePrepareCount}, '
+            'error=${controller.state.message?.error}',
+      );
+      expect(find.text(l10n.doRefactor), findsOneWidget);
+      expect(find.text('guide.topic → setup.topic'), findsOneWidget);
+      expect(find.text('guide.tree'), findsOneWidget);
+      expect(find.text('links.md'), findsOneWidget);
+      expect(File(topicPath).readAsStringSync(), topicSource);
+      expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
+
+      controller.rejectTopicRename = true;
+      await tester.tap(find.text(l10n.doRefactor));
+      await tester.pump();
+      expect(find.text(l10n.topicRenamePreviewTitle), findsOneWidget);
+      expect(File(topicPath).readAsStringSync(), topicSource);
+      expect(File(p.join(topics.path, 'setup.topic')).existsSync(), isFalse);
+
+      controller.rejectTopicRename = false;
+      await tester.tap(find.text(l10n.doRefactor));
+      await tester.pumpAndSettle();
+      expect(controller.appliedTopicRenamePlan, same(setupPlan));
+      expect(File(topicPath).readAsStringSync(), topicSource);
+      expect(File(treePath).readAsStringSync(), contains('guide.topic'));
+      expect(File(linksPath).readAsStringSync(), contains('(guide.topic)'));
+
+      await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.files));
+      await tester.pumpAndSettle();
+      controller.appliedTopicRenamePlan = null;
+      await openPopup(find.text('guide.topic').first);
+      await tester.tap(find.text(l10n.renameTopicFile));
+      await tester.pumpAndSettle();
+      await enterRename('setup.topic');
+      await tester.tap(find.text(l10n.tocRefactorMenu));
+      await tester.pumpAndSettle();
+      expect(controller.appliedTopicRenamePlan, same(setupPlan));
+
+      await openPopup(find.text('guide.tree'));
+      await tester.tap(find.text(l10n.rename));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.preview), findsNothing);
+      expect(find.text(l10n.rename), findsWidgets);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      await openPopup(find.text('guide.topic').first);
+      await tester.tap(find.text(l10n.renameTopicFile));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.preview), findsOneWidget);
+      expect(find.text(l10n.tocRefactorMenu), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      final sourceField = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      expect(sourceField, findsOneWidget);
+      await tester.tap(sourceField);
+      final sourceController = tester
+          .widget<TextField>(sourceField)
+          .controller!;
+      sourceController.selection = TextSelection.collapsed(
+        offset: topicSource.indexOf('guide') + 1,
+      );
+      await pressShiftF6();
+      expect(find.text(l10n.renameTopicFileInstead), findsOneWidget);
+      expect(controller.state.activeText, topicSource);
+      expect(File(topicPath).readAsStringSync(), topicSource);
+      await tester.tap(find.text(l10n.close));
+      await tester.pumpAndSettle();
+
+      await tester.tap(sourceField);
+      sourceController.selection = TextSelection.collapsed(
+        offset: topicSource.indexOf('install') + 1,
+      );
+      await pressShiftF6();
+      expect(find.text('${l10n.rename}: install'), findsOneWidget);
+      await tester.enterText(find.byType(TextFormField), 'renamed-install');
+      await tester.tap(find.text(l10n.rename));
+      await tester.pumpAndSettle();
+      expect(controller.state.activeText, contains('id="renamed-install"'));
+      expect(controller.state.activeText, contains('id="guide"'));
     },
   );
 
@@ -10633,6 +10865,12 @@ class _MutableWorkspaceController extends WorkspaceController {
   String? selectedWritersideInstanceId;
   String? openedFilePath;
   DocumentViewModePreference? requestedEditorMode;
+  var topicRenamePrepareCount = 0;
+  final topicRenamePlans = <String, WritersideTopicRenamePlan>{};
+  Future<bool>? topicRenameApplication;
+  var simulateTopicRename = false;
+  var rejectTopicRename = false;
+  WritersideTopicRenamePlan? appliedTopicRenamePlan;
 
   @override
   void updateActiveEditorMode(DocumentViewModePreference mode) {
@@ -10655,6 +10893,42 @@ class _MutableWorkspaceController extends WorkspaceController {
 
   @override
   Future<void> flushPersistence() async {}
+
+  @override
+  Future<WritersideProjectIndex?> writersideEditorIndex() async =>
+      state.workspace?.writersideProject?.index;
+
+  @override
+  Future<bool> applyWritersideRename(List<WritersideRenameEdit> edits) async {
+    if (edits.isEmpty) return false;
+    final activePath = state.workspace?.activeFilePath;
+    if (activePath == null ||
+        edits.any((edit) => edit.filePath != activePath)) {
+      return false;
+    }
+    var source = state.activeText;
+    final ordered = edits.toList()
+      ..sort(
+        (first, second) =>
+            second.span.startOffset.compareTo(first.span.startOffset),
+      );
+    for (final edit in ordered) {
+      final expected = edit.expectedText;
+      if (expected == null ||
+          edit.span.endOffset > source.length ||
+          source.substring(edit.span.startOffset, edit.span.endOffset) !=
+              expected) {
+        return false;
+      }
+      source = source.replaceRange(
+        edit.span.startOffset,
+        edit.span.endOffset,
+        edit.replacement,
+      );
+    }
+    state = state.copyWith(activeText: source, isDirty: true);
+    return true;
+  }
 
   @override
   Future<ValidationOutcome> validateActive() async => ValidationOutcome(
@@ -10685,6 +10959,81 @@ class _MutableWorkspaceController extends WorkspaceController {
     createdTopicRequest = request;
     createdTopicTreePath = instanceTreePath;
     return true;
+  }
+
+  @override
+  Future<WritersideTopicRenamePlan?> prepareWritersideTopicRename(
+    String topicPath,
+    String newFileName, {
+    required String topicModuleRoot,
+  }) async {
+    topicRenamePrepareCount++;
+    final prepared = topicRenamePlans[newFileName];
+    if (prepared != null) return prepared;
+    try {
+      return await const WorkspaceService().prepareWritersideTopicRename(
+        state.workspace!,
+        topicPath: topicPath,
+        newFileName: newFileName,
+        topicModuleRoot: topicModuleRoot,
+      );
+    } on Object catch (error) {
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) {
+    appliedTopicRenamePlan = plan;
+    if (rejectTopicRename) {
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: BusyMarkException(
+            'writerside.topic-file.topic-inventory-changed',
+            args: {'path': plan.oldTopicPath},
+          ),
+        ),
+      );
+      return Future.value(false);
+    }
+    if (simulateTopicRename) return Future.value(true);
+    final operation = _applyWritersideTopicRename(plan);
+    topicRenameApplication = operation;
+    return operation;
+  }
+
+  Future<bool> _applyWritersideTopicRename(
+    WritersideTopicRenamePlan plan,
+  ) async {
+    try {
+      await const WorkspaceService().applyWritersideTopicRename(plan);
+      final refreshed = await const WorkspaceService().openPath(
+        state.workspace!.rootPath,
+      );
+      final activePath = refreshed.activeFilePath;
+      state = WorkspaceState(
+        workspace: refreshed,
+        activeText: activePath == null
+            ? ''
+            : File(activePath).readAsStringSync(),
+      );
+      return true;
+    } on Object catch (error) {
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return false;
+    }
   }
 
   @override

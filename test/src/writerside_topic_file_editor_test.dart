@@ -910,6 +910,313 @@ Following-line destination: [Guide][next].
     ]);
   });
 
+  test('missing or mismatched XML root IDs block rename atomically', () async {
+    for (final source in [
+      '<topic title="Guide"><p>Missing.</p></topic>\n',
+      '<topic id="wrong" title="Guide"><p>Mismatch.</p></topic>\n',
+    ]) {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.topic">
+  <toc-element topic="guide.topic"/>
+</instance-profile>
+''',
+        },
+        topics: {'guide.topic': source},
+      );
+      final treePath = p.join(fixture.root.path, 'guide.tree');
+      final originalTree = File(treePath).readAsStringSync();
+
+      await expectLater(
+        editor.prepareRename(
+          module: fixture.module,
+          topic: _topic(fixture.module, 'guide.topic'),
+          newFileName: 'renamed.topic',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            source.contains('wrong')
+                ? 'writerside.topic-file.root-id-mismatch'
+                : 'writerside.topic-file.missing-root-id',
+          ),
+        ),
+      );
+
+      expect(File(treePath).readAsStringSync(), originalTree);
+      expect(
+        File(
+          p.join(fixture.root.path, 'topics', 'guide.topic'),
+        ).readAsStringSync(),
+        source,
+      );
+      expect(
+        File(p.join(fixture.root.path, 'topics', 'renamed.topic')).existsSync(),
+        isFalse,
+      );
+    }
+  });
+
+  test(
+    'prepared rename is read-only and applies its exact captured changes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.topic">
+  <toc-element topic="guide.topic"/>
+  <toc-element topic="links.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.topic': '<topic id="guide" title="Guide"/>\n',
+          'links.md': '# Links\n\n[Guide](guide.topic)\n',
+        },
+      );
+      final topic = _topic(fixture.module, 'guide.topic');
+      final treePath = p.join(fixture.root.path, 'guide.tree');
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      final originalTree = File(treePath).readAsStringSync();
+      final originalTopic = File(topic.filePath).readAsStringSync();
+      final originalLinks = File(linksPath).readAsStringSync();
+
+      final plan = await editor.prepareRename(
+        module: fixture.module,
+        topic: topic,
+        newFileName: 'setup.topic',
+      );
+
+      expect(File(topic.filePath).readAsStringSync(), originalTopic);
+      expect(File(treePath).readAsStringSync(), originalTree);
+      expect(File(linksPath).readAsStringSync(), originalLinks);
+      expect(File(plan.newTopicPath).existsSync(), isFalse);
+      expect(plan.oldTopicReference, 'guide.topic');
+      expect(plan.newTopicReference, 'setup.topic');
+      expect(plan.oldTopicId, 'guide');
+      expect(plan.newTopicId, 'setup');
+      expect(plan.updatesXmlTopicId, isTrue);
+      expect(
+        plan.changedFiles.map((change) => change.path),
+        containsAll([treePath, linksPath]),
+      );
+
+      await editor.applyRename(plan);
+
+      expect(File(topic.filePath).existsSync(), isFalse);
+      expect(
+        File(plan.newTopicPath).readAsStringSync(),
+        contains('id="setup"'),
+      );
+      expect(
+        File(treePath).readAsStringSync(),
+        contains('topic="setup.topic"'),
+      );
+      expect(File(linksPath).readAsStringSync(), contains('(setup.topic)'));
+    },
+  );
+
+  test('stale prepared rename fails before any partial write', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="links.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'links.md': '# Links\n\n[Guide](guide.md)\n',
+      },
+    );
+    final topic = _topic(fixture.module, 'guide.md');
+    final treePath = p.join(fixture.root.path, 'guide.tree');
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    final originalTree = File(treePath).readAsStringSync();
+    final plan = await editor.prepareRename(
+      module: fixture.module,
+      topic: topic,
+      newFileName: 'setup.md',
+    );
+    const externallyChanged = '# Externally changed\n\n[Guide](guide.md)\n';
+    File(linksPath).writeAsStringSync(externallyChanged);
+
+    await expectLater(
+      editor.applyRename(plan),
+      throwsA(isA<BusyMarkException>()),
+    );
+
+    expect(File(topic.filePath).readAsStringSync(), '# Guide\n');
+    expect(File(plan.newTopicPath).existsSync(), isFalse);
+    expect(File(treePath).readAsStringSync(), originalTree);
+    expect(File(linksPath).readAsStringSync(), externallyChanged);
+  });
+
+  test('rename preflights collisions only in publishing instances', () async {
+    final colliding = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="custom.topic"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'custom.topic': '''
+<topic id="custom" title="Custom"><web-file-name>setup.html</web-file-name></topic>
+''',
+      },
+    );
+
+    await expectLater(
+      editor.prepareRename(
+        module: colliding.module,
+        topic: _topic(colliding.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.web-file-name-collision',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(colliding.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+
+    final disjoint = await _fixture(
+      trees: {
+        'guide.tree': _instanceTree('guide', ['guide.md']),
+        'other.tree': _instanceTree('other', ['custom.topic']),
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'custom.topic': '''
+<topic id="custom" title="Custom"><web-file-name>setup.html</web-file-name></topic>
+''',
+      },
+    );
+    final result = await editor.rename(
+      module: disjoint.module,
+      topic: _topic(disjoint.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+    expect(File(result.newTopicPath).existsSync(), isTrue);
+  });
+
+  test(
+    'origin topic collisions block a project-wide prepared rename',
+    () async {
+      final project = await Directory.systemTemp.createTemp(
+        'busymark-topic-rename-origin-',
+      );
+      addTearDown(() async {
+        if (await project.exists()) await project.delete(recursive: true);
+      });
+      final mainRoot = Directory(p.join(project.path, 'main'))..createSync();
+      final sharedRoot = Directory(p.join(project.path, 'shared'))
+        ..createSync();
+      Directory(p.join(mainRoot.path, 'topics')).createSync();
+      Directory(p.join(sharedRoot.path, 'topics')).createSync();
+      File(p.join(mainRoot.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+      File(p.join(mainRoot.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="shared.topic" origin="shared"/>
+</instance-profile>
+''');
+      File(
+        p.join(mainRoot.path, 'topics', 'guide.md'),
+      ).writeAsStringSync('# Guide\n');
+      File(p.join(sharedRoot.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="lib.tree"/></ihp>
+''');
+      File(p.join(sharedRoot.path, 'lib.tree')).writeAsStringSync('''
+<instance-profile id="lib" is-library="true">
+  <toc-element topic="shared.topic"/>
+</instance-profile>
+''');
+      File(p.join(sharedRoot.path, 'topics', 'shared.topic')).writeAsStringSync(
+        '''
+<topic id="shared" title="Shared"><web-file-name>setup.html</web-file-name></topic>
+''',
+      );
+      final main = await const WritersideModuleService().load(mainRoot.path);
+      final shared = await const WritersideModuleService().load(
+        sharedRoot.path,
+      );
+
+      await expectLater(
+        editor.prepareRename(
+          module: main,
+          topic: _topic(main, 'guide.md'),
+          newFileName: 'setup.md',
+          projectModules: [main, shared],
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.web-file-name-collision',
+          ),
+        ),
+      );
+      expect(
+        File(p.join(mainRoot.path, 'topics', 'guide.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(mainRoot.path, 'topics', 'setup.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test('Unicode Markdown and XML topic filenames rename safely', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': _instanceTree('guide', ['Начало.md', '開始.topic']),
+      },
+      topics: {
+        'Начало.md': '# Начало\n',
+        '開始.topic': '<topic id="開始" title="開始"/>\n',
+      },
+    );
+
+    final markdown = await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'Начало.md'),
+      newFileName: 'Руководство.md',
+    );
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    final xml = await editor.rename(
+      module: reloaded,
+      topic: _topic(reloaded, '開始.topic'),
+      newFileName: '指南.topic',
+    );
+
+    expect(File(markdown.newTopicPath).existsSync(), isTrue);
+    expect(
+      XmlDocument.parse(
+        File(xml.newTopicPath).readAsStringSync(),
+      ).rootElement.getAttribute('id'),
+      '指南',
+    );
+  });
+
   test('rename supports Writerside .markdown topics', () async {
     final fixture = await _fixture(
       trees: {
@@ -1578,3 +1885,10 @@ List<String> _directTopicReferences(XmlElement element) {
       if (child.name.local == 'toc-element') child.getAttribute('topic')!,
   ];
 }
+
+String _instanceTree(String id, List<String> topics) =>
+    '''
+<instance-profile id="$id">
+${[for (final topic in topics) '  <toc-element topic="$topic"/>'].join('\n')}
+</instance-profile>
+''';

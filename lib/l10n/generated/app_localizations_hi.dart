@@ -1581,6 +1581,30 @@ class AppLocalizationsHi extends AppLocalizations {
   String get doRefactor => 'रीफ़ैक्टर करें';
 
   @override
+  String get preview => 'पूर्वावलोकन';
+
+  @override
+  String get topicRenamePreviewTitle => 'नाम बदलने का पूर्वावलोकन';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'पथ: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'विषय ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'इंस्टेंस $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'प्रभावित फ़ाइलें';
+
+  @override
   String get orphanTopicTitle => 'विषय फ़ाइल अब उपयोग में नहीं है';
 
   @override
@@ -2411,6 +2435,25 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'एलिमेंट id \"$id\" एक से अधिक बार दिखाई देता है।';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'इंस्टेंस \"$instanceId\" विषय \"$topic\" के लिए अमान्य वेब फ़ाइल नाम \"$webFileName\" प्रकाशित करता है।';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'इंस्टेंस \"$instanceId\" \"$firstTopic\" और \"$secondTopic\" दोनों को \"$webFileName\" के रूप में प्रकाशित करता है।';
   }
 
   @override
@@ -3955,6 +3998,10 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'प्रतीक का नाम सुरक्षित रूप से नहीं बदला जा सकता। नाम जाँचें और दोबारा प्रयास करने से पहले संदर्भ रीफ़्रेश करें।';
+
+  @override
+  String get renameTopicFileInstead =>
+      'विषय ID उनके फ़ाइल नामों से बनते हैं। विषय-सूची या फ़ाइलें साइडबार में ‘विषय फ़ाइल का नाम बदलें’ का उपयोग करें।';
 
   @override
   String get keyboardLayout => 'कीबोर्ड लेआउट';

@@ -3308,5 +3308,14 @@
   "settingsHistoryExcludedPathsHint": "مسار مطلق واحد في كل سطر",
   "settingsSecondsValue": "{value} ثوان",
   "settingsDaysValue": "{value} أيام",
-  "settingsMebibytesValue": "{value} ميجابايت"
+  "settingsMebibytesValue": "{value} ميجابايت",
+  "preview": "معاينة",
+  "topicRenamePreviewTitle": "معاينة إعادة التسمية",
+  "topicRenamePathChange": "المسار: {oldPath} → {newPath}",
+  "topicRenameIdChange": "معرّف الموضوع: {oldId} → {newId}",
+  "topicRenameUrlChange": "المثيل {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "الملفات المتأثرة",
+  "renameTopicFileInstead": "تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.",
+  "diagnosticWritersideWebFileNameInvalid": "ينشر المثيل \"{instanceId}\" اسم ملف ويب غير صالح \"{webFileName}\" للموضوع \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "ينشر المثيل \"{instanceId}\" الموضوعين \"{firstTopic}\" و\"{secondTopic}\" باسم \"{webFileName}\"."
 }

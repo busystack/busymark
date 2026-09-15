@@ -1608,6 +1608,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get doRefactor => 'Выполнить рефакторинг';
 
   @override
+  String get preview => 'Предпросмотр';
+
+  @override
+  String get topicRenamePreviewTitle => 'Предпросмотр переименования';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Путь: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID темы: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Экземпляр $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Затронутые файлы';
+
+  @override
   String get orphanTopicTitle => 'Файл темы больше не используется';
 
   @override
@@ -2446,6 +2470,25 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'ID элемента «$id» встречается несколько раз.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Экземпляр \"$instanceId\" публикует недопустимое имя веб-файла \"$webFileName\" для темы \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Экземпляр \"$instanceId\" публикует темы \"$firstTopic\" и \"$secondTopic\" под одним именем \"$webFileName\".';
   }
 
   @override
@@ -4015,6 +4058,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Невозможно безопасно переименовать символ. Проверьте имя и обновите ссылку перед повторной попыткой.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'ID тем определяются именами их файлов. Используйте «Переименовать файл темы» в оглавлении или на боковой панели «Файлы».';
 
   @override
   String get keyboardLayout => 'Раскладка клавиатуры';

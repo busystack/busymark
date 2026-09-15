@@ -1537,6 +1537,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get doRefactor => 'リファクタリングを実行';
 
   @override
+  String get preview => 'プレビュー';
+
+  @override
+  String get topicRenamePreviewTitle => '名前変更のプレビュー';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'パス: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'トピック ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'インスタンス $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => '影響を受けるファイル';
+
+  @override
   String get orphanTopicTitle => 'トピックファイルは使用されていません';
 
   @override
@@ -2341,6 +2365,25 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return '要素 ID「$id」が複数回登場します。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'インスタンス \"$instanceId\" はトピック \"$topic\" に無効な Web ファイル名 \"$webFileName\" を使用しています。';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'インスタンス \"$instanceId\" は \"$firstTopic\" と \"$secondTopic\" の両方を \"$webFileName\" として公開します。';
   }
 
   @override
@@ -3854,6 +3897,10 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'シンボル名を安全に変更できません。名前を確認し、参照を更新してから再試行してください。';
+
+  @override
+  String get renameTopicFileInstead =>
+      'トピック ID はファイル名から生成されます。目次またはファイルサイドバーの「トピックファイルの名前を変更」を使用してください。';
 
   @override
   String get keyboardLayout => 'キーボード配列';

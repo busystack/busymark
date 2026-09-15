@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "每行一个绝对路径",
   "settingsSecondsValue": "{value} 秒",
   "settingsDaysValue": "{value} 天",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "预览",
+  "topicRenamePreviewTitle": "重命名预览",
+  "topicRenamePathChange": "路径：{oldPath} → {newPath}",
+  "topicRenameIdChange": "主题 ID：{oldId} → {newId}",
+  "topicRenameUrlChange": "实例 {instance}：{oldName} → {newName}",
+  "topicRenameAffectedFiles": "受影响的文件",
+  "renameTopicFileInstead": "主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。",
+  "diagnosticWritersideWebFileNameInvalid": "实例 \"{instanceId}\" 为主题 \"{topic}\" 发布了无效的 Web 文件名 \"{webFileName}\"。",
+  "diagnosticWritersideWebFileNameCollision": "实例 \"{instanceId}\" 将 \"{firstTopic}\" 和 \"{secondTopic}\" 都发布为 \"{webFileName}\"。"
 }

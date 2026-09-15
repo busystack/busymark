@@ -1603,6 +1603,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String get doRefactor => 'Refactorizar';
 
   @override
+  String get preview => 'Vista previa';
+
+  @override
+  String get topicRenamePreviewTitle => 'Vista previa del cambio de nombre';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Ruta: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID del tema: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instancia $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Archivos afectados';
+
+  @override
   String get orphanTopicTitle => 'El archivo del tema ya no se usa';
 
   @override
@@ -2439,6 +2463,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'El ID del elemento \"$id\" aparece más de una vez.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'La instancia \"$instanceId\" publica el nombre de archivo web no válido \"$webFileName\" para el tema \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'La instancia \"$instanceId\" publica \"$firstTopic\" y \"$secondTopic\" como \"$webFileName\".';
   }
 
   @override
@@ -3999,6 +4042,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'No se puede cambiar el nombre del símbolo de forma segura. Compruebe el nombre y actualice la referencia antes de volver a intentarlo.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Los ID de los temas proceden de sus nombres de archivo. Use «Cambiar nombre del archivo de tema» en la tabla de contenido o en la barra lateral Archivos.';
 
   @override
   String get keyboardLayout => 'Distribución del teclado';

@@ -1594,6 +1594,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get doRefactor => 'تنفيذ إعادة الهيكلة';
 
   @override
+  String get preview => 'معاينة';
+
+  @override
+  String get topicRenamePreviewTitle => 'معاينة إعادة التسمية';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'المسار: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'معرّف الموضوع: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'المثيل $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'الملفات المتأثرة';
+
+  @override
   String get orphanTopicTitle => 'لم يعد ملف الموضوع مستخدمًا';
 
   @override
@@ -2433,6 +2457,25 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'يظهر معرّف العنصر \"⁨$id⁩\" أكثر من مرة.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'ينشر المثيل \"$instanceId\" اسم ملف ويب غير صالح \"$webFileName\" للموضوع \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'ينشر المثيل \"$instanceId\" الموضوعين \"$firstTopic\" و\"$secondTopic\" باسم \"$webFileName\".';
   }
 
   @override
@@ -3999,6 +4042,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.';
 
   @override
   String get keyboardLayout => 'تخطيط لوحة المفاتيح';

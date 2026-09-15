@@ -3334,5 +3334,14 @@
   "settingsHistoryExcludedPathsHint": "Один абсолютный путь в строке",
   "settingsSecondsValue": "{value} секунды",
   "settingsDaysValue": "{value} дни",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Предпросмотр",
+  "topicRenamePreviewTitle": "Предпросмотр переименования",
+  "topicRenamePathChange": "Путь: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID темы: {oldId} → {newId}",
+  "topicRenameUrlChange": "Экземпляр {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Затронутые файлы",
+  "renameTopicFileInstead": "ID тем определяются именами их файлов. Используйте «Переименовать файл темы» в оглавлении или на боковой панели «Файлы».",
+  "diagnosticWritersideWebFileNameInvalid": "Экземпляр \"{instanceId}\" публикует недопустимое имя веб-файла \"{webFileName}\" для темы \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Экземпляр \"{instanceId}\" публикует темы \"{firstTopic}\" и \"{secondTopic}\" под одним именем \"{webFileName}\"."
 }

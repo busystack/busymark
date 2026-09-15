@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "Một đường dẫn tuyệt đối trên mỗi dòng",
   "settingsSecondsValue": "{value} giây",
   "settingsDaysValue": "{value} ngày",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Xem trước",
+  "topicRenamePreviewTitle": "Xem trước việc đổi tên",
+  "topicRenamePathChange": "Đường dẫn: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID chủ đề: {oldId} → {newId}",
+  "topicRenameUrlChange": "Phiên bản {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Các tệp bị ảnh hưởng",
+  "renameTopicFileInstead": "ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.",
+  "diagnosticWritersideWebFileNameInvalid": "Phiên bản \"{instanceId}\" xuất bản tên tệp web không hợp lệ \"{webFileName}\" cho chủ đề \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\"."
 }

@@ -363,6 +363,49 @@ void main() {
       );
     },
   );
+
+  test(
+    'Writerside publication uses canonical effective web filenames',
+    () async {
+      await module('module', 'docs', '''
+<instance-profile id="guide" start-page="Document_everything.topic">
+  <toc-element topic="Document_everything.topic"/>
+  <toc-element topic="My___Awesome.topic"/>
+  <toc-element topic="custom.topic"/>
+</instance-profile>
+''');
+      await put(
+        'module/topics/Document_everything.topic',
+        '<topic id="Document_everything" title="Document everything"/>',
+      );
+      await put(
+        'module/topics/My___Awesome.topic',
+        '<topic id="My___Awesome" title="Awesome"/>',
+      );
+      await put('module/topics/custom.topic', '''
+<topic id="custom" title="Custom">
+  <web-file-name>Keep_CASE.v2.html</web-file-name>
+</topic>
+''');
+
+      await site();
+
+      expect(
+        File(
+          p.join(root.path, 'site', 'document-everything.html'),
+        ).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(root.path, 'site', 'my-awesome.html')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(root.path, 'site', 'Keep_CASE.v2.html')).existsSync(),
+        isTrue,
+      );
+    },
+  );
   test(
     'source and media are captured before progress or later editor changes',
     () async {

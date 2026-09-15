@@ -239,6 +239,19 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
             ),
     'writerside.topic.duplicate-id' =>
       l10n.diagnosticWritersideTopicDuplicateId(value('id')),
+    'writerside.web-file-name.invalid' =>
+      l10n.diagnosticWritersideWebFileNameInvalid(
+        value('instanceId'),
+        value('webFileName'),
+        value('topic'),
+      ),
+    'writerside.web-file-name.collision' =>
+      l10n.diagnosticWritersideWebFileNameCollision(
+        value('instanceId'),
+        value('webFileName'),
+        value('firstTopic'),
+        value('secondTopic'),
+      ),
     'writerside.tree.missing-topic' =>
       l10n.diagnosticWritersideTreeMissingTopic(value('topic')),
     'writerside.tree.invalid-href' => l10n.diagnosticWritersideTreeInvalidHref(

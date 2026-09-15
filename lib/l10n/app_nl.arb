@@ -4867,5 +4867,14 @@
   "settingsHistoryExcludedPathsHint": "Eén absolute pad per regel",
   "settingsSecondsValue": "{value} seconden",
   "settingsDaysValue": "{value} dagen",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Voorbeeld",
+  "topicRenamePreviewTitle": "Voorbeeld van naamswijziging",
+  "topicRenamePathChange": "Pad: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Onderwerp-ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instantie {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Betrokken bestanden",
+  "renameTopicFileInstead": "Onderwerp-ID's zijn afgeleid van de bestandsnamen. Gebruik Onderwerpbestand hernoemen in de inhoudsopgave of de zijbalk Bestanden.",
+  "diagnosticWritersideWebFileNameInvalid": "Instantie \"{instanceId}\" publiceert de ongeldige webbestandsnaam \"{webFileName}\" voor onderwerp \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Instantie \"{instanceId}\" publiceert zowel \"{firstTopic}\" als \"{secondTopic}\" als \"{webFileName}\"."
 }

@@ -1534,6 +1534,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get doRefactor => '리팩토링 수행';
 
   @override
+  String get preview => '미리 보기';
+
+  @override
+  String get topicRenamePreviewTitle => '이름 바꾸기 미리 보기';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return '경로: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return '토픽 ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return '인스턴스 $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => '영향을 받는 파일';
+
+  @override
   String get orphanTopicTitle => '토픽 파일이 더 이상 사용되지 않습니다.';
 
   @override
@@ -2336,6 +2360,25 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return '요소 ID \"$id\"이(가) 두 번 이상 나타납니다.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return '인스턴스 \"$instanceId\"에서 토픽 \"$topic\"의 웹 파일 이름 \"$webFileName\"이 올바르지 않습니다.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return '인스턴스 \"$instanceId\"에서 \"$firstTopic\"과 \"$secondTopic\"이 모두 \"$webFileName\"으로 게시됩니다.';
   }
 
   @override
@@ -3847,6 +3890,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       '기호 이름을 안전하게 바꿀 수 없습니다. 이름을 확인하고 참조를 새로 고친 후 다시 시도하세요.';
+
+  @override
+  String get renameTopicFileInstead =>
+      '토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.';
 
   @override
   String get keyboardLayout => '키보드 배열';

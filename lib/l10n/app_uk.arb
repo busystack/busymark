@@ -3334,5 +3334,14 @@
   "settingsHistoryExcludedPathsHint": "Один абсолютний шлях на рядок",
   "settingsSecondsValue": "{value} секунди",
   "settingsDaysValue": "{value} дні",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Попередній перегляд",
+  "topicRenamePreviewTitle": "Попередній перегляд перейменування",
+  "topicRenamePathChange": "Шлях: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID теми: {oldId} → {newId}",
+  "topicRenameUrlChange": "Екземпляр {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Змінені файли",
+  "renameTopicFileInstead": "ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».",
+  "diagnosticWritersideWebFileNameInvalid": "Екземпляр \"{instanceId}\" публікує неприпустиме ім’я вебфайлу \"{webFileName}\" для теми \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Екземпляр \"{instanceId}\" публікує теми \"{firstTopic}\" і \"{secondTopic}\" під одним іменем \"{webFileName}\"."
 }

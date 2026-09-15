@@ -39,6 +39,7 @@ import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
     show isTextDocumentationPath, slugForHeading;
 import '../../core/source_span.dart';
+import '../../comparison/source_comparison.dart';
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
@@ -88,6 +89,8 @@ import '../../writerside/writerside_toc_editor.dart';
 import '../../writerside/writerside_toc_presentation.dart';
 import '../../writerside/writerside_toc_navigation.dart';
 import '../../writerside/writerside_topic_creator.dart';
+import '../../writerside/writerside_topic_file_editor.dart';
+import '../../writerside/writerside_topic_file_name.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
 import '../../writerside/writerside_video.dart';
 import '../workspace_controller.dart';
@@ -2197,6 +2200,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late String _workspaceId;
   String? _activeFilePath;
   _WritersideTopicUsageReview? _topicUsageReview;
+  WritersideTopicRenamePlan? _topicRenameReview;
   WorkspaceReplacementCancellation? _replacementCancellation;
 
   @override
@@ -2228,6 +2232,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
       _topicUsageReview = null;
+      _topicRenameReview = null;
       _tab = _initialSidebarTabIndex(widget.workspace);
       return;
     }
@@ -2299,6 +2304,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     onOpenResult: widget.onOpenSearchResult,
                     onReviewReplacement: _reviewWorkspaceReplacement,
                   )
+                : _topicRenameReview != null
+                ? _WritersideTopicRenameSidebar(
+                    plan: _topicRenameReview!,
+                    onBack: () => setState(() => _topicRenameReview = null),
+                    onDoRefactor: () => _applyReviewedTopicRename(context),
+                  )
                 : _topicUsageReview != null
                 ? _WritersideTopicUsagesSidebar(
                     review: _topicUsageReview!,
@@ -2311,6 +2322,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     _SidebarTab.files => _FilesTab(
                       workspace: widget.workspace,
                       onShowFileHistory: _showFileHistory,
+                      onRenameTopic: (path) =>
+                          _startWritersideTopicRename(context, path),
                       onRequestTopicRemoval: (target) =>
                           _runWritersideTopicRemoval(context, target),
                     ),
@@ -2319,6 +2332,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                       canExport: widget.canExport,
                       onExport: widget.onExport,
                       onShowFileHistory: _showFileHistory,
+                      onRenameTopic: (path) =>
+                          _startWritersideTopicRename(context, path),
                       onRequestTopicRemoval: (target) =>
                           _runWritersideTopicRemoval(context, target),
                     ),
@@ -2422,6 +2437,85 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _sidebarTabsFor(widget.workspace.kind),
       showGitChanges: false,
     );
+  }
+
+  Future<bool> _startWritersideTopicRename(
+    BuildContext context,
+    String topicPath,
+  ) async {
+    final project = widget.workspace.writersideProject;
+    final owner = project?.modules
+        .where(
+          (module) =>
+              module.topics.any((topic) => p.equals(topic.filePath, topicPath)),
+        )
+        .firstOrNull;
+    if (owner == null) return false;
+    final decision =
+        await showBusyMarkModalDialog<WritersideTopicRenameDialogResult>(
+          context,
+          barrierDismissible: false,
+          builder: (_) => WritersideTopicRenameDialog(
+            currentFileName: p.basename(topicPath),
+          ),
+        );
+    if (decision == null || !mounted || !context.mounted) return false;
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    var plan = await controller.prepareWritersideTopicRename(
+      topicPath,
+      decision.fileName,
+      topicModuleRoot: owner.rootPath,
+    );
+    if (plan == null || !mounted || !context.mounted) {
+      if (mounted) _showLatestWorkspaceMessage(this.context);
+      return false;
+    }
+    if (!await confirmSafeToChangeWorkspaceFiles(
+          context,
+          ref,
+          plan.affectedPaths,
+        ) ||
+        !mounted ||
+        !context.mounted) {
+      return false;
+    }
+    // Saving dirty participants invalidates the first snapshot. Build the one
+    // the user will actually review or commit after all buffers are clean.
+    plan = await controller.prepareWritersideTopicRename(
+      topicPath,
+      decision.fileName,
+      topicModuleRoot: owner.rootPath,
+    );
+    if (plan == null || !mounted || !context.mounted) {
+      if (mounted) _showLatestWorkspaceMessage(this.context);
+      return false;
+    }
+    if (decision.action == WritersideTopicRenameDialogAction.preview) {
+      setState(() {
+        _topicUsageReview = null;
+        _topicRenameReview = plan;
+      });
+      return true;
+    }
+    final applied = await controller.applyWritersideTopicRename(plan);
+    if (!mounted || !context.mounted) return applied;
+    if (!applied) _showLatestWorkspaceMessage(this.context);
+    return applied;
+  }
+
+  Future<void> _applyReviewedTopicRename(BuildContext context) async {
+    final plan = _topicRenameReview;
+    if (plan == null) return;
+    final applied = await ref
+        .read(workspaceControllerProvider.notifier)
+        .applyWritersideTopicRename(plan);
+    if (!mounted || !context.mounted) return;
+    if (applied) {
+      setState(() => _topicRenameReview = null);
+      _clearGitDetailSelection(ref);
+    } else {
+      _showLatestWorkspaceMessage(this.context);
+    }
   }
 
   Future<WritersideTopicRemovalResult?> _runWritersideTopicRemoval(
@@ -3948,6 +4042,180 @@ class _WritersideTopicUsagesSidebar extends StatelessWidget {
   }
 }
 
+class _WritersideTopicRenameSidebar extends StatefulWidget {
+  const _WritersideTopicRenameSidebar({
+    required this.plan,
+    required this.onBack,
+    required this.onDoRefactor,
+  });
+
+  final WritersideTopicRenamePlan plan;
+  final VoidCallback onBack;
+  final VoidCallback onDoRefactor;
+
+  @override
+  State<_WritersideTopicRenameSidebar> createState() =>
+      _WritersideTopicRenameSidebarState();
+}
+
+class _WritersideTopicRenameSidebarState
+    extends State<_WritersideTopicRenameSidebar> {
+  var _selected = 0;
+
+  List<({String path, String before, String after})> get _files => [
+    (
+      path: widget.plan.newTopicPath,
+      before: widget.plan.originalTargetSource,
+      after: widget.plan.resultingTargetSource,
+    ),
+    for (final change in widget.plan.changedFiles)
+      (
+        path: change.path,
+        before: change.originalSource,
+        after: change.resultingSource,
+      ),
+  ];
+
+  @override
+  void didUpdateWidget(covariant _WritersideTopicRenameSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.plan, widget.plan)) _selected = 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final files = _files;
+    final selected = files[_selected.clamp(0, files.length - 1)];
+    final comparison = compareSource(
+      SourceComparisonInput(
+        id: '${selected.path}:before',
+        version: 0,
+        label: context.l10n.localHistorySelectedRevision,
+        source: selected.before,
+      ),
+      SourceComparisonInput(
+        id: '${selected.path}:after',
+        version: 1,
+        label: context.l10n.localHistoryCurrentDisk,
+        source: selected.after,
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.sidebar,
+            border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+          ),
+          child: SizedBox(
+            height: BusyMarkSizes.paneHeaderHeight,
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.xs),
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.back,
+                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+                  transparent: true,
+                  onPressed: widget.onBack,
+                ),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                const Icon(BusyMarkGlyphs.edit, size: BusyMarkSizes.iconSm),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Text(
+                    context.l10n.topicRenamePreviewTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.topicRenamePathChange(
+                  widget.plan.oldTopicPath,
+                  widget.plan.newTopicPath,
+                ),
+                key: const ValueKey('topic-rename-path-change'),
+              ),
+              if (widget.plan.updatesXmlTopicId)
+                Text(
+                  context.l10n.topicRenameIdChange(
+                    widget.plan.oldTopicId,
+                    widget.plan.newTopicId,
+                  ),
+                  key: const ValueKey('topic-rename-id-change'),
+                ),
+              for (final change in widget.plan.webFileNameChanges)
+                if (change.changed)
+                  Text(
+                    context.l10n.topicRenameUrlChange(
+                      change.instanceId,
+                      change.oldWebFileName,
+                      change.newWebFileName,
+                    ),
+                  ),
+              const SizedBox(height: BusyMarkSpacing.sm),
+              Text(
+                context.l10n.topicRenameAffectedFiles,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ],
+          ),
+        ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 180),
+          child: ListView.builder(
+            key: const ValueKey('topic-rename-affected-files'),
+            itemCount: files.length,
+            itemBuilder: (context, index) => ListTile(
+              dense: true,
+              selected: index == _selected,
+              leading: Icon(
+                index == 0 ? BusyMarkGlyphs.edit : BusyMarkGlyphs.document,
+                size: BusyMarkSizes.iconSm,
+              ),
+              title: Text(
+                index == 0
+                    ? '${p.basename(widget.plan.oldTopicPath)} → ${p.basename(widget.plan.newTopicPath)}'
+                    : p.basename(files[index].path),
+              ),
+              subtitle: Text(
+                files[index].path,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => setState(() => _selected = index),
+            ),
+          ),
+        ),
+        Divider(height: 1, color: colors.subtleBorder),
+        Expanded(child: SourceComparisonView(comparison: comparison)),
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: BusyMarkPushButton.standardIcon(
+            key: const ValueKey('topic-rename-do-refactor'),
+            onPressed: widget.onDoRefactor,
+            icon: const Icon(BusyMarkGlyphs.edit),
+            label: Text(context.l10n.doRefactor),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 String _writersideTopicUsageKindLabel(
   BuildContext context,
   WritersideTopicUsageKind kind,
@@ -4001,11 +4269,13 @@ class _FilesTab extends ConsumerStatefulWidget {
   const _FilesTab({
     required this.workspace,
     required this.onShowFileHistory,
+    required this.onRenameTopic,
     required this.onRequestTopicRemoval,
   });
 
   final Workspace workspace;
   final Future<void> Function(DocumentFile file) onShowFileHistory;
+  final Future<bool> Function(String topicPath) onRenameTopic;
   final Future<WritersideTopicRemovalResult?> Function(
     _WritersideTopicRemovalTarget target,
   )
@@ -4084,6 +4354,8 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
             const _ShowSelectedSidebarTreeMenuIntent(),
         const SingleActivator(LogicalKeyboardKey.f10, shift: true):
             const _ShowSelectedSidebarTreeMenuIntent(),
+        const SingleActivator(LogicalKeyboardKey.f6, shift: true):
+            const _RenameSelectedTopicFileIntent(),
       },
       child: Actions(
         actions: {
@@ -4098,6 +4370,20 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
               CallbackAction<_ShowSelectedSidebarTreeMenuIntent>(
                 onInvoke: (_) {
                   _selectedRowMenuKey.currentState?.showMenuFromKeyboard();
+                  return null;
+                },
+              ),
+          _RenameSelectedTopicFileIntent:
+              CallbackAction<_RenameSelectedTopicFileIntent>(
+                onInvoke: (_) {
+                  final path = _selectedPath;
+                  final file = path == null
+                      ? null
+                      : _documentFileForPath(widget.workspace, path);
+                  if (path != null &&
+                      _isWritersideTopicFile(widget.workspace, file)) {
+                    unawaited(widget.onRenameTopic(path));
+                  }
                   return null;
                 },
               ),
@@ -4234,24 +4520,24 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
           _clearGitDetailSelection(ref);
         }
       case _FileTreeAction.rename:
-        final newName = await _showFileNameDialog(
-          context,
-          title: context.l10n.rename,
-          actionLabel: context.l10n.rename,
-          initialValue: name,
-        );
-        if (newName == null ||
-            !context.mounted ||
-            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
-          return;
-        }
         final renamed = isTopic
-            ? await ref
-                  .read(workspaceControllerProvider.notifier)
-                  .renameWritersideTopicFile(path, newName)
-            : await ref
-                  .read(workspaceControllerProvider.notifier)
-                  .renameWorkspaceEntity(path, newName);
+            ? await widget.onRenameTopic(path)
+            : await (() async {
+                final newName = await _showFileNameDialog(
+                  context,
+                  title: context.l10n.rename,
+                  actionLabel: context.l10n.rename,
+                  initialValue: name,
+                );
+                if (newName == null ||
+                    !context.mounted ||
+                    !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+                  return false;
+                }
+                return ref
+                    .read(workspaceControllerProvider.notifier)
+                    .renameWorkspaceEntity(path, newName);
+              }());
         if (renamed) {
           setState(() => _cutEntry = null);
           _clearGitDetailSelection(ref);
@@ -4447,6 +4733,10 @@ class _ShowSelectedSidebarTreeMenuIntent extends Intent {
   const _ShowSelectedSidebarTreeMenuIntent();
 }
 
+class _RenameSelectedTopicFileIntent extends Intent {
+  const _RenameSelectedTopicFileIntent();
+}
+
 bool _isWritersideTopicFile(Workspace workspace, DocumentFile? file) {
   if (file == null) {
     return false;
@@ -4498,6 +4788,7 @@ Future<_FileTreeAction?> _showFileTreeMenu(
             ? context.l10n.renameTopicFile
             : context.l10n.rename,
         icon: BusyMarkGlyphs.edit,
+        shortcut: safeDeleteTopic ? 'Shift+F6' : null,
       ),
       BusyMarkPopupMenuItem(
         value: _FileTreeAction.cut,
@@ -5317,6 +5608,7 @@ class _TocTab extends ConsumerStatefulWidget {
     required this.canExport,
     required this.onExport,
     required this.onShowFileHistory,
+    required this.onRenameTopic,
     required this.onRequestTopicRemoval,
   });
 
@@ -5324,6 +5616,7 @@ class _TocTab extends ConsumerStatefulWidget {
   final bool canExport;
   final VoidCallback onExport;
   final Future<void> Function(DocumentFile file) onShowFileHistory;
+  final Future<bool> Function(String topicPath) onRenameTopic;
   final Future<WritersideTopicRemovalResult?> Function(
     _WritersideTopicRemovalTarget target,
   )
@@ -5563,6 +5856,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
             const _ShowSelectedSidebarTreeMenuIntent(),
         const SingleActivator(LogicalKeyboardKey.f10, shift: true):
             const _ShowSelectedSidebarTreeMenuIntent(),
+        const SingleActivator(LogicalKeyboardKey.f6, shift: true):
+            const _RenameSelectedTopicFileIntent(),
       },
       child: Actions(
         actions: {
@@ -5599,6 +5894,27 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 onInvoke: (_) {
                   _rowMenuKeys[_selectedNodePathKey]?.currentState
                       ?.showMenuFromKeyboard();
+                  return null;
+                },
+              ),
+          _RenameSelectedTopicFileIntent:
+              CallbackAction<_RenameSelectedTopicFileIntent>(
+                onInvoke: (_) {
+                  final selectedEntries = entries
+                      .where(
+                        (entry) => _selectedNodePathKeys.isEmpty
+                            ? entry.pathKey == selectedEntry?.pathKey
+                            : _selectedNodePathKeys.contains(entry.pathKey),
+                      )
+                      .toList();
+                  if (selectedEntries.length == 1) {
+                    final topic = _presenter!
+                        .present(selectedEntries.single.node)
+                        .topic;
+                    if (topic != null) {
+                      unawaited(widget.onRenameTopic(topic.filePath));
+                    }
+                  }
                   return null;
                 },
               ),
@@ -6472,7 +6788,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         if (topic == null || rawNode == null) return;
         String? validateDuplicateName(String name) {
           if (name.trim().isEmpty) return context.l10n.fileNameRequired;
-          if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(name)) {
+          if (!isValidWritersideTopicId(name.trim())) {
             return context.l10n.useIdentifierCharacters;
           }
           if (widget.workspace.writersideModule!.topics.any(
@@ -6715,38 +7031,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         if (path == null || topicOwner == null) {
           return;
         }
-        final newName = await _showFileNameDialog(
-          context,
-          title: context.l10n.rename,
-          actionLabel: context.l10n.rename,
-          initialValue: p.basename(path),
-        );
-        if (newName == null || !context.mounted || !mounted) {
-          return;
-        }
-        final affectedPaths = await ref
-            .read(workspaceServiceProvider)
-            .writersideTopicRenameAffectedPaths(
-              widget.workspace,
-              topicPath: path,
-              topicModuleRoot: topicOwner.rootPath,
-            );
-        if (!mounted || !context.mounted || !entryIsCurrent()) return;
-        final canRename = await confirmSafeToChangeWorkspaceFiles(
-          context,
-          ref,
-          affectedPaths,
-        );
-        if (!canRename || !mounted || !context.mounted || !entryIsCurrent()) {
-          return;
-        }
-        final renamed = await ref
-            .read(workspaceControllerProvider.notifier)
-            .renameWritersideTopicFile(
-              path,
-              newName,
-              topicModuleRoot: topicOwner.rootPath,
-            );
+        final renamed = await widget.onRenameTopic(path);
         if (!mounted) {
           return;
         }
@@ -7756,6 +8041,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
           value: _TocTreeAction.rename,
           label: context.l10n.renameTopicFile,
           icon: BusyMarkGlyphs.edit,
+          shortcut: 'Shift+F6',
           enabled: hasTopicFile,
         ),
         BusyMarkPopupMenuItem(
@@ -8587,23 +8873,29 @@ class _CreateWritersideTopicDialogState
     if (value.isEmpty) {
       return context.l10n.fileNameRequired;
     }
-    if (value == '.' ||
-        value == '..' ||
-        p.isAbsolute(value) ||
-        value.contains('/') ||
-        value.contains(r'\') ||
-        value.contains('..')) {
-      return context.l10n.useSingleSafeFileName;
-    }
     final expectedExtension = _extensionFor(_format);
     final extension = p.extension(value).toLowerCase();
     if (extension.isNotEmpty && extension != expectedExtension) {
       return context.l10n.useExpectedExtension(expectedExtension);
     }
-    final id = p.basenameWithoutExtension(value);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
+    final effective = extension.isEmpty ? '$value$expectedExtension' : value;
+    try {
+      validateWritersideTopicFileName(
+        effective,
+        requiredExtension: expectedExtension,
+      );
+    } on Object {
+      if (value == '.' ||
+          value == '..' ||
+          p.isAbsolute(value) ||
+          value.contains('/') ||
+          value.contains(r'\') ||
+          value.contains('\u0000')) {
+        return context.l10n.useSingleSafeFileName;
+      }
       return context.l10n.useIdentifierCharacters;
     }
+    final id = p.basenameWithoutExtension(effective);
     final existingIds = widget.workspace.writersideModule?.topics
         .map((topic) => topic.id)
         .toSet();
@@ -12313,6 +12605,21 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       );
       if (selected != null) await navigate(selected.filePath, selected.span);
     } else {
+      if (symbol.kind == WritersideSymbolKind.topic) {
+        await showBusyMarkModalDialog<void>(
+          context,
+          builder: (context) => AlertDialog(
+            content: Text(context.l10n.renameTopicFileInstead),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(context.l10n.close),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
       var pendingName = symbol.name;
       final newName = await showBusyMarkModalEditorDialog<String>(
         context,

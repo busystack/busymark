@@ -11,6 +11,7 @@ import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_schema.dart';
 import 'writerside_source_loader.dart';
+import 'writerside_web_file_name.dart';
 
 enum WritersideSymbolKind {
   module,
@@ -765,6 +766,12 @@ class WritersideProjectIndex {
     WritersideSymbol symbol,
     String newName,
   ) {
+    // A topic declaration is the filename-derived identity. It must only be
+    // changed by the atomic topic-file refactoring, which also renames the
+    // file and every semantic reference.
+    if (symbol.kind == WritersideSymbolKind.topic) {
+      return const [];
+    }
     final normalized = newName.trim();
     if (normalized.isEmpty ||
         !RegExp(r'^[A-Za-z_][A-Za-z0-9_.-]*$').hasMatch(normalized) ||
@@ -958,6 +965,7 @@ class WritersideProject {
       diagnostics: sortDiagnostics([
         for (final candidate in nextModules) ...candidate.diagnostics,
         ...nextIndex.diagnostics,
+        ...writersideWebFileNameDiagnostics(nextModules),
       ]),
     );
   }
@@ -1033,6 +1041,7 @@ class WritersideProjectService {
       diagnostics: sortDiagnostics([
         for (final module in modules) ...module.diagnostics,
         ...index.diagnostics,
+        ...writersideWebFileNameDiagnostics(modules),
       ]),
     );
   }
@@ -1062,6 +1071,7 @@ class WritersideProjectService {
       diagnostics: sortDiagnostics([
         for (final candidate in replaced.modules) ...candidate.diagnostics,
         ...index.diagnostics,
+        ...writersideWebFileNameDiagnostics(replaced.modules),
       ]),
     );
   }

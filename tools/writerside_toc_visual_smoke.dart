@@ -572,6 +572,85 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Native new XML',
         'native-child.topic',
       );
+      final originalChild = File(
+        p.join(widget.root.path, 'topics/native-child.topic'),
+      );
+      final renamedChild = File(
+        p.join(widget.root.path, 'topics/native-child-renamed.topic'),
+      );
+      await _tapLabel('Native new XML');
+      _keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.down,
+      );
+      await _key(PhysicalKeyboardKey.f6, LogicalKeyboardKey.f6);
+      _keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.up,
+      );
+      await _until(
+        () => _elements(
+          (widget) =>
+              widget.runtimeType.toString() == 'WritersideTopicRenameDialog',
+        ).isNotEmpty,
+        'Shift+F6 opens the topic rename dialog',
+      );
+      _check(
+        _elements(
+              (widget) => widget is Text && widget.data == 'Preview',
+            ).isNotEmpty &&
+            _elements(
+              (widget) => widget is Text && widget.data == 'Refactor',
+            ).isNotEmpty,
+        'Topic rename offers Preview and Refactor',
+      );
+      await _fill('File name', 'native-child-renamed.topic');
+      await _capture('20-topic-rename-dialog');
+      await _tapLabel('Preview');
+      await _until(
+        () => _elements(
+          (widget) => widget is Text && widget.data == 'Rename Preview',
+        ).isNotEmpty,
+        'Topic rename preview opens',
+      );
+      _check(
+        originalChild.existsSync() && !renamedChild.existsSync(),
+        'Topic rename Preview writes no files',
+      );
+      _check(
+        _elements(
+              (widget) =>
+                  widget is Text &&
+                  widget.data ==
+                      'native-child.topic → native-child-renamed.topic',
+            ).isNotEmpty &&
+            _elements(
+              (widget) => widget is Text && widget.data == 'guide.tree',
+            ).isNotEmpty,
+        'Topic rename preview lists the file and reference change',
+      );
+      await _capture('21-topic-rename-preview');
+      await _tapLabel('Do Refactor');
+      await _until(
+        () => renamedChild.existsSync() && !originalChild.existsSync(),
+        'Do Refactor commits the reviewed topic rename',
+      );
+      final renamedChildSource = await renamedChild.readAsString();
+      final renamedTreeSource = await File(
+        p.join(widget.root.path, 'guide.tree'),
+      ).readAsString();
+      _check(
+        XmlDocument.parse(renamedChildSource).rootElement.getAttribute('id') ==
+            'native-child-renamed',
+        'Do Refactor changes the XML topic ID with the filename',
+      );
+      _check(
+        renamedTreeSource.contains('native-child-renamed.topic') &&
+            !renamedTreeSource.contains('native-child.topic'),
+        'Do Refactor changes the TOC reference with the filename',
+      );
       await _menu('Native new Markdown');
       await _tapLabel('New Topic');
       await _tapLabel('Link Topic Files to TOC...');
@@ -672,7 +751,10 @@ class _HarnessState extends ConsumerState<_Harness> {
       _check(
         group
             .findAllElements('toc-element')
-            .any((node) => node.getAttribute('topic') == 'native-child.topic'),
+            .any(
+              (node) =>
+                  node.getAttribute('topic') == 'native-child-renamed.topic',
+            ),
         'Pointer drag retains complete subtree',
       );
       _check(
@@ -696,6 +778,14 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await _menu('Navigation-only title');
       await _tapLabel('Group');
+      await _until(
+        () => _elements(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.labelText == 'Group Name',
+        ).isNotEmpty,
+        'Group dialog is ready',
+      );
       await _fill('Group Name', 'Native group');
       await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
       await _until(

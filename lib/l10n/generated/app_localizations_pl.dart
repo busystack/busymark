@@ -1612,6 +1612,30 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doRefactor => 'Wykonaj refaktoryzację';
 
   @override
+  String get preview => 'Podgląd';
+
+  @override
+  String get topicRenamePreviewTitle => 'Podgląd zmiany nazwy';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Ścieżka: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Identyfikator tematu: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instancja $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Pliki objęte zmianą';
+
+  @override
   String get orphanTopicTitle => 'Plik tematu nie jest już używany';
 
   @override
@@ -2451,6 +2475,25 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Identyfikator elementu „$id” pojawia się więcej niż raz.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instancja \"$instanceId\" publikuje nieprawidłową nazwę pliku internetowego \"$webFileName\" dla tematu \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instancja \"$instanceId\" publikuje zarówno \"$firstTopic\", jak i \"$secondTopic\" jako \"$webFileName\".';
   }
 
   @override
@@ -4013,6 +4056,10 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Nie można bezpiecznie zmienić nazwy symbolu. Sprawdź nazwę i odśwież odwołanie przed ponowną próbą.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.';
 
   @override
   String get keyboardLayout => 'Układ klawiatury';

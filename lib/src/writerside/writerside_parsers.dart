@@ -1190,7 +1190,9 @@ class WritersideTopicParser {
       includes: includes,
       document: document,
       diagnostics: sortDiagnostics(topicDiagnostics),
-      webFileName: _webFileName(source),
+      // Authored convenience metadata only. Instance-effective publication
+      // names are resolved by WritersideWebFileNameResolver.
+      webFileName: _topicWebFileName(document),
       markdown: parsed,
       titleOverrides: titleOverrides,
       semanticElementNames: document.elements
@@ -1304,6 +1306,28 @@ class WritersideTopicParser {
           ),
         );
       }
+      final directTopicChildren = root.children.whereType<XmlElement>();
+      for (final element in directTopicChildren) {
+        switch (element.name.local) {
+          case 'title':
+            final instance = element.getAttribute('instance');
+            if (instance != null && instance.isNotEmpty) {
+              titleOverrides.add(
+                WritersideTopicTitleOverride(
+                  instance: instance,
+                  title: element.innerText.trim(),
+                ),
+              );
+            }
+          case 'web-file-name':
+            if (!element.attributes.any(
+              (attribute) =>
+                  {'instance', 'filter'}.contains(attribute.name.local),
+            )) {
+              webFileName ??= _trimmedOrNull(element.innerText);
+            }
+        }
+      }
       final seenIds = <String, SourceSpan>{};
       for (final element in document.descendants.whereType<XmlElement>()) {
         final semanticElement = nextSemanticElement(element);
@@ -1329,18 +1353,6 @@ class WritersideTopicParser {
           seenIds[elementId] = span;
         }
         switch (element.name.local) {
-          case 'title':
-            final instance = element.getAttribute('instance');
-            if (instance != null && instance.isNotEmpty) {
-              titleOverrides.add(
-                WritersideTopicTitleOverride(
-                  instance: instance,
-                  title: element.innerText.trim(),
-                ),
-              );
-            }
-          case 'web-file-name':
-            webFileName = element.innerText.trim();
           case 'a':
             final href =
                 element.getAttribute('href') ??
@@ -1492,14 +1504,16 @@ List<WritersideTopicTitleOverride> _topicTitleOverrides(
   ];
 }
 
-String? _webFileName(String source) {
-  final match = RegExp(
-    r'<web-file-name>\s*(.*?)\s*</web-file-name>',
-    dotAll: true,
-  ).firstMatch(source);
-  final value = match?.group(1)?.trim();
-  return value == null || value.isEmpty ? null : value;
-}
+String? _topicWebFileName(WritersideDocument document) => document.nodes
+    .whereType<WritersideElementNode>()
+    .where(
+      (element) =>
+          element.name == 'web-file-name' &&
+          !element.attributes.keys.any({'instance', 'filter'}.contains),
+    )
+    .map((element) => _trimmedOrNull(element.plainText))
+    .whereType<String>()
+    .firstOrNull;
 
 String? _trimmedOrNull(String? value) {
   final trimmed = value?.trim();

@@ -772,7 +772,29 @@ class WorkspaceService {
     String? topicModuleRoot,
     void Function(Iterable<String>)? validateBeforePublish,
   }) async {
-    final ownerRoot = topicModuleRoot ?? workspace.writersideModule?.rootPath;
+    final plan = await prepareWritersideTopicRename(
+      workspace,
+      topicPath: topicPath,
+      newFileName: newFileName,
+      topicModuleRoot:
+          topicModuleRoot ?? workspace.writersideModule?.rootPath ?? '',
+    );
+    final result = await applyWritersideTopicRename(
+      plan,
+      validateBeforePublish: validateBeforePublish,
+    );
+    return result.newTopicPath;
+  }
+
+  Future<WritersideTopicRenamePlan> prepareWritersideTopicRename(
+    Workspace workspace, {
+    required String topicPath,
+    required String newFileName,
+    required String topicModuleRoot,
+  }) async {
+    final ownerRoot = topicModuleRoot.isEmpty
+        ? workspace.writersideModule?.rootPath
+        : topicModuleRoot;
     if (ownerRoot == null) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
@@ -787,14 +809,22 @@ class WorkspaceService {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
     final topic = _writersideTopicForPath(module, topicPath);
-    final result = await writersideTopicFileEditor.rename(
+    return writersideTopicFileEditor.prepareRename(
       module: module,
       topic: topic,
       newFileName: newFileName,
       projectModules: project.modules,
+    );
+  }
+
+  Future<WritersideTopicFileRenameResult> applyWritersideTopicRename(
+    WritersideTopicRenamePlan plan, {
+    void Function(Iterable<String>)? validateBeforePublish,
+  }) {
+    return writersideTopicFileEditor.applyRename(
+      plan,
       validateBeforePublish: validateBeforePublish,
     );
-    return result.newTopicPath;
   }
 
   Future<List<String>> writersideTopicRenameAffectedPaths(
