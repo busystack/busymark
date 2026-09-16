@@ -8368,6 +8368,7 @@ Future<bool> _confirmRemoveTocEntry(
 }
 
 enum _TocHeaderAction {
+  synchronize,
   newInstance,
   newLibrary,
   editInstance,
@@ -8516,11 +8517,6 @@ class _TocHeader extends StatelessWidget {
                   ],
                   onSelected: onCreateTopic,
                 ),
-                BusyMarkCompactIconButton(
-                  tooltip: context.l10n.tocSynchronize,
-                  icon: BusyMarkGlyphs.refresh,
-                  onPressed: onSynchronize,
-                ),
                 BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
                   key: const ValueKey('workspace-sidebar-toc-menu'),
                   tooltip: context.l10n.tocActions,
@@ -8529,6 +8525,12 @@ class _TocHeader extends StatelessWidget {
                   borderRadius: BusyMarkRadius.nativeHeaderButton,
                   highlightWhenOpen: false,
                   itemBuilder: (context) => [
+                    BusyMarkPopupMenuItem(
+                      value: _TocHeaderAction.synchronize,
+                      label: context.l10n.tocSynchronize,
+                      icon: BusyMarkGlyphs.refresh,
+                    ),
+                    const PopupMenuDivider(),
                     BusyMarkPopupMenuItem(
                       value: _TocHeaderAction.newInstance,
                       label: context.l10n.newInstance,
@@ -8560,6 +8562,8 @@ class _TocHeader extends StatelessWidget {
                   ],
                   onSelected: (action) {
                     switch (action) {
+                      case _TocHeaderAction.synchronize:
+                        onSynchronize();
                       case _TocHeaderAction.newInstance:
                         onCreateInstance();
                       case _TocHeaderAction.newLibrary:

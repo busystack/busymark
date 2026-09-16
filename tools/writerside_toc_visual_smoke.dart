@@ -304,6 +304,16 @@ class _HarnessState extends ConsumerState<_Harness> {
     _nativeMenuOpen = true;
   }
 
+  Future<void> _synchronizeTocAndEditor() async {
+    final tocActions = _elements(
+      (widget) => widget.key == const ValueKey('workspace-sidebar-toc-menu'),
+    ).single;
+    await _tap(tocActions);
+    _nativeMenuOpen = true;
+    await _tapLabel('Synchronize TOC and Editor');
+    await _pause();
+  }
+
   Future<void> _fill(String label, String value) async {
     final element = _elements(
       (widget) => widget is TextField && widget.decoration?.labelText == label,
@@ -527,13 +537,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
       await _menu('XML guide title');
       await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
-      await _tap(
-        _elements(
-          (widget) =>
-              widget is Tooltip &&
-              widget.message == 'Synchronize TOC and Editor',
-        ).single,
-      );
+      await _synchronizeTocAndEditor();
       await _until(
         () =>
             ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
@@ -546,13 +550,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _menu('Welcome to BusyMark');
       await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
       await _tap(_elements((widget) => widget is EditableText).last);
-      await _tap(
-        _elements(
-          (widget) =>
-              widget is Tooltip &&
-              widget.message == 'Synchronize TOC and Editor',
-        ).single,
-      );
+      await _synchronizeTocAndEditor();
       await _pause();
       var selectedXml = false;
       _text('XML guide title').visitAncestorElements((element) {

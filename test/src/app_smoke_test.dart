@@ -2210,8 +2210,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('Nested entry'), findsOneWidget);
-      expect(find.byTooltip(l10n.tocActions), findsOneWidget);
       expect(find.byTooltip(l10n.newTopic), findsOneWidget);
+      expect(find.byTooltip(l10n.tocActions), findsOneWidget);
+      expect(find.byTooltip(l10n.tocSynchronize), findsNothing);
       expect(find.byTooltip(l10n.newChildTopic), findsNothing);
       final tocMenuButton = find.descendant(
         of: find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
@@ -2221,11 +2222,46 @@ void main() {
       await openPopup(find.byTooltip(l10n.tocActions));
       expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
       expect(find.text(l10n.newTopic), findsNothing);
+      final synchronizeItem = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem<Object?> &&
+            widget.label == l10n.tocSynchronize,
+      );
+      expect(synchronizeItem, findsOneWidget);
+      expect(
+        tester.widget<BusyMarkPopupMenuItem<Object?>>(synchronizeItem).enabled,
+        isTrue,
+      );
       expect(find.text(l10n.newInstance), findsOneWidget);
       expect(find.text(l10n.newTocLibrary), findsOneWidget);
       expect(find.text(l10n.editInstance), findsOneWidget);
       expect(find.text(l10n.openTocFile), findsOneWidget);
       expect(find.text(l10n.export), findsOneWidget);
+      final tocActionSequence = find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem<Object?> ||
+                widget is PopupMenuDivider,
+          )
+          .evaluate()
+          .map((element) {
+            final widget = element.widget;
+            return widget is BusyMarkPopupMenuItem<Object?>
+                ? widget.label
+                : '<divider>';
+          })
+          .toList();
+      expect(tocActionSequence, [
+        l10n.tocSynchronize,
+        '<divider>',
+        l10n.newInstance,
+        l10n.newTocLibrary,
+        '<divider>',
+        l10n.editInstance,
+        l10n.openTocFile,
+        '<divider>',
+        l10n.export,
+      ]);
       await tester.tap(find.text(l10n.editInstance));
       await tester.pumpAndSettle();
       expect(find.text(l10n.instanceOutputSettings), findsOneWidget);

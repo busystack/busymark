@@ -1495,6 +1495,10 @@ void main() {
     ).firstMatch(workspace)!.group(0)!;
     expect(
       tocHeader,
+      contains('BusyMarkHeaderPopupMenuButton<_TocCreationChoice>'),
+    );
+    expect(
+      tocHeader,
       contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
     );
     expect(tocHeader, contains('class _WritersideInstanceSelector'));
@@ -1518,14 +1522,29 @@ void main() {
         ),
       ),
     );
+    expect(tocHeader, contains("ValueKey('workspace-sidebar-new-topic-menu')"));
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
     expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(tocHeader, contains('highlightWhenOpen: false'));
     expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
+    expect(tocHeader, contains('_TocHeaderAction.synchronize'));
+    expect(tocHeader, contains('label: context.l10n.tocSynchronize'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.refresh'));
+    expect(
+      tocHeader,
+      contains(
+        'case _TocHeaderAction.synchronize:\n                        onSynchronize();',
+      ),
+    );
+    expect(
+      RegExp(
+        r'BusyMarkCompactIconButton\s*\(\s*tooltip:\s*context\.l10n\.tocSynchronize',
+      ).hasMatch(tocHeader),
+      isFalse,
+    );
     expect(tocHeader, contains('label: context.l10n.tocEmptyMdTopic'));
     expect(tocHeader, contains('label: context.l10n.tocEmptyXmlTopic'));
-    expect(tocHeader, contains('BusyMarkCompactIconButton'));
     expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));

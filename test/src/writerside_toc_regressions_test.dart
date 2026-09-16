@@ -129,6 +129,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> synchronizeTocAndEditor(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('workspace-sidebar-toc-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Synchronize TOC and Editor'));
+    await tester.pumpAndSettle();
+  }
+
   bool selected(WidgetTester tester, String path) =>
       (tester.widget(
                     find.descendant(
@@ -162,7 +169,7 @@ void main() {
         container.read(workspaceControllerProvider).activeBuffer!.filePath,
         treePath,
       );
-      await tester.tap(find.byTooltip('Synchronize TOC and Editor'));
+      await synchronizeTocAndEditor(tester);
       await _settle(
         tester,
         until: () =>
@@ -178,7 +185,7 @@ void main() {
       );
       // A topic-less group still uses element source navigation.
       await selectWithoutOpening(tester, '1');
-      await tester.tap(find.byTooltip('Synchronize TOC and Editor'));
+      await synchronizeTocAndEditor(tester);
       await _settle(
         tester,
         until: () =>
@@ -217,7 +224,7 @@ void main() {
             .first,
       );
       await tester.pump();
-      await tester.tap(find.byTooltip('Synchronize TOC and Editor'));
+      await synchronizeTocAndEditor(tester);
       await _settle(tester);
       expect(selected(tester, '2'), isTrue);
       expect(selected(tester, '0'), isFalse);
