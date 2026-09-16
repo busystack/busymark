@@ -619,6 +619,426 @@ Read [the old topic](doomed.md).
   );
 
   test(
+    'Safe Delete finds and unlinks authored HTML anchors without literal false positives',
+    () async {
+      const referrerSource = '''
+# Referrer
+
+Read <a href="doomed.md">the old topic</a>.
+
+Read <a href='doomed.md'>the single-quoted topic</a>.
+
+Read <a class="external-ish" href=doomed.md title="Old">the unquoted topic</a>.
+
+Read <a href="doomed.md#part"><strong>the old section</strong></a>.
+
+Read <a href="doomed.md?mode=x#part">the queried section</a>.
+
+<a href="doomed.md">One</a>
+
+<a href="doomed.md">Two</a>
+
+- Read <a href="doomed.md">the list topic</a>.
+
+> Read <a href="doomed.md">the quoted topic</a>.
+
+<a data-href="doomed.md">Not a topic link</a>
+
+<a href="https://example.com/doomed.md">External</a>
+
+![Image](image.png "<a href='doomed.md'>Image title</a>")
+
+[Other](other.md "<a href='doomed.md'>Link title</a>")
+
+`<a href="doomed.md">Inline example</a>`
+
+<!-- <a href="doomed.md">Comment example</a> -->
+
+```html
+<a href="doomed.md">Fenced example</a>
+```
+''';
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" name="Guide">
+  <toc-element topic="doomed.md"/>
+  <toc-element topic="referrer.md"/>
+</instance-profile>
+''',
+        },
+        configuredTrees: const ['guide.tree'],
+        topics: {
+          'doomed.md': '# Doomed\n\n<snippet id="part">Part.</snippet>\n',
+          'referrer.md': referrerSource,
+        },
+      );
+      final doomed = _topic(fixture.module, 'doomed.md');
+      final referrerPath = p.join(fixture.root.path, 'topics', 'referrer.md');
+      final analysis = await service.analyze(
+        module: fixture.module,
+        topicPath: doomed.filePath,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+      final links = analysis.usages
+          .where((usage) => usage.kind == WritersideTopicUsageKind.topicLink)
+          .toList();
+
+      expect(links, hasLength(9));
+      expect(links.every((usage) => usage.relevant), isTrue);
+      expect(
+        links.map((usage) => usage.canUpdateAutomatically),
+        everyElement(isTrue),
+      );
+      expect(
+        links.map(
+          (usage) => referrerSource.substring(
+            usage.span!.startOffset,
+            usage.span!.endOffset,
+          ),
+        ),
+        [
+          'doomed.md',
+          'doomed.md',
+          'doomed.md',
+          'doomed.md#part',
+          'doomed.md?mode=x#part',
+          'doomed.md',
+          'doomed.md',
+          'doomed.md',
+          'doomed.md',
+        ],
+      );
+      expect(
+        links.map((usage) => usage.span!.startOffset).toSet(),
+        hasLength(9),
+      );
+
+      final result = await service.apply(
+        WritersideTopicRemovalRequest(
+          analysis: analysis,
+          updateUsagesAutomatically: true,
+        ),
+      );
+
+      expect(result.deletedFile, isTrue);
+      expect(File(doomed.filePath).existsSync(), isFalse);
+      expect(File(referrerPath).readAsStringSync(), '''
+# Referrer
+
+Read the old topic.
+
+Read the single-quoted topic.
+
+Read the unquoted topic.
+
+Read <strong>the old section</strong>.
+
+Read the queried section.
+
+One
+
+Two
+
+- Read the list topic.
+
+> Read the quoted topic.
+
+<a data-href="doomed.md">Not a topic link</a>
+
+<a href="https://example.com/doomed.md">External</a>
+
+![Image](image.png "<a href='doomed.md'>Image title</a>")
+
+[Other](other.md "<a href='doomed.md'>Link title</a>")
+
+`<a href="doomed.md">Inline example</a>`
+
+<!-- <a href="doomed.md">Comment example</a> -->
+
+```html
+<a href="doomed.md">Fenced example</a>
+```
+''');
+      final reloaded = await const WritersideProjectService().load(
+        fixture.root.path,
+      );
+      expect(
+        reloaded.index.references.where(
+          (reference) =>
+              reference.kind == WritersideSymbolKind.topic &&
+              reference.value.startsWith('doomed.md'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'malformed authored HTML anchors are manual Safe Delete blockers',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide">
+  <toc-element topic="doomed.md"/>
+  <toc-element topic="referrer.md"/>
+</instance-profile>
+''',
+        },
+        configuredTrees: const ['guide.tree'],
+        topics: {
+          'doomed.md': '# Doomed\n',
+          'referrer.md': '# Referrer\n\nRead <a href="doomed.md">unfinished.\n',
+        },
+      );
+      final doomed = _topic(fixture.module, 'doomed.md');
+      final before = File(doomed.filePath).readAsStringSync();
+      final analysis = await service.analyze(
+        module: fixture.module,
+        topicPath: doomed.filePath,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+      final usage = analysis.usages.singleWhere(
+        (candidate) => candidate.kind == WritersideTopicUsageKind.topicLink,
+      );
+
+      expect(usage.reference, 'doomed.md');
+      expect(usage.canUpdateAutomatically, isFalse);
+      expect(analysis.canUpdateUsagesAutomatically, isFalse);
+      await expectLater(
+        service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            updateUsagesAutomatically: true,
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+      expect(File(doomed.filePath).readAsStringSync(), before);
+    },
+  );
+
+  test(
+    'authored HTML variable hrefs are expanded and ambiguity blocks',
+    () async {
+      Future<WritersideTopicRemovalAnalysis> analyzeWithVariables(
+        String variables,
+      ) async {
+        final fixture = await _fixture(
+          trees: {
+            'guide.tree': '''
+<instance-profile id="guide">
+  <toc-element topic="doomed.md"/>
+  <toc-element topic="other.md"/>
+  <toc-element topic="referrer.md"/>
+</instance-profile>
+''',
+          },
+          configuredTrees: const ['guide.tree'],
+          variables: variables,
+          topics: {
+            'doomed.md': '# Doomed\n',
+            'other.md': '# Other\n',
+            'referrer.md': '# Referrer\n\n<a href="%target%">Target</a>\n',
+          },
+        );
+        return service.analyze(
+          module: fixture.module,
+          topicPath: _topic(fixture.module, 'doomed.md').filePath,
+          mode: WritersideTopicRemovalMode.safeDeleteFile,
+        );
+      }
+
+      final unique = await analyzeWithVariables(
+        '<vars><var name="target" value="doomed.md"/></vars>',
+      );
+      expect(
+        unique.usages
+            .singleWhere(
+              (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+            )
+            .canUpdateAutomatically,
+        isTrue,
+      );
+      final ambiguous = await analyzeWithVariables('''
+<vars>
+  <var name="target" value="doomed.md"/>
+  <var name="target" value="other.md"/>
+</vars>
+''');
+      expect(
+        ambiguous.usages
+            .singleWhere(
+              (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+            )
+            .canUpdateAutomatically,
+        isFalse,
+      );
+      expect(ambiguous.canUpdateUsagesAutomatically, isFalse);
+    },
+  );
+
+  test(
+    'authored HTML relevance follows its conditioned Markdown chapter',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'user.tree': '''
+<instance-profile id="user">
+  <toc-element topic="referrer.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''',
+          'admin.tree': '''
+<instance-profile id="admin">
+  <toc-element topic="referrer.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''',
+        },
+        configuredTrees: const ['user.tree', 'admin.tree'],
+        topics: {
+          'doomed.md': '# Doomed\n',
+          'referrer.md': '''
+# Referrer
+
+## Admin {instance="admin"}
+
+Read <a href="doomed.md">the admin topic</a>.
+''',
+        },
+      );
+      final target = _topic(fixture.module, 'doomed.md').filePath;
+      final user = await service.analyze(
+        module: fixture.module,
+        topicPath: target,
+        mode: WritersideTopicRemovalMode.removeFromInstance,
+        selectedTreePath: p.join(fixture.root.path, 'user.tree'),
+        selectedNodePath: const [1],
+      );
+      final admin = await service.analyze(
+        module: fixture.module,
+        topicPath: target,
+        mode: WritersideTopicRemovalMode.removeFromInstance,
+        selectedTreePath: p.join(fixture.root.path, 'admin.tree'),
+        selectedNodePath: const [1],
+      );
+
+      expect(
+        user.usages
+            .singleWhere(
+              (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+            )
+            .relevant,
+        isFalse,
+      );
+      expect(
+        admin.usages
+            .singleWhere(
+              (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+            )
+            .relevant,
+        isTrue,
+      );
+    },
+  );
+
+  test('automatic HTML unlinking permits project-wide orphan status', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide">
+  <toc-element topic="referrer.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''',
+      },
+      configuredTrees: const ['guide.tree'],
+      topics: {
+        'doomed.md': '# Doomed\n',
+        'referrer.md': '# Referrer\n\n<a href="doomed.md">Old</a>\n',
+      },
+    );
+    final target = _topic(fixture.module, 'doomed.md');
+    final analysis = await service.analyze(
+      module: fixture.module,
+      topicPath: target.filePath,
+      mode: WritersideTopicRemovalMode.removeFromInstance,
+      selectedTreePath: p.join(fixture.root.path, 'guide.tree'),
+      selectedNodePath: const [1],
+    );
+
+    final result = await service.apply(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: true,
+      ),
+    );
+
+    expect(result.orphaned, isTrue);
+    expect(File(target.filePath).existsSync(), isTrue);
+    expect(
+      File(
+        p.join(fixture.root.path, 'topics', 'referrer.md'),
+      ).readAsStringSync(),
+      '# Referrer\n\nOld\n',
+    );
+  });
+
+  test('a surviving authored HTML link suppresses orphan status', () async {
+    final fixture = await _fixture(
+      trees: {
+        'user.tree': '''
+<instance-profile id="user">
+  <toc-element topic="referrer.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''',
+      },
+      configuredTrees: const ['user.tree'],
+      topics: {
+        'doomed.md': '# Doomed\n',
+        'referrer.md': '''
+# Referrer
+
+## Other instance {instance="admin"}
+
+<a href="doomed.md">Old</a>
+''',
+      },
+    );
+    final target = _topic(fixture.module, 'doomed.md');
+    final analysis = await service.analyze(
+      module: fixture.module,
+      topicPath: target.filePath,
+      mode: WritersideTopicRemovalMode.removeFromInstance,
+      selectedTreePath: p.join(fixture.root.path, 'user.tree'),
+      selectedNodePath: const [1],
+    );
+    final link = analysis.usages.singleWhere(
+      (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+    );
+    expect(link.relevant, isFalse);
+
+    final result = await service.apply(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: true,
+      ),
+    );
+
+    expect(result.orphaned, isFalse);
+    expect(File(target.filePath).existsSync(), isTrue);
+    expect(
+      File(
+        p.join(fixture.root.path, 'topics', 'referrer.md'),
+      ).readAsStringSync(),
+      contains('<a href="doomed.md">Old</a>'),
+    );
+  });
+
+  test(
     'ambiguous references block deletion without changing any file',
     () async {
       final fixture = await _fixture(
@@ -1215,6 +1635,72 @@ Read [the old topic](doomed.md).
     },
   );
 
+  test('authored Markdown HTML anchors resolve origin project-wide', () async {
+    final fixture = await _projectFixture(
+      mainTree: '''
+<instance-profile id="guide"><toc-element topic="guide.md"/></instance-profile>
+''',
+      sharedTree: '''
+<instance-profile id="shared"><toc-element topic="references.md"/></instance-profile>
+''',
+      sharedTopicFileName: 'references.md',
+      sharedTopic: '''
+# References
+
+Main: <a href="guide.md" origin="main">Main guide</a>.
+
+Other: <a href="guide.md" origin="other">Other guide</a>.
+''',
+    );
+    final otherRoot = p.join(fixture.root.path, 'other');
+    Directory(p.join(otherRoot, 'topics')).createSync(recursive: true);
+    File(p.join(otherRoot, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="other"/><topics dir="topics"/><instance src="other.tree"/></ihp>
+''');
+    File(p.join(otherRoot, 'other.tree')).writeAsStringSync(
+      '<instance-profile id="other"><toc-element topic="guide.md"/></instance-profile>\n',
+    );
+    File(
+      p.join(otherRoot, 'topics', 'guide.md'),
+    ).writeAsStringSync('# Other guide\n');
+    final project = await const WritersideProjectService().load(
+      fixture.root.path,
+      preferredModuleRoot: fixture.mainRoot,
+    );
+    final target = project.modulesByOrigin['main']!.topics.single;
+    final analysis = await service.analyze(
+      project: project,
+      projectRoot: fixture.root.path,
+      topicPath: target.filePath,
+      mode: WritersideTopicRemovalMode.safeDeleteFile,
+    );
+    final links = analysis.usages.where(
+      (usage) => usage.kind == WritersideTopicUsageKind.topicLink,
+    );
+
+    expect(links, hasLength(1));
+    expect(links.single.reference, 'guide.md');
+    expect(links.single.canUpdateAutomatically, isTrue);
+    await service.apply(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: true,
+      ),
+    );
+    expect(
+      File(
+        p.join(fixture.sharedRoot, 'topics', 'references.md'),
+      ).readAsStringSync(),
+      '''
+# References
+
+Main: Main guide.
+
+Other: <a href="guide.md" origin="other">Other guide</a>.
+''',
+    );
+  });
+
   test('safe delete updates automatic cross-module origin usages', () async {
     final fixture = await _projectFixture(
       mainTree: '''
@@ -1468,6 +1954,7 @@ Future<({Directory root, String mainRoot, String sharedRoot})> _projectFixture({
   required String mainTree,
   required String sharedTree,
   required String sharedTopic,
+  String sharedTopicFileName = 'references.topic',
 }) async {
   final root = await Directory.systemTemp.createTemp(
     'busymark-removal-project-',
@@ -1493,7 +1980,7 @@ Future<({Directory root, String mainRoot, String sharedRoot})> _projectFixture({
     p.join(mainRoot, 'topics', 'guide.md'),
   ).writeAsStringSync('# Guide\n\n<snippet id="part">Reusable.</snippet>\n');
   File(
-    p.join(sharedRoot, 'topics', 'references.topic'),
+    p.join(sharedRoot, 'topics', sharedTopicFileName),
   ).writeAsStringSync(sharedTopic.trimLeft());
   final canonicalRoot = Directory(await root.resolveSymbolicLinks());
   return (

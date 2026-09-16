@@ -17,6 +17,7 @@ import 'writerside_project.dart';
 import 'writerside_document.dart';
 import 'writerside_document_resolver.dart';
 import 'writerside_document_parser.dart';
+import 'writerside_html_reference_scanner.dart';
 import 'writerside_schema.dart';
 import 'writerside_toc_presentation.dart';
 import 'writerside_web_file_name.dart';
@@ -42,6 +43,8 @@ class WritersideTopicUsage {
     required this.canUpdateAutomatically,
     this.span,
     this.moduleRoot,
+    this.replacementSpan,
+    this.replacementText,
     List<int>? nodePath,
   }) : nodePath = nodePath == null ? null : List.unmodifiable(nodePath);
 
@@ -54,6 +57,8 @@ class WritersideTopicUsage {
   final bool canUpdateAutomatically;
   final SourceSpan? span;
   final String? moduleRoot;
+  final SourceSpan? replacementSpan;
+  final String? replacementText;
   final List<int>? nodePath;
 }
 
@@ -1443,6 +1448,8 @@ class WritersideTopicRemovalService {
         : snapshot.project.index.findUsages(targetSymbol).toSet();
     final result = <WritersideTopicUsage>[];
     final seen = <String>{};
+    final indexedUsages =
+        <({WritersideReference reference, int resultIndex})>[];
     for (final reference in snapshot.project.index.references.where(
       (reference) => reference.kind == WritersideSymbolKind.topic,
     )) {
@@ -1521,26 +1528,16 @@ class WritersideTopicRemovalService {
                 reference.span,
               ) !=
               null;
-      final relevant =
-          mode == WritersideTopicRemovalMode.safeDeleteFile ||
-          (selectedInstance != null &&
-              ((participatingTopics.contains(
-                        normalizePath(sourceTopic.filePath),
-                      ) &&
-                      _referenceActiveInInstance(
-                        snapshot,
-                        sourceModule,
-                        sourceTopic,
-                        selectedInstance,
-                        reference.span,
-                      )) ||
-                  (activeDocumentRanges[normalizePath(sourceTopic.filePath)] ??
-                          const <SourceSpan>[])
-                      .any(
-                        (span) =>
-                            span.startOffset <= reference.span.startOffset &&
-                            span.endOffset >= reference.span.endOffset,
-                      )));
+      final relevant = _contentUsageRelevant(
+        snapshot,
+        mode: mode,
+        sourceModule: sourceModule,
+        sourceTopic: sourceTopic,
+        selectedInstance: selectedInstance,
+        participatingTopics: participatingTopics,
+        activeDocumentRanges: activeDocumentRanges,
+        span: reference.span,
+      );
       result.add(
         WritersideTopicUsage(
           kind: kind,
@@ -1554,9 +1551,187 @@ class WritersideTopicRemovalService {
           moduleRoot: sourceModule.rootPath,
         ),
       );
+      indexedUsages.add((reference: reference, resultIndex: result.length - 1));
+    }
+    // The project index remains authoritative. Its Markdown projection can,
+    // however, omit an inline authored HTML anchor embedded in an otherwise
+    // ordinary Markdown block. Bind each authored anchor to at most one
+    // covering indexed usage; only missing occurrences are supplemented. The
+    // same tokenizer-backed scanner is shared with Rename Topic File.
+    final consumedIndexedUsages = <int>{};
+    for (final sourceModule in snapshot.project.modules) {
+      for (final sourceTopic in sourceModule.topics) {
+        if (sourceTopic.format != WritersideTopicFormat.markdown ||
+            p.equals(sourceTopic.filePath, snapshot.topic.filePath)) {
+          continue;
+        }
+        final source = snapshot.sources[normalizePath(sourceTopic.filePath)]!;
+        final protected = writersideMarkdownLiteralMask(
+          source: source,
+          protectedRanges:
+              sourceTopic.markdown?.codeBlocks.map((block) => block.span) ??
+              const [],
+        );
+        final anchors = const WritersideAuthoredHtmlReferenceScanner()
+            .scanMarkdownAnchors(
+              filePath: sourceTopic.filePath,
+              source: source,
+              protectedSource: protected,
+            );
+        for (final anchor in anchors) {
+          if (hasUriScheme(anchor.href)) continue;
+          final topicReference = _referenceWithoutAnchor(anchor.href);
+          if (topicReference.isEmpty ||
+              !_couldTarget(
+                snapshot,
+                topicReference,
+                fromTopic: sourceTopic,
+                sourceModule: sourceModule,
+                origin: anchor.origin,
+              )) {
+            continue;
+          }
+          final key =
+              '${sourceTopic.filePath}:${anchor.hrefSpan.startOffset}:'
+              '${anchor.hrefSpan.endOffset}';
+          final exact = _targets(
+            snapshot,
+            topicReference,
+            fromTopic: sourceTopic,
+            sourceModule: sourceModule,
+            origin: anchor.origin,
+          );
+          final anchorSpan = anchor.anchorSpan;
+          final innerSpan = anchor.innerContentSpan;
+          final automatic =
+              exact &&
+              anchor.structurallySafe &&
+              anchorSpan != null &&
+              innerSpan != null;
+          final matchingIndexed =
+              indexedUsages
+                  .where(
+                    (indexed) =>
+                        !consumedIndexedUsages.contains(indexed.resultIndex) &&
+                        p.equals(
+                          indexed.reference.filePath,
+                          sourceTopic.filePath,
+                        ) &&
+                        indexed.reference.span.startOffset <=
+                            anchor.hrefSpan.startOffset &&
+                        indexed.reference.span.endOffset >=
+                            anchor.hrefSpan.endOffset &&
+                        _referenceWithoutAnchor(indexed.reference.value) ==
+                            topicReference &&
+                        _normalizedOptionalValue(indexed.reference.origin) ==
+                            _normalizedOptionalValue(anchor.origin),
+                  )
+                  .toList()
+                ..sort(
+                  (left, right) =>
+                      (left.reference.span.endOffset -
+                              left.reference.span.startOffset)
+                          .compareTo(
+                            right.reference.span.endOffset -
+                                right.reference.span.startOffset,
+                          ),
+                );
+          final indexedUsage = matchingIndexed.firstOrNull?.resultIndex;
+          if (indexedUsage != null) {
+            consumedIndexedUsages.add(indexedUsage);
+            final usage = result[indexedUsage];
+            if (usage.kind == WritersideTopicUsageKind.topicLink) {
+              result[indexedUsage] = WritersideTopicUsage(
+                kind: usage.kind,
+                filePath: usage.filePath,
+                line: anchor.hrefSpan.startLine,
+                column: anchor.hrefSpan.startColumn,
+                reference: anchor.authoredHref,
+                relevant: _contentUsageRelevant(
+                  snapshot,
+                  mode: mode,
+                  sourceModule: sourceModule,
+                  sourceTopic: sourceTopic,
+                  selectedInstance: selectedInstance,
+                  participatingTopics: participatingTopics,
+                  activeDocumentRanges: activeDocumentRanges,
+                  span: anchor.hrefSpan,
+                ),
+                canUpdateAutomatically: automatic,
+                span: anchor.hrefSpan,
+                moduleRoot: usage.moduleRoot,
+                nodePath: usage.nodePath,
+                replacementSpan: automatic ? anchorSpan : null,
+                replacementText: automatic
+                    ? source.substring(
+                        innerSpan.startOffset,
+                        innerSpan.endOffset,
+                      )
+                    : null,
+              );
+            }
+            continue;
+          }
+          if (!seen.add(key)) continue;
+          result.add(
+            WritersideTopicUsage(
+              kind: WritersideTopicUsageKind.topicLink,
+              filePath: sourceTopic.filePath,
+              line: anchor.hrefSpan.startLine,
+              column: anchor.hrefSpan.startColumn,
+              reference: anchor.authoredHref,
+              relevant: _contentUsageRelevant(
+                snapshot,
+                mode: mode,
+                sourceModule: sourceModule,
+                sourceTopic: sourceTopic,
+                selectedInstance: selectedInstance,
+                participatingTopics: participatingTopics,
+                activeDocumentRanges: activeDocumentRanges,
+                span: anchor.hrefSpan,
+              ),
+              canUpdateAutomatically: automatic,
+              span: anchor.hrefSpan,
+              moduleRoot: sourceModule.rootPath,
+              replacementSpan: automatic ? anchorSpan : null,
+              replacementText: automatic
+                  ? source.substring(innerSpan.startOffset, innerSpan.endOffset)
+                  : null,
+            ),
+          );
+        }
+      }
     }
     return result;
   }
+
+  bool _contentUsageRelevant(
+    _RemovalSnapshot snapshot, {
+    required WritersideTopicRemovalMode mode,
+    required WritersideModule sourceModule,
+    required WritersideTopic sourceTopic,
+    required WritersideInstance? selectedInstance,
+    required Set<String> participatingTopics,
+    required Map<String, List<SourceSpan>> activeDocumentRanges,
+    required SourceSpan span,
+  }) =>
+      mode == WritersideTopicRemovalMode.safeDeleteFile ||
+      (selectedInstance != null &&
+          ((participatingTopics.contains(normalizePath(sourceTopic.filePath)) &&
+                  _referenceActiveInInstance(
+                    snapshot,
+                    sourceModule,
+                    sourceTopic,
+                    selectedInstance,
+                    span,
+                  )) ||
+              (activeDocumentRanges[normalizePath(sourceTopic.filePath)] ??
+                      const <SourceSpan>[])
+                  .any(
+                    (active) =>
+                        active.startOffset <= span.startOffset &&
+                        active.endOffset >= span.endOffset,
+                  )));
 
   WritersideElementNode? _elementContainingReference(
     WritersideTopic topic,
@@ -1664,8 +1839,23 @@ class WritersideTopicRemovalService {
     WritersideTopic topic,
     String source,
     WritersideTopicUsageKind kind,
-    SourceSpan span,
-  ) {
+    SourceSpan span, {
+    SourceSpan? replacementSpan,
+    String? replacementText,
+  }) {
+    if (replacementSpan != null && replacementText != null) {
+      if (replacementSpan.startOffset < 0 ||
+          replacementSpan.endOffset > source.length ||
+          replacementSpan.startOffset > span.startOffset ||
+          replacementSpan.endOffset < span.endOffset) {
+        return null;
+      }
+      return _TextReplacement(
+        replacementSpan.startOffset,
+        replacementSpan.endOffset,
+        replacementText,
+      );
+    }
     if (kind == WritersideTopicUsageKind.include) {
       final element = _elementContainingReference(topic, span);
       if (element?.semanticKind != WritersideSemanticKind.include) return null;
@@ -1704,6 +1894,8 @@ class WritersideTopicRemovalService {
         source,
         usage.kind,
         span,
+        replacementSpan: usage.replacementSpan,
+        replacementText: usage.replacementText,
       );
       if (replacement != null) replacements.add(replacement);
     }
@@ -2493,6 +2685,11 @@ bool _sameStringList(List<String> first, List<String> second) {
 
 String _referenceWithoutAnchor(String destination) =>
     destination.split('#').first.split('?').first;
+
+String? _normalizedOptionalValue(String? value) {
+  final normalized = value?.trim();
+  return normalized == null || normalized.isEmpty ? null : normalized;
+}
 
 String _xmlSource(XmlDocument document) =>
     '${document.toXmlString(pretty: true, indent: '  ')}\n';

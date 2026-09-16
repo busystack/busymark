@@ -1,12 +1,5 @@
 import 'dart:io';
 
-// HtmlParser exposes its tokenizer but does not expose per-attribute source
-// spans. Use the package tokenizer so raw HTML references are interpreted with
-// the same HTML rules as BusyMark's Markdown parser.
-// ignore: implementation_imports
-import 'package:html/src/token.dart' show StartTagToken;
-// ignore: implementation_imports
-import 'package:html/src/tokenizer.dart' show HtmlTokenizer;
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
@@ -18,6 +11,7 @@ import '../markdown/busymark_document.dart';
 import '../markdown/markdown_ast_adapter.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
+import 'writerside_html_reference_scanner.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_project.dart';
@@ -889,7 +883,7 @@ class WritersideTopicFileEditor {
     };
     final usages = <String, WritersideReference>{};
     final xmlAttributeSpans = <String>{};
-    final htmlAttributeQuotes = <String, _HtmlAttributeQuote>{};
+    final htmlAttributeQuotes = <String, WritersideHtmlAttributeQuote>{};
     final markdownDestinationSpans = <String>{};
     final markdownAngleDestinationSpans = <String>{};
     for (final usage in index.references) {
@@ -1205,7 +1199,11 @@ class WritersideTopicFileEditor {
   _AuthoredMarkdownProjection _authoredMarkdownTopicReferences(
     WritersideTopic topic,
   ) {
-    final protected = _markdownLiteralMask(topic);
+    final protected = writersideMarkdownLiteralMask(
+      source: topic.document.source,
+      protectedRanges:
+          topic.markdown?.codeBlocks.map((block) => block.span) ?? const [],
+    );
     final definitions = _markdownReferenceDefinitions(topic, protected);
     final authored =
         <_AuthoredMarkdownTopicReference>[
@@ -1409,56 +1407,6 @@ class WritersideTopicFileEditor {
         1;
   }
 
-  List<bool> _markdownLiteralMask(WritersideTopic topic) {
-    final source = topic.document.source;
-    final protected = List<bool>.filled(source.length, false);
-    void protect(int start, int end) {
-      final safeStart = start.clamp(0, source.length);
-      final safeEnd = end.clamp(safeStart, source.length);
-      for (var index = safeStart; index < safeEnd; index++) {
-        protected[index] = true;
-      }
-    }
-
-    for (final codeBlock in topic.markdown?.codeBlocks ?? const []) {
-      protect(codeBlock.span.startOffset, codeBlock.span.endOffset);
-    }
-    for (final comment in RegExp(r'<!--[\s\S]*?(?:-->|$)').allMatches(source)) {
-      protect(comment.start, comment.end);
-    }
-    for (var cursor = 0; cursor < source.length; cursor++) {
-      if (protected[cursor] ||
-          source[cursor] != '`' ||
-          _isEscapedMarkdownCharacter(source, cursor)) {
-        continue;
-      }
-      var delimiterLength = 1;
-      while (cursor + delimiterLength < source.length &&
-          source[cursor + delimiterLength] == '`') {
-        delimiterLength++;
-      }
-      var closing = cursor + delimiterLength;
-      while (closing < source.length) {
-        if (!protected[closing] && source[closing] == '`') {
-          var runLength = 1;
-          while (closing + runLength < source.length &&
-              source[closing + runLength] == '`') {
-            runLength++;
-          }
-          if (runLength == delimiterLength) break;
-          closing += runLength;
-        } else {
-          closing++;
-        }
-      }
-      if (closing < source.length) {
-        protect(cursor, closing + delimiterLength);
-        cursor = closing + delimiterLength - 1;
-      }
-    }
-    return protected;
-  }
-
   Map<String, _MarkdownReferenceDefinition> _markdownReferenceDefinitions(
     WritersideTopic topic,
     List<bool> protected,
@@ -1603,70 +1551,23 @@ class WritersideTopicFileEditor {
     List<bool> protected,
   ) {
     final source = topic.document.source;
-    final occurrences = <_AuthoredMarkdownTopicReference>[];
-    final tokenizer = HtmlTokenizer(
-      source,
-      generateSpans: true,
-      attributeSpans: true,
-    );
-    while (tokenizer.moveNext()) {
-      final token = tokenizer.current;
-      if (token is! StartTagToken || token.name != 'a') continue;
-      final tagSpan = token.span;
-      if (tagSpan == null ||
-          _rangeIsProtected(
-            protected,
-            tagSpan.start.offset,
-            tagSpan.end.offset,
-          )) {
-        continue;
-      }
-      final attributes = token.attributeSpans;
-      if (attributes == null) continue;
-      final href = attributes
-          .where((attribute) => attribute.name == 'href')
-          .firstOrNull;
-      final hrefStart = href?.startValue;
-      final hrefEnd = href?.endValue;
-      final destination = href?.value;
-      if (href == null ||
-          hrefStart == null ||
-          hrefEnd == null ||
-          hrefStart < 0 ||
-          hrefEnd > source.length ||
-          hrefStart >= hrefEnd ||
-          destination == null ||
-          destination.isEmpty) {
-        continue;
-      }
-      final origin = token.data['origin']?.trim();
-      final htmlAttributeQuote = switch (hrefStart > tagSpan.start.offset
-          ? source[hrefStart - 1]
-          : null) {
-        '"' when hrefEnd < tagSpan.end.offset && source[hrefEnd] == '"' =>
-          _HtmlAttributeQuote.doubleQuoted,
-        "'" when hrefEnd < tagSpan.end.offset && source[hrefEnd] == "'" =>
-          _HtmlAttributeQuote.singleQuoted,
-        _ => _HtmlAttributeQuote.unquoted,
-      };
-      occurrences.add(
-        _AuthoredMarkdownTopicReference(
-          occurrenceOffset: tagSpan.start.offset,
-          destination: destination,
-          rawDestination: source.substring(hrefStart, hrefEnd),
-          destinationSpan: SourceSpan.fromOffsets(
+    return [
+      for (final reference
+          in const WritersideAuthoredHtmlReferenceScanner().scanMarkdownAnchors(
             filePath: topic.filePath,
             source: source,
-            startOffset: hrefStart,
-            endOffset: hrefEnd,
-          ),
-          origin: origin?.isEmpty == true ? null : origin,
+            protectedSource: protected,
+          ))
+        _AuthoredMarkdownTopicReference(
+          occurrenceOffset: reference.startTagSpan.startOffset,
+          destination: reference.href,
+          rawDestination: reference.authoredHref,
+          destinationSpan: reference.hrefSpan,
+          origin: reference.origin,
           xmlAttribute: true,
-          htmlAttributeQuote: htmlAttributeQuote,
+          htmlAttributeQuote: reference.quote,
         ),
-      );
-    }
-    return occurrences;
+    ];
   }
 
   _InlineMarkdownDestination? _inlineMarkdownDestination(
@@ -1828,8 +1729,11 @@ class WritersideTopicFileEditor {
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
 
-  String _escapeHtmlAttributeValue(String value, _HtmlAttributeQuote quote) {
-    if (quote != _HtmlAttributeQuote.unquoted) {
+  String _escapeHtmlAttributeValue(
+    String value,
+    WritersideHtmlAttributeQuote quote,
+  ) {
+    if (quote != WritersideHtmlAttributeQuote.unquoted) {
       return _escapeXmlAttributeValue(value);
     }
     final escaped = StringBuffer();
@@ -2654,14 +2558,12 @@ class _AuthoredMarkdownTopicReference {
   final SourceSpan destinationSpan;
   final String? origin;
   final bool xmlAttribute;
-  final _HtmlAttributeQuote? htmlAttributeQuote;
+  final WritersideHtmlAttributeQuote? htmlAttributeQuote;
   final bool angleDestination;
   final bool inlineMarkdownDestination;
   final SourceSpan? referenceLabelSpan;
   final SourceSpan? definitionLabelSpan;
 }
-
-enum _HtmlAttributeQuote { doubleQuoted, singleQuoted, unquoted }
 
 class _AuthoredMarkdownProjection {
   const _AuthoredMarkdownProjection({
