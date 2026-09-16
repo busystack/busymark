@@ -77,6 +77,71 @@ void main() {
     },
   );
 
+  test('discovers and loads a module under build', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-build-discovery-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final main = await _writeDiscoveryModule(root, 'main', 'main');
+    final build = await _writeDiscoveryModule(root, 'build', 'build-docs');
+    const service = WritersideProjectService();
+
+    final discovery = await service.discoverModuleRoots(root.path);
+
+    expect(discovery.complete, isTrue);
+    expect(discovery.roots, containsAll([main.path, build.path]));
+    expect(discovery.roots, hasLength(2));
+    final project = await service.load(root.path);
+    expect(project.moduleDiscoveryComplete, isTrue);
+    expect(project.modules, hasLength(2));
+    expect(project.modulesByOrigin.keys, containsAll(['main', 'build-docs']));
+  });
+
+  test('discovers and loads a module under a hidden directory', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-hidden-discovery-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final main = await _writeDiscoveryModule(root, 'main', 'main');
+    final hidden = await _writeDiscoveryModule(root, '.docs', 'hidden-docs');
+    const service = WritersideProjectService();
+
+    final discovery = await service.discoverModuleRoots(root.path);
+
+    expect(discovery.complete, isTrue);
+    expect(discovery.roots, containsAll([main.path, hidden.path]));
+    expect(discovery.roots, hasLength(2));
+    final project = await service.load(root.path);
+    expect(project.moduleDiscoveryComplete, isTrue);
+    expect(project.modules, hasLength(2));
+    expect(project.modulesByOrigin.keys, containsAll(['main', 'hidden-docs']));
+  });
+
+  test('module discovery hard-excludes VCS metadata directories', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-vcs-discovery-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final main = await _writeDiscoveryModule(root, 'main', 'main');
+    for (final metadata in ['.git', '.hg', '.svn']) {
+      await _writeDiscoveryModule(
+        root,
+        p.join(metadata, 'fake'),
+        '$metadata-fake',
+      );
+    }
+    const service = WritersideProjectService();
+
+    final discovery = await service.discoverModuleRoots(root.path);
+
+    expect(discovery.complete, isTrue);
+    expect(discovery.roots, [main.path]);
+    final project = await service.load(root.path);
+    expect(project.moduleDiscoveryComplete, isTrue);
+    expect(project.modules, hasLength(1));
+    expect(project.modules.single.config.moduleName, 'main');
+  });
+
   test(
     'workspace promotes a parent directory to a multi-module project',
     () async {
@@ -538,6 +603,33 @@ Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> blocks) sync* {
     yield block;
     yield* _walkBlocks(block.children);
   }
+}
+
+Future<Directory> _writeDiscoveryModule(
+  Directory projectRoot,
+  String relativePath,
+  String moduleName,
+) async {
+  final moduleRoot = await Directory(
+    p.join(projectRoot.path, relativePath),
+  ).create(recursive: true);
+  final topicsRoot = await Directory(
+    p.join(moduleRoot.path, 'topics'),
+  ).create();
+  await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp version="2.0">
+  <module name="$moduleName"/>
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+  await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''');
+  await File(p.join(topicsRoot.path, 'guide.md')).writeAsString('# Guide\n');
+  return moduleRoot;
 }
 
 class _ProjectFixture {

@@ -364,7 +364,19 @@ class WritersideModuleService {
     for (final topicsRoot in usableTopicRoots) {
       final scan = await scanWorkspaceEntities(
         topicsRoot,
-        options: effectiveScanOptions,
+        // Directory names ignored by generic workspace browsing remain
+        // semantically valid inside configured Writerside topic roots.
+        // Explicit VCS metadata remains excluded by the scanner itself.
+        options: WorkspaceScanOptions(
+          maxParsedFileBytes: effectiveScanOptions.maxParsedFileBytes,
+          maxParsedDocuments: effectiveScanOptions.maxParsedDocuments,
+          maxTreeEntries: effectiveScanOptions.maxTreeEntries,
+          followLinks: false,
+          includeUnsupportedFiles: false,
+          includeDirectories: false,
+          includeHiddenDirectories: true,
+          includeExcludedDirectories: true,
+        ),
         directoryLister: topicDirectoryLister,
       );
       diagnostics.addAll(scan.diagnostics);

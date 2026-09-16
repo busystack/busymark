@@ -413,6 +413,77 @@ void main() {
     },
   );
 
+  test('topic under build reserves its module-wide ID for creation', () async {
+    final fixture = await _createWorkspaceWithUnparsedGuide(
+      reservedTopicPath: 'build/guide.topic',
+    );
+
+    expect(fixture.workspace.writersideModule!.topicDiscoveryComplete, isTrue);
+    expect(
+      fixture.workspace.writersideModule!.reservedTopicIds,
+      contains('guide'),
+    );
+    await expectLater(
+      fixture.service.createWritersideTopic(
+        fixture.workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Duplicate guide',
+          fileName: 'guide.md',
+        ),
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.id-exists',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test(
+    'topic under a hidden directory reserves its module-wide ID for creation',
+    () async {
+      final fixture = await _createWorkspaceWithUnparsedGuide(
+        reservedTopicPath: '.internal/guide.md',
+        reservedTopicSource: '# Guide\n\n${'content ' * 80}',
+      );
+
+      expect(
+        fixture.workspace.writersideModule!.topicDiscoveryComplete,
+        isTrue,
+      );
+      expect(
+        fixture.workspace.writersideModule!.reservedTopicIds,
+        contains('guide'),
+      );
+      await expectLater(
+        fixture.service.createWritersideTopic(
+          fixture.workspace,
+          const WritersideTopicCreateRequest(
+            title: 'Duplicate guide',
+            fileName: 'guide.md',
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.id-exists',
+          ),
+        ),
+      );
+      expect(
+        File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
   test('duplicate topic cannot reuse an unparsed topic basename', () async {
     final fixture = await _createWorkspaceWithUnparsedGuide();
     final module = fixture.workspace.writersideModule!;
@@ -1410,6 +1481,8 @@ _createWorkspaceWithUnparsedGuide({
   WorkspaceScanOptions scanOptions = const WorkspaceScanOptions(
     maxParsedFileBytes: 256,
   ),
+  String reservedTopicPath = 'guide.topic',
+  String? reservedTopicSource,
 }) async {
   final root = await Directory.systemTemp.createTemp(
     'busymark-workspace-unparsed-topic-id-',
@@ -1435,8 +1508,11 @@ _createWorkspaceWithUnparsedGuide({
   await File(
     p.join(root.path, 'topics', 'intro.md'),
   ).writeAsString('# Intro\n');
-  await File(p.join(root.path, 'topics', 'guide.topic')).writeAsString(
-    '<topic id="guide" title="Guide">${'content ' * 80}</topic>\n',
+  final reservedTopic = File(p.join(root.path, 'topics', reservedTopicPath));
+  await reservedTopic.parent.create(recursive: true);
+  await reservedTopic.writeAsString(
+    reservedTopicSource ??
+        '<topic id="guide" title="Guide">${'content ' * 80}</topic>\n',
   );
   final service = WorkspaceService(scanOptions: scanOptions);
   final workspace = await service.openPath(root.path);

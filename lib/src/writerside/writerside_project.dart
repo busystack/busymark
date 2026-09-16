@@ -1017,6 +1017,9 @@ class WritersideProjectService {
     final roots = <String>{for (final file in direct) p.dirname(file.path)};
     final scan = await scanWorkspaceEntities(
       root,
+      // Directory names ignored by generic workspace browsing remain
+      // semantically valid as Writerside module containers. Explicit VCS
+      // metadata remains excluded by the scanner itself.
       options: WorkspaceScanOptions(
         maxParsedFileBytes: scanOptions.maxParsedFileBytes,
         maxParsedDocuments: scanOptions.maxParsedDocuments,
@@ -1024,8 +1027,8 @@ class WritersideProjectService {
         followLinks: false,
         includeUnsupportedFiles: true,
         includeDirectories: false,
-        includeHiddenDirectories: false,
-        includeExcludedDirectories: false,
+        includeHiddenDirectories: true,
+        includeExcludedDirectories: true,
       ),
       directoryLister: moduleDirectoryLister,
     );
