@@ -528,11 +528,10 @@ void main() {
     final draftButton = find.byTooltip(l10n.aiDraftWithAi);
     final commitButton = find.text(l10n.gitCommit);
     expect(draftButton, findsOneWidget);
-    expect(find.byType(BusyMarkCompactIconButton), findsOneWidget);
     expect(
       find.ancestor(
         of: draftButton,
-        matching: find.byType(BusyMarkCompactIconButton),
+        matching: find.byType(BusyMarkHeaderIconButton),
       ),
       findsOneWidget,
     );
@@ -970,12 +969,12 @@ void main() {
       matching: find.byType(ElevatedButton),
     );
     expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
+    final draftButton = find.ancestor(
+      of: find.byTooltip(l10n.aiDraftWithAi),
+      matching: find.byType(BusyMarkHeaderIconButton),
+    );
     expect(
-      tester
-          .widget<BusyMarkCompactIconButton>(
-            find.byType(BusyMarkCompactIconButton),
-          )
-          .onPressed,
+      tester.widget<BusyMarkHeaderIconButton>(draftButton).onPressed,
       isNull,
     );
     expect(

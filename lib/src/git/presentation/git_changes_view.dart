@@ -266,11 +266,12 @@ class _CommitPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
                 if (onDraftCommitMessage != null) ...[
-                  BusyMarkCompactIconButton(
+                  BusyMarkHeaderIconButton(
                     tooltip: drafting
                         ? context.l10n.aiDrafting
                         : context.l10n.aiDraftWithAi,
                     icon: BusyMarkGlyphs.ai,
+                    transparent: false,
                     onPressed:
                         !committing && !drafting && stagedFiles.isNotEmpty
                         ? () => onDraftCommitMessage!()

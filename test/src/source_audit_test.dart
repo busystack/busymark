@@ -1199,13 +1199,13 @@ void main() {
     expect(commitPanel, contains('BusyMarkGroupedList('));
     expect(commitPanel, contains('BusyMarkGroupedTextEntry('));
     expect(commitPanel, contains('context.l10n.gitCommitMessage'));
-    expect(commitPanel, contains('BusyMarkCompactIconButton('));
+    expect(commitPanel, contains('BusyMarkHeaderIconButton('));
     expect(commitPanel, contains('BusyMarkGlyphs.ai'));
     expect(commitPanel, contains('BusyMarkPushButton.suggested('));
     expect(commitPanel, contains('BusyMarkStatusBox('));
     expect(commitPanel, isNot(contains('TextField(')));
     expect(commitPanel, isNot(contains('TextFormField(')));
-    expect(commitPanel, isNot(contains('BusyMarkHeaderIconButton(')));
+    expect(commitPanel, isNot(contains('BusyMarkCompactIconButton(')));
   });
 
   test('Git sidebar actions use the shared semantic button adapter', () {
