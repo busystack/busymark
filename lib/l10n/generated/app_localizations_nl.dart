@@ -4006,31 +4006,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiDraftWithAi => 'Met AI opstellen';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Inhoudsopgave genereren/bijwerken';
-
-  @override
-  String get markdownTocTitle => 'Inhoudsopgave';
-
-  @override
-  String markdownTocUpdated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count vermeldingen',
-      one: '1 vermelding',
-    );
-    return 'Inhoudsopgave bijgewerkt met $_temp0.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Voeg ten minste één sectiekop toe voordat u een inhoudsopgave genereert.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'De BusyMark-inhoudsopgavemarkeringen ontbreken, zijn gedupliceerd of zijn niet in de juiste volgorde.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Kopniveau $level volgt niveau $previousLevel; controleer de nesting van secties.';
   }

@@ -4012,25 +4012,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aiDraftWithAi => 'تهیهٔ پیش‌نویس با هوش مصنوعی';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'ایجاد/به‌روزرسانی فهرست مطالب';
-
-  @override
-  String get markdownTocTitle => 'فهرست مطالب';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'فهرست مطالب با ⁨$count⁩ مدخل به‌روزرسانی شد.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'پیش از ایجاد فهرست مطالب دست‌کم یک عنوان بخش اضافه کنید.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'نشانگرهای فهرست مطالب BusyMark وجود ندارند، تکراری‌اند یا ترتیب نادرستی دارند.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'عنوان سطح ⁨$level⁩ پس از سطح ⁨$previousLevel⁩ آمده است؛ تودرتویی بخش‌ها را بازبینی کنید.';
   }

@@ -3988,31 +3988,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiDraftWithAi => 'Draft with AI';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Generate/update table of contents';
-
-  @override
-  String get markdownTocTitle => 'Table of contents';
-
-  @override
-  String markdownTocUpdated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count entries',
-      one: '1 entry',
-    );
-    return 'Table of contents updated with $_temp0.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Add at least one section heading before generating a table of contents.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'The BusyMark table-of-contents markers are missing, duplicated, or out of order.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Heading level $level follows level $previousLevel; review the section nesting.';
   }

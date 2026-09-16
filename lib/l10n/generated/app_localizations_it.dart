@@ -3997,25 +3997,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiDraftWithAi => 'Crea bozza con IA';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Genera/aggiorna indice';
-
-  @override
-  String get markdownTocTitle => 'Indice';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Indice aggiornato con $count voci.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Aggiungi almeno un titolo di sezione prima di generare un indice.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'I marcatori dell’indice di BusyMark sono mancanti, duplicati o fuori ordine.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Il titolo di livello $level segue il livello $previousLevel; verifica la struttura delle sezioni.';
   }

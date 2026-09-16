@@ -4029,25 +4029,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiDraftWithAi => 'Створити чернетку за допомогою ШІ';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Створити/оновити зміст';
-
-  @override
-  String get markdownTocTitle => 'Зміст';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Зміст оновлено, записів: $count.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Додайте принаймні один заголовок розділу перед створенням змісту.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Маркери змісту BusyMark відсутні, повторюються або розташовані в неправильному порядку.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Після заголовка рівня $previousLevel іде рівень $level; перевірте вкладеність розділів.';
   }

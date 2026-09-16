@@ -4674,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "Menghasilkan/memperbarui daftar isi",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "Daftar isi",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "Daftar isi diperbarui dengan {count} entri.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "Tambahkan setidaknya satu judul bagian sebelum membuat daftar isi.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "Penanda daftar isi BusyMark hilang, duplikat, atau tidak berurutan.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "Tingkat judul {level} mengikuti tingkat {previousLevel}; tinjau bagian yang bersarang.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",

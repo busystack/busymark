@@ -4674,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "Inhoudsopgave genereren/bijwerken",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "Inhoudsopgave",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "Inhoudsopgave bijgewerkt met {count, plural, =1{1 vermelding} other{{count} vermeldingen}}.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "Voeg ten minste één sectiekop toe voordat u een inhoudsopgave genereert.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "De BusyMark-inhoudsopgavemarkeringen ontbreken, zijn gedupliceerd of zijn niet in de juiste volgorde.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "Kopniveau {level} volgt niveau {previousLevel}; controleer de nesting van secties.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",

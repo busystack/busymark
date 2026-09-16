@@ -270,7 +270,6 @@ void main() {
     );
     expect(mainMenu, contains('enabled: canExport'));
     for (final removed in [
-      'generateOrUpdateMarkdownToc',
       'BusyMarkCommandIds.clipboardHistory',
       'BusyMarkCommandIds.localHistory',
       'BusyMarkCommandIds.findLocalHistory',

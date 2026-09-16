@@ -294,7 +294,6 @@ void main() {
       l10n.clipboardHistory,
       l10n.localHistory,
       l10n.findLocalHistoryEllipsis,
-      l10n.generateOrUpdateMarkdownToc,
     }) {
       expect(find.text(documentCommand), findsNothing);
     }
@@ -3753,7 +3752,6 @@ void main() {
     expect(find.text(l10n.copyName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
-    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
     expect(find.text(l10n.export), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -4261,8 +4259,8 @@ void main() {
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
     expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
-    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsOneWidget);
     expect(find.text(l10n.export), findsOneWidget);
+    expect(find.byType(PopupMenuDivider), findsOneWidget);
 
     await tester.tap(find.text(l10n.copyFileName));
     await tester.pumpAndSettle();
@@ -4296,7 +4294,6 @@ void main() {
     expect(find.text(l10n.gitFileHistory), findsNothing);
     expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.findLocalHistoryEllipsis), findsNothing);
-    expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
     expect(find.text(l10n.export), findsNothing);
     expect(find.byIcon(BusyMarkGlyphs.branch), findsOneWidget);
     expect(find.byIcon(BusyMarkGlyphs.sidebarLocalHistory), findsOneWidget);
@@ -4878,6 +4875,25 @@ void main() {
         );
       }
     }
+
+    await selectView(LogicalKeyboardKey.digit3);
+    final outlineFileMenu = find.byKey(
+      const ValueKey('workspace-sidebar-outline-file-menu'),
+    );
+    final outlineFileActions = find.descendant(
+      of: outlineFileMenu,
+      matching: find.byTooltip(l10n.actions),
+    );
+    await tester.tap(outlineFileActions);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.copyFileName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
+    expect(find.text(l10n.export), findsNothing);
+    expect(find.byType(PopupMenuDivider), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
 
     await selectView(LogicalKeyboardKey.digit2);
     final selectedTopicActions = find.byTooltip(l10n.actions);

@@ -535,9 +535,6 @@ void main() {
 
     for (final localeEntry in locales.entries) {
       final l10n = localeEntry.value;
-      expect(l10n.markdownTocUpdated(0), 'Sumário atualizado com 0 entradas.');
-      expect(l10n.markdownTocUpdated(1), 'Sumário atualizado com 1 entrada.');
-      expect(l10n.markdownTocUpdated(2), 'Sumário atualizado com 2 entradas.');
       expect(
         l10n.aiGenerationVerified('BusyAI', 0),
         'Geração verificada com BusyAI. Há 0 modelos compatíveis disponíveis.',

@@ -3961,25 +3961,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiDraftWithAi => 'AI से मसौदा बनाएँ';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'विषय-सूची बनाएँ/अपडेट करें';
-
-  @override
-  String get markdownTocTitle => 'विषय-सूची';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'विषय-सूची $count प्रविष्टियों के साथ अपडेट हुई।';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'विषय-सूची बनाने से पहले कम-से-कम एक अनुभाग शीर्षक जोड़ें।';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark विषय-सूची मार्कर अनुपस्थित, डुप्लिकेट या गलत क्रम में हैं।';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'स्तर $level का शीर्षक स्तर $previousLevel के बाद है; अनुभागों का नेस्टिंग जाँचें।';
   }

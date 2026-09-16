@@ -4674,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "목차 생성/업데이트",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "목차",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "{count}개의 항목으로 목차가 업데이트되었습니다.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "목차를 생성하기 전에 하나 이상의 섹션 제목을 추가하세요.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "BusyMark 목차 표시가 없거나 중복되었거나 순서가 잘못되었습니다.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "제목 수준 {level}은(는) {previousLevel} 수준을 따릅니다. 섹션 중첩을 검토하세요.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",

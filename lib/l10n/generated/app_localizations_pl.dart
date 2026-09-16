@@ -4018,25 +4018,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiDraftWithAi => 'Utwórz wersję roboczą z SI';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Wygeneruj/zaktualizuj spis treści';
-
-  @override
-  String get markdownTocTitle => 'Spis treści';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Zaktualizowano spis treści zawierający $count pozycji.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Przed wygenerowaniem spisu treści dodaj co najmniej jeden nagłówek sekcji.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Znaczniki spisu treści BusyMark są nieobecne, powielone lub ułożone w niewłaściwej kolejności.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Nagłówek poziomu $level występuje po poziomie $previousLevel; sprawdź zagnieżdżenie sekcji.';
   }

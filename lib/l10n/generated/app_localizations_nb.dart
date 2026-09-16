@@ -3967,26 +3967,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiDraftWithAi => 'Lag utkast med KI';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Generer/oppdater innholdsfortegnelse';
-
-  @override
-  String get markdownTocTitle => 'Innholdsfortegnelse';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Innholdsfortegnelsen ble oppdatert med $count oppføringer.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Legg til minst én seksjonsoverskrift før du genererer en innholdsfortegnelse.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark-markørene for innholdsfortegnelsen mangler, er duplisert eller står i feil rekkefølge.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Overskrift på nivå $level følger nivå $previousLevel; kontroller seksjonsnestingen.';
   }

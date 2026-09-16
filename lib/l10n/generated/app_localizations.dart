@@ -6686,36 +6686,6 @@ abstract class AppLocalizations {
   /// **'Draft with AI'**
   String get aiDraftWithAi;
 
-  /// Deterministic action that creates or refreshes a Markdown table of contents.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate/update table of contents'**
-  String get generateOrUpdateMarkdownToc;
-
-  /// Heading inserted above a generated Markdown table of contents.
-  ///
-  /// In en, this message translates to:
-  /// **'Table of contents'**
-  String get markdownTocTitle;
-
-  /// Confirmation after generating a Markdown table of contents.
-  ///
-  /// In en, this message translates to:
-  /// **'Table of contents updated with {count, plural, =1{1 entry} other{{count} entries}}.'**
-  String markdownTocUpdated(int count);
-
-  /// Message when a Markdown document has no section headings for a generated table of contents.
-  ///
-  /// In en, this message translates to:
-  /// **'Add at least one section heading before generating a table of contents.'**
-  String get markdownTocNoHeadings;
-
-  /// Message when a generated Markdown table-of-contents region cannot be safely updated.
-  ///
-  /// In en, this message translates to:
-  /// **'The BusyMark table-of-contents markers are missing, duplicated, or out of order.'**
-  String get markdownTocMalformedMarkers;
-
   /// Accessibility diagnostic for a skipped Markdown heading level.
   ///
   /// In en, this message translates to:

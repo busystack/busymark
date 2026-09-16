@@ -4001,26 +4001,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiDraftWithAi => 'Mit KI entwerfen';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Inhaltsverzeichnis erstellen/aktualisieren';
-
-  @override
-  String get markdownTocTitle => 'Inhaltsverzeichnis';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Inhaltsverzeichnis mit $count Einträgen aktualisiert.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Fügen Sie mindestens eine Abschnittsüberschrift hinzu, bevor Sie ein Inhaltsverzeichnis erstellen.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Die BusyMark-Markierungen für das Inhaltsverzeichnis fehlen, sind doppelt vorhanden oder in falscher Reihenfolge.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Auf Überschriftenebene $previousLevel folgt Ebene $level; prüfen Sie die Abschnittsverschachtelung.';
   }

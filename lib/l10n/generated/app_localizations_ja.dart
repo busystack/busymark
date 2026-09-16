@@ -3861,24 +3861,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiDraftWithAi => 'AI で下書き';
 
   @override
-  String get generateOrUpdateMarkdownToc => '目次を生成／更新';
-
-  @override
-  String get markdownTocTitle => '目次';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return '$count 件の項目で目次を更新しました。';
-  }
-
-  @override
-  String get markdownTocNoHeadings => '目次を生成する前に、セクション見出しを 1 つ以上追加してください。';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark の目次マーカーがないか、重複しているか、順序が正しくありません。';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return '見出しレベル $level はレベル $previousLevel の後に続いています。セクションの入れ子を確認してください。';
   }

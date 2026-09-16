@@ -1116,10 +1116,6 @@ void main() {
     );
     expect(workspace, contains('_outlineDocumentMenuItems('));
     expect(workspace, contains('label: context.l10n.copyFileName'));
-    expect(
-      workspace,
-      contains('label: context.l10n.generateOrUpdateMarkdownToc'),
-    );
     expect(workspace, contains('label: context.l10n.export'));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));

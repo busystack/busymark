@@ -4674,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "生成/更新目录",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "目录",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "目录已更新，包含 {count} 个条目。",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "请先添加至少一个节标题，再生成目录。",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "BusyMark 目录标记缺失、重复或顺序错误。",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "标题级别 {level} 跟在级别 {previousLevel} 之后；请检查节的嵌套结构。",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",

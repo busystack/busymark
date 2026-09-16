@@ -4674,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "Tạo/cập nhật mục lục",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "Mục lục",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "Đã cập nhật mục lục với {count} mục.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "Thêm ít nhất một tiêu đề phần trước khi tạo mục lục.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "Các dấu đánh dấu mục lục BusyMark bị thiếu, trùng lặp hoặc không đúng thứ tự.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "Tiêu đề cấp {level} theo sau cấp {previousLevel}; hãy xem lại cấu trúc lồng ghép của các phần.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",

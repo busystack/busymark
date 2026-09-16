@@ -3854,24 +3854,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiDraftWithAi => 'AI를 활용한 초안';
 
   @override
-  String get generateOrUpdateMarkdownToc => '목차 생성/업데이트';
-
-  @override
-  String get markdownTocTitle => '목차';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return '$count개의 항목으로 목차가 업데이트되었습니다.';
-  }
-
-  @override
-  String get markdownTocNoHeadings => '목차를 생성하기 전에 하나 이상의 섹션 제목을 추가하세요.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark 목차 표시가 없거나 중복되었거나 순서가 잘못되었습니다.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return '제목 수준 $level은(는) $previousLevel 수준을 따릅니다. 섹션 중첩을 검토하세요.';
   }

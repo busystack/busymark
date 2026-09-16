@@ -3963,25 +3963,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiDraftWithAi => 'Soạn bằng AI';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Tạo/cập nhật mục lục';
-
-  @override
-  String get markdownTocTitle => 'Mục lục';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Đã cập nhật mục lục với $count mục.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Thêm ít nhất một tiêu đề phần trước khi tạo mục lục.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Các dấu đánh dấu mục lục BusyMark bị thiếu, trùng lặp hoặc không đúng thứ tự.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Tiêu đề cấp $level theo sau cấp $previousLevel; hãy xem lại cấu trúc lồng ghép của các phần.';
   }

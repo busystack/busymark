@@ -72,7 +72,6 @@ import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
-import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
 import '../../math/math_widget.dart';
 import '../../local_history/local_history_comparison_view.dart';
@@ -660,9 +659,6 @@ class WorkspaceScreen extends ConsumerWidget {
     final documentOutline = _activeDocumentOutline(state);
     final canExportPdf = canExportWorkspacePdf(state);
     final canExportHtml = canExportWorkspaceHtml(state);
-    final canGenerateMarkdownToc =
-        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
-        false;
     final sidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _Sidebar(
@@ -672,9 +668,7 @@ class WorkspaceScreen extends ConsumerWidget {
         searchResults: searchResults,
         onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
         canExport: canExportPdf || canExportHtml,
-        canGenerateMarkdownToc: canGenerateMarkdownToc,
         onExport: () => unawaited(exportWorkspace(context, ref)),
-        onGenerateMarkdownToc: () => _generateOrUpdateMarkdownToc(context, ref),
       ),
     );
     final workspaceContent = Expanded(
@@ -1229,50 +1223,6 @@ class WorkspaceScreen extends ConsumerWidget {
     }
   }
 
-  void _generateOrUpdateMarkdownToc(BuildContext context, WidgetRef ref) {
-    final state = ref.read(workspaceControllerProvider);
-    final workspace = state.workspace;
-    if (workspace == null) {
-      return;
-    }
-    final kind = _activeWorkspaceDocumentKind(workspace);
-    if (!(kind?.supportsAiMarkdownEditing ?? false)) {
-      return;
-    }
-    final filePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    if (filePath == null) {
-      return;
-    }
-    try {
-      final result = const MarkdownTocGenerator().generate(
-        source: state.activeText,
-        filePath: filePath,
-        mode: kind == DocumentKind.writersideMarkdownTopic
-            ? MarkdownMode.writersideMarkdown
-            : MarkdownMode.gfm,
-        title: context.l10n.markdownTocTitle,
-      );
-      ref
-          .read(workspaceControllerProvider.notifier)
-          .updateActiveText(result.source, sourceFilePath: filePath);
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.markdownTocUpdated(result.entryCount),
-      );
-    } on MarkdownTocException catch (error) {
-      final message = switch (error.failure) {
-        MarkdownTocFailure.malformedMarkers =>
-          context.l10n.markdownTocMalformedMarkers,
-        MarkdownTocFailure.noHeadings => context.l10n.markdownTocNoHeadings,
-      };
-      BusyMarkToastOverlay.show(
-        context,
-        message: message,
-        priority: BusyMarkToastPriority.high,
-      );
-    }
-  }
-
   String _activeFileName(BuildContext context, Workspace workspace) {
     final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (path == null || path.isEmpty) {
@@ -1808,7 +1758,6 @@ enum _OutlineDocumentAction {
   copyPath,
   openInFiles,
   refineWithAi,
-  generateMarkdownToc,
   export,
 }
 
@@ -1850,7 +1799,6 @@ List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
 List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
   BuildContext context, {
   required bool pathActionsEnabled,
-  required bool canGenerateMarkdownToc,
   required bool showExport,
   required bool canExport,
 }) {
@@ -1877,13 +1825,7 @@ List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
       label: context.l10n.aiRefineWithAi,
       icon: BusyMarkGlyphs.ai,
     ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
-    BusyMarkPopupMenuItem(
-      value: _OutlineDocumentAction.generateMarkdownToc,
-      label: context.l10n.generateOrUpdateMarkdownToc,
-      icon: BusyMarkGlyphs.orderedList,
-      enabled: canGenerateMarkdownToc,
-    ),
+    if (showExport) const PopupMenuDivider(height: BusyMarkSpacing.sm),
     if (showExport)
       BusyMarkPopupMenuItem(
         value: _OutlineDocumentAction.export,
@@ -2180,9 +2122,7 @@ class _Sidebar extends ConsumerStatefulWidget {
     required this.searchResults,
     required this.onOpenSearchResult,
     required this.canExport,
-    required this.canGenerateMarkdownToc,
     required this.onExport,
-    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -2191,9 +2131,7 @@ class _Sidebar extends ConsumerStatefulWidget {
   final List<_WorkspaceSearchResult> searchResults;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
   final bool canExport;
-  final bool canGenerateMarkdownToc;
   final VoidCallback onExport;
-  final VoidCallback onGenerateMarkdownToc;
 
   @override
   ConsumerState<_Sidebar> createState() => _SidebarState();
@@ -2292,9 +2230,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             onRefineActiveDocument: () =>
                 unawaited(_refineActiveDocumentWithAi(context)),
             canExport: widget.canExport,
-            canGenerateMarkdownToc: widget.canGenerateMarkdownToc,
             onExport: widget.onExport,
-            onGenerateMarkdownToc: widget.onGenerateMarkdownToc,
           ),
           Expanded(
             child: widget.searchState.active
@@ -3108,9 +3044,7 @@ class _SidebarHeader extends StatelessWidget {
     required this.onGitAction,
     required this.onRefineActiveDocument,
     required this.canExport,
-    required this.canGenerateMarkdownToc,
     required this.onExport,
-    required this.onGenerateMarkdownToc,
   });
 
   final Workspace workspace;
@@ -3128,9 +3062,7 @@ class _SidebarHeader extends StatelessWidget {
   onGitAction;
   final VoidCallback onRefineActiveDocument;
   final bool canExport;
-  final bool canGenerateMarkdownToc;
   final VoidCallback onExport;
-  final VoidCallback onGenerateMarkdownToc;
 
   @override
   Widget build(BuildContext context) {
@@ -3291,7 +3223,6 @@ class _SidebarHeader extends StatelessWidget {
                     itemBuilder: (menuContext) => _outlineDocumentMenuItems(
                       menuContext,
                       pathActionsEnabled: hasActiveDocumentPath,
-                      canGenerateMarkdownToc: canGenerateMarkdownToc,
                       showExport:
                           workspace.kind != WorkspaceKind.writersideModule,
                       canExport: canExport,
@@ -3321,8 +3252,6 @@ class _SidebarHeader extends StatelessWidget {
                               onRefineWithAi: onRefineActiveDocument,
                             ),
                           );
-                        case _OutlineDocumentAction.generateMarkdownToc:
-                          onGenerateMarkdownToc();
                         case _OutlineDocumentAction.export:
                           onExport();
                       }

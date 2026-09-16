@@ -4017,32 +4017,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aiDraftWithAi => 'Criar rascunho com IA';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Gerar/atualizar sumário';
-
-  @override
-  String get markdownTocTitle => 'Sumário';
-
-  @override
-  String markdownTocUpdated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count entradas',
-      one: '1 entrada',
-      zero: '0 entradas',
-    );
-    return 'Sumário atualizado com $_temp0.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Adicione pelo menos um título de secção antes de gerar um sumário.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'O título de nível $level vem após o nível $previousLevel; reveja o aninhamento das secções.';
   }
@@ -8585,32 +8559,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get aiDraftWithAi => 'Criar rascunho com IA';
-
-  @override
-  String get generateOrUpdateMarkdownToc => 'Gerar/atualizar sumário';
-
-  @override
-  String get markdownTocTitle => 'Sumário';
-
-  @override
-  String markdownTocUpdated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count entradas',
-      one: '1 entrada',
-      zero: '0 entradas',
-    );
-    return 'Sumário atualizado com $_temp0.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Adicione pelo menos um título de seção antes de gerar um sumário.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.';
 
   @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {

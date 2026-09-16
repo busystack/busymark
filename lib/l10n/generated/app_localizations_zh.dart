@@ -3798,23 +3798,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiDraftWithAi => '使用 AI 起草';
 
   @override
-  String get generateOrUpdateMarkdownToc => '生成/更新目录';
-
-  @override
-  String get markdownTocTitle => '目录';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return '目录已更新，包含 $count 个条目。';
-  }
-
-  @override
-  String get markdownTocNoHeadings => '请先添加至少一个节标题，再生成目录。';
-
-  @override
-  String get markdownTocMalformedMarkers => 'BusyMark 目录标记缺失、重复或顺序错误。';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return '标题级别 $level 跟在级别 $previousLevel 之后；请检查节的嵌套结构。';
   }
@@ -8107,23 +8090,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get aiDraftWithAi => '使用 AI 起草';
-
-  @override
-  String get generateOrUpdateMarkdownToc => '生成/更新目录';
-
-  @override
-  String get markdownTocTitle => '目录';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return '目录已更新，包含 $count 个条目。';
-  }
-
-  @override
-  String get markdownTocNoHeadings => '请先添加至少一个节标题，再生成目录。';
-
-  @override
-  String get markdownTocMalformedMarkers => 'BusyMark 目录标记缺失、重复或顺序错误。';
 
   @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {

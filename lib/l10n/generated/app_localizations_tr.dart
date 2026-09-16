@@ -3967,26 +3967,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiDraftWithAi => 'AI ile taslak oluştur';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'İçindekiler tablosu oluştur/güncelle';
-
-  @override
-  String get markdownTocTitle => 'İçindekiler';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'İçindekiler tablosu $count girişle güncellendi.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'İçindekiler tablosu oluşturmadan önce en az bir bölüm başlığı ekleyin.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark içindekiler tablosu işaretçileri eksik, yinelenmiş veya hatalı.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return '$level başlık seviyesi $previousLevel seviyesini takip eder; bölümün iç içe geçmesini inceleyin.';
   }

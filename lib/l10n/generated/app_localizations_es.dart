@@ -4003,26 +4003,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiDraftWithAi => 'Redactar con IA';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Generar/actualizar tabla de contenido';
-
-  @override
-  String get markdownTocTitle => 'Tabla de contenido';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Tabla de contenido actualizada con $count entradas.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Añada al menos un encabezado de sección antes de generar una tabla de contenido.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Los marcadores de la tabla de contenido de BusyMark faltan, están duplicados o no siguen el orden correcto.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'El encabezado de nivel $level sigue al nivel $previousLevel; revise la jerarquía de las secciones.';
   }

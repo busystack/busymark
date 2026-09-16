@@ -4020,25 +4020,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiDraftWithAi => 'Создать черновик с ИИ';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Создать/обновить оглавление';
-
-  @override
-  String get markdownTocTitle => 'Оглавление';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Оглавление обновлено, записей: $count.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Добавьте хотя бы один заголовок раздела перед созданием оглавления.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Маркеры оглавления BusyMark отсутствуют, повторяются или расположены в неверном порядке.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'За заголовком уровня $previousLevel следует уровень $level; проверьте вложенность разделов.';
   }

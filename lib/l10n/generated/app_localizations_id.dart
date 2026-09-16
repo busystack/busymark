@@ -3973,26 +3973,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get aiDraftWithAi => 'Draf dengan AI';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Menghasilkan/memperbarui daftar isi';
-
-  @override
-  String get markdownTocTitle => 'Daftar isi';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Daftar isi diperbarui dengan $count entri.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Tambahkan setidaknya satu judul bagian sebelum membuat daftar isi.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Penanda daftar isi BusyMark hilang, duplikat, atau tidak berurutan.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Tingkat judul $level mengikuti tingkat $previousLevel; tinjau bagian yang bersarang.';
   }

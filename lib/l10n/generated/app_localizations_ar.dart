@@ -4005,25 +4005,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiDraftWithAi => 'إعداد مسودة بالذكاء الاصطناعي';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'إنشاء/تحديث جدول المحتويات';
-
-  @override
-  String get markdownTocTitle => 'جدول المحتويات';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'حُدّث جدول المحتويات وأصبح يضم ⁨$count⁩ من الإدخالات.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'أضف عنوان قسم واحدًا على الأقل قبل إنشاء جدول المحتويات.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'علامات جدول محتويات BusyMark مفقودة أو مكررة أو بترتيب غير صحيح.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'يلي عنوان المستوى ⁨$previousLevel⁩ عنوان من المستوى ⁨$level⁩؛ راجع تداخل الأقسام.';
   }

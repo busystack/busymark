@@ -3966,25 +3966,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiDraftWithAi => 'Koosta TI-ga mustand';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Loo/värskenda sisukord';
-
-  @override
-  String get markdownTocTitle => 'Sisukord';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Sisukord värskendati $count kirjega.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Lisa enne sisukorra loomist vähemalt üks jaotise pealkiri.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMarki sisukorra tähised puuduvad, korduvad või on vales järjekorras.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Taseme $level pealkiri järgneb tasemele $previousLevel; kontrolli jaotiste pesastust.';
   }

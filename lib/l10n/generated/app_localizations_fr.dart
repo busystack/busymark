@@ -4004,26 +4004,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiDraftWithAi => 'Rédiger avec l’IA';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Générer/actualiser la table des matières';
-
-  @override
-  String get markdownTocTitle => 'Table des matières';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Table des matières actualisée avec $count entrées.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Ajoutez au moins un titre de section avant de générer une table des matières.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Les marqueurs de table des matières BusyMark sont absents, en double ou dans le mauvais ordre.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Le titre de niveau $level suit le niveau $previousLevel ; vérifiez l’imbrication des sections.';
   }
