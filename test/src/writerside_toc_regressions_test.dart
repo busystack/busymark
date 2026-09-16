@@ -371,11 +371,11 @@ void main() {
         final template = choice == 'Topic from Template...';
         if (template) {
           await tester.enterText(
-            find.byKey(const ValueKey('template-title')),
+            _editableUnderKey('template-title'),
             'Created topic',
           );
           await tester.enterText(
-            find.byKey(const ValueKey('template-filename')),
+            _editableUnderKey('template-filename'),
             'created-topic',
           );
         } else {
@@ -448,6 +448,11 @@ void main() {
     );
   }
 }
+
+Finder _editableUnderKey(String key) => find.descendant(
+  of: find.byKey(ValueKey(key)),
+  matching: find.byType(EditableText),
+);
 
 Future<void> _settle(WidgetTester tester, {bool Function()? until}) async {
   for (var i = 0; i < (until == null ? 30 : 300); i++) {

@@ -1343,6 +1343,35 @@ void main() {
     );
   });
 
+  test('Writerside template workflow uses BusyMark and Yaru presentation', () {
+    final templates = File(
+      'lib/src/workspace/presentation/writerside_template_dialogs.dart',
+    ).readAsStringSync();
+
+    for (final constructor in [
+      'ExpansionTile',
+      'ListTile',
+      'TextButton',
+      'LinearProgressIndicator',
+    ]) {
+      expect(
+        RegExp(
+          '(^|[^A-Za-z0-9_])$constructor\\s*\\(',
+          multiLine: true,
+        ).hasMatch(templates),
+        isFalse,
+        reason: '$constructor must not be directly constructed here',
+      );
+    }
+    expect(templates, contains('BusyMarkSearchField('));
+    expect(templates, contains('BusyMarkSidebarSurface('));
+    expect(templates, contains('YaruExpandable('));
+    expect(templates, contains('YaruMasterTile('));
+    expect(templates, contains('BusyMarkGroupedTextEntry('));
+    expect(templates, contains('BusyMarkActionRow('));
+    expect(templates, contains('YaruLinearProgressIndicator('));
+  });
+
   test('sidebar trees share the expandable Yaru-style row', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',

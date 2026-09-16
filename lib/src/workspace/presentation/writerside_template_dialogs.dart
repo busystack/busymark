@@ -6,6 +6,7 @@ import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
+import '../../app/busymark_search_field.dart';
 import '../../app/localization.dart';
 import '../../writerside/writerside_template_service.dart';
 import '../../writerside/writerside_topic_file_name.dart';
@@ -195,179 +196,209 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                 children: [
                   SizedBox(
                     width: 230,
-                    child: Column(
-                      children: [
-                        TextField(
-                          key: const ValueKey('template-search'),
-                          controller: _search,
-                          decoration: InputDecoration(
-                            hintText: context.l10n.search,
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        Expanded(
-                          child: ListView(
-                            children: [
-                              for (final category in [
-                                'default',
-                                'custom',
-                                'tgdp',
-                              ])
-                                ExpansionTile(
-                                  key: ValueKey(
-                                    'template-category-$category-${_search.text.isNotEmpty}',
-                                  ),
-                                  initiallyExpanded:
-                                      category != 'tgdp' ||
-                                      _search.text.isNotEmpty,
-                                  title: Text(
-                                    _categoryLabel(context, category),
-                                  ),
-                                  children: [
-                                    for (final template
-                                        in (groups.values
-                                            .where(
-                                              (entry) =>
-                                                  entry.category == category,
-                                            )
-                                            .toList()
-                                          ..sort(
-                                            (a, b) => a.name.compareTo(b.name),
-                                          )))
-                                      ListTile(
-                                        dense: true,
-                                        key: ValueKey(
-                                          'template-${template.id}',
-                                        ),
-                                        selected:
-                                            selected?.groupKey ==
-                                            template.groupKey,
-                                        title: Text(template.name),
-                                        onTap: () =>
-                                            setState(() => _select(template)),
-                                      ),
-                                    if (category == 'custom')
-                                      TextButton(
-                                        onPressed: () => _edit(create: true),
-                                        child: Text(
-                                          context.l10n.tocCreateCustomTemplate,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const VerticalDivider(),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_templates == null && _error == null)
-                          const LinearProgressIndicator(),
-                        if (selected != null) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  key: const ValueKey('template-title'),
-                                  controller: _title,
-                                  decoration: InputDecoration(
-                                    labelText: context.l10n.tocTopicTitleField,
-                                    errorText: _title.text.trim().isEmpty
-                                        ? context.l10n.topicTitleRequired
-                                        : null,
-                                  ),
-                                  onChanged: (_) => setState(() {}),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: selected.url == null
-                                    ? _edit
-                                    : () => launchUrl(
-                                        Uri.parse(selected.url!),
-                                        mode: LaunchMode.externalApplication,
-                                      ),
-                                child: Text(
-                                  selected.url == null
-                                      ? context.l10n.tocEditTemplates
-                                      : context.l10n.source,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            key: const ValueKey('template-filename'),
-                            controller: _filename,
-                            textDirection: TextDirection.ltr,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.tocTemplateFilename,
-                              suffixText: '.${selected.extension}',
-                              errorText: _filenameError,
+                    child: BusyMarkSidebarSurface(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                              BusyMarkSpacing.sm,
+                              BusyMarkSpacing.sm,
+                              BusyMarkSpacing.sm,
+                              BusyMarkSpacing.xs,
                             ),
-                            onChanged: (_) => setState(() {}),
-                            onSubmitted: (_) => _create(),
+                            child: BusyMarkSearchField(
+                              key: const ValueKey('template-search'),
+                              controller: _search,
+                              hintText: context.l10n.search,
+                              onChanged: (_) => setState(() {}),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Text(context.l10n.tocTemplateFormat),
-                              const SizedBox(width: 12),
-                              for (final extension in ['md', 'topic'])
-                                YaruRadioButton<String>(
-                                  value: extension,
-                                  groupValue: selected.extension,
-                                  title: Text(
-                                    extension == 'md'
-                                        ? context.l10n.tocTemplateMarkdown
-                                        : context.l10n.tocTemplateXml,
-                                  ),
-                                  onChanged:
-                                      !_templates!.any(
-                                        (entry) =>
-                                            entry.groupKey ==
-                                                selected.groupKey &&
-                                            entry.extension == extension,
-                                      )
-                                      ? null
-                                      : (value) => setState(() {
-                                          _selected = _templates!.firstWhere(
-                                            (entry) =>
-                                                entry.groupKey ==
-                                                    selected.groupKey &&
-                                                entry.extension == value,
-                                          );
-                                        }),
-                                ),
-                            ],
-                          ),
-                          const Divider(),
                           Expanded(
-                            child: ClipRect(
-                              child: widget.previewBuilder(
-                                context,
-                                selected,
-                                _title.text,
-                                _filename.text,
-                              ),
+                            child: BusyMarkSidebarNavigation(
+                              children: [
+                                for (final category in [
+                                  'default',
+                                  'custom',
+                                  'tgdp',
+                                ])
+                                  YaruExpandable(
+                                    key: ValueKey(
+                                      'template-category-$category-${_search.text.isNotEmpty}',
+                                    ),
+                                    isExpanded:
+                                        category != 'tgdp' ||
+                                        _search.text.isNotEmpty,
+                                    expandButtonPosition:
+                                        YaruExpandableButtonPosition.start,
+                                    header: Text(
+                                      _categoryLabel(context, category),
+                                      style: busyMarkSectionHeaderStyle(
+                                        context,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        for (final template
+                                            in (groups.values
+                                                .where(
+                                                  (entry) =>
+                                                      entry.category ==
+                                                      category,
+                                                )
+                                                .toList()
+                                              ..sort(
+                                                (a, b) =>
+                                                    a.name.compareTo(b.name),
+                                              )))
+                                          YaruMasterTile(
+                                            key: ValueKey(
+                                              'template-${template.id}',
+                                            ),
+                                            selected:
+                                                selected?.groupKey ==
+                                                template.groupKey,
+                                            title: Text(template.name),
+                                            onTap: () => setState(
+                                              () => _select(template),
+                                            ),
+                                          ),
+                                        if (category == 'custom')
+                                          YaruListTile.square(
+                                            title: Text(
+                                              context
+                                                  .l10n
+                                                  .tocCreateCustomTemplate,
+                                            ),
+                                            onTap: () => _edit(create: true),
+                                            verticalGap: BusyMarkSpacing.xs,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
-                        if (_error != null)
-                          BusyMarkStatusBox(
-                            message: _error!,
-                            kind: BusyMarkStatusKind.error,
-                          ),
-                        if (_templates == null && _error != null)
-                          TextButton(
-                            onPressed: _load,
-                            child: Text(context.l10n.tocTemplateRetry),
-                          ),
-                      ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: BusyMarkSpacing.md,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_templates == null && _error == null)
+                            const YaruLinearProgressIndicator(),
+                          if (selected != null) ...[
+                            BusyMarkGroupedList(
+                              filled: true,
+                              children: [
+                                BusyMarkGroupedTextEntry(
+                                  key: const ValueKey('template-title'),
+                                  label: context.l10n.tocTopicTitleField,
+                                  controller: _title,
+                                  errorText: _title.text.trim().isEmpty
+                                      ? context.l10n.topicTitleRequired
+                                      : null,
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                                BusyMarkGroupedTextEntry(
+                                  key: const ValueKey('template-filename'),
+                                  label: context.l10n.tocTemplateFilename,
+                                  controller: _filename,
+                                  textDirection: TextDirection.ltr,
+                                  errorText: _filenameError,
+                                  trailing: Directionality(
+                                    textDirection: TextDirection.ltr,
+                                    child: Text('.${selected.extension}'),
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                  onSubmitted: (_) => _create(),
+                                ),
+                                YaruListTile.square(
+                                  title: Text(context.l10n.tocTemplateFormat),
+                                  trailing: Wrap(
+                                    spacing: BusyMarkSpacing.md,
+                                    runSpacing: BusyMarkSpacing.xs,
+                                    children: [
+                                      for (final extension in ['md', 'topic'])
+                                        YaruRadioButton<String>(
+                                          value: extension,
+                                          groupValue: selected.extension,
+                                          title: Text(
+                                            extension == 'md'
+                                                ? context
+                                                      .l10n
+                                                      .tocTemplateMarkdown
+                                                : context.l10n.tocTemplateXml,
+                                          ),
+                                          onChanged:
+                                              !_templates!.any(
+                                                (entry) =>
+                                                    entry.groupKey ==
+                                                        selected.groupKey &&
+                                                    entry.extension ==
+                                                        extension,
+                                              )
+                                              ? null
+                                              : (value) => setState(() {
+                                                  _selected = _templates!
+                                                      .firstWhere(
+                                                        (entry) =>
+                                                            entry.groupKey ==
+                                                                selected
+                                                                    .groupKey &&
+                                                            entry.extension ==
+                                                                value,
+                                                      );
+                                                }),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                BusyMarkActionRow(
+                                  title: selected.url == null
+                                      ? context.l10n.tocEditTemplates
+                                      : context.l10n.source,
+                                  onTap: selected.url == null
+                                      ? _edit
+                                      : () => launchUrl(
+                                          Uri.parse(selected.url!),
+                                          mode: LaunchMode.externalApplication,
+                                        ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: BusyMarkSpacing.md),
+                            Expanded(
+                              child: ClipRect(
+                                child: widget.previewBuilder(
+                                  context,
+                                  selected,
+                                  _title.text,
+                                  _filename.text,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (_error != null)
+                            BusyMarkStatusBox(
+                              message: _error!,
+                              kind: BusyMarkStatusKind.error,
+                            ),
+                          if (_templates == null && _error != null)
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: BusyMarkDialogButton(
+                                label: context.l10n.tocTemplateRetry,
+                                onPressed: _load,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -558,7 +589,11 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
             absorbing: _busy,
             child: Column(
               children: [
-                Row(
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: BusyMarkSpacing.md,
+                  runSpacing: BusyMarkSpacing.sm,
                   children: [
                     SizedBox(
                       width: 240,
@@ -574,39 +609,44 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
                         }),
                       ),
                     ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: _snapshot == null
-                          ? null
-                          : () => setState(() => _add()),
-                      child: Text(context.l10n.tocTemplateNew),
-                    ),
-                    TextButton(
-                      onPressed: _selected == null
-                          ? null
-                          : () => setState(() => _add(copy: _selected)),
-                      child: Text(context.l10n.tocDuplicate),
-                    ),
-                    TextButton(
-                      onPressed: _selected == null
-                          ? null
-                          : () => setState(() {
-                              _draft.removeWhere(
-                                (entry) => entry.id == _selected!.id,
-                              );
-                              _select(
-                                _internal
-                                    ? _base.firstWhere(
-                                        (entry) => entry.id == _selected!.id,
-                                      )
-                                    : _visible.firstOrNull,
-                              );
-                            }),
-                      child: Text(
-                        _internal
-                            ? context.l10n.tocTemplateReset
-                            : context.l10n.delete,
-                      ),
+                    Wrap(
+                      spacing: BusyMarkSpacing.sm,
+                      runSpacing: BusyMarkSpacing.sm,
+                      children: [
+                        BusyMarkDialogButton(
+                          label: context.l10n.tocTemplateNew,
+                          onPressed: _snapshot == null
+                              ? null
+                              : () => setState(() => _add()),
+                        ),
+                        BusyMarkDialogButton(
+                          label: context.l10n.tocDuplicate,
+                          onPressed: _selected == null
+                              ? null
+                              : () => setState(() => _add(copy: _selected)),
+                        ),
+                        BusyMarkDialogButton(
+                          label: _internal
+                              ? context.l10n.tocTemplateReset
+                              : context.l10n.delete,
+                          destructive: !_internal,
+                          onPressed: _selected == null
+                              ? null
+                              : () => setState(() {
+                                  _draft.removeWhere(
+                                    (entry) => entry.id == _selected!.id,
+                                  );
+                                  _select(
+                                    _internal
+                                        ? _base.firstWhere(
+                                            (entry) =>
+                                                entry.id == _selected!.id,
+                                          )
+                                        : _visible.firstOrNull,
+                                  );
+                                }),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -617,92 +657,83 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
                     children: [
                       SizedBox(
                         width: 230,
-                        child: ListView(
-                          children: [
-                            for (final entry in _visible)
-                              ListTile(
-                                dense: true,
-                                selected: entry.id == _selected?.id,
-                                title: Text('${entry.name}.${entry.extension}'),
-                                onTap: () => setState(() => _select(entry)),
-                              ),
-                          ],
+                        child: BusyMarkSidebarSurface(
+                          child: BusyMarkSidebarNavigation(
+                            children: [
+                              for (final entry in _visible)
+                                YaruMasterTile(
+                                  selected: entry.id == _selected?.id,
+                                  title: Text(
+                                    '${entry.name}.${entry.extension}',
+                                  ),
+                                  onTap: () => setState(() => _select(entry)),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                      const VerticalDivider(),
                       Expanded(
-                        child: _selected == null
-                            ? const SizedBox.shrink()
-                            : Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextField(
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.only(
+                            start: BusyMarkSpacing.md,
+                          ),
+                          child: _selected == null
+                              ? const SizedBox.shrink()
+                              : Column(
+                                  children: [
+                                    BusyMarkGroupedList(
+                                      filled: true,
+                                      children: [
+                                        BusyMarkGroupedTextEntry(
                                           key: const ValueKey(
                                             'template-editor-name',
                                           ),
+                                          label: context.l10n.tocTemplateName,
                                           controller: _name,
                                           readOnly: _internal,
-                                          decoration: InputDecoration(
-                                            labelText:
-                                                context.l10n.tocTemplateName,
+                                          trailing: SizedBox(
+                                            width: 110,
+                                            child: BusyMarkPopupSelector<String>(
+                                              key: ValueKey(
+                                                'template-extension-${_selected!.id}-${_selected!.extension}',
+                                              ),
+                                              value: _selected!.extension,
+                                              label: _selected!.extension,
+                                              tooltip: context
+                                                  .l10n
+                                                  .tocTemplateExtension,
+                                              enabled: !_internal,
+                                              fullWidth: true,
+                                              options: [
+                                                for (final ext in [
+                                                  'md',
+                                                  'topic',
+                                                ])
+                                                  BusyMarkPopupSelectorOption(
+                                                    value: ext,
+                                                    label: ext,
+                                                  ),
+                                              ],
+                                              onSelected: (value) => setState(
+                                                () => _update(extension: value),
+                                              ),
+                                            ),
                                           ),
                                           onChanged: (_) => setState(_update),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      SizedBox(
-                                        width: 110,
-                                        child: BusyMarkPopupSelector<String>(
-                                          key: ValueKey(
-                                            'template-extension-${_selected!.id}-${_selected!.extension}',
-                                          ),
-                                          value: _selected!.extension,
-                                          label: _selected!.extension,
-                                          tooltip:
-                                              context.l10n.tocTemplateExtension,
-                                          enabled: !_internal,
-                                          fullWidth: true,
-                                          options: [
-                                            for (final ext in ['md', 'topic'])
-                                              BusyMarkPopupSelectorOption(
-                                                value: ext,
-                                                label: ext,
-                                              ),
-                                          ],
-                                          onSelected: (value) => setState(
-                                            () => _update(extension: value),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: TextField(
-                                      key: const ValueKey(
-                                        'template-editor-source',
-                                      ),
-                                      controller: _source,
-                                      expands: true,
-                                      minLines: null,
-                                      maxLines: null,
-                                      textAlignVertical: TextAlignVertical.top,
-                                      textDirection: TextDirection.ltr,
-                                      style: const TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 13,
-                                      ),
-                                      decoration: InputDecoration(
-                                        labelText: context.l10n.source,
-                                        border: const OutlineInputBorder(),
-                                      ),
-                                      onChanged: (_) => setState(_update),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    const SizedBox(height: BusyMarkSpacing.md),
+                                    Expanded(
+                                      child: _TemplateSourceEntry(
+                                        label: context.l10n.source,
+                                        controller: _source,
+                                        onChanged: (_) => setState(_update),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
                     ],
                   ),
@@ -713,7 +744,7 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
                     kind: BusyMarkStatusKind.error,
                   ),
                 if (_snapshot == null && _error == null)
-                  const LinearProgressIndicator(),
+                  const YaruLinearProgressIndicator(),
               ],
             ),
           ),
@@ -721,4 +752,66 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
       ],
     ),
   );
+}
+
+class _TemplateSourceEntry extends StatelessWidget {
+  const _TemplateSourceEntry({
+    required this.label,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return BusyMarkGroupedSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              BusyMarkSpacing.md,
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.md,
+              BusyMarkSpacing.sm,
+            ),
+            child: Text(label, style: busyMarkSectionHeaderStyle(context)),
+          ),
+          Divider(height: 1, thickness: 1, color: colors.cardShade),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                BusyMarkSpacing.md,
+                BusyMarkSpacing.sm,
+                BusyMarkSpacing.md,
+                BusyMarkSpacing.md,
+              ),
+              child: TextField(
+                key: const ValueKey('template-editor-source'),
+                controller: controller,
+                expands: true,
+                minLines: null,
+                maxLines: null,
+                textAlignVertical: TextAlignVertical.top,
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

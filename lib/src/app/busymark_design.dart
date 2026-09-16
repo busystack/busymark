@@ -2242,6 +2242,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.errorText,
     this.hintText,
     this.enabled = true,
+    this.readOnly = false,
     this.autofocus = false,
     this.focusNode,
     this.keyboardType,
@@ -2268,6 +2269,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
   final String? errorText;
   final String? hintText;
   final bool enabled;
+  final bool readOnly;
   final bool autofocus;
   final FocusNode? focusNode;
   final TextInputType? keyboardType;
@@ -2318,6 +2320,7 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
         controller: widget.controller,
         initialValue: widget.initialValue,
         enabled: widget.enabled,
+        readOnly: widget.readOnly,
         autofocus: widget.autofocus,
         focusNode: widget.focusNode,
         keyboardType: widget.keyboardType,

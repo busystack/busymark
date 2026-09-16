@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_search_field.dart';
 import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/workspace/presentation/writerside_template_dialogs.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
@@ -12,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaru/yaru.dart';
 
 void main() {
   late Directory root;
@@ -50,6 +54,10 @@ void main() {
           writersideTemplateServiceProvider.overrideWithValue(service),
         ],
         child: MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFFE95420),
+          ),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -102,27 +110,35 @@ void main() {
           direction: direction,
         );
         expect(find.text('Create Topic from Template'), findsOneWidget);
-        await tester.tap(find.text('XML (.topic)'));
-        await tester.enterText(
-          find.byKey(const ValueKey('template-title')),
-          'A & B',
+        final sidebarCenter = tester
+            .getRect(find.byType(BusyMarkSidebarSurface))
+            .center
+            .dx;
+        final formCenter = tester
+            .getRect(find.byKey(const ValueKey('template-title')))
+            .center
+            .dx;
+        expect(
+          sidebarCenter,
+          direction == TextDirection.ltr
+              ? lessThan(formCenter)
+              : greaterThan(formCenter),
         );
+        await tester.tap(find.text('XML (.topic)'));
+        await tester.enterText(editableUnderKey('template-title'), 'A & B');
         await tester.enterText(
-          find.byKey(const ValueKey('template-filename')),
+          editableUnderKey('template-filename'),
           'existing',
         );
         await tester.pumpAndSettle();
         await tester.tap(find.text('Create'));
         expect(created, isNull);
-        await tester.enterText(
-          find.byKey(const ValueKey('template-filename')),
-          '../bad',
-        );
+        await tester.enterText(editableUnderKey('template-filename'), '../bad');
         await tester.pumpAndSettle();
         await tester.tap(find.text('Create'));
         expect(created, isNull);
         await tester.enterText(
-          find.byKey(const ValueKey('template-filename')),
+          editableUnderKey('template-filename'),
           'from-template',
         );
         await tester.pumpAndSettle();
@@ -138,12 +154,114 @@ void main() {
     );
   }
 
+  testWidgets('creation uses native master-detail controls and filters', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      WritersideTemplateDialog(
+        existingIds: const {},
+        previewBuilder: (_, template, title, filename) =>
+            Text('${template.id}:$title:$filename'),
+        onCreate: (_, _, _) async => null,
+      ),
+    );
+
+    expect(find.byType(BusyMarkSearchField), findsOneWidget);
+    expect(find.byType(YaruExpandable), findsNWidgets(3));
+    expect(find.byType(YaruMasterTile), findsWidgets);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
+    expect(find.byType(BusyMarkActionRow), findsOneWidget);
+    expect(find.byType(YaruRadioButton<String>), findsNWidgets(2));
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+
+    await tester.enterText(editableUnderKey('template-search'), 'Overview');
+    await tester.pumpAndSettle();
+    final overviewTile = find.byKey(
+      const ValueKey('template-Writerside Overview MD Topic.md'),
+    );
+    expect(overviewTile, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('template-Writerside How to MD Topic.md')),
+      findsNothing,
+    );
+    await tester.tap(overviewTile);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<YaruMasterTile>(
+            find.byKey(
+              const ValueKey('template-Writerside Overview MD Topic.md'),
+            ),
+          )
+          .selected,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<EditableText>(editableUnderKey('template-title'))
+          .controller
+          .text,
+      'Overview',
+    );
+  });
+
+  testWidgets('creation opens both template editor entry points', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      WritersideTemplateDialog(
+        existingIds: const {},
+        previewBuilder: (_, _, _, _) => const SizedBox.shrink(),
+        onCreate: (_, _, _) async => null,
+      ),
+    );
+
+    await tester.tap(find.text('Edit templates...'));
+    await settle(tester);
+    expect(find.byType(YaruTabBar), findsOneWidget);
+    expect(find.byType(BusyMarkPopupSelector<String>), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsWidgets);
+    expect(find.byType(BusyMarkSidebarSurface), findsNWidgets(2));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Cancel').last);
+    await settle(tester);
+
+    await tester.ensureVisible(find.text('Create custom template...'));
+    await tester.tap(find.text('Create custom template...'));
+    await settle(tester);
+    expect(find.text('File and Code Templates'), findsOneWidget);
+    expect(find.byType(YaruTabBar), findsOneWidget);
+    expect(find.byType(BusyMarkPopupSelector<String>), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('template-editor-source')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('catalog failure keeps BusyMark status and retry controls', (
+    tester,
+  ) async {
+    service = _FailingTemplateService();
+    await show(
+      tester,
+      WritersideTemplateDialog(
+        existingIds: const {},
+        previewBuilder: (_, _, _, _) => const SizedBox.shrink(),
+        onCreate: (_, _, _) async => null,
+      ),
+    );
+
+    expect(find.byType(BusyMarkStatusBox), findsOneWidget);
+    expect(find.widgetWithText(BusyMarkDialogButton, 'Retry'), findsOneWidget);
+  });
+
   testWidgets('Files editor stages new content, cancels and persists on OK', (
     tester,
   ) async {
     await show(tester, const WritersideTemplatesEditor(createNew: true));
     await tester.enterText(
-      find.byKey(const ValueKey('template-editor-name')),
+      editableUnderKey('template-editor-name'),
       'My template',
     );
     await tester.enterText(
@@ -156,7 +274,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await settle(tester);
     await tester.enterText(
-      find.byKey(const ValueKey('template-editor-name')),
+      editableUnderKey('template-editor-name'),
       'My template',
     );
     await tester.enterText(
@@ -240,10 +358,7 @@ void main() {
     );
     await tester.tap(find.text('Broken XML ID'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('template-filename')),
-      'setup',
-    );
+    await tester.enterText(editableUnderKey('template-filename'), 'setup');
     await tester.tap(find.text('Create'));
     await settle(tester);
 
@@ -294,10 +409,7 @@ void main() {
     tester,
   ) async {
     await show(tester, const WritersideTemplatesEditor(createNew: true));
-    await tester.enterText(
-      find.byKey(const ValueKey('template-editor-name')),
-      'Draft',
-    );
+    await tester.enterText(editableUnderKey('template-editor-name'), 'Draft');
     await tester.enterText(
       find.byKey(const ValueKey('template-editor-source')),
       '# draft',
@@ -325,6 +437,52 @@ void main() {
       (await tester.runAsync(service.read))!.entries.single.name,
       'Writerside_other',
     );
+  });
+
+  testWidgets('Internal reset is staged, cancellable, and publishable', (
+    tester,
+  ) async {
+    final builtin = (await tester.runAsync(service.bundled))!.firstWhere(
+      (entry) => entry.name == 'Starter' && entry.extension == 'md',
+    );
+    final override = builtin.copyWith(source: '# Internal override');
+    await tester.runAsync(
+      () async => service.save(await service.read(), [override]),
+    );
+
+    await show(tester, WritersideTemplatesEditor(selectedId: builtin.id));
+    final nameEntry = tester.widget<BusyMarkGroupedTextEntry>(
+      find.byKey(const ValueKey('template-editor-name')),
+    );
+    expect(nameEntry.readOnly, isTrue);
+    final reset = tester.widget<BusyMarkDialogButton>(
+      find.widgetWithText(BusyMarkDialogButton, 'Reset'),
+    );
+    expect(reset.destructive, isFalse);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Reset'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('template-editor-source')),
+          )
+          .controller!
+          .text,
+      builtin.source,
+    );
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Cancel'));
+    await settle(tester);
+    expect(
+      (await tester.runAsync(service.read))!.entries.single.source,
+      '# Internal override',
+    );
+
+    await tester.tap(find.text('Open'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Reset'));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'OK'));
+    await settle(tester);
+    expect((await tester.runAsync(service.read))!.entries, isEmpty);
   });
 
   for (final customFirst in [true, false]) {
@@ -357,7 +515,7 @@ void main() {
         );
         if (!customFirst) {
           await tester.enterText(
-            find.byKey(const ValueKey('template-editor-name')),
+            editableUnderKey('template-editor-name'),
             'Starter',
           );
         }
@@ -385,6 +543,16 @@ void main() {
     );
   }
 }
+
+class _FailingTemplateService extends WritersideTemplateService {
+  @override
+  Future<List<WritersideTemplate>> catalog() async => throw StateError('load');
+}
+
+Finder editableUnderKey(String key) => find.descendant(
+  of: find.byKey(ValueKey(key)),
+  matching: find.byType(EditableText),
+);
 
 Future<void> settle(WidgetTester tester) async {
   // The real store uses async filesystem calls, not a synchronous fake.

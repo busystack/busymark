@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
@@ -306,6 +307,20 @@ class _HarnessState extends ConsumerState<_Harness> {
   Future<void> _fill(String label, String value) async {
     final element = _elements(
       (widget) => widget is TextField && widget.decoration?.labelText == label,
+    ).single;
+    await _tap(element);
+    final field = element.widget as TextField;
+    field.controller!.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+    field.onChanged?.call(value);
+    await _pause();
+  }
+
+  Future<void> _fillKey(String key, String value) async {
+    final element = _elements(
+      (widget) => widget is TextField && widget.key == ValueKey(key),
     ).single;
     await _tap(element);
     final field = element.widget as TextField;
@@ -943,7 +958,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _until(
         () => _elements(
           (widget) =>
-              widget is TextField &&
+              widget is BusyMarkGroupedTextEntry &&
               widget.key == const ValueKey('template-title'),
         ).isNotEmpty,
         'Template catalog loads',
@@ -1010,8 +1025,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         'File and Code Templates loads',
       );
       await _fill('Name:', 'Reusable guide');
-      await _fill(
-        'Source',
+      await _fillKey(
+        'template-editor-source',
         '<topic id="\${ID}" title="\${TITLE}"><p>Edited template content</p></topic>',
       );
       await _capture('17-file-and-code-templates');

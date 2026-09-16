@@ -1793,7 +1793,16 @@ void main() {
 
     expect(find.byType(YaruListTile), findsOneWidget);
     expect(find.byType(TextFormField), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkGroupedTextEntry>(
+            find.byType(BusyMarkGroupedTextEntry),
+          )
+          .readOnly,
+      isFalse,
+    );
     final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.readOnly, isFalse);
     final decoration = field.decoration!;
     expect(decoration.filled, isFalse);
     expect(decoration.fillColor, Colors.transparent);
@@ -1805,6 +1814,53 @@ void main() {
     expect(decoration.labelText, 'Language');
     expect(decoration.hintText, 'dart');
     expect(find.text('Required'), findsOneWidget);
+  });
+
+  testWidgets('grouped text entry forwards readOnly without disabling input', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: const Color(0xFF3584E4),
+        ),
+        home: const Scaffold(
+          body: BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: ValueKey('editable-entry'),
+                label: 'Editable',
+              ),
+              BusyMarkGroupedTextEntry(
+                key: ValueKey('readonly-entry'),
+                label: 'Read only',
+                readOnly: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(YaruListTile), findsNWidgets(2));
+    TextField fieldUnder(String key) => tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(ValueKey(key)),
+        matching: find.byType(TextField),
+      ),
+    );
+
+    final editable = fieldUnder('editable-entry');
+    final readOnly = fieldUnder('readonly-entry');
+    expect(editable.readOnly, isFalse);
+    expect(editable.enabled, isTrue);
+    expect(readOnly.readOnly, isTrue);
+    expect(readOnly.enabled, isTrue);
+    expect(readOnly.decoration?.filled, isFalse);
+    expect(readOnly.decoration?.border, InputBorder.none);
+    expect(readOnly.decoration?.fillColor, Colors.transparent);
   });
 
   testWidgets('semantic standard icon button delegates to FilledButton.icon', (
